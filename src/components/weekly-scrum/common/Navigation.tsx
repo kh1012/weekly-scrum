@@ -1,0 +1,87 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+interface NavItem {
+  key: string;
+  label: string;
+  href: string;
+  icon: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    key: "summary",
+    label: "요약",
+    href: "/weekly-scrum/summary",
+    icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+  },
+  {
+    key: "cards",
+    label: "카드",
+    href: "/weekly-scrum/cards",
+    icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z",
+  },
+  {
+    key: "projects",
+    label: "프로젝트",
+    href: "/weekly-scrum/projects",
+    icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z",
+  },
+  {
+    key: "matrix",
+    label: "매트릭스",
+    href: "/weekly-scrum/matrix",
+    icon: "M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z",
+  },
+  {
+    key: "risks",
+    label: "리스크",
+    href: "/weekly-scrum/risks",
+    icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
+  },
+];
+
+export function Navigation() {
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/weekly-scrum/summary") {
+      return pathname === "/weekly-scrum" || pathname === "/weekly-scrum/summary";
+    }
+    return pathname.startsWith(href);
+  };
+
+  return (
+    <nav className="flex items-center gap-1">
+      {NAV_ITEMS.map((item) => (
+        <Link
+          key={item.key}
+          href={item.href}
+          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+            isActive(item.href)
+              ? "bg-[#f6f8fa] text-[#1f2328]"
+              : "text-[#656d76] hover:text-[#1f2328] hover:bg-[#f6f8fa]"
+          }`}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={item.icon}
+            />
+          </svg>
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+

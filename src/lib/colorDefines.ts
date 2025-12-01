@@ -103,6 +103,47 @@ export const STATUS_COLORS = {
   },
 };
 
+// 리스크 레벨 색상
+export const RISK_LEVEL_COLORS = {
+  0: { bg: "#e8f5e9", text: "#7CB342", border: "#aed581", label: "없음", description: "리스크 없음" },
+  1: { bg: "#fff8e1", text: "#FBC02D", border: "#ffd54f", label: "경미", description: "업무 외적 부담, 일정 영향 없음" },
+  2: { bg: "#fff3e0", text: "#FB8C00", border: "#ffb74d", label: "중간", description: "병목 가능성 있음, 일정 영향 가능" },
+  3: { bg: "#ffebee", text: "#E53935", border: "#ef9a9a", label: "심각", description: "즉각적인 논의 필요, 일정 지연 확정" },
+} as const;
+
+/**
+ * 리스크 레벨에 따른 색상 반환
+ */
+export function getRiskLevelColor(level: 0 | 1 | 2 | 3) {
+  return RISK_LEVEL_COLORS[level];
+}
+
+/**
+ * 달성률 계산 (Progress / Plan)
+ */
+export function getAchievementRate(progressPercent: number, planPercent: number): number {
+  if (planPercent === 0) return progressPercent > 0 ? 100 : 0;
+  return Math.round((progressPercent / planPercent) * 100);
+}
+
+/**
+ * 달성률에 따른 상태 반환
+ */
+export function getAchievementStatus(rate: number): "exceeded" | "normal" | "delayed" {
+  if (rate >= 100) return "exceeded";
+  if (rate >= 80) return "normal";
+  return "delayed";
+}
+
+/**
+ * 달성률 상태 색상
+ */
+export const ACHIEVEMENT_COLORS = {
+  exceeded: { bg: "#dafbe1", text: "#1a7f37", border: "#4ac26b", label: "초과달성" },
+  normal: { bg: "#ddf4ff", text: "#0969da", border: "#54aeff", label: "정상" },
+  delayed: { bg: "#ffebe9", text: "#cf222e", border: "#ff8182", label: "지연" },
+} as const;
+
 /**
  * 진행률에 따른 색상 반환
  */

@@ -5,15 +5,27 @@ import * as path from "path";
 // 타입 정의
 // ========================================
 
+/**
+ * 리스크 레벨 타입
+ * 0 = 없음
+ * 1 = 경미 (업무 외적 부담, 일정 영향 없음)
+ * 2 = 중간 (병목 가능성 있음, 일정 영향 가능)
+ * 3 = 심각 (즉각적인 논의 필요, 일정 지연 확정)
+ */
+type RiskLevel = 0 | 1 | 2 | 3;
+
 interface ScrumItem {
   name: string;
   domain: string;
   project: string;
   topic: string;
+  plan: string;
+  planPercent: number;
   progress: string;
-  risk: string;
-  next: string;
   progressPercent: number;
+  next: string;
+  risk: string;
+  riskLevel: RiskLevel;
 }
 
 interface WeeklyScrumData {
@@ -29,15 +41,27 @@ interface WeeklyScrumData {
 // ========================================
 
 /**
- * Progress 텍스트에서 퍼센트 숫자를 추출합니다.
+ * 텍스트에서 퍼센트 숫자를 추출합니다.
  * 예: "셀 렌더링 구조 개선 60% 완료" → 60
  */
-function extractProgressPercent(progressText: string): number {
-  const match = progressText.match(/(\d+)\s*%/);
+function extractPercent(text: string): number {
+  const match = text.match(/(\d+)\s*%/);
   if (match) {
     return parseInt(match[1], 10);
   }
   // 퍼센트가 없는 경우 기본값 0
+  return 0;
+}
+
+/**
+ * RiskLevel 텍스트를 숫자로 변환합니다.
+ * 예: "2" → 2
+ */
+function parseRiskLevel(riskLevelText: string): RiskLevel {
+  const level = parseInt(riskLevelText, 10);
+  if (level >= 0 && level <= 3) {
+    return level as RiskLevel;
+  }
   return 0;
 }
 
@@ -95,28 +119,50 @@ function parseBlock(block: string): ScrumItem | null {
     return null;
   }
 
-  // 필드 파싱
-  const name = parseField(lines, "name");
+  // 필드 파싱 (required)
+  const name = parseField(lines, "Name");
+  const plan = parseField(lines, "Plan");
   const progress = parseField(lines, "Progress");
-  const risk = parseField(lines, "Risk");
   const next = parseField(lines, "Next");
 
+  // 필드 파싱 (optional)
+  const risk = parseField(lines, "Risk");
+  const riskLevelText = parseField(lines, "RiskLevel");
+
+  // 필수 필드 검증
   if (!name) {
-    console.warn(`name 필드 누락: ${block}`);
+    console.warn(`Name 필드 누락: ${block}`);
+    return null;
+  }
+  if (!plan) {
+    console.warn(`Plan 필드 누락: ${block}`);
+    return null;
+  }
+  if (!progress) {
+    console.warn(`Progress 필드 누락: ${block}`);
+    return null;
+  }
+  if (!next) {
+    console.warn(`Next 필드 누락: ${block}`);
     return null;
   }
 
-  const progressPercent = extractProgressPercent(progress);
+  const planPercent = extractPercent(plan);
+  const progressPercent = extractPercent(progress);
+  const riskLevel = parseRiskLevel(riskLevelText);
 
   return {
     name,
     domain: header.domain,
     project: header.project,
     topic: header.topic,
+    plan,
+    planPercent,
     progress,
-    risk,
-    next,
     progressPercent,
+    next,
+    risk,
+    riskLevel,
   };
 }
 

@@ -47,12 +47,10 @@ export function CircularProgress({
         />
       </svg>
       {/* Percent text */}
-      <span
-        className="absolute text-[10px] font-semibold"
-        style={{ color }}
-      >
+      <span className="absolute text-[10px] font-semibold" style={{ color }}>
         {isCompleted ? "완료" : `${percent}%`}
       </span>
     </div>
   );
 }
+
