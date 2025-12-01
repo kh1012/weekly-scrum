@@ -1,0 +1,84 @@
+[frontend / 스프레드시트 / 팀프로젝트 기반 개발]
+- name: 김용수
+- Progress: 시트 편집 영역 가상화 구조 설계 70% 완료
+- Next: 대용량 데이터 스크롤 튐 현상 개선 작업 진행
+
+[frontend / 스프레드시트 / 팀프로젝트 기반 개발]
+- name: 김현
+- Progress: 셀 렌더링 구조 개선 60% 완료
+- Next: 렌더링 최적화 마무리, Publish flow 테스트 2건 추가
+
+[backend / 스프레드시트 / 팀프로젝트 기반 개발]
+- name: 서상준
+- Progress: 셀 수정 이벤트 처리 API 안정화 55% 완료
+- Next: Publish 시점 동시성 제어 로직 개선
+
+[frontend / 워크스페이스 / IA 개선]
+- name: 김태이
+- Progress: 워크스페이스 네비게이션 구성도 정리 및 IA v1.1 적용 80%
+- Next: UX 플로우 기반 인터랙션 매핑 작업 착수
+
+[backend / 인증서비스 / OAuth 연동]
+- name: 김정빈
+- Progress: Google OAuth 연동 80% 완료
+- Next: Apple OAuth 구현 및 토큰 갱신 플로우 테스트
+
+[design / 디자인 시스템 / 컴포넌트 가이드]
+- name: 이하영
+- Progress: Typography, Spacing 토큰 재정의 70%
+- Next: 컴포넌트 가이드 문서 1차 검수 진행
+
+[frontend / 대시보드 / 차트 컴포넌트]
+- name: 변창언
+- Progress: D3.js 기반 라인차트 인터랙션 구현 40%
+- Next: 스크롤 가상화 적용 여부 검토 및 성능 측정
+
+[backend / API Gateway / 캐싱 레이어]
+- name: 손영민
+- Progress: Redis 캐싱 레이어 구축 완료 100%
+- Next: 캐시 무효화 정책 세부 튜닝 및 모니터링 개선
+
+[planning / 워크스페이스 / 요구사항 수집]
+- name: 김희성
+- Progress: 사용자 워크플로우 분석 및 요구사항 그룹화 60%
+- Next: 스프레드시트 연동 요구사항 우선순위 정리
+
+[frontend / 공통 컴포넌트 / 디자인 시스템]
+- name: 조해용
+- Progress: Button, Input 스펙 정리 및 UI 반응형 완성 90%
+- Next: Modal 컴포넌트 기능 분리 및 상태 관리 정리
+
+[backend / 로그 시스템 / 수집 파이프라인]
+- name: 도기봉
+- Progress: 이벤트 수집 서버 구조 개편 50%
+- Next: 지연 발생 구간 트레이싱 및 성능 개선
+
+[planning / 제품 기획 / 사용자 여정 분석]
+- name: 윤재웅
+- Progress: 신규 온보딩 흐름 사용자 여정도 작성 70%
+- Next: 문제 구간 도출 및 개선 아이디어 정리
+
+[design / 대시보드 / UI 시각화]
+- name: 한내경
+- Progress: 차트 컬러 시스템 정리 및 접근성 테스트 진행
+- Next: 대시보드 위젯 요소 디자인 1차 시안 제작
+
+[marketing / 서비스 홍보 / 콘텐츠 전략]
+- name: 양소희
+- Progress: 핵심 기능 중심 콘텐츠 주제 8개 도출
+- Next: 타겟 사용자별 메시지 구조화 작업 진행
+
+[content / 고객 교육 / 가이드 문서]
+- name: 김상리
+- Progress: 스프레드시트 사용 가이드 초안 작성 60%
+- Next: 예제 기반 챕터 추가 및 이미지 제작
+
+[frontend / 성능 최적화 / 렌더링 개선]
+- name: 김지원
+- Progress: hydration 오류 추적 및 SSR 성능 20% 개선
+- Next: CPU 스파이크 구간 병목 제거 시도
+
+[backend / 권한 시스템 / Role 모델링]
+- name: 하성열
+- Progress: Role 기반 접근 제어 정책 정리 50%
+- Next: 서비스별 권한 매트릭스 적용 로직 설계

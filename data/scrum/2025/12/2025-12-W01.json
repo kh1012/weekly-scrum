@@ -1,0 +1,178 @@
+{
+  "year": 2025,
+  "month": 12,
+  "week": "W01",
+  "range": "2025-12-01 2025-12-05",
+  "items": [
+    {
+      "name": "김용수",
+      "domain": "frontend",
+      "project": "스프레드시트",
+      "topic": "팀프로젝트 기반 개발",
+      "progress": "시트 편집 영역 가상화 구조 설계 70% 완료",
+      "risk": "",
+      "next": "대용량 데이터 스크롤 튐 현상 개선 작업 진행",
+      "progressPercent": 70
+    },
+    {
+      "name": "김현",
+      "domain": "frontend",
+      "project": "스프레드시트",
+      "topic": "팀프로젝트 기반 개발",
+      "progress": "셀 렌더링 구조 개선 60% 완료",
+      "risk": "",
+      "next": "렌더링 최적화 마무리, Publish flow 테스트 2건 추가",
+      "progressPercent": 60
+    },
+    {
+      "name": "서상준",
+      "domain": "backend",
+      "project": "스프레드시트",
+      "topic": "팀프로젝트 기반 개발",
+      "progress": "셀 수정 이벤트 처리 API 안정화 55% 완료",
+      "risk": "",
+      "next": "Publish 시점 동시성 제어 로직 개선",
+      "progressPercent": 55
+    },
+    {
+      "name": "김태이",
+      "domain": "frontend",
+      "project": "워크스페이스",
+      "topic": "IA 개선",
+      "progress": "워크스페이스 네비게이션 구성도 정리 및 IA v1.1 적용 80%",
+      "risk": "",
+      "next": "UX 플로우 기반 인터랙션 매핑 작업 착수",
+      "progressPercent": 80
+    },
+    {
+      "name": "김정빈",
+      "domain": "backend",
+      "project": "인증서비스",
+      "topic": "OAuth 연동",
+      "progress": "Google OAuth 연동 80% 완료",
+      "risk": "",
+      "next": "Apple OAuth 구현 및 토큰 갱신 플로우 테스트",
+      "progressPercent": 80
+    },
+    {
+      "name": "이하영",
+      "domain": "design",
+      "project": "디자인 시스템",
+      "topic": "컴포넌트 가이드",
+      "progress": "Typography, Spacing 토큰 재정의 70%",
+      "risk": "",
+      "next": "컴포넌트 가이드 문서 1차 검수 진행",
+      "progressPercent": 70
+    },
+    {
+      "name": "변창언",
+      "domain": "frontend",
+      "project": "대시보드",
+      "topic": "차트 컴포넌트",
+      "progress": "D3.js 기반 라인차트 인터랙션 구현 40%",
+      "risk": "",
+      "next": "스크롤 가상화 적용 여부 검토 및 성능 측정",
+      "progressPercent": 40
+    },
+    {
+      "name": "손영민",
+      "domain": "backend",
+      "project": "API Gateway",
+      "topic": "캐싱 레이어",
+      "progress": "Redis 캐싱 레이어 구축 완료 100%",
+      "risk": "",
+      "next": "캐시 무효화 정책 세부 튜닝 및 모니터링 개선",
+      "progressPercent": 100
+    },
+    {
+      "name": "김희성",
+      "domain": "planning",
+      "project": "워크스페이스",
+      "topic": "요구사항 수집",
+      "progress": "사용자 워크플로우 분석 및 요구사항 그룹화 60%",
+      "risk": "",
+      "next": "스프레드시트 연동 요구사항 우선순위 정리",
+      "progressPercent": 60
+    },
+    {
+      "name": "조해용",
+      "domain": "frontend",
+      "project": "공통 컴포넌트",
+      "topic": "디자인 시스템",
+      "progress": "Button, Input 스펙 정리 및 UI 반응형 완성 90%",
+      "risk": "",
+      "next": "Modal 컴포넌트 기능 분리 및 상태 관리 정리",
+      "progressPercent": 90
+    },
+    {
+      "name": "도기봉",
+      "domain": "backend",
+      "project": "로그 시스템",
+      "topic": "수집 파이프라인",
+      "progress": "이벤트 수집 서버 구조 개편 50%",
+      "risk": "",
+      "next": "지연 발생 구간 트레이싱 및 성능 개선",
+      "progressPercent": 50
+    },
+    {
+      "name": "윤재웅",
+      "domain": "planning",
+      "project": "제품 기획",
+      "topic": "사용자 여정 분석",
+      "progress": "신규 온보딩 흐름 사용자 여정도 작성 70%",
+      "risk": "",
+      "next": "문제 구간 도출 및 개선 아이디어 정리",
+      "progressPercent": 70
+    },
+    {
+      "name": "한내경",
+      "domain": "design",
+      "project": "대시보드",
+      "topic": "UI 시각화",
+      "progress": "차트 컬러 시스템 정리 및 접근성 테스트 진행",
+      "risk": "",
+      "next": "대시보드 위젯 요소 디자인 1차 시안 제작",
+      "progressPercent": 0
+    },
+    {
+      "name": "양소희",
+      "domain": "marketing",
+      "project": "서비스 홍보",
+      "topic": "콘텐츠 전략",
+      "progress": "핵심 기능 중심 콘텐츠 주제 8개 도출",
+      "risk": "",
+      "next": "타겟 사용자별 메시지 구조화 작업 진행",
+      "progressPercent": 0
+    },
+    {
+      "name": "김상리",
+      "domain": "content",
+      "project": "고객 교육",
+      "topic": "가이드 문서",
+      "progress": "스프레드시트 사용 가이드 초안 작성 60%",
+      "risk": "",
+      "next": "예제 기반 챕터 추가 및 이미지 제작",
+      "progressPercent": 60
+    },
+    {
+      "name": "김지원",
+      "domain": "frontend",
+      "project": "성능 최적화",
+      "topic": "렌더링 개선",
+      "progress": "hydration 오류 추적 및 SSR 성능 20% 개선",
+      "risk": "",
+      "next": "CPU 스파이크 구간 병목 제거 시도",
+      "progressPercent": 20
+    },
+    {
+      "name": "하성열",
+      "domain": "backend",
+      "project": "권한 시스템",
+      "topic": "Role 모델링",
+      "progress": "Role 기반 접근 제어 정책 정리 50%",
+      "risk": "",
+      "next": "서비스별 권한 매트릭스 적용 로직 설계",
+      "progressPercent": 50
+    }
+  ]
+}
