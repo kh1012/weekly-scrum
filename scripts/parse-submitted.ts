@@ -209,8 +209,8 @@ function main(): void {
   // 월을 2자리로 패딩
   const monthPadded = month.toString().padStart(2, "0");
 
-  // submitted.txt 읽기
-  const submittedPath = path.join(process.cwd(), "data", "submitted.txt");
+  // submitted-scrum.txt 읽기
+  const submittedPath = path.join(process.cwd(), "data", "submitted-scrum.txt");
 
   if (!fs.existsSync(submittedPath)) {
     console.error(`파일을 찾을 수 없습니다: ${submittedPath}`);

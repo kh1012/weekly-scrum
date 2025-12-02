@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "scrum:parse": "tsx scripts/parse-submitted.ts",
+    "insight:parse": "tsx scripts/parse-insight.ts",
     "predeploy": "npm run build && touch out/.nojekyll",
     "deploy": "gh-pages -d out -t true"
   },
