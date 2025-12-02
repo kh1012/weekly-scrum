@@ -23,6 +23,7 @@ interface ScrumItem {
   planPercent: number;
   progress: string;
   progressPercent: number;
+  reason: string; // 계획 대비 실행 미비 시 부연 설명
   next: string;
   risk: string;
   riskLevel: RiskLevel;
@@ -126,6 +127,7 @@ function parseBlock(block: string): ScrumItem | null {
   const next = parseField(lines, "Next");
 
   // 필드 파싱 (optional)
+  const reason = parseField(lines, "reason"); // 계획 대비 실행 미비 시 부연 설명
   const risk = parseField(lines, "Risk");
   const riskLevelText = parseField(lines, "RiskLevel");
 
@@ -160,6 +162,7 @@ function parseBlock(block: string): ScrumItem | null {
     planPercent,
     progress,
     progressPercent,
+    reason,
     next,
     risk,
     riskLevel,

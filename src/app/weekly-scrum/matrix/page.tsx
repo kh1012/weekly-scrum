@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useScrumContext } from "@/context/ScrumContext";
 import { MatrixView } from "@/components/weekly-scrum/matrix/MatrixView";
 
-export default function MatrixPage() {
+function MatrixContent() {
   const searchParams = useSearchParams();
   const isFullscreen = searchParams.get("fullscreen") === "true";
   const { filteredItems } = useScrumContext();
@@ -18,4 +19,12 @@ export default function MatrixPage() {
   }
 
   return <MatrixView items={filteredItems} />;
+}
+
+export default function MatrixPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-center text-[#656d76]">로딩 중...</div>}>
+      <MatrixContent />
+    </Suspense>
+  );
 }

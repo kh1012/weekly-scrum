@@ -24,17 +24,25 @@ export function RiskFocusView({ items }: RiskFocusViewProps) {
       const reasons: string[] = [];
       let level: RiskLevel = "normal";
 
+      // 진행률 기반 레벨 설정
       if (item.progressPercent < 30) {
         reasons.push(`진행률 ${item.progressPercent}% (30% 미만)`);
         level = "critical";
       } else if (item.progressPercent < 50) {
         reasons.push(`진행률 ${item.progressPercent}% (50% 미만)`);
-        if (level !== "critical") level = "warning";
+        level = "warning";
       }
 
+      // 리스크가 있는 경우 (critical이 아닌 경우만 warning으로 변경)
       if (item.risk && item.risk !== "-" && item.risk.trim() !== "") {
         reasons.push(`리스크: ${item.risk}`);
-        if (level !== "critical") level = "warning";
+        if (level === "normal") level = "warning";
+      }
+
+      // reason이 있는 경우에도 표시
+      if (item.reason && item.reason.trim() !== "") {
+        reasons.push(`사유: ${item.reason}`);
+        if (level === "normal") level = "warning";
       }
 
       return { item, level, reasons };

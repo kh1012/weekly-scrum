@@ -144,6 +144,12 @@ export function CompactCell({ items, avg }: CompactCellProps) {
                       <div className="text-sm font-medium text-[#1f2328] pl-1 leading-relaxed">
                         {i.topic}
                       </div>
+                      {/* 사유 표시 */}
+                      {i.reason && i.reason.trim() !== "" && (
+                        <div className="text-xs mt-2 pl-3 border-l-2" style={{ borderColor: "#9a6700", color: "#9a6700" }}>
+                          [사유] {i.reason}
+                        </div>
+                      )}
                       {/* 리스크 내용 표시 */}
                       {itemRiskColor && i.risk && i.risk.trim() !== "" && (
                         <div className="text-xs mt-2 pl-3 border-l-2" style={{ borderColor: itemRiskColor.text, color: itemRiskColor.text }}>
@@ -278,6 +284,15 @@ function ExpandedCard({ item }: ExpandedCardProps) {
               <div className="text-sm text-white leading-relaxed mb-3">
                 {item.topic}
               </div>
+              {/* 사유 표시 */}
+              {item.reason && item.reason.trim() !== "" && (
+                <div className="text-sm mt-2 pt-2 border-t border-[#3d444d]">
+                  <div className="text-[#9a6700] mb-1 text-xs">계획 대비 미비 사유</div>
+                  <div className="pl-3 border-l-2" style={{ borderColor: "#9a6700", color: "#9a6700" }}>
+                    {item.reason}
+                  </div>
+                </div>
+              )}
               {/* 리스크 정보 */}
               {riskLevel > 0 && riskColor && (
                 <div className="text-sm mt-3 pt-3 border-t border-[#3d444d]">

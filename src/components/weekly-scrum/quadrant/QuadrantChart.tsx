@@ -130,6 +130,19 @@ function CustomTooltip({ item, position }: CustomTooltipProps) {
           </div>
         </div>
 
+        {/* 사유 */}
+        {item.reason && item.reason.trim() !== "" && (
+          <div className="mb-3">
+            <div className="text-xs text-[#9a6700] mb-1">계획 대비 미비 사유</div>
+            <div
+              className="text-sm pl-2 border-l-2"
+              style={{ borderColor: "#9a6700", color: "#9a6700" }}
+            >
+              {item.reason}
+            </div>
+          </div>
+        )}
+
         {/* 리스크 */}
         {riskLevel > 0 && (
           <div className="mb-3">
@@ -406,7 +419,7 @@ export function QuadrantChart({ data }: QuadrantChartProps) {
 
               <Scatter
                 data={chartData}
-                shape={(props) => <CustomDot {...props} selectedItem={selectedItem} onClick={handleClick} />}
+                shape={(props: { cx?: number; cy?: number; payload?: ChartDataPoint }) => <CustomDot {...props} selectedItem={selectedItem} onClick={handleClick} />}
               />
             </ScatterChart>
           </ResponsiveContainer>

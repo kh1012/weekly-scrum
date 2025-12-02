@@ -19,6 +19,7 @@ export interface ScrumItem {
   planPercent: number;
   progress: string;
   progressPercent: number;
+  reason: string; // 계획 대비 실행 미비 시 부연 설명
   next: string;
   risk: string;
   riskLevel: RiskLevel;

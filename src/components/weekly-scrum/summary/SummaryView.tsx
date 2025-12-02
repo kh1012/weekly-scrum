@@ -7,6 +7,7 @@ import { SummaryCard, ProgressDistributionBar, RiskDistributionBar, AchievementS
 import { DomainStats } from "./DomainStats";
 import { MemberStats } from "./MemberStats";
 import { RiskItemsList } from "./RiskItemsList";
+import { ReasonItemsList } from "./ReasonItemsList";
 
 interface SummaryViewProps {
   items: ScrumItem[];
@@ -51,6 +52,18 @@ export function SummaryView({ items }: SummaryViewProps) {
     return items
       .filter((i) => i.risk && i.risk !== "-" && i.risk.trim() !== "")
       .sort((a, b) => (b.riskLevel ?? 0) - (a.riskLevel ?? 0));
+  }, [items]);
+
+  // 사유가 있는 항목 (계획 대비 미비)
+  const reasonItems = useMemo(() => {
+    return items
+      .filter((i) => i.reason && i.reason.trim() !== "")
+      .sort((a, b) => {
+        // 달성률이 낮은 순으로 정렬
+        const aRate = a.planPercent ? a.progressPercent / a.planPercent : 1;
+        const bRate = b.planPercent ? b.progressPercent / b.planPercent : 1;
+        return aRate - bRate;
+      });
   }, [items]);
 
   const progressDistribution = useMemo(
@@ -113,6 +126,8 @@ export function SummaryView({ items }: SummaryViewProps) {
         <DomainStats stats={domainStats} />
         <MemberStats stats={memberStats} />
       </div>
+
+      {reasonItems.length > 0 && <ReasonItemsList items={reasonItems} />}
 
       {riskItems.length > 0 && <RiskItemsList items={riskItems} />}
     </div>

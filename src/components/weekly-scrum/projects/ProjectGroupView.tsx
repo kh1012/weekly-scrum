@@ -205,6 +205,9 @@ function TopicCard({ item }: { item: ScrumItem }) {
 
       <div className="space-y-1 text-[10px]">
         <InfoRow color="bg-[#0969da]" text={item.progress} />
+        {item.reason && item.reason.trim() !== "" && (
+          <InfoRow color="bg-[#9a6700]" customColor="#9a6700" text={`[사유] ${item.reason}`} />
+        )}
         {item.risk && item.risk.trim() !== "" && (
           <InfoRow color={`bg-[${riskColor.text}]`} customColor={riskColor.text} text={item.risk} />
         )}

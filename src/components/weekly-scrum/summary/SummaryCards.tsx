@@ -15,10 +15,9 @@ interface SummaryCardProps {
 export function SummaryCard({ value, label, color, highlight }: SummaryCardProps) {
   return (
     <div
-      className={`bg-white rounded-md p-4 ${highlight ? "ring-2 ring-offset-1" : ""}`}
+      className={`bg-white rounded-md p-4 ${highlight ? "ring-2 ring-offset-1 ring-[#E53935]" : ""}`}
       style={{ 
         border: `1px solid ${highlight ? RISK_LEVEL_COLORS[3].border : UI_COLORS.border}`,
-        ringColor: highlight ? RISK_LEVEL_COLORS[3].text : undefined,
       }}
     >
       <div className="text-2xl font-bold" style={{ color }}>

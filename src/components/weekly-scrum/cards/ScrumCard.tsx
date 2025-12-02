@@ -91,6 +91,9 @@ export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
       <div className="space-y-1">
         {item.plan && <ContentBar label="Plan" color={PROGRESS_COLORS.high.text} content={item.plan} />}
         <ContentBar label="Progress" color={PROGRESS_COLORS.completed.text} content={item.progress} />
+        {item.reason && item.reason.trim() !== "" && (
+          <ContentBar label="Reason" color="#9a6700" content={item.reason} />
+        )}
         <ContentBar label="Next" color={UI_COLORS.accent} content={item.next} />
         {item.risk && item.risk.trim() !== "" && (
           <ContentBar label="Risk" color={riskColor.text} content={item.risk} />
