@@ -258,3 +258,4 @@ export function getLatestInsightWeekKey(weeks: InsightWeekOption[]): string {
   return weeks[0].key;
 }
 
+

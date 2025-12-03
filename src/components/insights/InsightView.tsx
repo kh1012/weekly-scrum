@@ -39,3 +39,4 @@ export function InsightView() {
   return <InsightDashboard data={currentInsight} range={currentRange} />;
 }
 
+

@@ -43,3 +43,4 @@ export function InsightDashboard({ data, range }: InsightDashboardProps) {
   );
 }
 
+
