@@ -3,6 +3,7 @@
 팀원이 매주 제출하는 위클리 스크럼 텍스트를 자동으로 파싱하여 JSON으로 변환하고, Next.js + Tailwind 기반의 대시보드에서 시각화하는 시스템입니다.
 
 **주요 기능:**
+
 - 스크럼 데이터 파싱 및 시각화
 - 리더용 인사이트 대시보드 (AI 기반 분석 결과 시각화)
 - Shares 대시보드 (리더 공유 사항 마크다운 프리뷰)
@@ -75,15 +76,15 @@
 
 ### 필드 설명
 
-| 필드        | 필수 | 설명                                      |
-| ----------- | ---- | ----------------------------------------- |
-| `Name`      | O    | 담당자 이름                               |
-| `Plan`      | O    | 이번 주 계획                              |
-| `Progress`  | O    | 실제 진행 상황                            |
-| `Next`      | O    | 다음 주 계획                              |
-| `Risk`      | X    | 리스크 사항                               |
-| `RiskLevel` | X    | 0=없음, 1=경미, 2=중간, 3=심각            |
-| `Reason`    | X    | 계획 대비 실행 미비 시 부연 설명          |
+| 필드        | 필수 | 설명                             |
+| ----------- | ---- | -------------------------------- |
+| `Name`      | O    | 담당자 이름                      |
+| `Plan`      | O    | 이번 주 계획                     |
+| `Progress`  | O    | 실제 진행 상황                   |
+| `Next`      | O    | 다음 주 계획                     |
+| `Risk`      | X    | 리스크 사항                      |
+| `RiskLevel` | X    | 0=없음, 1=경미, 2=중간, 3=심각   |
+| `Reason`    | X    | 계획 대비 실행 미비 시 부연 설명 |
 
 ### 도메인 목록
 
@@ -113,23 +114,29 @@ AI 에이전트가 생성한 인사이트 분석 결과를 다음 마크다운 �
 
 ```markdown
 ## Weekly Executive Summary
+
 - 요약 문장 1
 - 요약 문장 2
 
 ## Decision Points
+
 - 의사결정 필요 항목 1
 - 의사결정 필요 항목 2
 
 ## Risks & Required Actions
+
 | Risk / Reason | Level | Required Action |
-|---------------|-------|-----------------|
-| 리스크 내용 | 2 | 조치 내용 |
+| ------------- | ----- | --------------- |
+| 리스크 내용   | 2     | 조치 내용       |
 
 ## Execution Gap Analysis
+
 - name: 이름 | project: 프로젝트 | gap: -30 | reason: 사유
 
 ## Quadrant Summary
+
 q1: 6, q2: 3, q3: 2, q4: 1
+
 - 사분면 해석 문장 1
 - 사분면 해석 문장 2
 ```
@@ -159,23 +166,23 @@ data/shares/YYYY-MM-WXX.md
 
 ## 이번 주 핵심 성과
 
-- 
+-
 
 ## 주요 논의 사항
 
-### 1. 
+### 1.
 
-### 2. 
+### 2.
 
 ## 다음 주 중점 과제
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## 기타 공유 사항
 
-- 
+-
 ```
 
 ### 지원 마크다운 문법
@@ -212,6 +219,7 @@ yarn scrum:parse 2025 12 W01 "2025-12-02 ~ 2025-12-08"
 ```
 
 **입력/출력:**
+
 - **입력**: `data/submitted-scrum.txt`
 - **출력**: `data/scrum/{year}/{month}/{year}-{month}-{week}.json`
 
@@ -232,6 +240,7 @@ yarn insight:parse 2025 12 W01 "2025-12-02 ~ 2025-12-08" insight-input.json
 ```
 
 **입력/출력:**
+
 - **입력**: `data/submitted-insight.txt` 또는 `data/submitted-insight.json`
 - **출력**: `data/insights/{year}/{month}/{year}-{month}-{week}.json`
 
@@ -292,25 +301,25 @@ yarn shares:create 2025 12 W02
 
 #### 필드 설명
 
-| 필드                      | 타입   | 설명                           |
-| ------------------------- | ------ | ------------------------------ |
-| `year`                    | number | 연도                           |
-| `month`                   | number | 월                             |
-| `week`                    | string | 주차 (예: W01)                 |
-| `range`                   | string | 날짜 범위                      |
-| `items`                   | array  | 스크럼 항목 배열               |
-| `items[].name`            | string | 담당자 이름                    |
-| `items[].domain`          | string | 도메인 (Frontend, Backend 등)  |
-| `items[].project`         | string | 프로젝트명                     |
-| `items[].topic`           | string | 작업 토픽                      |
-| `items[].plan`            | string | 이번 주 계획                   |
-| `items[].planPercent`     | number | 계획 진행률 (0-100)            |
-| `items[].progress`        | string | 실제 진행 상황                 |
-| `items[].progressPercent` | number | 실제 진행률 (0-100)            |
-| `items[].reason`          | string | 계획 대비 미달 사유            |
-| `items[].next`            | string | 다음 주 계획                   |
-| `items[].risk`            | string | 리스크 사항                    |
-| `items[].riskLevel`       | number | 리스크 레벨 (0-3)              |
+| 필드                      | 타입   | 설명                          |
+| ------------------------- | ------ | ----------------------------- |
+| `year`                    | number | 연도                          |
+| `month`                   | number | 월                            |
+| `week`                    | string | 주차 (예: W01)                |
+| `range`                   | string | 날짜 범위                     |
+| `items`                   | array  | 스크럼 항목 배열              |
+| `items[].name`            | string | 담당자 이름                   |
+| `items[].domain`          | string | 도메인 (Frontend, Backend 등) |
+| `items[].project`         | string | 프로젝트명                    |
+| `items[].topic`           | string | 작업 토픽                     |
+| `items[].plan`            | string | 이번 주 계획                  |
+| `items[].planPercent`     | number | 계획 진행률 (0-100)           |
+| `items[].progress`        | string | 실제 진행 상황                |
+| `items[].progressPercent` | number | 실제 진행률 (0-100)           |
+| `items[].reason`          | string | 계획 대비 미달 사유           |
+| `items[].next`            | string | 다음 주 계획                  |
+| `items[].risk`            | string | 리스크 사항                   |
+| `items[].riskLevel`       | number | 리스크 레벨 (0-3)             |
 
 ### 인사이트 데이터 구조
 
@@ -363,16 +372,16 @@ yarn dev
 
 ### 주요 페이지
 
-| 페이지                    | 경로                       | 설명                                      |
-| ------------------------- | -------------------------- | ----------------------------------------- |
-| **요약** (Summary)        | `/weekly-scrum/summary`    | 전체 통계 및 요약 정보                    |
-| **카드** (Cards)          | `/weekly-scrum/cards`      | 개별 스크럼 항목을 카드 형태로 표시       |
-| **프로젝트** (Projects)   | `/weekly-scrum/projects`   | 프로젝트별 그룹화된 뷰                    |
-| **매트릭스** (Matrix)     | `/weekly-scrum/matrix`     | 멤버 × 프로젝트 매트릭스 뷰               |
-| **사분면** (Quadrant)     | `/weekly-scrum/quadrant`   | 진행률-리스크 사분면 차트                 |
-| **리스크** (Risks)        | `/weekly-scrum/risks`      | 리스크 항목 집중 뷰                       |
-| **인사이트** (Insights)   | `/insights`                | 리더용 AI 인사이트 대시보드               |
-| **Shares**                | `/shares`                  | 리더 공유 사항 마크다운 프리뷰            |
+| 페이지                  | 경로                     | 설명                                |
+| ----------------------- | ------------------------ | ----------------------------------- |
+| **요약** (Summary)      | `/weekly-scrum/summary`  | 전체 통계 및 요약 정보              |
+| **카드** (Cards)        | `/weekly-scrum/cards`    | 개별 스크럼 항목을 카드 형태로 표시 |
+| **프로젝트** (Projects) | `/weekly-scrum/projects` | 프로젝트별 그룹화된 뷰              |
+| **매트릭스** (Matrix)   | `/weekly-scrum/matrix`   | 멤버 × 프로젝트 매트릭스 뷰         |
+| **사분면** (Quadrant)   | `/weekly-scrum/quadrant` | 진행률-리스크 사분면 차트           |
+| **리스크** (Risks)      | `/weekly-scrum/risks`    | 리스크 항목 집중 뷰                 |
+| **인사이트** (Insights) | `/insights`              | 리더용 AI 인사이트 대시보드         |
+| **Shares**              | `/shares`                | 리더 공유 사항 마크다운 프리뷰      |
 
 ### 주요 기능
 
@@ -525,15 +534,15 @@ weekly-scrum/
 
 ## 기술 스택
 
-| 기술               | 버전   | 용도                         |
-| ------------------ | ------ | ---------------------------- |
-| Next.js            | 15.x   | React 프레임워크             |
-| React              | 19.x   | UI 라이브러리                |
-| TypeScript         | 5.x    | 타입 시스템                  |
-| Tailwind CSS       | 3.x    | 유틸리티 CSS                 |
-| Recharts           | 3.x    | 차트 라이브러리              |
-| tsx                | 4.x    | TypeScript 스크립트 실행     |
-| gh-pages           | 6.x    | GitHub Pages 배포            |
+| 기술         | 버전 | 용도                     |
+| ------------ | ---- | ------------------------ |
+| Next.js      | 15.x | React 프레임워크         |
+| React        | 19.x | UI 라이브러리            |
+| TypeScript   | 5.x  | 타입 시스템              |
+| Tailwind CSS | 3.x  | 유틸리티 CSS             |
+| Recharts     | 3.x  | 차트 라이브러리          |
+| tsx          | 4.x  | TypeScript 스크립트 실행 |
+| gh-pages     | 6.x  | GitHub Pages 배포        |
 
 ---
 
@@ -547,6 +556,90 @@ yarn deploy
 ```
 
 > 자세한 배포 가이드는 `DEPLOY.md` 참조
+
+---
+
+## 대시보드 운영 가이드
+
+매주 스크럼 데이터를 수집하고 대시보드를 갱신하는 운영 절차입니다.
+
+### 1단계: 스크럼 데이터 취합
+
+팀원들의 주간 스크럼 내용을 `data/submitted-scrum.txt` 파일에 취합합니다.
+
+```bash
+# 파일 열기
+open data/submitted-scrum.txt
+```
+
+각 항목은 다음 형식을 따릅니다:
+
+```
+[도메인 / 프로젝트 / 토픽]
+- Name: 담당자
+- Plan: 이번 주 계획
+- Progress: 진행 상황
+- Next: 다음 주 계획
+- Risk: 리스크 (선택)
+- RiskLevel: 0-3 (선택)
+- Reason: 사유 (선택)
+```
+
+### 2단계: 스크럼 데이터 파싱
+
+취합이 완료되면 파싱 스크립트를 실행하여 JSON 파일을 생성합니다.
+
+```bash
+yarn scrum:parse <year> <month> <week> "<range>"
+```
+
+**예시:**
+
+```bash
+yarn scrum:parse 2025 12 W02 "2025-12-09 ~ 2025-12-15"
+```
+
+### 3단계: 공유 리포트 생성
+
+`rule_shares.md` 지침을 참고하여 리더 공유 사항을 작성합니다.
+
+```bash
+# 빈 템플릿 생성 (선택)
+yarn shares:create
+
+# 또는 특정 주차 지정
+yarn shares:create 2025 12 W02
+```
+
+생성된 마크다운 파일(`data/shares/YYYY-MM-WXX.md`)에 공유 사항을 작성합니다.
+
+> **Tip:** `rule_shares.md`에 정의된 구조를 따르면 일관된 리포트 작성이 가능합니다.
+
+### 4단계: 정적 페이지 배포
+
+모든 데이터 준비가 완료되면 변경 사항을 푸시하여 GitHub Pages를 갱신합니다.
+
+```bash
+git add -A
+git commit -m "chore: update weekly scrum data (YYYY-MM-WXX)"
+git push origin main
+```
+
+푸시 후 GitHub Actions가 자동으로 빌드 및 배포를 수행합니다.
+
+- **Actions 확인:** https://github.com/kh1012/weekly-scrum/actions
+- **배포 사이트:** https://kh1012.github.io/weekly-scrum
+
+### 운영 체크리스트
+
+```
+□ submitted-scrum.txt에 팀원 스크럼 내용 취합
+□ yarn scrum:parse 실행하여 JSON 생성
+□ (선택) yarn shares:create로 공유 리포트 템플릿 생성
+□ (선택) rule_shares.md 참고하여 리포트 작성
+□ git push하여 정적 페이지 갱신
+□ 배포 완료 확인
+```
 
 ---
 
