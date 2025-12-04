@@ -112,9 +112,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
       if (headingMatch) {
         flushList();
-        const level = headingMatch[1].length;
+        const level = headingMatch[1].length as 1 | 2 | 3 | 4 | 5 | 6;
         const text = headingMatch[2];
-        const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
         const headingClasses: Record<number, string> = {
           1: "text-2xl font-bold text-[#1f2328] mt-6 mb-4",
           2: "text-xl font-semibold text-[#1f2328] mt-5 mb-3",
@@ -123,11 +122,30 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           5: "text-sm font-semibold text-[#1f2328] mt-3 mb-1",
           6: "text-sm font-medium text-[#656d76] mt-3 mb-1",
         };
-        elements.push(
-          <HeadingTag key={`h-${elements.length}`} className={headingClasses[level]}>
-            {renderInline(text)}
-          </HeadingTag>
-        );
+        const className = headingClasses[level];
+        const content = renderInline(text);
+        const key = `h-${elements.length}`;
+        
+        switch (level) {
+          case 1:
+            elements.push(<h1 key={key} className={className}>{content}</h1>);
+            break;
+          case 2:
+            elements.push(<h2 key={key} className={className}>{content}</h2>);
+            break;
+          case 3:
+            elements.push(<h3 key={key} className={className}>{content}</h3>);
+            break;
+          case 4:
+            elements.push(<h4 key={key} className={className}>{content}</h4>);
+            break;
+          case 5:
+            elements.push(<h5 key={key} className={className}>{content}</h5>);
+            break;
+          case 6:
+            elements.push(<h6 key={key} className={className}>{content}</h6>);
+            break;
+        }
         i++;
         continue;
       }
