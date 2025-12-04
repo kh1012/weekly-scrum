@@ -368,20 +368,20 @@ yarn shares:create 2025 12 W02
 yarn dev
 ```
 
-브라우저에서 `http://localhost:3000/weekly-scrum` 접속
+브라우저에서 `http://localhost:3000` 접속 (자동으로 `/summary`로 리다이렉트)
 
 ### 주요 페이지
 
-| 페이지                  | 경로                     | 설명                                |
-| ----------------------- | ------------------------ | ----------------------------------- |
-| **요약** (Summary)      | `/weekly-scrum/summary`  | 전체 통계 및 요약 정보              |
-| **카드** (Cards)        | `/weekly-scrum/cards`    | 개별 스크럼 항목을 카드 형태로 표시 |
-| **프로젝트** (Projects) | `/weekly-scrum/projects` | 프로젝트별 그룹화된 뷰              |
-| **매트릭스** (Matrix)   | `/weekly-scrum/matrix`   | 멤버 × 프로젝트 매트릭스 뷰         |
-| **사분면** (Quadrant)   | `/weekly-scrum/quadrant` | 진행률-리스크 사분면 차트           |
-| **리스크** (Risks)      | `/weekly-scrum/risks`    | 리스크 항목 집중 뷰                 |
-| **인사이트** (Insights) | `/insights`              | 리더용 AI 인사이트 대시보드         |
-| **Shares**              | `/shares`                | 리더 공유 사항 마크다운 프리뷰      |
+| 페이지                  | 경로        | 설명                                |
+| ----------------------- | ----------- | ----------------------------------- |
+| **요약** (Summary)      | `/summary`  | 전체 통계 및 요약 정보              |
+| **카드** (Cards)        | `/cards`    | 개별 스크럼 항목을 카드 형태로 표시 |
+| **프로젝트** (Projects) | `/projects` | 프로젝트별 그룹화된 뷰              |
+| **매트릭스** (Matrix)   | `/matrix`   | 멤버 × 프로젝트 매트릭스 뷰         |
+| **사분면** (Quadrant)   | `/quadrant` | 진행률-리스크 사분면 차트           |
+| **리스크** (Risks)      | `/risks`    | 리스크 항목 집중 뷰                 |
+| **인사이트** (Insights) | `/insights` | 리더용 AI 인사이트 대시보드         |
+| **Shares**              | `/shares`   | 리더 공유 사항 마크다운 프리뷰      |
 
 ### 주요 기능
 
@@ -409,25 +409,21 @@ src/
 ├── app/
 │   ├── layout.tsx                # 루트 레이아웃
 │   ├── globals.css               # 전역 스타일
-│   ├── page.tsx                  # 홈 페이지
+│   ├── page.tsx                  # 홈 → /summary 리다이렉트
+│   ├── (scrum)/                  # Route Group (URL에 미포함)
+│   │   ├── layout.tsx            # 스크럼 공통 레이아웃 (Header, ScrumProvider)
+│   │   ├── summary/page.tsx      # 요약 뷰
+│   │   ├── cards/page.tsx        # 카드 뷰
+│   │   ├── projects/page.tsx     # 프로젝트 뷰
+│   │   ├── matrix/page.tsx       # 매트릭스 뷰
+│   │   ├── quadrant/page.tsx     # 사분면 뷰
+│   │   └── risks/page.tsx        # 리스크 뷰
 │   ├── insights/                 # 인사이트 (독립 레이아웃)
 │   │   ├── layout.tsx
 │   │   └── page.tsx
-│   ├── shares/                   # Shares (독립 레이아웃)
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   └── weekly-scrum/
-│       ├── layout.tsx            # 스크럼 공통 레이아웃
-│       ├── page.tsx              # /weekly-scrum → /weekly-scrum/summary 리다이렉트
-│       ├── summary/page.tsx      # 요약 뷰
-│       ├── cards/page.tsx        # 카드 뷰
-│       ├── projects/page.tsx     # 프로젝트 뷰
-│       ├── matrix/page.tsx       # 매트릭스 뷰
-│       ├── quadrant/page.tsx     # 사분면 뷰
-│       ├── risks/page.tsx        # 리스크 뷰
-│       └── insights/             # 스크럼 레이아웃 내 인사이트
-│           ├── layout.tsx
-│           └── page.tsx
+│   └── shares/                   # Shares (독립 레이아웃)
+│       ├── layout.tsx
+│       └── page.tsx
 ├── components/
 │   ├── insights/                 # 인사이트 컴포넌트
 │   │   ├── DecisionPoints.tsx

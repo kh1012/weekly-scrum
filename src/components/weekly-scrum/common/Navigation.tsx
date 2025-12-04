@@ -14,37 +14,37 @@ const NAV_ITEMS: NavItem[] = [
   {
     key: "summary",
     label: "요약",
-    href: "/weekly-scrum/summary",
+    href: "/summary",
     icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
   },
   {
     key: "cards",
     label: "카드",
-    href: "/weekly-scrum/cards",
+    href: "/cards",
     icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z",
   },
   {
     key: "projects",
     label: "프로젝트",
-    href: "/weekly-scrum/projects",
+    href: "/projects",
     icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z",
   },
   {
     key: "matrix",
     label: "매트릭스",
-    href: "/weekly-scrum/matrix",
+    href: "/matrix",
     icon: "M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z",
   },
   {
     key: "quadrant",
     label: "사분면",
-    href: "/weekly-scrum/quadrant",
+    href: "/quadrant",
     icon: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
   },
   {
     key: "risks",
     label: "리스크",
-    href: "/weekly-scrum/risks",
+    href: "/risks",
     icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
   },
   {
@@ -65,8 +65,8 @@ export function Navigation() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    if (href === "/weekly-scrum/summary") {
-      return pathname === "/weekly-scrum" || pathname === "/weekly-scrum/summary";
+    if (href === "/summary") {
+      return pathname === "/" || pathname === "/summary";
     }
     return pathname.startsWith(href);
   };
@@ -102,4 +102,3 @@ export function Navigation() {
     </nav>
   );
 }
-

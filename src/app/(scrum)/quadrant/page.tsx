@@ -8,3 +8,4 @@ export default function QuadrantPage() {
 
   return <QuadrantView items={filteredItems} />;
 }
+

@@ -3,7 +3,7 @@ import { ScrumProvider } from "@/context/ScrumContext";
 import { Header, LayoutWrapper } from "@/components/weekly-scrum/common";
 import type { WeekOption } from "@/types/scrum";
 
-export default function WeeklyScrumLayout({
+export default function ScrumLayout({
   children,
 }: {
   children: React.ReactNode;

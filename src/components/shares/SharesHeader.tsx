@@ -10,7 +10,7 @@ export function SharesHeader() {
         <div className="flex items-center justify-between h-14">
           {/* 로고 및 제목 */}
           <div className="flex items-center gap-4">
-            <Link href="/weekly-scrum" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
                 <svg
                   className="w-5 h-5 text-white"
@@ -32,7 +32,7 @@ export function SharesHeader() {
             </Link>
             <span className="hidden sm:block text-[#d0d7de]">|</span>
             <Link
-              href="/weekly-scrum"
+              href="/"
               className="hidden sm:flex items-center gap-1.5 text-sm text-[#656d76] hover:text-[#1f2328] transition-colors"
             >
               <svg

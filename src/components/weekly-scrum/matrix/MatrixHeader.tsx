@@ -12,7 +12,7 @@ export function MatrixHeader({
   isFullscreen = false,
 }: MatrixHeaderProps) {
   const handleOpenFullscreen = () => {
-    window.open("/weekly-scrum/matrix?fullscreen=true", "_blank", "noopener,noreferrer");
+    window.open("/matrix?fullscreen=true", "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -91,4 +91,3 @@ function LegendItem({
     </span>
   );
 }
-
