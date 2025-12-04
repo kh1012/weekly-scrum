@@ -5,6 +5,7 @@
 **주요 기능:**
 - 스크럼 데이터 파싱 및 시각화
 - 리더용 인사이트 대시보드 (AI 기반 분석 결과 시각화)
+- Shares 대시보드 (리더 공유 사항 마크다운 프리뷰)
 - 다양한 뷰 모드 (요약, 카드, 프로젝트, 매트릭스, 사분면, 리스크)
 - 주차별/범위별 데이터 조회
 
@@ -24,6 +25,12 @@
 2. `data/submitted-insight.txt` 파일에 분석 결과 저장
 3. `yarn insight:parse` 스크립트를 실행하여 JSON 파일 생성
 4. 인사이트 대시보드에서 리더용 분석 결과 시각화
+
+### Shares 데이터 흐름
+
+1. `yarn shares:create` 스크립트로 빈 마크다운 템플릿 생성
+2. 리더들이 마크다운 파일에 공유 사항 작성
+3. Shares 대시보드에서 마크다운 프리뷰 표시
 
 ---
 
@@ -131,6 +138,59 @@ q1: 6, q2: 3, q3: 2, q4: 1
 
 ---
 
+## Shares 데이터 입력 포맷
+
+리더 공유 사항은 마크다운 파일로 직접 작성합니다.
+
+### 파일 경로
+
+```
+data/shares/YYYY-MM-WXX.md
+```
+
+**예시:** `data/shares/2025-12-W01.md`
+
+### 기본 템플릿
+
+`yarn shares:create` 스크립트를 실행하면 다음 템플릿이 생성됩니다:
+
+```markdown
+# YYYY년 M월 XX주차 리더 공유 사항
+
+## 이번 주 핵심 성과
+
+- 
+
+## 주요 논의 사항
+
+### 1. 
+
+### 2. 
+
+## 다음 주 중점 과제
+
+1. 
+2. 
+3. 
+
+## 기타 공유 사항
+
+- 
+```
+
+### 지원 마크다운 문법
+
+- 헤딩 (`#`, `##`, `###` 등)
+- 리스트 (`-`, `*`, `1.`)
+- 테이블 (`|---|---|`)
+- 볼드 (`**텍스트**`)
+- 이탤릭 (`*텍스트*`)
+- 인라인 코드 (`` `코드` ``)
+- 링크 (`[텍스트](URL)`)
+- 수평선 (`---`)
+
+---
+
 ## 변환 스크립트 사용법
 
 ### 설치
@@ -142,13 +202,13 @@ yarn install
 ### 스크럼 데이터 파싱
 
 ```bash
-yarn scrum:parse -- <year> <month> <week> "<range>"
+yarn scrum:parse <year> <month> <week> "<range>"
 ```
 
 **예시:**
 
 ```bash
-yarn scrum:parse -- 2025 12 W01 "2025-12-02 ~ 2025-12-08"
+yarn scrum:parse 2025 12 W01 "2025-12-02 ~ 2025-12-08"
 ```
 
 **입력/출력:**
@@ -158,22 +218,46 @@ yarn scrum:parse -- 2025 12 W01 "2025-12-02 ~ 2025-12-08"
 ### 인사이트 데이터 파싱
 
 ```bash
-yarn insight:parse -- <year> <month> <week> "<range>" [input_file]
+yarn insight:parse <year> <month> <week> "<range>" [input_file]
 ```
 
 **예시:**
 
 ```bash
 # 기본 입력 파일 사용
-yarn insight:parse -- 2025 12 W01 "2025-12-02 ~ 2025-12-08"
+yarn insight:parse 2025 12 W01 "2025-12-02 ~ 2025-12-08"
 
 # 커스텀 입력 파일 사용
-yarn insight:parse -- 2025 12 W01 "2025-12-02 ~ 2025-12-08" insight-input.json
+yarn insight:parse 2025 12 W01 "2025-12-02 ~ 2025-12-08" insight-input.json
 ```
 
 **입력/출력:**
 - **입력**: `data/submitted-insight.txt` 또는 `data/submitted-insight.json`
 - **출력**: `data/insights/{year}/{month}/{year}-{month}-{week}.json`
+
+### Shares 마크다운 생성
+
+```bash
+# 현재 주차 기준으로 생성
+yarn shares:create
+
+# 특정 주차 지정
+yarn shares:create <year> <month> <week>
+```
+
+**예시:**
+
+```bash
+# 현재 주차 기준
+yarn shares:create
+
+# 특정 주차 지정
+yarn shares:create 2025 12 W02
+```
+
+**출력:** `data/shares/{year}-{month}-{week}.md`
+
+> 이미 존재하는 파일은 덮어쓰지 않습니다.
 
 ---
 
@@ -288,6 +372,7 @@ yarn dev
 | **사분면** (Quadrant)     | `/weekly-scrum/quadrant`   | 진행률-리스크 사분면 차트                 |
 | **리스크** (Risks)        | `/weekly-scrum/risks`      | 리스크 항목 집중 뷰                       |
 | **인사이트** (Insights)   | `/insights`                | 리더용 AI 인사이트 대시보드               |
+| **Shares**                | `/shares`                  | 리더 공유 사항 마크다운 프리뷰            |
 
 ### 주요 기능
 
@@ -319,6 +404,9 @@ src/
 │   ├── insights/                 # 인사이트 (독립 레이아웃)
 │   │   ├── layout.tsx
 │   │   └── page.tsx
+│   ├── shares/                   # Shares (독립 레이아웃)
+│   │   ├── layout.tsx
+│   │   └── page.tsx
 │   └── weekly-scrum/
 │       ├── layout.tsx            # 스크럼 공통 레이아웃
 │       ├── page.tsx              # /weekly-scrum → /weekly-scrum/summary 리다이렉트
@@ -342,6 +430,11 @@ src/
 │   │   ├── InsightWeekSelector.tsx
 │   │   ├── QuadrantSummary.tsx
 │   │   └── RiskTable.tsx
+│   ├── shares/                   # Shares 컴포넌트
+│   │   ├── MarkdownRenderer.tsx  # 마크다운 렌더러
+│   │   ├── SharesHeader.tsx
+│   │   ├── SharesView.tsx
+│   │   └── SharesWeekSelector.tsx
 │   └── weekly-scrum/
 │       ├── cards/                # 카드 뷰 컴포넌트
 │       │   ├── CardsView.tsx
@@ -378,16 +471,19 @@ src/
 │           └── SummaryView.tsx
 ├── context/
 │   ├── InsightContext.tsx        # 인사이트 전역 상태
+│   ├── SharesContext.tsx         # Shares 전역 상태
 │   └── ScrumContext.tsx          # 스크럼 전역 상태
 ├── lib/
 │   ├── colorDefines.ts           # 색상 정의 및 유틸리티
 │   ├── insightData.ts            # 인사이트 데이터 로더
 │   ├── scrumData.ts              # 스크럼 데이터 로더
+│   ├── sharesData.ts             # Shares 데이터 로더
 │   ├── utils.ts                  # 필터링, 통계 유틸리티
 │   └── weekUtils.ts              # 주차 관련 유틸리티
 └── types/
     ├── insight.ts                # 인사이트 타입 정의
-    └── scrum.ts                  # 스크럼 타입 정의
+    ├── scrum.ts                  # 스크럼 타입 정의
+    └── shares.ts                 # Shares 타입 정의
 ```
 
 ---
@@ -401,11 +497,14 @@ weekly-scrum/
 │   ├── submitted-insight.txt     # 인사이트 입력 파일
 │   ├── scrum/                    # 스크럼 JSON 저장 디렉토리
 │   │   └── {year}/{month}/{year}-{month}-{week}.json
-│   └── insights/                 # 인사이트 JSON 저장 디렉토리
-│       └── {year}/{month}/{year}-{month}-{week}.json
+│   ├── insights/                 # 인사이트 JSON 저장 디렉토리
+│   │   └── {year}/{month}/{year}-{month}-{week}.json
+│   └── shares/                   # Shares 마크다운 저장 디렉토리
+│       └── {year}-{month}-{week}.md
 ├── scripts/
 │   ├── parse-submitted.ts        # 스크럼 변환 스크립트
-│   └── parse-insight.ts          # 인사이트 변환 스크립트
+│   ├── parse-insight.ts          # 인사이트 변환 스크립트
+│   └── create-shares.ts          # Shares 마크다운 생성 스크립트
 ├── src/
 │   ├── app/                      # Next.js App Router
 │   ├── components/               # React 컴포넌트
