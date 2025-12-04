@@ -13,12 +13,12 @@
     ],
     "decisionPoints": [
       "IA v1.1 반영 일정 확정 필요",
-      "OAuth 연동 테스트 범위 조정 여부 결정",
+      "소셜 로그인 연동 테스트 범위 조정 여부 결정",
       "Toast 컴포넌트 마이그레이션 우선순위 검토"
     ],
     "risks": [
       {
-        "item": "Publish 플로우 race condition 재발 가능성",
+        "item": "저장 플로우 race condition 재발 가능성",
         "level": 1,
         "action": "핵심 테스트 케이스 3종 추가"
       },
@@ -28,7 +28,7 @@
         "action": "Fallback 로직 검토 및 retry 전략 정비"
       },
       {
-        "item": "사내 행사 발표 준비로 인한 일정 영향",
+        "item": "컨퍼런스 발표 준비로 인한 일정 영향",
         "level": 2,
         "action": "발표 일정 확정 후 스프린트 조정"
       },
@@ -40,26 +40,26 @@
     ],
     "executionGap": [
       {
-        "name": "김정빈",
-        "project": "권한 시스템",
+        "name": "정유진",
+        "project": "접근 권한",
         "gap": -30,
         "reason": "요구사항 변경으로 일부 기능을 재구현"
       },
       {
-        "name": "김태이",
-        "project": "페이지 에디터",
+        "name": "이수진",
+        "project": "페이지 편집기",
         "gap": -30,
         "reason": "기존 구조의 의존성이 예상보다 높아 분석 시간 증가"
       },
       {
-        "name": "이하영",
+        "name": "최도현",
         "project": "차트 시스템",
         "gap": -30,
         "reason": "FE 요구사항 추가로 우선순위 변경"
       },
       {
-        "name": "도기봉",
-        "project": "인증 서비스",
+        "name": "황지민",
+        "project": "사용자 인증",
         "gap": -30,
         "reason": "외부 테스트 환경에서 인증 응답 값이 불규칙"
       }
@@ -77,5 +77,3 @@
     }
   }
 }
-
-
