@@ -2,26 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useVisitorCount } from "@/hooks/useVisitorCount";
 
 interface NavItem {
   key: string;
   label: string;
   href: string;
+  emoji: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { key: "summary", label: "요약", href: "/summary" },
-  { key: "cards", label: "카드", href: "/cards" },
-  { key: "projects", label: "프로젝트", href: "/projects" },
-  { key: "matrix", label: "매트릭스", href: "/matrix" },
-  { key: "quadrant", label: "사분면", href: "/quadrant" },
-  { key: "risks", label: "리스크", href: "/risks" },
-  { key: "my", label: "개인 대시보드", href: "/my" },
+  { key: "summary", label: "요약", href: "/summary", emoji: "📊" },
+  { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
+  { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
+  { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
+  { key: "quadrant", label: "사분면", href: "/quadrant", emoji: "🎯" },
+  { key: "risks", label: "리스크", href: "/risks", emoji: "⚠️" },
+  { key: "my", label: "개인 대시보드", href: "/my", emoji: "👤" },
 ];
 
 const EXTRA_ITEMS: NavItem[] = [
-  { key: "insights", label: "인사이트", href: "/insights" },
-  { key: "shares", label: "공유사항", href: "/shares" },
+  { key: "insights", label: "인사이트", href: "/insights", emoji: "💡" },
+  { key: "shares", label: "공유사항", href: "/shares", emoji: "📣" },
 ];
 
 function useIsActive() {
@@ -42,6 +44,7 @@ interface SideNavigationProps {
 
 export function SideNavigation({ onItemClick }: SideNavigationProps) {
   const isActive = useIsActive();
+  const { count, isLoading } = useVisitorCount();
 
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--notion-sidebar-bg)' }}>
@@ -67,6 +70,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                 onClick={onItemClick}
                 className={`notion-sidebar-item ${isActive(item.href) ? 'active' : ''}`}
               >
+                <span className="text-base w-5 text-center">{item.emoji}</span>
                 <span className="flex-1">{item.label}</span>
               </Link>
             ))}
@@ -86,6 +90,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                 onClick={onItemClick}
                 className={`notion-sidebar-item ${isActive(item.href) ? 'active' : ''}`}
               >
+                <span className="text-base w-5 text-center">{item.emoji}</span>
                 <span className="flex-1">{item.label}</span>
               </Link>
             ))}
@@ -93,10 +98,20 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
         </div>
       </nav>
 
-      {/* Footer */}
+      {/* Footer with Visitor Count */}
       <div className="px-3 py-3 border-t" style={{ borderColor: 'var(--notion-border)' }}>
-        <div className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>
-          v1.0
+        <div className="flex items-center justify-between">
+          <div className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>
+            v1.0
+          </div>
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--notion-text-muted)' }}>
+            <span>👀</span>
+            {isLoading ? (
+              <span className="inline-block w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <span>{count.toLocaleString()}</span>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -124,6 +139,7 @@ export function Navigation() {
             boxShadow: isActive(item.href) ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 2px 4px' : 'none',
           }}
         >
+          <span>{item.emoji}</span>
           <span>{item.label}</span>
         </Link>
       ))}
@@ -152,6 +168,7 @@ export function MobileNavigation({ onItemClick }: MobileNavigationProps) {
             color: isActive(item.href) ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
           }}
         >
+          <span className="text-lg">{item.emoji}</span>
           <span className="text-xs truncate w-full text-center">{item.label}</span>
         </Link>
       ))}

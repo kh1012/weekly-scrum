@@ -47,7 +47,7 @@ export function ProgressDistributionBar({
   return (
     <div className="notion-card p-4">
       <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-        진행률 분포
+        📊 진행률 분포
       </h3>
       <div className="flex h-6 rounded overflow-hidden" style={{ background: 'var(--notion-bg-secondary)' }}>
         {distribution.completed > 0 && (
@@ -131,7 +131,7 @@ export function RiskDistributionBar({ distribution, total }: RiskDistributionBar
   return (
     <div className="notion-card p-4">
       <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-        리스크 레벨 분포
+        ⚠️ 리스크 레벨 분포
       </h3>
       <div className="flex h-6 rounded overflow-hidden" style={{ background: 'var(--notion-bg-secondary)' }}>
         {!hasRisks ? (
@@ -268,7 +268,7 @@ export function AchievementSummary({ stats }: AchievementSummaryProps) {
   return (
     <div className="notion-card p-4">
       <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-        계획 대비 달성률
+        🎯 계획 대비 달성률
       </h3>
       <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3 flex-wrap">
         <div className="text-center">

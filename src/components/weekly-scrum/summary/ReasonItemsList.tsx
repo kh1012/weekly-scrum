@@ -18,9 +18,12 @@ export function ReasonItemsList({ items }: ReasonItemsListProps) {
         }}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--notion-text)' }}>
-            계획 대비 미비 사유
-          </h3>
+          <div className="flex items-center gap-2">
+            <span>💬</span>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--notion-text)' }}>
+              계획 대비 미비 사유
+            </h3>
+          </div>
           <span className="text-xs" style={{ color: 'var(--notion-text-secondary)' }}>{items.length}건</span>
         </div>
       </div>

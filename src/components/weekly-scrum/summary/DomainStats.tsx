@@ -15,7 +15,7 @@ export function DomainStats({ stats }: DomainStatsProps) {
   return (
     <div className="notion-card p-4">
       <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-        도메인별 현황
+        🏷️ 도메인별 현황
       </h3>
       <div className="space-y-3">
         {stats.map(({ domain, items, avgProgress }) => {

@@ -121,6 +121,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             className="flex items-center gap-1.5 text-xs"
             style={{ color: 'var(--notion-text-secondary)' }}
           >
+            <span>📅</span>
             <span className="truncate max-w-[140px]">{currentData?.range}</span>
             {selectMode === "range" && (
               <span className="notion-badge-blue text-[10px]">누적</span>
@@ -282,6 +283,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
         className="hidden xl:flex items-center gap-1.5 text-xs ml-1"
         style={{ color: 'var(--notion-text-secondary)' }}
       >
+        <span>📅</span>
         <span>{currentData?.range}</span>
         {selectMode === "range" && (
           <span className="notion-badge-blue text-[10px]">누적</span>

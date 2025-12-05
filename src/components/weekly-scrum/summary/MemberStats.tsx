@@ -15,7 +15,7 @@ export function MemberStats({ stats }: MemberStatsProps) {
   return (
     <div className="notion-card p-4">
       <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-        팀원별 워크로드
+        👥 팀원별 워크로드
       </h3>
       <div className="space-y-3">
         {stats.map(({ name, items, avgProgress }) => {

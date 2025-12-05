@@ -16,7 +16,8 @@ export function RiskItemsList({ items }: RiskItemsListProps) {
       className="notion-card p-4"
       style={{ borderColor: hasHighRisk ? 'var(--notion-red)' : 'var(--notion-border)' }}
     >
-      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
+      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--notion-text)' }}>
+        <span>{hasHighRisk ? '🚨' : '⚠️'}</span>
         주의 필요 항목 ({items.length})
       </h3>
       <div className="space-y-2">

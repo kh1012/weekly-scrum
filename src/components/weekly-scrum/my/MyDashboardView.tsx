@@ -133,7 +133,7 @@ export function MyDashboardView() {
           {/* 진행률 바 */}
           <div className="notion-card p-4">
             <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-              전체 진척 현황
+              📊 전체 진척 현황
             </h3>
             <div className="flex items-center gap-4 mb-2">
               <div className="flex-1">
@@ -166,7 +166,7 @@ export function MyDashboardView() {
             {/* 도메인별 */}
             <div className="notion-card p-4">
               <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-                도메인별 현황
+                🏷️ 도메인별 현황
               </h3>
               <div className="space-y-2">
                 {stats.domains.map(({ domain, count, avgProgress }) => {
@@ -202,7 +202,7 @@ export function MyDashboardView() {
             {/* 프로젝트별 */}
             <div className="notion-card p-4">
               <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-                프로젝트별 현황
+                📁 프로젝트별 현황
               </h3>
               <div className="space-y-2">
                 {stats.projects.map(({ project, count, avgProgress }) => (
@@ -233,7 +233,7 @@ export function MyDashboardView() {
           {/* 리스크 현황 */}
           <div className="notion-card p-4">
             <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
-              리스크 현황
+              ⚠️ 리스크 현황
             </h3>
             <div className="grid grid-cols-4 gap-2">
               {([3, 2, 1, 0] as RiskLevel[]).map((level) => {
@@ -267,7 +267,7 @@ export function MyDashboardView() {
               }}
             >
               <h3 className="text-sm font-semibold" style={{ color: 'var(--notion-text)' }}>
-                업무 상세 목록
+                📝 업무 상세 목록
               </h3>
             </div>
             <div className="divide-y" style={{ borderColor: 'var(--notion-border)' }}>
