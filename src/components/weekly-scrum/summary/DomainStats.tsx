@@ -1,7 +1,7 @@
 "use client";
 
 import type { ScrumItem } from "@/types/scrum";
-import { getDomainColor, getProgressColor, UI_COLORS } from "@/lib/colorDefines";
+import { getDomainColor, getProgressColor } from "@/lib/colorDefines";
 
 interface DomainStatsProps {
   stats: {
@@ -13,14 +13,8 @@ interface DomainStatsProps {
 
 export function DomainStats({ stats }: DomainStatsProps) {
   return (
-    <div
-      className="bg-white rounded-md p-4"
-      style={{ border: `1px solid ${UI_COLORS.border}` }}
-    >
-      <h3
-        className="text-sm font-semibold mb-3"
-        style={{ color: UI_COLORS.textPrimary }}
-      >
+    <div className="notion-card p-4">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
         도메인별 현황
       </h3>
       <div className="space-y-3">
@@ -31,31 +25,22 @@ export function DomainStats({ stats }: DomainStatsProps) {
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span
-                    className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                     style={{ background: color.bg, color: color.text }}
                   >
                     {domain}
                   </span>
-                  <span
-                    className="text-xs"
-                    style={{ color: UI_COLORS.textSecondary }}
-                  >
+                  <span className="text-xs" style={{ color: 'var(--notion-text-secondary)' }}>
                     {items.length}개
                   </span>
                 </div>
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: UI_COLORS.textPrimary }}
-                >
+                <span className="text-xs font-medium" style={{ color: 'var(--notion-text)' }}>
                   {avgProgress}%
                 </span>
               </div>
-              <div
-                className="h-2 rounded-full overflow-hidden"
-                style={{ backgroundColor: UI_COLORS.borderLight }}
-              >
+              <div className="notion-progress">
                 <div
-                  className="h-full rounded-full"
+                  className="notion-progress-bar"
                   style={{
                     width: `${avgProgress}%`,
                     backgroundColor: getProgressColor(avgProgress),
@@ -69,4 +54,3 @@ export function DomainStats({ stats }: DomainStatsProps) {
     </div>
   );
 }
-

@@ -30,6 +30,7 @@ interface ScrumContextValue {
   // 파생 데이터
   domains: string[];
   projects: string[];
+  members: string[];
   sortedWeekKeys: string[];
 
   // 액션
@@ -64,6 +65,7 @@ export function ScrumProvider({
   const [filters, setFilters] = useState<FilterState>({
     domain: "",
     project: "",
+    member: "",
     search: "",
   });
 
@@ -105,6 +107,13 @@ export function ScrumProvider({
     return Array.from(set).sort();
   }, [currentData]);
 
+  // 멤버 목록
+  const members = useMemo(() => {
+    if (!currentData) return [];
+    const set = new Set(currentData.items.map((item) => item.name));
+    return Array.from(set).sort();
+  }, [currentData]);
+
   // 필터 업데이트
   const updateFilter = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -112,7 +121,7 @@ export function ScrumProvider({
 
   // 필터 초기화
   const resetFilters = () => {
-    setFilters({ domain: "", project: "", search: "" });
+    setFilters({ domain: "", project: "", member: "", search: "" });
   };
 
   const value: ScrumContextValue = {
@@ -128,6 +137,7 @@ export function ScrumProvider({
     filters,
     domains,
     projects,
+    members,
     sortedWeekKeys,
     setSelectMode,
     setSelectedWeekKey,

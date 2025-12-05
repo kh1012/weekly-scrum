@@ -1,7 +1,7 @@
 "use client";
 
 import type { ScrumItem } from "@/types/scrum";
-import { getProgressColor, UI_COLORS } from "@/lib/colorDefines";
+import { getProgressColor } from "@/lib/colorDefines";
 
 interface MemberStatsProps {
   stats: {
@@ -13,14 +13,8 @@ interface MemberStatsProps {
 
 export function MemberStats({ stats }: MemberStatsProps) {
   return (
-    <div
-      className="bg-white rounded-md p-4"
-      style={{ border: `1px solid ${UI_COLORS.border}` }}
-    >
-      <h3
-        className="text-sm font-semibold mb-3"
-        style={{ color: UI_COLORS.textPrimary }}
-      >
+    <div className="notion-card p-4">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
         팀원별 워크로드
       </h3>
       <div className="space-y-3">
@@ -31,27 +25,20 @@ export function MemberStats({ stats }: MemberStatsProps) {
           return (
             <div key={name} className="flex items-center gap-3">
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium"
                 style={{
-                  backgroundColor: UI_COLORS.bgSecondary,
-                  border: `1px solid ${UI_COLORS.border}`,
-                  color: UI_COLORS.textSecondary,
+                  backgroundColor: 'var(--notion-bg-secondary)',
+                  color: 'var(--notion-text-secondary)',
                 }}
               >
                 {name.charAt(0)}
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: UI_COLORS.textPrimary }}
-                  >
+                  <span className="text-sm font-medium" style={{ color: 'var(--notion-text)' }}>
                     {name}
                   </span>
-                  <span
-                    className="text-xs"
-                    style={{ color: UI_COLORS.textSecondary }}
-                  >
+                  <span className="text-xs" style={{ color: 'var(--notion-text-secondary)' }}>
                     {completedCount}/{items.length}개 완료 · 평균 {avgProgress}%
                   </span>
                 </div>
@@ -59,7 +46,7 @@ export function MemberStats({ stats }: MemberStatsProps) {
                   {items.map((item, idx) => (
                     <div
                       key={idx}
-                      className="h-2 rounded-full flex-1"
+                      className="h-2 rounded flex-1"
                       style={{
                         backgroundColor: getProgressColor(item.progressPercent),
                       }}
@@ -75,4 +62,3 @@ export function MemberStats({ stats }: MemberStatsProps) {
     </div>
   );
 }
-

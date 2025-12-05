@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { UI_COLORS, PROGRESS_COLORS, STATUS_COLORS, RISK_LEVEL_COLORS, ACHIEVEMENT_COLORS } from "@/lib/colorDefines";
+import { PROGRESS_COLORS, RISK_LEVEL_COLORS, ACHIEVEMENT_COLORS } from "@/lib/colorDefines";
 import type { RiskLevel } from "@/types/scrum";
 
 interface SummaryCardProps {
@@ -15,15 +15,15 @@ interface SummaryCardProps {
 export function SummaryCard({ value, label, color, highlight }: SummaryCardProps) {
   return (
     <div
-      className={`bg-white rounded-md p-4 ${highlight ? "ring-2 ring-offset-1 ring-[#E53935]" : ""}`}
+      className={`notion-card p-4 ${highlight ? "ring-2 ring-offset-1 ring-red-400" : ""}`}
       style={{ 
-        border: `1px solid ${highlight ? RISK_LEVEL_COLORS[3].border : UI_COLORS.border}`,
+        borderColor: highlight ? 'var(--notion-red)' : 'var(--notion-border)',
       }}
     >
       <div className="text-2xl font-bold" style={{ color }}>
         {value}
       </div>
-      <div className="text-xs" style={{ color: UI_COLORS.textSecondary }}>
+      <div className="text-xs" style={{ color: 'var(--notion-text-secondary)' }}>
         {label}
       </div>
     </div>
@@ -45,17 +45,11 @@ export function ProgressDistributionBar({
   total,
 }: ProgressDistributionBarProps) {
   return (
-    <div
-      className="bg-white rounded-md p-4"
-      style={{ border: `1px solid ${UI_COLORS.border}` }}
-    >
-      <h3
-        className="text-sm font-semibold mb-3"
-        style={{ color: UI_COLORS.textPrimary }}
-      >
+    <div className="notion-card p-4">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
         진행률 분포
       </h3>
-      <div className="flex h-6 rounded-md overflow-hidden">
+      <div className="flex h-6 rounded overflow-hidden" style={{ background: 'var(--notion-bg-secondary)' }}>
         {distribution.completed > 0 && (
           <ProgressBar
             value={distribution.completed}
@@ -85,10 +79,7 @@ export function ProgressDistributionBar({
           />
         )}
       </div>
-      <div
-        className="flex items-center gap-4 mt-2 text-xs"
-        style={{ color: UI_COLORS.textSecondary }}
-      >
+      <div className="flex items-center gap-4 mt-2 text-xs" style={{ color: 'var(--notion-text-secondary)' }}>
         <Legend color={PROGRESS_COLORS.completed.text} label="완료" />
         <Legend color={PROGRESS_COLORS.high.text} label="70%+" />
         <Legend color={PROGRESS_COLORS.medium.text} label="40-70%" />
@@ -138,17 +129,11 @@ export function RiskDistributionBar({ distribution, total }: RiskDistributionBar
   const hasRisks = distribution[1] + distribution[2] + distribution[3] > 0;
 
   return (
-    <div
-      className="bg-white rounded-md p-4"
-      style={{ border: `1px solid ${UI_COLORS.border}` }}
-    >
-      <h3
-        className="text-sm font-semibold mb-3"
-        style={{ color: UI_COLORS.textPrimary }}
-      >
+    <div className="notion-card p-4">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
         리스크 레벨 분포
       </h3>
-      <div className="flex h-6 rounded-md overflow-hidden">
+      <div className="flex h-6 rounded overflow-hidden" style={{ background: 'var(--notion-bg-secondary)' }}>
         {!hasRisks ? (
           <div
             className="flex-1 flex items-center justify-center text-xs"
@@ -173,10 +158,7 @@ export function RiskDistributionBar({ distribution, total }: RiskDistributionBar
           </>
         )}
       </div>
-      <div
-        className="flex items-center gap-4 mt-2 text-xs flex-wrap"
-        style={{ color: UI_COLORS.textSecondary }}
-      >
+      <div className="flex items-center gap-4 mt-2 text-xs flex-wrap" style={{ color: 'var(--notion-text-secondary)' }}>
         <RiskLevelLegend level={3} />
         <RiskLevelLegend level={2} />
         <RiskLevelLegend level={1} />
@@ -232,7 +214,7 @@ function RiskLevelLegend({ level }: { level: RiskLevel }) {
       {isHovered &&
         createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none"
+            className="fixed z-[9999] pointer-events-none animate-fadeIn"
             style={{
               left: tooltipPos.x,
               top: tooltipPos.y,
@@ -240,8 +222,8 @@ function RiskLevelLegend({ level }: { level: RiskLevel }) {
             }}
           >
             <div 
-              className="rounded-lg shadow-lg px-3 py-2 min-w-[180px] max-w-[280px]"
-              style={{ background: color.text }}
+              className="rounded-lg px-3 py-2 min-w-[180px] max-w-[280px]"
+              style={{ background: color.text, boxShadow: 'var(--notion-shadow-sm)' }}
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-white text-xs font-bold">
@@ -284,42 +266,36 @@ export function AchievementSummary({ stats }: AchievementSummaryProps) {
   const total = stats.exceeded + stats.normal + stats.delayed;
 
   return (
-    <div
-      className="bg-white rounded-md p-4"
-      style={{ border: `1px solid ${UI_COLORS.border}` }}
-    >
-      <h3
-        className="text-sm font-semibold mb-3"
-        style={{ color: UI_COLORS.textPrimary }}
-      >
+    <div className="notion-card p-4">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--notion-text)' }}>
         계획 대비 달성률
       </h3>
       <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3 flex-wrap">
         <div className="text-center">
-          <div className="text-base sm:text-lg font-bold" style={{ color: UI_COLORS.textMuted }}>
+          <div className="text-base sm:text-lg font-bold" style={{ color: 'var(--notion-text-muted)' }}>
             {stats.avgPlan}%
           </div>
-          <div className="text-[10px] sm:text-xs" style={{ color: UI_COLORS.textSecondary }}>평균 계획</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: 'var(--notion-text-secondary)' }}>평균 계획</div>
         </div>
-        <div className="text-lg sm:text-xl" style={{ color: UI_COLORS.textMuted }}>→</div>
+        <div className="text-lg sm:text-xl" style={{ color: 'var(--notion-text-muted)' }}>→</div>
         <div className="text-center">
-          <div className="text-base sm:text-lg font-bold" style={{ color: PROGRESS_COLORS.high.text }}>
+          <div className="text-base sm:text-lg font-bold" style={{ color: 'var(--notion-blue)' }}>
             {stats.avgProgress}%
           </div>
-          <div className="text-[10px] sm:text-xs" style={{ color: UI_COLORS.textSecondary }}>평균 진척</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: 'var(--notion-text-secondary)' }}>평균 진척</div>
         </div>
-        <div className="text-lg sm:text-xl" style={{ color: UI_COLORS.textMuted }}>=</div>
+        <div className="text-lg sm:text-xl" style={{ color: 'var(--notion-text-muted)' }}>=</div>
         <div className="text-center">
           <div 
             className="text-xl sm:text-2xl font-bold"
-            style={{ color: stats.avgAchievement >= 80 ? ACHIEVEMENT_COLORS.exceeded.text : ACHIEVEMENT_COLORS.delayed.text }}
+            style={{ color: stats.avgAchievement >= 80 ? 'var(--notion-green)' : 'var(--notion-red)' }}
           >
             {stats.avgAchievement}%
           </div>
-          <div className="text-[10px] sm:text-xs" style={{ color: UI_COLORS.textSecondary }}>달성률</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: 'var(--notion-text-secondary)' }}>달성률</div>
         </div>
       </div>
-      <div className="flex h-4 rounded-md overflow-hidden">
+      <div className="flex h-4 rounded overflow-hidden" style={{ background: 'var(--notion-bg-secondary)' }}>
         {stats.exceeded > 0 && (
           <div
             className="flex items-center justify-center text-white text-[10px] font-medium"
@@ -345,10 +321,7 @@ export function AchievementSummary({ stats }: AchievementSummaryProps) {
           </div>
         )}
       </div>
-      <div
-        className="flex items-center gap-2 sm:gap-4 mt-2 text-[10px] sm:text-xs flex-wrap"
-        style={{ color: UI_COLORS.textSecondary }}
-      >
+      <div className="flex items-center gap-2 sm:gap-4 mt-2 text-[10px] sm:text-xs flex-wrap" style={{ color: 'var(--notion-text-secondary)' }}>
         <Legend color={ACHIEVEMENT_COLORS.exceeded.text} label="초과달성 (100%+)" />
         <Legend color={ACHIEVEMENT_COLORS.normal.text} label="정상 (80-100%)" />
         <Legend color={ACHIEVEMENT_COLORS.delayed.text} label="지연 (<80%)" />
@@ -356,4 +329,3 @@ export function AchievementSummary({ stats }: AchievementSummaryProps) {
     </div>
   );
 }
-

@@ -12,6 +12,9 @@ export function filterItems(items: ScrumItem[], filters: FilterState): ScrumItem
     if (filters.project && item.project !== filters.project) {
       return false;
     }
+    if (filters.member && item.name !== filters.member) {
+      return false;
+    }
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       const searchTarget = [

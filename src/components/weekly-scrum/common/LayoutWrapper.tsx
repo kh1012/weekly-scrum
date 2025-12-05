@@ -14,20 +14,11 @@ const FULL_WIDTH_PAGES = [
 ];
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
-  const pathname = usePathname();
-  
-  // 흰색 배경을 사용하는 페이지들
-  const whiteBackgroundPages = [
-    "/projects",
-    "/quadrant",
-  ];
-  const useWhiteBg = whiteBackgroundPages.some((p) => pathname === p);
-  
-  // 전체 너비를 사용하는 페이지 확인
-  const useFullWidth = FULL_WIDTH_PAGES.some((p) => pathname === p || pathname === p + "/");
-  
   return (
-    <div className={`min-h-screen ${useWhiteBg ? "bg-white" : "bg-[#f6f8fa]"}`}>
+    <div 
+      className="min-h-screen"
+      style={{ background: 'var(--notion-bg)' }}
+    >
       {children}
     </div>
   );
@@ -41,7 +32,9 @@ export function MainContent({ children }: { children: ReactNode }) {
   const useFullWidth = FULL_WIDTH_PAGES.some((p) => pathname === p || pathname === p + "/");
   
   return (
-    <main className={`mx-auto px-4 py-4 sm:px-6 lg:px-8 ${useFullWidth ? "max-w-full" : "max-w-7xl"}`}>
+    <main 
+      className={`mx-auto px-4 py-6 sm:px-6 lg:px-8 ${useFullWidth ? "max-w-full" : "max-w-6xl"}`}
+    >
       {children}
     </main>
   );
