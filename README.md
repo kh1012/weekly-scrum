@@ -1,14 +1,17 @@
 # Weekly Scrum Dashboard
 
-팀원이 매주 제출하는 위클리 스크럼 텍스트를 자동으로 파싱하여 JSON으로 변환하고, Next.js + Tailwind 기반의 대시보드에서 시각화하는 시스템입니다.
+팀원이 매주 제출하는 위클리 스크럼 텍스트를 자동으로 파싱하여 JSON으로 변환하고, Next.js + Tailwind 기반의 대시보드에서 시각화하는 시스템입니다. Notion 스타일의 UI/UX를 적용하여 깔끔하고 직관적인 사용자 경험을 제공합니다.
 
 **주요 기능:**
 
 - 스크럼 데이터 파싱 및 시각화
-- 리더용 인사이트 대시보드 (AI 기반 분석 결과 시각화)
+- 개인 대시보드 (개인별 업무 현황, 주차별 트렌드, 도메인/프로젝트별 분석)
 - Shares 대시보드 (리더 공유 사항 마크다운 프리뷰)
 - 다양한 뷰 모드 (요약, 카드, 프로젝트, 매트릭스, 사분면, 리스크)
 - 주차별/범위별 데이터 조회
+- 반응형 디자인 (모바일/태블릿/데스크탑)
+- 전역 검색 (단축키: `Ctrl+K` / `⌘K`)
+- 방문자 수 카운터 (Upstash Redis 연동)
 
 ---
 
@@ -372,24 +375,26 @@ yarn dev
 
 ### 주요 페이지
 
-| 페이지                  | 경로        | 설명                                |
-| ----------------------- | ----------- | ----------------------------------- |
-| **요약** (Summary)      | `/summary`  | 전체 통계 및 요약 정보              |
-| **카드** (Cards)        | `/cards`    | 개별 스크럼 항목을 카드 형태로 표시 |
-| **프로젝트** (Projects) | `/projects` | 프로젝트별 그룹화된 뷰              |
-| **매트릭스** (Matrix)   | `/matrix`   | 멤버 × 프로젝트 매트릭스 뷰         |
-| **사분면** (Quadrant)   | `/quadrant` | 진행률-리스크 사분면 차트           |
-| **리스크** (Risks)      | `/risks`    | 리스크 항목 집중 뷰                 |
-| **인사이트** (Insights) | `/insights` | 리더용 AI 인사이트 대시보드         |
-| **Shares**              | `/shares`   | 리더 공유 사항 마크다운 프리뷰      |
+| 페이지                      | 경로        | 설명                                           |
+| --------------------------- | ----------- | ---------------------------------------------- |
+| **요약** (Summary)          | `/summary`  | 전체 통계 및 요약 정보                         |
+| **카드** (Cards)            | `/cards`    | 개별 스크럼 항목을 카드 형태로 표시            |
+| **프로젝트** (Projects)     | `/projects` | 프로젝트별 그룹화된 뷰                         |
+| **매트릭스** (Matrix)       | `/matrix`   | 멤버 × 프로젝트 매트릭스 뷰                    |
+| **사분면** (Quadrant)       | `/quadrant` | 진행률-리스크 사분면 차트                      |
+| **리스크** (Risks)          | `/risks`    | 리스크 항목 집중 뷰                            |
+| **개인 대시보드** (My)      | `/my`       | 개인별 업무 현황, 트렌드 차트, 도메인/프로젝트 분석 |
+| **Shares**                  | `/shares`   | 리더 공유 사항 마크다운 프리뷰                 |
 
 ### 주요 기능
 
-- **필터링**: 도메인, 프로젝트별 필터링
-- **검색**: 이름, 토픽, 내용 검색
+- **필터링**: 도메인, 프로젝트, 멤버별 필터링
+- **검색**: 이름, 토픽, 내용 검색 (`Ctrl+K` / `⌘K` 단축키 지원)
 - **통계**: 전체 항목 수, 평균 진행률, 평균 계획률, 달성률, 리스크 항목 수 표시
 - **주차 선택**: 단일 주차 또는 범위 선택 모드 지원
-- **반응형**: 모바일 1열, 태블릿 2열, 데스크탑 3열 그리드
+- **반응형**: 모바일/태블릿/데스크탑 반응형 레이아웃
+- **Notion 스타일 UI**: 깔끔한 Notion 테마 기반 디자인
+- **사이드바**: 접이식 사이드 네비게이션 (데스크탑), 팝오버 메뉴 (모바일)
 
 ### 사분면 차트 해석
 
@@ -408,33 +413,21 @@ yarn dev
 src/
 ├── app/
 │   ├── layout.tsx                # 루트 레이아웃
-│   ├── globals.css               # 전역 스타일
+│   ├── globals.css               # 전역 스타일 (Notion 테마 CSS 변수)
 │   ├── page.tsx                  # 홈 → /summary 리다이렉트
 │   ├── (scrum)/                  # Route Group (URL에 미포함)
-│   │   ├── layout.tsx            # 스크럼 공통 레이아웃 (Header, ScrumProvider)
+│   │   ├── layout.tsx            # 스크럼 공통 레이아웃 (Header, Sidebar, ScrumProvider)
 │   │   ├── summary/page.tsx      # 요약 뷰
 │   │   ├── cards/page.tsx        # 카드 뷰
 │   │   ├── projects/page.tsx     # 프로젝트 뷰
 │   │   ├── matrix/page.tsx       # 매트릭스 뷰
 │   │   ├── quadrant/page.tsx     # 사분면 뷰
-│   │   └── risks/page.tsx        # 리스크 뷰
-│   ├── insights/                 # 인사이트 (독립 레이아웃)
-│   │   ├── layout.tsx
-│   │   └── page.tsx
+│   │   ├── risks/page.tsx        # 리스크 뷰
+│   │   └── my/page.tsx           # 개인 대시보드
 │   └── shares/                   # Shares (독립 레이아웃)
 │       ├── layout.tsx
 │       └── page.tsx
 ├── components/
-│   ├── insights/                 # 인사이트 컴포넌트
-│   │   ├── DecisionPoints.tsx
-│   │   ├── ExecutionGap.tsx
-│   │   ├── ExecutiveSummary.tsx
-│   │   ├── InsightDashboard.tsx
-│   │   ├── InsightHeader.tsx
-│   │   ├── InsightView.tsx
-│   │   ├── InsightWeekSelector.tsx
-│   │   ├── QuadrantSummary.tsx
-│   │   └── RiskTable.tsx
 │   ├── shares/                   # Shares 컴포넌트
 │   │   ├── MarkdownRenderer.tsx  # 마크다운 렌더러
 │   │   ├── SharesHeader.tsx
@@ -448,18 +441,33 @@ src/
 │       │   ├── CircularProgress.tsx
 │       │   ├── DomainBadge.tsx
 │       │   ├── EmptyState.tsx
-│       │   ├── Filters.tsx
-│       │   ├── Header.tsx
-│       │   ├── LayoutWrapper.tsx
-│       │   ├── Navigation.tsx
+│       │   ├── Filters.tsx       # 도메인/프로젝트/멤버 필터
+│       │   ├── Header.tsx        # GNB 헤더
+│       │   ├── LayoutWrapper.tsx # 레이아웃 래퍼 (동적 max-width)
+│       │   ├── Navigation.tsx    # 사이드바 네비게이션
 │       │   ├── RiskLevelBadge.tsx
-│       │   ├── SearchInput.tsx
+│       │   ├── SearchInput.tsx   # 검색창 (단축키 지원)
 │       │   ├── StatsBar.tsx
-│       │   └── WeekSelector.tsx
+│       │   └── WeekSelector.tsx  # 주차/범위 선택기
 │       ├── matrix/               # 매트릭스 뷰 컴포넌트
 │       │   ├── MatrixCell.tsx
 │       │   ├── MatrixHeader.tsx
 │       │   └── MatrixView.tsx
+│       ├── my/                   # 개인 대시보드 컴포넌트
+│       │   ├── MyDashboardView.tsx
+│       │   ├── components/       # 서브 컴포넌트
+│       │   │   ├── DashboardFilters.tsx
+│       │   │   ├── DomainPieChartCard.tsx
+│       │   │   ├── ItemRow.tsx
+│       │   │   ├── ProgressOverview.tsx
+│       │   │   ├── ProjectBarChart.tsx
+│       │   │   ├── RiskSummary.tsx
+│       │   │   ├── StatCard.tsx
+│       │   │   └── TrendChart.tsx
+│       │   ├── hooks/            # 커스텀 훅
+│       │   │   └── useMyDashboard.ts
+│       │   └── utils/            # 유틸리티
+│       │       └── dashboardUtils.ts
 │       ├── projects/             # 프로젝트 뷰 컴포넌트
 │       │   └── ProjectGroupView.tsx
 │       ├── quadrant/             # 사분면 뷰 컴포넌트
@@ -475,18 +483,17 @@ src/
 │           ├── SummaryCards.tsx
 │           └── SummaryView.tsx
 ├── context/
-│   ├── InsightContext.tsx        # 인사이트 전역 상태
 │   ├── SharesContext.tsx         # Shares 전역 상태
 │   └── ScrumContext.tsx          # 스크럼 전역 상태
+├── hooks/
+│   └── useVisitorCount.ts        # 방문자 수 카운터 훅
 ├── lib/
 │   ├── colorDefines.ts           # 색상 정의 및 유틸리티
-│   ├── insightData.ts            # 인사이트 데이터 로더
 │   ├── scrumData.ts              # 스크럼 데이터 로더
 │   ├── sharesData.ts             # Shares 데이터 로더
 │   ├── utils.ts                  # 필터링, 통계 유틸리티
 │   └── weekUtils.ts              # 주차 관련 유틸리티
 └── types/
-    ├── insight.ts                # 인사이트 타입 정의
     ├── scrum.ts                  # 스크럼 타입 정의
     └── shares.ts                 # Shares 타입 정의
 ```
@@ -530,15 +537,16 @@ weekly-scrum/
 
 ## 기술 스택
 
-| 기술         | 버전 | 용도                     |
-| ------------ | ---- | ------------------------ |
-| Next.js      | 15.x | React 프레임워크         |
-| React        | 19.x | UI 라이브러리            |
-| TypeScript   | 5.x  | 타입 시스템              |
-| Tailwind CSS | 3.x  | 유틸리티 CSS             |
-| Recharts     | 3.x  | 차트 라이브러리          |
-| tsx          | 4.x  | TypeScript 스크립트 실행 |
-| gh-pages     | 6.x  | GitHub Pages 배포        |
+| 기술         | 버전 | 용도                          |
+| ------------ | ---- | ----------------------------- |
+| Next.js      | 15.x | React 프레임워크              |
+| React        | 19.x | UI 라이브러리                 |
+| TypeScript   | 5.x  | 타입 시스템                   |
+| Tailwind CSS | 3.x  | 유틸리티 CSS + Notion 테마    |
+| Recharts     | 3.x  | 차트 라이브러리               |
+| Upstash Redis| -    | 방문자 수 카운터 (serverless) |
+| tsx          | 4.x  | TypeScript 스크립트 실행      |
+| gh-pages     | 6.x  | GitHub Pages 배포             |
 
 ---
 
@@ -550,6 +558,18 @@ GitHub Pages를 통해 정적 사이트로 배포합니다.
 # 빌드 및 배포
 yarn deploy
 ```
+
+### 환경 변수 설정 (선택)
+
+방문자 수 카운터를 사용하려면 Upstash Redis 환경 변수가 필요합니다:
+
+```bash
+# .env.local
+NEXT_PUBLIC_UPSTASH_REDIS_REST_URL="your-upstash-url"
+NEXT_PUBLIC_UPSTASH_REDIS_REST_TOKEN="your-upstash-token"
+```
+
+GitHub Actions 배포 시 Repository Secrets에 동일한 환경 변수를 설정합니다.
 
 > 자세한 배포 가이드는 `DEPLOY.md` 참조
 
@@ -636,6 +656,14 @@ git push origin main
 □ git push하여 정적 페이지 갱신
 □ 배포 완료 확인
 ```
+
+---
+
+## 단축키
+
+| 단축키              | 기능         |
+| ------------------- | ------------ |
+| `Ctrl+K` / `⌘K`     | 검색창 포커스 |
 
 ---
 

@@ -7,11 +7,44 @@ interface SearchInputProps {
   isMobile?: boolean;
 }
 
+// 운영체제 감지
+function getOS(): "mac" | "windows" | "other" {
+  if (typeof window === "undefined") return "other";
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  if (userAgent.includes("mac")) return "mac";
+  if (userAgent.includes("win")) return "windows";
+  return "other";
+}
+
 export function SearchInput({ isMobile = false }: SearchInputProps) {
   const { filters, updateFilter } = useScrumContext();
   const [localValue, setLocalValue] = useState(filters.search);
   const [isSearching, setIsSearching] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [os, setOS] = useState<"mac" | "windows" | "other">("other");
+  const inputRef = useRef<HTMLInputElement>(null);
   const debouncedUpdateFilter = useRef<NodeJS.Timeout | null>(null);
+
+  // 운영체제 감지
+  useEffect(() => {
+    setOS(getOS());
+  }, []);
+
+  // 전역 키보드 단축키 (Ctrl+K / Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = os === "mac";
+      const isShortcut = isMac ? e.metaKey && e.key === "k" : e.ctrlKey && e.key === "k";
+      
+      if (isShortcut) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [os]);
 
   useEffect(() => {
     setLocalValue(filters.search);
@@ -42,17 +75,26 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
     if (debouncedUpdateFilter.current) {
       clearTimeout(debouncedUpdateFilter.current);
     }
+    inputRef.current?.focus();
   }, [updateFilter]);
 
+  // 플레이스홀더 텍스트
+  const shortcutHint = os === "mac" ? "⌘K" : "Ctrl+K";
+  const placeholder = isMobile ? "검색..." : `검색... (${shortcutHint})`;
+
   return (
-    <div className="relative w-full">
+    <div 
+      className={`relative transition-all duration-200 ease-out ${
+        !isMobile && isFocused ? "w-80" : "w-full"
+      }`}
+    >
       {/* 검색 아이콘 */}
       <svg
-        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
+        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 transition-colors duration-200"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
-        style={{ color: "var(--notion-text-muted)" }}
+        style={{ color: isFocused ? "var(--notion-text-secondary)" : "var(--notion-text-muted)" }}
       >
         <path
           strokeLinecap="round"
@@ -63,15 +105,20 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
       </svg>
 
       <input
+        ref={inputRef}
         type="text"
-        placeholder={isMobile ? "검색..." : "검색..."}
+        placeholder={placeholder}
         value={localValue}
         onChange={handleChange}
-        className={`notion-input pl-8 ${
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        className={`notion-input pl-8 transition-all duration-200 ease-out ${
           isMobile ? "text-sm py-1.5" : "text-sm py-1.5"
-        }`}
+        } ${isFocused ? "search-input-focused" : ""}`}
         style={{
           paddingRight: localValue || isSearching ? "32px" : "10px",
+          backgroundColor: isFocused ? "var(--notion-bg-hover)" : "var(--notion-bg-secondary)",
+          borderColor: isFocused ? "var(--notion-text-muted)" : "var(--notion-border)",
         }}
       />
 
