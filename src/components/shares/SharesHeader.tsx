@@ -31,61 +31,98 @@ export function SharesHeader() {
     };
   }, [isSideNavOpen]);
 
+  const MenuButton = () => (
+    <button
+      onClick={() => setIsSideNavOpen(!isSideNavOpen)}
+      className="notion-btn p-1.5"
+      aria-label={isSideNavOpen ? "메뉴 닫기" : "메뉴 열기"}
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--notion-text-secondary)' }}>
+        {isSideNavOpen ? (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        ) : (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        )}
+      </svg>
+    </button>
+  );
+
   return (
     <>
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 h-14">
-          {/* 좌측: 햄버거 메뉴 + 로고 */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsSideNavOpen(!isSideNavOpen)}
-              className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all"
-              aria-label={isSideNavOpen ? "메뉴 닫기" : "메뉴 열기"}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isSideNavOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-sm">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                  />
-                </svg>
-              </div>
-              <span className="text-base font-semibold text-slate-800">Shares</span>
+      <header 
+        className="sticky top-0 z-40"
+        style={{ 
+          background: 'var(--notion-bg)',
+          borderBottom: '1px solid var(--notion-border)'
+        }}
+      >
+        {/* 데스크탑 레이아웃 */}
+        <div className="hidden md:flex items-center justify-between h-11 px-3">
+          {/* 좌측: 메뉴 + 로고 */}
+          <div className="flex items-center gap-2">
+            <MenuButton />
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">📣</span>
+              <span className="font-semibold text-sm" style={{ color: 'var(--notion-text)' }}>
+                공유사항
+              </span>
             </div>
           </div>
 
           {/* 우측: 주차 선택기 */}
           <SharesWeekSelector />
         </div>
+
+        {/* 모바일 레이아웃 */}
+        <div className="md:hidden">
+          {/* 1행: 메뉴 + 로고 */}
+          <div className="flex items-center gap-2 h-11 px-3" style={{ borderBottom: '1px solid var(--notion-border)' }}>
+            <MenuButton />
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">📣</span>
+              <span className="font-semibold text-sm" style={{ color: 'var(--notion-text)' }}>
+                공유사항
+              </span>
+            </div>
+          </div>
+
+          {/* 2행: 주차 선택기 */}
+          <div className="px-3 py-2 overflow-x-auto">
+            <SharesWeekSelector isMobile />
+          </div>
+        </div>
       </header>
 
       {/* Overlay */}
       {isSideNavOpen && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+          className="fixed inset-0 z-40 transition-opacity"
+          style={{ background: 'rgba(15, 15, 15, 0.6)' }}
           onClick={() => setIsSideNavOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Side Navigation Drawer */}
+      {/* Notion 스타일 Side Navigation Drawer */}
       <div
         ref={sideNavRef}
-        className={`fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-out ${
+        className={`fixed top-0 left-0 h-full w-60 z-50 transform transition-transform duration-200 ease-out ${
           isSideNavOpen ? "translate-x-0" : "-translate-x-full"
         }`}
+        style={{ 
+          background: 'var(--notion-sidebar-bg)',
+          boxShadow: isSideNavOpen ? 'var(--notion-shadow-md)' : 'none'
+        }}
       >
+        {/* 닫기 버튼 */}
+        <button
+          onClick={() => setIsSideNavOpen(false)}
+          className="absolute top-2 right-2 notion-btn p-1"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--notion-text-secondary)' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <SideNavigation onItemClick={() => setIsSideNavOpen(false)} />
       </div>
     </>

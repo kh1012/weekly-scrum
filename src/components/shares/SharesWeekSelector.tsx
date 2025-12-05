@@ -4,7 +4,11 @@ import { useMemo } from "react";
 import { useSharesContext } from "@/context/SharesContext";
 import type { SharesSelectMode } from "@/types/shares";
 
-export function SharesWeekSelector() {
+interface SharesWeekSelectorProps {
+  isMobile?: boolean;
+}
+
+export function SharesWeekSelector({ isMobile }: SharesWeekSelectorProps) {
   const {
     allData,
     weeks,
@@ -85,27 +89,126 @@ export function SharesWeekSelector() {
     return null;
   }
 
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-2">
+        {/* 모드 토글 + 날짜 범위 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-0.5 p-0.5 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
+            <button
+              onClick={() => handleModeChange("single")}
+              className="px-2 py-1 text-xs font-medium rounded transition-all"
+              style={{
+                background: selectMode === "single" ? 'var(--notion-bg)' : 'transparent',
+                color: selectMode === "single" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
+                boxShadow: selectMode === "single" ? 'var(--notion-shadow-sm)' : 'none',
+              }}
+            >
+              주차
+            </button>
+            <button
+              onClick={() => handleModeChange("range")}
+              className="px-2 py-1 text-xs font-medium rounded transition-all"
+              style={{
+                background: selectMode === "range" ? 'var(--notion-bg)' : 'transparent',
+                color: selectMode === "range" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
+                boxShadow: selectMode === "range" ? 'var(--notion-shadow-sm)' : 'none',
+              }}
+            >
+              범위
+            </button>
+          </div>
+          <span className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>
+            {currentRange}
+            {selectMode === "range" && (
+              <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: 'var(--notion-green-bg)', color: 'var(--notion-green)' }}>
+                누적
+              </span>
+            )}
+          </span>
+        </div>
+
+        {/* 셀렉터 */}
+        {selectMode === "single" ? (
+          <div className="flex items-center gap-1">
+            <select
+              value={selectedYear}
+              onChange={(e) => handleYearChange(Number(e.target.value))}
+              className="notion-select flex-1"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>{year}년</option>
+              ))}
+            </select>
+            <select
+              value={selectedMonth}
+              onChange={(e) => handleMonthChange(Number(e.target.value))}
+              className="notion-select flex-1"
+            >
+              {months.map((month) => (
+                <option key={month} value={month}>{month}월</option>
+              ))}
+            </select>
+            <select
+              value={selectedWeekKey.split("-")[2] || ""}
+              onChange={(e) => handleWeekChange(e.target.value)}
+              className="notion-select flex-1"
+            >
+              {availableWeeks.map((w) => (
+                <option key={w.week} value={w.week}>{w.week}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <select
+              value={rangeStart}
+              onChange={(e) => setRangeStart(e.target.value)}
+              className="notion-select flex-1 text-xs"
+            >
+              {allWeekOptions.map((opt) => (
+                <option key={opt.key} value={opt.key}>{opt.label}</option>
+              ))}
+            </select>
+            <span className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>~</span>
+            <select
+              value={rangeEnd}
+              onChange={(e) => setRangeEnd(e.target.value)}
+              className="notion-select flex-1 text-xs"
+            >
+              {allWeekOptions.map((opt) => (
+                <option key={opt.key} value={opt.key}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
       {/* 단일/범위 토글 */}
-      <div className="flex items-center bg-[#f6f8fa] border border-[#d0d7de] rounded-md p-0.5">
+      <div className="flex items-center gap-0.5 p-0.5 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
         <button
           onClick={() => handleModeChange("single")}
-          className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
-            selectMode === "single"
-              ? "bg-white text-[#1f2328] shadow-sm"
-              : "text-[#656d76] hover:text-[#1f2328]"
-          }`}
+          className="px-2 py-1 text-xs font-medium rounded transition-all"
+          style={{
+            background: selectMode === "single" ? 'var(--notion-bg)' : 'transparent',
+            color: selectMode === "single" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
+            boxShadow: selectMode === "single" ? 'var(--notion-shadow-sm)' : 'none',
+          }}
         >
           주차
         </button>
         <button
           onClick={() => handleModeChange("range")}
-          className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
-            selectMode === "range"
-              ? "bg-white text-[#1f2328] shadow-sm"
-              : "text-[#656d76] hover:text-[#1f2328]"
-          }`}
+          className="px-2 py-1 text-xs font-medium rounded transition-all"
+          style={{
+            background: selectMode === "range" ? 'var(--notion-bg)' : 'transparent',
+            color: selectMode === "range" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
+            boxShadow: selectMode === "range" ? 'var(--notion-shadow-sm)' : 'none',
+          }}
         >
           범위
         </button>
@@ -117,34 +220,28 @@ export function SharesWeekSelector() {
           <select
             value={selectedYear}
             onChange={(e) => handleYearChange(Number(e.target.value))}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-sm text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="notion-select"
           >
             {years.map((year) => (
-              <option key={year} value={year}>
-                {year}년
-              </option>
+              <option key={year} value={year}>{year}년</option>
             ))}
           </select>
           <select
             value={selectedMonth}
             onChange={(e) => handleMonthChange(Number(e.target.value))}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-sm text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="notion-select"
           >
             {months.map((month) => (
-              <option key={month} value={month}>
-                {month}월
-              </option>
+              <option key={month} value={month}>{month}월</option>
             ))}
           </select>
           <select
             value={selectedWeekKey.split("-")[2] || ""}
             onChange={(e) => handleWeekChange(e.target.value)}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-sm text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="notion-select"
           >
             {availableWeeks.map((w) => (
-              <option key={w.week} value={w.week}>
-                {w.week}
-              </option>
+              <option key={w.week} value={w.week}>{w.week}</option>
             ))}
           </select>
         </div>
@@ -153,34 +250,30 @@ export function SharesWeekSelector() {
           <select
             value={rangeStart}
             onChange={(e) => setRangeStart(e.target.value)}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-xs text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="notion-select text-xs"
           >
             {allWeekOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                {opt.label}
-              </option>
+              <option key={opt.key} value={opt.key}>{opt.label}</option>
             ))}
           </select>
-          <span className="text-xs text-[#656d76]">~</span>
+          <span className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>~</span>
           <select
             value={rangeEnd}
             onChange={(e) => setRangeEnd(e.target.value)}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-xs text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="notion-select text-xs"
           >
             {allWeekOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                {opt.label}
-              </option>
+              <option key={opt.key} value={opt.key}>{opt.label}</option>
             ))}
           </select>
         </div>
       )}
 
       {/* 날짜 범위 표시 */}
-      <span className="text-xs text-[#8c959f] ml-2">
+      <span className="text-xs ml-2" style={{ color: 'var(--notion-text-muted)' }}>
         {currentRange}
         {selectMode === "range" && (
-          <span className="ml-1.5 px-1.5 py-0.5 bg-[#e0f2f1] text-[#26a69a] rounded text-[10px] font-medium">
+          <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: 'var(--notion-green-bg)', color: 'var(--notion-green)' }}>
             누적
           </span>
         )}
