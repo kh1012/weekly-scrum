@@ -61,26 +61,31 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export function Navigation() {
+function useIsActive() {
   const pathname = usePathname();
-
-  const isActive = (href: string) => {
+  
+  return (href: string) => {
     if (href === "/summary") {
       return pathname === "/" || pathname === "/summary";
     }
     return pathname.startsWith(href);
   };
+}
+
+// 데스크탑 네비게이션
+export function Navigation() {
+  const isActive = useIsActive();
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
       {NAV_ITEMS.map((item) => (
         <Link
           key={item.key}
           href={item.href}
-          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
             isActive(item.href)
-              ? "bg-[#f6f8fa] text-[#1f2328]"
-              : "text-[#656d76] hover:text-[#1f2328] hover:bg-[#f6f8fa]"
+              ? "bg-white text-blue-600 shadow-sm"
+              : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
           }`}
         >
           <svg
@@ -97,6 +102,47 @@ export function Navigation() {
             />
           </svg>
           {item.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+// 모바일 네비게이션
+interface MobileNavigationProps {
+  onItemClick?: () => void;
+}
+
+export function MobileNavigation({ onItemClick }: MobileNavigationProps) {
+  const isActive = useIsActive();
+
+  return (
+    <nav className="grid grid-cols-4 gap-2">
+      {NAV_ITEMS.map((item) => (
+        <Link
+          key={item.key}
+          href={item.href}
+          onClick={onItemClick}
+          className={`flex flex-col items-center gap-1.5 px-2 py-2.5 text-xs font-medium rounded-xl transition-all ${
+            isActive(item.href)
+              ? "bg-blue-50 text-blue-600"
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={item.icon}
+            />
+          </svg>
+          <span className="truncate">{item.label}</span>
         </Link>
       ))}
     </nav>

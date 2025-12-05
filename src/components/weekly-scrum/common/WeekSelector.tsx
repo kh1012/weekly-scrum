@@ -20,31 +20,25 @@ export function WeekSelector() {
     setRangeEnd,
   } = useScrumContext();
 
-  // 연도 목록
   const years = useMemo(() => {
     const set = new Set(weeks.map((w) => w.year));
     return Array.from(set).sort((a, b) => b - a);
   }, [weeks]);
 
-  // 선택된 연도
   const selectedYear = currentData?.year ?? years[0];
 
-  // 선택된 연도에 해당하는 월 목록
   const months = useMemo(() => {
     const filtered = weeks.filter((w) => w.year === selectedYear);
     const set = new Set(filtered.map((w) => w.month));
     return Array.from(set).sort((a, b) => b - a);
   }, [weeks, selectedYear]);
 
-  // 선택된 월
   const selectedMonth = currentData?.month ?? months[0];
 
-  // 선택된 연도/월에 해당하는 주차 목록
   const availableWeeks = useMemo(() => {
     return weeks.filter((w) => w.year === selectedYear && w.month === selectedMonth);
   }, [weeks, selectedYear, selectedMonth]);
 
-  // 범위 선택용 전체 주차 목록
   const allWeekOptions = sortedWeekKeys.map((key) => {
     const d = allData[key];
     return { key, label: `${d.year}년 ${d.month}월 ${d.week}` };
@@ -81,25 +75,25 @@ export function WeekSelector() {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {/* 단일/범위 토글 */}
-      <div className="flex items-center bg-[#f6f8fa] border border-[#d0d7de] rounded-md p-0.5">
+      <div className="flex items-center bg-slate-100 p-0.5 rounded-lg">
         <button
           onClick={() => handleModeChange("single")}
-          className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
             selectMode === "single"
-              ? "bg-white text-[#1f2328] shadow-sm"
-              : "text-[#656d76] hover:text-[#1f2328]"
+              ? "bg-white text-slate-800 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
           }`}
         >
           주차
         </button>
         <button
           onClick={() => handleModeChange("range")}
-          className={`px-2 py-0.5 text-xs font-medium rounded transition-colors ${
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
             selectMode === "range"
-              ? "bg-white text-[#1f2328] shadow-sm"
-              : "text-[#656d76] hover:text-[#1f2328]"
+              ? "bg-white text-slate-800 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
           }`}
         >
           범위
@@ -108,11 +102,11 @@ export function WeekSelector() {
 
       {/* 주차 셀렉터 */}
       {selectMode === "single" ? (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <select
             value={selectedYear}
             onChange={(e) => handleYearChange(Number(e.target.value))}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-sm text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="appearance-none px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all"
           >
             {years.map((year) => (
               <option key={year} value={year}>
@@ -123,7 +117,7 @@ export function WeekSelector() {
           <select
             value={selectedMonth}
             onChange={(e) => handleMonthChange(Number(e.target.value))}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-sm text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="appearance-none px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all"
           >
             {months.map((month) => (
               <option key={month} value={month}>
@@ -134,7 +128,7 @@ export function WeekSelector() {
           <select
             value={selectedWeekKey.split("-")[2] || ""}
             onChange={(e) => handleWeekChange(e.target.value)}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-sm text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="appearance-none px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all"
           >
             {availableWeeks.map((w) => (
               <option key={w.week} value={w.week}>
@@ -148,7 +142,7 @@ export function WeekSelector() {
           <select
             value={rangeStart}
             onChange={(e) => setRangeStart(e.target.value)}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-xs text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="appearance-none px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all max-w-[130px]"
           >
             {allWeekOptions.map((opt) => (
               <option key={opt.key} value={opt.key}>
@@ -156,11 +150,11 @@ export function WeekSelector() {
               </option>
             ))}
           </select>
-          <span className="text-xs text-[#656d76]">~</span>
+          <span className="text-xs text-slate-400">~</span>
           <select
             value={rangeEnd}
             onChange={(e) => setRangeEnd(e.target.value)}
-            className="appearance-none px-2 py-1 bg-white border border-[#d0d7de] rounded-md text-xs text-[#1f2328] focus:outline-none focus:border-[#0969da] cursor-pointer"
+            className="appearance-none px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all max-w-[130px]"
           >
             {allWeekOptions.map((opt) => (
               <option key={opt.key} value={opt.key}>
@@ -172,15 +166,17 @@ export function WeekSelector() {
       )}
 
       {/* 날짜 범위 표시 */}
-      <span className="text-xs text-[#8c959f] ml-2">
-        {currentData?.range}
+      <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 ml-2">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>{currentData?.range}</span>
         {selectMode === "range" && (
-          <span className="ml-1.5 px-1.5 py-0.5 bg-[#e8f4fc] text-[#64b5f6] rounded text-[10px] font-medium">
+          <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-medium">
             누적
           </span>
         )}
-      </span>
+      </div>
     </div>
   );
 }
-

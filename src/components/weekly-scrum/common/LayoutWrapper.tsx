@@ -12,8 +12,8 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   
   // 흰색 배경을 사용하는 페이지들
   const whiteBackgroundPages = [
-    "/weekly-scrum/projects",
-    "/weekly-scrum/quadrant",
+    "/projects",
+    "/quadrant",
   ];
   const useWhiteBg = whiteBackgroundPages.some((p) => pathname === p);
   
@@ -23,4 +23,3 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
     </div>
   );
 }
-

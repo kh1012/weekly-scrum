@@ -294,29 +294,29 @@ export function AchievementSummary({ stats }: AchievementSummaryProps) {
       >
         계획 대비 달성률
       </h3>
-      <div className="flex items-center gap-6 mb-3">
+      <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3 flex-wrap">
         <div className="text-center">
-          <div className="text-lg font-bold" style={{ color: UI_COLORS.textMuted }}>
+          <div className="text-base sm:text-lg font-bold" style={{ color: UI_COLORS.textMuted }}>
             {stats.avgPlan}%
           </div>
-          <div className="text-xs" style={{ color: UI_COLORS.textSecondary }}>평균 계획</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: UI_COLORS.textSecondary }}>평균 계획</div>
         </div>
-        <div className="text-xl" style={{ color: UI_COLORS.textMuted }}>→</div>
+        <div className="text-lg sm:text-xl" style={{ color: UI_COLORS.textMuted }}>→</div>
         <div className="text-center">
-          <div className="text-lg font-bold" style={{ color: PROGRESS_COLORS.high.text }}>
+          <div className="text-base sm:text-lg font-bold" style={{ color: PROGRESS_COLORS.high.text }}>
             {stats.avgProgress}%
           </div>
-          <div className="text-xs" style={{ color: UI_COLORS.textSecondary }}>평균 진척</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: UI_COLORS.textSecondary }}>평균 진척</div>
         </div>
-        <div className="text-xl" style={{ color: UI_COLORS.textMuted }}>=</div>
+        <div className="text-lg sm:text-xl" style={{ color: UI_COLORS.textMuted }}>=</div>
         <div className="text-center">
           <div 
-            className="text-2xl font-bold"
+            className="text-xl sm:text-2xl font-bold"
             style={{ color: stats.avgAchievement >= 80 ? ACHIEVEMENT_COLORS.exceeded.text : ACHIEVEMENT_COLORS.delayed.text }}
           >
             {stats.avgAchievement}%
           </div>
-          <div className="text-xs" style={{ color: UI_COLORS.textSecondary }}>달성률</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: UI_COLORS.textSecondary }}>달성률</div>
         </div>
       </div>
       <div className="flex h-4 rounded-md overflow-hidden">
@@ -346,7 +346,7 @@ export function AchievementSummary({ stats }: AchievementSummaryProps) {
         )}
       </div>
       <div
-        className="flex items-center gap-4 mt-2 text-xs"
+        className="flex items-center gap-2 sm:gap-4 mt-2 text-[10px] sm:text-xs flex-wrap"
         style={{ color: UI_COLORS.textSecondary }}
       >
         <Legend color={ACHIEVEMENT_COLORS.exceeded.text} label="초과달성 (100%+)" />
