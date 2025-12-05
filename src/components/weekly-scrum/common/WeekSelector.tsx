@@ -40,7 +40,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
   const selectedMonth = currentData?.month ?? months[0];
 
   const availableWeeks = useMemo(() => {
-    return weeks.filter((w) => w.year === selectedYear && w.month === selectedMonth);
+    return weeks.filter(
+      (w) => w.year === selectedYear && w.month === selectedMonth
+    );
   }, [weeks, selectedYear, selectedMonth]);
 
   const allWeekOptions = sortedWeekKeys.map((key) => {
@@ -61,14 +63,18 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
     const monthSet = new Set(newMonths.map((w) => w.month));
     const sortedMonths = Array.from(monthSet).sort((a, b) => b - a);
     const newMonth = sortedMonths[0];
-    const newWeeks = weeks.filter((w) => w.year === year && w.month === newMonth);
+    const newWeeks = weeks.filter(
+      (w) => w.year === year && w.month === newMonth
+    );
     if (newWeeks.length > 0) {
       setSelectedWeekKey(newWeeks[0].key);
     }
   };
 
   const handleMonthChange = (month: number) => {
-    const newWeeks = weeks.filter((w) => w.year === selectedYear && w.month === month);
+    const newWeeks = weeks.filter(
+      (w) => w.year === selectedYear && w.month === month
+    );
     if (newWeeks.length > 0) {
       setSelectedWeekKey(newWeeks[0].key);
     }
@@ -84,9 +90,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
       <div className="flex flex-col gap-2">
         {/* 상단: 모드 토글 + 날짜 범위 */}
         <div className="flex items-center justify-between">
-          <div 
+          <div
             className="flex items-center p-0.5 rounded"
-            style={{ background: 'var(--notion-bg-secondary)' }}
+            style={{ background: "var(--notion-bg-secondary)" }}
           >
             <button
               onClick={() => handleModeChange("single")}
@@ -94,9 +100,16 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
                 selectMode === "single" ? "font-medium" : ""
               }`}
               style={{
-                background: selectMode === "single" ? 'var(--notion-bg)' : 'transparent',
-                color: selectMode === "single" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-                boxShadow: selectMode === "single" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
+                background:
+                  selectMode === "single" ? "var(--notion-bg)" : "transparent",
+                color:
+                  selectMode === "single"
+                    ? "var(--notion-text)"
+                    : "var(--notion-text-secondary)",
+                boxShadow:
+                  selectMode === "single"
+                    ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                    : "none",
               }}
             >
               주차
@@ -107,24 +120,33 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
                 selectMode === "range" ? "font-medium" : ""
               }`}
               style={{
-                background: selectMode === "range" ? 'var(--notion-bg)' : 'transparent',
-                color: selectMode === "range" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-                boxShadow: selectMode === "range" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
+                background:
+                  selectMode === "range" ? "var(--notion-bg)" : "transparent",
+                color:
+                  selectMode === "range"
+                    ? "var(--notion-text)"
+                    : "var(--notion-text-secondary)",
+                boxShadow:
+                  selectMode === "range"
+                    ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                    : "none",
               }}
             >
               범위
             </button>
           </div>
-          
+
           {/* 날짜 범위 표시 */}
-          <div 
+          <div
             className="flex items-center gap-1.5 text-xs"
-            style={{ color: 'var(--notion-text-secondary)' }}
+            style={{ color: "var(--notion-text-secondary)" }}
           >
             <span>📅</span>
             <span className="truncate max-w-[140px]">{currentData?.range}</span>
             {selectMode === "range" && (
-              <span className="notion-badge-blue text-[10px]">누적</span>
+              <span className="notion-badge-blue text-[10px] py-0.5 px-1 rounded">
+                누적
+              </span>
             )}
           </div>
         </div>
@@ -138,7 +160,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
               className="notion-select text-xs py-1 flex-1 min-w-0"
             >
               {years.map((year) => (
-                <option key={year} value={year}>{year}년</option>
+                <option key={year} value={year}>
+                  {year}년
+                </option>
               ))}
             </select>
             <select
@@ -147,7 +171,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
               className="notion-select text-xs py-1 w-16"
             >
               {months.map((month) => (
-                <option key={month} value={month}>{month}월</option>
+                <option key={month} value={month}>
+                  {month}월
+                </option>
               ))}
             </select>
             <select
@@ -156,7 +182,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
               className="notion-select text-xs py-1 w-16"
             >
               {availableWeeks.map((w) => (
-                <option key={w.week} value={w.week}>{w.week}</option>
+                <option key={w.week} value={w.week}>
+                  {w.week}
+                </option>
               ))}
             </select>
           </div>
@@ -168,17 +196,26 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
               className="notion-select text-xs py-1 flex-1 min-w-0"
             >
               {allWeekOptions.map((opt) => (
-                <option key={opt.key} value={opt.key}>{opt.label}</option>
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
               ))}
             </select>
-            <span className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>~</span>
+            <span
+              className="text-xs"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
+              ~
+            </span>
             <select
               value={rangeEnd}
               onChange={(e) => setRangeEnd(e.target.value)}
               className="notion-select text-xs py-1 flex-1 min-w-0"
             >
               {allWeekOptions.map((opt) => (
-                <option key={opt.key} value={opt.key}>{opt.label}</option>
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -191,9 +228,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
   return (
     <div className="flex items-center gap-2">
       {/* 단일/범위 토글 */}
-      <div 
+      <div
         className="flex items-center p-0.5 rounded"
-        style={{ background: 'var(--notion-bg-secondary)' }}
+        style={{ background: "var(--notion-bg-secondary)" }}
       >
         <button
           onClick={() => handleModeChange("single")}
@@ -201,9 +238,16 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             selectMode === "single" ? "font-medium" : ""
           }`}
           style={{
-            background: selectMode === "single" ? 'var(--notion-bg)' : 'transparent',
-            color: selectMode === "single" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-            boxShadow: selectMode === "single" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
+            background:
+              selectMode === "single" ? "var(--notion-bg)" : "transparent",
+            color:
+              selectMode === "single"
+                ? "var(--notion-text)"
+                : "var(--notion-text-secondary)",
+            boxShadow:
+              selectMode === "single"
+                ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                : "none",
           }}
         >
           주차
@@ -214,9 +258,16 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             selectMode === "range" ? "font-medium" : ""
           }`}
           style={{
-            background: selectMode === "range" ? 'var(--notion-bg)' : 'transparent',
-            color: selectMode === "range" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-            boxShadow: selectMode === "range" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
+            background:
+              selectMode === "range" ? "var(--notion-bg)" : "transparent",
+            color:
+              selectMode === "range"
+                ? "var(--notion-text)"
+                : "var(--notion-text-secondary)",
+            boxShadow:
+              selectMode === "range"
+                ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                : "none",
           }}
         >
           범위
@@ -232,7 +283,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             className="notion-select"
           >
             {years.map((year) => (
-              <option key={year} value={year}>{year}년</option>
+              <option key={year} value={year}>
+                {year}년
+              </option>
             ))}
           </select>
           <select
@@ -241,7 +294,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             className="notion-select"
           >
             {months.map((month) => (
-              <option key={month} value={month}>{month}월</option>
+              <option key={month} value={month}>
+                {month}월
+              </option>
             ))}
           </select>
           <select
@@ -250,7 +305,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             className="notion-select"
           >
             {availableWeeks.map((w) => (
-              <option key={w.week} value={w.week}>{w.week}</option>
+              <option key={w.week} value={w.week}>
+                {w.week}
+              </option>
             ))}
           </select>
         </div>
@@ -259,34 +316,45 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={rangeStart}
             onChange={(e) => setRangeStart(e.target.value)}
-            className="notion-select max-w-[140px]"
+            className="notion-select min-w-[150px]"
           >
             {allWeekOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>{opt.label}</option>
+              <option key={opt.key} value={opt.key}>
+                {opt.label}
+              </option>
             ))}
           </select>
-          <span className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>~</span>
+          <span
+            className="text-xs"
+            style={{ color: "var(--notion-text-muted)" }}
+          >
+            ~
+          </span>
           <select
             value={rangeEnd}
             onChange={(e) => setRangeEnd(e.target.value)}
-            className="notion-select max-w-[140px]"
+            className="notion-select min-w-[150px]"
           >
             {allWeekOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>{opt.label}</option>
+              <option key={opt.key} value={opt.key}>
+                {opt.label}
+              </option>
             ))}
           </select>
         </div>
       )}
 
       {/* 날짜 범위 표시 */}
-      <div 
+      <div
         className="hidden xl:flex items-center gap-1.5 text-xs ml-1"
-        style={{ color: 'var(--notion-text-secondary)' }}
+        style={{ color: "var(--notion-text-secondary)" }}
       >
         <span>📅</span>
         <span>{currentData?.range}</span>
         {selectMode === "range" && (
-          <span className="notion-badge-blue text-[10px]">누적</span>
+          <span className="notion-badge-blue text-[10px] py-0.5 px-1 rounded">
+            누적
+          </span>
         )}
       </div>
     </div>

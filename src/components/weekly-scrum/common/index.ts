@@ -1,5 +1,5 @@
 // Common Components
-export { Header } from "./Header";
+export { Header, Sidebar } from "./Header";
 export { Navigation } from "./Navigation";
 export { StatsBar } from "./StatsBar";
 export { WeekSelector } from "./WeekSelector";

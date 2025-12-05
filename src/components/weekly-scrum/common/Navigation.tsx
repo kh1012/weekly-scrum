@@ -22,7 +22,6 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const EXTRA_ITEMS: NavItem[] = [
-  { key: "insights", label: "인사이트", href: "/insights", emoji: "💡" },
   { key: "shares", label: "공유사항", href: "/shares", emoji: "📣" },
 ];
 

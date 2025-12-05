@@ -5,11 +5,7 @@ import {
   getLatestWeekKey,
 } from "@/lib/scrumData";
 import { ScrumProvider } from "@/context/ScrumContext";
-import {
-  Header,
-  LayoutWrapper,
-  MainContent,
-} from "@/components/weekly-scrum/common";
+import { LayoutWrapper, MainContent } from "@/components/weekly-scrum/common";
 import type { WeekOption } from "@/types/scrum";
 
 export default function ScrumLayout({
@@ -42,7 +38,6 @@ export default function ScrumLayout({
         initialWeekKey={mockKey}
       >
         <LayoutWrapper>
-          <Header />
           <MainContent>{children}</MainContent>
         </LayoutWrapper>
       </ScrumProvider>
@@ -58,7 +53,6 @@ export default function ScrumLayout({
       initialWeekKey={initialWeekKey}
     >
       <LayoutWrapper>
-        <Header />
         <MainContent>{children}</MainContent>
       </LayoutWrapper>
     </ScrumProvider>

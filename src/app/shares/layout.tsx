@@ -4,7 +4,7 @@ import {
   getLatestSharesWeekKey,
 } from "@/lib/sharesData";
 import { SharesProvider } from "@/context/SharesContext";
-import { SharesHeader } from "@/components/shares";
+import { SharesLayoutWrapper } from "@/components/shares";
 
 export default function SharesLayout({
   children,
@@ -21,12 +21,9 @@ export default function SharesLayout({
       weeks={weeks}
       initialWeekKey={initialWeekKey}
     >
-      <div className="min-h-screen bg-[#f6f8fa]">
-        <SharesHeader />
-        <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-          {children}
-        </main>
-      </div>
+      <SharesLayoutWrapper>
+        {children}
+      </SharesLayoutWrapper>
     </SharesProvider>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
+import { Header, Sidebar } from "./Header";
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -14,12 +15,24 @@ const FULL_WIDTH_PAGES = [
 ];
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   return (
     <div 
       className="min-h-screen"
       style={{ background: 'var(--notion-bg)' }}
     >
-      {children}
+      {/* PC 사이드바 */}
+      <Sidebar isOpen={isSidebarOpen} />
+
+      {/* 메인 영역 */}
+      <div className={`transition-all duration-200 ${isSidebarOpen ? 'lg:ml-60' : 'lg:ml-0'}`}>
+        <Header 
+          isSidebarOpen={isSidebarOpen} 
+          onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+        />
+        {children}
+      </div>
     </div>
   );
 }
