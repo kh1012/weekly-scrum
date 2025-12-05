@@ -1,6 +1,15 @@
-import { getAllScrumData, getAvailableWeeks, getMockData, getLatestWeekKey } from "@/lib/scrumData";
+import {
+  getAllScrumData,
+  getAvailableWeeks,
+  getMockData,
+  getLatestWeekKey,
+} from "@/lib/scrumData";
 import { ScrumProvider } from "@/context/ScrumContext";
-import { Header, LayoutWrapper } from "@/components/weekly-scrum/common";
+import {
+  Header,
+  LayoutWrapper,
+  MainContent,
+} from "@/components/weekly-scrum/common";
 import type { WeekOption } from "@/types/scrum";
 
 export default function ScrumLayout({
@@ -34,9 +43,7 @@ export default function ScrumLayout({
       >
         <LayoutWrapper>
           <Header />
-          <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-            {children}
-          </main>
+          <MainContent>{children}</MainContent>
         </LayoutWrapper>
       </ScrumProvider>
     );
@@ -45,14 +52,15 @@ export default function ScrumLayout({
   const initialWeekKey = getLatestWeekKey(weeks);
 
   return (
-    <ScrumProvider allData={allData} weeks={weeks} initialWeekKey={initialWeekKey}>
+    <ScrumProvider
+      allData={allData}
+      weeks={weeks}
+      initialWeekKey={initialWeekKey}
+    >
       <LayoutWrapper>
         <Header />
-        <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          {children}
-        </main>
+        <MainContent>{children}</MainContent>
       </LayoutWrapper>
     </ScrumProvider>
   );
 }
-

@@ -18,7 +18,11 @@ function MatrixContent() {
     );
   }
 
-  return <MatrixView items={filteredItems} />;
+  return (
+    <div className="flex justify-center px-4">
+      <MatrixView items={filteredItems} />
+    </div>
+  );
 }
 
 export default function MatrixPage() {

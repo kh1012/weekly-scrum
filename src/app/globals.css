@@ -89,15 +89,19 @@ body {
   background: var(--text-muted);
 }
 
-/* Select 스타일링 */
+/* Select 커스텀 스타일링 - Figma 스타일 */
 select {
-  background-image: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
 }
 
 select option {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  padding: 8px 12px;
+  padding: 10px 12px;
+  font-size: 0.875rem;
 }
 
 select option:checked {
@@ -113,8 +117,8 @@ select option:hover {
 @layer components {
   /* 헤더 스타일 */
   .glass-effect {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
   }
 
@@ -132,68 +136,139 @@ select option:hover {
     border-color: var(--border-focus);
   }
 
-  /* 버튼 스타일 */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.5rem 1rem;
+  /* Figma 스타일 셀렉트 */
+  .figma-select {
+    appearance: none;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
     font-size: 0.875rem;
     font-weight: 500;
-    border-radius: var(--radius-md);
-    transition: all 0.15s ease;
+    color: var(--text-primary);
     cursor: pointer;
-  }
-
-  .btn-primary {
-    background: var(--accent-blue);
-    color: white;
-    border: none;
-  }
-
-  .btn-primary:hover {
-    background: #2563eb;
-    box-shadow: var(--shadow-md);
-  }
-
-  .btn-secondary {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-  }
-
-  .btn-secondary:hover {
-    background: var(--bg-secondary);
-    border-color: var(--text-muted);
-  }
-
-  /* 입력 필드 스타일 */
-  .input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
     transition: all 0.15s ease;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em 1.25em;
   }
 
-  .input:focus {
+  .figma-select:hover {
+    border-color: var(--text-muted);
+    background-color: var(--bg-hover);
+  }
+
+  .figma-select:focus {
     outline: none;
     border-color: var(--accent-blue);
     box-shadow: 0 0 0 3px var(--accent-blue-light);
   }
 
-  .input::placeholder {
+  /* Figma 스타일 버튼 */
+  .figma-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+
+  .figma-btn-primary {
+    background: var(--accent-blue);
+    color: white;
+  }
+
+  .figma-btn-primary:hover {
+    background: #2563eb;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .figma-btn-secondary {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+
+  .figma-btn-secondary:hover {
+    background: var(--bg-hover);
+    border-color: var(--text-muted);
+  }
+
+  .figma-btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+
+  .figma-btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  /* Figma 스타일 입력 필드 */
+  .figma-input {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: all 0.15s ease;
+  }
+
+  .figma-input:hover {
+    border-color: var(--text-muted);
+  }
+
+  .figma-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px var(--accent-blue-light);
+  }
+
+  .figma-input::placeholder {
     color: var(--text-placeholder);
+  }
+
+  /* 토글 버튼 그룹 */
+  .toggle-group {
+    display: inline-flex;
+    background: var(--bg-tertiary);
+    padding: 2px;
+    border-radius: var(--radius-md);
+  }
+
+  .toggle-btn {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: calc(var(--radius-md) - 2px);
+    transition: all 0.15s ease;
+  }
+
+  .toggle-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .toggle-btn-active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-xs);
   }
 
   /* 뱃지 스타일 */
   .badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.5rem;
+    padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
     font-weight: 500;
     border-radius: 9999px;
@@ -318,6 +393,55 @@ select option:hover {
     box-shadow: var(--shadow-lg);
   }
 
+  /* 구분선 */
+  .divider {
+    width: 1px;
+    height: 1.5rem;
+    background: var(--border-color);
+  }
+
+  /* 사이드바 네비게이션 아이템 */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .nav-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .nav-item-active {
+    background: var(--accent-blue-light);
+    color: var(--accent-blue);
+  }
+
+  .nav-item-icon {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease;
+  }
+
+  .nav-item:hover .nav-item-icon {
+    background: var(--border-color);
+  }
+
+  .nav-item-active .nav-item-icon {
+    background: rgba(59, 130, 246, 0.15);
+  }
+
   /* 애니메이션 */
   .fade-in {
     animation: fadeIn 0.2s ease-out;
@@ -346,6 +470,21 @@ select option:hover {
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  .slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
     }
   }
 }

@@ -42,6 +42,7 @@ export interface WeeklyScrumData {
 export interface FilterState {
   domain: string;
   project: string;
+  member: string;
   search: string;
 }
 

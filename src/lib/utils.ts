@@ -14,7 +14,15 @@ export function filterItems(items: ScrumItem[], filters: FilterState): ScrumItem
     }
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      const searchTarget = [item.name, item.topic, item.progress, item.risk, item.next]
+      const searchTarget = [
+        item.name,
+        item.domain,
+        item.project,
+        item.topic,
+        item.progress,
+        item.risk,
+        item.next,
+      ]
         .join(" ")
         .toLowerCase();
       if (!searchTarget.includes(searchLower)) {
