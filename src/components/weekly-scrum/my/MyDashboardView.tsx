@@ -22,6 +22,7 @@ export function MyDashboardView() {
     members,
     activeMember,
     memberItems,
+    weeklyMemberItems,
     stats,
     weeklyTrend,
     selectMode,
@@ -128,24 +129,74 @@ export function MyDashboardView() {
           <CollaborationIntensity weeklyData={collaborationIntensity} />
 
           {/* 항목 리스트 */}
-          <div className="notion-card overflow-hidden">
-            <div
-              className="px-4 py-3"
-              style={{
-                background: "var(--notion-bg-secondary)",
-                borderBottom: "1px solid var(--notion-border)",
-              }}
-            >
+          {selectMode === "range" && weeklyMemberItems.length > 0 ? (
+            // 범위 모드: 주차별로 그룹화
+            <div className="space-y-4">
               <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
-                📝 업무 상세 목록 ({memberItems.length}개)
+                📝 주차별 업무 상세 목록 ({memberItems.length}개)
               </h3>
-            </div>
-            <div className="divide-y" style={{ borderColor: "var(--notion-border)" }}>
-              {memberItems.map((item, idx) => (
-                <ItemRow key={idx} item={item} />
+              {weeklyMemberItems.map((weekData) => (
+                <div key={weekData.weekKey} className="notion-card overflow-hidden">
+                  <div
+                    className="px-4 py-2.5 flex items-center justify-between"
+                    style={{
+                      background: "var(--notion-bg-secondary)",
+                      borderBottom: "1px solid var(--notion-border)",
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-xs font-semibold px-2 py-0.5 rounded"
+                        style={{
+                          background: "var(--notion-blue-bg)",
+                          color: "var(--notion-blue)",
+                        }}
+                      >
+                        {weekData.weekLabel}
+                      </span>
+                      <span
+                        className="text-xs"
+                        style={{ color: "var(--notion-text-secondary)" }}
+                      >
+                        {weekData.items.length}개 항목
+                      </span>
+                    </div>
+                    <span
+                      className="text-xs"
+                      style={{ color: "var(--notion-text-tertiary)" }}
+                    >
+                      📅 {weekData.range}
+                    </span>
+                  </div>
+                  <div className="divide-y" style={{ borderColor: "var(--notion-border)" }}>
+                    {weekData.items.map((item, idx) => (
+                      <ItemRow key={idx} item={item} />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
+          ) : (
+            // 단일 주차 모드: 기존 표시
+            <div className="notion-card overflow-hidden">
+              <div
+                className="px-4 py-3"
+                style={{
+                  background: "var(--notion-bg-secondary)",
+                  borderBottom: "1px solid var(--notion-border)",
+                }}
+              >
+                <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
+                  📝 업무 상세 목록 ({memberItems.length}개)
+                </h3>
+              </div>
+              <div className="divide-y" style={{ borderColor: "var(--notion-border)" }}>
+                {memberItems.map((item, idx) => (
+                  <ItemRow key={idx} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

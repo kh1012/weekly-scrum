@@ -4,12 +4,20 @@ import { useMemo, useState, useCallback } from "react";
 import { useScrumContext } from "@/context/ScrumContext";
 import { getAchievementRate } from "@/lib/colorDefines";
 import type { TrendPeriod } from "../utils/dashboardUtils";
+import type { ScrumItem } from "@/types/scrum";
 import { getWeekCount, getEndDateLabel, calculateMemberStats } from "../utils/dashboardUtils";
 import { calculateCollaborationStatus } from "../components/MyCollaborationStatus";
 import { calculateCollaborationIntensity } from "../components/CollaborationIntensity";
 
+export interface WeeklyMemberItems {
+  weekKey: string;
+  weekLabel: string;
+  range: string;
+  items: ScrumItem[];
+}
+
 export function useMyDashboard() {
-  const { currentData, members, allData, sortedWeekKeys, selectMode } = useScrumContext();
+  const { currentData, members, allData, sortedWeekKeys, selectMode, rangeStart, rangeEnd } = useScrumContext();
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [trendPeriod, setTrendPeriod] = useState<TrendPeriod>("1month");
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
@@ -123,6 +131,43 @@ export function useMyDashboard() {
     return calculateCollaborationIntensity(allData, sortedWeekKeys, activeMember, weekCount);
   }, [activeMember, allData, sortedWeekKeys, trendPeriod]);
 
+  // 범위 모드일 때 주차별로 그룹화된 데이터
+  const weeklyMemberItems = useMemo((): WeeklyMemberItems[] => {
+    if (selectMode !== "range" || !activeMember) return [];
+
+    // rangeStart ~ rangeEnd 범위의 주차 키들
+    const startIdx = sortedWeekKeys.indexOf(rangeStart);
+    const endIdx = sortedWeekKeys.indexOf(rangeEnd);
+    if (startIdx === -1 || endIdx === -1) return [];
+
+    const rangeWeekKeys = sortedWeekKeys.slice(
+      Math.min(startIdx, endIdx),
+      Math.max(startIdx, endIdx) + 1
+    );
+
+    return rangeWeekKeys.map((weekKey) => {
+      const weekData = allData[weekKey];
+      if (!weekData) return null;
+
+      let items = weekData.items.filter((item) => item.name === activeMember);
+
+      // 도메인/프로젝트 필터 적용
+      if (selectedDomains.size > 0) {
+        items = items.filter((item) => selectedDomains.has(item.domain));
+      }
+      if (selectedProjects.size > 0) {
+        items = items.filter((item) => selectedProjects.has(item.project));
+      }
+
+      return {
+        weekKey,
+        weekLabel: `${weekData.year}년 ${weekData.month}월 ${weekData.week}`,
+        range: weekData.range,
+        items,
+      };
+    }).filter((data): data is WeeklyMemberItems => data !== null && data.items.length > 0);
+  }, [selectMode, activeMember, allData, sortedWeekKeys, rangeStart, rangeEnd, selectedDomains, selectedProjects]);
+
   // 도메인 토글
   const toggleDomain = useCallback((domain: string) => {
     setSelectedDomains((prev) => {
@@ -183,6 +228,7 @@ export function useMyDashboard() {
     members,
     activeMember,
     memberItems,
+    weeklyMemberItems,
     stats,
     weeklyTrend,
     selectMode,
