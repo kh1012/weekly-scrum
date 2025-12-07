@@ -28,12 +28,6 @@ const NAV_CATEGORIES: NavCategory[] = [
       { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
       { key: "quadrant", label: "사분면", href: "/quadrant", emoji: "🎯" },
       { key: "risks", label: "리스크", href: "/risks", emoji: "⚠️" },
-    ],
-  },
-  {
-    key: "collaboration",
-    label: "협업",
-    items: [
       { key: "collaboration", label: "팀 협업", href: "/collaboration", emoji: "🤝" },
     ],
   },
