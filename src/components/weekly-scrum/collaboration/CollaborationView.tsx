@@ -150,11 +150,11 @@ export function CollaborationView({ items }: CollaborationViewProps) {
         </div>
       )}
 
-      {/* 네트워크 그래프 & 병목 맵 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <CollaborationNetworkGraph items={items} />
-        <BottleneckMap items={items} />
-      </div>
+      {/* 네트워크 그래프 (전체 너비) */}
+      <CollaborationNetworkGraph items={items} />
+
+      {/* 병목 맵 */}
+      <BottleneckMap items={items} />
 
       {/* 협업 부하 히트맵 */}
       <CollaborationLoadHeatmap items={items} />

@@ -18,7 +18,6 @@ import {
 import { MyCollaborationRadar } from "@/components/visualizations/MyCollaborationRadar";
 import { MyBottleneckTimeline } from "@/components/visualizations/MyBottleneckTimeline";
 import { MyCollaborationOrbit } from "@/components/visualizations/MyCollaborationOrbit";
-import { CollaborationInsights } from "@/components/visualizations/CollaborationInsights";
 
 export function MyDashboardView() {
   const {
@@ -130,11 +129,8 @@ export function MyDashboardView() {
             <MyCollaborationRadar items={currentData.items} memberName={activeMember} />
           </div>
 
-          {/* 협업 궤도 & 인사이트 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <MyCollaborationOrbit items={currentData.items} memberName={activeMember} />
-            <CollaborationInsights items={currentData.items} memberName={activeMember} />
-          </div>
+          {/* 협업 궤도 */}
+          <MyCollaborationOrbit items={currentData.items} memberName={activeMember} />
 
           {/* 모듈 분포 */}
           <ModuleDistribution items={memberItems} />

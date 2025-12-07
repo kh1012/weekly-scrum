@@ -9,289 +9,454 @@ interface CrossDomainMatrixProps {
   items: ScrumItem[];
 }
 
-// 명확한 색상 팔레트 정의
-const INTENSITY_COLORS = {
-  pair: {
-    0: { bg: "#f8fafc", text: "#cbd5e1" },
-    1: { bg: "#dbeafe", text: "#3b82f6" },
-    2: { bg: "#93c5fd", text: "#1e40af" },
-    3: { bg: "#3b82f6", text: "#ffffff" },
-    4: { bg: "#1d4ed8", text: "#ffffff" },
-  },
-  "waiting-on": {
-    0: { bg: "#f8fafc", text: "#cbd5e1" },
-    1: { bg: "#fee2e2", text: "#ef4444" },
-    2: { bg: "#fca5a5", text: "#b91c1c" },
-    3: { bg: "#ef4444", text: "#ffffff" },
-    4: { bg: "#dc2626", text: "#ffffff" },
-  },
-};
+interface DomainArc {
+  domain: string;
+  startAngle: number;
+  endAngle: number;
+  color: string;
+  pairOut: number;
+  pairIn: number;
+  waitingOut: number;
+  waitingIn: number;
+  total: number;
+}
+
+interface FlowRibbon {
+  source: string;
+  target: string;
+  sourceStart: number;
+  sourceEnd: number;
+  targetStart: number;
+  targetEnd: number;
+  value: number;
+  type: "pair" | "waiting-on";
+}
 
 export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
-  const [hoveredCell, setHoveredCell] = useState<{
-    source: string;
-    target: string;
-    type: "pair" | "waiting-on";
-  } | null>(null);
+  const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
+  const [hoveredRibbon, setHoveredRibbon] = useState<FlowRibbon | null>(null);
+  const [selectedType, setSelectedType] = useState<"all" | "pair" | "waiting-on">("all");
 
-  // Pair 데이터
-  const pairData = useMemo(() => {
-    const data = getCollaborationMatrix(items, "pair");
+  const { domainArcs, flowRibbons, domains } = useMemo(() => {
+    const pairData = getCollaborationMatrix(items, "pair");
+    const waitingData = getCollaborationMatrix(items, "waiting-on");
+
+    // 도메인 목록
     const domainSet = new Set<string>();
-    data.forEach((cell) => {
+    pairData.forEach((cell) => {
       domainSet.add(cell.sourceDomain);
       domainSet.add(cell.targetDomain);
     });
     const domains = Array.from(domainSet).sort();
-    const maxValue = Math.max(
-      ...data.filter((d) => d.sourceDomain !== d.targetDomain).map((d) => d.pairCount),
-      1
-    );
-    return { data, domains, maxValue };
+
+    if (domains.length === 0) {
+      return { domainArcs: [], flowRibbons: [], domains: [] };
+    }
+
+    // 도메인별 통계 계산
+    const domainStats = new Map<string, { pairOut: number; pairIn: number; waitingOut: number; waitingIn: number }>();
+    domains.forEach((d) => domainStats.set(d, { pairOut: 0, pairIn: 0, waitingOut: 0, waitingIn: 0 }));
+
+    pairData.forEach((cell) => {
+      if (cell.sourceDomain !== cell.targetDomain) {
+        const source = domainStats.get(cell.sourceDomain)!;
+        const target = domainStats.get(cell.targetDomain)!;
+        source.pairOut += cell.pairCount;
+        target.pairIn += cell.pairCount;
+      }
+    });
+
+    waitingData.forEach((cell) => {
+      if (cell.sourceDomain !== cell.targetDomain) {
+        const source = domainStats.get(cell.sourceDomain)!;
+        const target = domainStats.get(cell.targetDomain)!;
+        source.waitingOut += cell.waitingOnCount;
+        target.waitingIn += cell.waitingOnCount;
+      }
+    });
+
+    // 총량 계산
+    const totals = domains.map((d) => {
+      const s = domainStats.get(d)!;
+      return s.pairOut + s.pairIn + s.waitingOut + s.waitingIn;
+    });
+    const grandTotal = Math.max(totals.reduce((a, b) => a + b, 0), 1);
+
+    // 각도 할당 (Gap 포함)
+    const gapAngle = 0.04; // 도메인 간 간격
+    const totalGap = gapAngle * domains.length;
+    const availableAngle = 2 * Math.PI - totalGap;
+
+    let currentAngle = -Math.PI / 2;
+    const domainArcs: DomainArc[] = domains.map((domain, idx) => {
+      const stats = domainStats.get(domain)!;
+      const total = totals[idx];
+      const arcAngle = Math.max((total / grandTotal) * availableAngle, 0.15); // 최소 크기 보장
+
+      const arc: DomainArc = {
+        domain,
+        startAngle: currentAngle,
+        endAngle: currentAngle + arcAngle,
+        color: getDomainColor(domain),
+        pairOut: stats.pairOut,
+        pairIn: stats.pairIn,
+        waitingOut: stats.waitingOut,
+        waitingIn: stats.waitingIn,
+        total,
+      };
+
+      currentAngle += arcAngle + gapAngle;
+      return arc;
+    });
+
+    // Flow Ribbons 생성
+    const flowRibbons: FlowRibbon[] = [];
+    const domainCurrentAngle = new Map<string, number>();
+    domainArcs.forEach((arc) => domainCurrentAngle.set(arc.domain, arc.startAngle));
+
+    // Pair 리본
+    pairData.forEach((cell) => {
+      if (cell.sourceDomain === cell.targetDomain || cell.pairCount === 0) return;
+
+      const sourceArc = domainArcs.find((a) => a.domain === cell.sourceDomain)!;
+      const targetArc = domainArcs.find((a) => a.domain === cell.targetDomain)!;
+      const sourceTotal = sourceArc.total || 1;
+      const targetTotal = targetArc.total || 1;
+
+      const sourceAngleSpan = (sourceArc.endAngle - sourceArc.startAngle) * (cell.pairCount / sourceTotal);
+      const targetAngleSpan = (targetArc.endAngle - targetArc.startAngle) * (cell.pairCount / targetTotal);
+
+      const sourceStart = domainCurrentAngle.get(cell.sourceDomain)!;
+      const targetStart = domainCurrentAngle.get(cell.targetDomain)!;
+
+      flowRibbons.push({
+        source: cell.sourceDomain,
+        target: cell.targetDomain,
+        sourceStart,
+        sourceEnd: sourceStart + sourceAngleSpan,
+        targetStart,
+        targetEnd: targetStart + targetAngleSpan,
+        value: cell.pairCount,
+        type: "pair",
+      });
+
+      domainCurrentAngle.set(cell.sourceDomain, sourceStart + sourceAngleSpan);
+      domainCurrentAngle.set(cell.targetDomain, targetStart + targetAngleSpan);
+    });
+
+    // Waiting-on 리본
+    waitingData.forEach((cell) => {
+      if (cell.sourceDomain === cell.targetDomain || cell.waitingOnCount === 0) return;
+
+      const sourceArc = domainArcs.find((a) => a.domain === cell.sourceDomain)!;
+      const targetArc = domainArcs.find((a) => a.domain === cell.targetDomain)!;
+      const sourceTotal = sourceArc.total || 1;
+      const targetTotal = targetArc.total || 1;
+
+      const sourceAngleSpan = (sourceArc.endAngle - sourceArc.startAngle) * (cell.waitingOnCount / sourceTotal);
+      const targetAngleSpan = (targetArc.endAngle - targetArc.startAngle) * (cell.waitingOnCount / targetTotal);
+
+      const sourceStart = domainCurrentAngle.get(cell.sourceDomain)!;
+      const targetStart = domainCurrentAngle.get(cell.targetDomain)!;
+
+      flowRibbons.push({
+        source: cell.sourceDomain,
+        target: cell.targetDomain,
+        sourceStart,
+        sourceEnd: sourceStart + sourceAngleSpan,
+        targetStart,
+        targetEnd: targetStart + targetAngleSpan,
+        value: cell.waitingOnCount,
+        type: "waiting-on",
+      });
+
+      domainCurrentAngle.set(cell.sourceDomain, sourceStart + sourceAngleSpan);
+      domainCurrentAngle.set(cell.targetDomain, targetStart + targetAngleSpan);
+    });
+
+    return { domainArcs, flowRibbons, domains };
   }, [items]);
 
-  // Waiting-on 데이터
-  const waitingOnData = useMemo(() => {
-    const data = getCollaborationMatrix(items, "waiting-on");
-    const maxValue = Math.max(
-      ...data.filter((d) => d.sourceDomain !== d.targetDomain).map((d) => d.waitingOnCount),
-      1
-    );
-    return { data, maxValue };
-  }, [items]);
-
-  // 도메인 목록 (Pair 기준)
-  const domains = pairData.domains;
-
-  const getDomainColor = (domain: string): string => {
+  function getDomainColor(domain: string): string {
     const domainKey = domain as keyof typeof DOMAIN_COLORS;
     return DOMAIN_COLORS[domainKey]?.text ?? "#64748b";
+  }
+
+  // Arc path 생성
+  const createArcPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number) => {
+    const startInnerX = Math.cos(startAngle) * innerRadius;
+    const startInnerY = Math.sin(startAngle) * innerRadius;
+    const endInnerX = Math.cos(endAngle) * innerRadius;
+    const endInnerY = Math.sin(endAngle) * innerRadius;
+    const startOuterX = Math.cos(startAngle) * outerRadius;
+    const startOuterY = Math.sin(startAngle) * outerRadius;
+    const endOuterX = Math.cos(endAngle) * outerRadius;
+    const endOuterY = Math.sin(endAngle) * outerRadius;
+
+    const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+
+    return `
+      M ${startInnerX} ${startInnerY}
+      A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${endInnerX} ${endInnerY}
+      L ${endOuterX} ${endOuterY}
+      A ${outerRadius} ${outerRadius} 0 ${largeArc} 0 ${startOuterX} ${startOuterY}
+      Z
+    `;
   };
 
-  const getCellValue = (
-    source: string,
-    target: string,
-    type: "pair" | "waiting-on"
-  ): number => {
-    const dataSet = type === "pair" ? pairData.data : waitingOnData.data;
-    const cell = dataSet.find(
-      (c) => c.sourceDomain === source && c.targetDomain === target
-    );
-    return type === "pair" ? (cell?.pairCount ?? 0) : (cell?.waitingOnCount ?? 0);
+  // Ribbon path 생성
+  const createRibbonPath = (ribbon: FlowRibbon, radius: number) => {
+    const sourceStart = { x: Math.cos(ribbon.sourceStart) * radius, y: Math.sin(ribbon.sourceStart) * radius };
+    const sourceEnd = { x: Math.cos(ribbon.sourceEnd) * radius, y: Math.sin(ribbon.sourceEnd) * radius };
+    const targetStart = { x: Math.cos(ribbon.targetStart) * radius, y: Math.sin(ribbon.targetStart) * radius };
+    const targetEnd = { x: Math.cos(ribbon.targetEnd) * radius, y: Math.sin(ribbon.targetEnd) * radius };
+
+    // 베지어 곡선으로 연결
+    return `
+      M ${sourceStart.x} ${sourceStart.y}
+      Q 0 0 ${targetStart.x} ${targetStart.y}
+      A ${radius} ${radius} 0 0 1 ${targetEnd.x} ${targetEnd.y}
+      Q 0 0 ${sourceEnd.x} ${sourceEnd.y}
+      A ${radius} ${radius} 0 0 1 ${sourceStart.x} ${sourceStart.y}
+      Z
+    `;
   };
 
-  const getIntensityLevel = (
-    value: number,
-    maxValue: number
-  ): 0 | 1 | 2 | 3 | 4 => {
-    if (value === 0) return 0;
-    const ratio = value / maxValue;
-    if (ratio >= 0.8) return 4;
-    if (ratio >= 0.5) return 3;
-    if (ratio >= 0.25) return 2;
-    return 1;
-  };
-
-  const getCellStyle = (
-    value: number,
-    maxValue: number,
-    type: "pair" | "waiting-on",
-    isSelf: boolean
-  ) => {
-    if (isSelf) {
-      return { bg: "#e2e8f0", text: "#94a3b8" };
-    }
-    const level = getIntensityLevel(value, maxValue);
-    return INTENSITY_COLORS[type][level];
-  };
-
-  // 셀 크기
-  const CELL_SIZE = 36;
+  const filteredRibbons = flowRibbons.filter((r) => {
+    if (selectedType === "all") return true;
+    return r.type === selectedType;
+  });
 
   if (domains.length === 0) {
     return (
       <div className="notion-card p-4">
         <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
-          🔀 도메인 간 협업 매트릭스
+          🔀 도메인 간 협업 흐름
         </h3>
-        <div className="flex items-center justify-center h-32 text-sm" style={{ color: "var(--notion-text-secondary)" }}>
+        <div className="flex items-center justify-center h-48 text-sm" style={{ color: "var(--notion-text-secondary)" }}>
           협업 데이터가 없습니다.
         </div>
       </div>
     );
   }
 
-  // 단일 매트릭스 렌더링 컴포넌트
-  const renderMatrix = (type: "pair" | "waiting-on") => {
-    const maxValue = type === "pair" ? pairData.maxValue : waitingOnData.maxValue;
-    const colors = INTENSITY_COLORS[type];
-    const title = type === "pair" ? "Pair 협업" : "Waiting-on";
-    const titleColor = type === "pair" ? "#3b82f6" : "#ef4444";
-
-    return (
-      <div className="flex-1 min-w-0">
-        {/* 매트릭스 타이틀 */}
-        <div className="flex items-center gap-2 mb-3">
-          <span
-            className="w-3 h-3 rounded"
-            style={{ background: titleColor }}
-          />
-          <span className="text-sm font-semibold" style={{ color: titleColor }}>
-            {title}
-          </span>
-        </div>
-
-        {/* 매트릭스 Grid */}
-        <div className="overflow-x-auto">
-          <div
-            className="inline-grid gap-px"
-            style={{
-              gridTemplateColumns: `80px repeat(${domains.length}, ${CELL_SIZE}px)`,
-              background: "var(--notion-border)",
-              borderRadius: 6,
-              overflow: "hidden",
-            }}
-          >
-            {/* 헤더 행 */}
-            <div
-              className="flex items-end justify-center pb-1 text-[9px] font-medium"
-              style={{ background: "var(--notion-bg)", color: "var(--notion-text-muted)", height: 50 }}
-            >
-              From↓ To→
-            </div>
-            {domains.map((domain) => (
-              <div
-                key={`${type}-header-${domain}`}
-                className="flex flex-col items-center justify-end pb-1"
-                style={{ background: "var(--notion-bg)", height: 50 }}
-              >
-                <span
-                  className="w-2.5 h-2.5 rounded-full mb-0.5"
-                  style={{ background: getDomainColor(domain) }}
-                />
-                <span
-                  className="text-[9px] font-medium text-center leading-tight"
-                  style={{ color: "var(--notion-text-secondary)", maxWidth: CELL_SIZE }}
-                >
-                  {domain.length > 5 ? domain.slice(0, 4) + "…" : domain}
-                </span>
-              </div>
-            ))}
-
-            {/* 데이터 행 */}
-            {domains.map((sourceDomain) => (
-              <>
-                {/* 행 헤더 */}
-                <div
-                  key={`${type}-row-${sourceDomain}`}
-                  className="flex items-center gap-1.5 px-2"
-                  style={{ background: "var(--notion-bg)", height: CELL_SIZE }}
-                >
-                  <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ background: getDomainColor(sourceDomain) }}
-                  />
-                  <span
-                    className="text-[10px] font-medium truncate"
-                    style={{ color: "var(--notion-text)" }}
-                  >
-                    {sourceDomain}
-                  </span>
-                </div>
-
-                {/* 셀들 */}
-                {domains.map((targetDomain) => {
-                  const value = getCellValue(sourceDomain, targetDomain, type);
-                  const isSelf = sourceDomain === targetDomain;
-                  const style = getCellStyle(value, maxValue, type, isSelf);
-                  const isHovered =
-                    hoveredCell?.source === sourceDomain &&
-                    hoveredCell?.target === targetDomain &&
-                    hoveredCell?.type === type;
-
-                  return (
-                    <div
-                      key={`${type}-${sourceDomain}-${targetDomain}`}
-                      className="relative flex items-center justify-center font-semibold transition-all"
-                      style={{
-                        width: CELL_SIZE,
-                        height: CELL_SIZE,
-                        background: style.bg,
-                        color: style.text,
-                        fontSize: value >= 10 ? 11 : 12,
-                        cursor: isSelf ? "default" : "pointer",
-                        transform: isHovered ? "scale(1.1)" : "scale(1)",
-                        boxShadow: isHovered ? "0 4px 12px rgba(0,0,0,0.2)" : "none",
-                        zIndex: isHovered ? 10 : 1,
-                      }}
-                      onMouseEnter={() =>
-                        !isSelf && setHoveredCell({ source: sourceDomain, target: targetDomain, type })
-                      }
-                      onMouseLeave={() => setHoveredCell(null)}
-                    >
-                      {isSelf ? "−" : value > 0 ? value : ""}
-
-                      {/* 툴팁 */}
-                      {isHovered && !isSelf && (
-                        <div
-                          className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[10px] whitespace-nowrap z-20"
-                          style={{
-                            background: "var(--notion-text)",
-                            color: "var(--notion-bg)",
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                          }}
-                        >
-                          {sourceDomain} → {targetDomain}: <strong>{value}건</strong>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </>
-            ))}
-          </div>
-        </div>
-
-        {/* 범례 */}
-        <div className="mt-2 flex items-center gap-1.5 text-[10px]">
-          <span style={{ color: "var(--notion-text-tertiary)" }}>강도:</span>
-          {[0, 1, 2, 3, 4].map((level) => (
-            <div
-              key={level}
-              className="w-5 h-5 rounded flex items-center justify-center font-medium"
-              style={{
-                background: colors[level as 0 | 1 | 2 | 3 | 4].bg,
-                color: colors[level as 0 | 1 | 2 | 3 | 4].text,
-                fontSize: 9,
-              }}
-            >
-              {level}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const size = 500;
+  const center = size / 2;
+  const outerRadius = 200;
+  const innerRadius = 170;
+  const ribbonRadius = innerRadius - 5;
 
   return (
     <div className="notion-card p-4">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
-          🔀 도메인 간 협업 매트릭스
-        </h3>
-        <p className="text-xs mt-1" style={{ color: "var(--notion-text-secondary)" }}>
-          행(From) → 열(To) 방향으로 협업 관계를 표시합니다
-        </p>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
+            🔀 도메인 간 협업 흐름
+          </h3>
+          <p className="text-xs mt-1" style={{ color: "var(--notion-text-secondary)" }}>
+            도메인 간의 협업 관계를 시각화합니다
+          </p>
+        </div>
+        <div className="flex items-center gap-1 p-0.5 rounded" style={{ background: "var(--notion-bg-secondary)" }}>
+          {(["all", "pair", "waiting-on"] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => setSelectedType(type)}
+              className={`px-3 py-1.5 text-xs rounded transition-all ${selectedType === type ? "font-semibold" : ""}`}
+              style={{
+                background: selectedType === type ? "var(--notion-bg)" : "transparent",
+                color:
+                  selectedType === type
+                    ? type === "pair"
+                      ? "#3b82f6"
+                      : type === "waiting-on"
+                      ? "#ef4444"
+                      : "var(--notion-text)"
+                    : "var(--notion-text-secondary)",
+                boxShadow: selectedType === type ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px" : "none",
+              }}
+            >
+              {type === "all" ? "전체" : type === "pair" ? "Pair" : "Waiting-on"}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* 좌우 매트릭스 */}
-      <div className="flex gap-6 overflow-x-auto">
-        {renderMatrix("pair")}
-        <div
-          className="w-px self-stretch flex-shrink-0"
-          style={{ background: "var(--notion-border)" }}
-        />
-        {renderMatrix("waiting-on")}
+      <div
+        className="relative rounded-lg overflow-hidden"
+        style={{
+          background: "radial-gradient(ellipse at center, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)",
+          border: "1px solid var(--notion-border)",
+        }}
+      >
+        <svg width="100%" height={size} viewBox={`0 0 ${size} ${size}`}>
+          <g transform={`translate(${center}, ${center})`}>
+            {/* Ribbons (연결선) */}
+            {filteredRibbons.map((ribbon, idx) => {
+              const isHighlighted =
+                !hoveredDomain ||
+                ribbon.source === hoveredDomain ||
+                ribbon.target === hoveredDomain;
+              const isRibbonHovered = hoveredRibbon === ribbon;
+              const color = ribbon.type === "pair" ? "#3b82f6" : "#ef4444";
+
+              return (
+                <path
+                  key={`ribbon-${idx}`}
+                  d={createRibbonPath(ribbon, ribbonRadius)}
+                  fill={color}
+                  fillOpacity={isRibbonHovered ? 0.7 : isHighlighted ? 0.35 : 0.08}
+                  stroke={color}
+                  strokeWidth={isRibbonHovered ? 2 : 0}
+                  style={{ cursor: "pointer", transition: "fill-opacity 0.2s" }}
+                  onMouseEnter={() => setHoveredRibbon(ribbon)}
+                  onMouseLeave={() => setHoveredRibbon(null)}
+                />
+              );
+            })}
+
+            {/* Domain Arcs */}
+            {domainArcs.map((arc) => {
+              const isHighlighted = !hoveredDomain || arc.domain === hoveredDomain;
+              const midAngle = (arc.startAngle + arc.endAngle) / 2;
+              const labelRadius = outerRadius + 25;
+              const labelX = Math.cos(midAngle) * labelRadius;
+              const labelY = Math.sin(midAngle) * labelRadius;
+
+              return (
+                <g key={arc.domain}>
+                  {/* Arc */}
+                  <path
+                    d={createArcPath(arc.startAngle, arc.endAngle, innerRadius, outerRadius)}
+                    fill={arc.color}
+                    fillOpacity={isHighlighted ? 1 : 0.3}
+                    stroke="white"
+                    strokeWidth={2}
+                    style={{ cursor: "pointer", transition: "fill-opacity 0.2s" }}
+                    onMouseEnter={() => setHoveredDomain(arc.domain)}
+                    onMouseLeave={() => setHoveredDomain(null)}
+                  />
+                  {/* Label */}
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={11}
+                    fontWeight={600}
+                    fill={isHighlighted ? arc.color : "#94a3b8"}
+                    style={{ transition: "fill 0.2s", pointerEvents: "none" }}
+                  >
+                    {arc.domain}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Center label */}
+            <text
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={12}
+              fill="#64748b"
+              fontWeight={500}
+            >
+              {hoveredDomain || (hoveredRibbon ? `${hoveredRibbon.source} → ${hoveredRibbon.target}` : "도메인 협업")}
+            </text>
+            {(hoveredDomain || hoveredRibbon) && (
+              <text
+                y={18}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={10}
+                fill="#94a3b8"
+              >
+                {hoveredDomain
+                  ? `${domainArcs.find((a) => a.domain === hoveredDomain)?.total ?? 0}건`
+                  : hoveredRibbon
+                  ? `${hoveredRibbon.value}건 (${hoveredRibbon.type === "pair" ? "Pair" : "Waiting"})`
+                  : ""}
+              </text>
+            )}
+          </g>
+        </svg>
+
+        {/* Tooltip */}
+        {hoveredRibbon && (
+          <div
+            className="absolute top-3 right-3 p-3 rounded-lg text-xs"
+            style={{
+              background: "rgba(255,255,255,0.95)",
+              border: "1px solid var(--notion-border)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className="w-3 h-3 rounded"
+                style={{ background: hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444" }}
+              />
+              <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+                {hoveredRibbon.type === "pair" ? "Pair 협업" : "Waiting-on"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2" style={{ color: "var(--notion-text-secondary)" }}>
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: getDomainColor(hoveredRibbon.source) }}
+              />
+              <span>{hoveredRibbon.source}</span>
+              <span>→</span>
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: getDomainColor(hoveredRibbon.target) }}
+              />
+              <span>{hoveredRibbon.target}</span>
+            </div>
+            <div
+              className="mt-1 text-center font-bold"
+              style={{ color: hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444" }}
+            >
+              {hoveredRibbon.value}건
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 범례 */}
+      <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--notion-border)" }}>
+        <div className="flex flex-wrap gap-2">
+          {domainArcs.map((arc) => (
+            <span
+              key={arc.domain}
+              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded cursor-pointer transition-all"
+              style={{
+                background: hoveredDomain === arc.domain ? arc.color : "var(--notion-bg-secondary)",
+                color: hoveredDomain === arc.domain ? "white" : "var(--notion-text)",
+              }}
+              onMouseEnter={() => setHoveredDomain(arc.domain)}
+              onMouseLeave={() => setHoveredDomain(null)}
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: hoveredDomain === arc.domain ? "white" : arc.color }}
+              />
+              {arc.domain}
+              <span className="opacity-60">({arc.total})</span>
+            </span>
+          ))}
+        </div>
+        <div className="flex items-center gap-3 text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded" style={{ background: "rgba(59, 130, 246, 0.5)" }} />
+            Pair
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded" style={{ background: "rgba(239, 68, 68, 0.5)" }} />
+            Waiting-on
+          </span>
+        </div>
       </div>
     </div>
   );

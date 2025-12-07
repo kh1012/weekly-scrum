@@ -37,9 +37,11 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
   useEffect(() => {
     if (rawNodes.length === 0) return;
 
-    const width = 700;
-    const height = 400;
-    const padding = 60;
+    // 더 넓은 캔버스 크기
+    const width = 1200;
+    const height = 600;
+    const padding = 80;
+    const verticalSpacing = 120; // 노드 간 세로 간격
 
     // 도메인별로 그룹핑
     const domainGroups = new Map<string, typeof rawNodes>();
@@ -60,8 +62,9 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
 
       nodes.forEach((node, nodeIndex) => {
         const nodeCount = nodes.length;
-        const startY = height / 2 - ((nodeCount - 1) * 70) / 2;
-        const y = startY + nodeIndex * 70;
+        const totalHeight = (nodeCount - 1) * verticalSpacing;
+        const startY = height / 2 - totalHeight / 2;
+        const y = startY + nodeIndex * verticalSpacing;
 
         positions.push({
           id: node.id,
@@ -81,13 +84,13 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
       const result = nodes.map((n) => ({ ...n }));
 
       for (let iter = 0; iter < iterations; iter++) {
-        // Repulsion between nodes
+        // Repulsion between nodes (더 넓은 최소 거리)
         for (let i = 0; i < result.length; i++) {
           for (let j = i + 1; j < result.length; j++) {
             const dx = result[j].x - result[i].x;
             const dy = result[j].y - result[i].y;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const minDist = 80;
+            const minDist = 130; // 최소 거리 증가
 
             if (dist < minDist) {
               const force = (minDist - dist) / dist * 0.5;
@@ -133,16 +136,18 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     if (!draggingNode) return;
 
     const svgRect = e.currentTarget.getBoundingClientRect();
-    const newX = e.clientX - svgRect.left - dragOffset.x;
-    const newY = e.clientY - svgRect.top - dragOffset.y;
+    const scaleX = 1200 / svgRect.width;
+    const scaleY = 600 / svgRect.height;
+    const newX = (e.clientX - svgRect.left) * scaleX;
+    const newY = (e.clientY - svgRect.top) * scaleY;
 
     setNodePositions((prev) =>
       prev.map((node) =>
         node.name === draggingNode
           ? {
               ...node,
-              x: Math.max(40, Math.min(660, newX)),
-              y: Math.max(40, Math.min(360, newY)),
+              x: Math.max(60, Math.min(1140, newX)),
+              y: Math.max(60, Math.min(540, newY)),
             }
           : node
       )
@@ -159,8 +164,8 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
   };
 
   const getNodeRadius = (degree: number) => {
-    const minRadius = 20;
-    const maxRadius = 35;
+    const minRadius = 28;
+    const maxRadius = 45;
     const maxDegree = Math.max(...nodePositions.map((n) => n.degree), 1);
     return minRadius + ((maxRadius - minRadius) * degree) / maxDegree;
   };

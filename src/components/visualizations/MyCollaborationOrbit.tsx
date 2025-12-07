@@ -12,8 +12,10 @@ interface MyCollaborationOrbitProps {
 
 interface OrbitNode {
   name: string;
-  relation: "pair" | "waiting-on";
-  count: number;
+  relation: "pair" | "waiting-on" | "both";
+  pairCount: number;
+  waitingOnCount: number;
+  totalCount: number;
   domain: string;
   orbit: "inner" | "middle" | "outer";
   angle: number;
@@ -21,8 +23,9 @@ interface OrbitNode {
 
 export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbitProps) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
-  const { orbitNodes, summary } = useMemo(() => {
+  const { orbitNodes, summary, myDomain } = useMemo(() => {
     const summary = getMemberSummary(items, memberName);
     
     // 멤버 도메인 매핑
@@ -32,6 +35,8 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
         memberDomains.set(item.name, item.domain);
       }
     });
+
+    const myDomain = memberDomains.get(memberName) ?? "Unknown";
 
     // 협업자별 빈도와 관계 수집
     const collabMap = new Map<string, { name: string; pairCount: number; waitingOnCount: number; domain: string }>();
@@ -88,57 +93,84 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
     const collaborators = Array.from(collabMap.values());
     const maxCount = Math.max(...collaborators.map((c) => c.pairCount + c.waitingOnCount), 1);
 
-    const orbitNodes: OrbitNode[] = collaborators.map((collab, idx) => {
+    // 궤도별로 그룹핑
+    const innerNodes: typeof collaborators = [];
+    const middleNodes: typeof collaborators = [];
+    const outerNodes: typeof collaborators = [];
+
+    collaborators.forEach((collab) => {
       const totalCount = collab.pairCount + collab.waitingOnCount;
       const intensity = totalCount / maxCount;
 
-      let orbit: "inner" | "middle" | "outer";
-      let relation: "pair" | "waiting-on";
-
-      if (collab.pairCount > collab.waitingOnCount) {
-        relation = "pair";
-        orbit = intensity >= 0.6 ? "inner" : "middle";
+      if (collab.pairCount > 0 && intensity >= 0.5) {
+        innerNodes.push(collab);
+      } else if (collab.pairCount > 0) {
+        middleNodes.push(collab);
       } else {
-        relation = "waiting-on";
-        orbit = "outer";
+        outerNodes.push(collab);
       }
-
-      // 같은 궤도 내에서 각도 분배
-      const angle = (2 * Math.PI * idx) / collaborators.length;
-
-      return {
-        name: collab.name,
-        relation,
-        count: totalCount,
-        domain: collab.domain,
-        orbit,
-        angle,
-      };
     });
 
-    return { orbitNodes, summary };
+    // 각 궤도 내에서 각도 분배
+    const createOrbitNodes = (
+      nodes: typeof collaborators,
+      orbit: "inner" | "middle" | "outer",
+      startAngle: number = -Math.PI / 2
+    ): OrbitNode[] => {
+      return nodes.map((collab, idx) => {
+        const angle = startAngle + (2 * Math.PI * idx) / Math.max(nodes.length, 1);
+        const totalCount = collab.pairCount + collab.waitingOnCount;
+        
+        let relation: "pair" | "waiting-on" | "both";
+        if (collab.pairCount > 0 && collab.waitingOnCount > 0) {
+          relation = "both";
+        } else if (collab.pairCount > 0) {
+          relation = "pair";
+        } else {
+          relation = "waiting-on";
+        }
+
+        return {
+          name: collab.name,
+          relation,
+          pairCount: collab.pairCount,
+          waitingOnCount: collab.waitingOnCount,
+          totalCount,
+          domain: collab.domain,
+          orbit,
+          angle,
+        };
+      });
+    };
+
+    const orbitNodes: OrbitNode[] = [
+      ...createOrbitNodes(innerNodes, "inner"),
+      ...createOrbitNodes(middleNodes, "middle"),
+      ...createOrbitNodes(outerNodes, "outer"),
+    ];
+
+    return { orbitNodes, summary, myDomain };
   }, [items, memberName]);
 
   const getDomainColor = (domain: string): string => {
     const domainKey = domain as keyof typeof DOMAIN_COLORS;
-    return DOMAIN_COLORS[domainKey]?.text ?? "var(--notion-text-secondary)";
+    return DOMAIN_COLORS[domainKey]?.text ?? "#64748b";
   };
 
   const getOrbitRadius = (orbit: "inner" | "middle" | "outer"): number => {
     switch (orbit) {
-      case "inner":
-        return 70;
-      case "middle":
-        return 115;
-      case "outer":
-        return 160;
+      case "inner": return 100;
+      case "middle": return 170;
+      case "outer": return 240;
     }
   };
 
-  const getNodeSize = (count: number): number => {
-    const maxCount = Math.max(...orbitNodes.map((n) => n.count), 1);
-    return 10 + (count / maxCount) * 10;
+  const getNodeRadius = (count: number): number => {
+    const maxCount = Math.max(...orbitNodes.map((n) => n.totalCount), 1);
+    return 22 + (count / maxCount) * 14;
   };
+
+  const activeNode = selectedNode ?? hoveredNode;
 
   if (orbitNodes.length === 0) {
     return (
@@ -153,130 +185,354 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
     );
   }
 
-  const width = 400;
-  const height = 400;
+  const width = 600;
+  const height = 550;
   const centerX = width / 2;
   const centerY = height / 2;
+
+  // 곡선 경로 계산
+  const getCurvePath = (
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    fromRadius: number,
+    toRadius: number
+  ) => {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist === 0) return "";
+
+    const startX = fromX + (dx / dist) * fromRadius;
+    const startY = fromY + (dy / dist) * fromRadius;
+    const endX = toX - (dx / dist) * toRadius;
+    const endY = toY - (dy / dist) * toRadius;
+
+    // 곡선 제어점
+    const perpX = -dy / dist;
+    const perpY = dx / dist;
+    const curveOffset = Math.min(dist * 0.15, 25);
+    const ctrlX = (startX + endX) / 2 + perpX * curveOffset;
+    const ctrlY = (startY + endY) / 2 + perpY * curveOffset;
+
+    return `M ${startX} ${startY} Q ${ctrlX} ${ctrlY} ${endX} ${endY}`;
+  };
 
   return (
     <div className="notion-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
-          🌐 협업 궤도
-        </h3>
-        <div className="flex items-center gap-3 text-xs" style={{ color: "var(--notion-text-secondary)" }}>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--notion-blue)" }} />
+        <div>
+          <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
+            🌐 협업 궤도
+          </h3>
+          <p className="text-xs mt-0.5" style={{ color: "var(--notion-text-secondary)" }}>
+            중심(나)과의 협업 빈도에 따른 거리 배치
+          </p>
+        </div>
+        <div className="flex items-center gap-4 text-xs" style={{ color: "var(--notion-text-secondary)" }}>
+          <span className="flex items-center gap-1.5">
+            <svg width="20" height="8">
+              <line x1="0" y1="4" x2="16" y2="4" stroke="#3b82f6" strokeWidth="2.5" />
+            </svg>
             Pair
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--notion-red)" }} />
+          <span className="flex items-center gap-1.5">
+            <svg width="20" height="8">
+              <defs>
+                <marker id="orbitArrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#ef4444" />
+                </marker>
+              </defs>
+              <line x1="0" y1="4" x2="12" y2="4" stroke="#ef4444" strokeWidth="2" markerEnd="url(#orbitArrow)" />
+            </svg>
             Waiting-on
           </span>
         </div>
       </div>
 
-      <div className="relative" style={{ height: 400 }}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
-          {/* 궤도 원 */}
-          <circle cx={centerX} cy={centerY} r={70} fill="none" stroke="var(--notion-border)" strokeDasharray="4 4" opacity={0.5} />
-          <circle cx={centerX} cy={centerY} r={115} fill="none" stroke="var(--notion-border)" strokeDasharray="4 4" opacity={0.3} />
-          <circle cx={centerX} cy={centerY} r={160} fill="none" stroke="var(--notion-border)" strokeDasharray="4 4" opacity={0.2} />
+      <div
+        className="relative rounded-lg overflow-hidden"
+        style={{
+          background: "radial-gradient(ellipse at center, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)",
+          border: "1px solid var(--notion-border)",
+        }}
+      >
+        <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
+          <defs>
+            <filter id="orbitShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
+            </filter>
+            <filter id="orbitGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="0" stdDeviation="5" floodOpacity="0.3" />
+            </filter>
+            <marker id="arrowWaiting" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" />
+            </marker>
+          </defs>
+
+          {/* 궤도 링 */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={100}
+            fill="none"
+            stroke="#cbd5e1"
+            strokeWidth={1.5}
+            strokeDasharray="8 4"
+            opacity={0.6}
+          />
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={170}
+            fill="none"
+            stroke="#cbd5e1"
+            strokeWidth={1}
+            strokeDasharray="6 4"
+            opacity={0.4}
+          />
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={240}
+            fill="none"
+            stroke="#cbd5e1"
+            strokeWidth={1}
+            strokeDasharray="4 4"
+            opacity={0.3}
+          />
+
+          {/* 궤도 레이블 */}
+          <text x={centerX + 105} y={centerY - 5} fontSize={9} fill="#94a3b8" fontWeight={500}>
+            빈번한 Pair
+          </text>
+          <text x={centerX + 175} y={centerY - 5} fontSize={9} fill="#94a3b8" fontWeight={500}>
+            일반 협업
+          </text>
+          <text x={centerX + 245} y={centerY - 5} fontSize={9} fill="#94a3b8" fontWeight={500}>
+            Waiting
+          </text>
 
           {/* 연결선 */}
           {orbitNodes.map((node) => {
-            const radius = getOrbitRadius(node.orbit);
-            const x = centerX + radius * Math.cos(node.angle);
-            const y = centerY + radius * Math.sin(node.angle);
-            const color = node.relation === "pair" ? "var(--notion-blue)" : "var(--notion-red)";
+            const orbitRadius = getOrbitRadius(node.orbit);
+            const nodeX = centerX + orbitRadius * Math.cos(node.angle);
+            const nodeY = centerY + orbitRadius * Math.sin(node.angle);
+            const nodeRadius = getNodeRadius(node.totalCount);
+            const isActive = activeNode === node.name;
+            const opacity = activeNode ? (isActive ? 1 : 0.15) : 0.5;
 
-            return (
-              <line
-                key={`line-${node.name}`}
-                x1={centerX}
-                y1={centerY}
-                x2={x}
-                y2={y}
-                stroke={color}
-                strokeWidth={1}
-                opacity={hoveredNode === node.name ? 0.8 : 0.2}
-              />
-            );
+            // Pair 연결선
+            if (node.pairCount > 0) {
+              const path = getCurvePath(centerX, centerY, nodeX, nodeY, 35, nodeRadius);
+              return (
+                <path
+                  key={`pair-line-${node.name}`}
+                  d={path}
+                  fill="none"
+                  stroke="#3b82f6"
+                  strokeWidth={Math.min(node.pairCount + 1.5, 4)}
+                  strokeOpacity={opacity}
+                  strokeLinecap="round"
+                />
+              );
+            }
+
+            // Waiting-on 연결선
+            if (node.waitingOnCount > 0 && node.pairCount === 0) {
+              const path = getCurvePath(centerX, centerY, nodeX, nodeY, 35, nodeRadius + 6);
+              return (
+                <path
+                  key={`waiting-line-${node.name}`}
+                  d={path}
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth={Math.min(node.waitingOnCount + 1, 3)}
+                  strokeOpacity={opacity}
+                  strokeLinecap="round"
+                  markerEnd="url(#arrowWaiting)"
+                />
+              );
+            }
+
+            return null;
           })}
 
           {/* 중앙 노드 (나) */}
           <g transform={`translate(${centerX},${centerY})`}>
-            <circle r={24} fill="var(--notion-text)" />
+            <circle
+              r={35}
+              fill={getDomainColor(myDomain)}
+              stroke="white"
+              strokeWidth={3}
+              filter="url(#orbitGlow)"
+            />
             <text
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="var(--notion-bg)"
+              fill="white"
+              fontSize={12}
+              fontWeight={700}
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
+            >
+              {memberName.length > 5 ? memberName.slice(0, 4) + "…" : memberName}
+            </text>
+            <text
+              y={48}
+              textAnchor="middle"
+              fill="#64748b"
               fontSize={10}
               fontWeight={600}
             >
-              {memberName.slice(0, 3)}
+              (나)
             </text>
           </g>
 
           {/* 협업자 노드 */}
           {orbitNodes.map((node) => {
-            const radius = getOrbitRadius(node.orbit);
-            const x = centerX + radius * Math.cos(node.angle);
-            const y = centerY + radius * Math.sin(node.angle);
-            const nodeSize = getNodeSize(node.count);
-            const color = node.relation === "pair" ? "var(--notion-blue)" : "var(--notion-red)";
-            const isHovered = hoveredNode === node.name;
+            const orbitRadius = getOrbitRadius(node.orbit);
+            const x = centerX + orbitRadius * Math.cos(node.angle);
+            const y = centerY + orbitRadius * Math.sin(node.angle);
+            const nodeRadius = getNodeRadius(node.totalCount);
+            const isActive = activeNode === node.name;
+            const opacity = activeNode ? (isActive ? 1 : 0.25) : 1;
+            const isBottleneck = node.waitingOnCount >= 2;
 
             return (
               <g
                 key={node.name}
                 transform={`translate(${x},${y})`}
-                style={{ cursor: "pointer" }}
+                style={{ cursor: "pointer", opacity, transition: "opacity 0.2s" }}
                 onMouseEnter={() => setHoveredNode(node.name)}
                 onMouseLeave={() => setHoveredNode(null)}
+                onClick={() => setSelectedNode(selectedNode === node.name ? null : node.name)}
               >
+                {/* 병목 표시 */}
+                {isBottleneck && (
+                  <circle
+                    r={nodeRadius + 6}
+                    fill="none"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    strokeDasharray="4 2"
+                    opacity={0.7}
+                  />
+                )}
+                {/* 선택 하이라이트 */}
+                {isActive && (
+                  <circle
+                    r={nodeRadius + 4}
+                    fill="none"
+                    stroke={getDomainColor(node.domain)}
+                    strokeWidth={3}
+                    opacity={0.5}
+                  />
+                )}
+                {/* 노드 본체 */}
                 <circle
-                  r={nodeSize}
+                  r={nodeRadius}
                   fill={getDomainColor(node.domain)}
-                  stroke={color}
-                  strokeWidth={isHovered ? 3 : 2}
-                  opacity={isHovered ? 1 : 0.8}
+                  stroke="white"
+                  strokeWidth={2.5}
+                  filter={isActive ? "url(#orbitGlow)" : "url(#orbitShadow)"}
                 />
+                {/* 노드 내 이름 */}
                 <text
-                  y={nodeSize + 12}
                   textAnchor="middle"
-                  fontSize={9}
-                  fill="var(--notion-text)"
-                  fontWeight={isHovered ? 600 : 400}
+                  dominantBaseline="middle"
+                  fill="white"
+                  fontSize={nodeRadius > 28 ? 10 : 9}
+                  fontWeight={600}
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)", pointerEvents: "none" }}
                 >
-                  {node.name}
+                  {node.name.length > 4 ? node.name.slice(0, 3) + "…" : node.name}
                 </text>
+                {/* Pair 뱃지 */}
+                {node.pairCount > 0 && (
+                  <g transform={`translate(${nodeRadius - 3}, ${-nodeRadius + 3})`}>
+                    <circle r={9} fill="#3b82f6" stroke="white" strokeWidth={1.5} />
+                    <text
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="white"
+                      fontSize={8}
+                      fontWeight={700}
+                    >
+                      {node.pairCount}
+                    </text>
+                  </g>
+                )}
+                {/* Waiting-on 뱃지 */}
+                {node.waitingOnCount > 0 && (
+                  <g transform={`translate(${-nodeRadius + 3}, ${-nodeRadius + 3})`}>
+                    <circle r={9} fill="#ef4444" stroke="white" strokeWidth={1.5} />
+                    <text
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="white"
+                      fontSize={8}
+                      fontWeight={700}
+                    >
+                      {node.waitingOnCount}
+                    </text>
+                  </g>
+                )}
               </g>
             );
           })}
         </svg>
 
-        {/* 호버 정보 */}
-        {hoveredNode && (
+        {/* 호버/선택 정보 패널 */}
+        {activeNode && (
           <div
-            className="absolute top-2 right-2 p-2 rounded-lg text-xs"
+            className="absolute top-3 right-3 p-3 rounded-lg text-xs"
             style={{
-              background: "var(--notion-bg)",
+              background: "rgba(255,255,255,0.95)",
               border: "1px solid var(--notion-border)",
-              boxShadow: "var(--notion-shadow-sm)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              backdropFilter: "blur(4px)",
+              minWidth: 140,
             }}
           >
             {(() => {
-              const node = orbitNodes.find((n) => n.name === hoveredNode);
+              const node = orbitNodes.find((n) => n.name === activeNode);
               if (!node) return null;
               return (
                 <>
-                  <div className="font-semibold" style={{ color: "var(--notion-text)" }}>
+                  <div className="font-bold mb-2" style={{ color: "var(--notion-text)" }}>
                     {node.name}
                   </div>
-                  <div style={{ color: "var(--notion-text-secondary)" }}>
-                    {node.domain} · {node.count}회 협업
+                  <div className="space-y-1" style={{ color: "var(--notion-text-secondary)" }}>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ background: getDomainColor(node.domain) }}
+                      />
+                      {node.domain}
+                    </div>
+                    {node.pairCount > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-500">● Pair: {node.pairCount}건</span>
+                      </div>
+                    )}
+                    {node.waitingOnCount > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span style={{ color: node.waitingOnCount >= 2 ? "#ef4444" : undefined }}>
+                          ● Waiting: {node.waitingOnCount}건
+                        </span>
+                      </div>
+                    )}
                   </div>
+                  {selectedNode && (
+                    <button
+                      onClick={() => setSelectedNode(null)}
+                      className="mt-2 w-full text-xs py-1 rounded"
+                      style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text-secondary)" }}
+                    >
+                      선택 해제
+                    </button>
+                  )}
                 </>
               );
             })()}
@@ -285,21 +541,25 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
       </div>
 
       {/* 범례 */}
-      <div className="mt-3 pt-3 grid grid-cols-3 gap-2 text-xs" style={{ borderTop: "1px solid var(--notion-border)" }}>
-        <div className="text-center">
-          <div className="font-medium" style={{ color: "var(--notion-text)" }}>내부 궤도</div>
-          <div style={{ color: "var(--notion-text-secondary)" }}>빈번한 Pair</div>
+      <div className="mt-3 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--notion-border)" }}>
+        <div className="flex items-center gap-3 text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-blue-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
+            Pair 수
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
+            Waiting 수
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-4 h-4 rounded-full border-2 border-dashed border-red-400" />
+            병목
+          </span>
         </div>
-        <div className="text-center">
-          <div className="font-medium" style={{ color: "var(--notion-text)" }}>중간 궤도</div>
-          <div style={{ color: "var(--notion-text-secondary)" }}>일반 협업</div>
-        </div>
-        <div className="text-center">
-          <div className="font-medium" style={{ color: "var(--notion-text)" }}>외부 궤도</div>
-          <div style={{ color: "var(--notion-text-secondary)" }}>Waiting-on</div>
+        <div className="text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+          중심에 가까울수록 빈번한 협업
         </div>
       </div>
     </div>
   );
 }
-
