@@ -17,7 +17,7 @@ export function ModuleStats({ stats }: ModuleStatsProps) {
   }
 
   return (
-    <div className="notion-card">
+    <div className="notion-card p-4">
       <div className="flex items-center gap-2 mb-3">
         <svg
           className="w-4 h-4"

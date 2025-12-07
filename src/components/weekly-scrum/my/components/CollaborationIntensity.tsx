@@ -68,7 +68,7 @@ export function CollaborationIntensity({ weeklyData }: CollaborationIntensityPro
   );
 
   return (
-    <div className="notion-card">
+    <div className="notion-card p-4">
       <div className="flex items-center gap-2 mb-4">
         <svg
           className="w-5 h-5"

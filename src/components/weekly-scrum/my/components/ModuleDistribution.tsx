@@ -51,7 +51,7 @@ export function ModuleDistribution({ items }: ModuleDistributionProps) {
   const maxCount = Math.max(...moduleStats.map((s) => s.count));
 
   return (
-    <div className="notion-card">
+    <div className="notion-card p-4">
       <div className="flex items-center gap-2 mb-4">
         <svg
           className="w-5 h-5"

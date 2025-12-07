@@ -1,78 +1,98 @@
-[Frontend / 데이터 편집기 / 셀 렌더링 개선]
+[Frontend / MOTIIV / Spreadsheet / 셀 렌더링 개선]
 - Name: 김서연
 - Plan: 셀 최적화 100% 완료
-- Progress: 셀 렌더링 구조화 및 개선작업 100% 완료
+- Progress: 셀 렌더링 구조화 및 개선 작업 100% 완료
 - Next: 렌더링 최적화 마무리 및 저장 테스트 추가
 - Risk: 저장 플로우에서 race condition 재발 가능성 확인
 - RiskLevel: 1
+- Collaborators: 김정빈(pair), 조해용(waiting-on)
 
-[Planning / 협업 플랫폼 / IA 개선]
-- Name: 장현우
-- Plan: IA 구조 v1 정리 완료 (100%)
-- Progress: IA 구조 v1 정리 및 워딩 1차 검토 완료 (100%)
-- Next: IA v1.1 반영 및 기획-개발 매핑 구조 확정
 
-[Backend / 접근 권한 / 접근 제어 API]
-- Name: 정유진
-- Plan: 테이블 컴포넌트 개발 100% 완료
-- Progress: 테이블 컴포넌트 개발 70% 완료
-- Next: 테이블 컴포넌트 개발 100% 달성
-- Risk: 컨퍼런스 발표 준비
+[Backend / M-Connector / API / 동기화 API 안정화]
+- Name: 조해용
+- Plan: 동기화 엔드포인트 3종 구조 개편
+- Progress: API 2종 완료, 마지막 엔드포인트 오류 검출 로직 추가 중
+- Next: 데이터 누락 케이스 자동 보정 로직 설계
+- Risk: 외부 연동 DB 응답 지연으로 인한 timeout 발생 가능성
 - RiskLevel: 2
-- Reason: 중간 점검 과정에서 요구사항 변경으로 일부 기능이 재구현 필요해 일정이 지연되었습니다.
+- Collaborators: 김정빈(waiting-on)
 
-[Frontend / 협업 플랫폼 / 페이지 편집기 개선]
-- Name: 이수진
-- Plan: 템플릿 블록 구조 재설계 80% 완료
-- Progress: 템플릿 블록 기본 구조 50% 완료
-- Next: 블록별 세부 속성 정의 문서화
-- RiskLevel: 0
-- Reason: 기존 구조의 의존성이 예상보다 높아 분석 시간이 증가했습니다.
 
-[Design / 분석 대시보드 / 차트 시스템 개선]
-- Name: 최도현
-- Plan: 차트 UI 70% 정리
-- Progress: 차트 스타일 가이드 40% 정리
-- Next: 다크모드 대응 및 인터랙션 패턴 작성
-- RiskLevel: 0
-- Reason: FE 요구사항 추가로 우선순위가 변경되어 계획보다 진행률이 낮습니다.
-
-[Backend / 백엔드 게이트웨이 / 캐싱 전략]
-- Name: 오승현
-- Plan: 캐싱 정책 100% 설계
-- Progress: 캐싱 정책 및 Redis 구조 설계 100% 완료
-- Next: 서비스별 캐싱 Hit/Miss 모니터링 개발
-- RiskLevel: 0
-
-[Frontend / 공용 라이브러리 / 디자인 시스템]
-- Name: 조여름
-- Plan: Modal, Toast 컴포넌트 100% 마이그레이션
-- Progress: Modal 80%, Toast 40%
-- Next: Toast 컴포넌트 마이그레이션 완료 후 문서화
+[Planning / MOTIIV / 워크스페이스 / 프로젝트 템플릿 정의]
+- Name: 윤재웅
+- Plan: 템플릿 구조 정의 및 정책 정리
+- Progress: 템플릿 1차 구조 확정 및 가이드 draft 작성
+- Next: 피드백 기반 템플릿 유형 추가
+- Risk: 팀 프로젝트와 기능 중복 가능성
 - RiskLevel: 1
-- Reason: Storybook 자동 문서화 설정에서 오류가 발생해 디버깅 시간이 소요되었습니다.
+- Collaborators: 김희성(pair)
 
-[Planning / 신규 사용자 안내 / 사용자 퍼널 개선]
-- Name: 문정훈
-- Plan: 퍼널 진단 60% 완료
-- Progress: 40% 완료
-- Next: 고객 행동 로그 기반 개선 제안 정리
-- Risk: 퍼널 기준 지표 확정 지연 가능성
+
+[Design / MOTIIV / 홈 / 대시보드 카드 리뉴얼]
+- Name: 김희성
+- Plan: UI 컴포넌트 구조 정리 및 디자인 시스템 반영
+- Progress: 카드형 레이아웃 신규 제안 및 피드백 반영
+- Next: 마이크로 인터랙션 정의 및 전달
+- Risk: 기존 페이지 요소와 스타일 충돌 가능성
 - RiskLevel: 1
-- Reason: 일부 고객 데이터 샘플 확보가 늦어 분석 진척이 지연되었습니다.
+- Collaborators: 윤재웅(pair), 김서연(waiting-on)
 
-[Backend / 사용자 인증 / 소셜 로그인 연동]
-- Name: 황지민
-- Plan: Apple 로그인 연동 100% 완료
-- Progress: Apple 로그인 연동 70% 완료
-- Next: 인증 오류 케이스 추가 검증
-- Risk: 외부 인증 서버 응답 지연
+
+[Operation / Team / 온보딩 / 신규 온보딩 플로우 개선]
+- Name: 한내경
+- Plan: 온보딩 자료 최신화 및 신규 프로세스 정리
+- Progress: 온보딩 자료 일부 업데이트 및 실사용 피드백 수집
+- Next: 반복 질문 목록 정리 후 ChatGPT 기반 응답 가이드 제작
+- Risk: 기존 문서와 버전 충돌 가능성
+- RiskLevel: 1
+- Collaborators: 김정빈(pair)
+
+
+[Frontend / M-Desk / Workspace / Import 기능 개선]
+- Name: 김정빈
+- Plan: Import 오류 패턴 분류 및 예외 처리 정비
+- Progress: 엑셀 파일 손상 케이스 핸들링 80%
+- Next: 타임존 변환 오류 처리 및 테스트 보강
+- Risk: UTC 변환 로직이 기존 데이터와 충돌 가능성
 - RiskLevel: 2
-- Reason: 외부 테스트 환경에서 인증 응답 값이 불규칙하여 처리 로직 검토 시간이 증가했습니다.
+- Collaborators: 김서연(pair), 조해용(waiting-on)
 
-[Frontend / 분석 대시보드 / 상태 모니터링 페이지]
-- Name: 한예슬
-- Plan: 상태 페이지 초기 레이아웃 100% 완료
-- Progress: 레이아웃 100% 완료
-- Next: 실시간 상태 표시 기능 연결
+
+[Content / MOTIIV / 프로필 / 사용자 케이스 문서 제작]
+- Name: 도기봉
+- Plan: 업종별 모티브 활용 케이스 조사
+- Progress: 6개 업종 케이스 조사 및 문서화 60%
+- Next: 사용 예시 추가 및 그래픽 요소 정비
+- Risk: 자료 출처 검증 필요
 - RiskLevel: 0
+- Collaborators: 김희성(waiting-on)
+
+
+[Research / Idea-forge / Core / 플러그인 시스템 탐색]
+- Name: 하성열
+- Plan: 플러그인 구조 후보군 조사
+- Progress: 3개 아키텍처 비교 분석 완료
+- Next: MVP 기준 기술 PoC 착수
+- Risk: sandbox 권한 및 메시징 충돌 가능성
+- RiskLevel: 2
+- Collaborators: 김정빈(pair)
+
+
+[Backend / MOTIIV / 알림 / 푸시 시스템 안정화]
+- Name: 김건우
+- Plan: 알림 큐 적재/소비 흐름 개선
+- Progress: 메시지 소비 속도 30% 개선
+- Next: 장애 retry 정책 확장 및 로깅 체계 정비
+- Risk: 특정 알림 유형에서 중복 전송 위험
+- RiskLevel: 2
+- Collaborators: 한내경(waiting-on)
+
+
+[Planning / M-Desk / 팀프로젝트 / 사용자 플로우 점검]
+- Name: 최은진
+- Plan: 전체 사용자 플로우에서 이탈 지점 3곳 분석
+- Progress: 2개 이탈 포인트 원인 분석 완료
+- Next: 개선안 정리 후 디자인팀 전달
+- Risk: 기존 IA와 충돌 가능성
+- RiskLevel: 1
+- Collaborators: 김희성(waiting-on)
