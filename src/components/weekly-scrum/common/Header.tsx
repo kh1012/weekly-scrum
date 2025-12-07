@@ -57,8 +57,8 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         borderBottom: '1px solid var(--notion-border)'
       }}
     >
-      {/* 데스크탑 레이아웃 */}
-      <div className="hidden lg:flex items-center justify-between h-11 px-3">
+      {/* 데스크탑 xl+ 레이아웃 (1행) */}
+      <div className="hidden xl:flex items-center justify-between h-11 px-3">
         {/* 좌측: 사이드바 토글 + (로고) + 주차 + 필터 + 통계 */}
         <div className="flex items-center gap-3">
           {onSidebarToggle && (
@@ -96,6 +96,53 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         {/* 우측: 검색 */}
         <div className="w-64">
           <SearchInput />
+        </div>
+      </div>
+
+      {/* 데스크탑 lg~xl 레이아웃 (2행) */}
+      <div className="hidden lg:block xl:hidden">
+        {/* 1행: 사이드바 토글 + 로고 + 주차 + 검색 */}
+        <div 
+          className="flex items-center justify-between h-11 px-3"
+          style={{ borderBottom: '1px solid var(--notion-border)' }}
+        >
+          <div className="flex items-center gap-3">
+            {onSidebarToggle && (
+              <button
+                onClick={onSidebarToggle}
+                className="notion-btn p-1.5"
+                title={isSidebarOpen ? "사이드바 접기" : "사이드바 열기"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--notion-text-secondary)' }}>
+                  {isSidebarOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                  )}
+                </svg>
+              </button>
+            )}
+            {!isSidebarOpen && (
+              <>
+                <Logo />
+                <div className="w-px h-5" style={{ background: 'var(--notion-border)' }} />
+              </>
+            )}
+            <WeekSelector />
+          </div>
+          <div className="w-56">
+            <SearchInput />
+          </div>
+        </div>
+        {/* 2행: 필터 + 통계 */}
+        <div className="flex items-center justify-between h-9 px-3">
+          <div className="flex items-center gap-3">
+            {!isMyDashboard && <Filters />}
+            {!isMyDashboard && (
+              <div className="w-px h-4" style={{ background: 'var(--notion-border)' }} />
+            )}
+            <StatsBar />
+          </div>
         </div>
       </div>
 
