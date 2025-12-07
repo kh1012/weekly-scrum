@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import { getCollaborationNodes, getCollaborationEdges } from "@/lib/collaboration";
 import { DOMAIN_COLORS } from "@/lib/colorDefines";
@@ -9,7 +9,7 @@ interface CollaborationNetworkGraphProps {
   items: ScrumItem[];
 }
 
-interface Node3D {
+interface NodePosition {
   id: string;
   name: string;
   domain: string;
@@ -18,23 +18,14 @@ interface Node3D {
   waitingOnInbound: number;
   x: number;
   y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
 }
 
 export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphProps) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [rotationY, setRotationY] = useState(0);
-  const [rotationX, setRotationX] = useState(15);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isAutoRotating, setIsAutoRotating] = useState(true);
-  const [zoom, setZoom] = useState(1);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | null>(null);
+  const [nodePositions, setNodePositions] = useState<NodePosition[]>([]);
+  const [draggingNode, setDraggingNode] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const { rawNodes, edges } = useMemo(() => {
     const rawNodes = getCollaborationNodes(items);
@@ -42,180 +33,135 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     return { rawNodes, edges };
   }, [items]);
 
-  // Force-directed layout with 3D positions
-  const [nodes3D, setNodes3D] = useState<Node3D[]>([]);
-
+  // 도메인별 그룹핑 및 초기 배치
   useEffect(() => {
     if (rawNodes.length === 0) return;
 
-    // Initialize nodes in a sphere with larger radius for better spacing
-    const initialNodes: Node3D[] = rawNodes.map((node, index) => {
-      const phi = Math.acos(-1 + (2 * index) / rawNodes.length);
-      const theta = Math.sqrt(rawNodes.length * Math.PI) * phi;
-      // 노드 수에 따라 반경 동적 조절 (최소 150, 최대 220)
-      const baseRadius = Math.min(220, Math.max(150, 100 + rawNodes.length * 10));
-      
-      return {
-        id: node.id,
-        name: node.name,
-        domain: node.domain,
-        degree: node.degree,
-        pairCount: node.pairCount,
-        waitingOnInbound: node.waitingOnInbound,
-        x: baseRadius * Math.cos(theta) * Math.sin(phi),
-        y: baseRadius * Math.sin(theta) * Math.sin(phi),
-        z: baseRadius * Math.cos(phi),
-        vx: 0,
-        vy: 0,
-        vz: 0,
-      };
+    const width = 700;
+    const height = 400;
+    const padding = 60;
+
+    // 도메인별로 그룹핑
+    const domainGroups = new Map<string, typeof rawNodes>();
+    rawNodes.forEach((node) => {
+      const group = domainGroups.get(node.domain) || [];
+      group.push(node);
+      domainGroups.set(node.domain, group);
     });
 
-    // Simple force simulation with stronger repulsion
-    const simulate = (nodes: Node3D[], iterations: number): Node3D[] => {
+    const domains = Array.from(domainGroups.keys()).sort();
+    const domainCount = domains.length;
+
+    // 도메인별 열 배치
+    const positions: NodePosition[] = [];
+    domains.forEach((domain, domainIndex) => {
+      const nodes = domainGroups.get(domain) || [];
+      const columnX = padding + ((width - padding * 2) / Math.max(domainCount - 1, 1)) * domainIndex;
+
+      nodes.forEach((node, nodeIndex) => {
+        const nodeCount = nodes.length;
+        const startY = height / 2 - ((nodeCount - 1) * 70) / 2;
+        const y = startY + nodeIndex * 70;
+
+        positions.push({
+          id: node.id,
+          name: node.name,
+          domain: node.domain,
+          degree: node.degree,
+          pairCount: node.pairCount,
+          waitingOnInbound: node.waitingOnInbound,
+          x: columnX,
+          y: Math.max(padding, Math.min(height - padding, y)),
+        });
+      });
+    });
+
+    // Force simulation for better spacing
+    const simulate = (nodes: NodePosition[], iterations: number): NodePosition[] => {
       const result = nodes.map((n) => ({ ...n }));
-      
+
       for (let iter = 0; iter < iterations; iter++) {
-        // Repulsion between all nodes (강화된 척력)
+        // Repulsion between nodes
         for (let i = 0; i < result.length; i++) {
           for (let j = i + 1; j < result.length; j++) {
             const dx = result[j].x - result[i].x;
             const dy = result[j].y - result[i].y;
-            const dz = result[j].z - result[i].z;
-            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-            // 척력 강화: 2000 -> 5000 (노드 간 간격 증가)
-            const force = 5000 / (dist * dist);
-            
-            result[i].vx -= (dx / dist) * force;
-            result[i].vy -= (dy / dist) * force;
-            result[i].vz -= (dz / dist) * force;
-            result[j].vx += (dx / dist) * force;
-            result[j].vy += (dy / dist) * force;
-            result[j].vz += (dz / dist) * force;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const minDist = 80;
+
+            if (dist < minDist) {
+              const force = (minDist - dist) / dist * 0.5;
+              result[i].x -= dx * force * 0.3;
+              result[i].y -= dy * force;
+              result[j].x += dx * force * 0.3;
+              result[j].y += dy * force;
+            }
           }
         }
 
-        // Attraction along edges (약화된 인력)
-        edges.forEach((edge) => {
-          const source = result.find((n) => n.name === edge.source);
-          const target = result.find((n) => n.name === edge.target);
-          if (!source || !target) return;
-          
-          const dx = target.x - source.x;
-          const dy = target.y - source.y;
-          const dz = target.z - source.z;
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-          // 인력 약화: 0.02 -> 0.015
-          const force = dist * 0.015;
-          
-          source.vx += (dx / dist) * force;
-          source.vy += (dy / dist) * force;
-          source.vz += (dz / dist) * force;
-          target.vx -= (dx / dist) * force;
-          target.vy -= (dy / dist) * force;
-          target.vz -= (dz / dist) * force;
-        });
-
-        // Apply velocity with damping
+        // Keep within bounds
         result.forEach((node) => {
-          node.x += node.vx * 0.1;
-          node.y += node.vy * 0.1;
-          node.z += node.vz * 0.1;
-          node.vx *= 0.9;
-          node.vy *= 0.9;
-          node.vz *= 0.9;
+          node.x = Math.max(padding, Math.min(width - padding, node.x));
+          node.y = Math.max(padding, Math.min(height - padding, node.y));
         });
       }
 
       return result;
     };
 
-    const simulated = simulate(initialNodes, 100);
-    setNodes3D(simulated);
-  }, [rawNodes, edges]);
+    const simulated = simulate(positions, 50);
+    setNodePositions(simulated);
+  }, [rawNodes]);
 
-  // Auto rotation
-  useEffect(() => {
-    if (!isAutoRotating || isDragging) return;
-    
-    const animate = () => {
-      setRotationY((prev) => prev + 0.3);
-      animationRef.current = requestAnimationFrame(animate);
-    };
-    
-    animationRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [isAutoRotating, isDragging]);
-
-  // Project 3D to 2D with zoom
-  const project = useCallback((x: number, y: number, z: number) => {
-    const radY = (rotationY * Math.PI) / 180;
-    const radX = (rotationX * Math.PI) / 180;
-    
-    // Apply zoom to coordinates
-    const zoomedX = x * zoom;
-    const zoomedY = y * zoom;
-    const zoomedZ = z * zoom;
-    
-    // Rotate around Y axis
-    const x1 = zoomedX * Math.cos(radY) - zoomedZ * Math.sin(radY);
-    const z1 = zoomedX * Math.sin(radY) + zoomedZ * Math.cos(radY);
-    
-    // Rotate around X axis
-    const y2 = zoomedY * Math.cos(radX) - z1 * Math.sin(radX);
-    const z2 = zoomedY * Math.sin(radX) + z1 * Math.cos(radX);
-    
-    // Perspective projection
-    const perspective = 400;
-    const scale = perspective / (perspective + z2);
-    
-    return {
-      x: 200 + x1 * scale,
-      y: 200 + y2 * scale,
-      z: z2,
-      scale: scale * zoom,
-    };
-  }, [rotationY, rotationX, zoom]);
-
-  // Wheel handler for zoom
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  // 드래그 핸들러
+  const handleMouseDown = useCallback((e: React.MouseEvent, nodeName: string) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom((prev) => Math.max(0.5, Math.min(2.5, prev + delta)));
+    const node = nodePositions.find((n) => n.name === nodeName);
+    if (!node) return;
+
+    const svgRect = (e.currentTarget as SVGElement).closest("svg")?.getBoundingClientRect();
+    if (!svgRect) return;
+
+    setDraggingNode(nodeName);
+    setDragOffset({
+      x: e.clientX - svgRect.left - node.x,
+      y: e.clientY - svgRect.top - node.y,
+    });
+  }, [nodePositions]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!draggingNode) return;
+
+    const svgRect = e.currentTarget.getBoundingClientRect();
+    const newX = e.clientX - svgRect.left - dragOffset.x;
+    const newY = e.clientY - svgRect.top - dragOffset.y;
+
+    setNodePositions((prev) =>
+      prev.map((node) =>
+        node.name === draggingNode
+          ? {
+              ...node,
+              x: Math.max(40, Math.min(660, newX)),
+              y: Math.max(40, Math.min(360, newY)),
+            }
+          : node
+      )
+    );
+  }, [draggingNode, dragOffset]);
+
+  const handleMouseUp = useCallback(() => {
+    setDraggingNode(null);
   }, []);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setIsAutoRotating(false);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragStart.x;
-    const dy = e.clientY - dragStart.y;
-    setRotationY((prev) => prev + dx * 0.5);
-    setRotationX((prev) => Math.max(-60, Math.min(60, prev + dy * 0.3)));
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
 
   const getDomainColor = (domain: string): string => {
     const domainKey = domain as keyof typeof DOMAIN_COLORS;
-    return DOMAIN_COLORS[domainKey]?.text ?? "#888";
+    return DOMAIN_COLORS[domainKey]?.text ?? "#64748b";
   };
 
   const getNodeRadius = (degree: number) => {
-    const minRadius = 14;
-    const maxRadius = 28;
-    const maxDegree = Math.max(...nodes3D.map((n) => n.degree), 1);
+    const minRadius = 20;
+    const maxRadius = 35;
+    const maxDegree = Math.max(...nodePositions.map((n) => n.degree), 1);
     return minRadius + ((maxRadius - minRadius) * degree) / maxDegree;
   };
 
@@ -228,21 +174,44 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     return new Set(connected);
   }, [activeNode, edges]);
 
-  // Sort nodes by z for proper rendering order
-  const sortedNodes = useMemo(() => {
-    return [...nodes3D]
-      .map((node) => ({
-        ...node,
-        projected: project(node.x, node.y, node.z),
-      }))
-      .sort((a, b) => a.projected.z - b.projected.z);
-  }, [nodes3D, project]);
+  // 엣지 경로 계산 (곡선)
+  const getEdgePath = (
+    sourceX: number,
+    sourceY: number,
+    targetX: number,
+    targetY: number,
+    sourceRadius: number,
+    targetRadius: number
+  ) => {
+    const dx = targetX - sourceX;
+    const dy = targetY - sourceY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist === 0) return "";
+
+    // 노드 테두리에서 시작/끝
+    const startX = sourceX + (dx / dist) * sourceRadius;
+    const startY = sourceY + (dy / dist) * sourceRadius;
+    const endX = targetX - (dx / dist) * (targetRadius + 8);
+    const endY = targetY - (dy / dist) * (targetRadius + 8);
+
+    // 곡선 제어점 (수직 방향으로 오프셋)
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+    const perpX = -dy / dist;
+    const perpY = dx / dist;
+    const curveOffset = Math.min(dist * 0.15, 30);
+    const ctrlX = midX + perpX * curveOffset;
+    const ctrlY = midY + perpY * curveOffset;
+
+    return `M ${startX} ${startY} Q ${ctrlX} ${ctrlY} ${endX} ${endY}`;
+  };
 
   if (rawNodes.length === 0) {
     return (
       <div className="notion-card p-4">
         <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
-          🔗 협업 네트워크 (3D)
+          🔗 협업 네트워크
         </h3>
         <div className="flex items-center justify-center h-48 text-sm" style={{ color: "var(--notion-text-secondary)" }}>
           협업 데이터가 없습니다.
@@ -251,227 +220,311 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     );
   }
 
+  // 도메인 목록
+  const domains = Array.from(new Set(nodePositions.map((n) => n.domain))).sort();
+
   return (
     <div className="notion-card p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
-          🔗 협업 네트워크 (3D)
+          🔗 협업 네트워크
         </h3>
-        <div className="flex items-center gap-3 text-xs" style={{ color: "var(--notion-text-secondary)" }}>
-          <button
-            onClick={() => setIsAutoRotating(!isAutoRotating)}
-            className="px-2 py-1 rounded"
-            style={{
-              background: isAutoRotating ? "var(--notion-blue)" : "var(--notion-bg-secondary)",
-              color: isAutoRotating ? "white" : "var(--notion-text-secondary)",
-            }}
-          >
-            {isAutoRotating ? "⏸ 정지" : "▶ 회전"}
-          </button>
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-0.5 rounded" style={{ background: "var(--notion-blue)" }} />
-            pair
+        <div className="flex items-center gap-4 text-xs" style={{ color: "var(--notion-text-secondary)" }}>
+          <span className="flex items-center gap-1.5">
+            <svg width="20" height="8">
+              <line x1="0" y1="4" x2="16" y2="4" stroke="#3b82f6" strokeWidth="2" />
+            </svg>
+            Pair
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-0.5 rounded" style={{ background: "var(--notion-red)" }} />
-            waiting-on
+          <span className="flex items-center gap-1.5">
+            <svg width="20" height="8">
+              <defs>
+                <marker id="arrowRed" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#ef4444" />
+                </marker>
+              </defs>
+              <line x1="0" y1="4" x2="14" y2="4" stroke="#ef4444" strokeWidth="2" markerEnd="url(#arrowRed)" />
+            </svg>
+            Waiting-on
           </span>
         </div>
       </div>
 
       <div
-        ref={containerRef}
-        className="relative cursor-grab active:cursor-grabbing select-none"
+        className="relative rounded-lg overflow-hidden"
         style={{
-          height: 420,
-          background: "radial-gradient(ellipse at center, var(--notion-bg-secondary) 0%, var(--notion-bg) 100%)",
-          borderRadius: 8,
-          overflow: "hidden",
+          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+          border: "1px solid var(--notion-border)",
         }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
       >
         <svg
           width="100%"
-          height="100%"
-          viewBox="0 0 400 400"
-          style={{ transform: "translateZ(0)" }}
+          height="400"
+          viewBox="0 0 700 400"
+          style={{ cursor: draggingNode ? "grabbing" : "default" }}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
-          {/* 3D Grid Floor Effect */}
           <defs>
-            <linearGradient id="gridFade" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="var(--notion-border)" stopOpacity="0" />
-              <stop offset="50%" stopColor="var(--notion-border)" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="var(--notion-border)" stopOpacity="0" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
+            {/* 화살표 마커 */}
+            <marker
+              id="arrowhead-pair"
+              markerWidth="8"
+              markerHeight="8"
+              refX="6"
+              refY="4"
+              orient="auto"
+            >
+              <path d="M0,1 L6,4 L0,7 Z" fill="#3b82f6" />
+            </marker>
+            <marker
+              id="arrowhead-waiting"
+              markerWidth="8"
+              markerHeight="8"
+              refX="6"
+              refY="4"
+              orient="auto"
+            >
+              <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" />
+            </marker>
+            {/* 그림자 필터 */}
+            <filter id="nodeShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
+            </filter>
+            <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="0" stdDeviation="4" floodOpacity="0.3" />
             </filter>
           </defs>
 
-          {/* Edges */}
-          {edges.map((edge, idx) => {
-            const sourceNode = nodes3D.find((n) => n.name === edge.source);
-            const targetNode = nodes3D.find((n) => n.name === edge.target);
-            if (!sourceNode || !targetNode) return null;
-
-            const source = project(sourceNode.x, sourceNode.y, sourceNode.z);
-            const target = project(targetNode.x, targetNode.y, targetNode.z);
-
-            const isActive = !activeNode || activeConnections.has(edge.source);
-            const opacity = activeNode ? (isActive ? 0.8 : 0.08) : 0.4;
-            const baseWidth = Math.min(edge.count * 1.5 + 1, 4);
-            const avgScale = (source.scale + target.scale) / 2;
-            const strokeWidth = baseWidth * avgScale;
-            const color = edge.relation === "pair" ? "#3b82f6" : "#ef4444";
-
-            // Curved edge with control point
-            const midX = (source.x + target.x) / 2;
-            const midY = (source.y + target.y) / 2;
-            const offset = Math.min(20 * avgScale, 30);
-            const controlX = midX + (Math.random() - 0.5) * offset;
-            const controlY = midY + (Math.random() - 0.5) * offset;
+          {/* 도메인 레이블 (상단) */}
+          {domains.map((domain, idx) => {
+            const domainNodes = nodePositions.filter((n) => n.domain === domain);
+            if (domainNodes.length === 0) return null;
+            const avgX = domainNodes.reduce((sum, n) => sum + n.x, 0) / domainNodes.length;
 
             return (
-              <g key={idx}>
-                <path
-                  d={`M ${source.x} ${source.y} Q ${controlX} ${controlY} ${target.x} ${target.y}`}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth={strokeWidth}
-                  opacity={opacity}
+              <g key={`domain-label-${domain}`}>
+                <text
+                  x={avgX}
+                  y={20}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontWeight={600}
+                  fill={getDomainColor(domain)}
+                >
+                  {domain}
+                </text>
+                <line
+                  x1={avgX - 30}
+                  y1={28}
+                  x2={avgX + 30}
+                  y2={28}
+                  stroke={getDomainColor(domain)}
+                  strokeWidth={2}
                   strokeLinecap="round"
-                  filter={isActive && activeNode ? "url(#glow)" : undefined}
+                  opacity={0.4}
                 />
               </g>
             );
           })}
 
-          {/* Nodes (sorted by z-depth) */}
-          {sortedNodes.map((node) => {
-            const { x, y, scale } = node.projected;
+          {/* 엣지 (연결선) */}
+          {edges.map((edge, idx) => {
+            const sourceNode = nodePositions.find((n) => n.name === edge.source);
+            const targetNode = nodePositions.find((n) => n.name === edge.target);
+            if (!sourceNode || !targetNode) return null;
+
+            const sourceRadius = getNodeRadius(sourceNode.degree);
+            const targetRadius = getNodeRadius(targetNode.degree);
+            const path = getEdgePath(
+              sourceNode.x,
+              sourceNode.y,
+              targetNode.x,
+              targetNode.y,
+              sourceRadius,
+              targetRadius
+            );
+
+            const isActive = !activeNode || activeConnections.has(edge.source);
+            const opacity = activeNode ? (isActive ? 1 : 0.1) : 0.6;
+            const strokeWidth = Math.min(edge.count + 1.5, 4);
+            const isPair = edge.relation === "pair";
+            const color = isPair ? "#3b82f6" : "#ef4444";
+
+            return (
+              <g key={`edge-${idx}`}>
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={strokeWidth}
+                  strokeOpacity={opacity}
+                  strokeLinecap="round"
+                  markerEnd={isPair ? undefined : "url(#arrowhead-waiting)"}
+                  style={{
+                    transition: "stroke-opacity 0.2s ease",
+                  }}
+                />
+                {/* 엣지 카운트 표시 */}
+                {edge.count > 1 && opacity > 0.3 && (
+                  <text
+                    x={(sourceNode.x + targetNode.x) / 2}
+                    y={(sourceNode.y + targetNode.y) / 2 - 8}
+                    textAnchor="middle"
+                    fontSize={9}
+                    fontWeight={600}
+                    fill={color}
+                    opacity={opacity}
+                  >
+                    ×{edge.count}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* 노드 */}
+          {nodePositions.map((node) => {
             const isActive = !activeNode || activeConnections.has(node.name) || node.name === activeNode;
-            const opacity = activeNode ? (isActive ? 1 : 0.15) : 1;
-            const radius = getNodeRadius(node.degree) * scale;
+            const opacity = activeNode ? (isActive ? 1 : 0.25) : 1;
+            const radius = getNodeRadius(node.degree);
             const color = getDomainColor(node.domain);
             const isSelected = node.name === activeNode;
+            const isBottleneck = node.waitingOnInbound >= 2;
 
             return (
               <g
                 key={node.id}
-                transform={`translate(${x},${y})`}
+                transform={`translate(${node.x},${node.y})`}
                 style={{
-                  cursor: "pointer",
+                  cursor: "grab",
                   opacity,
                   transition: "opacity 0.2s ease",
                 }}
-                onMouseEnter={() => setHoveredNode(node.name)}
-                onMouseLeave={() => setHoveredNode(null)}
+                onMouseDown={(e) => handleMouseDown(e, node.name)}
+                onMouseEnter={() => !draggingNode && setHoveredNode(node.name)}
+                onMouseLeave={() => !draggingNode && setHoveredNode(null)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedNode(selectedNode === node.name ? null : node.name);
+                  if (!draggingNode) {
+                    setSelectedNode(selectedNode === node.name ? null : node.name);
+                  }
                 }}
               >
-                {/* Glow effect for active node */}
-                {isSelected && (
+                {/* 병목 경고 표시 */}
+                {isBottleneck && (
                   <circle
-                    r={radius + 6}
+                    r={radius + 8}
                     fill="none"
-                    stroke={color}
+                    stroke="#ef4444"
                     strokeWidth={2}
-                    opacity={0.5}
-                    filter="url(#glow)"
+                    strokeDasharray="4 2"
+                    opacity={0.6}
                   />
                 )}
-                {/* Shadow */}
-                <ellipse
-                  cx={2}
-                  cy={radius + 3}
-                  rx={radius * 0.8}
-                  ry={radius * 0.3}
-                  fill="rgba(0,0,0,0.15)"
-                />
-                {/* Main sphere gradient effect */}
+                {/* 선택 하이라이트 */}
+                {isSelected && (
+                  <circle
+                    r={radius + 5}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={3}
+                    opacity={0.5}
+                  />
+                )}
+                {/* 노드 본체 */}
                 <circle
                   r={radius}
                   fill={color}
-                  stroke={isSelected ? "white" : "rgba(255,255,255,0.3)"}
-                  strokeWidth={isSelected ? 2.5 : 1}
-                  style={{
-                    filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
-                  }}
+                  stroke="white"
+                  strokeWidth={2.5}
+                  filter={isSelected ? "url(#nodeGlow)" : "url(#nodeShadow)"}
                 />
-                {/* Highlight */}
-                <circle
-                  r={radius * 0.7}
-                  cx={-radius * 0.25}
-                  cy={-radius * 0.25}
-                  fill="url(#sphereHighlight)"
-                  opacity={0.4}
-                />
-                {/* Name label */}
+                {/* 노드 내 이름 */}
                 <text
-                  y={radius + 12 * scale}
+                  y={1}
                   textAnchor="middle"
-                  fontSize={Math.max(9, 10 * scale)}
-                  fill="var(--notion-text)"
-                  fontWeight={isSelected ? 700 : 500}
-                  style={{
-                    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                    pointerEvents: "none",
-                  }}
+                  dominantBaseline="middle"
+                  fontSize={radius > 25 ? 11 : 10}
+                  fontWeight={600}
+                  fill="white"
+                  style={{ pointerEvents: "none", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
                 >
-                  {node.name}
+                  {node.name.length > 5 ? node.name.slice(0, 4) + "…" : node.name}
                 </text>
+                {/* Pair 카운트 뱃지 */}
+                {node.pairCount > 0 && (
+                  <g transform={`translate(${radius - 2}, ${-radius + 2})`}>
+                    <circle r={8} fill="#3b82f6" stroke="white" strokeWidth={1.5} />
+                    <text
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={8}
+                      fontWeight={700}
+                      fill="white"
+                    >
+                      {node.pairCount}
+                    </text>
+                  </g>
+                )}
+                {/* Waiting-on Inbound 뱃지 */}
+                {node.waitingOnInbound > 0 && (
+                  <g transform={`translate(${-radius + 2}, ${-radius + 2})`}>
+                    <circle r={8} fill="#ef4444" stroke="white" strokeWidth={1.5} />
+                    <text
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={8}
+                      fontWeight={700}
+                      fill="white"
+                    >
+                      {node.waitingOnInbound}
+                    </text>
+                  </g>
+                )}
               </g>
             );
           })}
-
-          {/* Sphere highlight gradient */}
-          <defs>
-            <radialGradient id="sphereHighlight" cx="30%" cy="30%" r="50%">
-              <stop offset="0%" stopColor="white" stopOpacity="1" />
-              <stop offset="100%" stopColor="white" stopOpacity="0" />
-            </radialGradient>
-          </defs>
         </svg>
 
-        {/* Hover/Selected Info Panel */}
+        {/* 정보 패널 */}
         {activeNode && (
           <div
-            className="absolute top-3 left-3 p-3 rounded-lg text-xs backdrop-blur-sm"
+            className="absolute top-3 right-3 p-3 rounded-lg text-xs"
             style={{
               background: "rgba(255,255,255,0.95)",
               border: "1px solid var(--notion-border)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              backdropFilter: "blur(4px)",
             }}
           >
-            <div className="font-bold mb-1.5" style={{ color: "var(--notion-text)" }}>
+            <div className="font-bold mb-2" style={{ color: "var(--notion-text)" }}>
               {activeNode}
             </div>
             <div className="space-y-1" style={{ color: "var(--notion-text-secondary)" }}>
               {(() => {
-                const node = nodes3D.find((n) => n.name === activeNode);
+                const node = nodePositions.find((n) => n.name === activeNode);
                 if (!node) return null;
                 return (
                   <>
                     <div className="flex items-center gap-1.5">
                       <span
-                        className="w-2 h-2 rounded-full"
+                        className="w-2.5 h-2.5 rounded-full"
                         style={{ background: getDomainColor(node.domain) }}
                       />
                       {node.domain}
                     </div>
-                    <div>Pair 협업: <strong>{node.pairCount}건</strong></div>
-                    <div>대기 중: <strong style={{ color: node.waitingOnInbound >= 2 ? "#ef4444" : undefined }}>{node.waitingOnInbound}명</strong></div>
-                    <div>총 연결: <strong>{node.degree}건</strong></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-500">● Pair: {node.pairCount}건</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        style={{ color: node.waitingOnInbound >= 2 ? "#ef4444" : undefined }}
+                      >
+                        ● 대기 중: {node.waitingOnInbound}명
+                      </span>
+                    </div>
                   </>
                 );
               })()}
@@ -479,8 +532,8 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
             {selectedNode && (
               <button
                 onClick={() => setSelectedNode(null)}
-                className="mt-2 text-xs px-2 py-1 rounded"
-                style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-blue)" }}
+                className="mt-2 w-full text-xs py-1 rounded"
+                style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text-secondary)" }}
               >
                 선택 해제
               </button>
@@ -488,69 +541,47 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           </div>
         )}
 
-        {/* Zoom Controls */}
+        {/* 안내 */}
         <div
-          className="absolute bottom-3 left-3 flex items-center gap-1"
-          style={{ zIndex: 10 }}
-        >
-          <button
-            onClick={() => setZoom((prev) => Math.max(0.5, prev - 0.2))}
-            className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
-            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
-            title="축소"
-          >
-            −
-          </button>
-          <div
-            className="px-2 py-1 text-xs font-medium rounded"
-            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
-          >
-            {Math.round(zoom * 100)}%
-          </div>
-          <button
-            onClick={() => setZoom((prev) => Math.min(2.5, prev + 0.2))}
-            className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
-            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
-            title="확대"
-          >
-            +
-          </button>
-          <button
-            onClick={() => setZoom(1)}
-            className="ml-1 px-2 py-1 text-xs rounded"
-            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text-secondary)" }}
-            title="초기화"
-          >
-            리셋
-          </button>
-        </div>
-
-        {/* Interaction hint */}
-        <div
-          className="absolute bottom-3 right-3 text-xs px-2 py-1 rounded"
+          className="absolute bottom-2 left-2 text-[10px] px-2 py-1 rounded"
           style={{ background: "rgba(0,0,0,0.5)", color: "white" }}
         >
-          드래그: 회전 / 휠: 확대
+          노드 드래그로 위치 조정
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="mt-3 pt-3 flex flex-wrap gap-2" style={{ borderTop: "1px solid var(--notion-border)" }}>
-        {Array.from(new Set(nodes3D.map((n) => n.domain))).map((domain) => (
-          <span
-            key={domain}
-            className="flex items-center gap-1 text-xs px-2 py-0.5 rounded"
-            style={{ background: "var(--notion-bg-secondary)" }}
-          >
+      {/* 범례 */}
+      <div className="mt-3 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--notion-border)" }}>
+        <div className="flex flex-wrap gap-2">
+          {domains.map((domain) => (
             <span
-              className="w-2 h-2 rounded-full"
-              style={{ background: getDomainColor(domain) }}
-            />
-            {domain}
+              key={domain}
+              className="flex items-center gap-1 text-xs px-2 py-0.5 rounded"
+              style={{ background: "var(--notion-bg-secondary)" }}
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: getDomainColor(domain) }}
+              />
+              {domain}
+            </span>
+          ))}
+        </div>
+        <div className="flex items-center gap-3 text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-blue-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
+            Pair 수
           </span>
-        ))}
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
+            대기 중
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-4 h-4 rounded-full border-2 border-dashed border-red-400" />
+            병목
+          </span>
+        </div>
       </div>
     </div>
   );
 }
-
