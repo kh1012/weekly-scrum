@@ -32,6 +32,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
 
@@ -47,11 +48,12 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
   useEffect(() => {
     if (rawNodes.length === 0) return;
 
-    // Initialize nodes in a sphere
+    // Initialize nodes in a sphere with larger radius for better spacing
     const initialNodes: Node3D[] = rawNodes.map((node, index) => {
       const phi = Math.acos(-1 + (2 * index) / rawNodes.length);
       const theta = Math.sqrt(rawNodes.length * Math.PI) * phi;
-      const radius = 120;
+      // 노드 수에 따라 반경 동적 조절 (최소 150, 최대 220)
+      const baseRadius = Math.min(220, Math.max(150, 100 + rawNodes.length * 10));
       
       return {
         id: node.id,
@@ -60,28 +62,29 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
         degree: node.degree,
         pairCount: node.pairCount,
         waitingOnInbound: node.waitingOnInbound,
-        x: radius * Math.cos(theta) * Math.sin(phi),
-        y: radius * Math.sin(theta) * Math.sin(phi),
-        z: radius * Math.cos(phi),
+        x: baseRadius * Math.cos(theta) * Math.sin(phi),
+        y: baseRadius * Math.sin(theta) * Math.sin(phi),
+        z: baseRadius * Math.cos(phi),
         vx: 0,
         vy: 0,
         vz: 0,
       };
     });
 
-    // Simple force simulation
+    // Simple force simulation with stronger repulsion
     const simulate = (nodes: Node3D[], iterations: number): Node3D[] => {
       const result = nodes.map((n) => ({ ...n }));
       
       for (let iter = 0; iter < iterations; iter++) {
-        // Repulsion between all nodes
+        // Repulsion between all nodes (강화된 척력)
         for (let i = 0; i < result.length; i++) {
           for (let j = i + 1; j < result.length; j++) {
             const dx = result[j].x - result[i].x;
             const dy = result[j].y - result[i].y;
             const dz = result[j].z - result[i].z;
             const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-            const force = 2000 / (dist * dist);
+            // 척력 강화: 2000 -> 5000 (노드 간 간격 증가)
+            const force = 5000 / (dist * dist);
             
             result[i].vx -= (dx / dist) * force;
             result[i].vy -= (dy / dist) * force;
@@ -92,7 +95,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           }
         }
 
-        // Attraction along edges
+        // Attraction along edges (약화된 인력)
         edges.forEach((edge) => {
           const source = result.find((n) => n.name === edge.source);
           const target = result.find((n) => n.name === edge.target);
@@ -102,7 +105,8 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           const dy = target.y - source.y;
           const dz = target.z - source.z;
           const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-          const force = dist * 0.02;
+          // 인력 약화: 0.02 -> 0.015
+          const force = dist * 0.015;
           
           source.vx += (dx / dist) * force;
           source.vy += (dy / dist) * force;
@@ -147,18 +151,23 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     };
   }, [isAutoRotating, isDragging]);
 
-  // Project 3D to 2D
+  // Project 3D to 2D with zoom
   const project = useCallback((x: number, y: number, z: number) => {
     const radY = (rotationY * Math.PI) / 180;
     const radX = (rotationX * Math.PI) / 180;
     
+    // Apply zoom to coordinates
+    const zoomedX = x * zoom;
+    const zoomedY = y * zoom;
+    const zoomedZ = z * zoom;
+    
     // Rotate around Y axis
-    const x1 = x * Math.cos(radY) - z * Math.sin(radY);
-    const z1 = x * Math.sin(radY) + z * Math.cos(radY);
+    const x1 = zoomedX * Math.cos(radY) - zoomedZ * Math.sin(radY);
+    const z1 = zoomedX * Math.sin(radY) + zoomedZ * Math.cos(radY);
     
     // Rotate around X axis
-    const y2 = y * Math.cos(radX) - z1 * Math.sin(radX);
-    const z2 = y * Math.sin(radX) + z1 * Math.cos(radX);
+    const y2 = zoomedY * Math.cos(radX) - z1 * Math.sin(radX);
+    const z2 = zoomedY * Math.sin(radX) + z1 * Math.cos(radX);
     
     // Perspective projection
     const perspective = 400;
@@ -168,9 +177,16 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
       x: 200 + x1 * scale,
       y: 200 + y2 * scale,
       z: z2,
-      scale,
+      scale: scale * zoom,
     };
-  }, [rotationY, rotationX]);
+  }, [rotationY, rotationX, zoom]);
+
+  // Wheel handler for zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom((prev) => Math.max(0.5, Math.min(2.5, prev + delta)));
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -267,7 +283,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
         ref={containerRef}
         className="relative cursor-grab active:cursor-grabbing select-none"
         style={{
-          height: 400,
+          height: 420,
           background: "radial-gradient(ellipse at center, var(--notion-bg-secondary) 0%, var(--notion-bg) 100%)",
           borderRadius: 8,
           overflow: "hidden",
@@ -276,6 +292,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
       >
         <svg
           width="100%"
@@ -471,12 +488,49 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           </div>
         )}
 
+        {/* Zoom Controls */}
+        <div
+          className="absolute bottom-3 left-3 flex items-center gap-1"
+          style={{ zIndex: 10 }}
+        >
+          <button
+            onClick={() => setZoom((prev) => Math.max(0.5, prev - 0.2))}
+            className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
+            title="축소"
+          >
+            −
+          </button>
+          <div
+            className="px-2 py-1 text-xs font-medium rounded"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
+          >
+            {Math.round(zoom * 100)}%
+          </div>
+          <button
+            onClick={() => setZoom((prev) => Math.min(2.5, prev + 0.2))}
+            className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
+            title="확대"
+          >
+            +
+          </button>
+          <button
+            onClick={() => setZoom(1)}
+            className="ml-1 px-2 py-1 text-xs rounded"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text-secondary)" }}
+            title="초기화"
+          >
+            리셋
+          </button>
+        </div>
+
         {/* Interaction hint */}
         <div
-          className="absolute bottom-2 right-2 text-xs px-2 py-1 rounded"
-          style={{ background: "rgba(0,0,0,0.4)", color: "white" }}
+          className="absolute bottom-3 right-3 text-xs px-2 py-1 rounded"
+          style={{ background: "rgba(0,0,0,0.5)", color: "white" }}
         >
-          드래그하여 회전
+          드래그: 회전 / 휠: 확대
         </div>
       </div>
 
