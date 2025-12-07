@@ -1,0 +1,2 @@
+export { CollaborationView } from "./CollaborationView";
+

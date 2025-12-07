@@ -11,19 +11,50 @@ interface NavItem {
   emoji: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { key: "summary", label: "요약", href: "/summary", emoji: "📊" },
-  { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
-  { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
-  { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
-  { key: "quadrant", label: "사분면", href: "/quadrant", emoji: "🎯" },
-  { key: "risks", label: "리스크", href: "/risks", emoji: "⚠️" },
-  { key: "my", label: "개인 대시보드", href: "/my", emoji: "👤" },
+interface NavCategory {
+  key: string;
+  label: string;
+  items: NavItem[];
+}
+
+const NAV_CATEGORIES: NavCategory[] = [
+  {
+    key: "dashboard",
+    label: "대시보드",
+    items: [
+      { key: "summary", label: "요약", href: "/summary", emoji: "📊" },
+      { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
+      { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
+      { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
+      { key: "quadrant", label: "사분면", href: "/quadrant", emoji: "🎯" },
+      { key: "risks", label: "리스크", href: "/risks", emoji: "⚠️" },
+    ],
+  },
+  {
+    key: "collaboration",
+    label: "협업",
+    items: [
+      { key: "collaboration", label: "팀 협업", href: "/collaboration", emoji: "🤝" },
+    ],
+  },
+  {
+    key: "personal",
+    label: "개인화",
+    items: [
+      { key: "my", label: "개인 대시보드", href: "/my", emoji: "👤" },
+    ],
+  },
+  {
+    key: "extra",
+    label: "추가 기능",
+    items: [
+      { key: "shares", label: "Shares", href: "/shares", emoji: "📣" },
+    ],
+  },
 ];
 
-const EXTRA_ITEMS: NavItem[] = [
-  { key: "shares", label: "공유사항", href: "/shares", emoji: "📣" },
-];
+// 플랫 아이템 (하위 호환용)
+const NAV_ITEMS: NavItem[] = NAV_CATEGORIES.flatMap((cat) => cat.items);
 
 function useIsActive() {
   const pathname = usePathname();
@@ -56,45 +87,26 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
 
       {/* Navigation Items */}
       <nav className="flex-1 overflow-y-auto px-2 py-1">
-        {/* 메인 메뉴 */}
-        <div className="mb-4">
-          <div className="px-2 py-1.5 text-xs font-medium" style={{ color: 'var(--notion-text-muted)' }}>
-            대시보드
+        {NAV_CATEGORIES.map((category) => (
+          <div key={category.key} className="mb-3">
+            <div className="px-2 py-1.5 text-xs font-medium" style={{ color: 'var(--notion-text-muted)' }}>
+              {category.label}
+            </div>
+            <div className="space-y-0.5">
+              {category.items.map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  onClick={onItemClick}
+                  className={`notion-sidebar-item ${isActive(item.href) ? 'active' : ''}`}
+                >
+                  <span className="text-base w-5 text-center">{item.emoji}</span>
+                  <span className="flex-1">{item.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="space-y-0.5">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                onClick={onItemClick}
-                className={`notion-sidebar-item ${isActive(item.href) ? 'active' : ''}`}
-              >
-                <span className="text-base w-5 text-center">{item.emoji}</span>
-                <span className="flex-1">{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* 추가 메뉴 */}
-        <div>
-          <div className="px-2 py-1.5 text-xs font-medium" style={{ color: 'var(--notion-text-muted)' }}>
-            추가 기능
-          </div>
-          <div className="space-y-0.5">
-            {EXTRA_ITEMS.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                onClick={onItemClick}
-                className={`notion-sidebar-item ${isActive(item.href) ? 'active' : ''}`}
-              >
-                <span className="text-base w-5 text-center">{item.emoji}</span>
-                <span className="flex-1">{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
+        ))}
       </nav>
 
       {/* Footer with Visitor Count */}
