@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import { getCollaborationMatrix } from "@/lib/collaboration";
 import { DOMAIN_COLORS } from "@/lib/colorDefines";
@@ -33,9 +33,15 @@ interface FlowRibbon {
 }
 
 export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
+  const [mounted, setMounted] = useState(false);
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
   const [hoveredRibbon, setHoveredRibbon] = useState<FlowRibbon | null>(null);
   const [selectedType, setSelectedType] = useState<"all" | "pair" | "waiting-on">("all");
+
+  // Hydration 문제 방지: 클라이언트에서만 렌더링
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { domainArcs, flowRibbons, domains } = useMemo(() => {
     const pairData = getCollaborationMatrix(items, "pair");
@@ -227,9 +233,23 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
     return r.type === selectedType;
   });
 
+  // SSR 시 로딩 표시
+  if (!mounted) {
+    return (
+      <div className="notion-card p-3 sm:p-4">
+        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
+          🔀 도메인 간 협업 흐름
+        </h3>
+        <div className="flex items-center justify-center h-[280px] sm:h-[350px] md:h-[420px] lg:h-[480px] text-sm" style={{ color: "var(--notion-text-secondary)" }}>
+          로딩 중...
+        </div>
+      </div>
+    );
+  }
+
   if (domains.length === 0) {
     return (
-      <div className="notion-card p-4">
+      <div className="notion-card p-3 sm:p-4">
         <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
           🔀 도메인 간 협업 흐름
         </h3>
@@ -247,22 +267,22 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
   const ribbonRadius = innerRadius - 5;
 
   return (
-    <div className="notion-card p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="notion-card p-3 sm:p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
         <div>
           <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
             🔀 도메인 간 협업 흐름
           </h3>
-          <p className="text-xs mt-1" style={{ color: "var(--notion-text-secondary)" }}>
+          <p className="text-[10px] sm:text-xs mt-0.5 sm:mt-1" style={{ color: "var(--notion-text-secondary)" }}>
             도메인 간의 협업 관계를 시각화합니다
           </p>
         </div>
-        <div className="flex items-center gap-1 p-0.5 rounded" style={{ background: "var(--notion-bg-secondary)" }}>
+        <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 rounded w-fit" style={{ background: "var(--notion-bg-secondary)" }}>
           {(["all", "pair", "waiting-on"] as const).map((type) => (
             <button
               key={type}
               onClick={() => setSelectedType(type)}
-              className={`px-3 py-1.5 text-xs rounded transition-all ${selectedType === type ? "font-semibold" : ""}`}
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded transition-all ${selectedType === type ? "font-semibold" : ""}`}
               style={{
                 background: selectedType === type ? "var(--notion-bg)" : "transparent",
                 color:
@@ -276,7 +296,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                 boxShadow: selectedType === type ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px" : "none",
               }}
             >
-              {type === "all" ? "전체" : type === "pair" ? "Pair" : "Waiting-on"}
+              {type === "all" ? "전체" : type === "pair" ? "Pair" : "Waiting"}
             </button>
           ))}
         </div>
@@ -289,7 +309,12 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
           border: "1px solid var(--notion-border)",
         }}
       >
-        <svg width="100%" height={size} viewBox={`0 0 ${size} ${size}`}>
+        <svg
+          width="100%"
+          className="h-[280px] sm:h-[350px] md:h-[420px] lg:h-[480px]"
+          viewBox={`0 0 ${size} ${size}`}
+          preserveAspectRatio="xMidYMid meet"
+        >
           <g transform={`translate(${center}, ${center})`}>
             {/* Ribbons (연결선) */}
             {filteredRibbons.map((ribbon, idx) => {
@@ -299,16 +324,17 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                 ribbon.target === hoveredDomain;
               const isRibbonHovered = hoveredRibbon === ribbon;
               const color = ribbon.type === "pair" ? "#3b82f6" : "#ef4444";
+              const hasHover = hoveredDomain || hoveredRibbon;
 
               return (
                 <path
                   key={`ribbon-${idx}`}
                   d={createRibbonPath(ribbon, ribbonRadius)}
                   fill={color}
-                  fillOpacity={isRibbonHovered ? 0.7 : isHighlighted ? 0.35 : 0.08}
+                  fillOpacity={isRibbonHovered ? 0.85 : hasHover ? (isHighlighted ? 0.5 : 0.03) : 0.35}
                   stroke={color}
-                  strokeWidth={isRibbonHovered ? 2 : 0}
-                  style={{ cursor: "pointer", transition: "fill-opacity 0.2s" }}
+                  strokeWidth={isRibbonHovered ? 2.5 : 0}
+                  style={{ cursor: "pointer", transition: "fill-opacity 0.15s, stroke-width 0.15s" }}
                   onMouseEnter={() => setHoveredRibbon(ribbon)}
                   onMouseLeave={() => setHoveredRibbon(null)}
                 />
@@ -318,6 +344,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
             {/* Domain Arcs */}
             {domainArcs.map((arc) => {
               const isHighlighted = !hoveredDomain || arc.domain === hoveredDomain;
+              const hasHover = hoveredDomain || hoveredRibbon;
               const midAngle = (arc.startAngle + arc.endAngle) / 2;
               const labelRadius = outerRadius + 25;
               const labelX = Math.cos(midAngle) * labelRadius;
@@ -329,10 +356,10 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                   <path
                     d={createArcPath(arc.startAngle, arc.endAngle, innerRadius, outerRadius)}
                     fill={arc.color}
-                    fillOpacity={isHighlighted ? 1 : 0.3}
+                    fillOpacity={hasHover ? (isHighlighted ? 1 : 0.12) : 1}
                     stroke="white"
-                    strokeWidth={2}
-                    style={{ cursor: "pointer", transition: "fill-opacity 0.2s" }}
+                    strokeWidth={isHighlighted && hasHover ? 3 : 2}
+                    style={{ cursor: "pointer", transition: "fill-opacity 0.15s, stroke-width 0.15s" }}
                     onMouseEnter={() => setHoveredDomain(arc.domain)}
                     onMouseLeave={() => setHoveredDomain(null)}
                   />
@@ -342,10 +369,10 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                     y={labelY}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fontSize={11}
-                    fontWeight={600}
-                    fill={isHighlighted ? arc.color : "#94a3b8"}
-                    style={{ transition: "fill 0.2s", pointerEvents: "none" }}
+                    fontSize={isHighlighted && hasHover ? 12 : 11}
+                    fontWeight={isHighlighted && hasHover ? 700 : 600}
+                    fill={hasHover ? (isHighlighted ? arc.color : "#cbd5e1") : arc.color}
+                    style={{ transition: "all 0.15s", pointerEvents: "none" }}
                   >
                     {arc.domain}
                   </text>
@@ -384,7 +411,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
         {/* Tooltip */}
         {hoveredRibbon && (
           <div
-            className="absolute top-3 right-3 p-3 rounded-lg text-xs"
+            className="absolute top-2 right-2 p-2 sm:p-3 rounded-lg text-[10px] sm:text-xs max-w-[140px] sm:max-w-[180px]"
             style={{
               background: "rgba(255,255,255,0.95)",
               border: "1px solid var(--notion-border)",
@@ -392,24 +419,24 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
               backdropFilter: "blur(4px)",
             }}
           >
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
               <span
-                className="w-3 h-3 rounded"
+                className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded"
                 style={{ background: hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444" }}
               />
               <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-                {hoveredRibbon.type === "pair" ? "Pair 협업" : "Waiting-on"}
+                {hoveredRibbon.type === "pair" ? "Pair" : "Waiting"}
               </span>
             </div>
-            <div className="flex items-center gap-2" style={{ color: "var(--notion-text-secondary)" }}>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap" style={{ color: "var(--notion-text-secondary)" }}>
               <span
-                className="w-2.5 h-2.5 rounded-full"
+                className="w-2 h-2 rounded-full"
                 style={{ background: getDomainColor(hoveredRibbon.source) }}
               />
               <span>{hoveredRibbon.source}</span>
               <span>→</span>
               <span
-                className="w-2.5 h-2.5 rounded-full"
+                className="w-2 h-2 rounded-full"
                 style={{ background: getDomainColor(hoveredRibbon.target) }}
               />
               <span>{hoveredRibbon.target}</span>
@@ -425,12 +452,12 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
       </div>
 
       {/* 범례 */}
-      <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--notion-border)" }}>
-        <div className="flex flex-wrap gap-2">
+      <div className="mt-3 pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" style={{ borderTop: "1px solid var(--notion-border)" }}>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {domainArcs.map((arc) => (
             <span
               key={arc.domain}
-              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded cursor-pointer transition-all"
+              className="flex items-center gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded cursor-pointer transition-all"
               style={{
                 background: hoveredDomain === arc.domain ? arc.color : "var(--notion-bg-secondary)",
                 color: hoveredDomain === arc.domain ? "white" : "var(--notion-text)",
@@ -439,7 +466,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
               onMouseLeave={() => setHoveredDomain(null)}
             >
               <span
-                className="w-2.5 h-2.5 rounded-full"
+                className="w-2 h-2 rounded-full"
                 style={{ background: hoveredDomain === arc.domain ? "white" : arc.color }}
               />
               {arc.domain}
@@ -447,14 +474,14 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
             </span>
           ))}
         </div>
-        <div className="flex items-center gap-3 text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+        <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
           <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded" style={{ background: "rgba(59, 130, 246, 0.5)" }} />
+            <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded" style={{ background: "rgba(59, 130, 246, 0.5)" }} />
             Pair
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded" style={{ background: "rgba(239, 68, 68, 0.5)" }} />
-            Waiting-on
+            <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded" style={{ background: "rgba(239, 68, 68, 0.5)" }} />
+            Waiting
           </span>
         </div>
       </div>

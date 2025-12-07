@@ -11,13 +11,17 @@ export function Filters({ isMobile = false }: FiltersProps) {
 
   const hasActiveFilters = filters.domain || filters.project || filters.module || filters.member || filters.search;
 
+  // 모듈이 있는 경우 4개, 없으면 3개 필터
+  const filterCount = modules.length > 0 ? 4 : 3;
+
   if (isMobile) {
     return (
-      <div className="flex items-center gap-2 min-w-max">
+      <div className="flex items-center gap-1 w-full">
         <select
           value={filters.member}
           onChange={(e) => updateFilter("member", e.target.value)}
-          className="notion-select text-xs py-1"
+          className="notion-select text-xs py-1 truncate"
+          style={{ flex: `1 1 calc(100% / ${filterCount})`, minWidth: 0, maxWidth: `calc(100% / ${filterCount})` }}
         >
           <option value="">담당자</option>
           {members.map((member) => (
@@ -27,7 +31,8 @@ export function Filters({ isMobile = false }: FiltersProps) {
         <select
           value={filters.domain}
           onChange={(e) => updateFilter("domain", e.target.value)}
-          className="notion-select text-xs py-1"
+          className="notion-select text-xs py-1 truncate"
+          style={{ flex: `1 1 calc(100% / ${filterCount})`, minWidth: 0, maxWidth: `calc(100% / ${filterCount})` }}
         >
           <option value="">도메인</option>
           {domains.map((domain) => (
@@ -37,7 +42,8 @@ export function Filters({ isMobile = false }: FiltersProps) {
         <select
           value={filters.project}
           onChange={(e) => updateFilter("project", e.target.value)}
-          className="notion-select text-xs py-1"
+          className="notion-select text-xs py-1 truncate"
+          style={{ flex: `1 1 calc(100% / ${filterCount})`, minWidth: 0, maxWidth: `calc(100% / ${filterCount})` }}
         >
           <option value="">프로젝트</option>
           {projects.map((project) => (
@@ -48,7 +54,8 @@ export function Filters({ isMobile = false }: FiltersProps) {
           <select
             value={filters.module}
             onChange={(e) => updateFilter("module", e.target.value)}
-            className="notion-select text-xs py-1"
+            className="notion-select text-xs py-1 truncate"
+            style={{ flex: `1 1 calc(100% / ${filterCount})`, minWidth: 0, maxWidth: `calc(100% / ${filterCount})` }}
           >
             <option value="">모듈</option>
             {modules.map((mod) => (

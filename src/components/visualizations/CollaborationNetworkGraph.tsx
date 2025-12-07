@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import { getCollaborationNodes, getCollaborationEdges } from "@/lib/collaboration";
 import { DOMAIN_COLORS } from "@/lib/colorDefines";
@@ -9,7 +9,7 @@ interface CollaborationNetworkGraphProps {
   items: ScrumItem[];
 }
 
-interface NodePosition {
+interface NodeData {
   id: string;
   name: string;
   domain: string;
@@ -21,11 +21,13 @@ interface NodePosition {
 }
 
 export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [nodes, setNodes] = useState<NodeData[]>([]);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [nodePositions, setNodePositions] = useState<NodePosition[]>([]);
-  const [draggingNode, setDraggingNode] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
 
   const { rawNodes, edges } = useMemo(() => {
     const rawNodes = getCollaborationNodes(items);
@@ -33,17 +35,32 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     return { rawNodes, edges };
   }, [items]);
 
-  // 도메인별 그룹핑 및 초기 배치
+  // 컨테이너 크기 감지
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDimensions({
+          width: Math.max(rect.width, 300),
+          height: Math.max(rect.height, 300),
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+
+  // 초기 노드 배치 (도메인별 컬럼)
   useEffect(() => {
     if (rawNodes.length === 0) return;
 
-    // 더 넓은 캔버스 크기
-    const width = 1200;
-    const height = 600;
+    const { width, height } = dimensions;
     const padding = 80;
-    const verticalSpacing = 120; // 노드 간 세로 간격
+    const verticalSpacing = 90;
 
-    // 도메인별로 그룹핑
+    // 도메인별 그룹핑
     const domainGroups = new Map<string, typeof rawNodes>();
     rawNodes.forEach((node) => {
       const group = domainGroups.get(node.domain) || [];
@@ -54,19 +71,19 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     const domains = Array.from(domainGroups.keys()).sort();
     const domainCount = domains.length;
 
-    // 도메인별 열 배치
-    const positions: NodePosition[] = [];
+    const newNodes: NodeData[] = [];
     domains.forEach((domain, domainIndex) => {
-      const nodes = domainGroups.get(domain) || [];
-      const columnX = padding + ((width - padding * 2) / Math.max(domainCount - 1, 1)) * domainIndex;
+      const domainNodes = domainGroups.get(domain) || [];
+      const columnX = domainCount === 1
+        ? width / 2
+        : padding + ((width - padding * 2) / (domainCount - 1)) * domainIndex;
 
-      nodes.forEach((node, nodeIndex) => {
-        const nodeCount = nodes.length;
-        const totalHeight = (nodeCount - 1) * verticalSpacing;
+      domainNodes.forEach((node, nodeIndex) => {
+        const totalHeight = (domainNodes.length - 1) * verticalSpacing;
         const startY = height / 2 - totalHeight / 2;
         const y = startY + nodeIndex * verticalSpacing;
 
-        positions.push({
+        newNodes.push({
           id: node.id,
           name: node.name,
           domain: node.domain,
@@ -79,96 +96,129 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
       });
     });
 
-    // Force simulation for better spacing
-    const simulate = (nodes: NodePosition[], iterations: number): NodePosition[] => {
-      const result = nodes.map((n) => ({ ...n }));
+    // 노드 간 겹침 방지
+    for (let iter = 0; iter < 50; iter++) {
+      let moved = false;
+      for (let i = 0; i < newNodes.length; i++) {
+        for (let j = i + 1; j < newNodes.length; j++) {
+          const dx = newNodes[j].x - newNodes[i].x;
+          const dy = newNodes[j].y - newNodes[i].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minDist = 100;
 
-      for (let iter = 0; iter < iterations; iter++) {
-        // Repulsion between nodes (더 넓은 최소 거리)
-        for (let i = 0; i < result.length; i++) {
-          for (let j = i + 1; j < result.length; j++) {
-            const dx = result[j].x - result[i].x;
-            const dy = result[j].y - result[i].y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const minDist = 130; // 최소 거리 증가
+          if (dist < minDist && dist > 0) {
+            const force = (minDist - dist) / 2;
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
 
-            if (dist < minDist) {
-              const force = (minDist - dist) / dist * 0.5;
-              result[i].x -= dx * force * 0.3;
-              result[i].y -= dy * force;
-              result[j].x += dx * force * 0.3;
-              result[j].y += dy * force;
-            }
+            newNodes[i].x -= fx * 0.3;
+            newNodes[i].y -= fy;
+            newNodes[j].x += fx * 0.3;
+            newNodes[j].y += fy;
+            moved = true;
           }
         }
-
-        // Keep within bounds
-        result.forEach((node) => {
-          node.x = Math.max(padding, Math.min(width - padding, node.x));
-          node.y = Math.max(padding, Math.min(height - padding, node.y));
-        });
       }
 
-      return result;
-    };
+      // 경계 유지
+      newNodes.forEach((node) => {
+        node.x = Math.max(padding, Math.min(width - padding, node.x));
+        node.y = Math.max(padding, Math.min(height - padding, node.y));
+      });
 
-    const simulated = simulate(positions, 50);
-    setNodePositions(simulated);
-  }, [rawNodes]);
+      if (!moved) break;
+    }
 
-  // 드래그 핸들러
-  const handleMouseDown = useCallback((e: React.MouseEvent, nodeName: string) => {
-    e.preventDefault();
-    const node = nodePositions.find((n) => n.name === nodeName);
-    if (!node) return;
-
-    const svgRect = (e.currentTarget as SVGElement).closest("svg")?.getBoundingClientRect();
-    if (!svgRect) return;
-
-    setDraggingNode(nodeName);
-    setDragOffset({
-      x: e.clientX - svgRect.left - node.x,
-      y: e.clientY - svgRect.top - node.y,
-    });
-  }, [nodePositions]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draggingNode) return;
-
-    const svgRect = e.currentTarget.getBoundingClientRect();
-    const scaleX = 1200 / svgRect.width;
-    const scaleY = 600 / svgRect.height;
-    const newX = (e.clientX - svgRect.left) * scaleX;
-    const newY = (e.clientY - svgRect.top) * scaleY;
-
-    setNodePositions((prev) =>
-      prev.map((node) =>
-        node.name === draggingNode
-          ? {
-              ...node,
-              x: Math.max(60, Math.min(1140, newX)),
-              y: Math.max(60, Math.min(540, newY)),
-            }
-          : node
-      )
-    );
-  }, [draggingNode, dragOffset]);
-
-  const handleMouseUp = useCallback(() => {
-    setDraggingNode(null);
-  }, []);
+    setNodes(newNodes);
+  }, [rawNodes, dimensions]);
 
   const getDomainColor = (domain: string): string => {
     const domainKey = domain as keyof typeof DOMAIN_COLORS;
     return DOMAIN_COLORS[domainKey]?.text ?? "#64748b";
   };
 
-  const getNodeRadius = (degree: number) => {
-    const minRadius = 28;
-    const maxRadius = 45;
-    const maxDegree = Math.max(...nodePositions.map((n) => n.degree), 1);
-    return minRadius + ((maxRadius - minRadius) * degree) / maxDegree;
-  };
+  const getNodeRadius = useCallback((degree: number) => {
+    const maxDegree = Math.max(...nodes.map((n) => n.degree), 1);
+    return 26 + (degree / maxDegree) * 16;
+  }, [nodes]);
+
+  // SVG 좌표 변환
+  const getSvgPoint = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const { width, height } = dimensions;
+
+    // 줌 적용된 viewBox 계산
+    const vbWidth = width / zoom;
+    const vbHeight = height / zoom;
+    const vbX = (width - vbWidth) / 2;
+    const vbY = (height - vbHeight) / 2;
+
+    const x = vbX + ((e.clientX - rect.left) / rect.width) * vbWidth;
+    const y = vbY + ((e.clientY - rect.top) / rect.height) * vbHeight;
+
+    return { x, y };
+  }, [dimensions, zoom]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent<SVGGElement>, nodeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+
+    const svg = e.currentTarget.closest("svg");
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    const { width, height } = dimensions;
+    const vbWidth = width / zoom;
+    const vbHeight = height / zoom;
+    const vbX = (width - vbWidth) / 2;
+    const vbY = (height - vbHeight) / 2;
+
+    const svgX = vbX + ((e.clientX - rect.left) / rect.width) * vbWidth;
+    const svgY = vbY + ((e.clientY - rect.top) / rect.height) * vbHeight;
+
+    setDragging({
+      id: nodeId,
+      offsetX: svgX - node.x,
+      offsetY: svgY - node.y,
+    });
+  }, [nodes, dimensions, zoom]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!dragging) return;
+
+    const point = getSvgPoint(e);
+    const newX = point.x - dragging.offsetX;
+    const newY = point.y - dragging.offsetY;
+
+    const padding = 50;
+    const { width, height } = dimensions;
+
+    setNodes((prev) =>
+      prev.map((node) =>
+        node.id === dragging.id
+          ? {
+              ...node,
+              x: Math.max(padding, Math.min(width - padding, newX)),
+              y: Math.max(padding, Math.min(height - padding, newY)),
+            }
+          : node
+      )
+    );
+  }, [dragging, getSvgPoint, dimensions]);
+
+  const handleMouseUp = useCallback(() => {
+    setDragging(null);
+  }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom((prev) => Math.max(0.5, Math.min(2.5, prev + delta)));
+  }, []);
 
   const activeNode = selectedNode ?? hoveredNode;
   const activeConnections = useMemo(() => {
@@ -179,38 +229,40 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     return new Set(connected);
   }, [activeNode, edges]);
 
-  // 엣지 경로 계산 (곡선)
-  const getEdgePath = (
-    sourceX: number,
-    sourceY: number,
-    targetX: number,
-    targetY: number,
-    sourceRadius: number,
-    targetRadius: number
-  ) => {
-    const dx = targetX - sourceX;
-    const dy = targetY - sourceY;
+  // 엣지 경로 계산
+  const getEdgePath = useCallback((source: NodeData, target: NodeData) => {
+    const sourceRadius = getNodeRadius(source.degree);
+    const targetRadius = getNodeRadius(target.degree);
+
+    const dx = target.x - source.x;
+    const dy = target.y - source.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist === 0) return "";
 
-    // 노드 테두리에서 시작/끝
-    const startX = sourceX + (dx / dist) * sourceRadius;
-    const startY = sourceY + (dy / dist) * sourceRadius;
-    const endX = targetX - (dx / dist) * (targetRadius + 8);
-    const endY = targetY - (dy / dist) * (targetRadius + 8);
+    const startX = source.x + (dx / dist) * sourceRadius;
+    const startY = source.y + (dy / dist) * sourceRadius;
+    const endX = target.x - (dx / dist) * (targetRadius + 8);
+    const endY = target.y - (dy / dist) * (targetRadius + 8);
 
-    // 곡선 제어점 (수직 방향으로 오프셋)
+    // 곡선
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
     const perpX = -dy / dist;
     const perpY = dx / dist;
-    const curveOffset = Math.min(dist * 0.15, 30);
-    const ctrlX = midX + perpX * curveOffset;
-    const ctrlY = midY + perpY * curveOffset;
+    const curve = Math.min(dist * 0.12, 25);
+    const ctrlX = midX + perpX * curve;
+    const ctrlY = midY + perpY * curve;
 
     return `M ${startX} ${startY} Q ${ctrlX} ${ctrlY} ${endX} ${endY}`;
-  };
+  }, [getNodeRadius]);
+
+  // viewBox 계산
+  const { width, height } = dimensions;
+  const vbWidth = width / zoom;
+  const vbHeight = height / zoom;
+  const vbX = (width - vbWidth) / 2;
+  const vbY = (height - vbHeight) / 2;
 
   if (rawNodes.length === 0) {
     return (
@@ -225,38 +277,36 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
     );
   }
 
-  // 도메인 목록
-  const domains = Array.from(new Set(nodePositions.map((n) => n.domain))).sort();
+  const domains = Array.from(new Set(nodes.map((n) => n.domain))).sort();
 
   return (
-    <div className="notion-card p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
-          🔗 협업 네트워크
-        </h3>
-        <div className="flex items-center gap-4 text-xs" style={{ color: "var(--notion-text-secondary)" }}>
-          <span className="flex items-center gap-1.5">
-            <svg width="20" height="8">
-              <line x1="0" y1="4" x2="16" y2="4" stroke="#3b82f6" strokeWidth="2" />
-            </svg>
+    <div className="notion-card p-3 sm:p-4">
+      {/* 헤더 */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+        <div>
+          <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
+            🔗 협업 네트워크
+          </h3>
+          <p className="text-[10px] sm:text-xs mt-0.5" style={{ color: "var(--notion-text-secondary)" }}>
+            노드 드래그로 위치 조정 / 휠로 확대·축소
+          </p>
+        </div>
+        <div className="flex items-center gap-3 text-[10px] sm:text-xs" style={{ color: "var(--notion-text-secondary)" }}>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-0.5 bg-blue-500 rounded" />
             Pair
           </span>
-          <span className="flex items-center gap-1.5">
-            <svg width="20" height="8">
-              <defs>
-                <marker id="arrowRed" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                  <path d="M0,0 L6,3 L0,6 Z" fill="#ef4444" />
-                </marker>
-              </defs>
-              <line x1="0" y1="4" x2="14" y2="4" stroke="#ef4444" strokeWidth="2" markerEnd="url(#arrowRed)" />
-            </svg>
-            Waiting-on
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-0.5 bg-red-500 rounded" />
+            →Waiting
           </span>
         </div>
       </div>
 
+      {/* 그래프 영역 */}
       <div
-        className="relative rounded-lg overflow-hidden"
+        ref={containerRef}
+        className="relative rounded-lg overflow-hidden h-[300px] sm:h-[380px] md:h-[450px] lg:h-[500px]"
         style={{
           background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
           border: "1px solid var(--notion-border)",
@@ -264,226 +314,139 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
       >
         <svg
           width="100%"
-          height="400"
-          viewBox="0 0 700 400"
-          style={{ cursor: draggingNode ? "grabbing" : "default" }}
+          height="100%"
+          viewBox={`${vbX} ${vbY} ${vbWidth} ${vbHeight}`}
+          preserveAspectRatio="xMidYMid meet"
+          style={{ cursor: dragging ? "grabbing" : "default" }}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
         >
           <defs>
-            {/* 화살표 마커 */}
-            <marker
-              id="arrowhead-pair"
-              markerWidth="8"
-              markerHeight="8"
-              refX="6"
-              refY="4"
-              orient="auto"
-            >
-              <path d="M0,1 L6,4 L0,7 Z" fill="#3b82f6" />
+            {/* 연결된 엣지용 화살표 마커 */}
+            <marker id="arrow-waiting" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" fillOpacity="0.7" />
             </marker>
-            <marker
-              id="arrowhead-waiting"
-              markerWidth="8"
-              markerHeight="8"
-              refX="6"
-              refY="4"
-              orient="auto"
-            >
-              <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" />
+            {/* 연결되지 않은 엣지용 흐린 화살표 마커 */}
+            <marker id="arrow-waiting-dim" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" fillOpacity="0.1" />
             </marker>
-            {/* 그림자 필터 */}
-            <filter id="nodeShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <filter id="node-shadow" x="-50%" y="-50%" width="200%" height="200%">
               <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
             </filter>
-            <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodOpacity="0.3" />
+            <filter id="node-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="0" stdDeviation="6" floodOpacity="0.4" />
             </filter>
           </defs>
 
-          {/* 도메인 레이블 (상단) */}
-          {domains.map((domain, idx) => {
-            const domainNodes = nodePositions.filter((n) => n.domain === domain);
-            if (domainNodes.length === 0) return null;
-            const avgX = domainNodes.reduce((sum, n) => sum + n.x, 0) / domainNodes.length;
-
-            return (
-              <g key={`domain-label-${domain}`}>
-                <text
-                  x={avgX}
-                  y={20}
-                  textAnchor="middle"
-                  fontSize={11}
-                  fontWeight={600}
-                  fill={getDomainColor(domain)}
-                >
-                  {domain}
-                </text>
-                <line
-                  x1={avgX - 30}
-                  y1={28}
-                  x2={avgX + 30}
-                  y2={28}
-                  stroke={getDomainColor(domain)}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  opacity={0.4}
-                />
-              </g>
-            );
-          })}
-
-          {/* 엣지 (연결선) */}
+          {/* 엣지 */}
           {edges.map((edge, idx) => {
-            const sourceNode = nodePositions.find((n) => n.name === edge.source);
-            const targetNode = nodePositions.find((n) => n.name === edge.target);
-            if (!sourceNode || !targetNode) return null;
+            const source = nodes.find((n) => n.name === edge.source);
+            const target = nodes.find((n) => n.name === edge.target);
+            if (!source || !target) return null;
 
-            const sourceRadius = getNodeRadius(sourceNode.degree);
-            const targetRadius = getNodeRadius(targetNode.degree);
-            const path = getEdgePath(
-              sourceNode.x,
-              sourceNode.y,
-              targetNode.x,
-              targetNode.y,
-              sourceRadius,
-              targetRadius
-            );
-
-            const isActive = !activeNode || activeConnections.has(edge.source);
-            const opacity = activeNode ? (isActive ? 1 : 0.1) : 0.6;
-            const strokeWidth = Math.min(edge.count + 1.5, 4);
             const isPair = edge.relation === "pair";
-            const color = isPair ? "#3b82f6" : "#ef4444";
+            const isConnected = activeNode
+              ? edge.source === activeNode || edge.target === activeNode
+              : true;
 
             return (
-              <g key={`edge-${idx}`}>
-                <path
-                  d={path}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth={strokeWidth}
-                  strokeOpacity={opacity}
-                  strokeLinecap="round"
-                  markerEnd={isPair ? undefined : "url(#arrowhead-waiting)"}
-                  style={{
-                    transition: "stroke-opacity 0.2s ease",
-                  }}
-                />
-                {/* 엣지 카운트 표시 */}
-                {edge.count > 1 && opacity > 0.3 && (
-                  <text
-                    x={(sourceNode.x + targetNode.x) / 2}
-                    y={(sourceNode.y + targetNode.y) / 2 - 8}
-                    textAnchor="middle"
-                    fontSize={9}
-                    fontWeight={600}
-                    fill={color}
-                    opacity={opacity}
-                  >
-                    ×{edge.count}
-                  </text>
-                )}
-              </g>
+              <path
+                key={`edge-${idx}`}
+                d={getEdgePath(source, target)}
+                fill="none"
+                stroke={isPair ? "#3b82f6" : "#ef4444"}
+                strokeWidth={isPair ? 2.5 : 2}
+                strokeOpacity={isConnected ? 0.7 : 0.1}
+                strokeLinecap="round"
+                markerEnd={isPair ? undefined : isConnected ? "url(#arrow-waiting)" : "url(#arrow-waiting-dim)"}
+                style={{ transition: "stroke-opacity 0.2s" }}
+              />
             );
           })}
 
           {/* 노드 */}
-          {nodePositions.map((node) => {
-            const isActive = !activeNode || activeConnections.has(node.name) || node.name === activeNode;
-            const opacity = activeNode ? (isActive ? 1 : 0.25) : 1;
+          {nodes.map((node) => {
             const radius = getNodeRadius(node.degree);
-            const color = getDomainColor(node.domain);
-            const isSelected = node.name === activeNode;
+            const isActive = activeNode === node.name;
+            const isConnected = activeConnections.has(node.name);
+            const opacity = activeNode ? (isActive || isConnected ? 1 : 0.2) : 1;
             const isBottleneck = node.waitingOnInbound >= 2;
 
             return (
               <g
                 key={node.id}
-                transform={`translate(${node.x},${node.y})`}
+                transform={`translate(${node.x}, ${node.y})`}
                 style={{
-                  cursor: "grab",
+                  cursor: dragging?.id === node.id ? "grabbing" : "grab",
                   opacity,
-                  transition: "opacity 0.2s ease",
+                  transition: dragging?.id === node.id ? "none" : "opacity 0.2s",
                 }}
-                onMouseDown={(e) => handleMouseDown(e, node.name)}
-                onMouseEnter={() => !draggingNode && setHoveredNode(node.name)}
-                onMouseLeave={() => !draggingNode && setHoveredNode(null)}
+                onMouseDown={(e) => handleMouseDown(e, node.id)}
+                onMouseEnter={() => !dragging && setHoveredNode(node.name)}
+                onMouseLeave={() => !dragging && setHoveredNode(null)}
                 onClick={(e) => {
-                  e.stopPropagation();
-                  if (!draggingNode) {
+                  if (!dragging) {
+                    e.stopPropagation();
                     setSelectedNode(selectedNode === node.name ? null : node.name);
                   }
                 }}
               >
-                {/* 병목 경고 표시 */}
+                {/* 병목 표시 */}
                 {isBottleneck && (
                   <circle
-                    r={radius + 8}
+                    r={radius + 7}
                     fill="none"
                     stroke="#ef4444"
-                    strokeWidth={2}
-                    strokeDasharray="4 2"
-                    opacity={0.6}
+                    strokeWidth={2.5}
+                    strokeDasharray="5 3"
+                    opacity={0.8}
                   />
                 )}
                 {/* 선택 하이라이트 */}
-                {isSelected && (
+                {isActive && (
                   <circle
-                    r={radius + 5}
+                    r={radius + 4}
                     fill="none"
-                    stroke={color}
+                    stroke={getDomainColor(node.domain)}
                     strokeWidth={3}
-                    opacity={0.5}
+                    opacity={0.6}
                   />
                 )}
-                {/* 노드 본체 */}
+                {/* 노드 */}
                 <circle
                   r={radius}
-                  fill={color}
+                  fill={getDomainColor(node.domain)}
                   stroke="white"
-                  strokeWidth={2.5}
-                  filter={isSelected ? "url(#nodeGlow)" : "url(#nodeShadow)"}
+                  strokeWidth={3}
+                  filter={isActive ? "url(#node-glow)" : "url(#node-shadow)"}
                 />
-                {/* 노드 내 이름 */}
+                {/* 이름 */}
                 <text
-                  y={1}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={radius > 25 ? 11 : 10}
-                  fontWeight={600}
                   fill="white"
+                  fontSize={radius > 32 ? 11 : 10}
+                  fontWeight={600}
                   style={{ pointerEvents: "none", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
                 >
                   {node.name.length > 5 ? node.name.slice(0, 4) + "…" : node.name}
                 </text>
-                {/* Pair 카운트 뱃지 */}
+                {/* Pair 뱃지 */}
                 {node.pairCount > 0 && (
                   <g transform={`translate(${radius - 2}, ${-radius + 2})`}>
-                    <circle r={8} fill="#3b82f6" stroke="white" strokeWidth={1.5} />
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={8}
-                      fontWeight={700}
-                      fill="white"
-                    >
+                    <circle r={10} fill="#3b82f6" stroke="white" strokeWidth={2} />
+                    <text textAnchor="middle" dominantBaseline="middle" fontSize={9} fontWeight={700} fill="white">
                       {node.pairCount}
                     </text>
                   </g>
                 )}
-                {/* Waiting-on Inbound 뱃지 */}
+                {/* Waiting 뱃지 */}
                 {node.waitingOnInbound > 0 && (
                   <g transform={`translate(${-radius + 2}, ${-radius + 2})`}>
-                    <circle r={8} fill="#ef4444" stroke="white" strokeWidth={1.5} />
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={8}
-                      fontWeight={700}
-                      fill="white"
-                    >
+                    <circle r={10} fill="#ef4444" stroke="white" strokeWidth={2} />
+                    <text textAnchor="middle" dominantBaseline="middle" fontSize={9} fontWeight={700} fill="white">
                       {node.waitingOnInbound}
                     </text>
                   </g>
@@ -493,96 +456,106 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           })}
         </svg>
 
+        {/* 줌 컨트롤 */}
+        <div className="absolute bottom-2 left-2 flex items-center gap-1">
+          <button
+            onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))}
+            className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
+          >
+            −
+          </button>
+          <div
+            className="px-2 py-1 text-[10px] sm:text-xs font-medium rounded"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
+          >
+            {Math.round(zoom * 100)}%
+          </div>
+          <button
+            onClick={() => setZoom((z) => Math.min(2.5, z + 0.2))}
+            className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text)" }}
+          >
+            +
+          </button>
+          <button
+            onClick={() => setZoom(1)}
+            className="ml-1 px-2 py-1 text-[10px] sm:text-xs rounded"
+            style={{ background: "rgba(255,255,255,0.9)", color: "var(--notion-text-secondary)" }}
+          >
+            리셋
+          </button>
+        </div>
+
         {/* 정보 패널 */}
         {activeNode && (
           <div
-            className="absolute top-3 right-3 p-3 rounded-lg text-xs"
+            className="absolute top-2 right-2 p-2 sm:p-3 rounded-lg text-[10px] sm:text-xs max-w-[140px] sm:max-w-[180px]"
             style={{
               background: "rgba(255,255,255,0.95)",
               border: "1px solid var(--notion-border)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              backdropFilter: "blur(4px)",
             }}
           >
-            <div className="font-bold mb-2" style={{ color: "var(--notion-text)" }}>
-              {activeNode}
-            </div>
-            <div className="space-y-1" style={{ color: "var(--notion-text-secondary)" }}>
-              {(() => {
-                const node = nodePositions.find((n) => n.name === activeNode);
-                if (!node) return null;
-                return (
-                  <>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ background: getDomainColor(node.domain) }}
-                      />
+            {(() => {
+              const node = nodes.find((n) => n.name === activeNode);
+              if (!node) return null;
+              return (
+                <>
+                  <div className="font-bold mb-1.5 truncate" style={{ color: "var(--notion-text)" }}>
+                    {node.name}
+                  </div>
+                  <div className="space-y-0.5" style={{ color: "var(--notion-text-secondary)" }}>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ background: getDomainColor(node.domain) }} />
                       {node.domain}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-blue-500">● Pair: {node.pairCount}건</span>
+                    <div className="text-blue-500">Pair: {node.pairCount}건</div>
+                    <div style={{ color: node.waitingOnInbound >= 2 ? "#ef4444" : undefined }}>
+                      대기 중: {node.waitingOnInbound}명
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        style={{ color: node.waitingOnInbound >= 2 ? "#ef4444" : undefined }}
-                      >
-                        ● 대기 중: {node.waitingOnInbound}명
-                      </span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-            {selectedNode && (
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="mt-2 w-full text-xs py-1 rounded"
-                style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text-secondary)" }}
-              >
-                선택 해제
-              </button>
-            )}
+                  </div>
+                  {selectedNode && (
+                    <button
+                      onClick={() => setSelectedNode(null)}
+                      className="mt-2 w-full py-1 rounded text-[10px]"
+                      style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text-secondary)" }}
+                    >
+                      선택 해제
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
-
-        {/* 안내 */}
-        <div
-          className="absolute bottom-2 left-2 text-[10px] px-2 py-1 rounded"
-          style={{ background: "rgba(0,0,0,0.5)", color: "white" }}
-        >
-          노드 드래그로 위치 조정
-        </div>
       </div>
 
       {/* 범례 */}
-      <div className="mt-3 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--notion-border)" }}>
-        <div className="flex flex-wrap gap-2">
+      <div className="mt-3 pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" style={{ borderTop: "1px solid var(--notion-border)" }}>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {domains.map((domain) => (
             <span
               key={domain}
-              className="flex items-center gap-1 text-xs px-2 py-0.5 rounded"
+              className="flex items-center gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded"
               style={{ background: "var(--notion-bg-secondary)" }}
             >
-              <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ background: getDomainColor(domain) }}
-              />
+              <span className="w-2 h-2 rounded-full" style={{ background: getDomainColor(domain) }} />
               {domain}
             </span>
           ))}
         </div>
-        <div className="flex items-center gap-3 text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+        <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
           <span className="flex items-center gap-1">
             <span className="w-3 h-3 rounded-full bg-blue-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
-            Pair 수
+            Pair
           </span>
           <span className="flex items-center gap-1">
             <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
-            대기 중
+            대기
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full border-2 border-dashed border-red-400" />
+            <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-red-400" />
             병목
           </span>
         </div>

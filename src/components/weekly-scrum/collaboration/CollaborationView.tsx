@@ -89,19 +89,19 @@ export function CollaborationView({ items }: CollaborationViewProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* 헤더 */}
       <div>
-        <h1 className="text-xl font-bold" style={{ color: "var(--notion-text)" }}>
+        <h1 className="text-lg sm:text-xl font-bold" style={{ color: "var(--notion-text)" }}>
           팀 협업 현황
         </h1>
-        <p className="text-sm" style={{ color: "var(--notion-text-secondary)" }}>
+        <p className="text-xs sm:text-sm" style={{ color: "var(--notion-text-secondary)" }}>
           팀 전체의 협업 패턴과 병목 현황을 분석합니다
         </p>
       </div>
 
       {/* 팀 통계 카드 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
         <StatCard value={teamStats.totalMembers} label="참여 인원" color="var(--notion-text)" />
         <StatCard value={teamStats.totalCollaborations} label="총 협업" color="var(--notion-blue)" />
         <StatCard value={teamStats.totalPairs} label="Pair 협업" color="var(--notion-blue)" />
@@ -117,27 +117,27 @@ export function CollaborationView({ items }: CollaborationViewProps) {
 
       {/* 팀 인사이트 */}
       {teamInsights.length > 0 && (
-        <div className="notion-card p-4">
-          <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
+        <div className="notion-card p-3 sm:p-4">
+          <h3 className="text-sm font-semibold mb-2 sm:mb-3" style={{ color: "var(--notion-text)" }}>
             💡 팀 인사이트
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {teamInsights.map((insight, idx) => {
               const style = getInsightStyle(insight.type);
               return (
                 <div
                   key={idx}
-                  className="p-3 rounded-lg"
+                  className="p-2 sm:p-3 rounded-lg"
                   style={{ background: style.bg, borderLeft: `3px solid ${style.border}` }}
                 >
                   <div className="flex items-start gap-2">
-                    <span className="text-base">{insight.icon}</span>
+                    <span className="text-sm sm:text-base">{insight.icon}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+                      <div className="text-xs sm:text-sm font-medium" style={{ color: "var(--notion-text)" }}>
                         {insight.message}
                       </div>
                       {insight.detail && (
-                        <div className="text-xs mt-0.5" style={{ color: "var(--notion-text-secondary)" }}>
+                        <div className="text-[10px] sm:text-xs mt-0.5" style={{ color: "var(--notion-text-secondary)" }}>
                           {insight.detail}
                         </div>
                       )}
@@ -159,15 +159,70 @@ export function CollaborationView({ items }: CollaborationViewProps) {
       {/* 협업 부하 히트맵 */}
       <CollaborationLoadHeatmap items={items} />
 
-      {/* 도메인 간 협업 매트릭스 */}
+      {/* 도메인 간 협업 흐름 */}
       <CrossDomainMatrix items={items} />
 
-      {/* 멤버별 협업 요약 테이블 */}
-      <div className="notion-card p-4">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--notion-text)" }}>
+      {/* 멤버별 협업 요약 - 모바일: 카드, 데스크탑: 테이블 */}
+      <div className="notion-card p-3 sm:p-4">
+        <h3 className="text-sm font-semibold mb-3 sm:mb-4" style={{ color: "var(--notion-text)" }}>
           👥 멤버별 협업 요약
         </h3>
-        <div className="overflow-x-auto">
+
+        {/* 모바일: 카드 형태 */}
+        <div className="sm:hidden space-y-2">
+          {memberSummaries.map((member) => (
+            <div
+              key={member.name}
+              className="p-3 rounded-lg"
+              style={{ background: "var(--notion-bg-secondary)", border: "1px solid var(--notion-border)" }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ background: getDomainColor(member.domain) }}
+                  />
+                  <span className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+                    {member.name}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "var(--notion-bg)", color: "var(--notion-text-tertiary)" }}>
+                    {member.domain}
+                  </span>
+                </div>
+                <span className="text-sm font-bold" style={{ color: "var(--notion-text)" }}>
+                  {member.totalCollaborations}건
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1 text-center text-[10px]">
+                <div className="p-1.5 rounded" style={{ background: "var(--notion-bg)" }}>
+                  <div className="font-bold" style={{ color: "var(--notion-blue)" }}>{member.pairCount}</div>
+                  <div style={{ color: "var(--notion-text-tertiary)" }}>Pair</div>
+                </div>
+                <div className="p-1.5 rounded" style={{ background: "var(--notion-bg)" }}>
+                  <div className="font-bold" style={{ color: "var(--notion-orange)" }}>{member.waitingOnOutbound}</div>
+                  <div style={{ color: "var(--notion-text-tertiary)" }}>출</div>
+                </div>
+                <div className="p-1.5 rounded" style={{ background: "var(--notion-bg)" }}>
+                  <div className={`font-bold ${member.waitingOnInbound >= 2 ? "text-red-500" : ""}`} style={{ color: member.waitingOnInbound >= 2 ? undefined : "var(--notion-red)" }}>
+                    {member.waitingOnInbound}
+                  </div>
+                  <div style={{ color: "var(--notion-text-tertiary)" }}>입</div>
+                </div>
+                <div className="p-1.5 rounded" style={{ background: "var(--notion-bg)" }}>
+                  <div className="font-bold" style={{ color: "var(--notion-purple)" }}>{member.crossDomainScore}%</div>
+                  <div style={{ color: "var(--notion-text-tertiary)" }}>X-D</div>
+                </div>
+                <div className="p-1.5 rounded" style={{ background: "var(--notion-bg)" }}>
+                  <div className="font-bold" style={{ color: "var(--notion-green)" }}>{member.crossModuleScore}%</div>
+                  <div style={{ color: "var(--notion-text-tertiary)" }}>X-M</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 데스크탑: 테이블 형태 */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: "1px solid var(--notion-border)" }}>

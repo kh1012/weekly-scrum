@@ -225,19 +225,19 @@ interface DashboardHeaderProps {
 
 function DashboardHeader({ members, activeMember, onMemberChange }: DashboardHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 className="text-xl font-bold" style={{ color: "var(--notion-text)" }}>
+        <h1 className="text-lg sm:text-xl font-bold" style={{ color: "var(--notion-text)" }}>
           개인 대시보드
         </h1>
-        <p className="text-sm" style={{ color: "var(--notion-text-secondary)" }}>
+        <p className="text-xs sm:text-sm" style={{ color: "var(--notion-text-secondary)" }}>
           개인 업무 현황을 한눈에 확인하세요
         </p>
       </div>
       <select
         value={activeMember}
         onChange={(e) => onMemberChange(e.target.value)}
-        className="notion-select text-base font-medium px-4 py-2"
+        className="notion-select text-sm sm:text-base font-medium px-3 sm:px-4 py-1.5 sm:py-2 w-full sm:w-auto"
       >
         {members.map((member) => (
           <option key={member} value={member}>
