@@ -44,4 +44,6 @@ next-env.d.ts
 *.swo
 
 data/
+
 rule_all.md
+rule_shares.md

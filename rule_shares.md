@@ -135,3 +135,16 @@
   "collaborators": ["김정빈(pair)", "조해용(waiting-on)"]
 }
 ```
+
+Collaborators 관계 해석 규칙
+• pair: 고난도·심화 작업 / 구조적 결정 병행
+• review: 게이트 생성 / 승인 지연 가능성
+• waiting-on: 의존성 병목 / 일정 지연 가능성
+• support: 단순 지원 (리스크 낮음)
+
+⸻
+
+📦 출력 파일 생성 규칙
+• 결과는 ./data/shares/{json파일명}/index.md 경로로 생성
+• 동일 폴더에 JSON 원본도 복사
+• Markdown은 복사 시 깨지지 않도록 코드블록 및 표 형식 유지
