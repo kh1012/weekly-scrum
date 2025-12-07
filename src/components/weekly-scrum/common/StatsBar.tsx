@@ -13,7 +13,7 @@ interface StatItemProps {
 
 function StatItem({ children, tooltip }: StatItemProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -23,6 +23,8 @@ function StatItem({ children, tooltip }: StatItemProps) {
         x: rect.left + rect.width / 2,
         y: rect.bottom + 8,
       });
+    } else {
+      setTooltipPos(null);
     }
   }, [isHovered]);
 
@@ -39,7 +41,7 @@ function StatItem({ children, tooltip }: StatItemProps) {
       >
         {children}
       </span>
-      {isHovered &&
+      {isHovered && tooltipPos &&
         createPortal(
           <div
             className="fixed z-[9999] pointer-events-none animate-fadeIn"

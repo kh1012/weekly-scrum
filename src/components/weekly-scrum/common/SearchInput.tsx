@@ -34,8 +34,10 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMac = os === "mac";
-      const isShortcut = isMac ? e.metaKey && e.key === "k" : e.ctrlKey && e.key === "k";
-      
+      const isShortcut = isMac
+        ? e.metaKey && e.key === "k"
+        : e.ctrlKey && e.key === "k";
+
       if (isShortcut) {
         e.preventDefault();
         inputRef.current?.focus();
@@ -83,7 +85,7 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
   const placeholder = isMobile ? "검색..." : `검색... (${shortcutHint})`;
 
   return (
-    <div 
+    <div
       className={`relative transition-all duration-200 ease-out ${
         isMobile ? "w-full" : isFocused ? "w-72" : "w-56"
       }`}
@@ -94,7 +96,11 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
-        style={{ color: isFocused ? "var(--notion-text-secondary)" : "var(--notion-text-muted)" }}
+        style={{
+          color: isFocused
+            ? "var(--notion-text-secondary)"
+            : "var(--notion-text-muted)",
+        }}
       >
         <path
           strokeLinecap="round"
@@ -118,14 +124,16 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
         style={{
           paddingRight: localValue || isSearching ? "32px" : "10px",
           backgroundColor: "var(--notion-bg)",
-          borderColor: isFocused ? "var(--notion-blue)" : "var(--notion-border)",
+          borderColor: isFocused
+            ? "var(--notion-blue)"
+            : "var(--notion-border)",
           boxShadow: isFocused ? "0 0 0 2px var(--notion-blue-bg)" : "none",
         }}
       />
 
       {/* 로딩/클리어 버튼 */}
       {(localValue || isSearching) && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
           {isSearching ? (
             <svg
               className="animate-spin w-3.5 h-3.5"
