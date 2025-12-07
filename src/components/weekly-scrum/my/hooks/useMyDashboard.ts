@@ -5,6 +5,8 @@ import { useScrumContext } from "@/context/ScrumContext";
 import { getAchievementRate } from "@/lib/colorDefines";
 import type { TrendPeriod } from "../utils/dashboardUtils";
 import { getWeekCount, getEndDateLabel, calculateMemberStats } from "../utils/dashboardUtils";
+import { calculateCollaborationStatus } from "../components/MyCollaborationStatus";
+import { calculateCollaborationIntensity } from "../components/CollaborationIntensity";
 
 export function useMyDashboard() {
   const { currentData, members, allData, sortedWeekKeys, selectMode } = useScrumContext();
@@ -106,6 +108,21 @@ export function useMyDashboard() {
   // 멤버 통계
   const stats = useMemo(() => calculateMemberStats(memberItems), [memberItems]);
 
+  // 협업 상태 (내가 기다리는 사람, 나를 기다리는 사람)
+  const collaborationStatus = useMemo(() => {
+    if (!currentData || !activeMember) {
+      return { waitingForMe: [], iAmWaitingFor: [], myCollaborators: [] };
+    }
+    return calculateCollaborationStatus(memberItems, currentData.items, activeMember);
+  }, [currentData, memberItems, activeMember]);
+
+  // 협업 강도 (주차별 협업 빈도)
+  const collaborationIntensity = useMemo(() => {
+    if (!activeMember) return [];
+    const weekCount = getWeekCount(trendPeriod);
+    return calculateCollaborationIntensity(allData, sortedWeekKeys, activeMember, weekCount);
+  }, [activeMember, allData, sortedWeekKeys, trendPeriod]);
+
   // 도메인 토글
   const toggleDomain = useCallback((domain: string) => {
     setSelectedDomains((prev) => {
@@ -169,6 +186,10 @@ export function useMyDashboard() {
     stats,
     weeklyTrend,
     selectMode,
+
+    // Collaboration data
+    collaborationStatus,
+    collaborationIntensity,
 
     // Filter state
     selectedDomains,

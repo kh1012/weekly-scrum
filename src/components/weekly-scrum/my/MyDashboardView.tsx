@@ -11,6 +11,9 @@ import {
   ProjectBarChart,
   RiskSummary,
   ProgressOverview,
+  MyCollaborationStatus,
+  ModuleDistribution,
+  CollaborationIntensity,
 } from "./components";
 
 export function MyDashboardView() {
@@ -22,6 +25,8 @@ export function MyDashboardView() {
     stats,
     weeklyTrend,
     selectMode,
+    collaborationStatus,
+    collaborationIntensity,
     selectedDomains,
     selectedProjects,
     availableDomains,
@@ -108,6 +113,19 @@ export function MyDashboardView() {
 
           {/* 리스크 현황 */}
           <RiskSummary riskCounts={stats.riskCounts} />
+
+          {/* 협업 & 모듈 섹션 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <MyCollaborationStatus
+              waitingForMe={collaborationStatus.waitingForMe}
+              iAmWaitingFor={collaborationStatus.iAmWaitingFor}
+              myCollaborators={collaborationStatus.myCollaborators}
+            />
+            <ModuleDistribution items={memberItems} />
+          </div>
+
+          {/* 협업 강도 요약 */}
+          <CollaborationIntensity weeklyData={collaborationIntensity} />
 
           {/* 항목 리스트 */}
           <div className="notion-card overflow-hidden">
