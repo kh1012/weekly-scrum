@@ -15,6 +15,7 @@ import {
   ModuleDistribution,
   CollaborationIntensity,
 } from "./components";
+import { MyCollaborationRadar } from "@/components/visualizations/MyCollaborationRadar";
 
 export function MyDashboardView() {
   const {
@@ -122,8 +123,11 @@ export function MyDashboardView() {
               iAmWaitingFor={collaborationStatus.iAmWaitingFor}
               myCollaborators={collaborationStatus.myCollaborators}
             />
-            <ModuleDistribution items={memberItems} />
+            <MyCollaborationRadar items={currentData.items} memberName={activeMember} />
           </div>
+
+          {/* 모듈 분포 */}
+          <ModuleDistribution items={memberItems} />
 
           {/* 협업 강도 요약 */}
           <CollaborationIntensity weeklyData={collaborationIntensity} />
