@@ -134,15 +134,12 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
             <SearchInput />
           </div>
         </div>
-        {/* 2행: 필터 + 통계 */}
+        {/* 2행: 필터 (좌측) + 통계 (우측) */}
         <div className="flex items-center justify-between h-9 px-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             {!isMyDashboard && <Filters />}
-            {!isMyDashboard && (
-              <div className="w-px h-4" style={{ background: 'var(--notion-border)' }} />
-            )}
-            <StatsBar />
           </div>
+          <StatsBar />
         </div>
       </div>
 
