@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useCallback, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useScrumContext } from "@/context/ScrumContext";
-import { getProgressColor, RISK_LEVEL_COLORS, getAchievementRate } from "@/lib/colorDefines";
+import { getProgressColor, RISK_LEVEL_COLORS } from "@/lib/colorDefines";
 import type { RiskLevel } from "@/types/scrum";
 
 interface StatItemProps {
@@ -12,28 +12,31 @@ interface StatItemProps {
 }
 
 function StatItem({ children, tooltip }: StatItemProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const ref = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
-    if (isHovered && ref.current) {
+  const handleMouseEnter = useCallback(() => {
+    if (ref.current) {
       const rect = ref.current.getBoundingClientRect();
       setTooltipPos({
         x: rect.left + rect.width / 2,
         y: rect.bottom + 8,
       });
-    } else {
-      setTooltipPos(null);
     }
-  }, [isHovered]);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltipPos(null);
+  }, []);
+
+  const isHovered = tooltipPos !== null;
 
   return (
     <>
       <span
         ref={ref}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className="cursor-pointer px-1.5 py-0.5 rounded transition-colors"
         style={{ 
           background: isHovered ? 'var(--notion-bg-hover)' : 'transparent' 
@@ -41,7 +44,7 @@ function StatItem({ children, tooltip }: StatItemProps) {
       >
         {children}
       </span>
-      {isHovered && tooltipPos &&
+      {tooltipPos &&
         createPortal(
           <div
             className="fixed z-[9999] pointer-events-none animate-fadeIn"
