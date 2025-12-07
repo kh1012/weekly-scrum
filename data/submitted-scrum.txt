@@ -1,98 +1,98 @@
-[Frontend / MOTIIV / Spreadsheet / 셀 렌더링 개선]
+[Frontend / MOTIIV / Spreadsheet / 셀 렌더링 구조 개선]
 - Name: 김서연
-- Plan: 셀 최적화 100% 완료
-- Progress: 셀 렌더링 구조화 및 개선 작업 100% 완료
-- Next: 렌더링 최적화 마무리 및 저장 테스트 추가
-- Risk: 저장 플로우에서 race condition 재발 가능성 확인
+- Plan: 셀 구조 최적화 100%
+- Progress: 구조 분리 및 메모이제이션 적용 90%
+- Next: 대형 데이터 기준 성능 측정
+- Risk: 브라우저별 렌더링 편차 존재
 - RiskLevel: 1
 - Collaborators: 김정빈(pair), 조해용(waiting-on)
 
 
-[Backend / M-Connector / API / 동기화 API 안정화]
+[Backend / M-Connector / API / 동기화 트랜잭션 안정화]
 - Name: 조해용
-- Plan: 동기화 엔드포인트 3종 구조 개편
-- Progress: API 2종 완료, 마지막 엔드포인트 오류 검출 로직 추가 중
-- Next: 데이터 누락 케이스 자동 보정 로직 설계
-- Risk: 외부 연동 DB 응답 지연으로 인한 timeout 발생 가능성
+- Plan: 동기화 API 재설계 80%
+- Progress: 엔드포인트 2종 적용 완료 60%
+- Next: 잔여 엔드포인트 리팩토링
+- Risk: 외부 API 응답 지연 발생 가능성
 - RiskLevel: 2
 - Collaborators: 김정빈(waiting-on)
 
 
-[Planning / MOTIIV / 워크스페이스 / 프로젝트 템플릿 정의]
+[Planning / MOTIIV / Workspace / 템플릿 정책 정의]
 - Name: 윤재웅
-- Plan: 템플릿 구조 정의 및 정책 정리
-- Progress: 템플릿 1차 구조 확정 및 가이드 draft 작성
-- Next: 피드백 기반 템플릿 유형 추가
-- Risk: 팀 프로젝트와 기능 중복 가능성
+- Plan: 템플릿 정책 정의 100%
+- Progress: 템플릿 구조 설계 70%
+- Next: IA 전체 정합성 검증
+- Risk: 팀프로젝트 모듈과 정책 충돌 가능성
 - RiskLevel: 1
 - Collaborators: 김희성(pair)
 
 
-[Design / MOTIIV / 홈 / 대시보드 카드 리뉴얼]
+[Design / MOTIIV / 홈 / 신규 카드형 UI 개발]
 - Name: 김희성
-- Plan: UI 컴포넌트 구조 정리 및 디자인 시스템 반영
-- Progress: 카드형 레이아웃 신규 제안 및 피드백 반영
-- Next: 마이크로 인터랙션 정의 및 전달
-- Risk: 기존 페이지 요소와 스타일 충돌 가능성
+- Plan: 카드형 UI 구조화 100%
+- Progress: UI 컴포넌트 디자인 85%
+- Next: Interaction 가이드 작업
+- Risk: 특정 해상도에서 간격 깨짐
 - RiskLevel: 1
 - Collaborators: 윤재웅(pair), 김서연(waiting-on)
 
 
-[Operation / Team / 온보딩 / 신규 온보딩 플로우 개선]
+[Operation / Team / 온보딩 / 온보딩 문서 리뉴얼]
 - Name: 한내경
-- Plan: 온보딩 자료 최신화 및 신규 프로세스 정리
-- Progress: 온보딩 자료 일부 업데이트 및 실사용 피드백 수집
-- Next: 반복 질문 목록 정리 후 ChatGPT 기반 응답 가이드 제작
-- Risk: 기존 문서와 버전 충돌 가능성
+- Plan: 온보딩 자료 개편 90%
+- Progress: 문서 업데이트 60%
+- Next: 실제 신규자 테스트 진행
+- Risk: 기존 버전 일부 잔존 문제
 - RiskLevel: 1
 - Collaborators: 김정빈(pair)
 
 
-[Frontend / M-Desk / Workspace / Import 기능 개선]
+[Frontend / M-Desk / Workspace / Import 오류 개선]
 - Name: 김정빈
-- Plan: Import 오류 패턴 분류 및 예외 처리 정비
-- Progress: 엑셀 파일 손상 케이스 핸들링 80%
-- Next: 타임존 변환 오류 처리 및 테스트 보강
-- Risk: UTC 변환 로직이 기존 데이터와 충돌 가능성
+- Plan: Import 오류 처리 개선 100%
+- Progress: 손상된 파일 처리 로직 80%
+- Next: timezone 변환 로직 보완
+- Risk: 엣지 케이스 재현 어려움
 - RiskLevel: 2
 - Collaborators: 김서연(pair), 조해용(waiting-on)
 
 
-[Content / MOTIIV / 프로필 / 사용자 케이스 문서 제작]
+[Content / MOTIIV / Profile / 고객 사례 문서화]
 - Name: 도기봉
-- Plan: 업종별 모티브 활용 케이스 조사
-- Progress: 6개 업종 케이스 조사 및 문서화 60%
-- Next: 사용 예시 추가 및 그래픽 요소 정비
-- Risk: 자료 출처 검증 필요
+- Plan: 사례 6개 정리 100%
+- Progress: 4개 문서화 완료 70%
+- Next: 시각 자료 확보
+- Risk: 일부 자료 확보 지연
 - RiskLevel: 0
 - Collaborators: 김희성(waiting-on)
 
 
-[Research / Idea-forge / Core / 플러그인 시스템 탐색]
+[Research / Idea-forge / Core / 플러그인 구조 실험]
 - Name: 하성열
-- Plan: 플러그인 구조 후보군 조사
-- Progress: 3개 아키텍처 비교 분석 완료
-- Next: MVP 기준 기술 PoC 착수
-- Risk: sandbox 권한 및 메시징 충돌 가능성
+- Plan: 플러그인 PoC 100%
+- Progress: sandbox 구조 검증 65%
+- Next: 메시징 시스템 통합 테스트
+- Risk: CORS 정책 충돌 가능성
 - RiskLevel: 2
 - Collaborators: 김정빈(pair)
 
 
-[Backend / MOTIIV / 알림 / 푸시 시스템 안정화]
+[Backend / MOTIIV / Notification / 알림 큐 개선]
 - Name: 김건우
-- Plan: 알림 큐 적재/소비 흐름 개선
-- Progress: 메시지 소비 속도 30% 개선
-- Next: 장애 retry 정책 확장 및 로깅 체계 정비
-- Risk: 특정 알림 유형에서 중복 전송 위험
+- Plan: 알림 처리 최적화 90%
+- Progress: 큐 소비 속도 증가 50%
+- Next: retry 정책 확장
+- Risk: 일부 유형에서 메시지 유실 가능성
 - RiskLevel: 2
 - Collaborators: 한내경(waiting-on)
 
 
-[Planning / M-Desk / 팀프로젝트 / 사용자 플로우 점검]
+[Planning / M-Desk / 팀프로젝트 / 플로우 점검]
 - Name: 최은진
-- Plan: 전체 사용자 플로우에서 이탈 지점 3곳 분석
-- Progress: 2개 이탈 포인트 원인 분석 완료
-- Next: 개선안 정리 후 디자인팀 전달
-- Risk: 기존 IA와 충돌 가능성
+- Plan: 이탈 포인트 분석 80%
+- Progress: 2개 포인트 분석 60%
+- Next: UI 개선안 작성
+- Risk: 시나리오 간 종속성 있음
 - RiskLevel: 1
 - Collaborators: 김희성(waiting-on)

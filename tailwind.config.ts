@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       screens: {
-        '3xl': '1440px',
+        '3xl': '1600px',
       },
       colors: {
         primary: {

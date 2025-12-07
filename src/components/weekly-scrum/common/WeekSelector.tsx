@@ -344,9 +344,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
         </div>
       )}
 
-      {/* 날짜 범위 표시 */}
+      {/* 날짜 범위 표시 (1600px 이상에서만) */}
       <div
-        className="hidden xl:flex items-center gap-1.5 text-xs ml-1"
+        className="hidden 3xl:flex items-center gap-1.5 text-xs ml-1"
         style={{ color: "var(--notion-text-secondary)" }}
       >
         <span>📅</span>
