@@ -44,17 +44,20 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
   }, [isMenuOpen]);
 
   const Logo = () => (
-    <h1 className="font-semibold text-sm" style={{ color: 'var(--notion-text)' }}>
+    <h1
+      className="font-semibold text-sm"
+      style={{ color: "var(--notion-text)" }}
+    >
       Weekly Scrum
     </h1>
   );
 
   return (
-    <header 
+    <header
       className="sticky top-0 z-40"
-      style={{ 
-        background: 'var(--notion-bg)',
-        borderBottom: '1px solid var(--notion-border)'
+      style={{
+        background: "var(--notion-bg)",
+        borderBottom: "1px solid var(--notion-border)",
       }}
     >
       {/* 데스크탑 3xl+ 레이아웃 (1440px 이상, 1행) */}
@@ -67,11 +70,27 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
               className="notion-btn p-1.5"
               title={isSidebarOpen ? "사이드바 접기" : "사이드바 열기"}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--notion-text-secondary)' }}>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{ color: "var(--notion-text-secondary)" }}
+              >
                 {isSidebarOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                  />
                 )}
               </svg>
             </button>
@@ -79,17 +98,26 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           {!isSidebarOpen && (
             <>
               <Logo />
-              <div className="w-px h-5" style={{ background: 'var(--notion-border)' }} />
+              <div
+                className="w-px h-5"
+                style={{ background: "var(--notion-border)" }}
+              />
             </>
           )}
           <WeekSelector />
           {!isMyDashboard && (
             <>
-              <div className="w-px h-5" style={{ background: 'var(--notion-border)' }} />
+              <div
+                className="w-px h-5"
+                style={{ background: "var(--notion-border)" }}
+              />
               <Filters />
             </>
           )}
-          <div className="w-px h-5" style={{ background: 'var(--notion-border)' }} />
+          <div
+            className="w-px h-5"
+            style={{ background: "var(--notion-border)" }}
+          />
           <StatsBar />
         </div>
 
@@ -100,9 +128,9 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
       {/* 데스크탑 lg~3xl 레이아웃 (1024px~1600px, 2행) */}
       <div className="hidden lg:block 3xl:hidden">
         {/* 1행: 사이드바 토글 + 로고 + 주차 + 검색 */}
-        <div 
+        <div
           className="flex items-center justify-between h-11 px-3"
-          style={{ borderBottom: '1px solid var(--notion-border)' }}
+          style={{ borderBottom: "1px solid var(--notion-border)" }}
         >
           <div className="flex items-center gap-3">
             {onSidebarToggle && (
@@ -111,11 +139,27 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                 className="notion-btn p-1.5"
                 title={isSidebarOpen ? "사이드바 접기" : "사이드바 열기"}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--notion-text-secondary)' }}>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  style={{ color: "var(--notion-text-secondary)" }}
+                >
                   {isSidebarOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                    />
                   ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                    />
                   )}
                 </svg>
               </button>
@@ -123,7 +167,10 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
             {!isSidebarOpen && (
               <>
                 <Logo />
-                <div className="w-px h-5" style={{ background: 'var(--notion-border)' }} />
+                <div
+                  className="w-px h-5"
+                  style={{ background: "var(--notion-border)" }}
+                />
               </>
             )}
             <WeekSelector />
@@ -131,10 +178,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           <SearchInput />
         </div>
         {/* 2행: 필터 (좌측) + 통계 (우측) */}
-        <div 
-          className="flex items-center justify-between h-9 px-3"
-          style={{ background: 'var(--notion-bg-secondary)' }}
-        >
+        <div className="flex items-center justify-between h-11 px-3">
           <div className="flex items-center">
             {!isMyDashboard && <Filters />}
           </div>
@@ -145,9 +189,9 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
       {/* 모바일/태블릿 레이아웃 */}
       <div className="lg:hidden">
         {/* 1행: 메뉴 + 로고 */}
-        <div 
-          className="flex items-center gap-2 h-11 px-3 relative" 
-          style={{ borderBottom: '1px solid var(--notion-border)' }}
+        <div
+          className="flex items-center gap-2 h-11 px-3 relative"
+          style={{ borderBottom: "1px solid var(--notion-border)" }}
           ref={menuRef}
         >
           <button
@@ -155,20 +199,31 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
             className="notion-btn p-1.5"
             aria-label="메뉴"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--notion-text-secondary)' }}>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              style={{ color: "var(--notion-text-secondary)" }}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
           <Logo />
 
           {/* Popover 메뉴 */}
           {isMenuOpen && (
-            <div 
+            <div
               className="absolute top-full left-2 mt-1 w-56 rounded-lg overflow-hidden z-50 animate-fadeIn"
-              style={{ 
-                background: 'var(--notion-bg)',
-                boxShadow: 'var(--notion-shadow-md)',
-                border: '1px solid var(--notion-border)'
+              style={{
+                background: "var(--notion-bg)",
+                boxShadow: "var(--notion-shadow-md)",
+                border: "1px solid var(--notion-border)",
               }}
             >
               <SideNavigation onItemClick={() => setIsMenuOpen(false)} />
@@ -177,13 +232,19 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         </div>
 
         {/* 2행: 주차 선택 */}
-        <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--notion-border)' }}>
+        <div
+          className="px-3 py-2"
+          style={{ borderBottom: "1px solid var(--notion-border)" }}
+        >
           <WeekSelector isMobile />
         </div>
 
         {/* 3행: 필터 (개인 대시보드가 아닐 때만) */}
         {!isMyDashboard && (
-          <div className="px-3 py-2 overflow-x-auto" style={{ borderBottom: '1px solid var(--notion-border)' }}>
+          <div
+            className="px-3 py-2 overflow-x-auto"
+            style={{ borderBottom: "1px solid var(--notion-border)" }}
+          >
             <Filters isMobile />
           </div>
         )}
@@ -206,11 +267,11 @@ export function Sidebar({ isOpen }: SidebarProps) {
   if (!isOpen) return null;
 
   return (
-    <aside 
+    <aside
       className="hidden lg:flex flex-col fixed top-0 left-0 h-full w-60 z-30"
-      style={{ 
-        background: 'var(--notion-sidebar-bg)',
-        borderRight: '1px solid var(--notion-border)'
+      style={{
+        background: "var(--notion-sidebar-bg)",
+        borderRight: "1px solid var(--notion-border)",
       }}
     >
       <SideNavigation />
