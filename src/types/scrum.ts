@@ -8,12 +8,30 @@
 export type RiskLevel = 0 | 1 | 2 | 3;
 
 /**
+ * 협업 관계 타입
+ * waiting-on: 해당 사람의 작업/응답을 기다리는 중
+ * pair: 함께 페어 프로그래밍 또는 협업 중
+ * review: 코드 리뷰 또는 검토 요청
+ * handoff: 작업 인수인계
+ */
+export type Relation = "waiting-on" | "pair" | "review" | "handoff";
+
+/**
+ * 협업자 타입
+ */
+export interface Collaborator {
+  name: string;
+  relation: Relation;
+}
+
+/**
  * 스크럼 항목 타입
  */
 export interface ScrumItem {
   name: string;
   domain: string;
   project: string;
+  module?: string | null; // 모듈 (선택, 프로젝트에 종속되지 않음)
   topic: string;
   plan: string;
   planPercent: number;
@@ -23,6 +41,7 @@ export interface ScrumItem {
   next: string;
   risk: string;
   riskLevel: RiskLevel;
+  collaborators?: Collaborator[]; // 협업자 목록 (선택)
 }
 
 /**

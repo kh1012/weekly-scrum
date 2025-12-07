@@ -14,10 +14,24 @@ import * as path from "path";
  */
 type RiskLevel = 0 | 1 | 2 | 3;
 
+/**
+ * 협업 관계 타입
+ */
+type Relation = "waiting-on" | "pair" | "review" | "handoff";
+
+/**
+ * 협업자 타입
+ */
+interface Collaborator {
+  name: string;
+  relation: Relation;
+}
+
 interface ScrumItem {
   name: string;
   domain: string;
   project: string;
+  module?: string | null;
   topic: string;
   plan: string;
   planPercent: number;
@@ -27,6 +41,7 @@ interface ScrumItem {
   next: string;
   risk: string;
   riskLevel: RiskLevel;
+  collaborators?: Collaborator[];
 }
 
 interface WeeklyScrumData {
@@ -68,22 +83,80 @@ function parseRiskLevel(riskLevelText: string): RiskLevel {
 
 /**
  * 헤더 라인을 파싱합니다.
+ * 3개: [Domain / Project / Topic]
+ * 4개 이상: [Domain / Project / Module / Topic]
  * 예: "[FE / 스프레드시트 / 팀프로젝트 기반 개발]"
+ * 예: "[Frontend / MOTIIV / Spreadsheet / 셀 렌더링 개선]"
  */
 function parseHeader(headerLine: string): {
   domain: string;
   project: string;
+  module: string | null;
   topic: string;
 } | null {
-  const match = headerLine.match(/^\[(.+?)\s*\/\s*(.+?)\s*\/\s*(.+?)\]$/);
-  if (!match) {
+  // 대괄호 내부 추출
+  const bracketMatch = headerLine.match(/^\[(.+)\]$/);
+  if (!bracketMatch) {
     return null;
   }
+
+  // "/" 기준으로 split
+  const parts = bracketMatch[1].split("/").map((p) => p.trim());
+
+  if (parts.length < 3) {
+    return null;
+  }
+
+  if (parts.length === 3) {
+    // 3개: domain, project, topic
+    return {
+      domain: parts[0],
+      project: parts[1],
+      module: null,
+      topic: parts[2],
+    };
+  }
+
+  // 4개 이상: domain, project, module, topic (나머지는 topic에 합침)
   return {
-    domain: match[1].trim(),
-    project: match[2].trim(),
-    topic: match[3].trim(),
+    domain: parts[0],
+    project: parts[1],
+    module: parts[2],
+    topic: parts.slice(3).join(" / "),
   };
+}
+
+/**
+ * 협업자 목록을 파싱합니다.
+ * 예: "김정빈(pair), 조해용(waiting-on)" → [{ name: "김정빈", relation: "pair" }, ...]
+ */
+function parseCollaborators(text: string): Collaborator[] {
+  if (!text || text.trim() === "") {
+    return [];
+  }
+
+  const validRelations: Relation[] = ["waiting-on", "pair", "review", "handoff"];
+  const collaborators: Collaborator[] = [];
+
+  // 쉼표로 분리
+  const parts = text.split(",").map((p) => p.trim());
+
+  for (const part of parts) {
+    // "이름(relation)" 형태 파싱
+    const match = part.match(/^(.+?)\((.+?)\)$/);
+    if (match) {
+      const name = match[1].trim();
+      const relation = match[2].trim().toLowerCase() as Relation;
+
+      if (validRelations.includes(relation)) {
+        collaborators.push({ name, relation });
+      } else {
+        console.warn(`유효하지 않은 relation: ${relation} (${part})`);
+      }
+    }
+  }
+
+  return collaborators;
 }
 
 /**
@@ -130,6 +203,7 @@ function parseBlock(block: string): ScrumItem | null {
   const reason = parseField(lines, "reason"); // 계획 대비 실행 미비 시 부연 설명
   const risk = parseField(lines, "Risk");
   const riskLevelText = parseField(lines, "RiskLevel");
+  const collaboratorsText = parseField(lines, "Collaborators");
 
   // 필수 필드 검증
   if (!name) {
@@ -152,8 +226,9 @@ function parseBlock(block: string): ScrumItem | null {
   const planPercent = extractPercent(plan);
   const progressPercent = extractPercent(progress);
   const riskLevel = parseRiskLevel(riskLevelText);
+  const collaborators = parseCollaborators(collaboratorsText);
 
-  return {
+  const item: ScrumItem = {
     name,
     domain: header.domain,
     project: header.project,
@@ -167,6 +242,16 @@ function parseBlock(block: string): ScrumItem | null {
     risk,
     riskLevel,
   };
+
+  // optional 필드는 값이 있을 때만 추가
+  if (header.module) {
+    item.module = header.module;
+  }
+  if (collaborators.length > 0) {
+    item.collaborators = collaborators;
+  }
+
+  return item;
 }
 
 /**
