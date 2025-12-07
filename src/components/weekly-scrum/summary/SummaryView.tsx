@@ -13,6 +13,7 @@ import { ModuleStats } from "./ModuleStats";
 import { CollaboratorStats } from "./CollaboratorStats";
 import { CollaborationNetworkGraph } from "@/components/visualizations/CollaborationNetworkGraph";
 import { BottleneckMap } from "@/components/visualizations/BottleneckMap";
+import { CollaborationLoadHeatmap } from "@/components/visualizations/CollaborationLoadHeatmap";
 
 interface SummaryViewProps {
   items: ScrumItem[];
@@ -154,10 +155,13 @@ export function SummaryView({ items }: SummaryViewProps) {
 
       {/* 협업 네트워크 그래프 & 병목 현황 */}
       {collaboratorStats.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CollaborationNetworkGraph items={items} />
-          <BottleneckMap items={items} />
-        </div>
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <CollaborationNetworkGraph items={items} />
+            <BottleneckMap items={items} />
+          </div>
+          <CollaborationLoadHeatmap items={items} />
+        </>
       )}
 
       {reasonItems.length > 0 && <ReasonItemsList items={reasonItems} />}
