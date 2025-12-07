@@ -1,98 +1,148 @@
-[Frontend / MOTIIV / Spreadsheet / 셀 렌더링 구조 개선]
+[Frontend / MOTIIV / Home / 카드 렌더링 개선]
 - Name: 김서연
-- Plan: 셀 구조 최적화 100%
-- Progress: 구조 분리 및 메모이제이션 적용 90%
-- Next: 대형 데이터 기준 성능 측정
-- Risk: 브라우저별 렌더링 편차 존재
+- Plan: 카드 렌더링 속도 개선 100%
+- Progress: key 기반 렌더링 최적화 75%
+- Next: skeleton + loading fallback 정비
+- Risk: 모바일 viewport에서 셀 꼬임 가능성
 - RiskLevel: 1
-- Collaborators: 김정빈(pair), 조해용(waiting-on)
+- Collaborators: 김정빈(pair)
 
 
-[Backend / M-Connector / API / 동기화 트랜잭션 안정화]
+[Backend / M-Desk / Data / 데이터 정합성 점검]
 - Name: 조해용
-- Plan: 동기화 API 재설계 80%
-- Progress: 엔드포인트 2종 적용 완료 60%
-- Next: 잔여 엔드포인트 리팩토링
-- Risk: 외부 API 응답 지연 발생 가능성
+- Plan: 정합성 점검 자동화 80%
+- Progress: 테스트 케이스 50% 작성
+- Next: 자동 보정 로직 적용
+- Risk: DB 락 지연 발생 우려
 - RiskLevel: 2
+- Collaborators: 김건우(pair)
+
+
+[Planning / MOTIIV / Spreadsheet / 범위 선택 정책 수립]
+- Name: 윤재웅
+- Plan: 범위 정책 정의 100%
+- Progress: 1차 정책 문서 70%
+- Next: FE/BE 인터페이스 정리
+- Risk: 복합 셀 구조에서 예외 발생 가능
+- RiskLevel: 1
 - Collaborators: 김정빈(waiting-on)
 
 
-[Planning / MOTIIV / Workspace / 템플릿 정책 정의]
-- Name: 윤재웅
-- Plan: 템플릿 정책 정의 100%
-- Progress: 템플릿 구조 설계 70%
-- Next: IA 전체 정합성 검증
-- Risk: 팀프로젝트 모듈과 정책 충돌 가능성
+[Design / M-Connector / Dashboard / 레이아웃 보완]
+- Name: 김희성
+- Plan: 레이아웃 재정비 100%
+- Progress: UI 구조 개선 85%
+- Next: dark-mode 가이드 작성
+- Risk: 기존 컴포넌트와 스타일 충돌
+- RiskLevel: 1
+- Collaborators: 윤재웅(pair)
+
+
+[Operation / Team / 프로세스 / QA 라벨링 자동화]
+- Name: 한내경
+- Plan: 테스트 라벨링 프로세스 80%
+- Progress: 신규 라벨링 가이드 40%
+- Next: QA팀과 정합성 검증
+- Risk: 반자동화 도구의 안정성 문제
+- RiskLevel: 2
+- Collaborators: 김서연(waiting-on)
+
+
+[Content / MOTIIV / Notification / 알림 케이스 문서화]
+- Name: 도기봉
+- Plan: 알림 유형 정리 100%
+- Progress: 60% 문서화 완료
+- Next: UX 관점 예시 추가
+- Risk: 일부 케이스 정의 불명확
+- RiskLevel: 1
+- Collaborators: 김희성(waiting-on)
+
+
+[Research / Idea-forge / Plugin / 성능 baseline 측정]
+- Name: 하성열
+- Plan: baseline 측정 100%
+- Progress: worker-thread 적용 70%
+- Next: STT/LLM 연동 실험
+- Risk: shared memory 충돌 가능성
+- RiskLevel: 2
+- Collaborators: 김정빈(pair)
+
+
+[Frontend / M-Connector / UI / 상태 표시 컴포넌트 개선]
+- Name: 김정빈
+- Plan: 상태 UI 구조 개선 100%
+- Progress: 상태 전환 UI 60%
+- Next: shimmer 효과 추가
+- Risk: polling 비용 증가 가능성
+- RiskLevel: 1
+- Collaborators: 조해용(waiting-on)
+
+
+[Backend / MOTIIV / User / 권한 검증 로직 고도화]
+- Name: 김건우
+- Plan: 권한 검증 구조 개선 90%
+- Progress: 주요 케이스 50% 정비
+- Next: 잘못된 권한 부여 케이스 처리
+- Risk: 도메인 모델과 충돌 가능성
+- RiskLevel: 2
+- Collaborators: 윤재웅(waiting-on)
+
+
+[Planning / M-Desk / Workspace / 대시보드 IA 정비]
+- Name: 최은진
+- Plan: IA 지도 업데이트 80%
+- Progress: 우선순위 기준 재정의 60%
+- Next: 디자인팀 전달 문서화
+- Risk: 기존 IA와 병행 운영 이슈
 - RiskLevel: 1
 - Collaborators: 김희성(pair)
 
 
-[Design / MOTIIV / 홈 / 신규 카드형 UI 개발]
+[Design / MOTIIV / Profile / 사용자 정보 UI 재구성]
 - Name: 김희성
-- Plan: 카드형 UI 구조화 100%
-- Progress: UI 컴포넌트 디자인 85%
-- Next: Interaction 가이드 작업
-- Risk: 특정 해상도에서 간격 깨짐
-- RiskLevel: 1
-- Collaborators: 윤재웅(pair), 김서연(waiting-on)
+- Plan: UI 구조 재정리 100%
+- Progress: 신규 레이아웃 70%
+- Next: 모바일 대응 레이아웃 확정
+- Risk: 필드 overflow 우려
+- RiskLevel: 2
+- Collaborators: 김서연(waiting-on)
 
 
-[Operation / Team / 온보딩 / 온보딩 문서 리뉴얼]
+[Operation / Team / Automation / 주간 회의 자동화 스크립트]
 - Name: 한내경
-- Plan: 온보딩 자료 개편 90%
-- Progress: 문서 업데이트 60%
-- Next: 실제 신규자 테스트 진행
-- Risk: 기존 버전 일부 잔존 문제
+- Plan: 회의 자동화 100%
+- Progress: Slack → Notion 연동 50%
+- Next: 멤버별 태스크 자동 기록
+- Risk: Slack API 호출 제한
 - RiskLevel: 1
-- Collaborators: 김정빈(pair)
+- Collaborators: 김건우(pair)
 
 
-[Frontend / M-Desk / Workspace / Import 오류 개선]
-- Name: 김정빈
-- Plan: Import 오류 처리 개선 100%
-- Progress: 손상된 파일 처리 로직 80%
-- Next: timezone 변환 로직 보완
-- Risk: 엣지 케이스 재현 어려움
-- RiskLevel: 2
-- Collaborators: 김서연(pair), 조해용(waiting-on)
-
-
-[Content / MOTIIV / Profile / 고객 사례 문서화]
+[Content / Idea-forge / Docs / 실험 결과 보고서 작성]
 - Name: 도기봉
-- Plan: 사례 6개 정리 100%
-- Progress: 4개 문서화 완료 70%
-- Next: 시각 자료 확보
-- Risk: 일부 자료 확보 지연
-- RiskLevel: 0
-- Collaborators: 김희성(waiting-on)
+- Plan: 보고서 100%
+- Progress: 초안 70%
+- Next: 그래프/표 보강
+- Risk: 일부 실험 데이터 불안정
+- RiskLevel: 1
+- Collaborators: 하성열(waiting-on)
 
 
-[Research / Idea-forge / Core / 플러그인 구조 실험]
-- Name: 하성열
-- Plan: 플러그인 PoC 100%
-- Progress: sandbox 구조 검증 65%
-- Next: 메시징 시스템 통합 테스트
-- Risk: CORS 정책 충돌 가능성
+[Frontend / MOTIIV / Spreadsheet / 셀 병합 기능 개선]
+- Name: 김서연
+- Plan: 병합 로직 개선 90%
+- Progress: edge-case 처리 40%
+- Next: 사용자 피드백 기반 수정
+- Risk: 단일 셀 병합 시 데이터 손실 우려
 - RiskLevel: 2
 - Collaborators: 김정빈(pair)
 
 
-[Backend / MOTIIV / Notification / 알림 큐 개선]
-- Name: 김건우
-- Plan: 알림 처리 최적화 90%
-- Progress: 큐 소비 속도 증가 50%
-- Next: retry 정책 확장
-- Risk: 일부 유형에서 메시지 유실 가능성
+[Backend / M-Desk / Import / 대용량 업로드 안정화]
+- Name: 조해용
+- Plan: 업로드 안정성 개선 100%
+- Progress: streaming 업로드 65%
+- Next: 오류 복원 로직 강화
+- Risk: 특정 파일 구조에서 메모리 spike 발생 가능성
 - RiskLevel: 2
-- Collaborators: 한내경(waiting-on)
-
-
-[Planning / M-Desk / 팀프로젝트 / 플로우 점검]
-- Name: 최은진
-- Plan: 이탈 포인트 분석 80%
-- Progress: 2개 포인트 분석 60%
-- Next: UI 개선안 작성
-- Risk: 시나리오 간 종속성 있음
-- RiskLevel: 1
-- Collaborators: 김희성(waiting-on)
+- Collaborators: 김정빈(waiting-on)
