@@ -121,7 +121,7 @@ select option {
   }
 
   .notion-card:hover {
-    background: var(--notion-bg-secondary);
+    border-color: var(--notion-border-dark);
   }
 
   /* Notion 스타일 버튼 */

@@ -144,14 +144,14 @@ export function StatsBar() {
         tooltip={
           <div className="space-y-3">
             <div className="text-xs font-medium text-white/60 border-b border-white/10 pb-2">실행 / 계획</div>
-            <div className="flex items-center gap-4 text-sm p-2 rounded" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              <div className="flex items-center gap-2">
-                <span className="text-white/50">계획</span>
+            <div className="flex items-center justify-center gap-3 text-sm p-2 rounded whitespace-nowrap" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <div className="flex flex-col items-center">
+                <span className="text-white/50 text-xs">계획</span>
                 <span className="font-semibold text-white text-lg">{stats.avgPlan}%</span>
               </div>
               <span className="text-white/40">→</span>
-              <div className="flex items-center gap-2">
-                <span className="text-white/50">실행</span>
+              <div className="flex flex-col items-center">
+                <span className="text-white/50 text-xs">실행</span>
                 <span className="font-semibold text-lg" style={{ color: progressColor }}>{stats.avgProgress}%</span>
               </div>
             </div>
