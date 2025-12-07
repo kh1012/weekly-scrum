@@ -11,6 +11,7 @@ import { RiskItemsList } from "./RiskItemsList";
 import { ReasonItemsList } from "./ReasonItemsList";
 import { ModuleStats } from "./ModuleStats";
 import { CollaboratorStats } from "./CollaboratorStats";
+import { CollaborationNetworkGraph } from "@/components/visualizations/CollaborationNetworkGraph";
 
 interface SummaryViewProps {
   items: ScrumItem[];
@@ -148,6 +149,11 @@ export function SummaryView({ items }: SummaryViewProps) {
             topWaitingOn={topWaitingOnCollaborators}
           />
         </div>
+      )}
+
+      {/* 협업 네트워크 그래프 */}
+      {collaboratorStats.length > 0 && (
+        <CollaborationNetworkGraph items={items} />
       )}
 
       {reasonItems.length > 0 && <ReasonItemsList items={reasonItems} />}
