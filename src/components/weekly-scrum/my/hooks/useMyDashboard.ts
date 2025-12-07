@@ -131,6 +131,24 @@ export function useMyDashboard() {
     return calculateCollaborationIntensity(allData, sortedWeekKeys, activeMember, weekCount);
   }, [activeMember, allData, sortedWeekKeys, trendPeriod]);
 
+  // 병목 타임라인용 주차별 데이터
+  const bottleneckTimelineData = useMemo(() => {
+    const weekCount = getWeekCount(trendPeriod);
+    const recentWeeks = sortedWeekKeys.slice(-weekCount);
+
+    return recentWeeks
+      .map((weekKey) => {
+        const weekData = allData[weekKey];
+        if (!weekData) return null;
+        return {
+          weekKey,
+          weekLabel: `${weekData.month}/${weekData.week.replace("W", "")}`,
+          data: weekData,
+        };
+      })
+      .filter((d): d is { weekKey: string; weekLabel: string; data: typeof allData[string] } => d !== null);
+  }, [allData, sortedWeekKeys, trendPeriod]);
+
   // 범위 모드일 때 주차별로 그룹화된 데이터
   const weeklyMemberItems = useMemo((): WeeklyMemberItems[] => {
     if (selectMode !== "range" || !activeMember) return [];
@@ -236,6 +254,7 @@ export function useMyDashboard() {
     // Collaboration data
     collaborationStatus,
     collaborationIntensity,
+    bottleneckTimelineData,
 
     // Filter state
     selectedDomains,

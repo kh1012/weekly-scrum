@@ -16,6 +16,7 @@ import {
   CollaborationIntensity,
 } from "./components";
 import { MyCollaborationRadar } from "@/components/visualizations/MyCollaborationRadar";
+import { MyBottleneckTimeline } from "@/components/visualizations/MyBottleneckTimeline";
 
 export function MyDashboardView() {
   const {
@@ -29,6 +30,7 @@ export function MyDashboardView() {
     selectMode,
     collaborationStatus,
     collaborationIntensity,
+    bottleneckTimelineData,
     selectedDomains,
     selectedProjects,
     availableDomains,
@@ -129,8 +131,11 @@ export function MyDashboardView() {
           {/* 모듈 분포 */}
           <ModuleDistribution items={memberItems} />
 
-          {/* 협업 강도 요약 */}
-          <CollaborationIntensity weeklyData={collaborationIntensity} />
+          {/* 협업 강도 & 병목 타임라인 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <CollaborationIntensity weeklyData={collaborationIntensity} />
+            <MyBottleneckTimeline weeklyData={bottleneckTimelineData} memberName={activeMember} />
+          </div>
 
           {/* 항목 리스트 */}
           {selectMode === "range" && weeklyMemberItems.length > 0 ? (
