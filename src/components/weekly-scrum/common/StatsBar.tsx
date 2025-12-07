@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, ReactNode } from "react";
+import { useState, useRef, useCallback, useEffect, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useScrumContext } from "@/context/ScrumContext";
 import { getProgressColor, RISK_LEVEL_COLORS } from "@/lib/colorDefines";
@@ -14,32 +14,57 @@ interface StatItemProps {
 function StatItem({ children, tooltip }: StatItemProps) {
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const ref = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = useCallback(() => {
-    if (ref.current) {
+  const handleClick = useCallback(() => {
+    if (tooltipPos) {
+      // 이미 열려있으면 닫기
+      setTooltipPos(null);
+    } else if (ref.current) {
+      // 닫혀있으면 열기
       const rect = ref.current.getBoundingClientRect();
       setTooltipPos({
         x: rect.left + rect.width / 2,
         y: rect.bottom + 8,
       });
     }
-  }, []);
+  }, [tooltipPos]);
 
-  const handleMouseLeave = useCallback(() => {
-    setTooltipPos(null);
-  }, []);
+  // 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!tooltipPos) return;
 
-  const isHovered = tooltipPos !== null;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        ref.current && !ref.current.contains(target) &&
+        tooltipRef.current && !tooltipRef.current.contains(target)
+      ) {
+        setTooltipPos(null);
+      }
+    };
+
+    // 약간의 딜레이를 두어 현재 클릭 이벤트가 처리된 후에 리스너 등록
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [tooltipPos]);
+
+  const isActive = tooltipPos !== null;
 
   return (
     <>
       <span
         ref={ref}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="cursor-pointer px-1.5 py-0.5 rounded transition-colors"
+        onClick={handleClick}
+        className="cursor-pointer px-1.5 py-0.5 rounded transition-colors select-none"
         style={{ 
-          background: isHovered ? 'var(--notion-bg-hover)' : 'transparent' 
+          background: isActive ? 'var(--notion-bg-hover)' : 'transparent' 
         }}
       >
         {children}
@@ -47,7 +72,8 @@ function StatItem({ children, tooltip }: StatItemProps) {
       {tooltipPos &&
         createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none animate-fadeIn"
+            ref={tooltipRef}
+            className="fixed z-[9999] animate-fadeIn"
             style={{
               left: tooltipPos.x,
               top: tooltipPos.y,
