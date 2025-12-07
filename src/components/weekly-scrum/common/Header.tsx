@@ -94,12 +94,10 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         </div>
 
         {/* 우측: 검색 */}
-        <div className="w-64">
-          <SearchInput />
-        </div>
+        <SearchInput />
       </div>
 
-      {/* 데스크탑 lg~3xl 레이아웃 (1024px~1440px, 2행) */}
+      {/* 데스크탑 lg~3xl 레이아웃 (1024px~1600px, 2행) */}
       <div className="hidden lg:block 3xl:hidden">
         {/* 1행: 사이드바 토글 + 로고 + 주차 + 검색 */}
         <div 
@@ -130,12 +128,13 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
             )}
             <WeekSelector />
           </div>
-          <div className="w-56">
-            <SearchInput />
-          </div>
+          <SearchInput />
         </div>
         {/* 2행: 필터 (좌측) + 통계 (우측) */}
-        <div className="flex items-center justify-between h-9 px-3">
+        <div 
+          className="flex items-center justify-between h-9 px-3"
+          style={{ background: 'var(--notion-bg-secondary)' }}
+        >
           <div className="flex items-center">
             {!isMyDashboard && <Filters />}
           </div>

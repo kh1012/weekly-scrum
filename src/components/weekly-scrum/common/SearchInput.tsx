@@ -85,7 +85,7 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
   return (
     <div 
       className={`relative transition-all duration-200 ease-out ${
-        !isMobile && isFocused ? "w-80" : "w-full"
+        isMobile ? "w-full" : isFocused ? "w-72" : "w-56"
       }`}
     >
       {/* 검색 아이콘 */}
@@ -117,8 +117,9 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
         } ${isFocused ? "search-input-focused" : ""}`}
         style={{
           paddingRight: localValue || isSearching ? "32px" : "10px",
-          backgroundColor: isFocused ? "var(--notion-bg-hover)" : "var(--notion-bg-secondary)",
-          borderColor: isFocused ? "var(--notion-text-muted)" : "var(--notion-border)",
+          backgroundColor: "var(--notion-bg)",
+          borderColor: isFocused ? "var(--notion-blue)" : "var(--notion-border)",
+          boxShadow: isFocused ? "0 0 0 2px var(--notion-blue-bg)" : "none",
         }}
       />
 
