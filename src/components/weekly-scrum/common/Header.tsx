@@ -57,8 +57,8 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         borderBottom: '1px solid var(--notion-border)'
       }}
     >
-      {/* 데스크탑 xl+ 레이아웃 (1행) */}
-      <div className="hidden xl:flex items-center justify-between h-11 px-3">
+      {/* 데스크탑 3xl+ 레이아웃 (1440px 이상, 1행) */}
+      <div className="hidden 3xl:flex items-center justify-between h-11 px-3">
         {/* 좌측: 사이드바 토글 + (로고) + 주차 + 필터 + 통계 */}
         <div className="flex items-center gap-3">
           {onSidebarToggle && (
@@ -99,8 +99,8 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         </div>
       </div>
 
-      {/* 데스크탑 lg~xl 레이아웃 (2행) */}
-      <div className="hidden lg:block xl:hidden">
+      {/* 데스크탑 lg~3xl 레이아웃 (1024px~1440px, 2행) */}
+      <div className="hidden lg:block 3xl:hidden">
         {/* 1행: 사이드바 토글 + 로고 + 주차 + 검색 */}
         <div 
           className="flex items-center justify-between h-11 px-3"
