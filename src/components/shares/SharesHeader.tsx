@@ -39,7 +39,7 @@ export function SharesHeader({ isSidebarOpen = true, onSidebarToggle }: SharesHe
     <div className="flex items-center gap-1.5">
       <span className="text-base">📣</span>
       <span className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
-        공유사항
+        Shares
       </span>
     </div>
   );

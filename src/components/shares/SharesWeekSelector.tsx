@@ -94,25 +94,25 @@ export function SharesWeekSelector({ isMobile }: SharesWeekSelectorProps) {
       <div className="flex flex-col gap-2">
         {/* 모드 토글 + 날짜 범위 */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-0.5 p-0.5 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
+          <div className="flex items-center p-0.5 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
             <button
               onClick={() => handleModeChange("single")}
-              className="px-2 py-1 text-xs font-medium rounded transition-all"
+              className={`px-2 py-1 text-xs rounded transition-all ${selectMode === "single" ? "font-medium" : ""}`}
               style={{
                 background: selectMode === "single" ? 'var(--notion-bg)' : 'transparent',
                 color: selectMode === "single" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-                boxShadow: selectMode === "single" ? 'var(--notion-shadow-sm)' : 'none',
+                boxShadow: selectMode === "single" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
               }}
             >
               주차
             </button>
             <button
               onClick={() => handleModeChange("range")}
-              className="px-2 py-1 text-xs font-medium rounded transition-all"
+              className={`px-2 py-1 text-xs rounded transition-all ${selectMode === "range" ? "font-medium" : ""}`}
               style={{
                 background: selectMode === "range" ? 'var(--notion-bg)' : 'transparent',
                 color: selectMode === "range" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-                boxShadow: selectMode === "range" ? 'var(--notion-shadow-sm)' : 'none',
+                boxShadow: selectMode === "range" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
               }}
             >
               범위
@@ -189,25 +189,25 @@ export function SharesWeekSelector({ isMobile }: SharesWeekSelectorProps) {
   return (
     <div className="flex items-center gap-2">
       {/* 단일/범위 토글 */}
-      <div className="flex items-center gap-0.5 p-0.5 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
+      <div className="flex items-center p-0.5 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
         <button
           onClick={() => handleModeChange("single")}
-          className="px-2 py-1 text-xs font-medium rounded transition-all"
+          className={`px-2.5 py-1 text-xs rounded transition-all ${selectMode === "single" ? "font-medium" : ""}`}
           style={{
             background: selectMode === "single" ? 'var(--notion-bg)' : 'transparent',
             color: selectMode === "single" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-            boxShadow: selectMode === "single" ? 'var(--notion-shadow-sm)' : 'none',
+            boxShadow: selectMode === "single" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
           }}
         >
           주차
         </button>
         <button
           onClick={() => handleModeChange("range")}
-          className="px-2 py-1 text-xs font-medium rounded transition-all"
+          className={`px-2.5 py-1 text-xs rounded transition-all ${selectMode === "range" ? "font-medium" : ""}`}
           style={{
             background: selectMode === "range" ? 'var(--notion-bg)' : 'transparent',
             color: selectMode === "range" ? 'var(--notion-text)' : 'var(--notion-text-secondary)',
-            boxShadow: selectMode === "range" ? 'var(--notion-shadow-sm)' : 'none',
+            boxShadow: selectMode === "range" ? 'rgba(15, 15, 15, 0.1) 0px 0px 0px 1px' : 'none',
           }}
         >
           범위
