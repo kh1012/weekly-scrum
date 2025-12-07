@@ -176,11 +176,19 @@
 - 협업 많은 멤버 Top N
 - 페어 협업 Top N
 - 대기(waiting-on) 발생 Top N
+- **협업 네트워크 그래프**: 멤버 간 협업 관계 시각화 (pair=파란선, waiting-on=빨간선)
+- **병목 현황 맵**: waiting-on 관계 기반 병목 강도 표시
+- **협업 부하 히트맵**: 멤버별 협업 유형(pair/waiting-on)별 부하 현황
+- **도메인 간 협업 매트릭스**: 도메인 간 협업 빈도 히트맵
 
 **개인 대시보드 (My):**
 - 내 협업 상태 (나를 기다리는 사람 / 내가 기다리는 사람)
 - 모듈별 작업 분포
 - 협업 강도 요약 (주차별 협업 빈도 추이)
+- **협업 레이더 차트**: pair, waiting-on(출/입), 크로스 도메인/모듈 점수 5축 레이더
+- **병목 타임라인**: 주차별 병목 추이 및 이상치 감지
+- **협업 궤도 맵**: 중심=나, 궤도별 협업자 배치 (내부=빈번한 pair, 외부=waiting-on)
+- **협업 인사이트**: 자동 생성된 협업 분석 메시지 (병목 경고, 협업 패턴 등)
 
 **카드 뷰 (Cards):**
 - 모듈 정보 표시 (프로젝트 옆에 표시)
@@ -588,6 +596,15 @@ src/
 │           ├── RiskItemsList.tsx
 │           ├── SummaryCards.tsx
 │           └── SummaryView.tsx
+│   └── visualizations/           # 협업 시각화 컴포넌트
+│       ├── BottleneckMap.tsx     # 병목 현황 맵
+│       ├── CollaborationInsights.tsx # 협업 인사이트 카드
+│       ├── CollaborationLoadHeatmap.tsx # 협업 부하 히트맵
+│       ├── CollaborationNetworkGraph.tsx # 협업 네트워크 그래프
+│       ├── CrossDomainMatrix.tsx # 도메인 간 협업 매트릭스
+│       ├── MyBottleneckTimeline.tsx # 개인 병목 타임라인
+│       ├── MyCollaborationOrbit.tsx # 개인 협업 궤도 맵
+│       └── MyCollaborationRadar.tsx # 개인 협업 레이더 차트
 ├── context/
 │   ├── SharesContext.tsx         # Shares 전역 상태
 │   └── ScrumContext.tsx          # 스크럼 전역 상태
@@ -598,7 +615,12 @@ src/
 │   ├── scrumData.ts              # 스크럼 데이터 로더
 │   ├── sharesData.ts             # Shares 데이터 로더
 │   ├── utils.ts                  # 필터링, 통계 유틸리티
-│   └── weekUtils.ts              # 주차 관련 유틸리티
+│   ├── weekUtils.ts              # 주차 관련 유틸리티
+│   └── collaboration/            # 협업 분석 유틸리티
+│       ├── index.ts              # 모듈 export
+│       ├── types.ts              # 협업 관련 타입 정의
+│       ├── metrics.ts            # 협업 지표 계산 함수
+│       └── insights.ts           # 자동 인사이트 생성
 └── types/
     ├── scrum.ts                  # 스크럼 타입 정의
     └── shares.ts                 # Shares 타입 정의
