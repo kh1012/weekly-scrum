@@ -14,6 +14,7 @@ import { CollaboratorStats } from "./CollaboratorStats";
 import { CollaborationNetworkGraph } from "@/components/visualizations/CollaborationNetworkGraph";
 import { BottleneckMap } from "@/components/visualizations/BottleneckMap";
 import { CollaborationLoadHeatmap } from "@/components/visualizations/CollaborationLoadHeatmap";
+import { CrossDomainMatrix } from "@/components/visualizations/CrossDomainMatrix";
 
 interface SummaryViewProps {
   items: ScrumItem[];
@@ -161,6 +162,7 @@ export function SummaryView({ items }: SummaryViewProps) {
             <BottleneckMap items={items} />
           </div>
           <CollaborationLoadHeatmap items={items} />
+          <CrossDomainMatrix items={items} />
         </>
       )}
 
