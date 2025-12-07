@@ -61,6 +61,7 @@ export interface WeeklyScrumData {
 export interface FilterState {
   domain: string;
   project: string;
+  module: string;
   member: string;
   search: string;
 }
@@ -100,6 +101,15 @@ export interface ScrumState {
 }
 
 /**
+ * 협업자 통계 항목 타입
+ */
+export interface CollaboratorStat {
+  name: string;
+  count: number;
+  relations: Record<Relation, number>;
+}
+
+/**
  * 통계 타입
  */
 export interface ScrumStats {
@@ -114,4 +124,5 @@ export interface ScrumStats {
   domains: string[];
   projects: string[];
   members: string[];
+  modules: string[];
 }

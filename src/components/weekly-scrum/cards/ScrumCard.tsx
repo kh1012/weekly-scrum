@@ -44,6 +44,14 @@ export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
             <span className="text-xs font-medium truncate" style={{ color: 'var(--notion-text-secondary)' }}>
               {item.project}
             </span>
+            {item.module && (
+              <>
+                <span style={{ color: 'var(--notion-text-muted)' }} className="text-xs">/</span>
+                <span className="text-xs font-medium truncate" style={{ color: 'var(--notion-text-tertiary)' }}>
+                  {item.module}
+                </span>
+              </>
+            )}
             {riskLevel > 0 && (
               <span className="ml-auto">
                 <RiskLevelBadge level={riskLevel} size="sm" />
@@ -96,9 +104,45 @@ export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
           <ContentBar label="Risk" color={riskColor.text} content={item.risk} />
         )}
       </div>
+
+      {/* Collaborators */}
+      {item.collaborators && item.collaborators.length > 0 && (
+        <div className="mt-2 pt-2" style={{ borderTop: '1px dashed var(--notion-border)' }}>
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[9px] font-medium" style={{ color: 'var(--notion-text-muted)' }}>협업:</span>
+            {item.collaborators.map((collab, idx) => (
+              <span
+                key={idx}
+                className="text-[10px] px-1.5 py-0.5 rounded"
+                style={{
+                  backgroundColor: COLLAB_COLORS[collab.relation]?.bg || 'var(--notion-bg-tertiary)',
+                  color: COLLAB_COLORS[collab.relation]?.text || 'var(--notion-text-secondary)',
+                }}
+              >
+                {collab.name}
+                <span className="opacity-70 ml-0.5">({COLLAB_LABELS[collab.relation]})</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const COLLAB_COLORS: Record<string, { bg: string; text: string }> = {
+  pair: { bg: 'var(--notion-blue-bg)', text: 'var(--notion-blue)' },
+  'waiting-on': { bg: 'var(--notion-orange-bg)', text: 'var(--notion-orange)' },
+  review: { bg: 'var(--notion-purple-bg)', text: 'var(--notion-purple)' },
+  handoff: { bg: 'var(--notion-green-bg)', text: 'var(--notion-green)' },
+};
+
+const COLLAB_LABELS: Record<string, string> = {
+  pair: '페어',
+  'waiting-on': '대기',
+  review: '리뷰',
+  handoff: '인수',
+};
 
 function ContentBar({ label, color, content }: { label: string; color: string; content: string }) {
   return (

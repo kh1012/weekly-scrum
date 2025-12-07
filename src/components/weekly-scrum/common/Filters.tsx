@@ -7,9 +7,9 @@ interface FiltersProps {
 }
 
 export function Filters({ isMobile = false }: FiltersProps) {
-  const { filters, domains, projects, members, updateFilter, resetFilters } = useScrumContext();
+  const { filters, domains, projects, modules, members, updateFilter, resetFilters } = useScrumContext();
 
-  const hasActiveFilters = filters.domain || filters.project || filters.member || filters.search;
+  const hasActiveFilters = filters.domain || filters.project || filters.module || filters.member || filters.search;
 
   if (isMobile) {
     return (
@@ -44,6 +44,18 @@ export function Filters({ isMobile = false }: FiltersProps) {
             <option key={project} value={project}>{project}</option>
           ))}
         </select>
+        {modules.length > 0 && (
+          <select
+            value={filters.module}
+            onChange={(e) => updateFilter("module", e.target.value)}
+            className="notion-select text-xs py-1"
+          >
+            <option value="">모듈</option>
+            {modules.map((mod) => (
+              <option key={mod} value={mod}>{mod}</option>
+            ))}
+          </select>
+        )}
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
@@ -92,6 +104,18 @@ export function Filters({ isMobile = false }: FiltersProps) {
           <option key={project} value={project}>{project}</option>
         ))}
       </select>
+      {modules.length > 0 && (
+        <select
+          value={filters.module}
+          onChange={(e) => updateFilter("module", e.target.value)}
+          className="notion-select"
+        >
+          <option value="">전체 모듈</option>
+          {modules.map((mod) => (
+            <option key={mod} value={mod}>{mod}</option>
+          ))}
+        </select>
+      )}
       {hasActiveFilters && (
         <button
           onClick={resetFilters}

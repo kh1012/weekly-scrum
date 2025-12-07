@@ -1,4 +1,4 @@
-import type { ScrumItem, FilterState, RiskLevel, ScrumStats } from "@/types/scrum";
+import type { ScrumItem, FilterState, RiskLevel, ScrumStats, Relation, CollaboratorStat } from "@/types/scrum";
 import { getAchievementRate } from "./colorDefines";
 
 /**
@@ -12,6 +12,9 @@ export function filterItems(items: ScrumItem[], filters: FilterState): ScrumItem
     if (filters.project && item.project !== filters.project) {
       return false;
     }
+    if (filters.module && item.module !== filters.module) {
+      return false;
+    }
     if (filters.member && item.name !== filters.member) {
       return false;
     }
@@ -21,6 +24,7 @@ export function filterItems(items: ScrumItem[], filters: FilterState): ScrumItem
         item.name,
         item.domain,
         item.project,
+        item.module || "",
         item.topic,
         item.progress,
         item.risk,
@@ -53,6 +57,100 @@ export function extractProjects(items: ScrumItem[]): string[] {
 }
 
 /**
+ * 고유 모듈 목록 추출
+ */
+export function extractModules(items: ScrumItem[]): string[] {
+  const set = new Set<string>();
+  items.forEach((item) => {
+    if (item.module) {
+      set.add(item.module);
+    }
+  });
+  return Array.from(set).sort();
+}
+
+/**
+ * 협업자 통계 계산
+ * 각 협업자가 몇 번 언급되었는지, 어떤 관계로 언급되었는지 계산
+ */
+export function calculateCollaboratorStats(items: ScrumItem[]): CollaboratorStat[] {
+  const stats: Record<string, CollaboratorStat> = {};
+
+  items.forEach((item) => {
+    if (!item.collaborators) return;
+
+    item.collaborators.forEach((collab) => {
+      if (!stats[collab.name]) {
+        stats[collab.name] = {
+          name: collab.name,
+          count: 0,
+          relations: {
+            "waiting-on": 0,
+            pair: 0,
+            review: 0,
+            handoff: 0,
+          },
+        };
+      }
+      stats[collab.name].count++;
+      stats[collab.name].relations[collab.relation]++;
+    });
+  });
+
+  return Object.values(stats).sort((a, b) => b.count - a.count);
+}
+
+/**
+ * 특정 relation 기준 Top N 협업자 추출
+ */
+export function getTopCollaboratorsByRelation(
+  items: ScrumItem[],
+  relation: Relation,
+  limit: number = 5
+): { name: string; count: number }[] {
+  const counts: Record<string, number> = {};
+
+  items.forEach((item) => {
+    if (!item.collaborators) return;
+
+    item.collaborators.forEach((collab) => {
+      if (collab.relation === relation) {
+        counts[collab.name] = (counts[collab.name] || 0) + 1;
+      }
+    });
+  });
+
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/**
+ * 모듈별 통계 계산
+ */
+export function calculateModuleStats(items: ScrumItem[]): { module: string; count: number; avgProgress: number }[] {
+  const stats: Record<string, { count: number; totalProgress: number }> = {};
+
+  items.forEach((item) => {
+    const moduleName = item.module || "(모듈 없음)";
+    if (!stats[moduleName]) {
+      stats[moduleName] = { count: 0, totalProgress: 0 };
+    }
+    stats[moduleName].count++;
+    stats[moduleName].totalProgress += item.progressPercent;
+  });
+
+  return Object.entries(stats)
+    .map(([module, data]) => ({
+      module,
+      count: data.count,
+      avgProgress: Math.round(data.totalProgress / data.count),
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/**
  * 통계 계산
  */
 export function calculateStats(items: ScrumItem[]): ScrumStats {
@@ -79,10 +177,11 @@ export function calculateStats(items: ScrumItem[]): ScrumStats {
     riskCounts[level]++;
   });
 
-  // 고유 도메인, 프로젝트, 멤버 목록
+  // 고유 도메인, 프로젝트, 멤버, 모듈 목록
   const domains = Array.from(new Set(items.map((item) => item.domain))).sort();
   const projects = Array.from(new Set(items.map((item) => item.project))).sort();
   const members = Array.from(new Set(items.map((item) => item.name))).sort();
+  const modules = extractModules(items);
 
   return { 
     total, 
@@ -96,5 +195,6 @@ export function calculateStats(items: ScrumItem[]): ScrumStats {
     domains,
     projects,
     members,
+    modules,
   };
 }

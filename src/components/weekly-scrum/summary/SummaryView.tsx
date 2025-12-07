@@ -3,11 +3,14 @@
 import { useMemo } from "react";
 import type { ScrumItem, RiskLevel } from "@/types/scrum";
 import { PROGRESS_COLORS, UI_COLORS, STATUS_COLORS, RISK_LEVEL_COLORS, getAchievementRate } from "@/lib/colorDefines";
+import { calculateCollaboratorStats, getTopCollaboratorsByRelation, calculateModuleStats } from "@/lib/utils";
 import { SummaryCard, ProgressDistributionBar, RiskDistributionBar, AchievementSummary } from "./SummaryCards";
 import { DomainStats } from "./DomainStats";
 import { MemberStats } from "./MemberStats";
 import { RiskItemsList } from "./RiskItemsList";
 import { ReasonItemsList } from "./ReasonItemsList";
+import { ModuleStats } from "./ModuleStats";
+import { CollaboratorStats } from "./CollaboratorStats";
 
 interface SummaryViewProps {
   items: ScrumItem[];
@@ -65,6 +68,14 @@ export function SummaryView({ items }: SummaryViewProps) {
         return aRate - bRate;
       });
   }, [items]);
+
+  // 모듈 통계
+  const moduleStats = useMemo(() => calculateModuleStats(items), [items]);
+
+  // 협업자 통계
+  const collaboratorStats = useMemo(() => calculateCollaboratorStats(items), [items]);
+  const topPairCollaborators = useMemo(() => getTopCollaboratorsByRelation(items, "pair", 5), [items]);
+  const topWaitingOnCollaborators = useMemo(() => getTopCollaboratorsByRelation(items, "waiting-on", 5), [items]);
 
   const progressDistribution = useMemo(
     () => ({
@@ -126,6 +137,18 @@ export function SummaryView({ items }: SummaryViewProps) {
         <DomainStats stats={domainStats} />
         <MemberStats stats={memberStats} />
       </div>
+
+      {/* 모듈 & 협업 통계 */}
+      {(moduleStats.length > 1 || collaboratorStats.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ModuleStats stats={moduleStats} />
+          <CollaboratorStats
+            stats={collaboratorStats}
+            topPair={topPairCollaborators}
+            topWaitingOn={topWaitingOnCollaborators}
+          />
+        </div>
+      )}
 
       {reasonItems.length > 0 && <ReasonItemsList items={reasonItems} />}
 
