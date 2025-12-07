@@ -1,0 +1,323 @@
+{
+  "year": 2025,
+  "month": 12,
+  "week": "W02",
+  "range": "2025-12-08 ~ 2025-12-12",
+  "items": [
+    {
+      "name": "김서연",
+      "domain": "Frontend",
+      "project": "MOTIIV",
+      "topic": "카드 렌더링 개선",
+      "plan": "카드 렌더링 속도 개선 100%",
+      "planPercent": 100,
+      "progress": "key 기반 렌더링 최적화 75%",
+      "progressPercent": 75,
+      "reason": "",
+      "next": "skeleton + loading fallback 정비",
+      "risk": "모바일 viewport에서 셀 꼬임 가능성",
+      "riskLevel": 1,
+      "module": "Home",
+      "collaborators": [
+        {
+          "name": "김정빈",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "조해용",
+      "domain": "Backend",
+      "project": "M-Desk",
+      "topic": "데이터 정합성 점검",
+      "plan": "정합성 점검 자동화 80%",
+      "planPercent": 80,
+      "progress": "테스트 케이스 50% 작성",
+      "progressPercent": 50,
+      "reason": "",
+      "next": "자동 보정 로직 적용",
+      "risk": "DB 락 지연 발생 우려",
+      "riskLevel": 2,
+      "module": "Data",
+      "collaborators": [
+        {
+          "name": "김건우",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "윤재웅",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "topic": "범위 선택 정책 수립",
+      "plan": "범위 정책 정의 100%",
+      "planPercent": 100,
+      "progress": "1차 정책 문서 70%",
+      "progressPercent": 70,
+      "reason": "",
+      "next": "FE/BE 인터페이스 정리",
+      "risk": "복합 셀 구조에서 예외 발생 가능",
+      "riskLevel": 1,
+      "module": "Spreadsheet",
+      "collaborators": [
+        {
+          "name": "김정빈",
+          "relation": "waiting-on"
+        }
+      ]
+    },
+    {
+      "name": "김희성",
+      "domain": "Design",
+      "project": "M-Connector",
+      "topic": "레이아웃 보완",
+      "plan": "레이아웃 재정비 100%",
+      "planPercent": 100,
+      "progress": "UI 구조 개선 85%",
+      "progressPercent": 85,
+      "reason": "",
+      "next": "dark-mode 가이드 작성",
+      "risk": "기존 컴포넌트와 스타일 충돌",
+      "riskLevel": 1,
+      "module": "Dashboard",
+      "collaborators": [
+        {
+          "name": "윤재웅",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "한내경",
+      "domain": "Operation",
+      "project": "Team",
+      "topic": "QA 라벨링 자동화",
+      "plan": "테스트 라벨링 프로세스 80%",
+      "planPercent": 80,
+      "progress": "신규 라벨링 가이드 40%",
+      "progressPercent": 40,
+      "reason": "",
+      "next": "QA팀과 정합성 검증",
+      "risk": "반자동화 도구의 안정성 문제",
+      "riskLevel": 2,
+      "module": "프로세스",
+      "collaborators": [
+        {
+          "name": "김서연",
+          "relation": "waiting-on"
+        }
+      ]
+    },
+    {
+      "name": "도기봉",
+      "domain": "Content",
+      "project": "MOTIIV",
+      "topic": "알림 케이스 문서화",
+      "plan": "알림 유형 정리 100%",
+      "planPercent": 100,
+      "progress": "60% 문서화 완료",
+      "progressPercent": 60,
+      "reason": "",
+      "next": "UX 관점 예시 추가",
+      "risk": "일부 케이스 정의 불명확",
+      "riskLevel": 1,
+      "module": "Notification",
+      "collaborators": [
+        {
+          "name": "김희성",
+          "relation": "waiting-on"
+        }
+      ]
+    },
+    {
+      "name": "하성열",
+      "domain": "Research",
+      "project": "Idea-forge",
+      "topic": "성능 baseline 측정",
+      "plan": "baseline 측정 100%",
+      "planPercent": 100,
+      "progress": "worker-thread 적용 70%",
+      "progressPercent": 70,
+      "reason": "",
+      "next": "STT/LLM 연동 실험",
+      "risk": "shared memory 충돌 가능성",
+      "riskLevel": 2,
+      "module": "Plugin",
+      "collaborators": [
+        {
+          "name": "김정빈",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "김정빈",
+      "domain": "Frontend",
+      "project": "M-Connector",
+      "topic": "상태 표시 컴포넌트 개선",
+      "plan": "상태 UI 구조 개선 100%",
+      "planPercent": 100,
+      "progress": "상태 전환 UI 60%",
+      "progressPercent": 60,
+      "reason": "",
+      "next": "shimmer 효과 추가",
+      "risk": "polling 비용 증가 가능성",
+      "riskLevel": 1,
+      "module": "UI",
+      "collaborators": [
+        {
+          "name": "조해용",
+          "relation": "waiting-on"
+        }
+      ]
+    },
+    {
+      "name": "김건우",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "topic": "권한 검증 로직 고도화",
+      "plan": "권한 검증 구조 개선 90%",
+      "planPercent": 90,
+      "progress": "주요 케이스 50% 정비",
+      "progressPercent": 50,
+      "reason": "",
+      "next": "잘못된 권한 부여 케이스 처리",
+      "risk": "도메인 모델과 충돌 가능성",
+      "riskLevel": 2,
+      "module": "User",
+      "collaborators": [
+        {
+          "name": "윤재웅",
+          "relation": "waiting-on"
+        }
+      ]
+    },
+    {
+      "name": "최은진",
+      "domain": "Planning",
+      "project": "M-Desk",
+      "topic": "대시보드 IA 정비",
+      "plan": "IA 지도 업데이트 80%",
+      "planPercent": 80,
+      "progress": "우선순위 기준 재정의 60%",
+      "progressPercent": 60,
+      "reason": "",
+      "next": "디자인팀 전달 문서화",
+      "risk": "기존 IA와 병행 운영 이슈",
+      "riskLevel": 1,
+      "module": "Workspace",
+      "collaborators": [
+        {
+          "name": "김희성",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "김희성",
+      "domain": "Design",
+      "project": "MOTIIV",
+      "topic": "사용자 정보 UI 재구성",
+      "plan": "UI 구조 재정리 100%",
+      "planPercent": 100,
+      "progress": "신규 레이아웃 70%",
+      "progressPercent": 70,
+      "reason": "",
+      "next": "모바일 대응 레이아웃 확정",
+      "risk": "필드 overflow 우려",
+      "riskLevel": 2,
+      "module": "Profile",
+      "collaborators": [
+        {
+          "name": "김서연",
+          "relation": "waiting-on"
+        }
+      ]
+    },
+    {
+      "name": "한내경",
+      "domain": "Operation",
+      "project": "Team",
+      "topic": "주간 회의 자동화 스크립트",
+      "plan": "회의 자동화 100%",
+      "planPercent": 100,
+      "progress": "Slack → Notion 연동 50%",
+      "progressPercent": 50,
+      "reason": "",
+      "next": "멤버별 태스크 자동 기록",
+      "risk": "Slack API 호출 제한",
+      "riskLevel": 1,
+      "module": "Automation",
+      "collaborators": [
+        {
+          "name": "김건우",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "도기봉",
+      "domain": "Content",
+      "project": "Idea-forge",
+      "topic": "실험 결과 보고서 작성",
+      "plan": "보고서 100%",
+      "planPercent": 100,
+      "progress": "초안 70%",
+      "progressPercent": 70,
+      "reason": "",
+      "next": "그래프/표 보강",
+      "risk": "일부 실험 데이터 불안정",
+      "riskLevel": 1,
+      "module": "Docs",
+      "collaborators": [
+        {
+          "name": "하성열",
+          "relation": "waiting-on"
+        }
+      ]
+    },
+    {
+      "name": "김서연",
+      "domain": "Frontend",
+      "project": "MOTIIV",
+      "topic": "셀 병합 기능 개선",
+      "plan": "병합 로직 개선 90%",
+      "planPercent": 90,
+      "progress": "edge-case 처리 40%",
+      "progressPercent": 40,
+      "reason": "",
+      "next": "사용자 피드백 기반 수정",
+      "risk": "단일 셀 병합 시 데이터 손실 우려",
+      "riskLevel": 2,
+      "module": "Spreadsheet",
+      "collaborators": [
+        {
+          "name": "김정빈",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "조해용",
+      "domain": "Backend",
+      "project": "M-Desk",
+      "topic": "대용량 업로드 안정화",
+      "plan": "업로드 안정성 개선 100%",
+      "planPercent": 100,
+      "progress": "streaming 업로드 65%",
+      "progressPercent": 65,
+      "reason": "",
+      "next": "오류 복원 로직 강화",
+      "risk": "특정 파일 구조에서 메모리 spike 발생 가능성",
+      "riskLevel": 2,
+      "module": "Import",
+      "collaborators": [
+        {
+          "name": "김정빈",
+          "relation": "waiting-on"
+        }
+      ]
+    }
+  ]
+}
