@@ -17,6 +17,7 @@ import {
 } from "./components";
 import { MyCollaborationRadar } from "@/components/visualizations/MyCollaborationRadar";
 import { MyBottleneckTimeline } from "@/components/visualizations/MyBottleneckTimeline";
+import { MyCollaborationOrbit } from "@/components/visualizations/MyCollaborationOrbit";
 
 export function MyDashboardView() {
   const {
@@ -127,6 +128,9 @@ export function MyDashboardView() {
             />
             <MyCollaborationRadar items={currentData.items} memberName={activeMember} />
           </div>
+
+          {/* 협업 궤도 */}
+          <MyCollaborationOrbit items={currentData.items} memberName={activeMember} />
 
           {/* 모듈 분포 */}
           <ModuleDistribution items={memberItems} />
