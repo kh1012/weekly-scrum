@@ -51,9 +51,18 @@
 - Risk: 리스크 사항 (선택)
 - RiskLevel: 리스크 레벨 0-3 (선택)
 - Reason: 계획 대비 실행 미비 시 부연 설명 (선택)
+- Collaborators: 협업자 목록 (선택)
+```
+
+**모듈(Module)을 포함하는 확장 형식:**
+
+```
+[도메인 / 프로젝트 / 모듈 / 토픽]
 ```
 
 ### 예시
+
+**기본 형식 (모듈 없음, 협업자 없음):**
 
 ```
 [Frontend / 스프레드시트 / 셀 렌더링 개선]
@@ -63,7 +72,36 @@
 - Next: 렌더링 최적화 마무리 및 Publish 테스트 추가
 - Risk: Publish 플로우에서 race condition 재발 가능성 확인
 - RiskLevel: 1
+```
 
+**모듈 포함 형식:**
+
+```
+[Frontend / MOTIIV / Spreadsheet / 셀 렌더링 개선]
+- Name: 김서연
+- Plan: 셀 최적화 100% 완료
+- Progress: 셀 렌더링 구조화 및 개선 작업 100% 완료
+- Next: 렌더링 최적화 마무리 및 저장 테스트 추가
+- Risk: 저장 플로우에서 race condition 재발 가능성 확인
+- RiskLevel: 1
+```
+
+**협업자(Collaborators) 포함 형식:**
+
+```
+[Frontend / MOTIIV / Spreadsheet / 셀 렌더링 개선]
+- Name: 김서연
+- Plan: 셀 최적화 100% 완료
+- Progress: 셀 렌더링 구조화 및 개선 작업 100% 완료
+- Next: 렌더링 최적화 마무리 및 저장 테스트 추가
+- Risk: 저장 플로우에서 race condition 재발 가능성 확인
+- RiskLevel: 1
+- Collaborators: 김정빈(pair), 조해용(waiting-on)
+```
+
+**사유(Reason) 포함 형식:**
+
+```
 [Backend / 권한 시스템 / 접근 제어 UX]
 - Name: 김정빈
 - Plan: AI Agent 기반 개발 100% 완료
@@ -79,15 +117,74 @@
 
 ### 필드 설명
 
-| 필드        | 필수 | 설명                             |
-| ----------- | ---- | -------------------------------- |
-| `Name`      | O    | 담당자 이름                      |
-| `Plan`      | O    | 이번 주 계획                     |
-| `Progress`  | O    | 실제 진행 상황                   |
-| `Next`      | O    | 다음 주 계획                     |
-| `Risk`      | X    | 리스크 사항                      |
-| `RiskLevel` | X    | 0=없음, 1=경미, 2=중간, 3=심각   |
-| `Reason`    | X    | 계획 대비 실행 미비 시 부연 설명 |
+| 필드            | 필수 | 설명                                |
+| --------------- | ---- | ----------------------------------- |
+| `Name`          | O    | 담당자 이름                         |
+| `Plan`          | O    | 이번 주 계획                        |
+| `Progress`      | O    | 실제 진행 상황                      |
+| `Next`          | O    | 다음 주 계획                        |
+| `Risk`          | X    | 리스크 사항                         |
+| `RiskLevel`     | X    | 0=없음, 1=경미, 2=중간, 3=심각      |
+| `Reason`        | X    | 계획 대비 실행 미비 시 부연 설명    |
+| `Collaborators` | X    | 협업자 목록 (이름(관계) 형식, 쉼표 구분) |
+
+### 모듈(Module) 개념
+
+모듈은 프로젝트 내 세부 작업 영역을 구분하기 위한 **선택적 필드**입니다.
+
+**특징:**
+- 프로젝트 종류에 상관없이 자유롭게 사용 가능
+- 헤더에 4개 이상의 항목이 있으면 3번째가 모듈로 인식됨
+- 모듈 없이도 기존처럼 3개 항목(도메인/프로젝트/토픽)으로 사용 가능
+
+**헤더 규칙:**
+
+| 항목 수 | 해석 방식                          | 예시                                         |
+| ------- | ---------------------------------- | -------------------------------------------- |
+| 3개     | 도메인 / 프로젝트 / 토픽           | `[Frontend / MOTIIV / 버그 수정]`            |
+| 4개+    | 도메인 / 프로젝트 / 모듈 / 토픽    | `[Frontend / MOTIIV / Spreadsheet / 버그 수정]` |
+
+### 협업자(Collaborators) 개념
+
+협업자는 해당 작업과 관련된 팀원을 명시하기 위한 **선택적 필드**입니다.
+
+**입력 형식:**
+```
+- Collaborators: 이름(관계), 이름(관계), ...
+```
+
+**관계(Relation) 종류:**
+
+| 관계         | 설명                                    | 사용 예                          |
+| ------------ | --------------------------------------- | -------------------------------- |
+| `waiting-on` | 해당 사람의 작업/응답을 기다리는 중     | 코드 리뷰 대기, 피드백 대기      |
+| `pair`       | 함께 페어 프로그래밍 또는 협업 중       | 페어 코딩, 공동 작업             |
+| `review`     | 코드 리뷰 또는 검토 요청                | PR 리뷰 요청                     |
+| `handoff`    | 작업 인수인계                           | 담당자 변경, 작업 이관           |
+
+**예시:**
+```
+- Collaborators: 김정빈(pair), 조해용(waiting-on)
+- Collaborators: 이수진(review)
+- Collaborators: 박민수(handoff), 김서연(pair)
+```
+
+### 시각화에서의 활용
+
+**팀 대시보드 (Summary):**
+- 모듈별 작업 현황 차트
+- 협업 많은 멤버 Top N
+- 페어 협업 Top N
+- 대기(waiting-on) 발생 Top N
+
+**개인 대시보드 (My):**
+- 내 협업 상태 (나를 기다리는 사람 / 내가 기다리는 사람)
+- 모듈별 작업 분포
+- 협업 강도 요약 (주차별 협업 빈도 추이)
+
+**카드 뷰 (Cards):**
+- 모듈 정보 표시 (프로젝트 옆에 표시)
+- 협업자 목록 표시 (카드 하단)
 
 ### 도메인 목록
 
@@ -285,18 +382,23 @@ yarn shares:create 2025 12 W02
   "range": "2025-12-02 ~ 2025-12-08",
   "items": [
     {
-      "name": "김현",
+      "name": "김서연",
       "domain": "Frontend",
-      "project": "스프레드시트",
+      "project": "MOTIIV",
+      "module": "Spreadsheet",
       "topic": "셀 렌더링 개선",
       "plan": "셀 최적화 100% 완료",
       "planPercent": 100,
       "progress": "셀 렌더링 구조화 및 개선작업 100% 완료",
       "progressPercent": 100,
       "reason": "",
-      "next": "렌더링 최적화 마무리 및 Publish 테스트 추가",
-      "risk": "Publish 플로우에서 race condition 재발 가능성",
-      "riskLevel": 1
+      "next": "렌더링 최적화 마무리 및 저장 테스트 추가",
+      "risk": "저장 플로우에서 race condition 재발 가능성",
+      "riskLevel": 1,
+      "collaborators": [
+        { "name": "김정빈", "relation": "pair" },
+        { "name": "조해용", "relation": "waiting-on" }
+      ]
     }
   ]
 }
@@ -304,25 +406,29 @@ yarn shares:create 2025 12 W02
 
 #### 필드 설명
 
-| 필드                      | 타입   | 설명                          |
-| ------------------------- | ------ | ----------------------------- |
-| `year`                    | number | 연도                          |
-| `month`                   | number | 월                            |
-| `week`                    | string | 주차 (예: W01)                |
-| `range`                   | string | 날짜 범위                     |
-| `items`                   | array  | 스크럼 항목 배열              |
-| `items[].name`            | string | 담당자 이름                   |
-| `items[].domain`          | string | 도메인 (Frontend, Backend 등) |
-| `items[].project`         | string | 프로젝트명                    |
-| `items[].topic`           | string | 작업 토픽                     |
-| `items[].plan`            | string | 이번 주 계획                  |
-| `items[].planPercent`     | number | 계획 진행률 (0-100)           |
-| `items[].progress`        | string | 실제 진행 상황                |
-| `items[].progressPercent` | number | 실제 진행률 (0-100)           |
-| `items[].reason`          | string | 계획 대비 미달 사유           |
-| `items[].next`            | string | 다음 주 계획                  |
-| `items[].risk`            | string | 리스크 사항                   |
-| `items[].riskLevel`       | number | 리스크 레벨 (0-3)             |
+| 필드                            | 타입     | 필수 | 설명                                        |
+| ------------------------------- | -------- | ---- | ------------------------------------------- |
+| `year`                          | number   | O    | 연도                                        |
+| `month`                         | number   | O    | 월                                          |
+| `week`                          | string   | O    | 주차 (예: W01)                              |
+| `range`                         | string   | O    | 날짜 범위                                   |
+| `items`                         | array    | O    | 스크럼 항목 배열                            |
+| `items[].name`                  | string   | O    | 담당자 이름                                 |
+| `items[].domain`                | string   | O    | 도메인 (Frontend, Backend 등)               |
+| `items[].project`               | string   | O    | 프로젝트명                                  |
+| `items[].module`                | string   | X    | 모듈명 (선택)                               |
+| `items[].topic`                 | string   | O    | 작업 토픽                                   |
+| `items[].plan`                  | string   | O    | 이번 주 계획                                |
+| `items[].planPercent`           | number   | O    | 계획 진행률 (0-100)                         |
+| `items[].progress`              | string   | O    | 실제 진행 상황                              |
+| `items[].progressPercent`       | number   | O    | 실제 진행률 (0-100)                         |
+| `items[].reason`                | string   | X    | 계획 대비 미달 사유                         |
+| `items[].next`                  | string   | O    | 다음 주 계획                                |
+| `items[].risk`                  | string   | X    | 리스크 사항                                 |
+| `items[].riskLevel`             | number   | X    | 리스크 레벨 (0-3)                           |
+| `items[].collaborators`         | array    | X    | 협업자 목록                                 |
+| `items[].collaborators[].name`  | string   | O    | 협업자 이름                                 |
+| `items[].collaborators[].relation` | string | O   | 관계 (`waiting-on`, `pair`, `review`, `handoff`) |
 
 ### 인사이트 데이터 구조
 
