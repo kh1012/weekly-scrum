@@ -1,8 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { ProjectNode, ModuleNode, FeatureNode, WorkMapSelection } from "./types";
-import { computeProjectMetrics, computeModuleMetrics, computeFeatureMetrics } from "./metricsUtils";
+import type {
+  ProjectNode,
+  ModuleNode,
+  FeatureNode,
+  WorkMapSelection,
+} from "./types";
+import {
+  computeProjectMetrics,
+  computeModuleMetrics,
+  computeFeatureMetrics,
+} from "./metricsUtils";
 import { getProgressColor, getRiskColor } from "./MetricsIndicator";
 
 interface DirectoryTreeProps {
@@ -19,7 +28,11 @@ interface ExpandedState {
 /**
  * 트렌디한 디렉토리 트리 컴포넌트
  */
-export function DirectoryTree({ projects, selectedFeature, onFeatureSelect }: DirectoryTreeProps) {
+export function DirectoryTree({
+  projects,
+  selectedFeature,
+  onFeatureSelect,
+}: DirectoryTreeProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({
     projects: new Set(projects.map((p) => p.name)),
     modules: new Set(),
@@ -30,7 +43,10 @@ export function DirectoryTree({ projects, selectedFeature, onFeatureSelect }: Di
     if (selectedFeature?.project && selectedFeature?.module) {
       setExpanded((prev) => ({
         projects: new Set([...prev.projects, selectedFeature.project!]),
-        modules: new Set([...prev.modules, `${selectedFeature.project}/${selectedFeature.module}`]),
+        modules: new Set([
+          ...prev.modules,
+          `${selectedFeature.project}/${selectedFeature.module}`,
+        ]),
       }));
     }
   }, [selectedFeature]);
@@ -99,14 +115,20 @@ export function DirectoryTree({ projects, selectedFeature, onFeatureSelect }: Di
           <button
             onClick={expandAll}
             className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
-            style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text-muted)" }}
+            style={{
+              background: "var(--notion-bg-secondary)",
+              color: "var(--notion-text-muted)",
+            }}
           >
             펼침
           </button>
           <button
             onClick={collapseAll}
             className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
-            style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text-muted)" }}
+            style={{
+              background: "var(--notion-bg-secondary)",
+              color: "var(--notion-text-muted)",
+            }}
           >
             접기
           </button>
@@ -159,7 +181,10 @@ function ProjectItem({
   const progressColor = getProgressColor(metrics.progress);
 
   // 완료된 피쳐 수 계산 (progress >= 100)
-  const totalFeatures = project.modules.reduce((sum, m) => sum + m.features.length, 0);
+  const totalFeatures = project.modules.reduce(
+    (sum, m) => sum + m.features.length,
+    0
+  );
   const completedFeatures = project.modules.reduce(
     (sum, m) =>
       sum +
@@ -177,8 +202,10 @@ function ProjectItem({
         onClick={onToggle}
         className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all"
         style={{ background: "transparent" }}
-        onMouseEnter={(e) => e.currentTarget.style.background = "var(--notion-bg-hover)"}
-        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--notion-bg-hover)")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
         {/* 화살표 */}
         <svg
@@ -188,7 +215,9 @@ function ProjectItem({
           fill="none"
           stroke="currentColor"
           strokeWidth="2.5"
-          className={`transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+          className={`transition-transform flex-shrink-0 ${
+            isExpanded ? "rotate-90" : ""
+          }`}
           style={{ color: "var(--notion-text-muted)" }}
         >
           <polyline points="9 18 15 12 9 6" />
@@ -205,8 +234,8 @@ function ProjectItem({
         {/* 완료 현황 */}
         <span
           className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
-          style={{ 
-            background: "var(--notion-bg)", 
+          style={{
+            background: "var(--notion-bg)",
             color: "var(--notion-text-muted)",
           }}
         >
@@ -224,7 +253,10 @@ function ProjectItem({
 
       {/* 모듈 목록 */}
       {isExpanded && (
-        <div className="ml-4 mt-2 pl-3 border-l-2" style={{ borderColor: "var(--notion-border)" }}>
+        <div
+          className="ml-4 mt-2 pl-3 border-l-2"
+          style={{ borderColor: "var(--notion-border)" }}
+        >
           {project.modules.map((module, index) => {
             const moduleKey = `${project.name}/${module.name}`;
             return (
@@ -282,8 +314,10 @@ function ModuleItem({
         onClick={onToggle}
         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-all"
         style={{ background: "transparent" }}
-        onMouseEnter={(e) => e.currentTarget.style.background = "var(--notion-bg-hover)"}
-        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--notion-bg-hover)")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
         {/* 화살표 */}
         <svg
@@ -293,7 +327,9 @@ function ModuleItem({
           fill="none"
           stroke="currentColor"
           strokeWidth="2.5"
-          className={`transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+          className={`transition-transform flex-shrink-0 ${
+            isExpanded ? "rotate-90" : ""
+          }`}
           style={{ color: "var(--notion-text-muted)" }}
         >
           <polyline points="9 18 15 12 9 6" />
@@ -326,7 +362,10 @@ function ModuleItem({
 
       {/* 피쳐 목록 */}
       {isExpanded && (
-        <div className="ml-3 mt-1 pl-3 border-l" style={{ borderColor: "var(--notion-border)" }}>
+        <div
+          className="ml-3 mt-1 pl-3 border-l"
+          style={{ borderColor: "var(--notion-border)" }}
+        >
           {module.features.map((feature) => (
             <FeatureItem
               key={feature.name}
@@ -376,21 +415,26 @@ function FeatureItem({
       className="w-full flex items-center gap-2 pl-2 pr-2 py-1 rounded transition-all"
       style={{
         background: isSelected ? "var(--notion-bg-secondary)" : "transparent",
-        borderLeft: isSelected ? "2px solid var(--notion-text-muted)" : "2px solid transparent",
         marginLeft: "-2px",
       }}
       onMouseEnter={(e) => {
-        if (!isSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
+        if (!isSelected)
+          e.currentTarget.style.background = "var(--notion-bg-hover)";
       }}
       onMouseLeave={(e) => {
-        if (!isSelected) e.currentTarget.style.background = isSelected ? "var(--notion-bg-secondary)" : "transparent";
+        if (!isSelected)
+          e.currentTarget.style.background = isSelected
+            ? "var(--notion-bg-secondary)"
+            : "transparent";
       }}
     >
       {/* 피쳐명 */}
       <span
         className="flex-1 text-left text-[12px] truncate"
         style={{
-          color: isSelected ? "var(--notion-text)" : "var(--notion-text-secondary)",
+          color: isSelected
+            ? "var(--notion-text)"
+            : "var(--notion-text-secondary)",
           fontWeight: isSelected ? 500 : 400,
         }}
       >

@@ -168,7 +168,11 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   </h2>
                 </div>
                 <div className="p-4 h-[calc(100%-48px)] overflow-hidden">
-                  <CollaborationNetworkV2 items={selectedFeature.items} />
+                  <CollaborationNetworkV2 
+                    items={selectedFeature.items} 
+                    allItems={items}
+                    featureName={selection.feature || undefined}
+                  />
                 </div>
               </div>
             )}
