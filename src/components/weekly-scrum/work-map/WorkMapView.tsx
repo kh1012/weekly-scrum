@@ -30,6 +30,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
   // 트리 뷰 모드 상태
   const [viewMode, setViewMode] = useState<TreeViewMode>("project");
+  
+  // 100% 완료 항목 숨김 상태
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const [selection, setSelection] = useState<WorkMapSelection>({
     project: null,
@@ -178,27 +181,42 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     Work Map
                   </span>
                 </div>
-                {/* 뷰 모드 토글 */}
-                <button
-                  onClick={toggleViewMode}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
-                  style={{
-                    background: viewMode === "person" ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-                    color: viewMode === "person" ? "var(--notion-accent)" : "var(--notion-text-muted)",
-                  }}
-                >
-                  {viewMode === "project" ? (
-                    <>
-                      <span>📁</span>
-                      <span>Project</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>👤</span>
-                      <span>Person</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* 100% 숨김 토글 */}
+                  <button
+                    onClick={() => setHideCompleted(!hideCompleted)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                    style={{
+                      background: hideCompleted ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
+                      color: hideCompleted ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                    }}
+                    title={hideCompleted ? "100% 항목 표시" : "100% 항목 숨기기"}
+                  >
+                    <span>✓</span>
+                    <span className="hidden sm:inline">100%</span>
+                  </button>
+                  {/* 뷰 모드 토글 */}
+                  <button
+                    onClick={toggleViewMode}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                    style={{
+                      background: viewMode === "person" ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
+                      color: viewMode === "person" ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                    }}
+                  >
+                    {viewMode === "project" ? (
+                      <>
+                        <span>📁</span>
+                        <span>Project</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>👤</span>
+                        <span>Person</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
                 {viewMode === "project" 
@@ -215,12 +233,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   projects={projects}
                   selectedFeature={selection}
                   onFeatureSelect={handleFeatureSelect}
+                  hideCompleted={hideCompleted}
                 />
               ) : (
                 <PersonTree
                   persons={persons}
                   selectedFeature={personSelection}
                   onFeatureSelect={handlePersonFeatureSelect}
+                  hideCompleted={hideCompleted}
                 />
               )}
             </div>
@@ -360,27 +380,42 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 Work Map
               </span>
             </div>
-            {/* 뷰 모드 토글 */}
-            <button
-              onClick={toggleViewMode}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
-              style={{
-                background: viewMode === "person" ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-                color: viewMode === "person" ? "var(--notion-accent)" : "var(--notion-text-muted)",
-              }}
-            >
-              {viewMode === "project" ? (
-                <>
-                  <span>📁</span>
-                  <span>Project</span>
-                </>
-              ) : (
-                <>
-                  <span>👤</span>
-                  <span>Person</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* 100% 숨김 토글 */}
+              <button
+                onClick={() => setHideCompleted(!hideCompleted)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                style={{
+                  background: hideCompleted ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
+                  color: hideCompleted ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                }}
+                title={hideCompleted ? "100% 항목 표시" : "100% 항목 숨기기"}
+              >
+                <span>✓</span>
+                <span>100%</span>
+              </button>
+              {/* 뷰 모드 토글 */}
+              <button
+                onClick={toggleViewMode}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                style={{
+                  background: viewMode === "person" ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
+                  color: viewMode === "person" ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                }}
+              >
+                {viewMode === "project" ? (
+                  <>
+                    <span>📁</span>
+                    <span>Project</span>
+                  </>
+                ) : (
+                  <>
+                    <span>👤</span>
+                    <span>Person</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
           <div className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
             {viewMode === "project" 
@@ -397,12 +432,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               projects={projects}
               selectedFeature={selection}
               onFeatureSelect={handleFeatureSelect}
+              hideCompleted={hideCompleted}
             />
           ) : (
             <PersonTree
               persons={persons}
               selectedFeature={personSelection}
               onFeatureSelect={handlePersonFeatureSelect}
+              hideCompleted={hideCompleted}
             />
           )}
         </div>

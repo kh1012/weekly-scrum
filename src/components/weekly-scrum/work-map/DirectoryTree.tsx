@@ -69,6 +69,7 @@ interface DirectoryTreeProps {
   projects: ProjectNode[];
   selectedFeature?: WorkMapSelection;
   onFeatureSelect: (project: string, module: string, feature: string) => void;
+  hideCompleted?: boolean;
 }
 
 interface ExpandedState {
@@ -83,6 +84,7 @@ export function DirectoryTree({
   projects,
   selectedFeature,
   onFeatureSelect,
+  hideCompleted = false,
 }: DirectoryTreeProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({
     projects: new Set(projects.map((p) => p.name)),
@@ -188,19 +190,26 @@ export function DirectoryTree({
 
       {/* 트리 컨텐츠 */}
       <div className="flex-1 overflow-y-auto">
-        {projects.map((project, index) => (
-          <ProjectItem
-            key={project.name}
-            project={project}
-            isExpanded={expanded.projects.has(project.name)}
-            expandedModules={expanded.modules}
-            selectedFeature={selectedFeature}
-            onToggle={() => toggleProject(project.name)}
-            onModuleToggle={toggleModule}
-            onFeatureSelect={onFeatureSelect}
-            isFirst={index === 0}
-          />
-        ))}
+        {projects
+          .filter((project) => {
+            if (!hideCompleted) return true;
+            const metrics = computeProjectMetrics(project);
+            return metrics.progress < 100;
+          })
+          .map((project, index) => (
+            <ProjectItem
+              key={project.name}
+              project={project}
+              isExpanded={expanded.projects.has(project.name)}
+              expandedModules={expanded.modules}
+              selectedFeature={selectedFeature}
+              onToggle={() => toggleProject(project.name)}
+              onModuleToggle={toggleModule}
+              onFeatureSelect={onFeatureSelect}
+              isFirst={index === 0}
+              hideCompleted={hideCompleted}
+            />
+          ))}
       </div>
     </div>
   );
@@ -218,6 +227,7 @@ function ProjectItem({
   onModuleToggle,
   onFeatureSelect,
   isFirst,
+  hideCompleted = false,
 }: {
   project: ProjectNode;
   isExpanded: boolean;
@@ -227,6 +237,7 @@ function ProjectItem({
   onModuleToggle: (key: string) => void;
   onFeatureSelect: (project: string, module: string, feature: string) => void;
   isFirst: boolean;
+  hideCompleted?: boolean;
 }) {
   const metrics = computeProjectMetrics(project);
   const progressColor = getProgressColor(metrics.progress);
@@ -312,21 +323,28 @@ function ProjectItem({
           className="ml-4 mt-2 pl-3 border-l-2"
           style={{ borderColor: "var(--notion-border)" }}
         >
-          {project.modules.map((module, index) => {
-            const moduleKey = `${project.name}/${module.name}`;
-            return (
-              <ModuleItem
-                key={module.name}
-                module={module}
-                projectName={project.name}
-                isExpanded={expandedModules.has(moduleKey)}
-                selectedFeature={selectedFeature}
-                onToggle={() => onModuleToggle(moduleKey)}
-                onFeatureSelect={onFeatureSelect}
-                isFirst={index === 0}
-              />
-            );
-          })}
+          {project.modules
+            .filter((module) => {
+              if (!hideCompleted) return true;
+              const metrics = computeModuleMetrics(module);
+              return metrics.progress < 100;
+            })
+            .map((module, index) => {
+              const moduleKey = `${project.name}/${module.name}`;
+              return (
+                <ModuleItem
+                  key={module.name}
+                  module={module}
+                  projectName={project.name}
+                  isExpanded={expandedModules.has(moduleKey)}
+                  selectedFeature={selectedFeature}
+                  onToggle={() => onModuleToggle(moduleKey)}
+                  onFeatureSelect={onFeatureSelect}
+                  isFirst={index === 0}
+                  hideCompleted={hideCompleted}
+                />
+              );
+            })}
         </div>
       )}
     </div>
@@ -344,6 +362,7 @@ function ModuleItem({
   onToggle,
   onFeatureSelect,
   isFirst,
+  hideCompleted = false,
 }: {
   module: ModuleNode;
   projectName: string;
@@ -352,6 +371,7 @@ function ModuleItem({
   onToggle: () => void;
   onFeatureSelect: (project: string, module: string, feature: string) => void;
   isFirst: boolean;
+  hideCompleted?: boolean;
 }) {
   const metrics = computeModuleMetrics(module);
   const progressColor = getProgressColor(metrics.progress);
@@ -425,20 +445,26 @@ function ModuleItem({
           className="ml-3 mt-1 pl-3 border-l"
           style={{ borderColor: "var(--notion-border)" }}
         >
-          {module.features.map((feature) => (
-            <FeatureItem
-              key={feature.name}
-              feature={feature}
-              projectName={projectName}
-              moduleName={module.name}
-              isSelected={
-                selectedFeature?.project === projectName &&
-                selectedFeature?.module === module.name &&
-                selectedFeature?.feature === feature.name
-              }
-              onSelect={onFeatureSelect}
-            />
-          ))}
+          {module.features
+            .filter((feature) => {
+              if (!hideCompleted) return true;
+              const metrics = computeFeatureMetrics(feature);
+              return metrics.progress < 100;
+            })
+            .map((feature) => (
+              <FeatureItem
+                key={feature.name}
+                feature={feature}
+                projectName={projectName}
+                moduleName={module.name}
+                isSelected={
+                  selectedFeature?.project === projectName &&
+                  selectedFeature?.module === module.name &&
+                  selectedFeature?.feature === feature.name
+                }
+                onSelect={onFeatureSelect}
+              />
+            ))}
         </div>
       )}
     </div>
@@ -556,6 +582,7 @@ interface PersonTreeProps {
     module: string,
     feature: string
   ) => void;
+  hideCompleted?: boolean;
 }
 
 interface PersonExpandedState {
@@ -581,6 +608,7 @@ export function PersonTree({
   persons,
   selectedFeature,
   onFeatureSelect,
+  hideCompleted = false,
 }: PersonTreeProps) {
   const [expanded, setExpanded] = useState<PersonExpandedState>({
     persons: new Set(persons.map((p) => p.name)),
@@ -737,23 +765,30 @@ export function PersonTree({
 
       {/* 트리 컨텐츠 */}
       <div className="flex-1 overflow-y-auto">
-        {persons.map((person, index) => (
-          <PersonItem
-            key={person.name}
-            person={person}
-            isExpanded={expanded.persons.has(person.name)}
-            expandedDomains={expanded.domains}
-            expandedProjects={expanded.projects}
-            expandedModules={expanded.modules}
-            selectedFeature={selectedFeature}
-            onToggle={() => togglePerson(person.name)}
-            onDomainToggle={toggleDomain}
-            onProjectToggle={toggleProject}
-            onModuleToggle={toggleModule}
-            onFeatureSelect={onFeatureSelect}
-            isFirst={index === 0}
-          />
-        ))}
+        {persons
+          .filter((person) => {
+            if (!hideCompleted) return true;
+            const progress = computeItemsProgress(person.items);
+            return progress < 100;
+          })
+          .map((person, index) => (
+            <PersonItem
+              key={person.name}
+              person={person}
+              isExpanded={expanded.persons.has(person.name)}
+              expandedDomains={expanded.domains}
+              expandedProjects={expanded.projects}
+              expandedModules={expanded.modules}
+              selectedFeature={selectedFeature}
+              onToggle={() => togglePerson(person.name)}
+              onDomainToggle={toggleDomain}
+              onProjectToggle={toggleProject}
+              onModuleToggle={toggleModule}
+              onFeatureSelect={onFeatureSelect}
+              isFirst={index === 0}
+              hideCompleted={hideCompleted}
+            />
+          ))}
       </div>
     </div>
   );
@@ -775,6 +810,7 @@ function PersonItem({
   onModuleToggle,
   onFeatureSelect,
   isFirst,
+  hideCompleted = false,
 }: {
   person: PersonNode;
   isExpanded: boolean;
@@ -794,6 +830,7 @@ function PersonItem({
     feature: string
   ) => void;
   isFirst: boolean;
+  hideCompleted?: boolean;
 }) {
   const avgProgress = computeItemsProgress(person.items);
   const progressColor = getProgressColor(avgProgress);
@@ -859,25 +896,32 @@ function PersonItem({
           className="ml-4 mt-2 pl-3 border-l-2"
           style={{ borderColor: "var(--notion-border)" }}
         >
-          {person.domains.map((domain, index) => {
-            const domainKey = `${person.name}/${domain.name}`;
-            return (
-              <PersonDomainItem
-                key={domain.name}
-                domain={domain}
-                personName={person.name}
-                isExpanded={expandedDomains.has(domainKey)}
-                expandedProjects={expandedProjects}
-                expandedModules={expandedModules}
-                selectedFeature={selectedFeature}
-                onToggle={() => onDomainToggle(domainKey)}
-                onProjectToggle={onProjectToggle}
-                onModuleToggle={onModuleToggle}
-                onFeatureSelect={onFeatureSelect}
-                isFirst={index === 0}
-              />
-            );
-          })}
+          {person.domains
+            .filter((domain) => {
+              if (!hideCompleted) return true;
+              const progress = computeItemsProgress(domain.items);
+              return progress < 100;
+            })
+            .map((domain, index) => {
+              const domainKey = `${person.name}/${domain.name}`;
+              return (
+                <PersonDomainItem
+                  key={domain.name}
+                  domain={domain}
+                  personName={person.name}
+                  isExpanded={expandedDomains.has(domainKey)}
+                  expandedProjects={expandedProjects}
+                  expandedModules={expandedModules}
+                  selectedFeature={selectedFeature}
+                  onToggle={() => onDomainToggle(domainKey)}
+                  onProjectToggle={onProjectToggle}
+                  onModuleToggle={onModuleToggle}
+                  onFeatureSelect={onFeatureSelect}
+                  isFirst={index === 0}
+                  hideCompleted={hideCompleted}
+                />
+              );
+            })}
         </div>
       )}
     </div>
@@ -899,6 +943,7 @@ function PersonDomainItem({
   onModuleToggle,
   onFeatureSelect,
   isFirst,
+  hideCompleted = false,
 }: {
   domain: PersonDomainNode;
   personName: string;
@@ -909,6 +954,7 @@ function PersonDomainItem({
   onToggle: () => void;
   onProjectToggle: (key: string) => void;
   onModuleToggle: (key: string) => void;
+  hideCompleted?: boolean;
   onFeatureSelect: (
     person: string,
     domain: string,
@@ -977,24 +1023,31 @@ function PersonDomainItem({
           className="ml-3 mt-1 pl-3 border-l"
           style={{ borderColor: "var(--notion-border)" }}
         >
-          {domain.projects.map((project, index) => {
-            const projectKey = `${personName}/${domain.name}/${project.name}`;
-            return (
-              <PersonProjectItem
-                key={project.name}
-                project={project}
-                personName={personName}
-                domainName={domain.name}
-                isExpanded={expandedProjects.has(projectKey)}
-                expandedModules={expandedModules}
-                selectedFeature={selectedFeature}
-                onToggle={() => onProjectToggle(projectKey)}
-                onModuleToggle={onModuleToggle}
-                onFeatureSelect={onFeatureSelect}
-                isFirst={index === 0}
-              />
-            );
-          })}
+          {domain.projects
+            .filter((project) => {
+              if (!hideCompleted) return true;
+              const progress = computeItemsProgress(project.items);
+              return progress < 100;
+            })
+            .map((project, index) => {
+              const projectKey = `${personName}/${domain.name}/${project.name}`;
+              return (
+                <PersonProjectItem
+                  key={project.name}
+                  project={project}
+                  personName={personName}
+                  domainName={domain.name}
+                  isExpanded={expandedProjects.has(projectKey)}
+                  expandedModules={expandedModules}
+                  selectedFeature={selectedFeature}
+                  onToggle={() => onProjectToggle(projectKey)}
+                  onModuleToggle={onModuleToggle}
+                  onFeatureSelect={onFeatureSelect}
+                  isFirst={index === 0}
+                  hideCompleted={hideCompleted}
+                />
+              );
+            })}
         </div>
       )}
     </div>
@@ -1015,6 +1068,7 @@ function PersonProjectItem({
   onModuleToggle,
   onFeatureSelect,
   isFirst,
+  hideCompleted = false,
 }: {
   project: PersonProjectNode;
   personName: string;
@@ -1032,6 +1086,7 @@ function PersonProjectItem({
     feature: string
   ) => void;
   isFirst: boolean;
+  hideCompleted?: boolean;
 }) {
   const avgProgress = computeItemsProgress(project.items);
   const progressColor = getProgressColor(avgProgress);
@@ -1092,23 +1147,30 @@ function PersonProjectItem({
           className="ml-3 mt-1 pl-3 border-l"
           style={{ borderColor: "var(--notion-border)" }}
         >
-          {project.modules.map((module, index) => {
-            const moduleKey = `${personName}/${domainName}/${project.name}/${module.name}`;
-            return (
-              <PersonModuleItem
-                key={module.name}
-                module={module}
-                personName={personName}
-                domainName={domainName}
-                projectName={project.name}
-                isExpanded={expandedModules.has(moduleKey)}
-                selectedFeature={selectedFeature}
-                onToggle={() => onModuleToggle(moduleKey)}
-                onFeatureSelect={onFeatureSelect}
-                isFirst={index === 0}
-              />
-            );
-          })}
+          {project.modules
+            .filter((module) => {
+              if (!hideCompleted) return true;
+              const progress = computeItemsProgress(module.items);
+              return progress < 100;
+            })
+            .map((module, index) => {
+              const moduleKey = `${personName}/${domainName}/${project.name}/${module.name}`;
+              return (
+                <PersonModuleItem
+                  key={module.name}
+                  module={module}
+                  personName={personName}
+                  domainName={domainName}
+                  projectName={project.name}
+                  isExpanded={expandedModules.has(moduleKey)}
+                  selectedFeature={selectedFeature}
+                  onToggle={() => onModuleToggle(moduleKey)}
+                  onFeatureSelect={onFeatureSelect}
+                  isFirst={index === 0}
+                  hideCompleted={hideCompleted}
+                />
+              );
+            })}
         </div>
       )}
     </div>
@@ -1128,6 +1190,7 @@ function PersonModuleItem({
   onToggle,
   onFeatureSelect,
   isFirst,
+  hideCompleted = false,
 }: {
   module: PersonModuleNode;
   personName: string;
@@ -1144,6 +1207,7 @@ function PersonModuleItem({
     feature: string
   ) => void;
   isFirst: boolean;
+  hideCompleted?: boolean;
 }) {
   const avgProgress = computeItemsProgress(module.items);
   const progressColor = getProgressColor(avgProgress);
@@ -1204,24 +1268,30 @@ function PersonModuleItem({
           className="ml-3 mt-1 pl-3 border-l"
           style={{ borderColor: "var(--notion-border)" }}
         >
-          {module.features.map((feature) => (
-            <PersonFeatureItem
-              key={feature.name}
-              feature={feature}
-              personName={personName}
-              domainName={domainName}
-              projectName={projectName}
-              moduleName={module.name}
-              isSelected={
-                selectedFeature?.person === personName &&
-                selectedFeature?.domain === domainName &&
-                selectedFeature?.project === projectName &&
-                selectedFeature?.module === module.name &&
-                selectedFeature?.feature === feature.name
-              }
-              onSelect={onFeatureSelect}
-            />
-          ))}
+          {module.features
+            .filter((feature) => {
+              if (!hideCompleted) return true;
+              const progress = computeItemsProgress(feature.items);
+              return progress < 100;
+            })
+            .map((feature) => (
+              <PersonFeatureItem
+                key={feature.name}
+                feature={feature}
+                personName={personName}
+                domainName={domainName}
+                projectName={projectName}
+                moduleName={module.name}
+                isSelected={
+                  selectedFeature?.person === personName &&
+                  selectedFeature?.domain === domainName &&
+                  selectedFeature?.project === projectName &&
+                  selectedFeature?.module === module.name &&
+                  selectedFeature?.feature === feature.name
+                }
+                onSelect={onFeatureSelect}
+              />
+            ))}
         </div>
       )}
     </div>
