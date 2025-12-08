@@ -70,7 +70,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   const renderBreadcrumb = () => {
     const crumbs: { label: string; onClick: () => void }[] = [
       {
-        label: "Projects",
+        label: "All Projects",
         onClick: () => setSelection({ project: null, module: null, feature: null }),
       },
     ];
@@ -103,22 +103,38 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     }
 
     return (
-      <div className="flex items-center gap-1 text-sm mb-4 flex-wrap">
+      <div className="flex items-center gap-1.5 text-sm flex-wrap">
         {crumbs.map((crumb, index) => (
-          <span key={index} className="flex items-center gap-1">
+          <span key={index} className="flex items-center gap-1.5">
             {index > 0 && (
-              <span style={{ color: "var(--notion-text-muted)" }}>→</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             )}
             <button
               onClick={crumb.onClick}
-              className={`hover:underline ${
-                index === crumbs.length - 1 ? "font-medium" : ""
+              className={`px-2 py-1 rounded transition-colors ${
+                index === crumbs.length - 1
+                  ? "font-semibold"
+                  : "hover:bg-opacity-50"
               }`}
               style={{
                 color:
                   index === crumbs.length - 1
                     ? "var(--notion-text)"
                     : "var(--notion-text-secondary)",
+                background:
+                  index === crumbs.length - 1
+                    ? "var(--notion-bg-active)"
+                    : "transparent",
               }}
               disabled={index === crumbs.length - 1}
             >
@@ -133,64 +149,74 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 패널 헤더 컴포넌트
   const PanelHeader = ({
     title,
-    subtitle,
+    count,
     isActive,
   }: {
     title: string;
-    subtitle?: string;
+    count?: number;
     isActive?: boolean;
   }) => (
     <div
-      className="px-3 py-2 border-b flex items-center justify-between"
-      style={{
-        borderColor: "var(--notion-border)",
-        background: isActive ? "var(--notion-bg-active)" : "var(--notion-bg)",
-      }}
+      className="flex items-center justify-between mb-3"
     >
-      <h2
-        className="text-sm font-semibold"
+      <h3
+        className="text-sm font-bold uppercase tracking-wider"
         style={{ color: isActive ? "var(--notion-accent)" : "var(--notion-text-muted)" }}
       >
         {title}
-      </h2>
-      {subtitle && (
-        <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
-          {subtitle}
+      </h3>
+      {count !== undefined && (
+        <span
+          className="text-xs font-medium px-2 py-0.5 rounded-full"
+          style={{
+            background: isActive ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
+            color: isActive ? "var(--notion-accent)" : "var(--notion-text-muted)",
+          }}
+        >
+          {count}
         </span>
       )}
     </div>
   );
 
   return (
-    <div className="h-full flex flex-col">
-      {/* 헤더 */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--notion-text)" }}>
-          Work Map
-        </h1>
-        <p className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
-          Project → Module → Feature 구조로 작업 현황을 탐색합니다.
-        </p>
+    <div className="h-full flex flex-col" style={{ minHeight: "calc(100vh - 120px)" }}>
+      {/* 헤더 영역 */}
+      <div className="flex-shrink-0 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-2xl font-bold" style={{ color: "var(--notion-text)" }}>
+            Work Map
+          </h1>
+          <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+            {items.length} snapshots · {projects.length} projects
+          </div>
+        </div>
+        {renderBreadcrumb()}
       </div>
 
-      {/* Breadcrumb */}
-      {renderBreadcrumb()}
-
-      {/* Box-to-Box 레이아웃 */}
-      <div className="flex-1 flex gap-3 overflow-hidden">
+      {/* 상단: Project → Module → Feature 네비게이션 (수평) */}
+      <div
+        className="flex-shrink-0 grid grid-cols-3 gap-4 mb-4"
+        style={{ maxHeight: "280px" }}
+      >
         {/* Projects 패널 */}
         <div
-          className="w-56 flex-shrink-0 rounded-lg overflow-hidden flex flex-col"
-          style={{ border: "1px solid var(--notion-border)" }}
+          className="flex flex-col rounded-xl overflow-hidden"
+          style={{
+            background: "var(--notion-bg)",
+            border: "1px solid var(--notion-border)",
+          }}
         >
-          <PanelHeader
-            title="Projects"
-            subtitle={`${projects.length}`}
-            isActive={!selection.project}
-          />
+          <div className="px-4 pt-3">
+            <PanelHeader
+              title="Projects"
+              count={projects.length}
+              isActive={!selection.project}
+            />
+          </div>
           <div
-            className="flex-1 overflow-y-auto p-2"
-            style={{ background: "var(--notion-bg)" }}
+            className="flex-1 overflow-y-auto px-3 pb-3"
+            style={{ maxHeight: "220px" }}
           >
             <ProjectList
               projects={projects}
@@ -202,19 +228,24 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
         {/* Modules 패널 */}
         <div
-          className={`w-56 flex-shrink-0 rounded-lg overflow-hidden flex flex-col transition-opacity ${
-            selectedProject ? "opacity-100" : "opacity-50"
+          className={`flex flex-col rounded-xl overflow-hidden transition-opacity ${
+            selectedProject ? "opacity-100" : "opacity-40"
           }`}
-          style={{ border: "1px solid var(--notion-border)" }}
+          style={{
+            background: "var(--notion-bg)",
+            border: "1px solid var(--notion-border)",
+          }}
         >
-          <PanelHeader
-            title="Modules"
-            subtitle={selectedProject ? `${selectedProject.modules.length}` : "—"}
-            isActive={!!selection.project && !selection.module}
-          />
+          <div className="px-4 pt-3">
+            <PanelHeader
+              title="Modules"
+              count={selectedProject?.modules.length}
+              isActive={!!selection.project && !selection.module}
+            />
+          </div>
           <div
-            className="flex-1 overflow-y-auto p-2"
-            style={{ background: "var(--notion-bg)" }}
+            className="flex-1 overflow-y-auto px-3 pb-3"
+            style={{ maxHeight: "220px" }}
           >
             {selectedProject ? (
               <ModuleList
@@ -235,19 +266,24 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
         {/* Features 패널 */}
         <div
-          className={`w-56 flex-shrink-0 rounded-lg overflow-hidden flex flex-col transition-opacity ${
-            selectedModule ? "opacity-100" : "opacity-50"
+          className={`flex flex-col rounded-xl overflow-hidden transition-opacity ${
+            selectedModule ? "opacity-100" : "opacity-40"
           }`}
-          style={{ border: "1px solid var(--notion-border)" }}
+          style={{
+            background: "var(--notion-bg)",
+            border: "1px solid var(--notion-border)",
+          }}
         >
-          <PanelHeader
-            title="Features"
-            subtitle={selectedModule ? `${selectedModule.features.length}` : "—"}
-            isActive={!!selection.module && !selection.feature}
-          />
+          <div className="px-4 pt-3">
+            <PanelHeader
+              title="Features"
+              count={selectedModule?.features.length}
+              isActive={!!selection.module && !selection.feature}
+            />
+          </div>
           <div
-            className="flex-1 overflow-y-auto p-2"
-            style={{ background: "var(--notion-bg)" }}
+            className="flex-1 overflow-y-auto px-3 pb-3"
+            style={{ maxHeight: "220px" }}
           >
             {selectedModule ? (
               <FeatureList
@@ -265,27 +301,53 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Feature Detail 패널 */}
-        <div
-          className={`flex-1 min-w-80 rounded-lg overflow-hidden flex flex-col transition-opacity ${
-            selectedFeature ? "opacity-100" : "opacity-50"
-          }`}
-          style={{ border: "1px solid var(--notion-border)" }}
-        >
-          <PanelHeader
-            title="Detail"
-            subtitle={
-              selectedFeature
-                ? `${selectedFeature.items.length} snapshots`
-                : "—"
-            }
-            isActive={!!selection.feature}
-          />
+      {/* 하단: Detail 패널 (가로폭 전체) */}
+      <div
+        className="flex-1 rounded-xl overflow-hidden"
+        style={{
+          background: "var(--notion-bg)",
+          border: "1px solid var(--notion-border)",
+          minHeight: "400px",
+        }}
+      >
+        <div className="h-full flex flex-col">
+          {/* Detail 헤더 */}
           <div
-            className="flex-1 overflow-y-auto p-4"
-            style={{ background: "var(--notion-bg)" }}
+            className="flex-shrink-0 px-6 py-4 border-b"
+            style={{ borderColor: "var(--notion-border)" }}
           >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <h2
+                  className="text-lg font-bold"
+                  style={{ color: "var(--notion-text)" }}
+                >
+                  {selectedFeature ? selectedFeature.name : "Feature Detail"}
+                </h2>
+                {selectedFeature && (
+                  <span
+                    className="text-xs px-2 py-1 rounded"
+                    style={{
+                      background: "var(--notion-accent-light)",
+                      color: "var(--notion-accent)",
+                    }}
+                  >
+                    {selectedFeature.items.length} snapshots
+                  </span>
+                )}
+              </div>
+              {selectedFeature && (
+                <div className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+                  {selection.project} / {selection.module}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Detail 컨텐츠 */}
+          <div className="flex-1 overflow-y-auto p-6">
             {selectedFeature ? (
               <FeatureDetail
                 featureName={selectedFeature.name}
@@ -293,25 +355,24 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               />
             ) : (
               <div
-                className="h-full flex items-center justify-center text-sm"
+                className="h-full flex flex-col items-center justify-center"
                 style={{ color: "var(--notion-text-muted)" }}
               >
-                <div className="text-center">
-                  <div className="text-4xl mb-3">🗺️</div>
-                  <div>피쳐를 선택하면</div>
-                  <div>상세 정보가 표시됩니다</div>
+                <div
+                  className="text-6xl mb-4 p-6 rounded-full"
+                  style={{ background: "var(--notion-bg-secondary)" }}
+                >
+                  🗺️
                 </div>
+                <div className="text-lg font-medium mb-2">피쳐를 선택하세요</div>
+                <div className="text-sm">
+                  상단에서 Project → Module → Feature를 선택하면
+                </div>
+                <div className="text-sm">상세 정보와 협업 네트워크가 표시됩니다</div>
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* 모바일 안내 (필요시) */}
-      <div className="lg:hidden mt-4 p-3 rounded-lg" style={{ background: "var(--notion-bg-secondary)" }}>
-        <p className="text-xs text-center" style={{ color: "var(--notion-text-muted)" }}>
-          더 나은 경험을 위해 데스크톱 환경에서 사용하세요
-        </p>
       </div>
     </div>
   );
