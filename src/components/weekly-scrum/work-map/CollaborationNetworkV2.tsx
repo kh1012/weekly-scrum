@@ -191,6 +191,10 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   
+  // 드래그 vs 클릭 구분을 위한 ref
+  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
+  const wasDragged = useRef(false);
+  
   // 여러 개의 스냅샷 패널 관리
   const [snapshotPanels, setSnapshotPanels] = useState<SnapshotPanel[]>([]);
   const [draggingPanel, setDraggingPanel] = useState<{ nodeId: string; offsetX: number; offsetY: number } | null>(null);
@@ -265,29 +269,27 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
       const node = initialNodes.find((n) => n.id === nodeId);
       if (!node) return;
 
-      const svg = e.currentTarget.closest("svg");
-      if (!svg) return;
-
-      const rect = svg.getBoundingClientRect();
-      const { width, height } = dimensions;
-      const vbWidth = width / zoom;
-      const vbHeight = height / zoom;
-      const vbX = (width - vbWidth) / 2;
-      const vbY = (height - vbHeight) / 2;
-
-      const svgX = vbX + ((e.clientX - rect.left) / rect.width) * vbWidth;
-      const svgY = vbY + ((e.clientY - rect.top) / rect.height) * vbHeight;
-
-      const pos = nodePositions[nodeId] || { x: node.x, y: node.y };
+      // 드래그 시작 위치 저장
+      dragStartPos.current = { x: e.clientX, y: e.clientY };
+      wasDragged.current = false;
 
       setDraggedNode(nodeId);
     },
-    [initialNodes, dimensions, zoom, nodePositions]
+    [initialNodes]
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
       if (!draggedNode) return;
+
+      // 이동 거리 체크 (5px 이상 이동하면 드래그로 간주)
+      if (dragStartPos.current) {
+        const dx = e.clientX - dragStartPos.current.x;
+        const dy = e.clientY - dragStartPos.current.y;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+          wasDragged.current = true;
+        }
+      }
 
       const point = getSvgPoint(e);
       const padding = 50;
@@ -306,6 +308,7 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
 
   const handleMouseUp = useCallback(() => {
     setDraggedNode(null);
+    dragStartPos.current = null;
   }, []);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -488,29 +491,32 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
                 onMouseEnter={() => !draggedNode && setHoveredNode(node.id)}
                 onMouseLeave={() => !draggedNode && setHoveredNode(null)}
                 onClick={(e) => {
-                  if (!draggedNode) {
-                    e.stopPropagation();
-                    setSelectedNode(selectedNode === node.id ? null : node.id);
-                    
-                    // 이미 열린 패널이 있으면 무시
-                    if (snapshotPanels.some(p => p.nodeId === node.id)) {
-                      return;
-                    }
-                    
-                    // 클릭 위치의 우측하단에 패널 생성 (viewport 기준)
-                    const viewportWidth = window.innerWidth;
-                    const viewportHeight = window.innerHeight;
-                    const clickX = e.clientX;
-                    const clickY = e.clientY;
-                    
-                    setSnapshotPanels(prev => [...prev, {
-                      nodeId: node.id,
-                      x: Math.min(clickX + 20, viewportWidth - 400),
-                      y: Math.min(clickY + 10, viewportHeight - 520),
-                      showOnlyFeature: false,
-                      expandedSnapshots: new Set<number>(),
-                    }]);
+                  // 드래그 후 마우스업 시 onClick이 발생하므로 드래그 여부 체크
+                  if (wasDragged.current) {
+                    return;
                   }
+                  
+                  e.stopPropagation();
+                  setSelectedNode(selectedNode === node.id ? null : node.id);
+                  
+                  // 이미 열린 패널이 있으면 무시
+                  if (snapshotPanels.some(p => p.nodeId === node.id)) {
+                    return;
+                  }
+                  
+                  // 클릭 위치의 우측하단에 패널 생성 (viewport 기준)
+                  const viewportWidth = window.innerWidth;
+                  const viewportHeight = window.innerHeight;
+                  const clickX = e.clientX;
+                  const clickY = e.clientY;
+                  
+                  setSnapshotPanels(prev => [...prev, {
+                    nodeId: node.id,
+                    x: Math.min(clickX + 20, viewportWidth - 400),
+                    y: Math.min(clickY + 10, viewportHeight - 520),
+                    showOnlyFeature: false,
+                    expandedSnapshots: new Set<number>(),
+                  }]);
                 }}
               >
                 {/* 병목 표시 */}
