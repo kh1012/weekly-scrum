@@ -1,0 +1,363 @@
+{
+  "year": 2025,
+  "month": 12,
+  "week": "W01",
+  "range": "2025-12-01 ~ 2025-12-05",
+  "items": [
+    {
+      "name": "변창언",
+      "domain": "Frontend",
+      "project": "M-Connector",
+      "topic": "1차 기획, 디자인 반영",
+      "plan": "1차 기획-DB 7종 개발, 검증 (100%)",
+      "planPercent": 100,
+      "progress": [
+        "DB 7종 완료, 5종 검증(72%)"
+      ],
+      "progressPercent": 72,
+      "reason": "제품에 데이터 생성 필요하나, 사용 방법을 몰라 지연 발생",
+      "next": [
+        "디자인 완료, 2차 기획-Section 검토"
+      ],
+      "risk": [
+        "인앱기술지원 GPT"
+      ],
+      "riskLevel": 1,
+      "module": "DB Manager",
+      "collaborators": [
+        {
+          "name": "한내경",
+          "relation": "pre"
+        }
+      ]
+    },
+    {
+      "name": "윤재웅",
+      "domain": "Planning",
+      "project": "Spreadsheet Editor-Rich Note",
+      "topic": "상세기획",
+      "plan": "Rich Note 상세기획 완료 및 개발/디자인 전달 (100%)",
+      "planPercent": 100,
+      "progress": [
+        "Rich Note 상세기획 (100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "Top Bar 상세기획 완료 및 개발/디자인 전달(100%)"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null
+    },
+    {
+      "name": "손영민",
+      "domain": "Frontend",
+      "project": "Desk",
+      "topic": "오류, 공지 처리",
+      "plan": "데스크 Notice, Popup 기능 추가 (100%)",
+      "planPercent": 100,
+      "progress": [
+        "데스크 Notice, Popup 기능 추가 완료 (100%)",
+        "데스크 고객 지원(로그인 실패 문제) 검토 및 1차 대응 완료 (100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "데스크 어카운트 혼합 적용 추가"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null,
+      "collaborators": [
+        {
+          "name": "김용수",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "김정빈",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "topic": "비동기 메시지 큐 안정화",
+      "plan": "kafka 처리 실패시 처리 방안 개발 100%",
+      "planPercent": 100,
+      "progress": [
+        "kafka 처리 실패시 재시도 로직, 실패 토픽 저장 개발 100%"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "추가적 에러핸들링 방안 고민"
+      ],
+      "risk": [
+        "Streamlit 인도법인 대상 서버 구축, concrete fatigue json import 에러, Plugin 인도법인 Connection 에러"
+      ],
+      "riskLevel": 1,
+      "module": "메세지큐"
+    },
+    {
+      "name": "서상준",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "topic": "Datadog 메일링 서비스",
+      "plan": "Datadog 메일링 서비스 설정 완료를 통한 서버 모니터링 환경 (100%)",
+      "planPercent": 100,
+      "progress": [
+        "DevOps와 소통하여 당장 서버가 죽는 경우 메일링 세팅 완료 (100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "메트릭 기반의 모니터 결과 전송 받기 위한 추가 소통 필요"
+      ],
+      "risk": [
+        "12월 말 기원님이 메트릭 기반 모니터링 작업을 완료 되어야함."
+      ],
+      "riskLevel": 1,
+      "module": "메일링",
+      "collaborators": [
+        {
+          "name": "DevOps",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "김태이",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "topic": "대용량 텍스트 저장 방법 확보 및 적용",
+      "plan": "대용량 텍스트 저장 방법 조사 및 설계 및 적용 (100%)",
+      "planPercent": 100,
+      "progress": [
+        "아티클 적용 완료 (100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "스프레드시트에도 적용"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null,
+      "module": "컨텐츠",
+      "collaborators": [
+        {
+          "name": "김용수",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "하성열",
+      "domain": "Planning",
+      "project": "스프레드시트",
+      "topic": "AI Assist 기획",
+      "plan": "AI Assist 중 Description 생성 기능 컨셉 기획(100%)",
+      "planPercent": 100,
+      "progress": [
+        "AI Assist 중 Description 생성기능 컨셉 기획 진행 중(50%)"
+      ],
+      "progressPercent": 50,
+      "reason": "Description 생성 기능 컨셉 변경(단일 기능에서 AI Assist로 확장)",
+      "next": [
+        "AI Assist 중 Description 컨셉 공유 및 확정"
+      ],
+      "risk": [
+        "? (Level이 표기되어 있음)"
+      ],
+      "riskLevel": 1
+    },
+    {
+      "name": "한내경",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "topic": "마케팅",
+      "plan": "LinkedIn 3차 컨텐츠 작성/ FEA NX 3차 E-mail 작성 및 마케팅 팀에 전달 (100%)",
+      "planPercent": 100,
+      "progress": [
+        "로 마케팅 종료 (진행 100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "1월 마케팅 다시 시작"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null,
+      "module": "MOTIIV마케팅",
+      "collaborators": [
+        {
+          "name": "김희성",
+          "relation": "pair"
+        },
+        {
+          "name": "양소희",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "조해용",
+      "domain": "Planning",
+      "project": "워크스페이스",
+      "topic": "My project 기획",
+      "plan": "Workspace 중 My project 전체 컨셉 기획(100%)",
+      "planPercent": 100,
+      "progress": [
+        "Workspace 중 My project 전체 컨셉 기획(100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "워크스페이스 진입 흐름 기획 제안서 (2가지, 비핸스, 피그마?)",
+        "폴더 구조 및 디테일 기획"
+      ],
+      "risk": [
+        "컨셉 확장"
+      ],
+      "riskLevel": 1,
+      "collaborators": [
+        {
+          "name": "도기봉",
+          "relation": "pair"
+        },
+        {
+          "name": "윤재웅",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "김상리",
+      "domain": "Frontend",
+      "project": "Idea-forge",
+      "topic": "llm 구조 변경 및 테스트",
+      "plan": "버그 이슈 처리(2건), MAS 저장 시 산출물 제목 삽입, 이미지형 CTA 좌표 정밀 지정 기능 추가(100%)",
+      "planPercent": 100,
+      "progress": [
+        "llm UI 구조 변경 완료 (100%)",
+        "버그 이슈 처리(2건) 완료(100%)",
+        "MAS 저장 시 산출물 제목 삽입 기능 추가 완료 (100%)",
+        "이미지형 CTA 좌표 정밀 지정 기능 추가 완료(100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "변경된 llm 작업 건 배포 준비, v1.8.3 배포 일정 협의"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null,
+      "module": "llm",
+      "collaborators": [
+        {
+          "name": "김정빈",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "김지원",
+      "domain": "Frontend",
+      "project": "IdeaForge",
+      "topic": "개발 협의 및 진행",
+      "plan": "1.8.3 개발 건 협의 및 이슈 조정, 버그 이슈 처리(6건), 이미지 해상도를 위한 개선 건(100%)",
+      "planPercent": 100,
+      "progress": [
+        "1.8.3 개발 건 협의 및 이슈 조정(100%)",
+        "버그 이슈 처리(6건) 완료(100%)",
+        "이미지 해상도를 위한 개선 건(100%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "system에서 변경된 백엔드 건에 대한 대응(이미지/저장 용량)"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null,
+      "module": "1.8.3"
+    },
+    {
+      "name": "도기봉",
+      "domain": "Planning",
+      "project": "M-Desk",
+      "topic": "메인 기획",
+      "plan": "M-Desk 서비스 장애 안내 기획 (100%)",
+      "planPercent": 100,
+      "progress": [
+        "서비스 장애 안내 기획 (100%)",
+        "장애 안내 내용 가이드 (100%)",
+        "장애 안내 화면 디자인 (90%)"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "장애 안내 화면 디자인 수정"
+      ],
+      "risk": [
+        "MAS에 안내 등록 환경 개발 진행에 따라 기획 대응 필요"
+      ],
+      "riskLevel": 0,
+      "module": "서비스장애 안내"
+    },
+    {
+      "name": "양소희",
+      "domain": "Design",
+      "project": "MOTIIV",
+      "topic": "리스트 페이지 개선",
+      "plan": "스프레드시트 리스트 페이지 개선 및 인기 섹션 추가 PC/MO버전 디자인(100%)",
+      "planPercent": 100,
+      "progress": [
+        "스프레드시트 리스트 페이지 개선 및 인기 섹션 추가 PC/MO버전 디자인 100% 완료"
+      ],
+      "progressPercent": 100,
+      "reason": "",
+      "next": [
+        "스프레드시트 에디터 페이지 애드온 패널-리치노트 디자인 진행"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null,
+      "module": "스프레드시트",
+      "collaborators": [
+        {
+          "name": "김희성",
+          "relation": "pair"
+        }
+      ]
+    },
+    {
+      "name": "이하영",
+      "domain": "Research",
+      "project": "MOTIIV",
+      "topic": "기술부채 리서치 및 협의",
+      "plan": "SEO / Testing Tool / CSS 3개에 대한 프론트엔드 개발자 리서치 및 협의점 도출",
+      "planPercent": 0,
+      "progress": [
+        "Testing Tool을 제외한 SEO, CSS는 어떻게 진행할지 결론 도출 완료"
+      ],
+      "progressPercent": 0,
+      "reason": "",
+      "next": [
+        "Testing tool 점차적 도입 및 스프레드시트 백로그 이슈(SEO, Author box) 진행"
+      ],
+      "risk": [
+        "None"
+      ],
+      "riskLevel": null,
+      "module": "워크스페이스"
+    }
+  ]
+}

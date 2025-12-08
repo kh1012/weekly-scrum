@@ -223,12 +223,12 @@ function parseCollaborators(text: string): Collaborator[] {
 }
 
 /**
- * 멀티라인 필드를 파싱합니다 (Progress, Next).
+ * 멀티라인 필드를 파싱합니다 (Progress, Next, Risk 등).
  * 
- * 케이스 1: "- Progress: 단일 라인 내용" → ["단일 라인 내용"]
- * 케이스 2: "- Progress" (콜론 없이 끝남)
- *           "  - 항목1"
- *           "  - 항목2" → ["항목1", "항목2"]
+ * 케이스 1: "- Progress: 단일 라인 내용" 또는 "* Progress: 단일 라인 내용" → ["단일 라인 내용"]
+ * 케이스 2: "- Progress" 또는 "* Progress" (콜론 없이 끝남)
+ *           "  - 항목1" 또는 "    * 항목1"
+ *           "  - 항목2" 또는 "    * 항목2" → ["항목1", "항목2"]
  */
 function parseMultilineField(rawLines: string[], fieldName: string): string[] {
   const result: string[] = [];
@@ -239,8 +239,8 @@ function parseMultilineField(rawLines: string[], fieldName: string): string[] {
     const line = rawLines[i];
     const trimmed = line.trim();
     
-    // "- FieldName:" 형태 (단일 라인)
-    const singleLineMatch = trimmed.match(new RegExp(`^-\\s*${fieldName}:\\s*(.+)$`, 'i'));
+    // "- FieldName:" 또는 "* FieldName:" 형태 (단일 라인)
+    const singleLineMatch = trimmed.match(new RegExp(`^[-*]\\s*${fieldName}:\\s*(.+)$`, 'i'));
     if (singleLineMatch) {
       const content = singleLineMatch[1].trim();
       if (content) {
@@ -249,8 +249,8 @@ function parseMultilineField(rawLines: string[], fieldName: string): string[] {
       return result;
     }
     
-    // "- FieldName" 형태 (멀티라인 시작, 콜론 없음 또는 콜론 뒤 내용 없음)
-    const multiLineMatch = trimmed.match(new RegExp(`^-\\s*${fieldName}:?\\s*$`, 'i'));
+    // "- FieldName" 또는 "* FieldName" 형태 (멀티라인 시작, 콜론 없음 또는 콜론 뒤 내용 없음)
+    const multiLineMatch = trimmed.match(new RegExp(`^[-*]\\s*${fieldName}:?\\s*$`, 'i'));
     if (multiLineMatch) {
       fieldStartIndex = i;
       break;
@@ -272,8 +272,11 @@ function parseMultilineField(rawLines: string[], fieldName: string): string[] {
       if (content) {
         result.push(content);
       }
-    } else if (line.trim().startsWith("- ") && !line.match(/^\s/)) {
+    } else if ((line.trim().startsWith("- ") || line.trim().startsWith("* ")) && !line.match(/^\s/)) {
       // 들여쓰기 없는 새로운 필드 시작 → 멀티라인 종료
+      break;
+    } else if (line.trim().startsWith("[")) {
+      // 새로운 블록 시작 → 멀티라인 종료
       break;
     }
   }
@@ -283,12 +286,12 @@ function parseMultilineField(rawLines: string[], fieldName: string): string[] {
 
 /**
  * 단일 라인 필드를 파싱합니다.
+ * "- FieldName:" 또는 "* FieldName:" 형식 모두 지원합니다.
  */
 function parseSingleField(lines: string[], fieldName: string): string {
-  const fieldPrefix = `- ${fieldName}:`;
-  const line = lines.find((l) =>
-    l.trim().toLowerCase().startsWith(fieldPrefix.toLowerCase())
-  );
+  // "- FieldName:" 또는 "* FieldName:" 형식 모두 매칭
+  const regex = new RegExp(`^[-*]\\s*${fieldName}:`, 'i');
+  const line = lines.find((l) => regex.test(l.trim()));
   if (line) {
     return line.substring(line.indexOf(':') + 1).trim();
   }
