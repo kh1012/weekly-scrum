@@ -375,12 +375,19 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
           onWheel={handleWheel}
         >
           <defs>
-            {/* 화살표 마커 */}
+            {/* pre 화살표 마커 (주황색) */}
             <marker id="arrow-pre-v2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-              <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" fillOpacity="0.7" />
+              <path d="M0,1 L6,4 L0,7 Z" fill="#f59e0b" fillOpacity="0.8" />
             </marker>
             <marker id="arrow-pre-v2-dim" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-              <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" fillOpacity="0.1" />
+              <path d="M0,1 L6,4 L0,7 Z" fill="#f59e0b" fillOpacity="0.15" />
+            </marker>
+            {/* post 화살표 마커 (초록색) */}
+            <marker id="arrow-post-v2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,1 L6,4 L0,7 Z" fill="#22c55e" fillOpacity="0.8" />
+            </marker>
+            <marker id="arrow-post-v2-dim" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,1 L6,4 L0,7 Z" fill="#22c55e" fillOpacity="0.15" />
             </marker>
             <filter id="node-shadow-v2" x="-50%" y="-50%" width="200%" height="200%">
               <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
@@ -402,28 +409,42 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
             const targetRadius = getNodeRadius(targetNode);
 
             const isPair = edge.relation === "pair";
-            const isPreOrPost = edge.relation === "pre" || edge.relation === "post";
+            const isPre = edge.relation === "pre";
+            const isPost = edge.relation === "post";
             const isConnected = activeNode
               ? edge.from === activeNode || edge.to === activeNode
               : true;
 
-            // pre: 타겟 → 소스 방향으로 화살표 (협업자가 나에게 입력 제공)
-            const isPreRelation = edge.relation === "pre";
-            const actualSource = isPreRelation ? targetPos : sourcePos;
-            const actualTarget = isPreRelation ? sourcePos : targetPos;
-            const actualSourceRadius = isPreRelation ? targetRadius : sourceRadius;
-            const actualTargetRadius = isPreRelation ? sourceRadius : targetRadius;
+            // 색상 정의
+            // pair: 파란색, pre: 주황색, post: 초록색
+            const strokeColor = isPair ? "#3b82f6" : isPre ? "#f59e0b" : isPost ? "#22c55e" : "#64748b";
+
+            // pre: 협업자(to) → 나(from) 방향으로 화살표 (협업자가 나에게 선행 입력 제공)
+            // post: 나(from) → 협업자(to) 방향으로 화살표 (내가 협업자에게 결과물 전달)
+            const actualSource = isPre ? targetPos : sourcePos;
+            const actualTarget = isPre ? sourcePos : targetPos;
+            const actualSourceRadius = isPre ? targetRadius : sourceRadius;
+            const actualTargetRadius = isPre ? sourceRadius : targetRadius;
+
+            // 마커 결정
+            let markerEnd = undefined;
+            if (isPre) {
+              markerEnd = isConnected ? "url(#arrow-pre-v2)" : "url(#arrow-pre-v2-dim)";
+            } else if (isPost) {
+              markerEnd = isConnected ? "url(#arrow-post-v2)" : "url(#arrow-post-v2-dim)";
+            }
 
             return (
               <path
                 key={`edge-${idx}`}
                 d={getEdgePath(actualSource, actualTarget, actualSourceRadius, actualTargetRadius)}
                 fill="none"
-                stroke={isPair ? "#3b82f6" : isPreOrPost ? "#ef4444" : "#64748b"}
+                stroke={strokeColor}
                 strokeWidth={isPair ? 2.5 : 2}
                 strokeOpacity={isConnected ? 0.7 : 0.1}
                 strokeLinecap="round"
-                markerEnd={isPair ? undefined : isConnected ? "url(#arrow-pre-v2)" : "url(#arrow-pre-v2-dim)"}
+                strokeDasharray={isPair ? "6,4" : undefined}
+                markerEnd={markerEnd}
                 style={{ transition: "stroke-opacity 0.2s" }}
               />
             );
@@ -777,17 +798,33 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
           ))}
         </div>
         <div className="flex items-center gap-3 text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+          {/* Pair: 파란색 점선 */}
           <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded-full bg-blue-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
-            Pair
+            <svg width="20" height="10" viewBox="0 0 20 10">
+              <line x1="0" y1="5" x2="20" y2="5" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4,2" />
+            </svg>
+            <span>Pair</span>
           </span>
+          {/* Pre: 주황색 화살표 */}
           <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
-            선행
+            <svg width="20" height="10" viewBox="0 0 20 10">
+              <line x1="0" y1="5" x2="14" y2="5" stroke="#f59e0b" strokeWidth="2" />
+              <path d="M12,2 L18,5 L12,8 Z" fill="#f59e0b" />
+            </svg>
+            <span>Pre (선행)</span>
           </span>
+          {/* Post: 초록색 화살표 */}
+          <span className="flex items-center gap-1">
+            <svg width="20" height="10" viewBox="0 0 20 10">
+              <line x1="0" y1="5" x2="14" y2="5" stroke="#22c55e" strokeWidth="2" />
+              <path d="M12,2 L18,5 L12,8 Z" fill="#22c55e" />
+            </svg>
+            <span>Post (후행)</span>
+          </span>
+          {/* 병목 */}
           <span className="flex items-center gap-1">
             <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-red-400" />
-            병목
+            <span>병목</span>
           </span>
         </div>
       </div>
