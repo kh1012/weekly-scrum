@@ -1,6 +1,7 @@
 export { WorkMapView } from "./WorkMapView";
 export { DirectoryTree } from "./DirectoryTree";
 export { FeatureDetailView } from "./FeatureDetailView";
+export { SnapshotList } from "./SnapshotList";
 export { ProjectList } from "./ProjectList";
 export { ModuleList } from "./ModuleList";
 export { FeatureList } from "./FeatureList";

@@ -1,110 +1,77 @@
-[Frontend / M-Connector / DBManager / DBFirstPlanning]
+[Frontend / M-Connector / DB Manager / 1차 기획, 디자인 반영]
 * Name: 변창언
-* Define
-    * Domain: Frontend
-    * Project: M-Connector
-    * Module: DBManager
-    * Feature: DBFirstPlanning
 * Past Week
     * Tasks
-        * DB 7종 1차 기획 및 개발 (100%)
-        * DB 5종 검증 (72%)
+        * 1차 기획-DB 7종 개발, 검증 (100%)
+        * DB 7종 완료, 5종 검증 (72%)
     * Risk
-        * 제품 데이터 생성 과정 미숙으로 진행 지연 발생
-        * 인앱 기술지원 GPT 필요
+        * 제품에 데이터 생성이 필요하나 사용 방법 미숙으로 지연 발생, 인앱 기술지원 GPT 필요
     * RiskLevel: 1
     * Collaborators
         * 한내경 (pre)
 * This Week
     * Tasks
-        * 디자인 완료 후 DB 2차 기획 Section 검토
+        * 디자인 완료, 2차 기획-Section 검토
 
-[Planning / MOTIIV / Spreadsheet / RichNoteEditor]
+[Planning / MOTIIV / 스프레드시트 / Editor-Rich Note 상세기획]
 * Name: 윤재웅
-* Define
-    * Domain: Planning
-    * Project: MOTIIV
-    * Module: Spreadsheet
-    * Feature: RichNoteEditor
 * Past Week
     * Tasks
-        * Rich Note 상세 기획 및 개발/디자인 전달 (100%)
+        * Rich Note 상세기획 완료 및 개발/디자인 전달 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * Top Bar 상세기획 및 개발·디자인 전달
+        * Top Bar 상세기획 완료 및 개발/디자인 전달
 
-[Frontend / M-Desk / ServiceNotice / NoticeAndPopup]
+[Frontend / M-Desk / 공지 / 오류, 공지 처리]
 * Name: 손영민
-* Define
-    * Domain: Frontend
-    * Project: M-Desk
-    * Module: ServiceNotice
-    * Feature: NoticeAndPopup
 * Past Week
     * Tasks
-        * Notice/Popup 기능 추가 완료 (100%)
-        * 로그인 실패 문제 고객지원 1차 대응 (100%)
+        * 데스크 Notice, Popup 기능 추가 완료 (100%)
+        * 데스크 고객 지원(로그인 실패 문제) 검토 및 1차 대응 완료 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
         * 김용수 (pair)
 * This Week
     * Tasks
-        * Desk 어카운트 혼합 적용
+        * 데스크 어카운트 혼합 적용 추가
 
-[Frontend / MOTIIV / Documentation / ArticleManagement]
+[Frontend / MOTIIV / 문서화 / 아티클 정리 및 기타 업무들]
 * Name: 손영민
-* Define
-    * Domain: Frontend
-    * Project: MOTIIV
-    * Module: Documentation
-    * Feature: ArticleManagement
 * Past Week
     * Tasks
-        * 온보딩/프론트 규칙 문서 정리 (100%)
-        * Article 일부 개선 (100%)
+        * 신입 온보딩 및 프론트 규칙 협의를 위한 문서 정리 완료 (100%)
+        * Article 관련 일부 개선 사항 진행 완료 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * 다음 스프린트 정리 및 일부 개선 반영
+        * 다음 스프린트 정리 및 기획 회의 때 나왔던 일부 항목 개선
 
-[Backend / MOTIIV / MessageQueue / MQStabilization]
+[Backend / MOTIIV / 메세지큐 / 비동기 메시지 큐 안정화]
 * Name: 김정빈
-* Define
-    * Domain: Backend
-    * Project: MOTIIV
-    * Module: MessageQueue
-    * Feature: MQStabilization
 * Past Week
     * Tasks
-        * Kafka 실패 재시도 및 실패 토픽 저장 구현 (100%)
+        * kafka 처리 실패 시 재시도 로직 및 실패 토픽 저장 개발 (100%)
     * Risk
-        * Streamlit 인도법인 서버 구축 이슈
-        * concrete fatigue json import 오류
-        * Plugin 인도법인 Connection 오류
+        * Streamlit 인도법인 대상 서버 구축, concrete fatigue json import 에러, Plugin 인도법인 Connection 에러
     * RiskLevel: 1
     * Collaborators: None
 * This Week
     * Tasks
-        * 에러 핸들링 추가 방안 검토
+        * 추가적 에러 핸들링 방안 고민
 
-[Backend / IdeaForge / Support / BackendIssueSupport]
+[Backend / IdeaForge / 지원 / 백엔드 이슈 지원]
 * Name: 김정빈
-* Define
-    * Domain: Backend
-    * Project: IdeaForge
-    * Module: Support
-    * Feature: BackendIssueSupport
 * Past Week
     * Tasks
         * Streaming 이슈 처리 (100%)
         * DB 수정 (100%)
-        * HubSpot 파일 업로드 처리 (100%)
+        * 허브스팟 파일 업로드 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
@@ -115,54 +82,39 @@
         * AX 개발팀 배포 일정 공유
         * M-Desk 구현 내용 정의
 
-[Backend / MOTIIV / Mailing / DatadogMailing]
+[Backend / MOTIIV / 메일링 / Datadog 메일링 서비스]
 * Name: 서상준
-* Define
-    * Domain: Backend
-    * Project: MOTIIV
-    * Module: Mailing
-    * Feature: DatadogMailing
 * Past Week
     * Tasks
-        * Datadog 기반 서버 죽음 감지 메일링 세팅 완료 (100%)
+        * DevOps와 협업하여 서버 장애 시 Datadog 메일링 세팅 완료 (100%)
     * Risk
-        * 메트릭 기반 모니터링 작업(기원님) 완료 필요
+        * 12월 말까지 메트릭 기반 모니터링 작업이 완료되어야 함
     * RiskLevel: 1
     * Collaborators
         * DevOps (pair)
 * This Week
     * Tasks
-        * 메트릭 기반 모니터 알림 전송 협의
+        * 메트릭 기반 모니터 결과 전송을 위한 추가 협의
 
-[Backend / MOTIIV / Spreadsheet / ExternalAPIConsistency]
+[Backend / MOTIIV / 스프레드시트 / 외부 API 트랜잭션 일관성 확보]
 * Name: 서상준
-* Define
-    * Domain: Backend
-    * Project: MOTIIV
-    * Module: Spreadsheet
-    * Feature: ExternalAPIConsistency
 * Past Week
     * Tasks
-        * 실패한 외부 API 요청 MongoDB 저장 로직 구현 (100%)
+        * 실패한 외부 API 요청을 mongoDB에 저장하는 로직 구현 (100%)
     * Risk
-        * M-Drive 시스템 토큰 활성화를 위한 추가 개발 필요
+        * M-Drive(mws) 쪽에서 시스템 토큰 사용을 위한 추가 개발 필요
     * RiskLevel: 2
     * Collaborators
         * 김용수 (pair)
 * This Week
     * Tasks
-        * 시스템 토큰 기반 실패 요청 재시도 로직 개발
+        * 시스템 토큰을 활용한 실패 요청 재시도 로직 개발
 
-[Backend / MOTIIV / Spreadsheet / SignedURLAtomicity]
+[Backend / MOTIIV / 스프레드시트 / signed url 업데이트 원자성 확보]
 * Name: 서상준
-* Define
-    * Domain: Backend
-    * Project: MOTIIV
-    * Module: Spreadsheet
-    * Feature: SignedURLAtomicity
 * Past Week
     * Tasks
-        * Excel JSON body 직접 업데이트 API 개발 (100%)
+        * excel json content body로 받아 직접 update 하는 API 추가 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
@@ -170,51 +122,36 @@
     * Tasks
         * None
 
-[Backend / MOTIIV / Content / LargeTextStorage]
+[Backend / MOTIIV / 컨텐츠 / 대용량 텍스트 저장 방법 확보 및 적용]
 * Name: 김태이
-* Define
-    * Domain: Backend
-    * Project: MOTIIV
-    * Module: Content
-    * Feature: LargeTextStorage
 * Past Week
     * Tasks
-        * 대용량 텍스트 저장 방식 아티클 적용 (100%)
+        * 아티클에 대용량 텍스트 저장 방식을 적용 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
         * 김용수 (pair)
 * This Week
     * Tasks
-        * 스프레드시트에 저장 방식 추가 적용
+        * 스프레드시트에도 동일한 저장 방식 적용
 
-[Backend / MOTIIV / Scheduler / RichTextMigration]
+[Backend / MOTIIV / 스케쥴러 / 기존 리치텍스트 마이그레이션 배치작업]
 * Name: 김태이
-* Define
-    * Domain: Backend
-    * Project: MOTIIV
-    * Module: Scheduler
-    * Feature: RichTextMigration
 * Past Week
     * Tasks
-        * 기존 아티클 리치텍스트 마이그레이션 (100%)
+        * 기존 아티클 리치텍스트 마이그레이션 배치 작업 개발 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * Spreadsheet 리치텍스트 적용
+        * 기존 스프레드시트 리치텍스트 적용
 
-[Research / P1-Connect / Prototype / MarketingAutomationPrototype]
+[Research / P1-Connect / 프로토타입 / 모티브 마케팅 자동화 도구]
 * Name: 김태이
-* Define
-    * Domain: Research
-    * Project: P1-Connect
-    * Module: Prototype
-    * Feature: MarketingAutomationPrototype
 * Past Week
     * Tasks
-        * 마케팅 자동화 도구 프로토타입 시연 및 문서 작성 (100%)
+        * 모티브 마케팅 자동화 도구 프로토타입 시연 및 문서 작성 완료 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
@@ -222,53 +159,37 @@
     * Tasks
         * None
 
-[Backend / MOTIIV / Content / ContentTrash]
+[Backend / MOTIIV / 컨텐츠 / 컨텐츠 휴지통 개념 도입]
 * Name: 김태이
-* Define
-    * Domain: Backend
-    * Project: MOTIIV
-    * Module: Content
-    * Feature: ContentTrash
 * Past Week
     * Tasks
-        * 트래시 개념 도입 작업 (0%)
+        * 컨텐츠 휴지통 개념 도입 개발 진행 (0%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * 중요도 낮음 → 시간 날 때 진행
+        * 백엔드 회의 이슈로 급하지 않아, 시간 날 때 진행
 
-[Planning / MOTIIV / Spreadsheet / AIAssist]
+[Planning / MOTIIV / 스프레드시트 / AI Assist 기획]
 * Name: 하성열
-* Define
-    * Domain: Planning
-    * Project: MOTIIV
-    * Module: Spreadsheet
-    * Feature: AIAssist
 * Past Week
     * Tasks
-        * Description 생성 기능 기획 (50%)
+        * AI Assist 중 Description 생성 기능 컨셉 기획 (50%)
     * Risk
-        * 단일 기능에서 Assist 확장으로 범위 변경 리스크
+        * Description 생성 기능을 단일 기능에서 AI Assist로 확장하면서 범위 변경 리스크 존재
     * RiskLevel: 1
     * Collaborators: None
 * This Week
     * Tasks
-        * Description 컨셉 공유 및 확정
+        * AI Assist 중 Description 컨셉 공유 및 확정
 
-[Planning / MOTIIV / Marketing / MarketingExecution]
+[Planning / MOTIIV / MOTIIV마케팅 / 마케팅]
 * Name: 한내경
-* Define
-    * Domain: Planning
-    * Project: MOTIIV
-    * Module: Marketing
-    * Feature: MarketingExecution
 * Past Week
     * Tasks
-        * LinkedIn 3차 콘텐츠 제작 및 전달 (100%)
-        * FEA NX E-mail 3차 작성 (100%)
-        * 마케팅 종료 처리 (100%)
+        * LinkedIn 3차 컨텐츠 작성 및 FEA NX 3차 E-mail 작성, 마케팅팀 전달 (100%)
+        * 마케팅 캠페인 종료 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
@@ -278,17 +199,11 @@
     * Tasks
         * 1월 마케팅 재개 준비
 
-[Planning / M-Connector / DBManager / DBManagerPlanning]
+[Planning / M-Connector / DB Manager / M-Connector 기획]
 * Name: 한내경
-* Define
-    * Domain: Planning
-    * Project: M-Connector
-    * Module: DBManager
-    * Feature: DBManagerPlanning
 * Past Week
     * Tasks
-        * 디자인 피드백·컨펌
-        * 출시 목표 DB 정리 (13/17 완료)
+        * 디자인 피드백 및 컨펌, 12월 출시 목표 DB 정리 (76%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
@@ -296,86 +211,66 @@
         * 양소희 (post)
 * This Week
     * Tasks
-        * 매뉴얼 및 예제 작성
+        * M-Connector 매뉴얼 및 예제 작성
 
-[Planning / MOTIIV / Workspace / WorkspaceMyProject]
+[Planning / MOTIIV / 워크스페이스 / My project 기획]
 * Name: 조해용
-* Define
-    * Domain: Planning
-    * Project: MOTIIV
-    * Module: Workspace
-    * Feature: WorkspaceMyProject
 * Past Week
     * Tasks
-        * MyProject 컨셉 기획 (100%)
+        * Workspace 중 My project 전체 컨셉 기획 (100%)
     * Risk
-        * 컨셉 확장으로 일정 증가 가능성
+        * 컨셉 확장으로 인한 범위 증가 가능성
     * RiskLevel: 1
     * Collaborators
         * 도기봉 (pair)
         * 윤재웅 (pair)
 * This Week
     * Tasks
-        * 워크스페이스 진입 흐름 2안 작성
-        * 폴더 구조 및 상세 기획
+        * 워크스페이스 진입 흐름 기획 제안서 작성 (2가지, Behance, Figma 등)
+        * 폴더 구조 및 디테일 기획
 
-[Planning / MOTIIV / IA / IAPlanning]
+[Planning / MOTIIV / IA / IA 및 릴리즈 정리]
 * Name: 김희성
-* Define
-    * Domain: Planning
-    * Project: MOTIIV
-    * Module: IA
-    * Feature: IAPlanning
 * Past Week
     * Tasks
-        * 릴리즈 프로세스 정리 (100%)
-        * 데이터 기반 인사이트 도출 (50%)
-        * IA 구조 개편 및 디자인팀 공유 (100%)
+        * 릴리즈 운영 정책 및 프로세스 정리 (100%)
+        * 성과 데이터 기반 인사이트 도출 (50%)
+        * 주요 사용자 여정 기반 IA 구조 개편 및 디자인팀 공유 (100%)
     * Risk
-        * 신입 OJT 준비
+        * 신입 OJT 과제 준비
         * 마케팅 성과 공유 세션 준비
         * GEN NX Free Trial 작업
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * 홈 개편 초안
-        * 인사이트 도출 지속
+        * 홈 개편 초안 작성
+        * 성과 데이터 기반 인사이트 도출 계속 진행
 
-[Frontend / IdeaForge / LLM / LLMRefactorAndFix]
+[Frontend / IdeaForge / llm / llm 구조 변경 및 테스트]
 * Name: 김상리
-* Define
-    * Domain: Frontend
-    * Project: IdeaForge
-    * Module: LLM
-    * Feature: LLMRefactorAndFix
 * Past Week
     * Tasks
-        * LLM UI 구조 변경 (100%)
-        * 버그 2건 처리 (100%)
-        * MAS 저장 시 제목 삽입 기능 개발 (100%)
-        * CTA 좌표 정밀 지정 기능 개발 (100%)
+        * llm UI 구조 변경 완료 (100%)
+        * 버그 이슈 처리 2건 완료 (100%)
+        * MAS 저장 시 산출물 제목 삽입 기능 추가 (100%)
+        * 이미지형 CTA 좌표 정밀 지정 기능 추가 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
         * 김정빈 (pair)
 * This Week
     * Tasks
-        * 변경사항 배포 준비
-        * v1.8.3 일정 협의
+        * 변경된 llm 작업 건 배포 준비
+        * v1.8.3 배포 일정 협의
 
-[Frontend / MidasNewsroom / Blog / BlogStructure]
+[Frontend / 마이다스 뉴스룸 / 블로그 / 블로그 구조 설계 및 공통모듈 제작]
 * Name: 김상리
-* Define
-    * Domain: Frontend
-    * Project: MidasNewsroom
-    * Module: Blog
-    * Feature: BlogStructure
 * Past Week
     * Tasks
         * 블로그 구조 설계 (30%)
         * 공통 모듈 제작 (50%)
-        * 기능 검토 (30%)
+        * 세부 기능 기술 검토 (30%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
@@ -385,121 +280,90 @@
         * 블로그 페이지 제작
         * 세부 기능 구현
 
-[Frontend / IdeaForge / Version183 / Version183Development]
+[Frontend / IdeaForge / 1.8.3 / 개발 협의 및 진행]
 * Name: 김지원
-* Define
-    * Domain: Frontend
-    * Project: IdeaForge
-    * Module: Version183
-    * Feature: Version183Development
 * Past Week
     * Tasks
-        * 개발 협의 및 이슈 조정 (100%)
-        * 버그 6건 처리 (100%)
-        * 이미지 해상도 개선 (100%)
+        * 1.8.3 개발 건 협의 및 이슈 조정 (100%)
+        * 버그 이슈 처리 6건 완료 (100%)
+        * 이미지 해상도 개선 작업 완료 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * 변경된 백엔드 이미지/용량 정책 대응
+        * system에서 변경된 백엔드 건(이미지/저장 용량)에 대한 대응
 
-[Frontend / MidasNewsroom / Blog / BlogDevelopment]
+[Frontend / 마이다스 뉴스룸 / 블로그 / 개발 및 기술 검토]
 * Name: 김지원
-* Define
-    * Domain: Frontend
-    * Project: MidasNewsroom
-    * Module: Blog
-    * Feature: BlogDevelopment
 * Past Week
     * Tasks
         * 서브 도메인 생성 (100%)
         * 블로그 개설 (100%)
-        * 리스트 기술 검토 (100%)
+        * 블로그 리스트 기술 검토 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * 검색 기술 검토
+        * 블로그 검색 기술 검토
         * 디자인 수급 및 적용
 
-[Planning / M-Desk / ServiceNotice / ServiceNoticePlanning]
+[Planning / M-Desk / 서비스장애 안내 / 메인 기획]
 * Name: 도기봉
-* Define
-    * Domain: Planning
-    * Project: M-Desk
-    * Module: ServiceNotice
-    * Feature: ServiceNoticePlanning
 * Past Week
     * Tasks
-        * 장애 안내 기획 (100%)
-        * 안내 가이드 작성 (100%)
-        * 안내 화면 디자인 (90%)
+        * 서비스 장애 안내 기획 (100%)
+        * 장애 안내 내용 가이드 작성 (100%)
+        * 장애 안내 화면 디자인 (90%)
     * Risk
-        * MAS 안내 등록 환경 개발 상황에 따라 기획 대응 필요
+        * MAS에 안내 등록 환경 개발 진행 상황에 따라 기획 대응 필요
     * RiskLevel: 0
     * Collaborators: None
 * This Week
     * Tasks
-        * 안내 화면 디자인 수정
+        * 장애 안내 화면 디자인 수정
 
-[Planning / MOTIIV / ProfilePage / ProfilePageConcept]
+[Planning / MOTIIV / 프로필페이지 / 컨셉 기획]
 * Name: 도기봉
-* Define
-    * Domain: Planning
-    * Project: MOTIIV
-    * Module: ProfilePage
-    * Feature: ProfilePageConcept
 * Past Week
     * Tasks
-        * 프로필·워크스페이스 정의 (100%)
-        * 프로필 개요 정의 (100%)
-        * 콘텐츠 구성 (10%)
+        * 프로필 페이지와 워크스페이스 페이지 정의 (100%)
+        * 프로필페이지 개요 정의 (100%)
+        * 프로필 페이지 콘텐츠 구성 (10%)
     * Risk
-        * 콘텐츠 정의를 위한 추가 논의 필요
+        * 프로필페이지에 들어갈 콘텐츠 아이템 역할 정의를 위한 의사소통 필요
     * RiskLevel: 0
     * Collaborators: None
 * This Week
     * Tasks
-        * 상세 기획
-        * 메뉴 구성 정의
-        * 콘텐츠 상세 정의
+        * 프로필페이지 상세 기획
+        * 프로필페이지 메뉴 구성 정의
+        * 프로필페이지에 들어갈 콘텐츠 정의
 
-[Design / MOTIIV / Spreadsheet / SpreadsheetListImprovement]
+[Design / MOTIIV / 스프레드시트 / 리스트 페이지 개선]
 * Name: 양소희
-* Define
-    * Domain: Design
-    * Project: MOTIIV
-    * Module: Spreadsheet
-    * Feature: SpreadsheetListImprovement
 * Past Week
     * Tasks
-        * 리스트 페이지 개선 + 인기 섹션 추가(PC/MO) 디자인 100%
+        * 스프레드시트 리스트 페이지 개선 및 인기 섹션 추가 PC/MO 디자인 완료 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators
         * 김희성 (pair)
 * This Week
     * Tasks
-        * 에디터 페이지 Add-on 패널 Rich Note 디자인 진행
+        * 스프레드시트 에디터 페이지 애드온 패널-리치노트 디자인 진행
 
-[Research / MOTIIV / Documentation / TechDebtResearch]
+[Research / MOTIIV / 문서화 / 기술부채 리서치 및 협의]
 * Name: 이하영
-* Define
-    * Domain: Research
-    * Project: MOTIIV
-    * Module: Documentation
-    * Feature: TechDebtResearch
 * Past Week
     * Tasks
-        * SEO 리서치 공유 (100%)
-        * Testing Tool 리서치 (0%)
-        * Style 리서치 (100%)
+        * SEO 리서치 및 결과 공유 (100%)
+        * Testing Tool 리서치 및 결과 공유 (0%)
+        * 스타일 리서치 및 결과 공유 (100%)
     * Risk: None
     * RiskLevel: None
     * Collaborators: None
 * This Week
     * Tasks
-        * Testing Tool 도입 검토
-        * SEO/Author Box 백로그 진행
+        * Testing tool 점진적 도입 및 스프레드시트 백로그 이슈(SEO, Author box) 진행
