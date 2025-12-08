@@ -254,78 +254,89 @@ export function CollaborationNetworkV2({ items }: CollaborationNetworkV2Props) {
         <svg width="100%" height="100%">
           {/* 화살표 마커 정의 */}
           <defs>
+            {/* pre: 협업자 → 나 방향 (끝점에 화살표) */}
             <marker
               id="arrowhead-pre"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
+              markerWidth="8"
+              markerHeight="8"
+              refX="6"
+              refY="4"
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" fill={COLORS.pre.line} />
+              <path d="M0,1 L6,4 L0,7 Z" fill={COLORS.pre.line} fillOpacity="0.8" />
             </marker>
+            {/* post: 나 → 협업자 방향 (끝점에 화살표) */}
             <marker
               id="arrowhead-post"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
+              markerWidth="8"
+              markerHeight="8"
+              refX="6"
+              refY="4"
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" fill={COLORS.post.line} />
+              <path d="M0,1 L6,4 L0,7 Z" fill={COLORS.post.line} fillOpacity="0.8" />
             </marker>
+            {/* 노드 그림자 */}
+            <filter id="node-shadow-v2" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
+            </filter>
           </defs>
 
           {/* 엣지 */}
           {edges.map((edge, index) => {
-            const from = nodePositions[edge.from];
-            const to = nodePositions[edge.to];
-            if (!from || !to) return null;
+            const fromPos = nodePositions[edge.from];
+            const toPos = nodePositions[edge.to];
+            if (!fromPos || !toPos) return null;
 
             const color = COLORS[edge.relation];
-
-            // 노드 반지름을 고려한 선 끝점 계산
-            const dx = to.x - from.x;
-            const dy = to.y - from.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
             const nodeRadius = 28;
 
-            const startX = from.x + (dx / dist) * nodeRadius;
-            const startY = from.y + (dy / dist) * nodeRadius;
-            const endX = to.x - (dx / dist) * (nodeRadius + 10);
-            const endY = to.y - (dy / dist) * (nodeRadius + 10);
+            // pre: 협업자(to) → 나(from) 방향으로 화살표
+            // post: 나(from) → 협업자(to) 방향으로 화살표
+            const isPreRelation = edge.relation === "pre";
+            const sourcePos = isPreRelation ? toPos : fromPos;
+            const targetPos = isPreRelation ? fromPos : toPos;
+
+            const dx = targetPos.x - sourcePos.x;
+            const dy = targetPos.y - sourcePos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) return null;
+
+            const startX = sourcePos.x + (dx / dist) * nodeRadius;
+            const startY = sourcePos.y + (dy / dist) * nodeRadius;
+            const endX = targetPos.x - (dx / dist) * (nodeRadius + 6);
+            const endY = targetPos.y - (dy / dist) * (nodeRadius + 6);
 
             if (edge.relation === "pair") {
-              // pair: 점선 양방향 연결
+              // pair: 점선 양방향 연결 (화살표 없음)
               return (
-                <g key={index}>
-                  <line
-                    x1={startX}
-                    y1={startY}
-                    x2={endX}
-                    y2={endY}
-                    stroke={color.line}
-                    strokeWidth={2.5}
-                    strokeDasharray="6,4"
-                    opacity={0.8}
-                  />
-                </g>
+                <line
+                  key={index}
+                  x1={startX}
+                  y1={startY}
+                  x2={endX}
+                  y2={endY}
+                  stroke={color.line}
+                  strokeWidth={2}
+                  strokeDasharray="5,3"
+                  opacity={0.7}
+                />
               );
             } else {
               // pre/post: 화살표가 있는 실선
               return (
-                <g key={index}>
-                  <line
-                    x1={startX}
-                    y1={startY}
-                    x2={endX}
-                    y2={endY}
-                    stroke={color.line}
-                    strokeWidth={2.5}
-                    markerEnd={`url(#arrowhead-${edge.relation})`}
-                    opacity={0.8}
-                  />
-                </g>
+                <line
+                  key={index}
+                  x1={startX}
+                  y1={startY}
+                  x2={endX}
+                  y2={endY}
+                  stroke={color.line}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  markerEnd={`url(#arrowhead-${edge.relation})`}
+                  opacity={0.7}
+                />
               );
             }
           })}
@@ -360,6 +371,7 @@ export function CollaborationNetworkV2({ items }: CollaborationNetworkV2Props) {
                   fill={node.isCenter ? "#1e293b" : "#475569"}
                   stroke={isTooltipTarget ? "#3b82f6" : node.isCenter ? "#3b82f6" : "#64748b"}
                   strokeWidth={node.isCenter ? 3 : 2}
+                  filter="url(#node-shadow-v2)"
                 />
                 {/* 노드 텍스트 */}
                 <text
@@ -376,129 +388,259 @@ export function CollaborationNetworkV2({ items }: CollaborationNetworkV2Props) {
           })}
         </svg>
 
-        {/* 툴팁 */}
-        {tooltip.visible && tooltip.node && (
-          <div
-            className="absolute p-4 rounded-xl shadow-lg max-w-xs"
-            style={{
-              left: tooltip.side === "right" ? tooltip.x + 40 : undefined,
-              right: tooltip.side === "left" ? dimensions.width - tooltip.x + 40 : undefined,
-              top: Math.max(10, Math.min(tooltip.y - 50, dimensions.height - 200)),
-              background: "var(--notion-bg)",
-              border: "1px solid var(--notion-border)",
-              zIndex: 10,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 헤더 */}
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-                {tooltip.node.name}
-              </span>
-              <span
-                className="text-xs px-2 py-0.5 rounded"
-                style={{ background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6" }}
-              >
-                {tooltip.node.item.domain}
-              </span>
-            </div>
-
-            {/* 경로 */}
+        {/* 툴팁 - 해당 사람의 전체 스냅샷 */}
+        {tooltip.visible && tooltip.node && (() => {
+          // 해당 사람의 모든 스냅샷 찾기
+          const personSnapshots = items.filter((item) => item.name === tooltip.node!.name);
+          
+          return (
             <div
-              className="text-xs mb-3 pb-3 border-b"
-              style={{ color: "var(--notion-text-muted)", borderColor: "var(--notion-border)" }}
+              className="absolute rounded-xl shadow-lg"
+              style={{
+                left: tooltip.side === "right" ? tooltip.x + 40 : undefined,
+                right: tooltip.side === "left" ? dimensions.width - tooltip.x + 40 : undefined,
+                top: 10,
+                bottom: 10,
+                width: "320px",
+                background: "var(--notion-bg)",
+                border: "1px solid var(--notion-border)",
+                zIndex: 10,
+                display: "flex",
+                flexDirection: "column",
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              {tooltip.node.item.project} / {tooltip.node.item.module || "—"} / {tooltip.node.item.topic}
-            </div>
-
-            {/* 진행률 */}
-            <div className="mb-3">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span style={{ color: "var(--notion-text-muted)" }}>Progress</span>
-                <span style={{ color: "var(--notion-text)" }}>{tooltip.node.item.progressPercent}%</span>
-              </div>
+              {/* 헤더 */}
               <div
-                className="h-1.5 rounded-full overflow-hidden"
-                style={{ background: "var(--notion-bg-secondary)" }}
+                className="flex items-center justify-between p-3 border-b flex-shrink-0"
+                style={{ borderColor: "var(--notion-border)" }}
               >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${tooltip.node.item.progressPercent}%`,
-                    background:
-                      tooltip.node.item.progressPercent >= 80
-                        ? "#22c55e"
-                        : tooltip.node.item.progressPercent >= 50
-                        ? "#3b82f6"
-                        : "#f59e0b",
-                  }}
-                />
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                    style={{ background: "#1e293b" }}
+                  >
+                    {tooltip.node.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+                      {tooltip.node.name}
+                    </div>
+                    <div className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
+                      {personSnapshots.length}개 스냅샷
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setTooltip((prev) => ({ ...prev, visible: false }))}
+                  className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+                  style={{ color: "var(--notion-text-muted)" }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* 스냅샷 목록 (스크롤 가능) */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {personSnapshots.map((snapshot, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-lg"
+                    style={{
+                      background: "var(--notion-bg-secondary)",
+                      border: "1px solid var(--notion-border)",
+                    }}
+                  >
+                    {/* 스냅샷 헤더 */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded"
+                        style={{ background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6" }}
+                      >
+                        {snapshot.domain}
+                      </span>
+                      <span
+                        className="text-xs font-bold"
+                        style={{
+                          color:
+                            snapshot.progressPercent >= 80
+                              ? "#22c55e"
+                              : snapshot.progressPercent >= 50
+                              ? "#3b82f6"
+                              : "#f59e0b",
+                        }}
+                      >
+                        {snapshot.progressPercent}%
+                      </span>
+                    </div>
+
+                    {/* 경로 */}
+                    <div
+                      className="text-xs font-medium mb-2 truncate"
+                      style={{ color: "var(--notion-text)" }}
+                      title={`${snapshot.project} / ${snapshot.module || "—"} / ${snapshot.topic}`}
+                    >
+                      {snapshot.project} / {snapshot.module || "—"} / {snapshot.topic}
+                    </div>
+
+                    {/* 진행률 바 */}
+                    <div
+                      className="h-1 rounded-full overflow-hidden mb-2"
+                      style={{ background: "var(--notion-border)" }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${snapshot.progressPercent}%`,
+                          background:
+                            snapshot.progressPercent >= 80
+                              ? "#22c55e"
+                              : snapshot.progressPercent >= 50
+                              ? "#3b82f6"
+                              : "#f59e0b",
+                        }}
+                      />
+                    </div>
+
+                    {/* Past Week */}
+                    {snapshot.progress && snapshot.progress.length > 0 && (
+                      <div className="mb-2">
+                        <div
+                          className="text-[10px] font-medium mb-1"
+                          style={{ color: "var(--notion-text-muted)" }}
+                        >
+                          Past Week
+                        </div>
+                        <ul className="space-y-0.5">
+                          {snapshot.progress.slice(0, 3).map((task, i) => (
+                            <li
+                              key={i}
+                              className="text-[11px] truncate"
+                              style={{ color: "var(--notion-text-secondary)" }}
+                              title={task}
+                            >
+                              • {task}
+                            </li>
+                          ))}
+                          {snapshot.progress.length > 3 && (
+                            <li
+                              className="text-[10px]"
+                              style={{ color: "var(--notion-text-muted)" }}
+                            >
+                              +{snapshot.progress.length - 3}개 더...
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* This Week */}
+                    {snapshot.next && snapshot.next.length > 0 && (
+                      <div className="mb-2">
+                        <div
+                          className="text-[10px] font-medium mb-1"
+                          style={{ color: "var(--notion-text-muted)" }}
+                        >
+                          This Week
+                        </div>
+                        <ul className="space-y-0.5">
+                          {snapshot.next.slice(0, 2).map((task, i) => (
+                            <li
+                              key={i}
+                              className="text-[11px] truncate"
+                              style={{ color: "var(--notion-text-secondary)" }}
+                              title={task}
+                            >
+                              • {task}
+                            </li>
+                          ))}
+                          {snapshot.next.length > 2 && (
+                            <li
+                              className="text-[10px]"
+                              style={{ color: "var(--notion-text-muted)" }}
+                            >
+                              +{snapshot.next.length - 2}개 더...
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 협업자 */}
+                    {snapshot.collaborators && snapshot.collaborators.length > 0 && (
+                      <div>
+                        <div
+                          className="text-[10px] font-medium mb-1"
+                          style={{ color: "var(--notion-text-muted)" }}
+                        >
+                          Collaborators
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {snapshot.collaborators.map((collab, i) => (
+                            <span
+                              key={i}
+                              className="text-[10px] px-1.5 py-0.5 rounded-full"
+                              style={{
+                                background: COLORS[collab.relation].bg,
+                                color: COLORS[collab.relation].text,
+                              }}
+                            >
+                              {collab.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 리스크 */}
+                    {snapshot.risk && snapshot.risk.length > 0 && (
+                      <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--notion-border)" }}>
+                        <div
+                          className="text-[10px] font-medium mb-1 flex items-center gap-1"
+                          style={{ color: "#ef4444" }}
+                        >
+                          ⚠️ Risk
+                          {snapshot.riskLevel !== null && snapshot.riskLevel !== undefined && (
+                            <span className="px-1 rounded text-[9px]" style={{ background: "rgba(239, 68, 68, 0.1)" }}>
+                              R{snapshot.riskLevel}
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className="text-[10px]"
+                          style={{ color: "var(--notion-text-secondary)" }}
+                        >
+                          {snapshot.risk[0]}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* 협업자 */}
-            {tooltip.node.item.collaborators && tooltip.node.item.collaborators.length > 0 && (
-              <div>
-                <div className="text-xs mb-2" style={{ color: "var(--notion-text-muted)" }}>
-                  Collaborators
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {tooltip.node.item.collaborators.map((collab, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2 py-0.5 rounded-full"
-                      style={{
-                        background: COLORS[collab.relation].bg,
-                        color: COLORS[collab.relation].text,
-                      }}
-                    >
-                      {collab.name} ({collab.relation})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* 범례 */}
-      <div className="flex flex-wrap items-center justify-center gap-6 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            <div className="w-8 h-0.5" style={{ background: COLORS.pair.line, borderStyle: "dashed" }} />
-          </div>
-          <span style={{ color: "var(--notion-text-muted)" }}>pair (실시간 협업)</span>
+      <div className="flex flex-wrap items-center justify-center gap-4 text-[11px]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-0.5 rounded" style={{ background: COLORS.pair.line, opacity: 0.7 }} />
+          <span style={{ color: "var(--notion-text-muted)" }}>Pair</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            <div className="w-6 h-0.5" style={{ background: COLORS.pre.line }} />
-            <div
-              style={{
-                width: 0,
-                height: 0,
-                borderLeft: `6px solid ${COLORS.pre.line}`,
-                borderTop: "4px solid transparent",
-                borderBottom: "4px solid transparent",
-              }}
-            />
-          </div>
-          <span style={{ color: "var(--notion-text-muted)" }}>pre (선행 협업)</span>
+        <div className="flex items-center gap-1.5">
+          <svg width="20" height="10" viewBox="0 0 20 10">
+            <line x1="0" y1="5" x2="14" y2="5" stroke={COLORS.pre.line} strokeWidth="2" />
+            <path d="M12,2 L18,5 L12,8 Z" fill={COLORS.pre.line} />
+          </svg>
+          <span style={{ color: "var(--notion-text-muted)" }}>Pre (선행)</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            <div className="w-6 h-0.5" style={{ background: COLORS.post.line }} />
-            <div
-              style={{
-                width: 0,
-                height: 0,
-                borderLeft: `6px solid ${COLORS.post.line}`,
-                borderTop: "4px solid transparent",
-                borderBottom: "4px solid transparent",
-              }}
-            />
-          </div>
-          <span style={{ color: "var(--notion-text-muted)" }}>post (후행 협업)</span>
+        <div className="flex items-center gap-1.5">
+          <svg width="20" height="10" viewBox="0 0 20 10">
+            <line x1="0" y1="5" x2="14" y2="5" stroke={COLORS.post.line} strokeWidth="2" />
+            <path d="M12,2 L18,5 L12,8 Z" fill={COLORS.post.line} />
+          </svg>
+          <span style={{ color: "var(--notion-text-muted)" }}>Post (후행)</span>
         </div>
       </div>
     </div>
