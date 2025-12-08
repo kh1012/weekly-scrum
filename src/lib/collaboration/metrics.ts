@@ -155,6 +155,11 @@ export function getCrossModuleCollaboration(
 
 /**
  * 협업 엣지 목록 생성 (네트워크 그래프용)
+ * 
+ * 화살표 방향 규칙:
+ * - pre: 협업자 → 나 (협업자가 먼저 해야 내가 할 수 있음)
+ * - post: 나 → 협업자 (내가 먼저 해야 협업자가 할 수 있음)
+ * - pair: 양방향 (화살표 없음)
  */
 export function getCollaborationEdges(items: ScrumItem[]): CollaborationEdge[] {
   const edgeMap = new Map<string, CollaborationEdge>();
@@ -162,14 +167,19 @@ export function getCollaborationEdges(items: ScrumItem[]): CollaborationEdge[] {
   for (const item of items) {
     if (!item.collaborators) continue;
     for (const collab of item.collaborators) {
-      const key = `${item.name}->${collab.name}:${collab.relation}`;
+      // pre: 협업자 → 나 (협업자가 source, 내가 target)
+      // post, pair: 나 → 협업자 (내가 source, 협업자가 target)
+      const source = collab.relation === "pre" ? collab.name : item.name;
+      const target = collab.relation === "pre" ? item.name : collab.name;
+      
+      const key = `${source}->${target}:${collab.relation}`;
       const existing = edgeMap.get(key);
       if (existing) {
         existing.count++;
       } else {
         edgeMap.set(key, {
-          source: item.name,
-          target: collab.name,
+          source,
+          target,
           relation: collab.relation,
           count: 1,
         });

@@ -373,7 +373,8 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
             }
 
             if (node.preCount > 0 && node.pairCount === 0) {
-              const path = getCurvePath(CENTER_X, CENTER_Y, node.x, node.y, 32, nodeRadius + 6);
+              // pre: 협업자 → 나 방향 (협업자가 먼저 해야 내가 할 수 있음)
+              const path = getCurvePath(node.x, node.y, CENTER_X, CENTER_Y, nodeRadius + 6, 32);
               return (
                 <path
                   key={`pre-line-${node.name}`}

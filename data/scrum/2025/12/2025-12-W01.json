@@ -34,8 +34,8 @@
     {
       "name": "윤재웅",
       "domain": "Planning",
-      "project": "Spreadsheet Editor-Rich Note",
-      "topic": "상세기획",
+      "project": "MOTIIV",
+      "topic": "Editor-Rich Note 상세기획",
       "plan": "Rich Note 상세기획 완료 및 개발/디자인 전달 (100%)",
       "planPercent": 100,
       "progress": [
@@ -49,12 +49,13 @@
       "risk": [
         "None"
       ],
-      "riskLevel": null
+      "riskLevel": null,
+      "module": "Spreadsheet"
     },
     {
       "name": "손영민",
       "domain": "Frontend",
-      "project": "Desk",
+      "project": "M-Desk",
       "topic": "오류, 공지 처리",
       "plan": "데스크 Notice, Popup 기능 추가 (100%)",
       "planPercent": 100,
@@ -71,6 +72,7 @@
         "None"
       ],
       "riskLevel": null,
+      "module": "공지",
       "collaborators": [
         {
           "name": "김용수",
@@ -156,7 +158,7 @@
     {
       "name": "하성열",
       "domain": "Planning",
-      "project": "스프레드시트",
+      "project": "MOTIIV",
       "topic": "AI Assist 기획",
       "plan": "AI Assist 중 Description 생성 기능 컨셉 기획(100%)",
       "planPercent": 100,
@@ -171,7 +173,8 @@
       "risk": [
         "? (Level이 표기되어 있음)"
       ],
-      "riskLevel": 1
+      "riskLevel": 1,
+      "module": "스프레드시트"
     },
     {
       "name": "한내경",
@@ -207,7 +210,7 @@
     {
       "name": "조해용",
       "domain": "Planning",
-      "project": "워크스페이스",
+      "project": "MOTIIV",
       "topic": "My project 기획",
       "plan": "Workspace 중 My project 전체 컨셉 기획(100%)",
       "planPercent": 100,
@@ -224,6 +227,7 @@
         "컨셉 확장"
       ],
       "riskLevel": 1,
+      "module": "워크스페이스",
       "collaborators": [
         {
           "name": "도기봉",
@@ -238,7 +242,7 @@
     {
       "name": "김상리",
       "domain": "Frontend",
-      "project": "Idea-forge",
+      "project": "IdeaForge",
       "topic": "llm 구조 변경 및 테스트",
       "plan": "버그 이슈 처리(2건), MAS 저장 시 산출물 제목 삽입, 이미지형 CTA 좌표 정밀 지정 기능 추가(100%)",
       "planPercent": 100,
