@@ -41,8 +41,10 @@ function buildNetworkData(
 
   const centerX = width / 2;
   const centerY = height / 2;
-  const radius = Math.min(width, height) * 0.35;
-  const padding = 60;
+  // 노드 배치 영역을 화면 전체로 확장
+  const padding = 50;
+  const usableWidth = width - padding * 2;
+  const usableHeight = height - padding * 2;
 
   // 노드와 엣지 생성
   for (const item of items) {
@@ -103,7 +105,7 @@ function buildNetworkData(
   // 노드 배열 생성
   const nodes = Array.from(nodesMap.values());
 
-  // 도메인별 그룹핑하여 배치
+  // 도메인별 그룹핑하여 배치 (전체 영역을 활용하도록 조정)
   const domainGroups = new Map<string, NetworkNode[]>();
   nodes.forEach((node) => {
     const group = domainGroups.get(node.domain) || [];
@@ -113,13 +115,16 @@ function buildNetworkData(
 
   const domains = Array.from(domainGroups.keys()).sort();
   const domainCount = domains.length;
-  const verticalSpacing = 80;
+  // 수직 간격을 화면 높이에 맞게 동적으로 계산
+  const maxNodesInDomain = Math.max(...Array.from(domainGroups.values()).map(g => g.length), 1);
+  const verticalSpacing = Math.min(120, usableHeight / Math.max(maxNodesInDomain, 2));
 
   domains.forEach((domain, domainIndex) => {
     const domainNodes = domainGroups.get(domain) || [];
+    // 가로 전체를 균등 분배
     const columnX = domainCount === 1
       ? width / 2
-      : padding + ((width - padding * 2) / Math.max(domainCount - 1, 1)) * domainIndex;
+      : padding + (usableWidth / Math.max(domainCount - 1, 1)) * domainIndex;
 
     domainNodes.forEach((node, nodeIndex) => {
       const totalHeight = (domainNodes.length - 1) * verticalSpacing;
@@ -131,25 +136,25 @@ function buildNetworkData(
     });
   });
 
-  // 노드 간 겹침 방지
-  for (let iter = 0; iter < 30; iter++) {
+  // 노드 간 겹침 방지 (더 넓은 최소 거리 적용)
+  const minNodeDist = Math.min(130, usableWidth / Math.max(nodes.length, 2));
+  for (let iter = 0; iter < 50; iter++) {
     let moved = false;
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const dx = nodes[j].x - nodes[i].x;
         const dy = nodes[j].y - nodes[i].y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const minDist = 90;
 
-        if (dist < minDist && dist > 0) {
-          const force = (minDist - dist) / 2;
+        if (dist < minNodeDist && dist > 0) {
+          const force = (minNodeDist - dist) / 2;
           const fx = (dx / dist) * force;
           const fy = (dy / dist) * force;
 
-          nodes[i].x -= fx * 0.3;
-          nodes[i].y -= fy;
-          nodes[j].x += fx * 0.3;
-          nodes[j].y += fy;
+          nodes[i].x -= fx * 0.5;
+          nodes[i].y -= fy * 0.5;
+          nodes[j].x += fx * 0.5;
+          nodes[j].y += fy * 0.5;
           moved = true;
         }
       }
@@ -169,6 +174,14 @@ function buildNetworkData(
 /**
  * 협업 네트워크 시각화 컴포넌트 V2 (팀협업 스타일)
  */
+interface SnapshotPanel {
+  nodeId: string;
+  x: number;
+  y: number;
+  showOnlyFeature: boolean;
+  expandedSnapshots: Set<number>; // 펼쳐진 스냅샷 인덱스
+}
+
 export function CollaborationNetworkV2({ items, allItems, featureName }: CollaborationNetworkV2Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 500, height: 350 });
@@ -177,8 +190,10 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [showOnlyFeature, setShowOnlyFeature] = useState(false);
-  const [snapshotPanelNode, setSnapshotPanelNode] = useState<string | null>(null);
+  
+  // 여러 개의 스냅샷 패널 관리
+  const [snapshotPanels, setSnapshotPanels] = useState<SnapshotPanel[]>([]);
+  const [draggingPanel, setDraggingPanel] = useState<{ nodeId: string; offsetX: number; offsetY: number } | null>(null);
 
   // 초기 네트워크 데이터 빌드
   const { nodes: initialNodes, edges } = useMemo(
@@ -476,7 +491,27 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
                   if (!draggedNode) {
                     e.stopPropagation();
                     setSelectedNode(selectedNode === node.id ? null : node.id);
-                    setSnapshotPanelNode(snapshotPanelNode === node.id ? null : node.id);
+                    
+                    // 이미 열린 패널이 있으면 무시
+                    if (snapshotPanels.some(p => p.nodeId === node.id)) {
+                      return;
+                    }
+                    
+                    // 클릭 위치의 우측하단에 패널 생성
+                    const container = containerRef.current;
+                    if (container) {
+                      const rect = container.getBoundingClientRect();
+                      const clickX = e.clientX - rect.left;
+                      const clickY = e.clientY - rect.top;
+                      
+                      setSnapshotPanels(prev => [...prev, {
+                        nodeId: node.id,
+                        x: Math.min(clickX + 10, dimensions.width - 380),
+                        y: Math.min(clickY + 10, dimensions.height - 250),
+                        showOnlyFeature: false,
+                        expandedSnapshots: new Set<number>(),
+                      }]);
+                    }
                   }
                 }}
               >
@@ -574,32 +609,94 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
           </button>
         </div>
 
-        {/* 스냅샷 패널 */}
-        {snapshotPanelNode && (() => {
-          const node = initialNodes.find((n) => n.id === snapshotPanelNode);
+        {/* 스냅샷 패널들 (여러 개 동시 표시 가능, 드래그 가능) */}
+        {snapshotPanels.map((panel) => {
+          const node = initialNodes.find((n) => n.id === panel.nodeId);
           if (!node) return null;
 
           // 전체 스냅샷 또는 feature 스냅샷
           const sourceItems = allItems || items;
-          const personSnapshots = showOnlyFeature
+          const personSnapshots = panel.showOnlyFeature
             ? items.filter((item) => item.name === node.name)
             : sourceItems.filter((item) => item.name === node.name);
 
+          // 스냅샷 확장/축소 토글 함수
+          const toggleSnapshotExpand = (idx: number) => {
+            setSnapshotPanels(prev =>
+              prev.map(p => {
+                if (p.nodeId !== panel.nodeId) return p;
+                const newExpanded = new Set(p.expandedSnapshots);
+                if (newExpanded.has(idx)) {
+                  newExpanded.delete(idx);
+                } else {
+                  newExpanded.add(idx);
+                }
+                return { ...p, expandedSnapshots: newExpanded };
+              })
+            );
+          };
+
           return (
             <div
-              className="absolute top-2 right-2 bottom-2 rounded-lg flex flex-col"
+              key={panel.nodeId}
+              className="absolute rounded-xl flex flex-col select-none"
               style={{
-                width: "320px",
+                left: panel.x,
+                top: panel.y,
+                width: "360px",
+                maxHeight: "450px",
                 background: "rgba(255,255,255,0.98)",
                 border: "1px solid var(--notion-border)",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+                zIndex: snapshotPanels.indexOf(panel) + 10,
+              }}
+              onMouseDown={(e) => {
+                // 패널을 맨 앞으로 가져오기
+                setSnapshotPanels(prev => {
+                  const others = prev.filter(p => p.nodeId !== panel.nodeId);
+                  return [...others, panel];
+                });
               }}
             >
-              {/* 헤더 */}
-              <div className="flex items-center justify-between p-3 border-b flex-shrink-0" style={{ borderColor: "var(--notion-border)" }}>
-                <div className="flex items-center gap-2">
+              {/* 헤더 (드래그 핸들) */}
+              <div
+                className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0 cursor-move"
+                style={{ borderColor: "var(--notion-border)" }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const startPanelX = panel.x;
+                  const startPanelY = panel.y;
+
+                  const handleMouseMove = (moveE: MouseEvent) => {
+                    const dx = moveE.clientX - startX;
+                    const dy = moveE.clientY - startY;
+                    setSnapshotPanels(prev =>
+                      prev.map(p =>
+                        p.nodeId === panel.nodeId
+                          ? {
+                              ...p,
+                              x: Math.max(0, Math.min(dimensions.width - 360, startPanelX + dx)),
+                              y: Math.max(0, Math.min(dimensions.height - 150, startPanelY + dy)),
+                            }
+                          : p
+                      )
+                    );
+                  };
+
+                  const handleMouseUp = () => {
+                    document.removeEventListener("mousemove", handleMouseMove);
+                    document.removeEventListener("mouseup", handleMouseUp);
+                  };
+
+                  document.addEventListener("mousemove", handleMouseMove);
+                  document.addEventListener("mouseup", handleMouseUp);
+                }}
+              >
+                <div className="flex items-center gap-3">
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
                     style={{ background: getDomainColor(node.domain) }}
                   >
                     {node.name.charAt(0)}
@@ -608,17 +705,18 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
                     <div className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
                       {node.name}
                     </div>
-                    <div className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
+                    <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
                       {personSnapshots.length}개 스냅샷
                     </div>
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    setSnapshotPanelNode(null);
-                    setSelectedNode(null);
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSnapshotPanels(prev => prev.filter(p => p.nodeId !== panel.nodeId));
+                    if (selectedNode === panel.nodeId) setSelectedNode(null);
                   }}
-                  className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-sm"
                   style={{ color: "var(--notion-text-muted)" }}
                 >
                   ✕
@@ -627,18 +725,24 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
 
               {/* 필터 토글 */}
               {featureName && allItems && (
-                <div className="px-3 py-2 border-b flex-shrink-0" style={{ borderColor: "var(--notion-border)" }}>
+                <div className="px-4 py-2 border-b flex-shrink-0" style={{ borderColor: "var(--notion-border)" }}>
                   <button
-                    onClick={() => setShowOnlyFeature(!showOnlyFeature)}
-                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs transition-colors"
-                    style={{ 
-                      background: showOnlyFeature ? "rgba(59, 130, 246, 0.1)" : "var(--notion-bg-secondary)",
-                      color: showOnlyFeature ? "#3b82f6" : "var(--notion-text-secondary)",
+                    onClick={() => {
+                      setSnapshotPanels(prev =>
+                        prev.map(p =>
+                          p.nodeId === panel.nodeId ? { ...p, showOnlyFeature: !p.showOnlyFeature } : p
+                        )
+                      );
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    style={{
+                      background: panel.showOnlyFeature ? "rgba(59, 130, 246, 0.1)" : "var(--notion-bg-secondary)",
+                      color: panel.showOnlyFeature ? "#3b82f6" : "var(--notion-text-secondary)",
                     }}
                   >
-                    <span>{showOnlyFeature ? `🎯 ${featureName} 만 보기` : "📋 전체 스냅샷 보기"}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "var(--notion-bg)" }}>
-                      {showOnlyFeature ? items.filter((i) => i.name === node.name).length : personSnapshots.length}
+                    <span>{panel.showOnlyFeature ? `🎯 ${featureName}` : "📋 전체"}</span>
+                    <span className="px-2 py-0.5 rounded text-xs" style={{ background: "var(--notion-bg)" }}>
+                      {panel.showOnlyFeature ? items.filter((i) => i.name === node.name).length : personSnapshots.length}
                     </span>
                   </button>
                 </div>
@@ -647,140 +751,184 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
               {/* 스냅샷 목록 */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {personSnapshots.length === 0 ? (
-                  <div className="text-center py-8 text-sm" style={{ color: "var(--notion-text-muted)" }}>
+                  <div className="text-center py-6 text-sm" style={{ color: "var(--notion-text-muted)" }}>
                     스냅샷이 없습니다.
                   </div>
                 ) : (
-                  personSnapshots.map((snapshot, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-lg"
-                      style={{
-                        background: "var(--notion-bg)",
-                        border: "1px solid var(--notion-border)",
-                      }}
-                    >
-                      {/* 스냅샷 헤더 */}
-                      <div className="flex items-center justify-between mb-2">
-                        <span
-                          className="text-[10px] px-1.5 py-0.5 rounded"
-                          style={{ background: `${getDomainColor(snapshot.domain)}20`, color: getDomainColor(snapshot.domain) }}
-                        >
-                          {snapshot.domain}
-                        </span>
-                        <span
-                          className="text-xs font-bold"
-                          style={{
-                            color:
-                              snapshot.progressPercent >= 80
-                                ? "#22c55e"
-                                : snapshot.progressPercent >= 50
-                                ? "#3b82f6"
-                                : "#f59e0b",
-                          }}
-                        >
-                          {snapshot.progressPercent}%
-                        </span>
-                      </div>
+                  personSnapshots.map((snapshot, idx) => {
+                    const isExpanded = panel.expandedSnapshots.has(idx);
+                    const progressColor = snapshot.progressPercent >= 80
+                      ? "#22c55e"
+                      : snapshot.progressPercent >= 50
+                      ? "#3b82f6"
+                      : "#f59e0b";
 
-                      {/* 경로 */}
+                    return (
                       <div
-                        className="text-xs font-medium mb-2 truncate"
-                        style={{ color: "var(--notion-text)" }}
-                        title={`${snapshot.project} / ${snapshot.module || "—"} / ${snapshot.topic}`}
+                        key={idx}
+                        className="rounded-lg overflow-hidden transition-all"
+                        style={{
+                          background: "var(--notion-bg)",
+                          border: "1px solid var(--notion-border)",
+                        }}
                       >
-                        {snapshot.project} / {snapshot.module || "—"} / {snapshot.topic}
-                      </div>
-
-                      {/* 진행률 바 */}
-                      <div
-                        className="h-1 rounded-full overflow-hidden mb-2"
-                        style={{ background: "var(--notion-border)" }}
-                      >
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${snapshot.progressPercent}%`,
-                            background:
-                              snapshot.progressPercent >= 80
-                                ? "#22c55e"
-                                : snapshot.progressPercent >= 50
-                                ? "#3b82f6"
-                                : "#f59e0b",
-                          }}
-                        />
-                      </div>
-
-                      {/* Past Week */}
-                      {snapshot.progress && snapshot.progress.length > 0 && (
-                        <div className="mb-2">
-                          <div className="text-[10px] font-medium mb-1" style={{ color: "var(--notion-text-muted)" }}>
-                            Past Week
+                        {/* 스냅샷 헤더 (클릭하여 펼치기/접기) */}
+                        <button
+                          onClick={() => toggleSnapshotExpand(idx)}
+                          className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {/* 펼치기/접기 아이콘 */}
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className={`flex-shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                              style={{ color: "var(--notion-text-muted)" }}
+                            >
+                              <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                            {/* 도메인 뱃지 */}
+                            <span
+                              className="text-xs px-2 py-0.5 rounded flex-shrink-0"
+                              style={{ 
+                                background: `${getDomainColor(snapshot.domain)}20`, 
+                                color: getDomainColor(snapshot.domain) 
+                              }}
+                            >
+                              {snapshot.domain}
+                            </span>
+                            {/* 피쳐명 */}
+                            <span
+                              className="text-sm font-medium truncate"
+                              style={{ color: "var(--notion-text)" }}
+                              title={snapshot.topic}
+                            >
+                              {snapshot.topic}
+                            </span>
                           </div>
-                          <ul className="space-y-0.5">
-                            {snapshot.progress.slice(0, 2).map((task, i) => (
-                              <li
-                                key={i}
-                                className="text-[11px] truncate"
-                                style={{ color: "var(--notion-text-secondary)" }}
-                                title={task}
-                              >
-                                • {task}
-                              </li>
-                            ))}
-                            {snapshot.progress.length > 2 && (
-                              <li className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
-                                +{snapshot.progress.length - 2}개 더...
-                              </li>
+                          {/* 진행률 */}
+                          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                            {/* 리스크 아이콘 */}
+                            {snapshot.risk && snapshot.risk.length > 0 && (
+                              <span className="text-xs" style={{ color: "#ef4444" }}>⚠️</span>
                             )}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* This Week */}
-                      {snapshot.next && snapshot.next.length > 0 && (
-                        <div className="mb-2">
-                          <div className="text-[10px] font-medium mb-1" style={{ color: "var(--notion-text-muted)" }}>
-                            This Week
+                            <span
+                              className="text-sm font-bold"
+                              style={{ color: progressColor }}
+                            >
+                              {snapshot.progressPercent}%
+                            </span>
                           </div>
-                          <ul className="space-y-0.5">
-                            {snapshot.next.slice(0, 2).map((task, i) => (
-                              <li
-                                key={i}
-                                className="text-[11px] truncate"
-                                style={{ color: "var(--notion-text-secondary)" }}
-                                title={task}
-                              >
-                                • {task}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        </button>
 
-                      {/* 리스크 */}
-                      {snapshot.risk && snapshot.risk.length > 0 && (
-                        <div className="pt-2 border-t" style={{ borderColor: "var(--notion-border)" }}>
-                          <div className="text-[10px] font-medium mb-1 flex items-center gap-1" style={{ color: "#ef4444" }}>
-                            ⚠️ Risk
-                            {snapshot.riskLevel !== null && snapshot.riskLevel !== undefined && (
-                              <span className="px-1 rounded text-[9px]" style={{ background: "rgba(239, 68, 68, 0.1)" }}>
-                                R{snapshot.riskLevel}
-                              </span>
+                        {/* 펼쳐진 상세 내용 */}
+                        {isExpanded && (
+                          <div className="px-4 pb-3 pt-0 border-t" style={{ borderColor: "var(--notion-border)" }}>
+                            {/* 경로 */}
+                            <div
+                              className="text-xs py-2"
+                              style={{ color: "var(--notion-text-muted)" }}
+                            >
+                              📁 {snapshot.project} / {snapshot.module || "—"}
+                            </div>
+
+                            {/* 진행률 바 */}
+                            <div className="mb-3">
+                              <div
+                                className="h-1.5 rounded-full overflow-hidden"
+                                style={{ background: "var(--notion-bg-secondary)" }}
+                              >
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${snapshot.progressPercent}%`,
+                                    background: progressColor,
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* 완료된 작업 */}
+                            {snapshot.progress && snapshot.progress.length > 0 && (
+                              <div className="mb-2">
+                                <div className="text-xs font-medium mb-1" style={{ color: "var(--notion-text-muted)" }}>
+                                  완료된 작업
+                                </div>
+                                <ul className="space-y-1">
+                                  {snapshot.progress.slice(0, 3).map((p, i) => (
+                                    <li
+                                      key={i}
+                                      className="text-xs flex items-start gap-1.5"
+                                      style={{ color: "var(--notion-text-secondary)" }}
+                                    >
+                                      <span className="text-green-500 flex-shrink-0">✓</span>
+                                      <span className="line-clamp-2">{p}</span>
+                                    </li>
+                                  ))}
+                                  {snapshot.progress.length > 3 && (
+                                    <li className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+                                      +{snapshot.progress.length - 3} more
+                                    </li>
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* 다음 계획 */}
+                            {snapshot.next && snapshot.next.length > 0 && (
+                              <div className="mb-2">
+                                <div className="text-xs font-medium mb-1" style={{ color: "var(--notion-text-muted)" }}>
+                                  다음 계획
+                                </div>
+                                <ul className="space-y-1">
+                                  {snapshot.next.slice(0, 2).map((n, i) => (
+                                    <li
+                                      key={i}
+                                      className="text-xs flex items-start gap-1.5"
+                                      style={{ color: "var(--notion-text-secondary)" }}
+                                    >
+                                      <span className="text-blue-500 flex-shrink-0">→</span>
+                                      <span className="line-clamp-2">{n}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* 리스크 */}
+                            {snapshot.risk && snapshot.risk.length > 0 && (
+                              <div>
+                                <div className="text-xs font-medium mb-1" style={{ color: "#ef4444" }}>
+                                  리스크 {snapshot.riskLevel !== null && snapshot.riskLevel !== undefined && `(R${snapshot.riskLevel})`}
+                                </div>
+                                <ul className="space-y-1">
+                                  {snapshot.risk.map((r, i) => (
+                                    <li
+                                      key={i}
+                                      className="text-xs flex items-start gap-1.5"
+                                      style={{ color: "#ef4444" }}
+                                    >
+                                      <span className="flex-shrink-0">⚠</span>
+                                      <span className="line-clamp-2">{r}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
                             )}
                           </div>
-                          <div className="text-[10px]" style={{ color: "var(--notion-text-secondary)" }}>
-                            {snapshot.risk[0]}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
           );
-        })()}
+        })}
       </div>
 
       {/* 범례 */}

@@ -35,3 +35,56 @@ export interface WorkMapSelection {
   feature: string | null;
 }
 
+/**
+ * 트리 뷰 모드 타입
+ */
+export type TreeViewMode = "project" | "person";
+
+// ========================================
+// 사람 단위 계층 구조 타입
+// ========================================
+
+/**
+ * 사람 노드 타입 (Person → Domain → Project → Module → Feature)
+ */
+export interface PersonNode {
+  name: string;
+  domains: PersonDomainNode[];
+  items: ScrumItem[];
+}
+
+/**
+ * 사람 도메인 노드 타입
+ */
+export interface PersonDomainNode {
+  name: string;
+  projects: PersonProjectNode[];
+  items: ScrumItem[];
+}
+
+/**
+ * 사람 프로젝트 노드 타입
+ */
+export interface PersonProjectNode {
+  name: string;
+  modules: PersonModuleNode[];
+  items: ScrumItem[];
+}
+
+/**
+ * 사람 모듈 노드 타입
+ */
+export interface PersonModuleNode {
+  name: string;
+  features: PersonFeatureNode[];
+  items: ScrumItem[];
+}
+
+/**
+ * 사람 피쳐 노드 타입
+ */
+export interface PersonFeatureNode {
+  name: string;
+  items: ScrumItem[];
+}
+

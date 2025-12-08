@@ -102,12 +102,12 @@ interface ParseError {
 function extractTaskWithProgress(text: string): PastWeekTask {
   // (%) 또는 % 형태 매칭
   const match = text.match(/^(.+?)\s*\((\d+)%\)\s*$/);
-  if (match) {
+    if (match) {
     return {
       title: match[1].trim(),
       progress: parseInt(match[2], 10),
     };
-  }
+    }
 
   // 괄호 없이 %만 있는 경우
   const simpleMatch = text.match(/^(.+?)\s+(\d+)%\s*$/);
@@ -131,17 +131,17 @@ function extractTaskWithProgress(text: string): PastWeekTask {
  */
 function parseRiskLevel(riskLevelText: string): RiskLevel | null {
   const trimmed = riskLevelText.trim().toLowerCase();
-
+  
   // "none", "?" 또는 빈 값은 null (미정)
   if (trimmed === "none" || trimmed === "?" || trimmed === "") {
     return null;
   }
-
+  
   const level = parseInt(trimmed, 10);
   if (!isNaN(level) && level >= 0 && level <= 3) {
     return level as RiskLevel;
   }
-
+  
   return null;
 }
 
@@ -169,7 +169,7 @@ function parseHeader(headerLine: string): {
     // 부족한 부분은 빈 문자열로 채움
     while (parts.length < 4) {
       parts.push("");
-    }
+  }
   }
 
   return {
@@ -185,11 +185,11 @@ function parseHeader(headerLine: string): {
  */
 function parseRelation(rawRelation: string): Relation | null {
   const relation = rawRelation.toLowerCase().trim();
-
+  
   if (relation === "pair" || relation === "pre" || relation === "post") {
     return relation as Relation;
   }
-
+  
   // 레거시 relation 마이그레이션
   if (relation === "waiting-on") {
     return "pre";
@@ -197,7 +197,7 @@ function parseRelation(rawRelation: string): Relation | null {
   if (relation === "review" || relation === "handoff") {
     return "pre";
   }
-
+  
   return null;
 }
 
@@ -208,17 +208,17 @@ function parseRelation(rawRelation: string): Relation | null {
 function parseCollaboratorItem(text: string): Collaborator | null {
   // "이름 (relation)" 형태 파싱
   const match = text.match(/^(.+?)\s*\((.+?)\)$/);
-  if (match) {
-    const name = match[1].trim();
-    const rawRelation = match[2].trim();
+    if (match) {
+      const name = match[1].trim();
+      const rawRelation = match[2].trim();
     const relation = parseRelation(rawRelation);
 
-    if (relation) {
+      if (relation) {
       return { name, relation };
-    } else {
+      } else {
       console.warn(`유효하지 않은 relation: ${rawRelation} (${text})`);
+      }
     }
-  }
   return null;
 }
 
@@ -296,7 +296,7 @@ function parseDefineBlock(
 
   for (const line of lines) {
     const trimmed = line.trim();
-
+    
     // Define 섹션 시작 감지
     if (trimmed.match(/^[*-]\s*Define\s*$/i)) {
       inDefine = true;
@@ -309,8 +309,8 @@ function parseDefineBlock(
         trimmed.match(/^[*-]\s*(Past Week|This Week|Name)\s*$/i) ||
         trimmed.match(/^[*-]\s*(Past Week|This Week|Name):/i)
       ) {
-        break;
-      }
+      break;
+    }
 
       // Define 내부 필드 파싱
       const fieldMatch = trimmed.match(/^[*-]\s*(Domain|Project|Module|Feature):\s*(.+)$/i);
@@ -344,7 +344,7 @@ function parsePastWeekBlock(lines: string[]): PastWeek {
       break;
     }
   }
-
+  
   if (pastWeekStart < 0) {
     return {
       tasks: [],
@@ -352,7 +352,7 @@ function parsePastWeekBlock(lines: string[]): PastWeek {
       riskLevel: null,
       collaborators: [],
     };
-  }
+}
 
   const pastWeekLines = lines.slice(pastWeekStart, pastWeekEnd);
 

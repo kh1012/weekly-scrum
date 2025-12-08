@@ -59,7 +59,10 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     key: "personal",
     label: "개인화",
-    items: [{ key: "my", label: "개인 대시보드", href: "/my", emoji: "👤" }],
+    items: [
+      { key: "my", label: "개인 대시보드", href: "/my", emoji: "👤" },
+      { key: "report", label: "개인 리포트", href: "/report", emoji: "📋" },
+    ],
   },
   {
     key: "extra",
