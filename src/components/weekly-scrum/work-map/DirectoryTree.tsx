@@ -171,22 +171,14 @@ function ProjectItem({
   );
 
   return (
-    <div className="select-none">
-      {/* 프로젝트 구분선 (첫 번째가 아닐 때) */}
-      {!isFirst && (
-        <div
-          className="mx-2 my-3"
-          style={{ borderTop: "1px solid var(--notion-border)" }}
-        />
-      )}
-
+    <div className={`select-none ${isFirst ? "" : "mt-4"}`}>
       {/* 프로젝트 헤더 */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all"
-        style={{ background: "var(--notion-bg-secondary)" }}
+        className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all"
+        style={{ background: "transparent" }}
         onMouseEnter={(e) => e.currentTarget.style.background = "var(--notion-bg-hover)"}
-        onMouseLeave={(e) => e.currentTarget.style.background = "var(--notion-bg-secondary)"}
+        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
       >
         {/* 화살표 */}
         <svg
