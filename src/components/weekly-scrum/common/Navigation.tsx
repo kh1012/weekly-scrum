@@ -9,6 +9,7 @@ interface NavItem {
   label: string;
   href: string;
   emoji: string;
+  description?: string;
 }
 
 interface NavCategory {
@@ -19,16 +20,35 @@ interface NavCategory {
 
 const NAV_CATEGORIES: NavCategory[] = [
   {
-    key: "dashboard",
-    label: "대시보드",
+    key: "structure",
+    label: "구조 탐색",
+    items: [
+      {
+        key: "work-map",
+        label: "Work Map",
+        href: "/work-map",
+        emoji: "🗺️",
+        description: "Project → Module → Feature",
+      },
+    ],
+  },
+  {
+    key: "analysis",
+    label: "분석",
     items: [
       { key: "summary", label: "요약", href: "/summary", emoji: "📊" },
-      { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
-      { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
-      { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
       { key: "quadrant", label: "사분면", href: "/quadrant", emoji: "🎯" },
       { key: "risks", label: "리스크", href: "/risks", emoji: "⚠️" },
       { key: "collaboration", label: "팀 협업", href: "/collaboration", emoji: "🤝" },
+    ],
+  },
+  {
+    key: "views",
+    label: "뷰",
+    items: [
+      { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
+      { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
+      { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
     ],
   },
   {
@@ -77,6 +97,12 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
         <span className="font-semibold text-sm" style={{ color: 'var(--notion-text)' }}>
           Weekly Scrum
         </span>
+        <span
+          className="text-xs px-1.5 py-0.5 rounded"
+          style={{ background: 'var(--notion-accent-light)', color: 'var(--notion-accent)' }}
+        >
+          v2
+        </span>
       </div>
 
       {/* Navigation Items */}
@@ -95,7 +121,17 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                   className={`notion-sidebar-item ${isActive(item.href) ? 'active' : ''}`}
                 >
                   <span className="text-base w-5 text-center">{item.emoji}</span>
-                  <span className="flex-1">{item.label}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block">{item.label}</span>
+                    {item.description && (
+                      <span
+                        className="block text-xs truncate"
+                        style={{ color: 'var(--notion-text-muted)' }}
+                      >
+                        {item.description}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -107,7 +143,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
       <div className="px-3 py-3 border-t" style={{ borderColor: 'var(--notion-border)' }}>
         <div className="flex items-center justify-between">
           <div className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>
-            v1.0
+            v2.0
           </div>
           <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--notion-text-muted)' }}>
             <span>👀</span>
@@ -127,9 +163,19 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
 export function Navigation() {
   const isActive = useIsActive();
 
+  // 우선순위: Work Map, 요약, 사분면, 리스크, 팀 협업, 개인
+  const priorityItems = [
+    NAV_ITEMS.find((i) => i.key === "work-map"),
+    NAV_ITEMS.find((i) => i.key === "summary"),
+    NAV_ITEMS.find((i) => i.key === "quadrant"),
+    NAV_ITEMS.find((i) => i.key === "risks"),
+    NAV_ITEMS.find((i) => i.key === "collaboration"),
+    NAV_ITEMS.find((i) => i.key === "my"),
+  ].filter(Boolean) as NavItem[];
+
   return (
     <nav className="flex items-center gap-0.5 px-1 py-1 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
-      {NAV_ITEMS.slice(0, 6).map((item) => (
+      {priorityItems.map((item) => (
         <Link
           key={item.key}
           href={item.href}
@@ -160,9 +206,21 @@ interface MobileNavigationProps {
 export function MobileNavigation({ onItemClick }: MobileNavigationProps) {
   const isActive = useIsActive();
 
+  // 모바일 우선순위 메뉴
+  const mobileItems = [
+    NAV_ITEMS.find((i) => i.key === "work-map"),
+    NAV_ITEMS.find((i) => i.key === "summary"),
+    NAV_ITEMS.find((i) => i.key === "quadrant"),
+    NAV_ITEMS.find((i) => i.key === "risks"),
+    NAV_ITEMS.find((i) => i.key === "collaboration"),
+    NAV_ITEMS.find((i) => i.key === "cards"),
+    NAV_ITEMS.find((i) => i.key === "my"),
+    NAV_ITEMS.find((i) => i.key === "shares"),
+  ].filter(Boolean) as NavItem[];
+
   return (
     <nav className="grid grid-cols-4 gap-1 p-1">
-      {NAV_ITEMS.slice(0, 8).map((item) => (
+      {mobileItems.map((item) => (
         <Link
           key={item.key}
           href={item.href}

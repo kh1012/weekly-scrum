@@ -24,7 +24,45 @@ export interface Collaborator {
 }
 
 /**
- * 스크럼 항목 타입
+ * v2 Past Week Task 타입
+ */
+export interface PastWeekTask {
+  title: string;
+  progress: number; // 0-100
+}
+
+/**
+ * v2 Past Week 블록 타입
+ */
+export interface PastWeek {
+  tasks: PastWeekTask[];
+  risk: string[] | null;
+  riskLevel: RiskLevel | null;
+  collaborators: Collaborator[];
+}
+
+/**
+ * v2 This Week 블록 타입
+ */
+export interface ThisWeek {
+  tasks: string[];
+}
+
+/**
+ * v2 스크럼 항목 타입
+ */
+export interface ScrumItemV2 {
+  name: string;
+  domain: string;
+  project: string;
+  module: string;
+  feature: string;
+  pastWeek: PastWeek;
+  thisWeek: ThisWeek;
+}
+
+/**
+ * v1 스크럼 항목 타입 (하위 호환성 유지)
  */
 export interface ScrumItem {
   name: string;
@@ -44,15 +82,33 @@ export interface ScrumItem {
 }
 
 /**
- * 주간 스크럼 데이터 타입
+ * v2 주간 스크럼 데이터 타입
+ */
+export interface WeeklyScrumDataV2 {
+  year: number;
+  month: number;
+  week: string;
+  range: string;
+  schemaVersion: 2;
+  items: ScrumItemV2[];
+}
+
+/**
+ * v1 주간 스크럼 데이터 타입 (하위 호환성 유지)
  */
 export interface WeeklyScrumData {
   year: number;
   month: number;
   week: string;
   range: string;
+  schemaVersion?: 1;
   items: ScrumItem[];
 }
+
+/**
+ * 통합 주간 스크럼 데이터 타입 (v1 또는 v2)
+ */
+export type WeeklyScrumDataUnion = WeeklyScrumData | WeeklyScrumDataV2;
 
 /**
  * 필터 상태 타입
@@ -128,4 +184,69 @@ export interface ScrumStats {
   projects: string[];
   members: string[];
   modules: string[];
+}
+
+// ========================================
+// v2 → v1 변환 유틸리티 (하위 호환성)
+// ========================================
+
+/**
+ * v2 ScrumItem을 v1 ScrumItem으로 변환
+ */
+export function convertV2ToV1Item(item: ScrumItemV2): ScrumItem {
+  const avgProgress =
+    item.pastWeek.tasks.length > 0
+      ? Math.round(
+          item.pastWeek.tasks.reduce((sum, t) => sum + t.progress, 0) /
+            item.pastWeek.tasks.length
+        )
+      : 0;
+
+  return {
+    name: item.name,
+    domain: item.domain,
+    project: item.project,
+    module: item.module || null,
+    topic: item.feature, // feature → topic 매핑
+    plan: item.pastWeek.tasks.map((t) => `${t.title} (${t.progress}%)`).join(", ") || "",
+    planPercent: avgProgress,
+    progress: item.pastWeek.tasks.map((t) => `${t.title} (${t.progress}%)`),
+    progressPercent: avgProgress,
+    reason: "",
+    next: item.thisWeek.tasks,
+    risk: item.pastWeek.risk,
+    riskLevel: item.pastWeek.riskLevel,
+    collaborators: item.pastWeek.collaborators,
+  };
+}
+
+/**
+ * v2 WeeklyScrumData를 v1 WeeklyScrumData로 변환
+ */
+export function convertV2ToV1Data(data: WeeklyScrumDataV2): WeeklyScrumData {
+  return {
+    year: data.year,
+    month: data.month,
+    week: data.week,
+    range: data.range,
+    schemaVersion: 1,
+    items: data.items.map(convertV2ToV1Item),
+  };
+}
+
+/**
+ * 데이터가 v2 스키마인지 확인
+ */
+export function isV2Data(data: WeeklyScrumDataUnion): data is WeeklyScrumDataV2 {
+  return data.schemaVersion === 2;
+}
+
+/**
+ * 데이터를 v1 형태로 정규화 (v1이면 그대로, v2면 변환)
+ */
+export function normalizeToV1(data: WeeklyScrumDataUnion): WeeklyScrumData {
+  if (isV2Data(data)) {
+    return convertV2ToV1Data(data);
+  }
+  return data;
 }

@@ -1,7 +1,37 @@
 import "server-only";
 import * as fs from "fs";
 import * as path from "path";
-import type { WeeklyScrumData, WeekOption, ScrumItem } from "@/types/scrum";
+import type { WeeklyScrumData, WeekOption, ScrumItem, ScrumItemV2 } from "@/types/scrum";
+
+/**
+ * v2 ScrumItem을 v1 ScrumItem으로 변환
+ */
+function convertV2ToV1Item(item: ScrumItemV2): ScrumItem {
+  const avgProgress =
+    item.pastWeek.tasks.length > 0
+      ? Math.round(
+          item.pastWeek.tasks.reduce((sum, t) => sum + t.progress, 0) /
+            item.pastWeek.tasks.length
+        )
+      : 0;
+
+  return {
+    name: item.name,
+    domain: item.domain,
+    project: item.project,
+    module: item.module || null,
+    topic: item.feature, // feature → topic 매핑
+    plan: item.pastWeek.tasks.map((t) => `${t.title} (${t.progress}%)`).join(", ") || "",
+    planPercent: avgProgress,
+    progress: item.pastWeek.tasks.map((t) => `${t.title} (${t.progress}%)`),
+    progressPercent: avgProgress,
+    reason: "",
+    next: item.thisWeek.tasks,
+    risk: item.pastWeek.risk,
+    riskLevel: item.pastWeek.riskLevel,
+    collaborators: item.pastWeek.collaborators,
+  };
+}
 
 /**
  * 레거시 ScrumItem을 새 스키마로 마이그레이션합니다.
@@ -80,8 +110,23 @@ function migrateScrumItem(item: Record<string, unknown>): ScrumItem {
 
 /**
  * WeeklyScrumData를 마이그레이션합니다.
+ * v2 스키마일 경우 v1으로 변환합니다.
  */
 function migrateWeeklyScrumData(data: Record<string, unknown>): WeeklyScrumData {
+  // v2 스키마 감지
+  if (data.schemaVersion === 2) {
+    const v2Items = data.items as ScrumItemV2[];
+    const v1Items = v2Items.map(convertV2ToV1Item);
+    return {
+      year: data.year as number,
+      month: data.month as number,
+      week: data.week as string,
+      range: data.range as string,
+      items: v1Items,
+    };
+  }
+
+  // v1 또는 레거시 스키마
   const items = (data.items as Record<string, unknown>[]).map(migrateScrumItem);
   return {
     year: data.year as number,

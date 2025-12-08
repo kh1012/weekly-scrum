@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 // ========================================
-// 타입 정의
+// 타입 정의 (v2 스키마)
 // ========================================
 
 /**
@@ -31,29 +31,64 @@ interface Collaborator {
   relation: Relation;
 }
 
-interface ScrumItem {
+/**
+ * v2 Past Week Task 타입
+ */
+interface PastWeekTask {
+  title: string;
+  progress: number;
+}
+
+/**
+ * v2 Past Week 블록 타입
+ */
+interface PastWeek {
+  tasks: PastWeekTask[];
+  risk: string[] | null;
+  riskLevel: RiskLevel | null;
+  collaborators: Collaborator[];
+}
+
+/**
+ * v2 This Week 블록 타입
+ */
+interface ThisWeek {
+  tasks: string[];
+}
+
+/**
+ * v2 스크럼 항목 타입
+ */
+interface ScrumItemV2 {
   name: string;
   domain: string;
   project: string;
-  module?: string | null;
-  topic: string;
-  plan: string;
-  planPercent: number;
-  progress: string[]; // 멀티라인 지원 (배열)
-  progressPercent: number;
-  reason: string;
-  next: string[]; // 멀티라인 지원 (배열)
-  risk: string[] | null; // 멀티라인 지원 (배열), null = 미정 ("?" 입력 시)
-  riskLevel: RiskLevel | null; // null = 미정 ("?" 입력 시)
-  collaborators?: Collaborator[];
+  module: string;
+  feature: string;
+  pastWeek: PastWeek;
+  thisWeek: ThisWeek;
 }
 
-interface WeeklyScrumData {
+/**
+ * v2 주간 스크럼 데이터 타입
+ */
+interface WeeklyScrumDataV2 {
   year: number;
   month: number;
   week: string;
   range: string;
-  items: ScrumItem[];
+  schemaVersion: 2;
+  items: ScrumItemV2[];
+}
+
+// ========================================
+// 파싱 에러 타입
+// ========================================
+
+interface ParseError {
+  line: number;
+  message: string;
+  block?: string;
 }
 
 // ========================================
@@ -62,75 +97,63 @@ interface WeeklyScrumData {
 
 /**
  * 텍스트에서 퍼센트 숫자를 추출합니다.
- * 배열인 경우 첫 번째 요소 또는 전체에서 가장 높은 퍼센트를 추출합니다.
- * 예: "셀 렌더링 구조 개선 60% 완료" → 60
+ * 예: "Rich-note 편집 패널 구조 리팩토링 (50%)" → { title: "Rich-note 편집 패널 구조 리팩토링", progress: 50 }
  */
-function extractPercent(textOrArray: string | string[]): number {
-  const texts = Array.isArray(textOrArray) ? textOrArray : [textOrArray];
-  
-  for (const text of texts) {
-    const match = text.match(/(\d+)\s*%/);
-    if (match) {
-      return parseInt(match[1], 10);
-    }
+function extractTaskWithProgress(text: string): PastWeekTask {
+  // (%) 또는 % 형태 매칭
+  const match = text.match(/^(.+?)\s*\((\d+)%\)\s*$/);
+  if (match) {
+    return {
+      title: match[1].trim(),
+      progress: parseInt(match[2], 10),
+    };
   }
+
+  // 괄호 없이 %만 있는 경우
+  const simpleMatch = text.match(/^(.+?)\s+(\d+)%\s*$/);
+  if (simpleMatch) {
+    return {
+      title: simpleMatch[1].trim(),
+      progress: parseInt(simpleMatch[2], 10),
+    };
+  }
+
   // 퍼센트가 없는 경우 기본값 0
-  return 0;
+  return {
+    title: text.trim(),
+    progress: 0,
+  };
 }
 
 /**
  * RiskLevel 텍스트를 숫자로 변환합니다.
- * "?" 또는 빈 값은 null로 처리합니다.
+ * "None", "?" 또는 빈 값은 null로 처리합니다.
  */
 function parseRiskLevel(riskLevelText: string): RiskLevel | null {
-  const trimmed = riskLevelText.trim();
-  
-  // "?" 또는 빈 값은 null (미정)
-  if (trimmed === "?" || trimmed === "") {
+  const trimmed = riskLevelText.trim().toLowerCase();
+
+  // "none", "?" 또는 빈 값은 null (미정)
+  if (trimmed === "none" || trimmed === "?" || trimmed === "") {
     return null;
   }
-  
+
   const level = parseInt(trimmed, 10);
   if (!isNaN(level) && level >= 0 && level <= 3) {
     return level as RiskLevel;
   }
-  
+
   return null;
 }
 
 /**
- * Risk 멀티라인 필드를 파싱합니다.
- * "?" 또는 빈 값은 null로 처리합니다.
- */
-function parseRiskMultiline(rawLines: string[]): string[] | null {
-  const result = parseMultilineField(rawLines, "Risk");
-  
-  // 빈 배열 또는 "?" 단일 값인 경우 null
-  if (result.length === 0) {
-    return null;
-  }
-  
-  // 첫 번째 항목이 "?" 또는 "-"인 경우 null (미정)
-  if (result.length === 1 && (result[0] === "?" || result[0] === "-")) {
-    return null;
-  }
-  
-  // "?" 또는 "-" 항목 필터링
-  const filtered = result.filter(item => item !== "?" && item !== "-" && item.trim() !== "");
-  
-  return filtered.length > 0 ? filtered : null;
-}
-
-/**
  * 헤더 라인을 파싱합니다.
- * 3개: [Domain / Project / Topic]
- * 4개 이상: [Domain / Project / Module / Topic]
+ * [Domain / Project / Module / Feature] 형식
  */
 function parseHeader(headerLine: string): {
   domain: string;
   project: string;
-  module: string | null;
-  topic: string;
+  module: string;
+  feature: string;
 } | null {
   // 대괄호 내부 추출
   const bracketMatch = headerLine.match(/^\[(.+)\]$/);
@@ -141,262 +164,355 @@ function parseHeader(headerLine: string): {
   // "/" 기준으로 split
   const parts = bracketMatch[1].split("/").map((p) => p.trim());
 
-  if (parts.length < 3) {
-    return null;
+  if (parts.length < 4) {
+    console.warn(`헤더 파싱 경고: 4개 미만의 항목 - ${headerLine}`);
+    // 부족한 부분은 빈 문자열로 채움
+    while (parts.length < 4) {
+      parts.push("");
+    }
   }
 
-  if (parts.length === 3) {
-    // 3개: domain, project, topic
-    return {
-      domain: parts[0],
-      project: parts[1],
-      module: null,
-      topic: parts[2],
-    };
-  }
-
-  // 4개 이상: domain, project, module, topic (나머지는 topic에 합침)
   return {
     domain: parts[0],
     project: parts[1],
     module: parts[2],
-    topic: parts.slice(3).join(" / "),
+    feature: parts.slice(3).join(" / "), // 4개 이상이면 나머지는 feature에 합침
   };
 }
 
 /**
- * 레거시 relation을 새 스키마로 매핑합니다.
- * waiting-on → pre (선행 협업자)
- * review, handoff → pre (유사한 의미로 매핑)
+ * relation을 파싱합니다.
  */
-function migrateRelation(rawRelation: string): Relation | null {
+function parseRelation(rawRelation: string): Relation | null {
   const relation = rawRelation.toLowerCase().trim();
-  
-  // 새 스키마 relation
+
   if (relation === "pair" || relation === "pre" || relation === "post") {
     return relation as Relation;
   }
-  
+
   // 레거시 relation 마이그레이션
   if (relation === "waiting-on") {
-    return "pre"; // waiting-on은 선행 협업자를 기다리는 것이므로 pre로 매핑
+    return "pre";
   }
   if (relation === "review" || relation === "handoff") {
-    return "pre"; // review, handoff도 pre로 매핑
+    return "pre";
   }
-  
+
   return null;
 }
 
 /**
- * 협업자 목록을 파싱합니다.
- * 예: "김정빈(pair), 조해용(pre)" → [{ name: "김정빈", relation: "pair" }, ...]
- * 레거시 형식(waiting-on)도 pre로 자동 마이그레이션합니다.
+ * 협업자 항목을 파싱합니다.
+ * 예: "박민수 (pair)" → { name: "박민수", relation: "pair" }
  */
-function parseCollaborators(text: string): Collaborator[] {
-  if (!text || text.trim() === "") {
-    return [];
-  }
+function parseCollaboratorItem(text: string): Collaborator | null {
+  // "이름 (relation)" 형태 파싱
+  const match = text.match(/^(.+?)\s*\((.+?)\)$/);
+  if (match) {
+    const name = match[1].trim();
+    const rawRelation = match[2].trim();
+    const relation = parseRelation(rawRelation);
 
-  const collaborators: Collaborator[] = [];
-
-  // 쉼표로 분리
-  const parts = text.split(",").map((p) => p.trim());
-
-  for (const part of parts) {
-    // "이름(relation)" 형태 파싱
-    const match = part.match(/^(.+?)\((.+?)\)$/);
-    if (match) {
-      const name = match[1].trim();
-      const rawRelation = match[2].trim();
-      const relation = migrateRelation(rawRelation);
-
-      if (relation) {
-        collaborators.push({ name, relation });
-      } else {
-        console.warn(`유효하지 않은 relation: ${rawRelation} (${part})`);
-      }
+    if (relation) {
+      return { name, relation };
+    } else {
+      console.warn(`유효하지 않은 relation: ${rawRelation} (${text})`);
     }
   }
-
-  return collaborators;
+  return null;
 }
 
 /**
- * 멀티라인 필드를 파싱합니다 (Progress, Next, Risk 등).
- * 
- * 케이스 1: "- Progress: 단일 라인 내용" 또는 "* Progress: 단일 라인 내용" → ["단일 라인 내용"]
- * 케이스 2: "- Progress" 또는 "* Progress" (콜론 없이 끝남)
- *           "  - 항목1" 또는 "    * 항목1"
- *           "  - 항목2" 또는 "    * 항목2" → ["항목1", "항목2"]
+ * 블록 내에서 특정 섹션의 하위 항목들을 추출합니다.
  */
-function parseMultilineField(rawLines: string[], fieldName: string): string[] {
-  const result: string[] = [];
-  
-  // 필드 시작 위치 찾기
-  let fieldStartIndex = -1;
-  for (let i = 0; i < rawLines.length; i++) {
-    const line = rawLines[i];
+function extractSectionItems(lines: string[], sectionName: string): string[] {
+  const results: string[] = [];
+  let inSection = false;
+  let sectionIndent = -1;
+
+  for (const line of lines) {
     const trimmed = line.trim();
-    
-    // "- FieldName:" 또는 "* FieldName:" 형태 (단일 라인)
-    const singleLineMatch = trimmed.match(new RegExp(`^[-*]\\s*${fieldName}:\\s*(.+)$`, 'i'));
-    if (singleLineMatch) {
-      const content = singleLineMatch[1].trim();
-      if (content) {
-        result.push(content);
+
+    // 섹션 시작 감지 (예: "* Tasks", "* Risk", etc.)
+    const sectionMatch = trimmed.match(/^[*-]\s*(.+?)(?::(.*))?$/);
+    if (sectionMatch) {
+      const name = sectionMatch[1].trim();
+
+      if (name.toLowerCase() === sectionName.toLowerCase()) {
+        inSection = true;
+        sectionIndent = line.search(/[^\s]/); // 현재 들여쓰기 레벨
+
+        // 같은 줄에 값이 있는 경우 (예: "* Risk: None")
+        const inlineValue = sectionMatch[2]?.trim();
+        if (inlineValue && inlineValue.toLowerCase() !== "none") {
+          results.push(inlineValue);
+          inSection = false; // 인라인 값만 있으면 섹션 종료
+        }
+        continue;
+      } else if (inSection) {
+        // 같은 레벨의 다른 섹션 시작 → 현재 섹션 종료
+        const currentIndent = line.search(/[^\s]/);
+        if (currentIndent <= sectionIndent) {
+          inSection = false;
+        }
       }
-      return result;
     }
-    
-    // "- FieldName" 또는 "* FieldName" 형태 (멀티라인 시작, 콜론 없음 또는 콜론 뒤 내용 없음)
-    const multiLineMatch = trimmed.match(new RegExp(`^[-*]\\s*${fieldName}:?\\s*$`, 'i'));
-    if (multiLineMatch) {
-      fieldStartIndex = i;
-      break;
-    }
-  }
-  
-  if (fieldStartIndex === -1) {
-    return result;
-  }
-  
-  // 멀티라인 항목 수집
-  for (let i = fieldStartIndex + 1; i < rawLines.length; i++) {
-    const line = rawLines[i];
-    
-    // 들여쓰기된 항목인지 확인 (공백 또는 탭으로 시작하고 "-" 또는 "*"가 있음)
-    const itemMatch = line.match(/^[\s\t]+[-*]\s*(.+)$/);
-    if (itemMatch) {
-      const content = itemMatch[1].trim();
-      if (content) {
-        result.push(content);
+
+    if (inSection) {
+      // 들여쓰기된 항목 추출
+      const itemMatch = trimmed.match(/^[*-]\s*(.+)$/);
+      if (itemMatch) {
+        results.push(itemMatch[1].trim());
       }
-    } else if ((line.trim().startsWith("- ") || line.trim().startsWith("* ")) && !line.match(/^\s/)) {
-      // 들여쓰기 없는 새로운 필드 시작 → 멀티라인 종료
-      break;
-    } else if (line.trim().startsWith("[")) {
-      // 새로운 블록 시작 → 멀티라인 종료
-      break;
     }
   }
-  
-  return result;
+
+  return results;
 }
 
 /**
  * 단일 라인 필드를 파싱합니다.
- * "- FieldName:" 또는 "* FieldName:" 형식 모두 지원합니다.
+ * 예: "* Name: 김서연" → "김서연"
  */
 function parseSingleField(lines: string[], fieldName: string): string {
-  // "- FieldName:" 또는 "* FieldName:" 형식 모두 매칭
-  const regex = new RegExp(`^[-*]\\s*${fieldName}:`, 'i');
-  const line = lines.find((l) => regex.test(l.trim()));
-  if (line) {
-    return line.substring(line.indexOf(':') + 1).trim();
+  const regex = new RegExp(`^[*-]\\s*${fieldName}:\\s*(.*)$`, "i");
+  for (const line of lines) {
+    const match = line.trim().match(regex);
+    if (match) {
+      return match[1].trim();
+    }
   }
   return "";
 }
 
 /**
- * 텍스트 블록 하나를 ScrumItem으로 파싱합니다.
+ * Define 블록에서 필드 값을 추출합니다.
  */
-function parseBlock(block: string): ScrumItem | null {
-  const rawLines = block.split("\n");
-  const lines = rawLines.map((l) => l.trim()).filter((l) => l.length > 0);
+function parseDefineBlock(
+  lines: string[]
+): { domain: string; project: string; module: string; feature: string } | null {
+  let inDefine = false;
+  const result = { domain: "", project: "", module: "", feature: "" };
 
-  if (lines.length === 0) {
-    return null;
-  }
+  for (const line of lines) {
+    const trimmed = line.trim();
 
-  // 첫 줄은 헤더
-  const header = parseHeader(lines[0]);
-  if (!header) {
-    console.warn(`헤더 파싱 실패: ${lines[0]}`);
-    return null;
-  }
+    // Define 섹션 시작 감지
+    if (trimmed.match(/^[*-]\s*Define\s*$/i)) {
+      inDefine = true;
+      continue;
+    }
 
-  // 필드 파싱 (required)
-  const name = parseSingleField(lines, "Name");
-  const plan = parseSingleField(lines, "Plan");
-  
-  // 멀티라인 필드 파싱
-  const progress = parseMultilineField(rawLines, "Progress");
-  const next = parseMultilineField(rawLines, "Next");
-  
-  // 필드 파싱 (optional)
-  const reason = parseSingleField(lines, "reason");
-  const riskLevelText = parseSingleField(lines, "RiskLevel");
-  const collaboratorsText = parseSingleField(lines, "Collaborators");
-  
-  // Risk 멀티라인 파싱
-  const risk = parseRiskMultiline(rawLines);
+    if (inDefine) {
+      // 다른 최상위 섹션 시작 시 종료
+      if (
+        trimmed.match(/^[*-]\s*(Past Week|This Week|Name)\s*$/i) ||
+        trimmed.match(/^[*-]\s*(Past Week|This Week|Name):/i)
+      ) {
+        break;
+      }
 
-  // 필수 필드 검증
-  if (!name) {
-    console.warn(`Name 필드 누락: ${block}`);
-    return null;
-  }
-  if (!plan) {
-    console.warn(`Plan 필드 누락: ${block}`);
-    return null;
-  }
-  if (progress.length === 0) {
-    console.warn(`Progress 필드 누락: ${block}`);
-    return null;
-  }
-  if (next.length === 0) {
-    console.warn(`Next 필드 누락: ${block}`);
-    return null;
-  }
-
-  const planPercent = extractPercent(plan);
-  const progressPercent = extractPercent(progress);
-  const riskLevel = parseRiskLevel(riskLevelText);
-  const collaborators = parseCollaborators(collaboratorsText);
-
-  const item: ScrumItem = {
-    name,
-    domain: header.domain,
-    project: header.project,
-    topic: header.topic,
-    plan,
-    planPercent,
-    progress,
-    progressPercent,
-    reason,
-    next,
-    risk,
-    riskLevel,
-  };
-
-  // optional 필드는 값이 있을 때만 추가
-  if (header.module) {
-    item.module = header.module;
-  }
-  if (collaborators.length > 0) {
-    item.collaborators = collaborators;
-  }
-
-  return item;
-}
-
-/**
- * submitted.txt 전체를 파싱하여 ScrumItem 배열로 변환합니다.
- */
-function parseSubmittedText(content: string): ScrumItem[] {
-  // 빈 줄로 블록 구분
-  const blocks = content.split(/\n\s*\n/).filter((block) => block.trim());
-
-  const items: ScrumItem[] = [];
-  for (const block of blocks) {
-    const item = parseBlock(block);
-    if (item) {
-      items.push(item);
+      // Define 내부 필드 파싱
+      const fieldMatch = trimmed.match(/^[*-]\s*(Domain|Project|Module|Feature):\s*(.+)$/i);
+      if (fieldMatch) {
+        const field = fieldMatch[1].toLowerCase() as keyof typeof result;
+        result[field] = fieldMatch[2].trim();
+      }
     }
   }
 
-  return items;
+  if (result.domain || result.project || result.module || result.feature) {
+    return result;
+  }
+  return null;
+}
+
+/**
+ * Past Week 블록을 파싱합니다.
+ */
+function parsePastWeekBlock(lines: string[]): PastWeek {
+  // Past Week 섹션 찾기
+  let pastWeekStart = -1;
+  let pastWeekEnd = lines.length;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (trimmed.match(/^[*-]\s*Past Week\s*$/i)) {
+      pastWeekStart = i;
+    } else if (pastWeekStart >= 0 && trimmed.match(/^[*-]\s*This Week\s*$/i)) {
+      pastWeekEnd = i;
+      break;
+    }
+  }
+
+  if (pastWeekStart < 0) {
+    return {
+      tasks: [],
+      risk: null,
+      riskLevel: null,
+      collaborators: [],
+    };
+  }
+
+  const pastWeekLines = lines.slice(pastWeekStart, pastWeekEnd);
+
+  // Tasks 추출
+  const taskTexts = extractSectionItems(pastWeekLines, "Tasks");
+  const tasks = taskTexts.map(extractTaskWithProgress);
+
+  // Risk 추출
+  const riskTexts = extractSectionItems(pastWeekLines, "Risk");
+  const filteredRisks = riskTexts.filter(
+    (r) => r.toLowerCase() !== "none" && r !== "?" && r !== "-"
+  );
+  const risk = filteredRisks.length > 0 ? filteredRisks : null;
+
+  // RiskLevel 추출
+  const riskLevelText = parseSingleField(pastWeekLines, "RiskLevel");
+  const riskLevel = parseRiskLevel(riskLevelText);
+
+  // Collaborators 추출
+  const collaboratorTexts = extractSectionItems(pastWeekLines, "Collaborators");
+  const collaborators: Collaborator[] = [];
+  for (const text of collaboratorTexts) {
+    if (text.toLowerCase() === "none") continue;
+    const collab = parseCollaboratorItem(text);
+    if (collab) {
+      collaborators.push(collab);
+    }
+  }
+
+  return { tasks, risk, riskLevel, collaborators };
+}
+
+/**
+ * This Week 블록을 파싱합니다.
+ */
+function parseThisWeekBlock(lines: string[]): ThisWeek {
+  // This Week 섹션 찾기
+  let thisWeekStart = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (trimmed.match(/^[*-]\s*This Week\s*$/i)) {
+      thisWeekStart = i;
+      break;
+    }
+  }
+
+  if (thisWeekStart < 0) {
+    return { tasks: [] };
+  }
+
+  const thisWeekLines = lines.slice(thisWeekStart);
+
+  // Tasks 추출
+  const taskTexts = extractSectionItems(thisWeekLines, "Tasks");
+
+  return { tasks: taskTexts };
+}
+
+/**
+ * 텍스트 블록 하나를 ScrumItemV2로 파싱합니다.
+ */
+function parseBlockV2(block: string, startLine: number): { item: ScrumItemV2 | null; errors: ParseError[] } {
+  const errors: ParseError[] = [];
+  const rawLines = block.split("\n");
+  const lines = rawLines.filter((l) => l.trim().length > 0);
+
+  if (lines.length === 0) {
+    return { item: null, errors: [] };
+  }
+
+  // 첫 줄은 헤더
+  const headerLine = lines[0].trim();
+  const header = parseHeader(headerLine);
+  if (!header) {
+    errors.push({
+      line: startLine,
+      message: `헤더 파싱 실패: ${headerLine}`,
+      block: block.substring(0, 100),
+    });
+    return { item: null, errors };
+  }
+
+  // Define 블록 파싱 (있으면 헤더보다 우선)
+  const defineBlock = parseDefineBlock(lines);
+  const domain = defineBlock?.domain || header.domain;
+  const project = defineBlock?.project || header.project;
+  const module = defineBlock?.module || header.module;
+  const feature = defineBlock?.feature || header.feature;
+
+  // Name 필드 파싱
+  const name = parseSingleField(lines, "Name");
+  if (!name) {
+    errors.push({
+      line: startLine,
+      message: `Name 필드 누락`,
+      block: block.substring(0, 100),
+    });
+    // 일부 필드 누락되어도 계속 파싱 시도
+  }
+
+  // Past Week 블록 파싱
+  const pastWeek = parsePastWeekBlock(lines);
+
+  // This Week 블록 파싱
+  const thisWeek = parseThisWeekBlock(lines);
+
+  // 필수 필드 검증 (경고만, 계속 진행)
+  if (pastWeek.tasks.length === 0) {
+    errors.push({
+      line: startLine,
+      message: `Past Week Tasks가 비어있음`,
+      block: block.substring(0, 100),
+    });
+  }
+
+  if (thisWeek.tasks.length === 0) {
+    errors.push({
+      line: startLine,
+      message: `This Week Tasks가 비어있음`,
+      block: block.substring(0, 100),
+    });
+  }
+
+  const item: ScrumItemV2 = {
+    name: name || "Unknown",
+    domain,
+    project,
+    module,
+    feature,
+    pastWeek,
+    thisWeek,
+  };
+
+  return { item, errors };
+}
+
+/**
+ * submitted.txt 전체를 파싱하여 ScrumItemV2 배열로 변환합니다.
+ */
+function parseSubmittedTextV2(content: string): { items: ScrumItemV2[]; errors: ParseError[] } {
+  // 빈 줄로 블록 구분
+  const blocks = content.split(/\n\s*\n/).filter((block) => block.trim());
+
+  const items: ScrumItemV2[] = [];
+  const allErrors: ParseError[] = [];
+  let currentLine = 1;
+
+  for (const block of blocks) {
+    const { item, errors } = parseBlockV2(block, currentLine);
+    if (item) {
+      items.push(item);
+    }
+    allErrors.push(...errors);
+
+    // 다음 블록의 시작 라인 계산
+    currentLine += block.split("\n").length + 1; // +1 for empty line
+  }
+
+  return { items, errors: allErrors };
 }
 
 // ========================================
@@ -408,9 +524,7 @@ function main(): void {
 
   if (args.length < 4) {
     console.error("사용법: yarn scrum:parse <year> <month> <week> <range>");
-    console.error(
-      '예시: yarn scrum:parse 2025 01 W01 "2025-01-06 ~ 2025-01-12"'
-    );
+    console.error('예시: yarn scrum:parse 2025 01 W01 "2025-01-06 ~ 2025-01-12"');
     process.exit(1);
   }
 
@@ -430,18 +544,31 @@ function main(): void {
   }
 
   const content = fs.readFileSync(submittedPath, "utf-8");
-  const items = parseSubmittedText(content);
+  const { items, errors } = parseSubmittedTextV2(content);
+
+  // 파싱 에러 출력
+  if (errors.length > 0) {
+    console.warn("\n⚠️  파싱 경고/에러:");
+    for (const error of errors) {
+      console.warn(`  [Line ${error.line}] ${error.message}`);
+      if (error.block) {
+        console.warn(`    → ${error.block}...`);
+      }
+    }
+    console.warn("");
+  }
 
   if (items.length === 0) {
     console.warn("파싱된 항목이 없습니다.");
   }
 
-  // 결과 JSON 생성
-  const result: WeeklyScrumData = {
+  // 결과 JSON 생성 (v2 스키마)
+  const result: WeeklyScrumDataV2 = {
     year,
     month,
     week,
     range,
+    schemaVersion: 2,
     items,
   };
 
@@ -466,6 +593,11 @@ function main(): void {
 
   console.log(`✅ 파싱 완료: ${items.length}개 항목`);
   console.log(`📁 저장 위치: ${outputPath}`);
+  console.log(`📋 스키마 버전: v2`);
+
+  if (errors.length > 0) {
+    console.log(`⚠️  경고: ${errors.length}개`);
+  }
 }
 
 main();
