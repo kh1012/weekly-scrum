@@ -497,21 +497,19 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
                       return;
                     }
                     
-                    // 클릭 위치의 우측하단에 패널 생성
-                    const container = containerRef.current;
-                    if (container) {
-                      const rect = container.getBoundingClientRect();
-                      const clickX = e.clientX - rect.left;
-                      const clickY = e.clientY - rect.top;
-                      
-                      setSnapshotPanels(prev => [...prev, {
-                        nodeId: node.id,
-                        x: Math.min(clickX + 10, dimensions.width - 380),
-                        y: Math.min(clickY + 10, dimensions.height - 250),
-                        showOnlyFeature: false,
-                        expandedSnapshots: new Set<number>(),
-                      }]);
-                    }
+                    // 클릭 위치의 우측하단에 패널 생성 (viewport 기준)
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const clickX = e.clientX;
+                    const clickY = e.clientY;
+                    
+                    setSnapshotPanels(prev => [...prev, {
+                      nodeId: node.id,
+                      x: Math.min(clickX + 20, viewportWidth - 400),
+                      y: Math.min(clickY + 10, viewportHeight - 520),
+                      showOnlyFeature: false,
+                      expandedSnapshots: new Set<number>(),
+                    }]);
                   }
                 }}
               >
@@ -639,16 +637,16 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
           return (
             <div
               key={panel.nodeId}
-              className="absolute rounded-xl flex flex-col select-none"
+              className="fixed rounded-xl flex flex-col select-none"
               style={{
                 left: panel.x,
                 top: panel.y,
-                width: "360px",
-                maxHeight: "450px",
+                width: "380px",
+                maxHeight: "500px",
                 background: "rgba(255,255,255,0.98)",
                 border: "1px solid var(--notion-border)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
-                zIndex: snapshotPanels.indexOf(panel) + 10,
+                boxShadow: "0 12px 32px rgba(0,0,0,0.2)",
+                zIndex: 1000 + snapshotPanels.indexOf(panel),
               }}
               onMouseDown={(e) => {
                 // 패널을 맨 앞으로 가져오기
@@ -672,13 +670,16 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
                   const handleMouseMove = (moveE: MouseEvent) => {
                     const dx = moveE.clientX - startX;
                     const dy = moveE.clientY - startY;
+                    // viewport 전체 영역에서 드래그 가능
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
                     setSnapshotPanels(prev =>
                       prev.map(p =>
                         p.nodeId === panel.nodeId
                           ? {
                               ...p,
-                              x: Math.max(0, Math.min(dimensions.width - 360, startPanelX + dx)),
-                              y: Math.max(0, Math.min(dimensions.height - 150, startPanelY + dy)),
+                              x: Math.max(0, Math.min(viewportWidth - 380, startPanelX + dx)),
+                              y: Math.max(0, Math.min(viewportHeight - 100, startPanelY + dy)),
                             }
                           : p
                       )
