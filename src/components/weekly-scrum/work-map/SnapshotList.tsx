@@ -28,8 +28,11 @@ export function SnapshotList({ items }: SnapshotListProps) {
         return (
           <div
             key={`${item.name}-${index}`}
-            className="p-4 rounded-lg"
-            style={{ background: "var(--notion-bg-secondary)" }}
+            className="p-4 rounded-xl shadow-sm"
+            style={{ 
+              background: "var(--notion-bg)", 
+              border: "1px solid var(--notion-border)",
+            }}
           >
             {/* 헤더 */}
             <div className="flex items-center justify-between mb-3">
@@ -52,7 +55,7 @@ export function SnapshotList({ items }: SnapshotListProps) {
               </div>
               <div
                 className="h-1.5 rounded-full overflow-hidden"
-                style={{ background: "var(--notion-bg)" }}
+                style={{ background: "var(--notion-bg-secondary)" }}
               >
                 <div
                   className="h-full rounded-full"
