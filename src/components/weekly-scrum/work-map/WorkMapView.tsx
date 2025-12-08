@@ -47,8 +47,8 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   const [treeWidth, setTreeWidth] = useState(450);
   const isResizing = useRef(false);
   
-  // 네트워크 영역 높이 조절 상태 (기본 400px로 증가)
-  const [networkHeight, setNetworkHeight] = useState(400);
+  // 네트워크 영역 높이 조절 상태 (기본 480px)
+  const [networkHeight, setNetworkHeight] = useState(480);
   const isNetworkResizing = useRef(false);
 
   // 리사이즈 핸들러

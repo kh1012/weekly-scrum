@@ -826,17 +826,6 @@ function PersonItem({
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
-        {/* 아바타 */}
-        <span
-          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-          style={{
-            background: "var(--notion-accent-light)",
-            color: "var(--notion-accent)",
-          }}
-        >
-          {person.name.charAt(0)}
-        </span>
-
         <span
           className="flex-1 text-left font-semibold text-sm truncate"
           style={{ color: "var(--notion-text)" }}
@@ -959,8 +948,6 @@ function PersonDomainItem({
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
-        <span className="text-[10px]">🏷️</span>
-
         <span
           className="flex-1 text-left font-medium text-[13px] truncate"
           style={{ color: "var(--notion-text)" }}
@@ -1076,8 +1063,6 @@ function PersonProjectItem({
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
-        <span className="text-[10px]">📁</span>
-
         <span
           className="flex-1 text-left text-[12px] truncate"
           style={{ color: "var(--notion-text-secondary)" }}
@@ -1189,8 +1174,6 @@ function PersonModuleItem({
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
-
-        <span className="text-[10px]">📦</span>
 
         <span
           className="flex-1 text-left text-[11px] truncate"
