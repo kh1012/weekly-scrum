@@ -15,7 +15,7 @@ interface NodeData {
   domain: string;
   degree: number;
   pairCount: number;
-  waitingOnInbound: number;
+  preCount: number; // 나를 기다리는 사람 수 (다른 사람이 나를 pre로 지정한 수)
   x: number;
   y: number;
 }
@@ -89,7 +89,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           domain: node.domain,
           degree: node.degree,
           pairCount: node.pairCount,
-          waitingOnInbound: node.waitingOnInbound,
+          preCount: node.preCount,
           x: columnX,
           y: Math.max(padding, Math.min(height - padding, y)),
         });
@@ -298,7 +298,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           </span>
           <span className="flex items-center gap-1">
             <span className="w-3 h-0.5 bg-red-500 rounded" />
-            →Waiting
+            →Pre
           </span>
         </div>
       </div>
@@ -347,6 +347,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
             if (!source || !target) return null;
 
             const isPair = edge.relation === "pair";
+            const isPreOrPost = edge.relation === "pre" || edge.relation === "post";
             const isConnected = activeNode
               ? edge.source === activeNode || edge.target === activeNode
               : true;
@@ -356,7 +357,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
                 key={`edge-${idx}`}
                 d={getEdgePath(source, target)}
                 fill="none"
-                stroke={isPair ? "#3b82f6" : "#ef4444"}
+                stroke={isPair ? "#3b82f6" : isPreOrPost ? "#ef4444" : "#64748b"}
                 strokeWidth={isPair ? 2.5 : 2}
                 strokeOpacity={isConnected ? 0.7 : 0.1}
                 strokeLinecap="round"
@@ -372,7 +373,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
             const isActive = activeNode === node.name;
             const isConnected = activeConnections.has(node.name);
             const opacity = activeNode ? (isActive || isConnected ? 1 : 0.2) : 1;
-            const isBottleneck = node.waitingOnInbound >= 2;
+            const isBottleneck = node.preCount >= 2;
 
             return (
               <g
@@ -442,12 +443,12 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
                     </text>
                   </g>
                 )}
-                {/* Waiting 뱃지 */}
-                {node.waitingOnInbound > 0 && (
+                {/* Pre 뱃지 (나를 기다리는 사람 수) */}
+                {node.preCount > 0 && (
                   <g transform={`translate(${-radius + 2}, ${-radius + 2})`}>
                     <circle r={10} fill="#ef4444" stroke="white" strokeWidth={2} />
                     <text textAnchor="middle" dominantBaseline="middle" fontSize={9} fontWeight={700} fill="white">
-                      {node.waitingOnInbound}
+                      {node.preCount}
                     </text>
                   </g>
                 )}
@@ -511,8 +512,8 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
                       {node.domain}
                     </div>
                     <div className="text-blue-500">Pair: {node.pairCount}건</div>
-                    <div style={{ color: node.waitingOnInbound >= 2 ? "#ef4444" : undefined }}>
-                      대기 중: {node.waitingOnInbound}명
+                    <div style={{ color: node.preCount >= 2 ? "#ef4444" : undefined }}>
+                      대기 중: {node.preCount}명
                     </div>
                   </div>
                   {selectedNode && (
@@ -552,7 +553,7 @@ export function CollaborationNetworkGraph({ items }: CollaborationNetworkGraphPr
           </span>
           <span className="flex items-center gap-1">
             <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
-            대기
+            선행
           </span>
           <span className="flex items-center gap-1">
             <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-red-400" />

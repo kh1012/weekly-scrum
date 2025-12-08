@@ -29,8 +29,8 @@ export function CollaborationView({ items }: CollaborationViewProps) {
     const bottleneckNodes = getBottleneckNodes(items);
 
     const totalPairs = edges.filter((e) => e.relation === "pair").reduce((sum, e) => sum + e.count, 0);
-    const totalWaitingOn = edges.filter((e) => e.relation === "waiting-on").reduce((sum, e) => sum + e.count, 0);
-    const totalCollaborations = totalPairs + totalWaitingOn;
+    const totalPre = edges.filter((e) => e.relation === "pre").reduce((sum, e) => sum + e.count, 0);
+    const totalCollaborations = totalPairs + totalPre;
 
     const maxBottleneck = bottleneckNodes.length > 0 ? bottleneckNodes[0] : null;
     const avgLoad = heatmapData.length > 0
@@ -45,7 +45,7 @@ export function CollaborationView({ items }: CollaborationViewProps) {
     return {
       totalMembers: nodes.length,
       totalPairs,
-      totalWaitingOn,
+      totalPre,
       totalCollaborations,
       avgLoad,
       maxBottleneck,
@@ -105,7 +105,7 @@ export function CollaborationView({ items }: CollaborationViewProps) {
         <StatCard value={teamStats.totalMembers} label="참여 인원" color="var(--notion-text)" />
         <StatCard value={teamStats.totalCollaborations} label="총 협업" color="var(--notion-blue)" />
         <StatCard value={teamStats.totalPairs} label="Pair 협업" color="var(--notion-blue)" />
-        <StatCard value={teamStats.totalWaitingOn} label="Waiting-on" color="var(--notion-red)" />
+        <StatCard value={teamStats.totalPre} label="Pre 협업" color="var(--notion-red)" />
         <StatCard value={teamStats.avgLoad} label="평균 부하" color="var(--notion-orange)" />
         <StatCard
           value={teamStats.maxBottleneck?.inboundCount ?? 0}
@@ -199,12 +199,12 @@ export function CollaborationView({ items }: CollaborationViewProps) {
                   <div style={{ color: "var(--notion-text-tertiary)" }}>Pair</div>
                 </div>
                 <div className="p-1.5 rounded" style={{ background: "var(--notion-bg)" }}>
-                  <div className="font-bold" style={{ color: "var(--notion-orange)" }}>{member.waitingOnOutbound}</div>
+                  <div className="font-bold" style={{ color: "var(--notion-orange)" }}>{member.preCount}</div>
                   <div style={{ color: "var(--notion-text-tertiary)" }}>출</div>
                 </div>
                 <div className="p-1.5 rounded" style={{ background: "var(--notion-bg)" }}>
-                  <div className={`font-bold ${member.waitingOnInbound >= 2 ? "text-red-500" : ""}`} style={{ color: member.waitingOnInbound >= 2 ? undefined : "var(--notion-red)" }}>
-                    {member.waitingOnInbound}
+                  <div className={`font-bold ${member.preInbound >= 2 ? "text-red-500" : ""}`} style={{ color: member.preInbound >= 2 ? undefined : "var(--notion-red)" }}>
+                    {member.preInbound}
                   </div>
                   <div style={{ color: "var(--notion-text-tertiary)" }}>입</div>
                 </div>
@@ -270,14 +270,14 @@ export function CollaborationView({ items }: CollaborationViewProps) {
                     {member.pairCount}
                   </td>
                   <td className="py-2 px-3 text-center" style={{ color: "var(--notion-orange)" }}>
-                    {member.waitingOnOutbound}
+                    {member.preCount}
                   </td>
                   <td className="py-2 px-3 text-center">
                     <span
-                      className={member.waitingOnInbound >= 2 ? "font-bold" : ""}
-                      style={{ color: member.waitingOnInbound >= 2 ? "var(--notion-red)" : "var(--notion-text-secondary)" }}
+                      className={member.preInbound >= 2 ? "font-bold" : ""}
+                      style={{ color: member.preInbound >= 2 ? "var(--notion-red)" : "var(--notion-text-secondary)" }}
                     >
-                      {member.waitingOnInbound}
+                      {member.preInbound}
                     </span>
                   </td>
                   <td className="py-2 px-3 text-center" style={{ color: "var(--notion-purple)" }}>
@@ -341,14 +341,14 @@ export function CollaborationView({ items }: CollaborationViewProps) {
             </div>
             <div className="space-y-1">
               {memberSummaries
-                .filter((m) => m.waitingOnInbound > 0)
-                .sort((a, b) => b.waitingOnInbound - a.waitingOnInbound)
+                .filter((m) => m.preInbound > 0)
+                .sort((a, b) => b.preInbound - a.preInbound)
                 .slice(0, 5)
                 .map((member) => (
                   <div
                     key={member.name}
                     className="flex items-center justify-between p-2 rounded"
-                    style={{ background: member.waitingOnInbound >= 2 ? "var(--notion-red-bg)" : "var(--notion-bg-secondary)" }}
+                    style={{ background: member.preInbound >= 2 ? "var(--notion-red-bg)" : "var(--notion-bg-secondary)" }}
                   >
                     <div className="flex items-center gap-2">
                       <span
@@ -361,9 +361,9 @@ export function CollaborationView({ items }: CollaborationViewProps) {
                     </div>
                     <span
                       className="text-sm font-medium"
-                      style={{ color: member.waitingOnInbound >= 2 ? "var(--notion-red)" : "var(--notion-text-secondary)" }}
+                      style={{ color: member.preInbound >= 2 ? "var(--notion-red)" : "var(--notion-text-secondary)" }}
                     >
-                      {member.waitingOnInbound}명 대기
+                      {member.preInbound}명 대기
                     </span>
                   </div>
                 ))}

@@ -9,12 +9,11 @@ export type RiskLevel = 0 | 1 | 2 | 3;
 
 /**
  * 협업 관계 타입
- * waiting-on: 해당 사람의 작업/응답을 기다리는 중
- * pair: 함께 페어 프로그래밍 또는 협업 중
- * review: 코드 리뷰 또는 검토 요청
- * handoff: 작업 인수인계
+ * pair: 실시간 공동 협업 (pair partner)
+ * pre: 앞단 협업자 - 내 작업에 필요한 선행 입력 제공 (pre partner)
+ * post: 후단 협업자 - 내 결과물을 받아 다음 단계 수행 (post partner)
  */
-export type Relation = "waiting-on" | "pair" | "review" | "handoff";
+export type Relation = "pair" | "pre" | "post";
 
 /**
  * 협업자 타입
@@ -35,12 +34,12 @@ export interface ScrumItem {
   topic: string;
   plan: string;
   planPercent: number;
-  progress: string;
+  progress: string[]; // 멀티라인 지원 (배열)
   progressPercent: number;
   reason: string; // 계획 대비 실행 미비 시 부연 설명
-  next: string;
-  risk: string;
-  riskLevel: RiskLevel;
+  next: string[]; // 멀티라인 지원 (배열)
+  risk: string | null; // null = 미정 ("?" 입력 시)
+  riskLevel: RiskLevel | null; // null = 미정 ("?" 입력 시)
   collaborators?: Collaborator[]; // 협업자 목록 (선택)
 }
 
@@ -106,7 +105,11 @@ export interface ScrumState {
 export interface CollaboratorStat {
   name: string;
   count: number;
-  relations: Record<Relation, number>;
+  relations: {
+    pair: number;
+    pre: number;
+    post: number;
+  };
 }
 
 /**
@@ -120,7 +123,7 @@ export interface ScrumStats {
   atRisk: number;
   completed: number;
   inProgress: number;
-  riskCounts: Record<RiskLevel, number>;
+  riskCounts: Record<RiskLevel | "unknown", number>; // unknown = 리스크 미정
   domains: string[];
   projects: string[];
   members: string[];

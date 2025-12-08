@@ -16,8 +16,8 @@ interface DomainArc {
   color: string;
   pairOut: number;
   pairIn: number;
-  waitingOut: number;
-  waitingIn: number;
+  preOut: number;
+  preIn: number;
   total: number;
 }
 
@@ -29,14 +29,14 @@ interface FlowRibbon {
   targetStart: number;
   targetEnd: number;
   value: number;
-  type: "pair" | "waiting-on";
+  type: "pair" | "pre";
 }
 
 export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
   const [mounted, setMounted] = useState(false);
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
   const [hoveredRibbon, setHoveredRibbon] = useState<FlowRibbon | null>(null);
-  const [selectedType, setSelectedType] = useState<"all" | "pair" | "waiting-on">("all");
+  const [selectedType, setSelectedType] = useState<"all" | "pair" | "pre">("all");
 
   // Hydration 문제 방지: 클라이언트에서만 렌더링
   useEffect(() => {
@@ -45,7 +45,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
 
   const { domainArcs, flowRibbons, domains } = useMemo(() => {
     const pairData = getCollaborationMatrix(items, "pair");
-    const waitingData = getCollaborationMatrix(items, "waiting-on");
+    const preData = getCollaborationMatrix(items, "pre");
 
     // 도메인 목록
     const domainSet = new Set<string>();
@@ -60,8 +60,8 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
     }
 
     // 도메인별 통계 계산
-    const domainStats = new Map<string, { pairOut: number; pairIn: number; waitingOut: number; waitingIn: number }>();
-    domains.forEach((d) => domainStats.set(d, { pairOut: 0, pairIn: 0, waitingOut: 0, waitingIn: 0 }));
+    const domainStats = new Map<string, { pairOut: number; pairIn: number; preOut: number; preIn: number }>();
+    domains.forEach((d) => domainStats.set(d, { pairOut: 0, pairIn: 0, preOut: 0, preIn: 0 }));
 
     pairData.forEach((cell) => {
       if (cell.sourceDomain !== cell.targetDomain) {
@@ -72,19 +72,19 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
       }
     });
 
-    waitingData.forEach((cell) => {
+    preData.forEach((cell) => {
       if (cell.sourceDomain !== cell.targetDomain) {
         const source = domainStats.get(cell.sourceDomain)!;
         const target = domainStats.get(cell.targetDomain)!;
-        source.waitingOut += cell.waitingOnCount;
-        target.waitingIn += cell.waitingOnCount;
+        source.preOut += cell.preCount;
+        target.preIn += cell.preCount;
       }
     });
 
     // 총량 계산
     const totals = domains.map((d) => {
       const s = domainStats.get(d)!;
-      return s.pairOut + s.pairIn + s.waitingOut + s.waitingIn;
+      return s.pairOut + s.pairIn + s.preOut + s.preIn;
     });
     const grandTotal = Math.max(totals.reduce((a, b) => a + b, 0), 1);
 
@@ -106,8 +106,8 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
         color: getDomainColor(domain),
         pairOut: stats.pairOut,
         pairIn: stats.pairIn,
-        waitingOut: stats.waitingOut,
-        waitingIn: stats.waitingIn,
+        preOut: stats.preOut,
+        preIn: stats.preIn,
         total,
       };
 
@@ -150,17 +150,17 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
       domainCurrentAngle.set(cell.targetDomain, targetStart + targetAngleSpan);
     });
 
-    // Waiting-on 리본
-    waitingData.forEach((cell) => {
-      if (cell.sourceDomain === cell.targetDomain || cell.waitingOnCount === 0) return;
+    // Pre 리본
+    preData.forEach((cell) => {
+      if (cell.sourceDomain === cell.targetDomain || cell.preCount === 0) return;
 
       const sourceArc = domainArcs.find((a) => a.domain === cell.sourceDomain)!;
       const targetArc = domainArcs.find((a) => a.domain === cell.targetDomain)!;
       const sourceTotal = sourceArc.total || 1;
       const targetTotal = targetArc.total || 1;
 
-      const sourceAngleSpan = (sourceArc.endAngle - sourceArc.startAngle) * (cell.waitingOnCount / sourceTotal);
-      const targetAngleSpan = (targetArc.endAngle - targetArc.startAngle) * (cell.waitingOnCount / targetTotal);
+      const sourceAngleSpan = (sourceArc.endAngle - sourceArc.startAngle) * (cell.preCount / sourceTotal);
+      const targetAngleSpan = (targetArc.endAngle - targetArc.startAngle) * (cell.preCount / targetTotal);
 
       const sourceStart = domainCurrentAngle.get(cell.sourceDomain)!;
       const targetStart = domainCurrentAngle.get(cell.targetDomain)!;
@@ -172,8 +172,8 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
         sourceEnd: sourceStart + sourceAngleSpan,
         targetStart,
         targetEnd: targetStart + targetAngleSpan,
-        value: cell.waitingOnCount,
-        type: "waiting-on",
+        value: cell.preCount,
+        type: "pre",
       });
 
       domainCurrentAngle.set(cell.sourceDomain, sourceStart + sourceAngleSpan);
@@ -278,7 +278,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
           </p>
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 rounded w-fit" style={{ background: "var(--notion-bg-secondary)" }}>
-          {(["all", "pair", "waiting-on"] as const).map((type) => (
+          {(["all", "pair", "pre"] as const).map((type) => (
             <button
               key={type}
               onClick={() => setSelectedType(type)}
@@ -289,14 +289,14 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                   selectedType === type
                     ? type === "pair"
                       ? "#3b82f6"
-                      : type === "waiting-on"
+                      : type === "pre"
                       ? "#ef4444"
                       : "var(--notion-text)"
                     : "var(--notion-text-secondary)",
                 boxShadow: selectedType === type ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px" : "none",
               }}
             >
-              {type === "all" ? "전체" : type === "pair" ? "Pair" : "Waiting"}
+              {type === "all" ? "전체" : type === "pair" ? "Pair" : "Pre"}
             </button>
           ))}
         </div>
@@ -401,7 +401,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                 {hoveredDomain
                   ? `${domainArcs.find((a) => a.domain === hoveredDomain)?.total ?? 0}건`
                   : hoveredRibbon
-                  ? `${hoveredRibbon.value}건 (${hoveredRibbon.type === "pair" ? "Pair" : "Waiting"})`
+                  ? `${hoveredRibbon.value}건 (${hoveredRibbon.type === "pair" ? "Pair" : "Pre"})`
                   : ""}
               </text>
             )}
@@ -425,7 +425,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                 style={{ background: hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444" }}
               />
               <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-                {hoveredRibbon.type === "pair" ? "Pair" : "Waiting"}
+                {hoveredRibbon.type === "pair" ? "Pair" : "Pre"}
               </span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap" style={{ color: "var(--notion-text-secondary)" }}>
@@ -481,7 +481,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded" style={{ background: "rgba(239, 68, 68, 0.5)" }} />
-            Waiting
+            Pre
           </span>
         </div>
       </div>

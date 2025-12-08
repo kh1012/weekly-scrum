@@ -204,14 +204,14 @@ function TopicCard({ item }: { item: ScrumItem }) {
       )}
 
       <div className="space-y-1 text-[10px]">
-        <InfoRow color="bg-[#0969da]" text={item.progress} />
+        <InfoRow color="bg-[#0969da]" text={item.progress.join(" / ")} />
         {item.reason && item.reason.trim() !== "" && (
           <InfoRow color="bg-[#9a6700]" customColor="#9a6700" text={`[사유] ${item.reason}`} />
         )}
-        {item.risk && item.risk.trim() !== "" && (
+        {item.risk && (
           <InfoRow color={`bg-[${riskColor.text}]`} customColor={riskColor.text} text={item.risk} />
         )}
-        <InfoRow color="bg-[#1a7f37]" text={item.next} />
+        <InfoRow color="bg-[#1a7f37]" text={item.next.join(" / ")} />
       </div>
     </div>
   );

@@ -10,28 +10,30 @@ interface CollaborationTarget {
 }
 
 interface MyCollaborationStatusProps {
-  /** 나를 기다리고 있는 사람들 (다른 사람 항목 중 나를 waiting-on으로 지정한 경우) */
+  /** 나를 기다리고 있는 사람들 (다른 사람 항목 중 나를 pre로 지정한 경우) */
   waitingForMe: CollaborationTarget[];
-  /** 내가 기다리는 사람들 (내 항목에서 waiting-on으로 지정한 사람) */
+  /** 내가 기다리는 사람들 (내 항목에서 pre로 지정한 사람) */
   iAmWaitingFor: CollaborationTarget[];
+  /** 내 결과물을 받을 사람들 (내 항목에서 post로 지정한 사람) */
+  postPartners: CollaborationTarget[];
   /** 내 협업자 목록 */
   myCollaborators: CollaborationTarget[];
 }
 
 const RELATION_LABELS: Record<Relation, { label: string; color: string }> = {
   pair: { label: "페어", color: "var(--notion-blue)" },
-  "waiting-on": { label: "대기", color: "var(--notion-orange)" },
-  review: { label: "리뷰", color: "var(--notion-purple)" },
-  handoff: { label: "인수", color: "var(--notion-green)" },
+  pre: { label: "선행", color: "var(--notion-orange)" },
+  post: { label: "후행", color: "var(--notion-green)" },
 };
 
 export function MyCollaborationStatus({
   waitingForMe,
   iAmWaitingFor,
+  postPartners,
   myCollaborators,
 }: MyCollaborationStatusProps) {
   const hasAnyCollaboration =
-    waitingForMe.length > 0 || iAmWaitingFor.length > 0 || myCollaborators.length > 0;
+    waitingForMe.length > 0 || iAmWaitingFor.length > 0 || postPartners.length > 0 || myCollaborators.length > 0;
 
   if (!hasAnyCollaboration) {
     return null;
@@ -60,7 +62,7 @@ export function MyCollaborationStatus({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* 나를 기다리는 사람들 */}
+        {/* 나를 기다리는 사람들 (다른 사람이 나를 pre로 지정) */}
         <div className="space-y-2">
           <h4
             className="text-sm font-medium flex items-center gap-1.5"
@@ -82,7 +84,7 @@ export function MyCollaborationStatus({
           )}
         </div>
 
-        {/* 내가 기다리는 사람들 */}
+        {/* 내가 기다리는 사람들 (내가 pre로 지정) */}
         <div className="space-y-2">
           <h4
             className="text-sm font-medium flex items-center gap-1.5"
@@ -105,18 +107,49 @@ export function MyCollaborationStatus({
         </div>
       </div>
 
-      {/* 기타 협업자 */}
-      {myCollaborators.filter((c) => c.relation !== "waiting-on").length > 0 && (
+      {/* Post 협업자 (내 결과물을 받을 사람) */}
+      {postPartners.length > 0 && (
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--notion-border)" }}>
+          <h4
+            className="text-sm font-medium mb-2 flex items-center gap-1.5"
+            style={{ color: "var(--notion-green)" }}
+          >
+            <span className="w-2 h-2 rounded-full bg-current" />
+            내 결과물을 받을 사람 ({postPartners.length})
+          </h4>
+          <div className="flex flex-wrap gap-1.5">
+            {postPartners.map((item, idx) => {
+              const config = RELATION_LABELS[item.relation];
+              return (
+                <span
+                  key={idx}
+                  className="text-xs px-2 py-1 rounded"
+                  style={{
+                    backgroundColor: `${config.color}15`,
+                    color: config.color,
+                  }}
+                  title={`${item.topic} (${item.project})`}
+                >
+                  {item.name}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 기타 협업자 (pair) */}
+      {myCollaborators.filter((c) => c.relation === "pair").length > 0 && (
         <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--notion-border)" }}>
           <h4
             className="text-sm font-medium mb-2"
             style={{ color: "var(--notion-text-secondary)" }}
           >
-            현재 협업 중
+            현재 Pair 협업 중
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {myCollaborators
-              .filter((c) => c.relation !== "waiting-on")
+              .filter((c) => c.relation === "pair")
               .map((item, idx) => {
                 const config = RELATION_LABELS[item.relation];
                 return (
@@ -183,16 +216,17 @@ export function calculateCollaborationStatus(
 ): {
   waitingForMe: CollaborationTarget[];
   iAmWaitingFor: CollaborationTarget[];
+  postPartners: CollaborationTarget[];
   myCollaborators: CollaborationTarget[];
 } {
-  // 나를 waiting-on으로 지정한 다른 사람들
+  // 나를 pre로 지정한 다른 사람들 (나를 기다리는 사람들)
   const waitingForMe: CollaborationTarget[] = [];
   allItems.forEach((item) => {
     if (item.name === memberName) return;
     if (!item.collaborators) return;
 
     item.collaborators.forEach((collab) => {
-      if (collab.name === memberName && collab.relation === "waiting-on") {
+      if (collab.name === memberName && collab.relation === "pre") {
         waitingForMe.push({
           name: item.name,
           relation: collab.relation,
@@ -203,14 +237,31 @@ export function calculateCollaborationStatus(
     });
   });
 
-  // 내가 waiting-on으로 지정한 사람들
+  // 내가 pre로 지정한 사람들 (내가 기다리는 사람들)
   const iAmWaitingFor: CollaborationTarget[] = [];
   memberItems.forEach((item) => {
     if (!item.collaborators) return;
 
     item.collaborators.forEach((collab) => {
-      if (collab.relation === "waiting-on") {
+      if (collab.relation === "pre") {
         iAmWaitingFor.push({
+          name: collab.name,
+          relation: collab.relation,
+          topic: item.topic,
+          project: item.project,
+        });
+      }
+    });
+  });
+
+  // 내가 post로 지정한 사람들 (내 결과물을 받을 사람들)
+  const postPartners: CollaborationTarget[] = [];
+  memberItems.forEach((item) => {
+    if (!item.collaborators) return;
+
+    item.collaborators.forEach((collab) => {
+      if (collab.relation === "post") {
+        postPartners.push({
           name: collab.name,
           relation: collab.relation,
           topic: item.topic,
@@ -235,6 +286,5 @@ export function calculateCollaborationStatus(
     });
   });
 
-  return { waitingForMe, iAmWaitingFor, myCollaborators };
+  return { waitingForMe, iAmWaitingFor, postPartners, myCollaborators };
 }
-

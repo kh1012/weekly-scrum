@@ -42,8 +42,8 @@ export function CollaborationLoadHeatmap({ items }: CollaborationLoadHeatmapProp
   const maxValues = useMemo(() => {
     return {
       pair: Math.max(...heatmapData.map((d) => d.pairCount), 1),
-      waitingOutbound: Math.max(...heatmapData.map((d) => d.waitingOnOutbound), 1),
-      waitingInbound: Math.max(...heatmapData.map((d) => d.waitingOnInbound), 1),
+      pre: Math.max(...heatmapData.map((d) => d.preCount), 1),
+      preInbound: Math.max(...heatmapData.map((d) => d.preInbound), 1),
       total: Math.max(...heatmapData.map((d) => d.totalLoad), 1),
     };
   }, [heatmapData]);
@@ -92,10 +92,10 @@ export function CollaborationLoadHeatmap({ items }: CollaborationLoadHeatmapProp
                 Pair
               </th>
               <th className="text-center py-2 px-2 font-medium" style={{ color: "var(--notion-orange)" }}>
-                대기 중 (출)
+                Pre (출)
               </th>
               <th className="text-center py-2 px-2 font-medium" style={{ color: "var(--notion-red)" }}>
-                대기 중 (입)
+                Pre (입)
               </th>
               <th className="text-center py-2 px-2 font-medium" style={{ color: "var(--notion-text)" }}>
                 총계
@@ -134,22 +134,22 @@ export function CollaborationLoadHeatmap({ items }: CollaborationLoadHeatmapProp
                   <div
                     className="text-center py-1 rounded font-medium"
                     style={{
-                      background: getHeatColor(row.waitingOnOutbound, maxValues.waitingOutbound),
-                      color: getTextColor(row.waitingOnOutbound, maxValues.waitingOutbound),
+                      background: getHeatColor(row.preCount, maxValues.pre),
+                      color: getTextColor(row.preCount, maxValues.pre),
                     }}
                   >
-                    {row.waitingOnOutbound}
+                    {row.preCount}
                   </div>
                 </td>
                 <td className="py-1.5 px-2">
                   <div
                     className="text-center py-1 rounded font-medium"
                     style={{
-                      background: getHeatColor(row.waitingOnInbound, maxValues.waitingInbound),
-                      color: getTextColor(row.waitingOnInbound, maxValues.waitingInbound),
+                      background: getHeatColor(row.preInbound, maxValues.preInbound),
+                      color: getTextColor(row.preInbound, maxValues.preInbound),
                     }}
                   >
-                    {row.waitingOnInbound}
+                    {row.preInbound}
                   </div>
                 </td>
                 <td className="py-1.5 px-2">
@@ -175,10 +175,10 @@ export function CollaborationLoadHeatmap({ items }: CollaborationLoadHeatmapProp
           <span style={{ color: "var(--notion-blue)" }}>Pair</span>: 함께 작업 중인 협업 수
         </div>
         <div style={{ color: "var(--notion-text-secondary)" }}>
-          <span style={{ color: "var(--notion-orange)" }}>대기 중 (출)</span>: 다른 사람을 기다리는 수
+          <span style={{ color: "var(--notion-orange)" }}>Pre (출)</span>: 내가 선행 협업자로 지정한 수
         </div>
         <div style={{ color: "var(--notion-text-secondary)" }}>
-          <span style={{ color: "var(--notion-red)" }}>대기 중 (입)</span>: 나를 기다리는 사람 수
+          <span style={{ color: "var(--notion-red)" }}>Pre (입)</span>: 나를 기다리는 사람 수
         </div>
         <div style={{ color: "var(--notion-text-secondary)" }}>
           <span style={{ color: "var(--notion-text)" }}>총계</span>: 전체 협업 부하
@@ -187,4 +187,3 @@ export function CollaborationLoadHeatmap({ items }: CollaborationLoadHeatmapProp
     </div>
   );
 }
-

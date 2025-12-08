@@ -23,8 +23,8 @@ export interface CollaborationNode {
   domain: string;
   degree: number; // 연결된 엣지 수
   pairCount: number;
-  waitingOnOutbound: number; // 내가 기다리는 수
-  waitingOnInbound: number; // 나를 기다리는 수
+  preCount: number; // 내가 선행 협업자로 지정한 수 (나를 기다리는 수)
+  postCount: number; // 내가 후행 협업자로 지정한 수 (내가 기다리는 수)
 }
 
 /**
@@ -34,8 +34,9 @@ export interface MemberCollaborationSummary {
   name: string;
   domain: string;
   pairCount: number;
-  waitingOnOutbound: number; // 내가 다른 사람을 기다리는 수
-  waitingOnInbound: number; // 다른 사람이 나를 기다리는 수
+  preCount: number; // 내가 선행 협업자로 지정한 수 (pre 관계)
+  postCount: number; // 내가 후행 협업자로 지정한 수 (post 관계)
+  preInbound: number; // 다른 사람이 나를 pre로 지정한 수 (나를 기다리는 수)
   crossDomainScore: number; // 다른 도메인과의 협업 비율
   crossModuleScore: number; // 다른 모듈과의 협업 비율
   totalCollaborations: number;
@@ -53,7 +54,8 @@ export interface DomainMatrixCell {
   sourceDomain: string;
   targetDomain: string;
   pairCount: number;
-  waitingOnCount: number;
+  preCount: number;
+  postCount: number;
   totalCount: number;
 }
 
@@ -64,10 +66,9 @@ export interface CollaborationLoadRow {
   name: string;
   domain: string;
   pairCount: number;
-  waitingOnOutbound: number;
-  waitingOnInbound: number;
-  reviewCount: number;
-  handoffCount: number;
+  preCount: number; // 내가 선행 협업자로 지정한 수
+  postCount: number; // 내가 후행 협업자로 지정한 수
+  preInbound: number; // 다른 사람이 나를 pre로 지정한 수
   totalLoad: number;
 }
 
@@ -91,8 +92,8 @@ export interface WeeklyCollaborationTrend {
   weekKey: string;
   weekLabel: string;
   pairCount: number;
-  waitingOnOutbound: number;
-  waitingOnInbound: number;
+  preCount: number;
+  postCount: number;
   totalCollaborations: number;
 }
 

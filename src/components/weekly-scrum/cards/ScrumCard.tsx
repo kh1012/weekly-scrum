@@ -19,11 +19,14 @@ interface ScrumCardProps {
 
 export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
   const domainColor = getDomainColor(item.domain);
-  const riskLevel = (item.riskLevel ?? 0) as RiskLevel;
-  const riskColor = getRiskLevelColor(riskLevel);
+  const riskLevel = item.riskLevel ?? 0;
+  const riskColor = getRiskLevelColor(riskLevel as RiskLevel);
   const achievementRate = getAchievementRate(item.progressPercent, item.planPercent ?? item.progressPercent);
   const achievementStatus = getAchievementStatus(achievementRate);
   const achievementColor = ACHIEVEMENT_COLORS[achievementStatus];
+
+  // risk가 null이면 미정 상태
+  const isRiskUnknown = item.risk === null && item.riskLevel === null;
 
   return (
     <div
@@ -54,7 +57,7 @@ export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
             )}
             {riskLevel > 0 && (
               <span className="ml-auto">
-                <RiskLevelBadge level={riskLevel} size="sm" />
+                <RiskLevelBadge level={riskLevel as RiskLevel} size="sm" />
               </span>
             )}
           </div>
@@ -95,13 +98,16 @@ export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
       {/* Content Sections */}
       <div className="space-y-1">
         {item.plan && <ContentBar label="Plan" color={PROGRESS_COLORS.high.text} content={item.plan} />}
-        <ContentBar label="Progress" color={PROGRESS_COLORS.completed.text} content={item.progress} />
+        <ContentBarMulti label="Progress" color={PROGRESS_COLORS.completed.text} items={item.progress} />
         {item.reason && item.reason.trim() !== "" && (
           <ContentBar label="Reason" color="var(--notion-orange)" content={item.reason} />
         )}
-        <ContentBar label="Next" color="var(--notion-blue)" content={item.next} />
-        {item.risk && item.risk.trim() !== "" && (
+        <ContentBarMulti label="Next" color="var(--notion-blue)" items={item.next} />
+        {item.risk && (
           <ContentBar label="Risk" color={riskColor.text} content={item.risk} />
+        )}
+        {isRiskUnknown && (
+          <ContentBar label="Risk" color="var(--notion-text-tertiary)" content="미정" />
         )}
       </div>
 
@@ -132,18 +138,17 @@ export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
 
 const COLLAB_COLORS: Record<string, { bg: string; text: string }> = {
   pair: { bg: 'var(--notion-blue-bg)', text: 'var(--notion-blue)' },
-  'waiting-on': { bg: 'var(--notion-orange-bg)', text: 'var(--notion-orange)' },
-  review: { bg: 'var(--notion-purple-bg)', text: 'var(--notion-purple)' },
-  handoff: { bg: 'var(--notion-green-bg)', text: 'var(--notion-green)' },
+  pre: { bg: 'var(--notion-orange-bg)', text: 'var(--notion-orange)' },
+  post: { bg: 'var(--notion-green-bg)', text: 'var(--notion-green)' },
 };
 
 const COLLAB_LABELS: Record<string, string> = {
   pair: '페어',
-  'waiting-on': '대기',
-  review: '리뷰',
-  handoff: '인수',
+  pre: '선행',
+  post: '후행',
 };
 
+/** 단일 라인 콘텐츠 바 */
 function ContentBar({ label, color, content }: { label: string; color: string; content: string }) {
   return (
     <div className="flex items-stretch gap-0 rounded overflow-hidden" style={{ backgroundColor: 'var(--notion-bg-secondary)' }}>
@@ -153,6 +158,54 @@ function ContentBar({ label, color, content }: { label: string; color: string; c
         <span className="text-xs leading-relaxed" style={{ color: 'var(--notion-text)' }}>
           {content || "-"}
         </span>
+      </div>
+    </div>
+  );
+}
+
+/** 멀티라인 콘텐츠 바 (배열 지원) */
+function ContentBarMulti({ label, color, items }: { label: string; color: string; items: string[] }) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="flex items-stretch gap-0 rounded overflow-hidden" style={{ backgroundColor: 'var(--notion-bg-secondary)' }}>
+        <div className="w-0.5 shrink-0" style={{ backgroundColor: color }} />
+        <div className="flex-1 px-2 py-1">
+          <span className="text-[9px] font-medium mr-1.5" style={{ color }}>{label}</span>
+          <span className="text-xs leading-relaxed" style={{ color: 'var(--notion-text)' }}>-</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 단일 항목인 경우 기존처럼 표시
+  if (items.length === 1) {
+    return (
+      <div className="flex items-stretch gap-0 rounded overflow-hidden" style={{ backgroundColor: 'var(--notion-bg-secondary)' }}>
+        <div className="w-0.5 shrink-0" style={{ backgroundColor: color }} />
+        <div className="flex-1 px-2 py-1">
+          <span className="text-[9px] font-medium mr-1.5" style={{ color }}>{label}</span>
+          <span className="text-xs leading-relaxed" style={{ color: 'var(--notion-text)' }}>
+            {items[0]}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // 멀티라인인 경우 리스트로 표시
+  return (
+    <div className="flex items-stretch gap-0 rounded overflow-hidden" style={{ backgroundColor: 'var(--notion-bg-secondary)' }}>
+      <div className="w-0.5 shrink-0" style={{ backgroundColor: color }} />
+      <div className="flex-1 px-2 py-1">
+        <span className="text-[9px] font-medium block mb-0.5" style={{ color }}>{label}</span>
+        <ul className="space-y-0.5 ml-2">
+          {items.map((item, idx) => (
+            <li key={idx} className="text-xs leading-relaxed flex items-start gap-1" style={{ color: 'var(--notion-text)' }}>
+              <span style={{ color }} className="text-[8px] mt-1">•</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

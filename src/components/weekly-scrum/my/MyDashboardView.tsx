@@ -124,6 +124,7 @@ export function MyDashboardView() {
             <MyCollaborationStatus
               waitingForMe={collaborationStatus.waitingForMe}
               iAmWaitingFor={collaborationStatus.iAmWaitingFor}
+              postPartners={collaborationStatus.postPartners}
               myCollaborators={collaborationStatus.myCollaborators}
             />
             <MyCollaborationRadar items={currentData.items} memberName={activeMember} />

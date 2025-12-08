@@ -34,19 +34,19 @@ export function MyBottleneckTimeline({ weeklyData, memberName }: MyBottleneckTim
     return weeklyData.map(({ weekLabel, data }) => {
       const memberItems = data.items.filter((item) => item.name === memberName);
 
-      // 내가 기다리는 수 (outbound)
+      // 내가 기다리는 수 (outbound) - 내가 pre로 지정한 사람
       let outbound = 0;
       for (const item of memberItems) {
-        const waitingOns = item.collaborators?.filter((c) => c.relation === "waiting-on") ?? [];
-        outbound += waitingOns.length;
+        const pres = item.collaborators?.filter((c) => c.relation === "pre") ?? [];
+        outbound += pres.length;
       }
 
-      // 나를 기다리는 수 (inbound)
+      // 나를 기다리는 수 (inbound) - 다른 사람이 나를 pre로 지정
       let inbound = 0;
       for (const item of data.items) {
         if (item.name === memberName) continue;
         const waitingForMe = item.collaborators?.filter(
-          (c) => c.name === memberName && c.relation === "waiting-on"
+          (c) => c.name === memberName && c.relation === "pre"
         );
         inbound += waitingForMe?.length ?? 0;
       }

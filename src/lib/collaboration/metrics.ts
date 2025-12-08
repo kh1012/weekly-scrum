@@ -28,29 +28,44 @@ export function getPairCountPerMember(items: ScrumItem[]): Map<string, number> {
 }
 
 /**
- * 멤버별 waiting-on outbound (내가 다른 사람을 기다리는 수) 계산
+ * 멤버별 pre 관계 수 계산 (내가 선행 협업자로 지정한 수)
  */
-export function getWaitingOnOutbound(items: ScrumItem[]): Map<string, number> {
-  const outboundCounts = new Map<string, number>();
+export function getPreCount(items: ScrumItem[]): Map<string, number> {
+  const preCounts = new Map<string, number>();
 
   for (const item of items) {
-    const waitingOns = item.collaborators?.filter((c) => c.relation === "waiting-on") ?? [];
-    const currentCount = outboundCounts.get(item.name) ?? 0;
-    outboundCounts.set(item.name, currentCount + waitingOns.length);
+    const pres = item.collaborators?.filter((c) => c.relation === "pre") ?? [];
+    const currentCount = preCounts.get(item.name) ?? 0;
+    preCounts.set(item.name, currentCount + pres.length);
   }
 
-  return outboundCounts;
+  return preCounts;
 }
 
 /**
- * 멤버별 waiting-on inbound (다른 사람이 나를 기다리는 수) 계산
+ * 멤버별 post 관계 수 계산 (내가 후행 협업자로 지정한 수)
  */
-export function getWaitingOnInbound(items: ScrumItem[]): Map<string, number> {
+export function getPostCount(items: ScrumItem[]): Map<string, number> {
+  const postCounts = new Map<string, number>();
+
+  for (const item of items) {
+    const posts = item.collaborators?.filter((c) => c.relation === "post") ?? [];
+    const currentCount = postCounts.get(item.name) ?? 0;
+    postCounts.set(item.name, currentCount + posts.length);
+  }
+
+  return postCounts;
+}
+
+/**
+ * 멤버별 pre inbound 수 계산 (다른 사람이 나를 pre로 지정한 수 = 나를 기다리는 수)
+ */
+export function getPreInbound(items: ScrumItem[]): Map<string, number> {
   const inboundCounts = new Map<string, number>();
 
   for (const item of items) {
-    const waitingOns = item.collaborators?.filter((c) => c.relation === "waiting-on") ?? [];
-    for (const collab of waitingOns) {
+    const pres = item.collaborators?.filter((c) => c.relation === "pre") ?? [];
+    for (const collab of pres) {
       const currentCount = inboundCounts.get(collab.name) ?? 0;
       inboundCounts.set(collab.name, currentCount + 1);
     }
@@ -171,8 +186,9 @@ export function getCollaborationEdges(items: ScrumItem[]): CollaborationEdge[] {
 export function getCollaborationNodes(items: ScrumItem[]): CollaborationNode[] {
   const memberDomains = getMemberDomains(items);
   const pairCounts = getPairCountPerMember(items);
-  const outboundCounts = getWaitingOnOutbound(items);
-  const inboundCounts = getWaitingOnInbound(items);
+  const preCounts = getPreCount(items);
+  const postCounts = getPostCount(items);
+  const preInboundCounts = getPreInbound(items);
   const edges = getCollaborationEdges(items);
 
   // 모든 멤버 수집 (작업자 + 협업자)
@@ -199,8 +215,8 @@ export function getCollaborationNodes(items: ScrumItem[]): CollaborationNode[] {
     domain: memberDomains.get(name) ?? "Unknown",
     degree: degreeMap.get(name) ?? 0,
     pairCount: pairCounts.get(name) ?? 0,
-    waitingOnOutbound: outboundCounts.get(name) ?? 0,
-    waitingOnInbound: inboundCounts.get(name) ?? 0,
+    preCount: preInboundCounts.get(name) ?? 0, // 나를 pre로 지정한 수 (나를 기다리는 수)
+    postCount: postCounts.get(name) ?? 0,
   }));
 }
 
@@ -228,7 +244,8 @@ export function getCollaborationMatrix(
         sourceDomain: source,
         targetDomain: target,
         pairCount: 0,
-        waitingOnCount: 0,
+        preCount: 0,
+        postCount: 0,
         totalCount: 0,
       });
     }
@@ -249,8 +266,10 @@ export function getCollaborationMatrix(
 
       if (collab.relation === "pair") {
         cell.pairCount++;
-      } else if (collab.relation === "waiting-on") {
-        cell.waitingOnCount++;
+      } else if (collab.relation === "pre") {
+        cell.preCount++;
+      } else if (collab.relation === "post") {
+        cell.postCount++;
       }
       cell.totalCount++;
     }
@@ -260,8 +279,10 @@ export function getCollaborationMatrix(
   let result = Array.from(matrixMap.values());
   if (relationFilter === "pair") {
     result = result.map((c) => ({ ...c, totalCount: c.pairCount }));
-  } else if (relationFilter === "waiting-on") {
-    result = result.map((c) => ({ ...c, totalCount: c.waitingOnCount }));
+  } else if (relationFilter === "pre") {
+    result = result.map((c) => ({ ...c, totalCount: c.preCount }));
+  } else if (relationFilter === "post") {
+    result = result.map((c) => ({ ...c, totalCount: c.postCount }));
   }
 
   return result;
@@ -281,9 +302,8 @@ export function getMemberSummary(
   // 협업자별 통계
   const collabStats = new Map<string, { relation: Relation; count: number }>();
   let pairCount = 0;
-  let waitingOnOutbound = 0;
-  let reviewCount = 0;
-  let handoffCount = 0;
+  let preCount = 0;
+  let postCount = 0;
 
   for (const item of memberItems) {
     if (!item.collaborators) continue;
@@ -300,27 +320,24 @@ export function getMemberSummary(
         case "pair":
           pairCount++;
           break;
-        case "waiting-on":
-          waitingOnOutbound++;
+        case "pre":
+          preCount++;
           break;
-        case "review":
-          reviewCount++;
-          break;
-        case "handoff":
-          handoffCount++;
+        case "post":
+          postCount++;
           break;
       }
     }
   }
 
-  // waiting-on inbound 계산
-  let waitingOnInbound = 0;
+  // pre inbound 계산 (다른 사람이 나를 pre로 지정한 수)
+  let preInbound = 0;
   for (const item of items) {
     if (item.name === memberName) continue;
-    const waitingForMe = item.collaborators?.filter(
-      (c) => c.name === memberName && c.relation === "waiting-on"
+    const preForMe = item.collaborators?.filter(
+      (c) => c.name === memberName && c.relation === "pre"
     );
-    waitingOnInbound += waitingForMe?.length ?? 0;
+    preInbound += preForMe?.length ?? 0;
   }
 
   // 협업자 목록 정리
@@ -335,14 +352,15 @@ export function getMemberSummary(
     }
   }
 
-  const totalCollaborations = pairCount + waitingOnOutbound + waitingOnInbound + reviewCount + handoffCount;
+  const totalCollaborations = pairCount + preCount + postCount + preInbound;
 
   return {
     name: memberName,
     domain: memberDomain,
     pairCount,
-    waitingOnOutbound,
-    waitingOnInbound,
+    preCount,
+    postCount,
+    preInbound,
     crossDomainScore: getCrossDomainCollaboration(items, memberName),
     crossModuleScore: getCrossModuleCollaboration(items, memberName),
     totalCollaborations,
@@ -356,16 +374,15 @@ export function getMemberSummary(
 export function getCollaborationLoadHeatmap(items: ScrumItem[]): CollaborationLoadRow[] {
   const memberDomains = getMemberDomains(items);
   const members = Array.from(new Set(items.map((i) => i.name)));
-  const inboundCounts = getWaitingOnInbound(items);
+  const preInboundCounts = getPreInbound(items);
 
   const rows: CollaborationLoadRow[] = [];
 
   for (const member of members) {
     const memberItems = items.filter((i) => i.name === member);
     let pairCount = 0;
-    let waitingOnOutbound = 0;
-    let reviewCount = 0;
-    let handoffCount = 0;
+    let preCount = 0;
+    let postCount = 0;
 
     for (const item of memberItems) {
       if (!item.collaborators) continue;
@@ -374,30 +391,26 @@ export function getCollaborationLoadHeatmap(items: ScrumItem[]): CollaborationLo
           case "pair":
             pairCount++;
             break;
-          case "waiting-on":
-            waitingOnOutbound++;
+          case "pre":
+            preCount++;
             break;
-          case "review":
-            reviewCount++;
-            break;
-          case "handoff":
-            handoffCount++;
+          case "post":
+            postCount++;
             break;
         }
       }
     }
 
-    const waitingOnInbound = inboundCounts.get(member) ?? 0;
-    const totalLoad = pairCount + waitingOnOutbound + waitingOnInbound + reviewCount + handoffCount;
+    const preInbound = preInboundCounts.get(member) ?? 0;
+    const totalLoad = pairCount + preCount + postCount + preInbound;
 
     rows.push({
       name: member,
       domain: memberDomains.get(member) ?? "Unknown",
       pairCount,
-      waitingOnOutbound,
-      waitingOnInbound,
-      reviewCount,
-      handoffCount,
+      preCount,
+      postCount,
+      preInbound,
       totalLoad,
     });
   }
@@ -407,11 +420,12 @@ export function getCollaborationLoadHeatmap(items: ScrumItem[]): CollaborationLo
 
 /**
  * 병목 노드 목록 생성 (Bottleneck Map용)
+ * 병목 = 다른 사람이 나를 pre로 지정한 경우 (나를 기다리는 사람이 많음)
  */
 export function getBottleneckNodes(items: ScrumItem[]): BottleneckNode[] {
   const memberDomains = getMemberDomains(items);
-  const inboundCounts = getWaitingOnInbound(items);
-  const outboundCounts = getWaitingOnOutbound(items);
+  const preInboundCounts = getPreInbound(items);
+  const preCounts = getPreCount(items);
 
   // 모든 멤버 수집
   const allMembers = new Set<string>();
@@ -424,15 +438,15 @@ export function getBottleneckNodes(items: ScrumItem[]): BottleneckNode[] {
     }
   }
 
-  // 누가 누구를 기다리는지 매핑
-  const waitersMap = new Map<string, string[]>(); // target -> waiters
-  const blockingMap = new Map<string, string[]>(); // source -> blocking
+  // 누가 누구를 기다리는지 매핑 (pre 관계 기준)
+  const waitersMap = new Map<string, string[]>(); // target -> waiters (나를 pre로 지정한 사람들)
+  const blockingMap = new Map<string, string[]>(); // source -> blocking (내가 pre로 지정한 사람들)
 
   for (const item of items) {
     if (!item.collaborators) continue;
     for (const c of item.collaborators) {
-      if (c.relation === "waiting-on") {
-        // item.name이 c.name을 기다림
+      if (c.relation === "pre") {
+        // item.name이 c.name을 pre로 지정 (item.name이 c.name을 기다림)
         const waiters = waitersMap.get(c.name) ?? [];
         waiters.push(item.name);
         waitersMap.set(c.name, waiters);
@@ -445,19 +459,18 @@ export function getBottleneckNodes(items: ScrumItem[]): BottleneckNode[] {
   }
 
   // 최대 inbound 수 (정규화용)
-  const maxInbound = Math.max(...Array.from(inboundCounts.values()), 1);
+  const maxInbound = Math.max(...Array.from(preInboundCounts.values()), 1);
 
   return Array.from(allMembers).map((name) => {
-    const inboundCount = inboundCounts.get(name) ?? 0;
+    const inboundCount = preInboundCounts.get(name) ?? 0;
     return {
       name,
       domain: memberDomains.get(name) ?? "Unknown",
       inboundCount,
-      outboundCount: outboundCounts.get(name) ?? 0,
+      outboundCount: preCounts.get(name) ?? 0,
       intensity: Math.round((inboundCount / maxInbound) * 100),
       waiters: waitersMap.get(name) ?? [],
       blocking: blockingMap.get(name) ?? [],
     };
   }).sort((a, b) => b.inboundCount - a.inboundCount);
 }
-

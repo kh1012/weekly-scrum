@@ -28,8 +28,8 @@ export function MyCollaborationRadar({ items, memberName }: MyCollaborationRadar
     );
 
     const maxPair = Math.max(...allSummaries.map((s) => s.pairCount), 1);
-    const maxOutbound = Math.max(...allSummaries.map((s) => s.waitingOnOutbound), 1);
-    const maxInbound = Math.max(...allSummaries.map((s) => s.waitingOnInbound), 1);
+    const maxOutbound = Math.max(...allSummaries.map((s) => s.preCount), 1);
+    const maxInbound = Math.max(...allSummaries.map((s) => s.preInbound), 1);
 
     // 레이더 데이터 (0-100 스케일로 정규화)
     const radarData = [
@@ -40,16 +40,16 @@ export function MyCollaborationRadar({ items, memberName }: MyCollaborationRadar
         rawValue: summary.pairCount,
       },
       {
-        subject: "대기 (출)",
-        value: Math.round((summary.waitingOnOutbound / maxOutbound) * 100),
+        subject: "Pre (출)",
+        value: Math.round((summary.preCount / maxOutbound) * 100),
         fullMark: 100,
-        rawValue: summary.waitingOnOutbound,
+        rawValue: summary.preCount,
       },
       {
-        subject: "대기 (입)",
-        value: Math.round((summary.waitingOnInbound / maxInbound) * 100),
+        subject: "Pre (입)",
+        value: Math.round((summary.preInbound / maxInbound) * 100),
         fullMark: 100,
-        rawValue: summary.waitingOnInbound,
+        rawValue: summary.preInbound,
       },
       {
         subject: "크로스 도메인",
@@ -135,18 +135,18 @@ export function MyCollaborationRadar({ items, memberName }: MyCollaborationRadar
         </div>
         <div className="text-center">
           <div className="text-lg font-bold" style={{ color: "var(--notion-orange)" }}>
-            {summary.waitingOnOutbound}
+            {summary.preCount}
           </div>
           <div className="text-xs" style={{ color: "var(--notion-text-secondary)" }}>
-            대기(출)
+            Pre(출)
           </div>
         </div>
         <div className="text-center">
           <div className="text-lg font-bold" style={{ color: "var(--notion-red)" }}>
-            {summary.waitingOnInbound}
+            {summary.preInbound}
           </div>
           <div className="text-xs" style={{ color: "var(--notion-text-secondary)" }}>
-            대기(입)
+            Pre(입)
           </div>
         </div>
         <div className="text-center">
@@ -169,4 +169,3 @@ export function MyCollaborationRadar({ items, memberName }: MyCollaborationRadar
     </div>
   );
 }
-

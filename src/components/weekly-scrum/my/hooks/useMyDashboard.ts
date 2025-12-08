@@ -116,10 +116,10 @@ export function useMyDashboard() {
   // 멤버 통계
   const stats = useMemo(() => calculateMemberStats(memberItems), [memberItems]);
 
-  // 협업 상태 (내가 기다리는 사람, 나를 기다리는 사람)
+  // 협업 상태 (내가 기다리는 사람, 나를 기다리는 사람, 내 결과물을 받을 사람)
   const collaborationStatus = useMemo(() => {
     if (!currentData || !activeMember) {
-      return { waitingForMe: [], iAmWaitingFor: [], myCollaborators: [] };
+      return { waitingForMe: [], iAmWaitingFor: [], postPartners: [], myCollaborators: [] };
     }
     return calculateCollaborationStatus(memberItems, currentData.items, activeMember);
   }, [currentData, memberItems, activeMember]);

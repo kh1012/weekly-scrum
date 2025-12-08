@@ -5,20 +5,19 @@ import type { CollaboratorStat } from "@/types/scrum";
 interface CollaboratorStatsProps {
   stats: CollaboratorStat[];
   topPair: { name: string; count: number }[];
-  topWaitingOn: { name: string; count: number }[];
+  topPre: { name: string; count: number }[];
 }
 
 const RELATION_LABELS: Record<string, { label: string; color: string }> = {
   pair: { label: "페어", color: "var(--notion-blue)" },
-  "waiting-on": { label: "대기", color: "var(--notion-orange)" },
-  review: { label: "리뷰", color: "var(--notion-purple)" },
-  handoff: { label: "인수", color: "var(--notion-green)" },
+  pre: { label: "선행", color: "var(--notion-orange)" },
+  post: { label: "후행", color: "var(--notion-green)" },
 };
 
 export function CollaboratorStats({
   stats,
   topPair,
-  topWaitingOn,
+  topPre,
 }: CollaboratorStatsProps) {
   if (stats.length === 0) {
     return null;
@@ -83,6 +82,7 @@ export function CollaboratorStats({
                   {Object.entries(stat.relations).map(([relation, count]) => {
                     if (count === 0) return null;
                     const config = RELATION_LABELS[relation];
+                    if (!config) return null;
                     return (
                       <span
                         key={relation}
@@ -130,16 +130,16 @@ export function CollaboratorStats({
             </div>
           )}
 
-          {topWaitingOn.length > 0 && (
+          {topPre.length > 0 && (
             <div>
               <h4
                 className="text-xs font-medium mb-2"
                 style={{ color: "var(--notion-orange)" }}
               >
-                대기 중 Top
+                선행 협업 Top
               </h4>
               <div className="flex flex-wrap gap-1.5">
-                {topWaitingOn.map((item) => (
+                {topPre.map((item) => (
                   <span
                     key={item.name}
                     className="text-xs px-2 py-1 rounded"

@@ -79,7 +79,7 @@ export function SummaryView({ items }: SummaryViewProps) {
   // 협업자 통계
   const collaboratorStats = useMemo(() => calculateCollaboratorStats(items), [items]);
   const topPairCollaborators = useMemo(() => getTopCollaboratorsByRelation(items, "pair", 5), [items]);
-  const topWaitingOnCollaborators = useMemo(() => getTopCollaboratorsByRelation(items, "waiting-on", 5), [items]);
+  const topPreCollaborators = useMemo(() => getTopCollaboratorsByRelation(items, "pre", 5), [items]);
 
   const progressDistribution = useMemo(
     () => ({
@@ -149,7 +149,7 @@ export function SummaryView({ items }: SummaryViewProps) {
           <CollaboratorStats
             stats={collaboratorStats}
             topPair={topPairCollaborators}
-            topWaitingOn={topWaitingOnCollaborators}
+            topPre={topPreCollaborators}
           />
         </div>
       )}

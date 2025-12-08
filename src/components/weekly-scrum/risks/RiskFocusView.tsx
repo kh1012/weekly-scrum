@@ -152,11 +152,11 @@ function RiskItem({ item, reasons, showReasons }: { item: ScrumItem; reasons: st
         )}
 
         <div className="mt-2 space-y-1">
-          {item.progress && item.progress !== "-" && (
-            <InfoBox color="#0969da" text={item.progress} />
+          {item.progress && item.progress.length > 0 && (
+            <InfoBox color="#0969da" text={item.progress.join(" / ")} />
           )}
-          {item.next && item.next !== "-" && (
-            <InfoBox color="#1a7f37" text={item.next} />
+          {item.next && item.next.length > 0 && (
+            <InfoBox color="#1a7f37" text={item.next.join(" / ")} />
           )}
         </div>
       </div>

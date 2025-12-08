@@ -12,9 +12,9 @@ interface MyCollaborationOrbitProps {
 
 interface OrbitNode {
   name: string;
-  relation: "pair" | "waiting-on" | "both";
+  relation: "pair" | "pre" | "both";
   pairCount: number;
-  waitingOnCount: number;
+  preCount: number;
   totalCount: number;
   domain: string;
   orbit: "inner" | "middle" | "outer";
@@ -50,7 +50,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
     const myDomain = memberDomains.get(memberName) ?? "Unknown";
 
     // 협업자별 빈도와 관계 수집
-    const collabMap = new Map<string, { name: string; pairCount: number; waitingOnCount: number; domain: string }>();
+    const collabMap = new Map<string, { name: string; pairCount: number; preCount: number; domain: string }>();
 
     // Pair 관계
     for (const item of items.filter((i) => i.name === memberName)) {
@@ -59,7 +59,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
         const existing = collabMap.get(p.name) ?? { 
           name: p.name, 
           pairCount: 0, 
-          waitingOnCount: 0, 
+          preCount: 0, 
           domain: memberDomains.get(p.name) ?? "Unknown" 
         };
         existing.pairCount++;
@@ -67,42 +67,42 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
       }
     }
 
-    // Waiting-on 관계 (내가 기다리는)
+    // Pre 관계 (내가 기다리는)
     for (const item of items.filter((i) => i.name === memberName)) {
-      const waitings = item.collaborators?.filter((c) => c.relation === "waiting-on") ?? [];
-      for (const w of waitings) {
+      const pres = item.collaborators?.filter((c) => c.relation === "pre") ?? [];
+      for (const w of pres) {
         const existing = collabMap.get(w.name) ?? { 
           name: w.name, 
           pairCount: 0, 
-          waitingOnCount: 0, 
+          preCount: 0, 
           domain: memberDomains.get(w.name) ?? "Unknown" 
         };
-        existing.waitingOnCount++;
+        existing.preCount++;
         collabMap.set(w.name, existing);
       }
     }
 
-    // Waiting-on 관계 (나를 기다리는)
+    // Pre 관계 (나를 기다리는)
     for (const item of items) {
       if (item.name === memberName) continue;
       const waitingForMe = item.collaborators?.filter(
-        (c) => c.name === memberName && c.relation === "waiting-on"
+        (c) => c.name === memberName && c.relation === "pre"
       );
       if (waitingForMe && waitingForMe.length > 0) {
         const existing = collabMap.get(item.name) ?? { 
           name: item.name, 
           pairCount: 0, 
-          waitingOnCount: 0, 
+          preCount: 0, 
           domain: memberDomains.get(item.name) ?? "Unknown" 
         };
-        existing.waitingOnCount += waitingForMe.length;
+        existing.preCount += waitingForMe.length;
         collabMap.set(item.name, existing);
       }
     }
 
     // 궤도 할당
     const collaborators = Array.from(collabMap.values());
-    const maxCount = Math.max(...collaborators.map((c) => c.pairCount + c.waitingOnCount), 1);
+    const maxCount = Math.max(...collaborators.map((c) => c.pairCount + c.preCount), 1);
 
     // 궤도별로 그룹핑
     const innerNodes: typeof collaborators = [];
@@ -110,7 +110,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
     const outerNodes: typeof collaborators = [];
 
     collaborators.forEach((collab) => {
-      const totalCount = collab.pairCount + collab.waitingOnCount;
+      const totalCount = collab.pairCount + collab.preCount;
       const intensity = totalCount / maxCount;
 
       if (collab.pairCount > 0 && intensity >= 0.5) {
@@ -139,22 +139,22 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
       const orbitRadius = getOrbitRadius(orbit);
       return nodes.map((collab, idx) => {
         const angle = startAngle + (2 * Math.PI * idx) / Math.max(nodes.length, 1);
-        const totalCount = collab.pairCount + collab.waitingOnCount;
+        const totalCount = collab.pairCount + collab.preCount;
         
-        let relation: "pair" | "waiting-on" | "both";
-        if (collab.pairCount > 0 && collab.waitingOnCount > 0) {
+        let relation: "pair" | "pre" | "both";
+        if (collab.pairCount > 0 && collab.preCount > 0) {
           relation = "both";
         } else if (collab.pairCount > 0) {
           relation = "pair";
         } else {
-          relation = "waiting-on";
+          relation = "pre";
         }
 
         return {
           name: collab.name,
           relation,
           pairCount: collab.pairCount,
-          waitingOnCount: collab.waitingOnCount,
+          preCount: collab.preCount,
           totalCount,
           domain: collab.domain,
           orbit,
@@ -305,7 +305,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
           </span>
           <span className="flex items-center gap-1">
             <span className="w-3 h-0.5 bg-red-500 rounded" />
-            →Waiting
+            →Pre
           </span>
         </div>
       </div>
@@ -335,7 +335,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
             <filter id="orbitGlow2" x="-50%" y="-50%" width="200%" height="200%">
               <feDropShadow dx="0" dy="0" stdDeviation="5" floodOpacity="0.3" />
             </filter>
-            <marker id="arrowWaiting2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <marker id="arrowPre2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
               <path d="M0,1 L6,4 L0,7 Z" fill="#ef4444" />
             </marker>
           </defs>
@@ -348,7 +348,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
           {/* 궤도 레이블 */}
           <text x={CENTER_X + 95} y={CENTER_Y - 5} fontSize={9} fill="#94a3b8" fontWeight={500}>빈번한 Pair</text>
           <text x={CENTER_X + 155} y={CENTER_Y - 5} fontSize={9} fill="#94a3b8" fontWeight={500}>일반 협업</text>
-          <text x={CENTER_X + 215} y={CENTER_Y - 5} fontSize={9} fill="#94a3b8" fontWeight={500}>Waiting</text>
+          <text x={CENTER_X + 215} y={CENTER_Y - 5} fontSize={9} fill="#94a3b8" fontWeight={500}>Pre</text>
 
           {/* 연결선 */}
           {nodePositions.map((node) => {
@@ -372,18 +372,18 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
               );
             }
 
-            if (node.waitingOnCount > 0 && node.pairCount === 0) {
+            if (node.preCount > 0 && node.pairCount === 0) {
               const path = getCurvePath(CENTER_X, CENTER_Y, node.x, node.y, 32, nodeRadius + 6);
               return (
                 <path
-                  key={`waiting-line-${node.name}`}
+                  key={`pre-line-${node.name}`}
                   d={path}
                   fill="none"
                   stroke="#ef4444"
-                  strokeWidth={Math.min(node.waitingOnCount + 1, 3)}
+                  strokeWidth={Math.min(node.preCount + 1, 3)}
                   strokeOpacity={opacity}
                   strokeLinecap="round"
-                  markerEnd="url(#arrowWaiting2)"
+                  markerEnd="url(#arrowPre2)"
                 />
               );
             }
@@ -406,7 +406,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
             const isActive = activeNode === node.name;
             const hasActive = !!activeNode;
             const opacity = hasActive ? (isActive ? 1 : 0.2) : 1;
-            const isBottleneck = node.waitingOnCount >= 2;
+            const isBottleneck = node.preCount >= 2;
             const isDragging = draggingNode === node.name;
 
             return (
@@ -464,12 +464,12 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
                     </text>
                   </g>
                 )}
-                {/* Waiting-on 뱃지 */}
-                {node.waitingOnCount > 0 && (
+                {/* Pre 뱃지 */}
+                {node.preCount > 0 && (
                   <g transform={`translate(${-nodeRadius + 3}, ${-nodeRadius + 3})`}>
                     <circle r={9} fill="#ef4444" stroke="white" strokeWidth={1.5} />
                     <text textAnchor="middle" dominantBaseline="middle" fill="white" fontSize={8} fontWeight={700}>
-                      {node.waitingOnCount}
+                      {node.preCount}
                     </text>
                   </g>
                 )}
@@ -541,9 +541,9 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
                     {node.pairCount > 0 && (
                       <div className="text-blue-500">Pair: {node.pairCount}건</div>
                     )}
-                    {node.waitingOnCount > 0 && (
-                      <div style={{ color: node.waitingOnCount >= 2 ? "#ef4444" : undefined }}>
-                        Waiting: {node.waitingOnCount}건
+                    {node.preCount > 0 && (
+                      <div style={{ color: node.preCount >= 2 ? "#ef4444" : undefined }}>
+                        Pre: {node.preCount}건
                       </div>
                     )}
                   </div>
@@ -572,7 +572,7 @@ export function MyCollaborationOrbit({ items, memberName }: MyCollaborationOrbit
           </span>
           <span className="flex items-center gap-1">
             <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[7px] flex items-center justify-center font-bold">n</span>
-            대기
+            선행
           </span>
           <span className="flex items-center gap-1">
             <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-red-400" />

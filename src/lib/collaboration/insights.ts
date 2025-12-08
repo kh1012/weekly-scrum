@@ -3,7 +3,7 @@
  */
 
 import type { ScrumItem, WeeklyScrumData } from "@/types/scrum";
-import { getMemberSummary, getWaitingOnInbound, getWaitingOnOutbound, getPairCountPerMember } from "./metrics";
+import { getMemberSummary, getPreInbound, getPreCount, getPairCountPerMember } from "./metrics";
 
 export interface CollaborationInsight {
   type: "warning" | "info" | "success" | "neutral";
@@ -22,22 +22,22 @@ export function generatePersonalInsights(
 ): CollaborationInsight[] {
   const insights: CollaborationInsight[] = [];
   const summary = getMemberSummary(items, memberName);
-  const inboundCounts = getWaitingOnInbound(items);
-  const outboundCounts = getWaitingOnOutbound(items);
+  const preInboundCounts = getPreInbound(items);
+  const preCounts = getPreCount(items);
   const pairCounts = getPairCountPerMember(items);
 
-  // 1. 병목 경고: 나를 기다리는 사람이 많을 때
-  if (summary.waitingOnInbound >= 2) {
+  // 1. 병목 경고: 나를 기다리는 사람이 많을 때 (다른 사람이 나를 pre로 지정)
+  if (summary.preInbound >= 2) {
     insights.push({
       type: "warning",
       icon: "🚧",
-      message: `${summary.waitingOnInbound}명이 당신의 작업을 기다리고 있습니다`,
+      message: `${summary.preInbound}명이 당신의 작업을 기다리고 있습니다`,
       detail: "병목 해소를 위해 해당 작업의 우선순위를 높여주세요.",
     });
   }
 
   // 2. 정상 상태: 나를 기다리는 사람이 적을 때
-  if (summary.waitingOnInbound === 0 && summary.totalCollaborations > 0) {
+  if (summary.preInbound === 0 && summary.totalCollaborations > 0) {
     insights.push({
       type: "success",
       icon: "✅",
@@ -82,12 +82,12 @@ export function generatePersonalInsights(
     });
   }
 
-  // 6. 내가 기다리는 작업이 많을 때
-  if (summary.waitingOnOutbound >= 3) {
+  // 6. 내가 기다리는 작업이 많을 때 (내가 pre로 지정한 사람이 많음)
+  if (summary.preCount >= 3) {
     insights.push({
       type: "warning",
       icon: "⏳",
-      message: `${summary.waitingOnOutbound}개 작업이 다른 사람을 기다리고 있습니다`,
+      message: `${summary.preCount}개 작업이 선행 협업자를 기다리고 있습니다`,
       detail: "대기 중인 작업의 진행 상황을 확인해보세요.",
     });
   }
@@ -97,7 +97,7 @@ export function generatePersonalInsights(
     const prevSummary = getMemberSummary(previousWeekData.items, memberName);
 
     // 병목 증가
-    const inboundDiff = summary.waitingOnInbound - prevSummary.waitingOnInbound;
+    const inboundDiff = summary.preInbound - prevSummary.preInbound;
     if (inboundDiff > 0) {
       insights.push({
         type: "warning",
@@ -123,16 +123,16 @@ export function generatePersonalInsights(
     }
   }
 
-  // 8. 반복적인 병목 패턴 (같은 사람에게 여러 번 waiting-on)
-  const waitingOnTargets = new Map<string, number>();
+  // 8. 반복적인 pre 패턴 (같은 사람에게 여러 번 pre 관계)
+  const preTargets = new Map<string, number>();
   for (const item of items.filter((i) => i.name === memberName)) {
-    const waitings = item.collaborators?.filter((c) => c.relation === "waiting-on") ?? [];
-    for (const w of waitings) {
-      waitingOnTargets.set(w.name, (waitingOnTargets.get(w.name) ?? 0) + 1);
+    const pres = item.collaborators?.filter((c) => c.relation === "pre") ?? [];
+    for (const w of pres) {
+      preTargets.set(w.name, (preTargets.get(w.name) ?? 0) + 1);
     }
   }
 
-  for (const [target, count] of waitingOnTargets) {
+  for (const [target, count] of preTargets) {
     if (count >= 2) {
       insights.push({
         type: "neutral",
@@ -161,13 +161,13 @@ export function generatePersonalInsights(
  */
 export function generateTeamInsights(items: ScrumItem[]): CollaborationInsight[] {
   const insights: CollaborationInsight[] = [];
-  const inboundCounts = getWaitingOnInbound(items);
+  const preInboundCounts = getPreInbound(items);
   const pairCounts = getPairCountPerMember(items);
 
   // 1. 가장 큰 병목
   let maxInbound = 0;
   let bottleneckMember = "";
-  for (const [name, count] of inboundCounts) {
+  for (const [name, count] of preInboundCounts) {
     if (count > maxInbound) {
       maxInbound = count;
       bottleneckMember = name;
@@ -201,19 +201,18 @@ export function generateTeamInsights(items: ScrumItem[]): CollaborationInsight[]
     });
   }
 
-  // 3. 전체 waiting-on 비율
-  const totalWaitingOn = Array.from(inboundCounts.values()).reduce((a, b) => a + b, 0);
+  // 3. 전체 pre 관계 비율
+  const totalPre = Array.from(preInboundCounts.values()).reduce((a, b) => a + b, 0);
   const totalPairs = Array.from(pairCounts.values()).reduce((a, b) => a + b, 0);
 
-  if (totalWaitingOn > totalPairs * 1.5) {
+  if (totalPre > totalPairs * 1.5) {
     insights.push({
       type: "warning",
       icon: "⚠️",
       message: "팀 전체적으로 대기 관계가 많습니다",
-      detail: `Waiting-on ${totalWaitingOn}건 vs Pair ${totalPairs}건`,
+      detail: `Pre 협업 ${totalPre}건 vs Pair ${totalPairs}건`,
     });
   }
 
   return insights;
 }
-

@@ -20,15 +20,16 @@ export function filterItems(items: ScrumItem[], filters: FilterState): ScrumItem
     }
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
+      // progress와 next는 배열이므로 join하여 검색
       const searchTarget = [
         item.name,
         item.domain,
         item.project,
         item.module || "",
         item.topic,
-        item.progress,
-        item.risk,
-        item.next,
+        item.progress.join(" "),
+        item.risk || "",
+        item.next.join(" "),
       ]
         .join(" ")
         .toLowerCase();
@@ -85,10 +86,9 @@ export function calculateCollaboratorStats(items: ScrumItem[]): CollaboratorStat
           name: collab.name,
           count: 0,
           relations: {
-            "waiting-on": 0,
             pair: 0,
-            review: 0,
-            handoff: 0,
+            pre: 0,
+            post: 0,
           },
         };
       }
@@ -166,15 +166,19 @@ export function calculateStats(items: ScrumItem[]): ScrumStats {
   
   const avgAchievement = getAchievementRate(avgProgress, avgPlan);
   
-  const atRisk = items.filter((item) => (item.riskLevel ?? 0) >= 2).length;
+  // riskLevel이 null이 아니고 2 이상인 경우만 atRisk로 카운트
+  const atRisk = items.filter((item) => item.riskLevel !== null && item.riskLevel >= 2).length;
   const completed = items.filter((item) => item.progressPercent >= 100).length;
   const inProgress = total - completed;
 
-  // 리스크 레벨별 카운트
-  const riskCounts: Record<RiskLevel, number> = { 0: 0, 1: 0, 2: 0, 3: 0 };
+  // 리스크 레벨별 카운트 (unknown = 미정 상태 포함)
+  const riskCounts: Record<RiskLevel | "unknown", number> = { 0: 0, 1: 0, 2: 0, 3: 0, unknown: 0 };
   items.forEach((item) => {
-    const level = (item.riskLevel ?? 0) as RiskLevel;
-    riskCounts[level]++;
+    if (item.riskLevel === null) {
+      riskCounts.unknown++;
+    } else {
+      riskCounts[item.riskLevel]++;
+    }
   });
 
   // 고유 도메인, 프로젝트, 멤버, 모듈 목록

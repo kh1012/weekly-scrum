@@ -27,7 +27,6 @@
 - RiskLevel: 1
 - Collaborators: 김정빈(waiting-on)
 
-
 [Design / M-Connector / Dashboard / 레이아웃 보완]
 - Name: 김희성
 - Plan: 레이아웃 재정비 100%

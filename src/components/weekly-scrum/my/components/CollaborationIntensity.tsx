@@ -10,9 +10,8 @@ export interface CollaborationWeekData {
   weekKey: string;
   weekLabel: string;
   pair: number;
-  review: number;
-  waitingOn: number;
-  handoff: number;
+  pre: number;
+  post: number;
   total: number;
 }
 
@@ -25,18 +24,13 @@ const RELATION_CONFIG: Record<
     color: "var(--notion-blue)",
     bgColor: "var(--notion-blue-bg)",
   },
-  "waiting-on": {
-    label: "대기",
+  pre: {
+    label: "선행",
     color: "var(--notion-orange)",
     bgColor: "var(--notion-orange-bg)",
   },
-  review: {
-    label: "리뷰",
-    color: "var(--notion-purple)",
-    bgColor: "var(--notion-purple-bg)",
-  },
-  handoff: {
-    label: "인수",
+  post: {
+    label: "후행",
     color: "var(--notion-green)",
     bgColor: "var(--notion-green-bg)",
   },
@@ -59,12 +53,11 @@ export function CollaborationIntensity({ weeklyData }: CollaborationIntensityPro
   const totals = weeklyData.reduce(
     (acc, w) => ({
       pair: acc.pair + w.pair,
-      review: acc.review + w.review,
-      waitingOn: acc.waitingOn + w.waitingOn,
-      handoff: acc.handoff + w.handoff,
+      pre: acc.pre + w.pre,
+      post: acc.post + w.post,
       total: acc.total + w.total,
     }),
-    { pair: 0, review: 0, waitingOn: 0, handoff: 0, total: 0 }
+    { pair: 0, pre: 0, post: 0, total: 0 }
   );
 
   return (
@@ -91,16 +84,14 @@ export function CollaborationIntensity({ weeklyData }: CollaborationIntensityPro
 
       {/* 범례 */}
       <div className="flex flex-wrap gap-3 mb-4">
-        {(["pair", "review", "waiting-on", "handoff"] as Relation[]).map((relation) => {
+        {(["pair", "pre", "post"] as Relation[]).map((relation) => {
           const config = RELATION_CONFIG[relation];
           const count =
-            relation === "waiting-on"
-              ? totals.waitingOn
+            relation === "pre"
+              ? totals.pre
               : relation === "pair"
               ? totals.pair
-              : relation === "review"
-              ? totals.review
-              : totals.handoff;
+              : totals.post;
 
           if (count === 0) return null;
 
@@ -147,34 +138,24 @@ export function CollaborationIntensity({ weeklyData }: CollaborationIntensityPro
                       title={`페어: ${week.pair}`}
                     />
                   )}
-                  {week.review > 0 && (
+                  {week.pre > 0 && (
                     <div
                       className="h-full"
                       style={{
-                        width: `${(week.review / maxTotal) * 100}%`,
-                        backgroundColor: RELATION_CONFIG.review.color,
+                        width: `${(week.pre / maxTotal) * 100}%`,
+                        backgroundColor: RELATION_CONFIG.pre.color,
                       }}
-                      title={`리뷰: ${week.review}`}
+                      title={`선행: ${week.pre}`}
                     />
                   )}
-                  {week.waitingOn > 0 && (
+                  {week.post > 0 && (
                     <div
                       className="h-full"
                       style={{
-                        width: `${(week.waitingOn / maxTotal) * 100}%`,
-                        backgroundColor: RELATION_CONFIG["waiting-on"].color,
+                        width: `${(week.post / maxTotal) * 100}%`,
+                        backgroundColor: RELATION_CONFIG.post.color,
                       }}
-                      title={`대기: ${week.waitingOn}`}
-                    />
-                  )}
-                  {week.handoff > 0 && (
-                    <div
-                      className="h-full"
-                      style={{
-                        width: `${(week.handoff / maxTotal) * 100}%`,
-                        backgroundColor: RELATION_CONFIG.handoff.color,
-                      }}
-                      title={`인수: ${week.handoff}`}
+                      title={`후행: ${week.post}`}
                     />
                   )}
                 </>
@@ -228,15 +209,14 @@ export function calculateCollaborationIntensity(
         weekKey,
         weekLabel: weekKey,
         pair: 0,
-        review: 0,
-        waitingOn: 0,
-        handoff: 0,
+        pre: 0,
+        post: 0,
         total: 0,
       };
     }
 
     const memberItems = weekData.items.filter((item) => item.name === memberName);
-    const counts = { pair: 0, review: 0, waitingOn: 0, handoff: 0 };
+    const counts = { pair: 0, pre: 0, post: 0 };
 
     memberItems.forEach((item) => {
       if (!item.collaborators) return;
@@ -246,14 +226,11 @@ export function calculateCollaborationIntensity(
           case "pair":
             counts.pair++;
             break;
-          case "review":
-            counts.review++;
+          case "pre":
+            counts.pre++;
             break;
-          case "waiting-on":
-            counts.waitingOn++;
-            break;
-          case "handoff":
-            counts.handoff++;
+          case "post":
+            counts.post++;
             break;
         }
       });
@@ -266,8 +243,7 @@ export function calculateCollaborationIntensity(
       weekKey,
       weekLabel,
       ...counts,
-      total: counts.pair + counts.review + counts.waitingOn + counts.handoff,
+      total: counts.pair + counts.pre + counts.post,
     };
   });
 }
-
