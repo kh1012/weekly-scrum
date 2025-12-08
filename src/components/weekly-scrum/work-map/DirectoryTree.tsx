@@ -114,8 +114,8 @@ export function DirectoryTree({ projects, selectedFeature, onFeatureSelect }: Di
       </div>
 
       {/* 트리 컨텐츠 */}
-      <div className="flex-1 overflow-y-auto space-y-0.5">
-        {projects.map((project) => (
+      <div className="flex-1 overflow-y-auto">
+        {projects.map((project, index) => (
           <ProjectItem
             key={project.name}
             project={project}
@@ -125,6 +125,7 @@ export function DirectoryTree({ projects, selectedFeature, onFeatureSelect }: Di
             onToggle={() => toggleProject(project.name)}
             onModuleToggle={toggleModule}
             onFeatureSelect={onFeatureSelect}
+            isFirst={index === 0}
           />
         ))}
       </div>
@@ -143,6 +144,7 @@ function ProjectItem({
   onToggle,
   onModuleToggle,
   onFeatureSelect,
+  isFirst,
 }: {
   project: ProjectNode;
   isExpanded: boolean;
@@ -151,6 +153,7 @@ function ProjectItem({
   onToggle: () => void;
   onModuleToggle: (key: string) => void;
   onFeatureSelect: (project: string, module: string, feature: string) => void;
+  isFirst: boolean;
 }) {
   const metrics = computeProjectMetrics(project);
   const progressColor = getProgressColor(metrics.progress);
@@ -169,7 +172,120 @@ function ProjectItem({
 
   return (
     <div className="select-none">
+      {/* 프로젝트 구분선 (첫 번째가 아닐 때) */}
+      {!isFirst && (
+        <div
+          className="mx-2 my-3"
+          style={{ borderTop: "1px solid var(--notion-border)" }}
+        />
+      )}
+
       {/* 프로젝트 헤더 */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all"
+        style={{ background: "var(--notion-bg-secondary)" }}
+        onMouseEnter={(e) => e.currentTarget.style.background = "var(--notion-bg-hover)"}
+        onMouseLeave={(e) => e.currentTarget.style.background = "var(--notion-bg-secondary)"}
+      >
+        {/* 화살표 */}
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className={`transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+          style={{ color: "var(--notion-text-muted)" }}
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+
+        {/* 프로젝트명 */}
+        <span
+          className="flex-1 text-left font-semibold text-sm truncate"
+          style={{ color: "var(--notion-text)" }}
+        >
+          {project.name}
+        </span>
+
+        {/* 완료 현황 */}
+        <span
+          className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
+          style={{ 
+            background: "var(--notion-bg)", 
+            color: "var(--notion-text-muted)",
+          }}
+        >
+          {completedFeatures}/{totalFeatures}
+        </span>
+
+        {/* 진행률 */}
+        <span
+          className="text-xs font-bold flex-shrink-0"
+          style={{ color: progressColor }}
+        >
+          {metrics.progress}%
+        </span>
+      </button>
+
+      {/* 모듈 목록 */}
+      {isExpanded && (
+        <div className="ml-4 mt-2 pl-3 border-l-2" style={{ borderColor: "var(--notion-border)" }}>
+          {project.modules.map((module, index) => {
+            const moduleKey = `${project.name}/${module.name}`;
+            return (
+              <ModuleItem
+                key={module.name}
+                module={module}
+                projectName={project.name}
+                isExpanded={expandedModules.has(moduleKey)}
+                selectedFeature={selectedFeature}
+                onToggle={() => onModuleToggle(moduleKey)}
+                onFeatureSelect={onFeatureSelect}
+                isFirst={index === 0}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 모듈 아이템
+ */
+function ModuleItem({
+  module,
+  projectName,
+  isExpanded,
+  selectedFeature,
+  onToggle,
+  onFeatureSelect,
+  isFirst,
+}: {
+  module: ModuleNode;
+  projectName: string;
+  isExpanded: boolean;
+  selectedFeature?: WorkMapSelection;
+  onToggle: () => void;
+  onFeatureSelect: (project: string, module: string, feature: string) => void;
+  isFirst: boolean;
+}) {
+  const metrics = computeModuleMetrics(module);
+  const progressColor = getProgressColor(metrics.progress);
+
+  // 완료된 피쳐 수 계산
+  const completedFeatures = module.features.filter((f) => {
+    const fm = computeFeatureMetrics(f);
+    return fm.progress >= 100;
+  }).length;
+
+  return (
+    <div className={isFirst ? "" : "mt-2"}>
+      {/* 모듈 헤더 */}
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-all"
@@ -191,108 +307,17 @@ function ProjectItem({
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
-        {/* 프로젝트명 */}
-        <span
-          className="flex-1 text-left font-semibold text-sm truncate"
-          style={{ color: "var(--notion-text)" }}
-        >
-          {project.name}
-        </span>
-
-        {/* 진행률 */}
-        <span
-          className="text-xs font-bold flex-shrink-0"
-          style={{ color: progressColor }}
-        >
-          {metrics.progress}%
-        </span>
-      </button>
-
-      {/* 모듈 목록 */}
-      {isExpanded && (
-        <div className="ml-3 border-l" style={{ borderColor: "var(--notion-border)" }}>
-          {project.modules.map((module) => {
-            const moduleKey = `${project.name}/${module.name}`;
-            return (
-              <ModuleItem
-                key={module.name}
-                module={module}
-                projectName={project.name}
-                isExpanded={expandedModules.has(moduleKey)}
-                selectedFeature={selectedFeature}
-                onToggle={() => onModuleToggle(moduleKey)}
-                onFeatureSelect={onFeatureSelect}
-              />
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * 모듈 아이템
- */
-function ModuleItem({
-  module,
-  projectName,
-  isExpanded,
-  selectedFeature,
-  onToggle,
-  onFeatureSelect,
-}: {
-  module: ModuleNode;
-  projectName: string;
-  isExpanded: boolean;
-  selectedFeature?: WorkMapSelection;
-  onToggle: () => void;
-  onFeatureSelect: (project: string, module: string, feature: string) => void;
-}) {
-  const metrics = computeModuleMetrics(module);
-  const progressColor = getProgressColor(metrics.progress);
-
-  // 완료된 피쳐 수 계산
-  const completedFeatures = module.features.filter((f) => {
-    const fm = computeFeatureMetrics(f);
-    return fm.progress >= 100;
-  }).length;
-
-  return (
-    <div className="pl-2">
-      {/* 모듈 헤더 */}
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-2 px-2 py-1 rounded-md transition-all"
-        style={{ background: "transparent" }}
-        onMouseEnter={(e) => e.currentTarget.style.background = "var(--notion-bg-hover)"}
-        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-      >
-        {/* 화살표 */}
-        <svg
-          width="9"
-          height="9"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          className={`transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
-          style={{ color: "var(--notion-text-muted)" }}
-        >
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-
         {/* 모듈명 */}
         <span
-          className="flex-1 text-left font-medium text-sm truncate"
-          style={{ color: "var(--notion-text-secondary)" }}
+          className="flex-1 text-left font-medium text-[13px] truncate"
+          style={{ color: "var(--notion-text)" }}
         >
           {module.name}
         </span>
 
         {/* 완료 현황 */}
         <span
-          className="text-xs flex-shrink-0"
+          className="text-[10px] flex-shrink-0"
           style={{ color: "var(--notion-text-muted)" }}
         >
           {completedFeatures}/{module.features.length}
@@ -309,7 +334,7 @@ function ModuleItem({
 
       {/* 피쳐 목록 */}
       {isExpanded && (
-        <div className="ml-3 border-l" style={{ borderColor: "var(--notion-border)" }}>
+        <div className="ml-3 mt-1 pl-3 border-l" style={{ borderColor: "var(--notion-border)" }}>
           {module.features.map((feature) => (
             <FeatureItem
               key={feature.name}
@@ -356,22 +381,24 @@ function FeatureItem({
   return (
     <button
       onClick={() => onSelect(projectName, moduleName, feature.name)}
-      className="w-full flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-md transition-all"
+      className="w-full flex items-center gap-2 pl-2 pr-2 py-1 rounded transition-all"
       style={{
-        background: isSelected ? "rgba(0, 0, 0, 0.05)" : "transparent",
+        background: isSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
+        borderLeft: isSelected ? "2px solid #3b82f6" : "2px solid transparent",
+        marginLeft: "-2px",
       }}
       onMouseEnter={(e) => {
         if (!isSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
       }}
       onMouseLeave={(e) => {
-        if (!isSelected) e.currentTarget.style.background = "transparent";
+        if (!isSelected) e.currentTarget.style.background = isSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
       }}
     >
       {/* 피쳐명 */}
       <span
-        className="flex-1 text-left text-sm truncate"
+        className="flex-1 text-left text-[12px] truncate"
         style={{
-          color: isSelected ? "var(--notion-text)" : "var(--notion-text-secondary)",
+          color: isSelected ? "#3b82f6" : "var(--notion-text-secondary)",
           fontWeight: isSelected ? 500 : 400,
         }}
       >
@@ -380,7 +407,7 @@ function FeatureItem({
 
       {/* 태스크 완료 현황 */}
       <span
-        className="text-xs flex-shrink-0"
+        className="text-[10px] flex-shrink-0"
         style={{ color: "var(--notion-text-muted)" }}
       >
         {completedTasks}/{totalTasks}
@@ -388,7 +415,7 @@ function FeatureItem({
 
       {/* 진행률 바 */}
       <div
-        className="w-10 h-1.5 rounded-full overflow-hidden flex-shrink-0"
+        className="w-8 h-1 rounded-full overflow-hidden flex-shrink-0"
         style={{ background: "var(--notion-bg-secondary)" }}
       >
         <div
@@ -399,7 +426,7 @@ function FeatureItem({
 
       {/* 진행률 텍스트 */}
       <span
-        className="text-xs font-bold w-8 text-right flex-shrink-0"
+        className="text-[10px] font-bold w-7 text-right flex-shrink-0"
         style={{ color: progressColor }}
       >
         {metrics.progress}%
