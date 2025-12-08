@@ -64,7 +64,7 @@
 * Risk: 12월 말 기원님이 메트릭 기반 모니터링 작업을 완료 되어야함.
 * RiskLevel: 1
 * Collaborators: DevOps(pair)
-[Backend / MOTIIV / 스프레드시트 / 외부 API 트랜잭션 일관성 확보]
+[Backend / MOTIIV / Spreadsheet / 외부 API 트랜잭션 일관성 확보]
 * Name: 서상준
 * Plan: 별도 트랜잭션에서 실패한 외부 API 요청 기록 (100%)
 * Progress: 실패 API mongoDB 저장 완료 (100%)
@@ -72,7 +72,7 @@
 * Risk: M-Drive(mws) 쪽 시스템 토큰 사용할 수 있도록 추가 개발 필요
 * RiskLevel: 2
 * Collaborators: 김용수(pair)
-[Backend / MOTIIV / 스프레드시트 / signed url 업데이트 원자성 확보]
+[Backend / MOTIIV / Spreadsheet / signed url 업데이트 원자성 확보]
 * Name: 서상준
 * Plan: signed url을 사용해 할 때 직접 업데이트 하여 원자성 확보 (100%)
 * Progress: excel json content body로 받아 직접 update 하는 API 추가 (100%)
@@ -251,10 +251,12 @@
 * RiskLevel: None
 * Collaborators: 김희성(pair)
 
-[Research / MOTIIV / 워크스페이스 / 기술부채 리서치 및 협의]
+[Research / MOTIIV / 문서화 / 기술부채 리서치 및 협의]
+* Tasks 
+    * SEO 리서치 및 결과 공유 (100%)
+    * Testing Tool 리서치 및 결과 공유 (0%)
+    * 스타일 리서치 및 결과 공유 (100%)
 * Name: 이하영
-* Plan: SEO / Testing Tool / CSS 3개에 대한 프론트엔드 개발자 리서치 및 협의점 도출
-* Progress: Testing Tool을 제외한 SEO, CSS는 어떻게 진행할지 결론 도출 완료
 * Reason
     * Testing은 각자 궁금한 도구를 직접 사용해보고 공유하는 것까지만 완료.
     * 리서치해야 할 항목들이 생각보다 많아서 스프린트 기간 내 완성도 높은 결과를 내놓기 어려웠음

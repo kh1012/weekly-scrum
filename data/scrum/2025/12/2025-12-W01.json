@@ -341,27 +341,6 @@
           "relation": "pair"
         }
       ]
-    },
-    {
-      "name": "이하영",
-      "domain": "Research",
-      "project": "MOTIIV",
-      "topic": "기술부채 리서치 및 협의",
-      "plan": "SEO / Testing Tool / CSS 3개에 대한 프론트엔드 개발자 리서치 및 협의점 도출",
-      "planPercent": 0,
-      "progress": [
-        "Testing Tool을 제외한 SEO, CSS는 어떻게 진행할지 결론 도출 완료"
-      ],
-      "progressPercent": 0,
-      "reason": "",
-      "next": [
-        "Testing tool 점차적 도입 및 스프레드시트 백로그 이슈(SEO, Author box) 진행"
-      ],
-      "risk": [
-        "None"
-      ],
-      "riskLevel": null,
-      "module": "워크스페이스"
     }
   ]
 }
