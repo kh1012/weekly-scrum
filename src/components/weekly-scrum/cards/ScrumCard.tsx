@@ -103,8 +103,8 @@ export function ScrumCard({ item, isCompleted = false }: ScrumCardProps) {
           <ContentBar label="Reason" color="var(--notion-orange)" content={item.reason} />
         )}
         <ContentBarMulti label="Next" color="var(--notion-blue)" items={item.next} />
-        {item.risk && (
-          <ContentBar label="Risk" color={riskColor.text} content={item.risk} />
+        {item.risk && item.risk.length > 0 && (
+          <ContentBarMulti label="Risk" color={riskColor.text} items={item.risk} />
         )}
         {isRiskUnknown && (
           <ContentBar label="Risk" color="var(--notion-text-tertiary)" content="미정" />

@@ -155,12 +155,16 @@ function CustomTooltip({ item, position }: CustomTooltipProps) {
               </span>
               <span className="text-xs text-[#8c959f]">{riskColor.description}</span>
             </div>
-            {item.risk && item.risk.trim() !== "" && (
+            {item.risk && item.risk.length > 0 && (
               <div
                 className="text-sm pl-2 border-l-2 mt-1"
                 style={{ borderColor: riskColor.text, color: riskColor.text }}
               >
-                {item.risk}
+                {item.risk.length === 1 ? item.risk[0] : (
+                  <ul className="list-disc list-inside">
+                    {item.risk.map((r, i) => <li key={i}>{r}</li>)}
+                  </ul>
+                )}
               </div>
             )}
           </div>

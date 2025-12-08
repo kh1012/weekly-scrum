@@ -28,7 +28,7 @@ export function filterItems(items: ScrumItem[], filters: FilterState): ScrumItem
         item.module || "",
         item.topic,
         item.progress.join(" "),
-        item.risk || "",
+        item.risk?.join(" ") || "",
         item.next.join(" "),
       ]
         .join(" ")

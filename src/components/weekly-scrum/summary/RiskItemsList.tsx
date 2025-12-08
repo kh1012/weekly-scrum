@@ -50,9 +50,19 @@ export function RiskItemsList({ items }: RiskItemsListProps) {
                     ({item.name})
                   </span>
                 </div>
-                <p className="text-xs" style={{ color: riskColor.text }}>
-                  {item.risk}
-                </p>
+                {item.risk && item.risk.length > 0 && (
+                  <div className="text-xs" style={{ color: riskColor.text }}>
+                    {item.risk.length === 1 ? (
+                      item.risk[0]
+                    ) : (
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {item.risk.map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
               <span className="text-xs font-medium shrink-0" style={{ color: riskColor.text }}>
                 {item.progressPercent}%

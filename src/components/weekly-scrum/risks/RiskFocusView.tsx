@@ -34,8 +34,8 @@ export function RiskFocusView({ items }: RiskFocusViewProps) {
       }
 
       // 리스크가 있는 경우 (critical이 아닌 경우만 warning으로 변경)
-      if (item.risk && item.risk !== "-" && item.risk.trim() !== "") {
-        reasons.push(`리스크: ${item.risk}`);
+      if (item.risk && item.risk.length > 0) {
+        reasons.push(`리스크: ${item.risk.join(", ")}`);
         if (level === "normal") level = "warning";
       }
 

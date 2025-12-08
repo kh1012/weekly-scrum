@@ -57,7 +57,7 @@ export function SummaryView({ items }: SummaryViewProps) {
 
   const riskItems = useMemo(() => {
     return items
-      .filter((i) => i.risk && i.risk !== "-" && i.risk.trim() !== "")
+      .filter((i) => i.risk && i.risk.length > 0)
       .sort((a, b) => (b.riskLevel ?? 0) - (a.riskLevel ?? 0));
   }, [items]);
 

@@ -151,9 +151,13 @@ export function CompactCell({ items, avg }: CompactCellProps) {
                         </div>
                       )}
                       {/* 리스크 내용 표시 */}
-                      {itemRiskColor && i.risk && i.risk.trim() !== "" && (
+                      {itemRiskColor && i.risk && i.risk.length > 0 && (
                         <div className="text-xs mt-2 pl-3 border-l-2" style={{ borderColor: itemRiskColor.text, color: itemRiskColor.text }}>
-                          {i.risk}
+                          {i.risk.length === 1 ? i.risk[0] : (
+                            <ul className="list-disc list-inside">
+                              {i.risk.map((r, idx) => <li key={idx}>{r}</li>)}
+                            </ul>
+                          )}
                         </div>
                       )}
                     </div>
@@ -300,9 +304,13 @@ function ExpandedCard({ item }: ExpandedCardProps) {
                     <span style={{ color: riskColor.text }}>Lv.{riskLevel} {riskColor.label}</span>
                     <span className="text-[#8c959f]">- {riskColor.description}</span>
                   </div>
-                  {item.risk && item.risk.trim() !== "" && (
+                  {item.risk && item.risk.length > 0 && (
                     <div className="mt-2 pl-3 border-l-2" style={{ borderColor: riskColor.text, color: riskColor.text }}>
-                      {item.risk}
+                      {item.risk.length === 1 ? item.risk[0] : (
+                        <ul className="list-disc list-inside text-sm">
+                          {item.risk.map((r, i) => <li key={i}>{r}</li>)}
+                        </ul>
+                      )}
                     </div>
                   )}
                 </div>

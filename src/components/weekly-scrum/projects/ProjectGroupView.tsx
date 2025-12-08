@@ -208,8 +208,8 @@ function TopicCard({ item }: { item: ScrumItem }) {
         {item.reason && item.reason.trim() !== "" && (
           <InfoRow color="bg-[#9a6700]" customColor="#9a6700" text={`[사유] ${item.reason}`} />
         )}
-        {item.risk && (
-          <InfoRow color={`bg-[${riskColor.text}]`} customColor={riskColor.text} text={item.risk} />
+        {item.risk && item.risk.length > 0 && (
+          <InfoRow color={`bg-[${riskColor.text}]`} customColor={riskColor.text} text={item.risk.join(" / ")} />
         )}
         <InfoRow color="bg-[#1a7f37]" text={item.next.join(" / ")} />
       </div>

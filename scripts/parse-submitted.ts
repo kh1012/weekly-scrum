@@ -43,7 +43,7 @@ interface ScrumItem {
   progressPercent: number;
   reason: string;
   next: string[]; // 멀티라인 지원 (배열)
-  risk: string | null; // null = 미정 ("?" 입력 시)
+  risk: string[] | null; // 멀티라인 지원 (배열), null = 미정 ("?" 입력 시)
   riskLevel: RiskLevel | null; // null = 미정 ("?" 입력 시)
   collaborators?: Collaborator[];
 }
@@ -99,18 +99,26 @@ function parseRiskLevel(riskLevelText: string): RiskLevel | null {
 }
 
 /**
- * Risk 텍스트를 파싱합니다.
+ * Risk 멀티라인 필드를 파싱합니다.
  * "?" 또는 빈 값은 null로 처리합니다.
  */
-function parseRisk(riskText: string): string | null {
-  const trimmed = riskText.trim();
+function parseRiskMultiline(rawLines: string[]): string[] | null {
+  const result = parseMultilineField(rawLines, "Risk");
   
-  // "?" 또는 빈 값은 null (미정)
-  if (trimmed === "?" || trimmed === "" || trimmed === "-") {
+  // 빈 배열 또는 "?" 단일 값인 경우 null
+  if (result.length === 0) {
     return null;
   }
   
-  return trimmed;
+  // 첫 번째 항목이 "?" 또는 "-"인 경우 null (미정)
+  if (result.length === 1 && (result[0] === "?" || result[0] === "-")) {
+    return null;
+  }
+  
+  // "?" 또는 "-" 항목 필터링
+  const filtered = result.filter(item => item !== "?" && item !== "-" && item.trim() !== "");
+  
+  return filtered.length > 0 ? filtered : null;
 }
 
 /**
@@ -315,9 +323,11 @@ function parseBlock(block: string): ScrumItem | null {
   
   // 필드 파싱 (optional)
   const reason = parseSingleField(lines, "reason");
-  const riskText = parseSingleField(lines, "Risk");
   const riskLevelText = parseSingleField(lines, "RiskLevel");
   const collaboratorsText = parseSingleField(lines, "Collaborators");
+  
+  // Risk 멀티라인 파싱
+  const risk = parseRiskMultiline(rawLines);
 
   // 필수 필드 검증
   if (!name) {
@@ -339,7 +349,6 @@ function parseBlock(block: string): ScrumItem | null {
 
   const planPercent = extractPercent(plan);
   const progressPercent = extractPercent(progress);
-  const risk = parseRisk(riskText);
   const riskLevel = parseRiskLevel(riskLevelText);
   const collaborators = parseCollaborators(collaboratorsText);
 

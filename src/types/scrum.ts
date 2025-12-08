@@ -38,7 +38,7 @@ export interface ScrumItem {
   progressPercent: number;
   reason: string; // 계획 대비 실행 미비 시 부연 설명
   next: string[]; // 멀티라인 지원 (배열)
-  risk: string | null; // null = 미정 ("?" 입력 시)
+  risk: string[] | null; // 멀티라인 지원 (배열), null = 미정 ("?" 입력 시)
   riskLevel: RiskLevel | null; // null = 미정 ("?" 입력 시)
   collaborators?: Collaborator[]; // 협업자 목록 (선택)
 }

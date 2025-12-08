@@ -7,7 +7,7 @@ import type { WeeklyScrumData, WeekOption, ScrumItem } from "@/types/scrum";
  * 레거시 ScrumItem을 새 스키마로 마이그레이션합니다.
  * - progress: string → string[]
  * - next: string → string[]
- * - risk: string → string | null (빈 문자열 또는 "?"는 null로)
+ * - risk: string → string[] | null (빈 문자열 또는 "?"는 null로)
  * - riskLevel: number → number | null ("?"는 null로)
  */
 function migrateScrumItem(item: Record<string, unknown>): ScrumItem {
@@ -31,12 +31,19 @@ function migrateScrumItem(item: Record<string, unknown>): ScrumItem {
     next = [];
   }
 
-  // risk 마이그레이션: string → string | null
-  let risk: string | null = null;
-  if (typeof item.risk === "string") {
+  // risk 마이그레이션: string | string[] → string[] | null
+  let risk: string[] | null = null;
+  if (Array.isArray(item.risk)) {
+    // 이미 배열인 경우
+    const filtered = (item.risk as string[]).filter(
+      (r) => r && r.trim() !== "" && r.trim() !== "?" && r.trim() !== "-"
+    );
+    risk = filtered.length > 0 ? filtered : null;
+  } else if (typeof item.risk === "string") {
+    // 레거시 문자열인 경우 배열로 변환
     const trimmed = item.risk.trim();
     if (trimmed && trimmed !== "?" && trimmed !== "-") {
-      risk = trimmed;
+      risk = [trimmed];
     }
   }
 
@@ -198,7 +205,7 @@ export function getMockData(): WeeklyScrumData {
         progress: ["셀 렌더링 구조 개선 60% 완료"],
         progressPercent: 60,
         reason: "긴급 버그 대응으로 인한 일정 지연",
-        risk: "Publish 단계에서 race condition 재발 가능성",
+        risk: ["Publish 단계에서 race condition 재발 가능성"],
         riskLevel: 2,
         next: ["렌더링 최적화 마무리", "Publish flow 테스트 2건 추가"],
       },
@@ -226,7 +233,7 @@ export function getMockData(): WeeklyScrumData {
         progress: ["Google OAuth 연동 80% 완료"],
         progressPercent: 80,
         reason: "외부 API 문서 변경으로 인한 추가 작업 발생",
-        risk: "토큰 갱신 로직에서 edge case 미처리",
+        risk: ["토큰 갱신 로직에서 edge case 미처리"],
         riskLevel: 1,
         next: ["Apple OAuth 연동 시작", "토큰 갱신 테스트 추가"],
       },

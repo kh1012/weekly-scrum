@@ -1,147 +1,263 @@
-[Frontend / MOTIIV / Home / 카드 렌더링 개선]
-- Name: 김서연
-- Plan: 카드 렌더링 속도 개선 100%
-- Progress: key 기반 렌더링 최적화 75%
-- Next: skeleton + loading fallback 정비
-- Risk: 모바일 viewport에서 셀 꼬임 가능성
-- RiskLevel: 1
-- Collaborators: 김정빈(pair)
+[Frontend / M-Connector / DB Manager / 1차 기획, 디자인 반영]
+* Name: 변창언
+* Plan: 1차 기획-DB 7종 개발, 검증 (100%)
+* Progress: DB 7종 완료, 5종 검증(72%)
+* Reason: 제품에 데이터 생성 필요하나, 사용 방법을 몰라 지연 발생
+* Next: 디자인 완료, 2차 기획-Section 검토
+* Risk: 인앱기술지원 GPT
+* RiskLevel: 1
+* Collaborators: 한내경(pre)
 
+[Planning / Spreadsheet Editor-Rich Note / 상세기획]
+* Name: 윤재웅
+* Plan: Rich Note 상세기획 완료 및 개발/디자인 전달 (100%)
+* Progress: Rich Note 상세기획 (100%)
+* Next: Top Bar 상세기획 완료 및 개발/디자인 전달(100%)
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
 
-[Backend / M-Desk / Data / 데이터 정합성 점검]
-- Name: 조해용
-- Plan: 정합성 점검 자동화 80%
-- Progress: 테스트 케이스 50% 작성
-- Next: 자동 보정 로직 적용
-- Risk: DB 락 지연 발생 우려
-- RiskLevel: 2
-- Collaborators: 김건우(pair)
+[Frontend / Desk / 오류, 공지 처리]
+* Name: 손영민
+* Plan: 데스크 Notice, Popup 기능 추가 (100%)
+* Progress
+    * 데스크 Notice, Popup 기능 추가 완료 (100%)
+    * 데스크 고객 지원(로그인 실패 문제) 검토 및 1차 대응 완료 (100%)
+* Next: 데스크 어카운트 혼합 적용 추가
+* Risk: None
+* RiskLevel: None
+* Collaborators: 김용수(pair)
+[Frontend / Motiiv / 아티클 정리 및 기타 업무들]
+* Name: 손영민
+* Plan: 아티클 정리 및 문서 작업 (100%)
+* Progress
+    * 신입 온보딩 및 프론트 규칙 협의를 위한 문서 정리 완료 (100%)
+    * Article 관련 일부 개선 사항 진행 완료 (100%)
+* Next: 다음 스프린트 정리 및 기획 회의 때 나왔던 일부 항목 개선
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
 
+[Backend / MOTIIV / 메세지큐 /비동기 메시지 큐 안정화]
+* Name: 김정빈
+* Plan: kafka 처리 실패시 처리 방안 개발 100%
+* Progress: kafka 처리 실패시 재시도 로직, 실패 토픽 저장 개발 100%
+* Next: 추가적 에러핸들링 방안 고민
+* Risk: Streamlit 인도법인 대상 서버 구축, concrete fatigue json import 에러, Plugin 인도법인 Connection 에러
+* RiskLevel: 1
+* Collaborators: None
+[Backend / IdeaForge / 지원 / 백엔드 이슈 지원]
+* Name: 김정빈
+* Plan: 3개 이슈 처리 100%
+* Progress: Streaming 100%, DB 수정 100%, 허브스팟 파일 업로드 100%
+* Next: AX 개발팀 배포 일정 공유, MDesk 구현 내용 정의
+* Risk: None
+* RiskLevel: None
+* Collaborators: 김지원(Pair), 김상리(Pair)
 
-[Planning / MOTIIV / Spreadsheet / 범위 선택 정책 수립]
-- Name: 윤재웅
-- Plan: 범위 정책 정의 100%
-- Progress: 1차 정책 문서 70%
-- Next: FE/BE 인터페이스 정리
-- Risk: 복합 셀 구조에서 예외 발생 가능
-- RiskLevel: 1
-- Collaborators: 김정빈(waiting-on)
+[Backend / MOTIIV / 메일링 / Datadog 메일링 서비스]
+* Name: 서상준
+* Plan: Datadog 메일링 서비스 설정 완료를 통한 서버 모니터링 환경 (100%)
+* Progress: DevOps와 소통하여 당장 서버가 죽는 경우 메일링 세팅 완료 (100%)
+* Next: 메트릭 기반의 모니터 결과 전송 받기 위한 추가 소통 필요
+* Risk: 12월 말 기원님이 메트릭 기반 모니터링 작업을 완료 되어야함.
+* RiskLevel: 1
+* Collaborators: DevOps(pair)
+[Backend / MOTIIV / 스프레드시트 / 외부 API 트랜잭션 일관성 확보]
+* Name: 서상준
+* Plan: 별도 트랜잭션에서 실패한 외부 API 요청 기록 (100%)
+* Progress: 실패 API mongoDB 저장 완료 (100%)
+* Next: 시스템 토큰을 활용한 실패한 요청 재시도 로직 개발
+* Risk: M-Drive(mws) 쪽 시스템 토큰 사용할 수 있도록 추가 개발 필요
+* RiskLevel: 2
+* Collaborators: 김용수(pair)
+[Backend / MOTIIV / 스프레드시트 / signed url 업데이트 원자성 확보]
+* Name: 서상준
+* Plan: signed url을 사용해 할 때 직접 업데이트 하여 원자성 확보 (100%)
+* Progress: excel json content body로 받아 직접 update 하는 API 추가 (100%)
+* Next: None
+* Risk: None
+* RiskLevel: None
 
-[Design / M-Connector / Dashboard / 레이아웃 보완]
-- Name: 김희성
-- Plan: 레이아웃 재정비 100%
-- Progress: UI 구조 개선 85%
-- Next: dark-mode 가이드 작성
-- Risk: 기존 컴포넌트와 스타일 충돌
-- RiskLevel: 1
-- Collaborators: 윤재웅(pair)
+[Backend / MOTIIV / 컨텐츠 / 대용량 텍스트 저장 방법 확보 및 적용]
+* Name: 김태이
+* Plan: 대용량 텍스트 저장 방법 조사 및 설계 및 적용 (100%)
+* Progress: 아티클 적용 완료 (100%)
+* Next: 스프레드시트에도 적용
+* Risk: None
+* RiskLevel: None
+* Collaborators: 김용수(pair)
+[Backend / MOTIIV / 스케쥴러 / 기존 리치텍스트 마이그레이션 배치작업]
+* Name: 김태이
+* Plan: 기존 아티클 리치텍스트 마이그레이션 배치작업 개발 완료 (100%)
+* Progress: 개발 완료 (100%)
+* Next: 기존 스프레드시트 리치텍스트 적용
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
+[Research / P1-Connect / 프로토타입 / 모티브 마케팅 자동화 도구]
+* Name: 김태이
+* Plan: 모티브 마케팅 자동화 도구 프로토타입 개발 (100%)
+* Progress: 프로토타입 시연 및 문서 작성 완료 (100%)
+* Next: None
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
+[Backend / MOTIIV / 컨텐츠 / 컨텐츠 휴지통 개념 도입]
+* Name: 김태이
+* Plan: 컨텐츠 삭제 되더라도 데이터 유지(휴지통) (100%)
+* Progress: 다른 이슈들 & 연차 사용으로 진행 못함(0&)
+* Next: 백엔드 회의에서 나온 이슈로, 급하지 않음으로 시간날 때 진행
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
 
+[Planning / 스프레드시트 / AI Assist 기획]
+* Name: 하성열
+* Plan: AI Assist 중 Description 생성 기능 컨셉 기획(100%)
+* Progress: AI Assist 중 Description 생성기능 컨셉 기획 진행 중(50%)
+* Reason: Description 생성 기능 컨셉 변경(단일 기능에서 AI Assist로 확장)
+* Next: AI Assist 중 Description 컨셉 공유 및 확정
+* Risk: ? (Level이 표기되어 있음)
+* RiskLevel: 1
+* Collaborators: None
 
-[Operation / Team / 프로세스 / QA 라벨링 자동화]
-- Name: 한내경
-- Plan: 테스트 라벨링 프로세스 80%
-- Progress: 신규 라벨링 가이드 40%
-- Next: QA팀과 정합성 검증
-- Risk: 반자동화 도구의 안정성 문제
-- RiskLevel: 2
-- Collaborators: 김서연(waiting-on)
+[Planning / MOTIIV / MOTIIV마케팅 / 마케팅]
+* Name: 한내경
+* Plan: LinkedIn 3차 컨텐츠 작성/ FEA NX 3차 E-mail 작성 및 마케팅 팀에 전달 (100%)
+* Progress: 로 마케팅 종료 (진행 100%)
+* Reason: 
+* Next: 1월 마케팅 다시 시작
+* Risk: None
+* RiskLevel: None
+* Collaborators: 김희성(pair), 양소희(pair)
+[Planning / M-Connector / DB Manager / M-Connector 기획]
+* Name: 한내경
+* Plan: 12월 출시 (12/31)
+* Progress: 디자인 피드백 & 컨펌, 12월 출시 목표 DB 정리 (13/17 완료)/ 일본과 DB 오픈 우선순위 협의 필요
+* Reason: 결과/이미지 기능 오픈
+* Next: M-Connector 매뉴얼 & 예제 작성
+* Risk: None
+* RiskLevel: None
+* Collaborators: 변창언(post), 양소희(post)
 
+[Planning / 워크스페이스 / My project 기획]
+* Name: 조해용
+* Plan: Workspace 중 My project 전체 컨셉 기획(100%)
+* Progress: Workspace 중 My project 전체 컨셉 기획(100%)
+* Next
+    * 워크스페이스 진입 흐름 기획 제안서 (2가지, 비핸스, 피그마?)
+    * 폴더 구조 및 디테일 기획
+* Risk: 컨셉 확장 
+* RiskLevel: 1
+* Collaborators: 도기봉(pair), 윤재웅(pair)
 
-[Content / MOTIIV / Notification / 알림 케이스 문서화]
-- Name: 도기봉
-- Plan: 알림 유형 정리 100%
-- Progress: 60% 문서화 완료
-- Next: UX 관점 예시 추가
-- Risk: 일부 케이스 정의 불명확
-- RiskLevel: 1
-- Collaborators: 김희성(waiting-on)
+[Planning / MOTIIV / IA / IA 및 릴리즈 정리]
+* Name: 김희성
+* Plan:
+    * 릴리즈 운영 정책 및 프로세스 정리 (100%)
+    * 성과 데이터 기반 인사이트 도출 (50%)
+* Progress:
+    * 주요 사용자 여정 기반의 IA 구조 개편 완료 및 디자인팀 공유 (100%)
+* Next
+    * 홈 개편 초안 작성 
+    * 성과 데이터 기반 인사이트 도출 
+* Risk:
+    * 신입 OJT 과제 준비
+    * 마케팅 성과 공유 세션 준비
+    * GEN NX Free Trial 작업
+* RiskLevel: ? (레벨 체크부탁드립니다)
 
+[Frontend / Idea-forge / llm / llm 구조 변경 및 테스트]
+* Name: 김상리
+* Plan: 버그 이슈 처리(2건), MAS 저장 시 산출물 제목 삽입, 이미지형 CTA 좌표 정밀 지정 기능 추가(100%)
+* Progress
+    * llm UI 구조 변경 완료 (100%)
+    * 버그 이슈 처리(2건) 완료(100%)
+    * MAS 저장 시 산출물 제목 삽입 기능 추가 완료 (100%)
+    * 이미지형 CTA 좌표 정밀 지정 기능 추가 완료(100%)
+* Next: 변경된 llm 작업 건 배포 준비, v1.8.3 배포 일정 협의
+* Risk: None
+* RiskLevel: None
+* Collaborators: 김정빈(pair)
+[Frontend / 마이다스 뉴스룸 / 블로그 / 블로그 구조 설계 및 공통모듈 제작]
+* Name: 김상리
+* Plan: 블로그 구조 설계(30%)
+* Progress
+    * 블로그 구조 설계 (30%)
+    * 공통모듈 제작(50%)
+    * 세부기능 기술 검토(30%)
+* Next: 블로그 페이지 제작, 세부 기능 구현
+* Risk: None
+* RiskLevel: None
+* Collaborators: 김지원(pair)
 
-[Research / Idea-forge / Plugin / 성능 baseline 측정]
-- Name: 하성열
-- Plan: baseline 측정 100%
-- Progress: worker-thread 적용 70%
-- Next: STT/LLM 연동 실험
-- Risk: shared memory 충돌 가능성
-- RiskLevel: 2
-- Collaborators: 김정빈(pair)
+[Frontend / IdeaForge / 1.8.3 / 개발 협의 및 진행]
+* Name: 김지원
+* Plan: 1.8.3 개발 건 협의 및 이슈 조정, 버그 이슈 처리(6건), 이미지 해상도를 위한 개선 건(100%)
+* Progress
+    * 1.8.3 개발 건 협의 및 이슈 조정(100%)
+    * 버그 이슈 처리(6건) 완료(100%)
+    * 이미지 해상도를 위한 개선 건(100%)
+* Next: system에서 변경된 백엔드 건에 대한 대응(이미지/저장 용량)
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
+[Frontend / 마이다스 뉴스룸 / 블로그 / 개발 및 기술 검토]
+* Name: 김지원
+* Plan: 서브 도메인 생성(100%), 블로그 개설(100%), 블로그 리스트 기술 검토(100%)
+* Progress
+    * 서브 도메인 생성(100%)
+    * 블로그 개설(100%)
+    * 블로그 리스트 기술 검토(100%)
+* Next: 블로그 검색 기술 검토 (100%), 디자인 수급 및 적용(20%)
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
 
+[Planning/ M-Desk / 서비스장애 안내 / 메인 기획]
+* Name: 도기봉
+* Plan: M-Desk 서비스 장애 안내 기획 (100%)
+* Progress: 
+    * 서비스 장애 안내 기획 (100%)
+    * 장애 안내 내용 가이드 (100%)
+    * 장애 안내 화면 디자인 (90%)
+* Next: 장애 안내 화면 디자인 수정
+* Risk: MAS에 안내 등록 환경 개발 진행에 따라 기획 대응 필요
+* RiskLevel: 0
+* Collaborators: None
+[Planning/ MOTIIV / 프로필페이지 / 컨셉 기획]
+* Name: 도기봉
+* Plan: 프로필페이지 개요 및 배경 (100%)
+* Progress: 
+    * 프로필 페이지와 워크스페이스 페이지 정의 (100%)
+    * 프로필페이지 개요 정의 (100%)
+    * 프로필 페이지 콘텐츠 구성 (10%)
+* Next: 
+    * 프로필페이지 상세 기획
+    * 프로필페이지 메뉴 구성 정의
+    * 프로필페이지에 들어갈 콘텐츠 정의
+* Risk: 프로필페이지에 들어갈 콘텐츠 아이템들의 역할 정의를 위한 의사소통을 하며 진행
+* RiskLevel: 0
+* Collaborators: None
 
-[Frontend / M-Connector / UI / 상태 표시 컴포넌트 개선]
-- Name: 김정빈
-- Plan: 상태 UI 구조 개선 100%
-- Progress: 상태 전환 UI 60%
-- Next: shimmer 효과 추가
-- Risk: polling 비용 증가 가능성
-- RiskLevel: 1
-- Collaborators: 조해용(waiting-on)
+[Design / MOTIIV / 스프레드시트 / 리스트 페이지 개선]
+* Name: 양소희
+* Plan: 스프레드시트 리스트 페이지 개선 및 인기 섹션 추가 PC/MO버전 디자인(100%) 
+* Progress: 스프레드시트 리스트 페이지 개선 및 인기 섹션 추가 PC/MO버전 디자인 100% 완료
+* Next: 스프레드시트 에디터 페이지 애드온 패널-리치노트 디자인 진행 
+* Risk: None
+* RiskLevel: None
+* Collaborators: 김희성(pair)
 
-
-[Backend / MOTIIV / User / 권한 검증 로직 고도화]
-- Name: 김건우
-- Plan: 권한 검증 구조 개선 90%
-- Progress: 주요 케이스 50% 정비
-- Next: 잘못된 권한 부여 케이스 처리
-- Risk: 도메인 모델과 충돌 가능성
-- RiskLevel: 2
-- Collaborators: 윤재웅(waiting-on)
-
-
-[Planning / M-Desk / Workspace / 대시보드 IA 정비]
-- Name: 최은진
-- Plan: IA 지도 업데이트 80%
-- Progress: 우선순위 기준 재정의 60%
-- Next: 디자인팀 전달 문서화
-- Risk: 기존 IA와 병행 운영 이슈
-- RiskLevel: 1
-- Collaborators: 김희성(pair)
-
-
-[Design / MOTIIV / Profile / 사용자 정보 UI 재구성]
-- Name: 김희성
-- Plan: UI 구조 재정리 100%
-- Progress: 신규 레이아웃 70%
-- Next: 모바일 대응 레이아웃 확정
-- Risk: 필드 overflow 우려
-- RiskLevel: 2
-- Collaborators: 김서연(waiting-on)
-
-
-[Operation / Team / Automation / 주간 회의 자동화 스크립트]
-- Name: 한내경
-- Plan: 회의 자동화 100%
-- Progress: Slack → Notion 연동 50%
-- Next: 멤버별 태스크 자동 기록
-- Risk: Slack API 호출 제한
-- RiskLevel: 1
-- Collaborators: 김건우(pair)
-
-
-[Content / Idea-forge / Docs / 실험 결과 보고서 작성]
-- Name: 도기봉
-- Plan: 보고서 100%
-- Progress: 초안 70%
-- Next: 그래프/표 보강
-- Risk: 일부 실험 데이터 불안정
-- RiskLevel: 1
-- Collaborators: 하성열(waiting-on)
-
-
-[Frontend / MOTIIV / Spreadsheet / 셀 병합 기능 개선]
-- Name: 김서연
-- Plan: 병합 로직 개선 90%
-- Progress: edge-case 처리 40%
-- Next: 사용자 피드백 기반 수정
-- Risk: 단일 셀 병합 시 데이터 손실 우려
-- RiskLevel: 2
-- Collaborators: 김정빈(pair)
-
-
-[Backend / M-Desk / Import / 대용량 업로드 안정화]
-- Name: 조해용
-- Plan: 업로드 안정성 개선 100%
-- Progress: streaming 업로드 65%
-- Next: 오류 복원 로직 강화
-- Risk: 특정 파일 구조에서 메모리 spike 발생 가능성
-- RiskLevel: 2
-- Collaborators: 김정빈(waiting-on)
+[Research / MOTIIV / 워크스페이스 / 기술부채 리서치 및 협의]
+* Name: 이하영
+* Plan: SEO / Testing Tool / CSS 3개에 대한 프론트엔드 개발자 리서치 및 협의점 도출
+* Progress: Testing Tool을 제외한 SEO, CSS는 어떻게 진행할지 결론 도출 완료
+* Reason
+    * Testing은 각자 궁금한 도구를 직접 사용해보고 공유하는 것까지만 완료.
+    * 리서치해야 할 항목들이 생각보다 많아서 스프린트 기간 내 완성도 높은 결과를 내놓기 어려웠음
+* Next: Testing tool 점차적 도입 및 스프레드시트 백로그 이슈(SEO, Author box) 진행
+* Risk: None
+* RiskLevel: None
+* Collaborators: None
