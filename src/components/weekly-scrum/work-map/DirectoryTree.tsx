@@ -375,22 +375,22 @@ function FeatureItem({
       onClick={() => onSelect(projectName, moduleName, feature.name)}
       className="w-full flex items-center gap-2 pl-2 pr-2 py-1 rounded transition-all"
       style={{
-        background: isSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
-        borderLeft: isSelected ? "2px solid #3b82f6" : "2px solid transparent",
+        background: isSelected ? "var(--notion-bg-secondary)" : "transparent",
+        borderLeft: isSelected ? "2px solid var(--notion-text-muted)" : "2px solid transparent",
         marginLeft: "-2px",
       }}
       onMouseEnter={(e) => {
         if (!isSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
       }}
       onMouseLeave={(e) => {
-        if (!isSelected) e.currentTarget.style.background = isSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
+        if (!isSelected) e.currentTarget.style.background = isSelected ? "var(--notion-bg-secondary)" : "transparent";
       }}
     >
       {/* 피쳐명 */}
       <span
         className="flex-1 text-left text-[12px] truncate"
         style={{
-          color: isSelected ? "#3b82f6" : "var(--notion-text-secondary)",
+          color: isSelected ? "var(--notion-text)" : "var(--notion-text-secondary)",
           fontWeight: isSelected ? 500 : 400,
         }}
       >
