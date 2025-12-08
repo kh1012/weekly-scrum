@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import type { WorkMapSelection, TreeViewMode } from "./types";
 import { useWorkMapData } from "./useWorkMapData";
@@ -20,6 +20,9 @@ interface PersonSelection {
   module: string | null;
   feature: string | null;
 }
+
+// 모바일 뷰 상태 타입
+type MobileView = "tree" | "detail";
 
 export function WorkMapView({ items }: WorkMapViewProps) {
   const { projects, persons, getProjectByName, getModuleByName, getFeatureByName, getPersonFeatureItems } =
@@ -50,6 +53,20 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 네트워크 영역 높이 조절 상태 (기본 480px)
   const [networkHeight, setNetworkHeight] = useState(480);
   const isNetworkResizing = useRef(false);
+
+  // 모바일 관련 상태
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileView, setMobileView] = useState<MobileView>("tree");
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // 리사이즈 핸들러
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -103,6 +120,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 피쳐 선택 핸들러 (프로젝트 뷰)
   const handleFeatureSelect = (project: string, module: string, feature: string) => {
     setSelection({ project, module, feature });
+    // 모바일에서는 detail 뷰로 전환
+    if (isMobile) {
+      setMobileView("detail");
+    }
   };
 
   // 피쳐 선택 핸들러 (사람 뷰)
@@ -114,6 +135,15 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     feature: string
   ) => {
     setPersonSelection({ person, domain, project, module, feature });
+    // 모바일에서는 detail 뷰로 전환
+    if (isMobile) {
+      setMobileView("detail");
+    }
+  };
+
+  // 모바일에서 트리 뷰로 돌아가기
+  const handleBackToTree = () => {
+    setMobileView("tree");
   };
 
   // 선택된 피쳐의 협업자 존재 여부
@@ -126,6 +156,184 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     setViewMode((prev) => (prev === "project" ? "person" : "project"));
   };
 
+  // 모바일 뷰 렌더링
+  if (isMobile) {
+    return (
+      <div className="h-full flex flex-col" style={{ minHeight: "calc(100vh - 120px)" }}>
+        {mobileView === "tree" ? (
+          // 모바일: 트리 뷰 (전체 화면)
+          <div className="flex-1 flex flex-col">
+            {/* 트리 헤더 */}
+            <div
+              className="flex-shrink-0 px-4 py-3 border-b"
+              style={{ 
+                borderColor: "var(--notion-border)",
+                background: "var(--notion-bg)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🗺️</span>
+                  <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+                    Work Map
+                  </span>
+                </div>
+                {/* 뷰 모드 토글 */}
+                <button
+                  onClick={toggleViewMode}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                  style={{
+                    background: viewMode === "person" ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
+                    color: viewMode === "person" ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                  }}
+                >
+                  {viewMode === "project" ? (
+                    <>
+                      <span>📁</span>
+                      <span>Project</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>👤</span>
+                      <span>Person</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
+                {viewMode === "project" 
+                  ? `${projects.length} projects · ${items.length} snapshots`
+                  : `${persons.length} members · ${items.length} snapshots`
+                }
+              </div>
+            </div>
+
+            {/* 트리 컨텐츠 - 전체 화면 (스크롤 가능) */}
+            <div className="flex-1 overflow-y-auto p-3" style={{ background: "var(--notion-bg)" }}>
+              {viewMode === "project" ? (
+                <DirectoryTree
+                  projects={projects}
+                  selectedFeature={selection}
+                  onFeatureSelect={handleFeatureSelect}
+                />
+              ) : (
+                <PersonTree
+                  persons={persons}
+                  selectedFeature={personSelection}
+                  onFeatureSelect={handlePersonFeatureSelect}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          // 모바일: 상세 뷰
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* 헤더 + 뒤로가기 */}
+            <div
+              className="flex-shrink-0 px-4 py-3 border-b flex items-center gap-3"
+              style={{ 
+                borderColor: "var(--notion-border)",
+                background: "var(--notion-bg)",
+              }}
+            >
+              <button
+                onClick={handleBackToTree}
+                className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+                style={{ background: "var(--notion-bg-secondary)" }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ color: "var(--notion-text)" }}
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <div className="flex-1 min-w-0">
+                <div 
+                  className="text-sm font-medium truncate" 
+                  style={{ color: "var(--notion-text)" }}
+                >
+                  {viewMode === "project" ? selection.feature : personSelection.feature}
+                </div>
+                <div 
+                  className="text-xs truncate" 
+                  style={{ color: "var(--notion-text-muted)" }}
+                >
+                  {viewMode === "project" 
+                    ? `${selection.project} / ${selection.module}`
+                    : `${personSelection.person} / ${personSelection.domain}`
+                  }
+                </div>
+              </div>
+            </div>
+
+            {/* 상세 내용 */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-4">
+              {activeFeatureItems.length > 0 ? (
+                <>
+                  {/* 협업 네트워크 (모바일) */}
+                  {hasCollaborators && (
+                    <div
+                      className="rounded-xl overflow-hidden"
+                      style={{
+                        background: "var(--notion-bg)",
+                        border: "1px solid var(--notion-border)",
+                        height: "300px",
+                      }}
+                    >
+                      <div
+                        className="px-4 py-2 border-b"
+                        style={{ borderColor: "var(--notion-border)" }}
+                      >
+                        <h2 className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+                          Collaboration Network
+                        </h2>
+                      </div>
+                      <div className="p-2 h-[calc(100%-40px)] overflow-hidden">
+                        <CollaborationNetworkV2 
+                          items={activeFeatureItems} 
+                          allItems={items}
+                          featureName={viewMode === "project" ? (selection.feature || undefined) : (personSelection.feature || undefined)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 스냅샷 목록 */}
+                  <SnapshotList items={activeFeatureItems} />
+                </>
+              ) : (
+                <div
+                  className="flex-1 rounded-xl flex flex-col items-center justify-center py-12"
+                  style={{
+                    background: "var(--notion-bg)",
+                    border: "1px solid var(--notion-border)",
+                  }}
+                >
+                  <div
+                    className="text-4xl mb-3 p-4 rounded-full"
+                    style={{ background: "var(--notion-bg-secondary)" }}
+                  >
+                    📄
+                  </div>
+                  <div className="text-base font-medium mb-1" style={{ color: "var(--notion-text)" }}>
+                    데이터 없음
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 데스크톱 뷰 렌더링
   return (
     <div
       className="flex"
