@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import type { WorkMapSelection } from "./types";
 import { useWorkMapData } from "./useWorkMapData";
@@ -22,6 +22,36 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     feature: null,
   });
 
+  // 트리 너비 조절 상태 (기본 450px, Tailwind의 w-[450px]에 해당)
+  const [treeWidth, setTreeWidth] = useState(450);
+  const isResizing = useRef(false);
+
+  // 리사이즈 핸들러
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    isResizing.current = true;
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startWidth = treeWidth;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const delta = e.clientX - startX;
+      // 최소 280px, 최대 700px
+      const newWidth = Math.max(280, Math.min(700, startWidth + delta));
+      setTreeWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, [treeWidth]);
+
   // 현재 선택된 피쳐
   const selectedFeature =
     selection.project && selection.module && selection.feature
@@ -40,13 +70,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
   return (
     <div
-      className="flex gap-4"
+      className="flex"
       style={{ height: "calc(100vh - 120px)", minHeight: "600px" }}
     >
       {/* 좌측: 디렉토리 트리 */}
       <div
-        className="w-80 flex-shrink-0 rounded-xl overflow-hidden flex flex-col"
+        className="flex-shrink-0 rounded-xl overflow-hidden flex flex-col"
         style={{
+          width: treeWidth,
           background: "var(--notion-bg)",
           border: "1px solid var(--notion-border)",
         }}
@@ -77,8 +108,23 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         </div>
       </div>
 
+      {/* 리사이즈 핸들 */}
+      <div
+        className="w-1 flex-shrink-0 cursor-col-resize group relative"
+        onMouseDown={handleMouseDown}
+      >
+        <div
+          className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center"
+        >
+          <div
+            className="w-1 h-8 rounded-full transition-colors group-hover:bg-blue-400"
+            style={{ background: "var(--notion-border)" }}
+          />
+        </div>
+      </div>
+
       {/* 우측: 협업 네트워크 + 스냅샷 */}
-      <div className="flex-1 flex flex-col gap-4 min-w-0">
+      <div className="flex-1 flex flex-col gap-4 min-w-0 ml-3">
         {/* 선택된 피쳐 정보 헤더 */}
         {selectedFeature && (
           <div

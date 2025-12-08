@@ -49,15 +49,19 @@ export function buildWorkMapHierarchy(items: ScrumItem[]): ProjectNode[] {
     featureNode.items.push(item);
   }
 
-  // 정렬: 프로젝트명 → 모듈명 → 피쳐명
-  const projects = Array.from(projectMap.values()).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  // 정렬: 프로젝트명 → 모듈명 → 피쳐명 (일관된 정렬을 위해 단순 비교 사용)
+  const sortByName = (a: { name: string }, b: { name: string }) => {
+    if (a.name < b.name) return -1;
+    if (a.name > b.name) return 1;
+    return 0;
+  };
+
+  const projects = Array.from(projectMap.values()).sort(sortByName);
 
   for (const project of projects) {
-    project.modules.sort((a, b) => a.name.localeCompare(b.name));
+    project.modules.sort(sortByName);
     for (const module of project.modules) {
-      module.features.sort((a, b) => a.name.localeCompare(b.name));
+      module.features.sort(sortByName);
     }
   }
 

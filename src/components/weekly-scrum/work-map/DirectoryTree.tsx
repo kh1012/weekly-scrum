@@ -172,8 +172,10 @@ function ProjectItem({
       {/* 프로젝트 헤더 */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-all hover:bg-opacity-80"
+        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-all"
         style={{ background: "transparent" }}
+        onMouseEnter={(e) => e.currentTarget.style.background = "var(--notion-bg-hover)"}
+        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
       >
         {/* 화살표 */}
         <svg
@@ -188,9 +190,6 @@ function ProjectItem({
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
-
-        {/* 폴더 아이콘 */}
-        <span className="text-sm flex-shrink-0">{isExpanded ? "📂" : "📁"}</span>
 
         {/* 프로젝트명 */}
         <span
@@ -264,8 +263,10 @@ function ModuleItem({
       {/* 모듈 헤더 */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-2 py-1 rounded-md transition-all hover:bg-opacity-80"
+        className="w-full flex items-center gap-2 px-2 py-1 rounded-md transition-all"
         style={{ background: "transparent" }}
+        onMouseEnter={(e) => e.currentTarget.style.background = "var(--notion-bg-hover)"}
+        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
       >
         {/* 화살표 */}
         <svg
@@ -280,9 +281,6 @@ function ModuleItem({
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
-
-        {/* 폴더 아이콘 */}
-        <span className="text-sm flex-shrink-0">{isExpanded ? "📂" : "📁"}</span>
 
         {/* 모듈명 */}
         <span
@@ -350,7 +348,6 @@ function FeatureItem({
 }) {
   const metrics = computeFeatureMetrics(feature);
   const progressColor = getProgressColor(metrics.progress);
-  const memberCount = new Set(feature.items.map((i) => i.name)).size;
 
   // 완료된 태스크 수 계산
   const totalTasks = metrics.taskCount;
@@ -359,17 +356,17 @@ function FeatureItem({
   return (
     <button
       onClick={() => onSelect(projectName, moduleName, feature.name)}
-      className={`w-full flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-md transition-all ${
-        isSelected ? "" : "hover:bg-opacity-50"
-      }`}
+      className="w-full flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-md transition-all"
       style={{
-        background: isSelected ? "var(--notion-bg-active)" : "transparent",
-        boxShadow: isSelected ? `inset 0 0 0 1px ${progressColor}` : "none",
+        background: isSelected ? "rgba(0, 0, 0, 0.05)" : "transparent",
+      }}
+      onMouseEnter={(e) => {
+        if (!isSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
+      }}
+      onMouseLeave={(e) => {
+        if (!isSelected) e.currentTarget.style.background = "transparent";
       }}
     >
-      {/* 파일 아이콘 */}
-      <span className="text-sm flex-shrink-0">📄</span>
-
       {/* 피쳐명 */}
       <span
         className="flex-1 text-left text-sm truncate"
