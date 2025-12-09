@@ -254,8 +254,12 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
   // 리셋 버튼 컴포넌트
   const ResetButton = ({ isMobileStyle = false }: { isMobileStyle?: boolean }) => (
     <button
-      onClick={resetMultiFilters}
-      className={`flex items-center justify-center rounded-lg transition-all hover:scale-105 ${
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        resetMultiFilters();
+      }}
+      className={`flex items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95 ${
         isMobileStyle ? "w-7 h-7" : "w-8 h-8"
       }`}
       style={{
@@ -267,7 +271,7 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
           ? "1px solid rgba(239, 68, 68, 0.25)"
           : "1px solid transparent",
       }}
-      title="모든 필터 해제"
+      title="모든 필터 해제 (전체 표시)"
     >
       <svg
         className={isMobileStyle ? "w-3.5 h-3.5" : "w-4 h-4"}
