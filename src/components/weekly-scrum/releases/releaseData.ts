@@ -28,12 +28,24 @@ export const RELEASES: Release[] = [
         description: "스냅샷 카드 v2 구조 적용 (Past Week/This Week)",
       },
       {
+        type: "improve",
+        description: "스냅샷 뷰어 탭 슬라이딩 애니메이션 추가",
+      },
+      {
+        type: "improve",
+        description: "스냅샷 뷰어 사람별 보기 필터 제거 (GNB 필터로 대체)",
+      },
+      {
         type: "style",
-        description: "뷰 모드 토글 스타일 개선 (그림자 삭제, 파란색 하이라이트)",
+        description: "뷰 모드 토글 스타일 개선 (흰색 배경, 파란색 하이라이트)",
       },
       {
         type: "style",
         description: "카드 내부 회색 배경 삭제 (진행률 바 제외)",
+      },
+      {
+        type: "style",
+        description: "컨텐츠 영역 개선 ('진행 중' 헤더 삭제, '완료된 항목' 하단 표시)",
       },
       {
         type: "refactor",
