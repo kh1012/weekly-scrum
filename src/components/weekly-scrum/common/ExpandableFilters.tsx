@@ -37,6 +37,21 @@ function FilterSection({
   isMobile = false,
 }: FilterSectionProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [alignRight, setAlignRight] = useState(false);
+
+  // 드롭다운 위치 계산
+  useEffect(() => {
+    if (!isExpanded || !buttonRef.current) return;
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const dropdownWidth = 256; // w-64 = 256px
+    const viewportWidth = window.innerWidth;
+    const rightEdge = buttonRect.left + dropdownWidth;
+    
+    // 우측 끝이 viewport를 벗어나면 우측 정렬
+    setAlignRight(rightEdge > viewportWidth - 16); // 16px 여유
+  }, [isExpanded]);
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -62,6 +77,7 @@ function FilterSection({
     <div className="relative" ref={dropdownRef}>
       {/* 필터 버튼 - 필터 적용 시 파란색 활성화 */}
       <button
+        ref={buttonRef}
         onClick={onToggleExpand}
         className={`flex items-center gap-1.5 px-3 rounded-xl text-xs font-medium transition-all ${
           isMobile ? "h-8 text-[11px] px-2" : "h-9"
@@ -95,7 +111,9 @@ function FilterSection({
       {/* 드롭다운 패널 */}
       {isExpanded && (
         <div
-          className="absolute top-full left-0 mt-1 w-64 max-h-80 overflow-hidden rounded-xl z-50 animate-fadeIn"
+          className={`absolute top-full mt-1 w-64 max-h-80 overflow-hidden rounded-xl z-50 animate-fadeIn ${
+            alignRight ? "right-0" : "left-0"
+          }`}
           style={{
             background: "var(--notion-bg)",
             boxShadow: "var(--notion-shadow-lg)",
