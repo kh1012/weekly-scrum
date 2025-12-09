@@ -1460,9 +1460,9 @@ export function CollaborationNetworkV2({
       {/* 중앙 모달 - 전체 스냅샷 리스트 */}
       {modalNode && (
         <div
-          className="fixed inset-0 z-[2000] flex items-center justify-center"
+          className="fixed inset-0 z-[2000] flex items-center justify-center rounded-2xl"
           style={{
-            background: "rgba(0, 0, 0, 0.3)",
+            background: "rgba(255, 255, 255, 0.1)",
             backdropFilter: "blur(8px)",
             WebkitBackdropFilter: "blur(8px)",
           }}

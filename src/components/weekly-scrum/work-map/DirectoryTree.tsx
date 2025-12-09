@@ -227,7 +227,7 @@ export function DirectoryTree({
         <div className="flex items-center gap-1">
           <button
             onClick={expandAll}
-            className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
+            className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",
@@ -237,7 +237,7 @@ export function DirectoryTree({
           </button>
           <button
             onClick={collapseAll}
-            className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
+            className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",
@@ -332,7 +332,7 @@ function ProjectItem({
       <div className="flex items-center gap-1">
         <button
           onClick={onToggle}
-          className="flex-1 flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all"
+          className="flex-1 h-9 flex items-center gap-2.5 px-2 rounded-lg transition-all"
           style={{ 
             background: isProjectSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
             boxShadow: isProjectSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.2)" : "none",
@@ -391,14 +391,14 @@ function ProjectItem({
           </span>
         </button>
 
-        {/* 보기 버튼 */}
+        {/* 보기 버튼 - 프로젝트 버튼과 동일한 높이 */}
         {onProjectView && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onProjectView(project.name);
             }}
-            className="flex-shrink-0 px-2 py-2 text-xs rounded-lg transition-colors"
+            className="flex-shrink-0 h-9 px-2.5 text-xs rounded-lg transition-colors"
             style={{
               background: isProjectSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
               color: isProjectSelected ? "#3b82f6" : "var(--notion-text-muted)",
@@ -490,7 +490,7 @@ function ModuleItem({
       <div className="flex items-center gap-1">
         <button
           onClick={onToggle}
-          className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md transition-all"
+          className="flex-1 h-8 flex items-center gap-2 px-2 rounded-md transition-all"
           style={{ 
             background: isModuleSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
             boxShadow: isModuleSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.2)" : "none",
@@ -546,14 +546,14 @@ function ModuleItem({
           </span>
         </button>
 
-        {/* 보기 버튼 */}
+        {/* 보기 버튼 - 모듈 버튼과 동일한 높이 */}
         {onModuleView && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onModuleView(projectName, module.name);
             }}
-            className="flex-shrink-0 px-1.5 py-1.5 text-[10px] rounded-md transition-colors"
+            className="flex-shrink-0 h-8 px-2 text-[10px] rounded-md transition-colors"
             style={{
               background: isModuleSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
               color: isModuleSelected ? "#3b82f6" : "var(--notion-text-muted)",
@@ -959,7 +959,7 @@ export function PersonTree({
         <div className="flex items-center gap-1">
           <button
             onClick={expandAll}
-            className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
+            className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",
@@ -969,7 +969,7 @@ export function PersonTree({
           </button>
           <button
             onClick={collapseAll}
-            className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
+            className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",

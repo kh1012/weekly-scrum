@@ -133,25 +133,16 @@ export function useWorkMapPersistence(
     setViewModeState(mergedState.viewMode);
 
     // 프로젝트 트리 펼침 상태
-    // 저장된 상태가 없으면 모든 프로젝트를 기본 펼침
-    const projectsToExpand =
-      mergedState.expandedProjects.length > 0
-        ? mergedState.expandedProjects
-        : initialProjects;
-
+    // 저장된 상태가 있으면 복원, 없으면 모두 접힌 상태로 시작
     setExpanded({
-      projects: new Set(projectsToExpand),
+      projects: new Set(mergedState.expandedProjects),
       modules: new Set(mergedState.expandedModules),
     });
 
     // 사람 트리 펼침 상태
-    const personsToExpand =
-      mergedState.expandedPersons.length > 0
-        ? mergedState.expandedPersons
-        : initialPersons;
-
+    // 저장된 상태가 있으면 복원, 없으면 모두 접힌 상태로 시작
     setPersonExpanded({
-      persons: new Set(personsToExpand),
+      persons: new Set(mergedState.expandedPersons),
       domains: new Set(mergedState.expandedDomains),
       projects: new Set(mergedState.expandedPersonProjects),
       modules: new Set(mergedState.expandedPersonModules),
