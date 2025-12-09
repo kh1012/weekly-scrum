@@ -33,7 +33,6 @@ const NAV_CATEGORIES: NavCategory[] = [
         label: "Work Map",
         href: "/work-map",
         emoji: "🗺️",
-        description: "Project → Module → Feature",
       },
       {
         key: "snapshots",

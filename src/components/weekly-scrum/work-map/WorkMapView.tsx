@@ -427,7 +427,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   {/* 협업 네트워크 (모바일) */}
                   {hasCollaborators && (
                     <div
-                      className="rounded-xl overflow-hidden"
+                      className="rounded-xl"
                       style={{
                         background: "var(--notion-bg)",
                         border: "1px solid var(--notion-border)",
@@ -442,7 +442,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                           Collaboration Network
                         </h2>
                       </div>
-                      <div className="p-2 h-[calc(100%-40px)] overflow-hidden">
+                      <div className="p-2 h-[calc(100%-40px)]">
                         <CollaborationNetworkV2 
                           items={activeFeatureItems} 
                           allItems={filteredItems}
@@ -721,9 +721,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
           <>
             {/* 협업 네트워크 */}
             {hasCollaborators && (
-              <div className="flex-shrink-0 flex flex-col animate-card-reveal stagger-1">
+              <div className="flex-shrink-0 flex flex-col">
                 <div
-                  className="rounded-2xl overflow-hidden interactive-card"
+                  className="rounded-2xl"
                   style={{
                     background: "var(--notion-bg)",
                     border: "1px solid var(--notion-border)",
@@ -739,7 +739,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       Collaboration Network
                     </h2>
                   </div>
-                <div className="p-4 h-[calc(100%-48px)] overflow-hidden">
+                <div className="p-4 h-[calc(100%-48px)]">
                   <CollaborationNetworkV2 
                     items={activeFeatureItems} 
                     allItems={filteredItems}

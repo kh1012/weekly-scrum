@@ -201,6 +201,9 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
   // 여러 개의 스냅샷 패널 관리
   const [snapshotPanels, setSnapshotPanels] = useState<SnapshotPanel[]>([]);
   const [draggingPanel, setDraggingPanel] = useState<{ nodeId: string; offsetX: number; offsetY: number } | null>(null);
+  
+  // 중앙 모달 상태
+  const [modalNode, setModalNode] = useState<{ id: string; name: string; domain: string } | null>(null);
 
   // 초기 네트워크 데이터 빌드
   const { nodes: initialNodes, edges } = useMemo(
@@ -796,70 +799,95 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
             >
               {/* 헤더 (드래그 핸들) */}
               <div
-                className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0 cursor-move"
+                className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
                 style={{ borderColor: "var(--notion-border)" }}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  const startX = e.clientX;
-                  const startY = e.clientY;
-                  const startPanelX = panel.x;
-                  const startPanelY = panel.y;
-
-                  const handleMouseMove = (moveE: MouseEvent) => {
-                    const dx = moveE.clientX - startX;
-                    const dy = moveE.clientY - startY;
-                    // viewport 전체 영역에서 드래그 가능
-                    const viewportWidth = window.innerWidth;
-                    const viewportHeight = window.innerHeight;
-                    setSnapshotPanels(prev =>
-                      prev.map(p =>
-                        p.nodeId === panel.nodeId
-                          ? {
-                              ...p,
-                              x: Math.max(0, Math.min(viewportWidth - 380, startPanelX + dx)),
-                              y: Math.max(0, Math.min(viewportHeight - 100, startPanelY + dy)),
-                            }
-                          : p
-                      )
-                    );
-                  };
-
-                  const handleMouseUp = () => {
-                    document.removeEventListener("mousemove", handleMouseMove);
-                    document.removeEventListener("mouseup", handleMouseUp);
-                  };
-
-                  document.addEventListener("mousemove", handleMouseMove);
-                  document.addEventListener("mouseup", handleMouseUp);
-                }}
               >
-                <div className="flex items-center gap-3">
+                {/* 이름 영역 - 클릭 시 중앙 모달 */}
+                <button
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setModalNode({ id: node.id, name: node.name, domain: node.domain });
+                    // 패널 닫기
+                    setSnapshotPanels(prev => prev.filter(p => p.nodeId !== panel.nodeId));
+                    if (selectedNode === panel.nodeId) setSelectedNode(null);
+                  }}
+                  title="클릭하여 전체 스냅샷 보기"
+                >
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
                     style={{ background: getDomainColor(node.domain) }}
                   >
                     {node.name.charAt(0)}
                   </div>
-                  <div>
-                    <div className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+                  <div className="text-left">
+                    <div className="font-semibold text-sm flex items-center gap-1" style={{ color: "var(--notion-text)" }}>
                       {node.name}
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "var(--notion-text-muted)" }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                     </div>
                     <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
                       {personSnapshots.length}개 스냅샷
                     </div>
                   </div>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSnapshotPanels(prev => prev.filter(p => p.nodeId !== panel.nodeId));
-                    if (selectedNode === panel.nodeId) setSelectedNode(null);
-                  }}
-                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-sm"
-                  style={{ color: "var(--notion-text-muted)" }}
-                >
-                  ✕
                 </button>
+                
+                {/* 드래그 핸들 + 닫기 */}
+                <div className="flex items-center gap-2">
+                  {/* 드래그 핸들 */}
+                  <div
+                    className="w-8 h-8 flex items-center justify-center cursor-move rounded-full hover:bg-gray-100"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      const startX = e.clientX;
+                      const startY = e.clientY;
+                      const startPanelX = panel.x;
+                      const startPanelY = panel.y;
+
+                      const handleMouseMove = (moveE: MouseEvent) => {
+                        const dx = moveE.clientX - startX;
+                        const dy = moveE.clientY - startY;
+                        const viewportWidth = window.innerWidth;
+                        const viewportHeight = window.innerHeight;
+                        setSnapshotPanels(prev =>
+                          prev.map(p =>
+                            p.nodeId === panel.nodeId
+                              ? {
+                                  ...p,
+                                  x: Math.max(0, Math.min(viewportWidth - 380, startPanelX + dx)),
+                                  y: Math.max(0, Math.min(viewportHeight - 100, startPanelY + dy)),
+                                }
+                              : p
+                          )
+                        );
+                      };
+
+                      const handleMouseUp = () => {
+                        document.removeEventListener("mousemove", handleMouseMove);
+                        document.removeEventListener("mouseup", handleMouseUp);
+                      };
+
+                      document.addEventListener("mousemove", handleMouseMove);
+                      document.addEventListener("mouseup", handleMouseUp);
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "var(--notion-text-muted)" }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSnapshotPanels(prev => prev.filter(p => p.nodeId !== panel.nodeId));
+                      if (selectedNode === panel.nodeId) setSelectedNode(null);
+                    }}
+                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-sm"
+                    style={{ color: "var(--notion-text-muted)" }}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               {/* 필터 토글 */}
@@ -1115,6 +1143,211 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
           </span>
         </div>
       </div>
+
+      {/* 중앙 모달 - 전체 스냅샷 리스트 */}
+      {modalNode && (
+        <div
+          className="fixed inset-0 z-[2000] flex items-center justify-center"
+          style={{ background: "rgba(0, 0, 0, 0.5)" }}
+          onClick={() => setModalNode(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl flex flex-col animate-scale-in"
+            style={{
+              background: "var(--notion-bg)",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.25)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div
+              className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
+              style={{ borderColor: "var(--notion-border)" }}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
+                  style={{ background: getDomainColor(modalNode.domain) }}
+                >
+                  {modalNode.name.charAt(0)}
+                </div>
+                <div>
+                  <div className="font-bold text-lg" style={{ color: "var(--notion-text)" }}>
+                    {modalNode.name}
+                  </div>
+                  <div className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+                    {(allItems || items).filter((i) => i.name === modalNode.name).length}개 스냅샷
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalNode(null)}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-lg"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* 모달 본문 - 스냅샷 리스트 */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-3">
+                {(allItems || items)
+                  .filter((snapshot) => snapshot.name === modalNode.name)
+                  .map((snapshot, idx) => {
+                    const progressColor =
+                      snapshot.progressPercent >= 80
+                        ? "#22c55e"
+                        : snapshot.progressPercent >= 50
+                        ? "#3b82f6"
+                        : "#f59e0b";
+
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-xl p-4"
+                        style={{
+                          background: "var(--notion-bg-secondary)",
+                          border: "1px solid var(--notion-border)",
+                        }}
+                      >
+                        {/* 상단: 도메인 + 피쳐명 + 진행률 */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span
+                              className="text-xs px-2 py-0.5 rounded flex-shrink-0"
+                              style={{
+                                background: `${getDomainColor(snapshot.domain)}20`,
+                                color: getDomainColor(snapshot.domain),
+                              }}
+                            >
+                              {snapshot.domain}
+                            </span>
+                            <span
+                              className="font-semibold text-sm truncate"
+                              style={{ color: "var(--notion-text)" }}
+                              title={snapshot.topic}
+                            >
+                              {snapshot.topic}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                            {snapshot.risk && snapshot.risk.length > 0 && (
+                              <span className="text-xs" style={{ color: "#ef4444" }}>
+                                ⚠️
+                              </span>
+                            )}
+                            <span className="text-sm font-bold" style={{ color: progressColor }}>
+                              {snapshot.progressPercent}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 경로 */}
+                        <div className="text-xs mb-3" style={{ color: "var(--notion-text-muted)" }}>
+                          📁 {snapshot.project} / {snapshot.module || "—"}
+                        </div>
+
+                        {/* 진행률 바 */}
+                        <div className="mb-3">
+                          <div
+                            className="h-1.5 rounded-full overflow-hidden"
+                            style={{ background: "var(--notion-bg)" }}
+                          >
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${snapshot.progressPercent}%`,
+                                background: progressColor,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* 완료된 작업 */}
+                        {snapshot.progress && snapshot.progress.length > 0 && (
+                          <div className="mb-2">
+                            <div
+                              className="text-xs font-medium mb-1"
+                              style={{ color: "var(--notion-text-muted)" }}
+                            >
+                              완료된 작업
+                            </div>
+                            <ul className="space-y-1">
+                              {snapshot.progress.slice(0, 3).map((p, i) => (
+                                <li
+                                  key={i}
+                                  className="text-xs flex items-start gap-1.5"
+                                  style={{ color: "var(--notion-text-secondary)" }}
+                                >
+                                  <span className="text-green-500 flex-shrink-0">✓</span>
+                                  <span>{p}</span>
+                                </li>
+                              ))}
+                              {snapshot.progress.length > 3 && (
+                                <li className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+                                  +{snapshot.progress.length - 3} more
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* 다음 계획 */}
+                        {snapshot.next && snapshot.next.length > 0 && (
+                          <div className="mb-2">
+                            <div
+                              className="text-xs font-medium mb-1"
+                              style={{ color: "var(--notion-text-muted)" }}
+                            >
+                              다음 계획
+                            </div>
+                            <ul className="space-y-1">
+                              {snapshot.next.slice(0, 2).map((n, i) => (
+                                <li
+                                  key={i}
+                                  className="text-xs flex items-start gap-1.5"
+                                  style={{ color: "var(--notion-text-secondary)" }}
+                                >
+                                  <span className="text-blue-500 flex-shrink-0">→</span>
+                                  <span>{n}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* 리스크 */}
+                        {snapshot.risk && snapshot.risk.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium mb-1" style={{ color: "#ef4444" }}>
+                              리스크{" "}
+                              {snapshot.riskLevel !== null &&
+                                snapshot.riskLevel !== undefined &&
+                                `(R${snapshot.riskLevel})`}
+                            </div>
+                            <ul className="space-y-1">
+                              {snapshot.risk.map((r, i) => (
+                                <li
+                                  key={i}
+                                  className="text-xs flex items-start gap-1.5"
+                                  style={{ color: "#ef4444" }}
+                                >
+                                  <span className="flex-shrink-0">⚠</span>
+                                  <span>{r}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
