@@ -723,12 +723,11 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             {hasCollaborators && (
               <div className="flex-shrink-0 flex flex-col">
                 <div
-                  className="rounded-2xl"
+                  className="rounded-2xl overflow-hidden"
                   style={{
                     background: "var(--notion-bg)",
                     border: "1px solid var(--notion-border)",
                     height: networkHeight,
-                    minHeight: "250px",
                   }}
                 >
                   <div

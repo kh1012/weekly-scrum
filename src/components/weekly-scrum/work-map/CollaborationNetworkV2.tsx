@@ -552,7 +552,6 @@ export function CollaborationNetworkV2({
         style={{
           background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
           border: "1px solid var(--notion-border)",
-          minHeight: "250px",
         }}
       >
         <svg
