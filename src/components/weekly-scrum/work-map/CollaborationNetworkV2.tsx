@@ -1030,8 +1030,14 @@ export function CollaborationNetworkV2({
                         p.nodeId === panel.nodeId
                           ? {
                               ...p,
-                              x: Math.max(0, Math.min(viewportWidth - 380, startPanelX + dx)),
-                              y: Math.max(0, Math.min(viewportHeight - 100, startPanelY + dy)),
+                              x: Math.max(
+                                0,
+                                Math.min(viewportWidth - 380, startPanelX + dx)
+                              ),
+                              y: Math.max(
+                                0,
+                                Math.min(viewportHeight - 100, startPanelY + dy)
+                              ),
                             }
                           : p
                       )

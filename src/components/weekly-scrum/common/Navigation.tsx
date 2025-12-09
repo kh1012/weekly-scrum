@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVisitorCount } from "@/hooks/useVisitorCount";
+import { RELEASES } from "../releases/releaseData";
 
 // 기본적으로 접혀있는 카테고리 키
 const COLLAPSED_BY_DEFAULT = ["analysis", "views", "personal"];
@@ -365,7 +366,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
               background: "var(--notion-bg-secondary)",
             }}
           >
-            v2.1
+            v{RELEASES[0]?.version ?? "2.0"}
           </div>
           <div
             className="flex items-center gap-2 text-xs px-2 py-1 rounded-lg transition-all duration-200"
