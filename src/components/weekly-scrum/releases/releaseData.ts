@@ -2,6 +2,34 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.1.1",
+    date: "2025-12-09",
+    title: "GNB 필터 개선 및 페이지 상태 복원",
+    summary: "GNB 필터 UI를 개선하고, 마지막 방문 페이지 복원 기능을 추가했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "마지막 방문 페이지 localStorage 저장 및 자동 복원",
+      },
+      {
+        type: "feat",
+        description: "GNB 필터 좌측에 전체 필터 해제 리셋 버튼 추가",
+      },
+      {
+        type: "improve",
+        description: "개별 필터 UI 단순화 ('전체 해제' 버튼 제거)",
+      },
+      {
+        type: "improve",
+        description: "필터 상태에 따른 리셋 버튼 시각적 피드백 (빨간색 하이라이트)",
+      },
+      {
+        type: "style",
+        description: "필터 버튼 상태 표시 개선 (전체 선택: 파란색, 일부 선택: 주황색)",
+      },
+    ],
+  },
+  {
     version: "2.1.0",
     date: "2025-12-09",
     title: "스냅샷 뷰어 v2 구조 및 Work Map 개선",

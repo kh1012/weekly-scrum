@@ -45,7 +45,9 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   // 현재 경로를 localStorage에 저장
   useEffect(() => {
-    if (SAVEABLE_PAGES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+    if (
+      SAVEABLE_PAGES.some((p) => pathname === p || pathname.startsWith(p + "/"))
+    ) {
       try {
         localStorage.setItem(LAST_VISITED_PAGE_KEY, pathname);
       } catch {

@@ -32,7 +32,7 @@ const NAV_CATEGORIES: NavCategory[] = [
       },
       {
         key: "snapshots",
-        label: "스냅샷 뷰어",
+        label: "Snapshots",
         href: "/snapshots",
         emoji: "📸",
       },
