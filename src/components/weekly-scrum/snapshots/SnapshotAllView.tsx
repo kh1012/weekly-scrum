@@ -2,16 +2,19 @@
 
 import type { ScrumItem } from "@/types/scrum";
 import type { CompareState } from "./types";
+import type { DisplayMode } from "./SnapshotToolbar";
 import { ScrumCard } from "../cards/ScrumCard";
+import { ScrumListItem } from "./ScrumListItem";
 import { EmptyState } from "../common/EmptyState";
 
 interface SnapshotAllViewProps {
   items: ScrumItem[];
+  displayMode: DisplayMode;
   compareState: CompareState;
   onCompareToggle: (item: ScrumItem) => void;
 }
 
-export function SnapshotAllView({ items, compareState, onCompareToggle }: SnapshotAllViewProps) {
+export function SnapshotAllView({ items, displayMode, compareState, onCompareToggle }: SnapshotAllViewProps) {
   if (items.length === 0) {
     return <EmptyState message="스냅샷이 없습니다" submessage="필터 조건을 변경해보세요" />;
   }
@@ -33,18 +36,33 @@ export function SnapshotAllView({ items, compareState, onCompareToggle }: Snapsh
       {inProgressItems.length > 0 && (
         <section>
           <SectionHeader color="bg-blue-500" title="진행 중" count={inProgressItems.length} />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {inProgressItems.map((item, index) => (
-              <ScrumCard
-                key={`progress-${item.name}-${item.project}-${item.topic}-${index}`}
-                item={item}
-                isCompleted={false}
-                showCompareCheckbox={true}
-                isCompareSelected={isSelected(item)}
-                onCompareToggle={onCompareToggle}
-              />
-            ))}
-          </div>
+          {displayMode === "card" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {inProgressItems.map((item, index) => (
+                <ScrumCard
+                  key={`progress-${item.name}-${item.project}-${item.topic}-${index}`}
+                  item={item}
+                  isCompleted={false}
+                  showCompareCheckbox={true}
+                  isCompareSelected={isSelected(item)}
+                  onCompareToggle={onCompareToggle}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {inProgressItems.map((item, index) => (
+                <ScrumListItem
+                  key={`progress-${item.name}-${item.project}-${item.topic}-${index}`}
+                  item={item}
+                  isCompleted={false}
+                  showCompareCheckbox={true}
+                  isCompareSelected={isSelected(item)}
+                  onCompareToggle={onCompareToggle}
+                />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -52,18 +70,33 @@ export function SnapshotAllView({ items, compareState, onCompareToggle }: Snapsh
       {completedItems.length > 0 && (
         <section>
           <SectionHeader color="bg-green-500" title="완료" count={completedItems.length} />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {completedItems.map((item, index) => (
-              <ScrumCard
-                key={`completed-${item.name}-${item.project}-${item.topic}-${index}`}
-                item={item}
-                isCompleted={true}
-                showCompareCheckbox={true}
-                isCompareSelected={isSelected(item)}
-                onCompareToggle={onCompareToggle}
-              />
-            ))}
-          </div>
+          {displayMode === "card" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {completedItems.map((item, index) => (
+                <ScrumCard
+                  key={`completed-${item.name}-${item.project}-${item.topic}-${index}`}
+                  item={item}
+                  isCompleted={true}
+                  showCompareCheckbox={true}
+                  isCompareSelected={isSelected(item)}
+                  onCompareToggle={onCompareToggle}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {completedItems.map((item, index) => (
+                <ScrumListItem
+                  key={`completed-${item.name}-${item.project}-${item.topic}-${index}`}
+                  item={item}
+                  isCompleted={true}
+                  showCompareCheckbox={true}
+                  isCompareSelected={isSelected(item)}
+                  onCompareToggle={onCompareToggle}
+                />
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>
@@ -83,4 +116,3 @@ function SectionHeader({ color, title, count }: { color: string; title: string; 
     </div>
   );
 }
-

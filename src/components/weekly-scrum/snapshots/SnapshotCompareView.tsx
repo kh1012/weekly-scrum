@@ -3,7 +3,7 @@
 import type { ScrumItem, RiskLevel } from "@/types/scrum";
 import { CircularProgress } from "../common/CircularProgress";
 import { RiskLevelBadge } from "../common/RiskLevelBadge";
-import { getDomainColor } from "@/lib/colorDefines";
+import { getDomainColor, getRiskLevelColor, PROGRESS_COLORS } from "@/lib/colorDefines";
 
 interface SnapshotCompareViewProps {
   items: ScrumItem[];
@@ -114,12 +114,16 @@ export function SnapshotCompareView({ items, onClose }: SnapshotCompareViewProps
 function CompareCard({ item }: { item: ScrumItem }) {
   const domainColor = getDomainColor(item.domain);
   const riskLevel = item.riskLevel ?? 0;
+  const riskColor = getRiskLevelColor(riskLevel as RiskLevel);
+
+  // risk가 null이면 미정 상태
+  const isRiskUnknown = item.risk === null && item.riskLevel === null;
 
   return (
     <div
       className="w-80 flex-shrink-0 p-4 rounded-lg"
       style={{
-        background: "var(--notion-bg-secondary)",
+        background: "var(--notion-bg)",
         border: "1px solid var(--notion-border)",
       }}
     >
@@ -147,13 +151,40 @@ function CompareCard({ item }: { item: ScrumItem }) {
         <CircularProgress percent={item.progressPercent} isCompleted={item.progressPercent >= 100} />
       </div>
 
-      {/* Progress */}
-      <div className="space-y-2">
-        <ContentSection label="Progress" items={item.progress} color="#22c55e" />
-        <ContentSection label="Next" items={item.next} color="#3b82f6" />
-        {item.risk && item.risk.length > 0 && (
-          <ContentSection label="Risk" items={item.risk} color="#ef4444" />
-        )}
+      {/* v2 구조: Past Week / This Week */}
+      <div className="space-y-3">
+        {/* Past Week */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-[10px] font-semibold" style={{ color: PROGRESS_COLORS.completed.text }}>
+              Past Week
+            </span>
+          </div>
+          <div className="space-y-1.5 pl-2" style={{ borderLeft: `2px solid ${PROGRESS_COLORS.completed.text}` }}>
+            <ContentSection label="Tasks" items={item.progress} />
+            {item.risk && item.risk.length > 0 && (
+              <ContentSection label="Risk" items={item.risk} color={riskColor.text} />
+            )}
+            {isRiskUnknown && (
+              <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+                <span className="font-medium" style={{ color: "var(--notion-text-tertiary)" }}>Risk: </span>
+                <span>미정</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* This Week */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-[10px] font-semibold" style={{ color: "var(--notion-blue)" }}>
+              This Week
+            </span>
+          </div>
+          <div className="space-y-1.5 pl-2" style={{ borderLeft: "2px solid var(--notion-blue)" }}>
+            <ContentSection label="Tasks" items={item.next} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -166,21 +197,35 @@ function ContentSection({
 }: {
   label: string;
   items: string[];
-  color: string;
+  color?: string;
 }) {
-  if (!items || items.length === 0) return null;
+  const textColor = color || "var(--notion-text)";
+  
+  if (!items || items.length === 0) {
+    return (
+      <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+        <span className="font-medium" style={{ color: textColor }}>{label}: </span>
+        <span>-</span>
+      </div>
+    );
+  }
+
+  if (items.length === 1) {
+    return (
+      <div className="text-xs" style={{ color: "var(--notion-text)" }}>
+        <span className="font-medium" style={{ color: textColor }}>{label}: </span>
+        <span>{items[0]}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="text-xs">
-      <div className="font-medium mb-1" style={{ color }}>
-        {label}
-      </div>
-      <ul className="space-y-0.5">
+      <span className="font-medium" style={{ color: textColor }}>{label}:</span>
+      <ul className="mt-0.5 space-y-0.5 ml-3">
         {items.map((item, idx) => (
           <li key={idx} className="flex items-start gap-1" style={{ color: "var(--notion-text)" }}>
-            <span style={{ color }} className="text-[8px] mt-1">
-              •
-            </span>
+            <span className="text-[8px] mt-1" style={{ color: textColor }}>•</span>
             <span className="line-clamp-2">{item}</span>
           </li>
         ))}
@@ -217,4 +262,3 @@ function CompareRow({
     </tr>
   );
 }
-

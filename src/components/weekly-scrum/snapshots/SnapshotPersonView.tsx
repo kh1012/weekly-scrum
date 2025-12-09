@@ -3,13 +3,16 @@
 import { useState } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import type { PersonGroup, CompareState } from "./types";
+import type { DisplayMode } from "./SnapshotToolbar";
 import { ScrumCard } from "../cards/ScrumCard";
+import { ScrumListItem } from "./ScrumListItem";
 import { EmptyState } from "../common/EmptyState";
 
 interface SnapshotPersonViewProps {
   personGroups: PersonGroup[];
   selectedPerson: string | null;
   onPersonChange: (person: string | null) => void;
+  displayMode: DisplayMode;
   compareState: CompareState;
   onCompareToggle: (item: ScrumItem) => void;
 }
@@ -17,7 +20,7 @@ interface SnapshotPersonViewProps {
 export function SnapshotPersonView({
   personGroups,
   selectedPerson,
-  onPersonChange,
+  displayMode,
   compareState,
   onCompareToggle,
 }: SnapshotPersonViewProps) {
@@ -69,7 +72,7 @@ export function SnapshotPersonView({
             {/* 헤더 */}
             <button
               onClick={() => togglePerson(group.name)}
-              className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-gray-50"
+              className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-gray-50/50"
             >
               <div className="flex items-center gap-3">
                 {/* 아바타 */}
@@ -131,18 +134,33 @@ export function SnapshotPersonView({
             {/* 스냅샷 목록 */}
             {isExpanded && (
               <div className="px-4 pb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {group.items.map((item, index) => (
-                    <ScrumCard
-                      key={`${group.name}-${item.project}-${item.topic}-${index}`}
-                      item={item}
-                      isCompleted={item.progressPercent >= 100}
-                      showCompareCheckbox={true}
-                      isCompareSelected={isSelected(item)}
-                      onCompareToggle={onCompareToggle}
-                    />
-                  ))}
-                </div>
+                {displayMode === "card" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {group.items.map((item, index) => (
+                      <ScrumCard
+                        key={`${group.name}-${item.project}-${item.topic}-${index}`}
+                        item={item}
+                        isCompleted={item.progressPercent >= 100}
+                        showCompareCheckbox={true}
+                        isCompareSelected={isSelected(item)}
+                        onCompareToggle={onCompareToggle}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {group.items.map((item, index) => (
+                      <ScrumListItem
+                        key={`${group.name}-${item.project}-${item.topic}-${index}`}
+                        item={item}
+                        isCompleted={item.progressPercent >= 100}
+                        showCompareCheckbox={true}
+                        isCompareSelected={isSelected(item)}
+                        onCompareToggle={onCompareToggle}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -151,4 +169,3 @@ export function SnapshotPersonView({
     </div>
   );
 }
-

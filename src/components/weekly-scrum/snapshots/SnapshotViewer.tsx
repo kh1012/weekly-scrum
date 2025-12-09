@@ -1,14 +1,20 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import { useScrumContext } from "@/context/ScrumContext";
 import type { SnapshotViewMode, PersonGroup, CompareState } from "./types";
-import { SnapshotToolbar } from "./SnapshotToolbar";
+import { SnapshotToolbar, type DisplayMode } from "./SnapshotToolbar";
 import { SnapshotAllView } from "./SnapshotAllView";
 import { SnapshotPersonView } from "./SnapshotPersonView";
 import { SnapshotCompareView } from "./SnapshotCompareView";
 import { SnapshotContinuityView } from "./SnapshotContinuityView";
+
+const STORAGE_KEY = "snapshot-viewer-state";
+
+interface StoredState {
+  displayMode: DisplayMode;
+}
 
 /**
  * 스냅샷 뷰어 메인 컴포넌트
@@ -19,6 +25,9 @@ export function SnapshotViewer() {
   // 뷰 모드
   const [viewMode, setViewMode] = useState<SnapshotViewMode>("all");
   
+  // 디스플레이 모드 (카드/리스트)
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("card");
+  
   // 선택된 사람 (person 뷰에서)
   const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
   
@@ -27,6 +36,36 @@ export function SnapshotViewer() {
     selectedItems: [],
     isCompareMode: false,
   });
+
+  // 초기화 상태
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // localStorage에서 상태 불러오기
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed: StoredState = JSON.parse(stored);
+        if (parsed.displayMode) {
+          setDisplayMode(parsed.displayMode);
+        }
+      }
+    } catch {
+      // 무시
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // displayMode 변경 시 저장
+  const handleDisplayModeChange = useCallback((mode: DisplayMode) => {
+    setDisplayMode(mode);
+    try {
+      const state: StoredState = { displayMode: mode };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // 무시
+    }
+  }, []);
 
   // 사람별 그룹화
   const personGroups = useMemo((): PersonGroup[] => {
@@ -118,12 +157,22 @@ export function SnapshotViewer() {
     setCompareState({ selectedItems: [], isCompareMode: false });
   }, []);
 
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* 툴바 */}
       <SnapshotToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        displayMode={displayMode}
+        onDisplayModeChange={handleDisplayModeChange}
         personGroups={personGroups}
         selectedPerson={selectedPerson}
         onPersonChange={setSelectedPerson}
@@ -136,6 +185,7 @@ export function SnapshotViewer() {
       {viewMode === "all" && (
         <SnapshotAllView
           items={filteredItems}
+          displayMode={displayMode}
           compareState={compareState}
           onCompareToggle={handleCompareToggle}
         />
@@ -146,6 +196,7 @@ export function SnapshotViewer() {
           personGroups={personGroups}
           selectedPerson={selectedPerson}
           onPersonChange={setSelectedPerson}
+          displayMode={displayMode}
           compareState={compareState}
           onCompareToggle={handleCompareToggle}
         />
@@ -171,4 +222,3 @@ export function SnapshotViewer() {
     </div>
   );
 }
-
