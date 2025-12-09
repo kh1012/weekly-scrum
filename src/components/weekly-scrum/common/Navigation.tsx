@@ -110,7 +110,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
   const isActive = useIsActive();
   const { count, isLoading } = useVisitorCount();
   const pathname = usePathname();
-  
+
   // 접힌 카테고리 상태
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
     new Set(COLLAPSED_BY_DEFAULT)
@@ -199,7 +199,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         {NAV_CATEGORIES.map((category, categoryIndex) => {
           const isCollapsed = collapsedCategories.has(category.key);
-          const hasActiveItem = category.items.some((item) => isActive(item.href));
+          const hasActiveItem = category.items.some((item) =>
+            isActive(item.href)
+          );
           const itemCount = category.items.length;
 
           return (
@@ -213,9 +215,10 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                 onClick={() => toggleCategory(category.key)}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group"
                 style={{
-                  background: hasActiveItem && isCollapsed 
-                    ? "rgba(59, 130, 246, 0.05)" 
-                    : "transparent",
+                  background:
+                    hasActiveItem && isCollapsed
+                      ? "rgba(59, 130, 246, 0.05)"
+                      : "transparent",
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -226,7 +229,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                     viewBox="0 0 24 24"
                     style={{
                       color: "var(--notion-text-muted)",
-                      transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                      transform: isCollapsed
+                        ? "rotate(-90deg)"
+                        : "rotate(0deg)",
                     }}
                   >
                     <path
@@ -247,11 +252,11 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded-full transition-all duration-200"
                     style={{
-                      background: hasActiveItem 
-                        ? "rgba(59, 130, 246, 0.15)" 
+                      background: hasActiveItem
+                        ? "rgba(59, 130, 246, 0.15)"
                         : "var(--notion-bg-secondary)",
-                      color: hasActiveItem 
-                        ? "#3b82f6" 
+                      color: hasActiveItem
+                        ? "#3b82f6"
                         : "var(--notion-text-muted)",
                     }}
                   >
@@ -284,7 +289,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                           color: active
                             ? "#3b82f6"
                             : "var(--notion-text-secondary)",
-                          transform: active ? "translateX(2px)" : "translateX(0)",
+                          transform: active
+                            ? "translateX(2px)"
+                            : "translateX(0)",
                         }}
                         onMouseEnter={(e) => {
                           if (!active) {

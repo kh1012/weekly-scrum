@@ -2,6 +2,55 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.2.0",
+    date: "2025-12-09",
+    title: "Airbnb 스타일 UI/UX 전면 개선",
+    summary:
+      "Work Map, 스냅샷 뷰어, GNB, SNB에 Airbnb 스타일의 인터랙션 애니메이션을 적용하고, 선택 모드 UX를 개선했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "스냅샷 뷰어 선택 모드 - 카드 전체 클릭으로 선택 가능",
+      },
+      {
+        type: "feat",
+        description: "스냅샷 뷰어 우클릭 컨텍스트 메뉴 (선택 모드 토글)",
+      },
+      {
+        type: "feat",
+        description: "SNB 카테고리 접기/펼치기 기능 (분석/뷰/개인화 기본 접힘)",
+      },
+      {
+        type: "style",
+        description: "카드 호버 리프트 효과 (translateY + shadow)",
+      },
+      {
+        type: "style",
+        description: "카드 순차 등장 애니메이션 (stagger reveal)",
+      },
+      {
+        type: "style",
+        description: "GNB Glass effect 배경 (blur + 투명도)",
+      },
+      {
+        type: "style",
+        description: "SNB 메뉴 아이템 슬라이드 인터랙션",
+      },
+      {
+        type: "style",
+        description: "검색 입력 포커스 시 너비 확장 애니메이션",
+      },
+      {
+        type: "style",
+        description: "버튼/토글 둥근 모서리 및 그림자 스타일 통일",
+      },
+      {
+        type: "improve",
+        description: "전체적인 여백 및 간격 조정 (더 여유로운 레이아웃)",
+      },
+    ],
+  },
+  {
     version: "2.1.0",
     date: "2025-12-09",
     title: "GNB 필터 개선 및 스냅샷 뷰어 v2",
