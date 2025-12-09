@@ -342,7 +342,7 @@ function ProjectItem({
               e.stopPropagation();
               onProjectView(project.name);
             }}
-            className="flex-shrink-0 px-2 py-1 text-xs rounded transition-colors"
+            className="flex-shrink-0 px-2 py-2 text-xs rounded-lg transition-colors"
             style={{
               background: isProjectSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
               color: isProjectSelected ? "#3b82f6" : "var(--notion-text-muted)",
@@ -497,7 +497,7 @@ function ModuleItem({
               e.stopPropagation();
               onModuleView(projectName, module.name);
             }}
-            className="flex-shrink-0 px-1.5 py-0.5 text-[10px] rounded transition-colors"
+            className="flex-shrink-0 px-1.5 py-1.5 text-[10px] rounded-md transition-colors"
             style={{
               background: isModuleSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
               color: isModuleSelected ? "#3b82f6" : "var(--notion-text-muted)",
