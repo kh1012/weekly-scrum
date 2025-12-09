@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useMemo, useCallback, useEffect, ReactNode } from "react";
 import type {
   WeeklyScrumData,
   WeekOption,
@@ -13,6 +13,9 @@ import type {
 } from "@/types/scrum";
 import { weekKeyToSortValue, mergeDataInRange } from "@/lib/weekUtils";
 import { filterItems, calculateStats } from "@/lib/utils";
+
+// LocalStorage 키
+const FILTER_STORAGE_KEY = "scrum-filter-state";
 
 interface ScrumContextValue {
   // 데이터
@@ -80,16 +83,51 @@ const defaultMultiFilters: MultiFilterState = {
   search: "",
 };
 
+// 저장된 필터 상태 타입
+interface StoredFilterState {
+  multiFilters: MultiFilterState;
+  selectMode: SelectMode;
+  selectedWeekKey: string;
+  rangeStart: string;
+  rangeEnd: string;
+}
+
+// LocalStorage에서 필터 상태 불러오기
+function loadStoredFilterState(): Partial<StoredFilterState> {
+  if (typeof window === "undefined") return {};
+  
+  try {
+    const stored = localStorage.getItem(FILTER_STORAGE_KEY);
+    if (!stored) return {};
+    return JSON.parse(stored);
+  } catch {
+    console.warn("Failed to load filter state from localStorage");
+    return {};
+  }
+}
+
+// LocalStorage에 필터 상태 저장
+function saveFilterState(state: StoredFilterState): void {
+  if (typeof window === "undefined") return;
+  
+  try {
+    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    console.warn("Failed to save filter state to localStorage");
+  }
+}
+
 export function ScrumProvider({
   children,
   allData,
   weeks,
   initialWeekKey,
 }: ScrumProviderProps) {
-  const [selectMode, setSelectMode] = useState<SelectMode>("single");
-  const [selectedWeekKey, setSelectedWeekKey] = useState(initialWeekKey);
-  const [rangeStart, setRangeStart] = useState(initialWeekKey);
-  const [rangeEnd, setRangeEnd] = useState(initialWeekKey);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [selectMode, setSelectModeState] = useState<SelectMode>("single");
+  const [selectedWeekKey, setSelectedWeekKeyState] = useState(initialWeekKey);
+  const [rangeStart, setRangeStartState] = useState(initialWeekKey);
+  const [rangeEnd, setRangeEndState] = useState(initialWeekKey);
   const [filters, setFilters] = useState<FilterState>({
     domain: "",
     project: "",
@@ -98,6 +136,59 @@ export function ScrumProvider({
     search: "",
   });
   const [multiFilters, setMultiFilters] = useState<MultiFilterState>(defaultMultiFilters);
+
+  // 초기 상태 복원 (localStorage에서)
+  useEffect(() => {
+    const stored = loadStoredFilterState();
+    
+    if (stored.multiFilters) {
+      setMultiFilters(stored.multiFilters);
+    }
+    if (stored.selectMode) {
+      setSelectModeState(stored.selectMode);
+    }
+    if (stored.selectedWeekKey && allData[stored.selectedWeekKey]) {
+      setSelectedWeekKeyState(stored.selectedWeekKey);
+    }
+    if (stored.rangeStart && allData[stored.rangeStart]) {
+      setRangeStartState(stored.rangeStart);
+    }
+    if (stored.rangeEnd && allData[stored.rangeEnd]) {
+      setRangeEndState(stored.rangeEnd);
+    }
+    
+    setIsInitialized(true);
+  }, [allData]);
+
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    saveFilterState({
+      multiFilters,
+      selectMode,
+      selectedWeekKey,
+      rangeStart,
+      rangeEnd,
+    });
+  }, [isInitialized, multiFilters, selectMode, selectedWeekKey, rangeStart, rangeEnd]);
+
+  // Wrapper 함수들 (상태 변경 + 저장)
+  const setSelectMode = useCallback((mode: SelectMode) => {
+    setSelectModeState(mode);
+  }, []);
+
+  const setSelectedWeekKey = useCallback((key: string) => {
+    setSelectedWeekKeyState(key);
+  }, []);
+
+  const setRangeStart = useCallback((key: string) => {
+    setRangeStartState(key);
+  }, []);
+
+  const setRangeEnd = useCallback((key: string) => {
+    setRangeEndState(key);
+  }, []);
 
   // 정렬된 주차 키 목록
   const sortedWeekKeys = useMemo(() => {
