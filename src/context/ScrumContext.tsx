@@ -141,9 +141,13 @@ export function ScrumProvider({
   useEffect(() => {
     const stored = loadStoredFilterState();
     
+    // localStorage에 저장된 필터가 있으면 복원, 없으면 전체 선택 상태로 초기화
     if (stored.multiFilters) {
       setMultiFilters(stored.multiFilters);
     }
+    // localStorage에 필터가 없으면 초기 전체 선택 상태로 설정하지 않음
+    // (빈 배열 = 모든 항목 표시 로직을 유지하되, UI에서 "전체 선택" 표시)
+    
     if (stored.selectMode) {
       setSelectModeState(stored.selectMode);
     }

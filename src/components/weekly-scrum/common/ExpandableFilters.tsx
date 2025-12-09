@@ -55,6 +55,9 @@ function FilterSection({
   const enabledOptions = options.filter((opt) => opt.enabled);
   const selectedCount = selectedValues.length;
   const hasSelection = selectedCount > 0;
+  // 빈 배열 = 전체 선택 (필터 미적용)
+  const isAllSelected = !hasSelection;
+  const totalCount = enabledOptions.length;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -76,7 +79,7 @@ function FilterSection({
       >
         <span>{icon}</span>
         <span className="truncate max-w-[80px]">
-          {hasSelection ? `${title} (${selectedCount})` : title}
+          {hasSelection ? `${title} (${selectedCount})` : `${title} (전체)`}
         </span>
         <svg
           className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -104,7 +107,7 @@ function FilterSection({
             style={{ borderColor: "var(--notion-border)" }}
           >
             <span className="text-xs font-semibold" style={{ color: "var(--notion-text)" }}>
-              {title}
+              {title} {isAllSelected && <span style={{ color: "var(--notion-text-muted)" }}>(전체)</span>}
             </span>
             <div className="flex items-center gap-1">
               {hasSelection && (
@@ -113,25 +116,15 @@ function FilterSection({
                     e.stopPropagation();
                     onClear();
                   }}
-                  className="px-2 py-0.5 text-[10px] rounded transition-colors hover:bg-red-50"
-                  style={{ color: "#ef4444" }}
+                  className="px-2 py-0.5 text-[10px] rounded transition-colors"
+                  style={{ 
+                    color: "#3b82f6",
+                    background: "rgba(59, 130, 246, 0.1)",
+                  }}
                 >
-                  초기화
+                  전체 선택
                 </button>
               )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectAll(enabledOptions.map((opt) => opt.value));
-                }}
-                className="px-2 py-0.5 text-[10px] rounded transition-colors"
-                style={{
-                  color: "var(--notion-text-muted)",
-                  background: "var(--notion-bg-secondary)",
-                }}
-              >
-                전체 선택
-              </button>
             </div>
           </div>
 
@@ -147,7 +140,8 @@ function FilterSection({
             ) : (
               <div className="space-y-0.5">
                 {options.map((option) => {
-                  const isSelected = selectedValues.includes(option.value);
+                  // 빈 배열 = 전체 선택, 또는 해당 값이 선택됨
+                  const isSelected = isAllSelected || selectedValues.includes(option.value);
                   const isDisabled = !option.enabled;
 
                   return (
@@ -164,7 +158,18 @@ function FilterSection({
                         type="checkbox"
                         checked={isSelected}
                         disabled={isDisabled}
-                        onChange={() => !isDisabled && onToggle(option.value)}
+                        onChange={() => {
+                          if (isDisabled) return;
+                          if (isAllSelected) {
+                            // 전체 선택 상태에서 하나를 해제하면, 나머지를 모두 선택
+                            const otherValues = enabledOptions
+                              .filter((opt) => opt.value !== option.value)
+                              .map((opt) => opt.value);
+                            onSelectAll(otherValues);
+                          } else {
+                            onToggle(option.value);
+                          }
+                        }}
                         className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
                       />
                       <span
