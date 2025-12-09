@@ -87,49 +87,50 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
   // 모바일 레이아웃
   if (isMobile) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {/* 상단: 모드 토글 + 날짜 범위 */}
         <div className="flex items-center justify-between">
           <div
-            className="flex items-center p-0.5 rounded"
-            style={{ background: "var(--notion-bg-secondary)" }}
+            className="flex items-center p-1 rounded-xl"
+            style={{ 
+              background: "var(--notion-bg-secondary)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)",
+            }}
           >
             <button
               onClick={() => handleModeChange("single")}
-              className={`px-2 py-1 text-xs rounded transition-all ${
-                selectMode === "single" ? "font-medium" : ""
-              }`}
+              className="px-3 py-1.5 text-xs rounded-lg transition-all duration-200"
               style={{
                 background:
-                  selectMode === "single" ? "var(--notion-bg)" : "transparent",
+                  selectMode === "single" ? "white" : "transparent",
                 color:
                   selectMode === "single"
-                    ? "var(--notion-text)"
+                    ? "#3b82f6"
                     : "var(--notion-text-secondary)",
                 boxShadow:
                   selectMode === "single"
-                    ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                    ? "0 1px 4px rgba(0,0,0,0.06)"
                     : "none",
+                fontWeight: selectMode === "single" ? 600 : 500,
               }}
             >
               주차
             </button>
             <button
               onClick={() => handleModeChange("range")}
-              className={`px-2 py-1 text-xs rounded transition-all ${
-                selectMode === "range" ? "font-medium" : ""
-              }`}
+              className="px-3 py-1.5 text-xs rounded-lg transition-all duration-200"
               style={{
                 background:
-                  selectMode === "range" ? "var(--notion-bg)" : "transparent",
+                  selectMode === "range" ? "white" : "transparent",
                 color:
                   selectMode === "range"
-                    ? "var(--notion-text)"
+                    ? "#3b82f6"
                     : "var(--notion-text-secondary)",
                 boxShadow:
                   selectMode === "range"
-                    ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                    ? "0 1px 4px rgba(0,0,0,0.06)"
                     : "none",
+                fontWeight: selectMode === "range" ? 600 : 500,
               }}
             >
               범위
@@ -138,13 +139,22 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
 
           {/* 날짜 범위 표시 */}
           <div
-            className="flex items-center gap-1.5 text-xs"
-            style={{ color: "var(--notion-text-secondary)" }}
+            className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-xl"
+            style={{ 
+              color: "var(--notion-text-secondary)",
+              background: "var(--notion-bg-secondary)",
+            }}
           >
             <span>📅</span>
-            <span className="truncate max-w-[140px]">{currentData?.range}</span>
+            <span className="truncate max-w-[120px] font-medium">{currentData?.range}</span>
             {selectMode === "range" && (
-              <span className="notion-badge-blue text-[10px] py-0.5 px-1 rounded">
+              <span 
+                className="text-[10px] py-0.5 px-1.5 rounded-lg font-semibold"
+                style={{
+                  background: "rgba(59, 130, 246, 0.15)",
+                  color: "#3b82f6",
+                }}
+              >
                 누적
               </span>
             )}
@@ -153,11 +163,12 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
 
         {/* 하단: 셀렉터 */}
         {selectMode === "single" ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <select
               value={selectedYear}
               onChange={(e) => handleYearChange(Number(e.target.value))}
-              className="notion-select text-xs py-1 flex-1 min-w-0"
+              className="notion-select text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
+              style={{ background: "var(--notion-bg-secondary)", border: "none" }}
             >
               {years.map((year) => (
                 <option key={year} value={year}>
@@ -168,7 +179,8 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             <select
               value={selectedMonth}
               onChange={(e) => handleMonthChange(Number(e.target.value))}
-              className="notion-select text-xs py-1 w-16"
+              className="notion-select text-xs py-2 px-3 w-20 rounded-xl font-medium"
+              style={{ background: "var(--notion-bg-secondary)", border: "none" }}
             >
               {months.map((month) => (
                 <option key={month} value={month}>
@@ -179,7 +191,8 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             <select
               value={selectedWeekKey.split("-")[2] || ""}
               onChange={(e) => handleWeekChange(e.target.value)}
-              className="notion-select text-xs py-1 w-16"
+              className="notion-select text-xs py-2 px-3 w-20 rounded-xl font-medium"
+              style={{ background: "var(--notion-bg-secondary)", border: "none" }}
             >
               {availableWeeks.map((w) => (
                 <option key={w.week} value={w.week}>
@@ -189,11 +202,12 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             </select>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <select
               value={rangeStart}
               onChange={(e) => setRangeStart(e.target.value)}
-              className="notion-select text-xs py-1 flex-1 min-w-0"
+              className="notion-select text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
+              style={{ background: "var(--notion-bg-secondary)", border: "none" }}
             >
               {allWeekOptions.map((opt) => (
                 <option key={opt.key} value={opt.key}>
@@ -202,15 +216,16 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
               ))}
             </select>
             <span
-              className="text-xs"
+              className="text-xs font-medium px-1"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              ~
+              →
             </span>
             <select
               value={rangeEnd}
               onChange={(e) => setRangeEnd(e.target.value)}
-              className="notion-select text-xs py-1 flex-1 min-w-0"
+              className="notion-select text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
+              style={{ background: "var(--notion-bg-secondary)", border: "none" }}
             >
               {allWeekOptions.map((opt) => (
                 <option key={opt.key} value={opt.key}>
@@ -226,48 +241,49 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
 
   // 데스크탑 레이아웃
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       {/* 단일/범위 토글 */}
       <div
-        className="flex items-center p-0.5 rounded"
-        style={{ background: "var(--notion-bg-secondary)" }}
+        className="flex items-center p-1 rounded-xl"
+        style={{ 
+          background: "var(--notion-bg-secondary)",
+          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)",
+        }}
       >
         <button
           onClick={() => handleModeChange("single")}
-          className={`px-2.5 py-1 text-xs rounded transition-all ${
-            selectMode === "single" ? "font-medium" : ""
-          }`}
+          className="px-3 py-1.5 text-xs rounded-lg transition-all duration-200 interactive-btn"
           style={{
             background:
-              selectMode === "single" ? "var(--notion-bg)" : "transparent",
+              selectMode === "single" ? "white" : "transparent",
             color:
               selectMode === "single"
-                ? "var(--notion-text)"
+                ? "#3b82f6"
                 : "var(--notion-text-secondary)",
             boxShadow:
               selectMode === "single"
-                ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                ? "0 1px 4px rgba(0,0,0,0.06)"
                 : "none",
+            fontWeight: selectMode === "single" ? 600 : 500,
           }}
         >
           주차
         </button>
         <button
           onClick={() => handleModeChange("range")}
-          className={`px-2.5 py-1 text-xs rounded transition-all ${
-            selectMode === "range" ? "font-medium" : ""
-          }`}
+          className="px-3 py-1.5 text-xs rounded-lg transition-all duration-200 interactive-btn"
           style={{
             background:
-              selectMode === "range" ? "var(--notion-bg)" : "transparent",
+              selectMode === "range" ? "white" : "transparent",
             color:
               selectMode === "range"
-                ? "var(--notion-text)"
+                ? "#3b82f6"
                 : "var(--notion-text-secondary)",
             boxShadow:
               selectMode === "range"
-                ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                ? "0 1px 4px rgba(0,0,0,0.06)"
                 : "none",
+            fontWeight: selectMode === "range" ? 600 : 500,
           }}
         >
           범위
@@ -276,11 +292,15 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
 
       {/* 주차 셀렉터 */}
       {selectMode === "single" ? (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <select
             value={selectedYear}
             onChange={(e) => handleYearChange(Number(e.target.value))}
-            className="notion-select"
+            className="notion-select rounded-lg px-3 py-1.5 font-medium"
+            style={{
+              background: "var(--notion-bg-secondary)",
+              border: "none",
+            }}
           >
             {years.map((year) => (
               <option key={year} value={year}>
@@ -291,7 +311,11 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={selectedMonth}
             onChange={(e) => handleMonthChange(Number(e.target.value))}
-            className="notion-select"
+            className="notion-select rounded-lg px-3 py-1.5 font-medium"
+            style={{
+              background: "var(--notion-bg-secondary)",
+              border: "none",
+            }}
           >
             {months.map((month) => (
               <option key={month} value={month}>
@@ -302,7 +326,11 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={selectedWeekKey.split("-")[2] || ""}
             onChange={(e) => handleWeekChange(e.target.value)}
-            className="notion-select"
+            className="notion-select rounded-lg px-3 py-1.5 font-medium"
+            style={{
+              background: "var(--notion-bg-secondary)",
+              border: "none",
+            }}
           >
             {availableWeeks.map((w) => (
               <option key={w.week} value={w.week}>
@@ -312,11 +340,15 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           </select>
         </div>
       ) : (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <select
             value={rangeStart}
             onChange={(e) => setRangeStart(e.target.value)}
-            className="notion-select min-w-[150px]"
+            className="notion-select rounded-lg px-3 py-1.5 font-medium min-w-[150px]"
+            style={{
+              background: "var(--notion-bg-secondary)",
+              border: "none",
+            }}
           >
             {allWeekOptions.map((opt) => (
               <option key={opt.key} value={opt.key}>
@@ -325,15 +357,19 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             ))}
           </select>
           <span
-            className="text-xs"
+            className="text-xs font-medium px-1"
             style={{ color: "var(--notion-text-muted)" }}
           >
-            ~
+            →
           </span>
           <select
             value={rangeEnd}
             onChange={(e) => setRangeEnd(e.target.value)}
-            className="notion-select min-w-[150px]"
+            className="notion-select rounded-lg px-3 py-1.5 font-medium min-w-[150px]"
+            style={{
+              background: "var(--notion-bg-secondary)",
+              border: "none",
+            }}
           >
             {allWeekOptions.map((opt) => (
               <option key={opt.key} value={opt.key}>
@@ -346,13 +382,22 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
 
       {/* 날짜 범위 표시 (1600px 이상에서만) */}
       <div
-        className="hidden 3xl:flex items-center gap-1.5 text-xs ml-1"
-        style={{ color: "var(--notion-text-secondary)" }}
+        className="hidden 3xl:flex items-center gap-2 text-xs ml-2 px-3 py-1.5 rounded-xl"
+        style={{ 
+          color: "var(--notion-text-secondary)",
+          background: "var(--notion-bg-secondary)",
+        }}
       >
         <span>📅</span>
-        <span>{currentData?.range}</span>
+        <span className="font-medium">{currentData?.range}</span>
         {selectMode === "range" && (
-          <span className="notion-badge-blue text-[10px] py-0.5 px-1 rounded">
+          <span 
+            className="text-[10px] py-0.5 px-1.5 rounded-lg font-semibold"
+            style={{
+              background: "rgba(59, 130, 246, 0.15)",
+              color: "#3b82f6",
+            }}
+          >
             누적
           </span>
         )}

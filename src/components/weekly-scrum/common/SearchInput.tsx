@@ -86,20 +86,21 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
 
   return (
     <div
-      className={`relative transition-all duration-200 ease-out ${
-        isMobile ? "w-full" : isFocused ? "w-72" : "w-56"
+      className={`relative transition-all duration-300 ease-out ${
+        isMobile ? "w-full" : isFocused ? "w-80" : "w-60"
       }`}
     >
       {/* 검색 아이콘 */}
       <svg
-        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 transition-colors duration-200"
+        className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-all duration-200"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
         style={{
           color: isFocused
-            ? "var(--notion-text-secondary)"
+            ? "#3b82f6"
             : "var(--notion-text-muted)",
+          transform: `translateY(-50%) ${isFocused ? "scale(1.05)" : "scale(1)"}`,
         }}
       >
         <path
@@ -118,29 +119,31 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
         onChange={handleChange}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        className={`notion-input pl-8 transition-all duration-200 ease-out ${
-          isMobile ? "text-sm py-1.5" : "text-sm py-1.5"
-        } ${isFocused ? "search-input-focused" : ""}`}
+        className={`w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ease-out focus:outline-none ${
+          isMobile ? "" : ""
+        }`}
         style={{
-          paddingRight: localValue || isSearching ? "32px" : "10px",
-          backgroundColor: "var(--notion-bg)",
-          borderColor: isFocused
-            ? "var(--notion-blue)"
-            : "var(--notion-border)",
-          boxShadow: isFocused ? "0 0 0 2px var(--notion-blue-bg)" : "none",
+          backgroundColor: isFocused ? "white" : "var(--notion-bg-secondary)",
+          border: isFocused 
+            ? "1px solid rgba(59, 130, 246, 0.3)" 
+            : "1px solid transparent",
+          boxShadow: isFocused 
+            ? "0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05)" 
+            : "none",
+          color: "var(--notion-text)",
         }}
       />
 
       {/* 로딩/클리어 버튼 */}
       {(localValue || isSearching) && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
           {isSearching ? (
             <svg
-              className="animate-spin w-3.5 h-3.5"
+              className="animate-spin w-4 h-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              style={{ color: "var(--notion-text-muted)" }}
+              style={{ color: "#3b82f6" }}
             >
               <circle
                 className="opacity-25"
@@ -159,11 +162,14 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
           ) : (
             <button
               onClick={handleClear}
-              className="notion-btn p-0.5"
-              style={{ color: "var(--notion-text-muted)" }}
+              className="flex items-center justify-center w-5 h-5 rounded-full transition-all duration-200 interactive-btn"
+              style={{ 
+                background: "var(--notion-bg-secondary)",
+                color: "var(--notion-text-muted)",
+              }}
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="w-3 h-3"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -171,7 +177,7 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
