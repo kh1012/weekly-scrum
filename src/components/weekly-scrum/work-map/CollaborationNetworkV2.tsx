@@ -792,31 +792,21 @@ export function CollaborationNetworkV2({
                   const viewportWidth = window.innerWidth;
                   const viewportHeight = window.innerHeight;
 
-                  // 컨테이너의 위치를 고려하여 offset 계산
-                  // fixed 포지션이 부모 transform에 영향받을 수 있으므로
-                  const containerRect =
-                    containerRef.current?.getBoundingClientRect();
-                  const offsetX = containerRect?.left ?? 0;
-                  const offsetY = containerRect?.top ?? 0;
-
-                  // 마우스 클릭 위치에서 컨테이너 offset을 빼서 실제 위치 계산
-                  const clickX = e.clientX - offsetX;
-                  const clickY = e.clientY - offsetY;
+                  // viewport 기준으로 패널 위치 계산 (fixed 포지션 사용)
+                  const clickX = e.clientX;
+                  const clickY = e.clientY;
 
                   // 창의 좌상단이 마우스 클릭 위치에 오도록 설정
                   // 화면을 벗어나지 않도록 경계 처리
                   const panelWidth = 380;
                   const panelHeight = 500;
-                  const containerWidth = containerRect?.width ?? viewportWidth;
-                  const containerHeight =
-                    containerRect?.height ?? viewportHeight;
                   const x = Math.max(
                     0,
-                    Math.min(clickX, containerWidth - panelWidth)
+                    Math.min(clickX, viewportWidth - panelWidth)
                   );
                   const y = Math.max(
                     0,
-                    Math.min(clickY, containerHeight - panelHeight)
+                    Math.min(clickY, viewportHeight - panelHeight)
                   );
 
                   setSnapshotPanels((prev) => [
@@ -825,7 +815,7 @@ export function CollaborationNetworkV2({
                       nodeId: node.id,
                       x,
                       y,
-                      showOnlyFeature: false,
+                      showOnlyFeature: true, // 기본: 현재 피쳐 관련 스냅샷만 표시
                       expandedSnapshots: new Set<number>(),
                     },
                   ]);
@@ -996,7 +986,7 @@ export function CollaborationNetworkV2({
           return (
             <div
               key={panel.nodeId}
-              className="absolute rounded-xl flex flex-col select-none"
+              className="fixed rounded-xl flex flex-col select-none"
               style={{
                 left: panel.x,
                 top: panel.y,
@@ -1005,7 +995,7 @@ export function CollaborationNetworkV2({
                 background: "rgba(255,255,255,0.98)",
                 border: "1px solid var(--notion-border)",
                 boxShadow: "0 12px 32px rgba(0,0,0,0.2)",
-                zIndex: 1000 + snapshotPanels.indexOf(panel),
+                zIndex: 2000 + snapshotPanels.indexOf(panel),
               }}
               onMouseDown={(e) => {
                 // 패널을 맨 앞으로 가져오기
@@ -1032,14 +1022,16 @@ export function CollaborationNetworkV2({
                   const handleMouseMove = (moveE: MouseEvent) => {
                     const dx = moveE.clientX - startX;
                     const dy = moveE.clientY - startY;
-                    // 캔버스 밖으로도 자유롭게 이동 가능
+                    // viewport 전체에서 자유롭게 이동 가능
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
                     setSnapshotPanels((prev) =>
                       prev.map((p) =>
                         p.nodeId === panel.nodeId
                           ? {
                               ...p,
-                              x: startPanelX + dx,
-                              y: startPanelY + dy,
+                              x: Math.max(0, Math.min(viewportWidth - 380, startPanelX + dx)),
+                              y: Math.max(0, Math.min(viewportHeight - 100, startPanelY + dy)),
                             }
                           : p
                       )
