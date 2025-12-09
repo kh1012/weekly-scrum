@@ -11,9 +11,6 @@ interface LayoutWrapperProps {
 // max-w-full을 적용할 페이지 경로
 const FULL_WIDTH_PAGES = ["/matrix", "/quadrant", "/work-map", "/snapshots"];
 
-// gray 배경을 적용할 페이지 경로
-const GRAY_BACKGROUND_PAGES = ["/work-map"];
-
 // localStorage 키
 const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
 
@@ -89,20 +86,11 @@ export function MainContent({ children }: { children: ReactNode }) {
     (p) => pathname === p || pathname === p + "/"
   );
 
-  const useGrayBackground = GRAY_BACKGROUND_PAGES.some(
-    (p) => pathname === p || pathname === p + "/"
-  );
-
   return (
     <main
       className={`mx-auto px-4 py-6 sm:px-6 lg:px-8 ${
         useFullWidth ? "max-w-full" : "max-w-6xl"
       }`}
-      style={{
-        background: useGrayBackground
-          ? "linear-gradient(180deg, rgba(251, 251, 250, 1) 0%, rgba(250, 250, 250, 1) 100%)"
-          : "transparent",
-      }}
     >
       {children}
     </main>
