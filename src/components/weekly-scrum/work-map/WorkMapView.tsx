@@ -88,8 +88,8 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   const [treeWidth, setTreeWidth] = useState(450);
   const isResizing = useRef(false);
   
-  // 네트워크 영역 높이 조절 상태 (기본 480px)
-  const [networkHeight, setNetworkHeight] = useState(480);
+  // 네트워크 영역 높이 조절 상태 (기본 672px, 최대 960px)
+  const [networkHeight, setNetworkHeight] = useState(672);
   const isNetworkResizing = useRef(false);
 
   // 모바일 관련 상태
@@ -760,7 +760,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     const handleMouseMove = (moveE: MouseEvent) => {
                       if (!isNetworkResizing.current) return;
                       const delta = moveE.clientY - startY;
-                      const newHeight = Math.max(250, Math.min(700, startHeight + delta));
+                      const newHeight = Math.max(250, Math.min(960, startHeight + delta));
                       setNetworkHeight(newHeight);
                     };
 

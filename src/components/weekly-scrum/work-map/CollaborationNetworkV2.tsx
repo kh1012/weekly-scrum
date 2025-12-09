@@ -792,13 +792,14 @@ export function CollaborationNetworkV2({
                   // 클릭 위치의 우측하단에 패널 생성 (viewport 기준)
                   const viewportWidth = window.innerWidth;
                   const viewportHeight = window.innerHeight;
-                  
+
                   // 컨테이너의 위치를 고려하여 offset 계산
                   // fixed 포지션이 부모 transform에 영향받을 수 있으므로
-                  const containerRect = containerRef.current?.getBoundingClientRect();
+                  const containerRect =
+                    containerRef.current?.getBoundingClientRect();
                   const offsetX = containerRect?.left ?? 0;
                   const offsetY = containerRect?.top ?? 0;
-                  
+
                   // 마우스 클릭 위치에서 컨테이너 offset을 빼서 실제 위치 계산
                   const clickX = e.clientX - offsetX;
                   const clickY = e.clientY - offsetY;
@@ -808,7 +809,8 @@ export function CollaborationNetworkV2({
                   const panelWidth = 380;
                   const panelHeight = 500;
                   const containerWidth = containerRect?.width ?? viewportWidth;
-                  const containerHeight = containerRect?.height ?? viewportHeight;
+                  const containerHeight =
+                    containerRect?.height ?? viewportHeight;
                   const x = Math.max(
                     0,
                     Math.min(clickX, containerWidth - panelWidth)
@@ -1031,23 +1033,14 @@ export function CollaborationNetworkV2({
                   const handleMouseMove = (moveE: MouseEvent) => {
                     const dx = moveE.clientX - startX;
                     const dy = moveE.clientY - startY;
-                    // 컨테이너 크기 기준으로 경계 처리
-                    const containerRect = containerRef.current?.getBoundingClientRect();
-                    const containerWidth = containerRect?.width ?? window.innerWidth;
-                    const containerHeight = containerRect?.height ?? window.innerHeight;
+                    // 캔버스 밖으로도 자유롭게 이동 가능
                     setSnapshotPanels((prev) =>
                       prev.map((p) =>
                         p.nodeId === panel.nodeId
                           ? {
                               ...p,
-                              x: Math.max(
-                                0,
-                                Math.min(containerWidth - 380, startPanelX + dx)
-                              ),
-                              y: Math.max(
-                                0,
-                                Math.min(containerHeight - 100, startPanelY + dy)
-                              ),
+                              x: startPanelX + dx,
+                              y: startPanelY + dy,
                             }
                           : p
                       )
