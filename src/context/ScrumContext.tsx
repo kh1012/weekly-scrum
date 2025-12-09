@@ -440,10 +440,8 @@ export function ScrumProvider({
 
   // 다중 선택 필터 전체 초기화
   const resetMultiFilters = useCallback(() => {
-    console.log("[resetMultiFilters] 리셋 실행, 이전 상태:", multiFilters);
-    console.log("[resetMultiFilters] 새로운 상태:", defaultMultiFilters);
     setMultiFilters(defaultMultiFilters);
-  }, [multiFilters]);
+  }, []);
 
   // 활성화된 다중 필터 여부
   const hasActiveMultiFilters = useMemo(

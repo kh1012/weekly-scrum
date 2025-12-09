@@ -55,38 +55,32 @@ function FilterSection({
   const enabledOptions = options.filter((opt) => opt.enabled);
   const selectedCount = selectedValues.length;
   const hasSelection = selectedCount > 0;
-  // 빈 배열 = 전체 선택 (필터 미적용)
-  const isAllSelected = !hasSelection;
+  // 빈 배열 = 필터 없음 (전체 표시), 값 있음 = 필터 적용 (선택된 것만 표시)
+  const isFilterActive = hasSelection;
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* 필터 버튼 - 전체 선택이면 파란색 활성화 */}
+      {/* 필터 버튼 - 필터 적용 시 파란색 활성화 */}
       <button
         onClick={onToggleExpand}
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
           isMobile ? "text-[11px] px-2 py-1" : ""
         }`}
         style={{
-          background: isAllSelected
+          background: isFilterActive
             ? "rgba(59, 130, 246, 0.12)"
-            : hasSelection
-            ? "rgba(245, 158, 11, 0.12)"
             : "var(--notion-bg-secondary)",
-          color: isAllSelected
+          color: isFilterActive
             ? "#3b82f6"
-            : hasSelection
-            ? "#f59e0b"
             : "var(--notion-text-muted)",
-          border: isAllSelected
+          border: isFilterActive
             ? "1px solid rgba(59, 130, 246, 0.25)"
-            : hasSelection
-            ? "1px solid rgba(245, 158, 11, 0.25)"
             : "1px solid transparent",
         }}
       >
         <span>{icon}</span>
         <span className="truncate max-w-[80px]">
-          {isAllSelected ? `${title} (전체)` : `${title} (${selectedCount})`}
+          {isFilterActive ? `${title} (${selectedCount})` : `${title} (전체)`}
         </span>
         <svg
           className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -116,12 +110,14 @@ function FilterSection({
             <span className="text-xs font-semibold" style={{ color: "var(--notion-text)" }}>
               {title}
             </span>
-            {/* 전체 선택 버튼 (일부 선택된 경우에만 표시) */}
-            {hasSelection && (
+            <div className="flex items-center gap-1">
+              {/* 전체 선택 버튼 */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClear();
+                  // 모든 활성화된 옵션 선택
+                  const allValues = enabledOptions.map((opt) => opt.value);
+                  onSelectAll(allValues);
                 }}
                 className="px-2 py-0.5 text-[10px] rounded transition-colors"
                 style={{
@@ -131,7 +127,23 @@ function FilterSection({
               >
                 전체 선택
               </button>
-            )}
+              {/* 필터 해제 버튼 (필터 적용 시에만 표시) */}
+              {hasSelection && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClear();
+                  }}
+                  className="px-2 py-0.5 text-[10px] rounded transition-colors"
+                  style={{
+                    color: "#ef4444",
+                    background: "rgba(239, 68, 68, 0.1)",
+                  }}
+                >
+                  해제
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 옵션 목록 */}
@@ -146,8 +158,8 @@ function FilterSection({
             ) : (
               <div className="space-y-0.5">
                 {options.map((option) => {
-                  // 빈 배열 = 전체 선택, 또는 해당 값이 선택됨
-                  const isSelected = isAllSelected || selectedValues.includes(option.value);
+                  // 선택된 값만 체크됨 (빈 배열 = 모두 해제 = 필터 없음)
+                  const isSelected = selectedValues.includes(option.value);
                   const isDisabled = !option.enabled;
 
                   return (
@@ -166,15 +178,8 @@ function FilterSection({
                         disabled={isDisabled}
                         onChange={() => {
                           if (isDisabled) return;
-                          if (isAllSelected) {
-                            // 전체 선택 상태에서 하나를 해제하면, 나머지를 모두 선택
-                            const otherValues = enabledOptions
-                              .filter((opt) => opt.value !== option.value)
-                              .map((opt) => opt.value);
-                            onSelectAll(otherValues);
-                          } else {
-                            onToggle(option.value);
-                          }
+                          // 단순 토글 (선택/해제)
+                          onToggle(option.value);
                         }}
                         className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
                       />
@@ -271,7 +276,7 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
           ? "1px solid rgba(239, 68, 68, 0.25)"
           : "1px solid transparent",
       }}
-      title="모든 필터 해제 (전체 표시)"
+      title="필터 초기화 (전체 표시)"
     >
       <svg
         className={isMobileStyle ? "w-3.5 h-3.5" : "w-4 h-4"}
