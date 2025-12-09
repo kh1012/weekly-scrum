@@ -1,4 +1,4 @@
-[Frontend / M-Connector / - / DB Manager]
+[Frontend / M-Connector / DB Manager / DB 테이블]
 * Name: 변창언
 * Past Week
     * Tasks
@@ -199,7 +199,7 @@
     * Tasks
         * 1월 마케팅 재개 준비
 
-[Planning / M-Connector / - / DB Manager]
+[Planning / M-Connector / DB Manager / DB 테이블]
 * Name: 한내경
 * Past Week
     * Tasks

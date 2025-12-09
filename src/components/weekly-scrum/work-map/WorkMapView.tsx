@@ -97,11 +97,26 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     document.addEventListener("mouseup", handleMouseUp);
   }, [treeWidth]);
 
-  // 현재 선택된 피쳐 (프로젝트 뷰)
-  const selectedFeature =
-    selection.project && selection.module && selection.feature
-      ? getFeatureByName(selection.project, selection.module, selection.feature)
-      : null;
+  // 현재 선택된 레벨과 아이템 (프로젝트 뷰)
+  const getSelectedItems = (): ScrumItem[] => {
+    if (!selection.project) return [];
+    
+    // 피쳐 레벨 선택
+    if (selection.module && selection.feature) {
+      const feature = getFeatureByName(selection.project, selection.module, selection.feature);
+      return feature?.items || [];
+    }
+    
+    // 모듈 레벨 선택
+    if (selection.module) {
+      const module = getModuleByName(selection.project, selection.module);
+      return module?.items || [];
+    }
+    
+    // 프로젝트 레벨 선택
+    const project = getProjectByName(selection.project);
+    return project?.items || [];
+  };
 
   // 현재 선택된 피쳐 아이템 (사람 뷰)
   const selectedPersonFeatureItems =
@@ -117,13 +132,37 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
   // 현재 활성화된 피쳐 아이템 (뷰 모드에 따라)
   const activeFeatureItems = viewMode === "project" 
-    ? selectedFeature?.items || []
+    ? getSelectedItems()
     : selectedPersonFeatureItems;
+  
+  // 선택 레벨 표시용 문자열
+  const getSelectionLabel = () => {
+    if (!selection.project) return null;
+    if (selection.feature) return `${selection.project} / ${selection.module} / ${selection.feature}`;
+    if (selection.module) return `${selection.project} / ${selection.module}`;
+    return selection.project;
+  };
 
   // 피쳐 선택 핸들러 (프로젝트 뷰)
   const handleFeatureSelect = (project: string, module: string, feature: string) => {
     setSelection({ project, module, feature });
     // 모바일에서는 detail 뷰로 전환
+    if (isMobile) {
+      setMobileView("detail");
+    }
+  };
+
+  // 프로젝트 보기 핸들러
+  const handleProjectView = (project: string) => {
+    setSelection({ project, module: null, feature: null });
+    if (isMobile) {
+      setMobileView("detail");
+    }
+  };
+
+  // 모듈 보기 핸들러
+  const handleModuleView = (project: string, module: string) => {
+    setSelection({ project, module, feature: null });
     if (isMobile) {
       setMobileView("detail");
     }
@@ -233,6 +272,8 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   projects={projects}
                   selectedFeature={selection}
                   onFeatureSelect={handleFeatureSelect}
+                  onProjectView={handleProjectView}
+                  onModuleView={handleModuleView}
                   hideCompleted={hideCompleted}
                 />
               ) : (
@@ -432,6 +473,8 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               projects={projects}
               selectedFeature={selection}
               onFeatureSelect={handleFeatureSelect}
+              onProjectView={handleProjectView}
+              onModuleView={handleModuleView}
               hideCompleted={hideCompleted}
             />
           ) : (
@@ -462,7 +505,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
       {/* 우측: 협업 네트워크 + 스냅샷 */}
       <div className="flex-1 flex flex-col gap-4 min-w-0 ml-3">
-        {/* 선택된 피쳐 정보 헤더 */}
+        {/* 선택된 정보 헤더 */}
         {activeFeatureItems.length > 0 && (
           <div
             className="flex-shrink-0 px-5 py-3 rounded-xl"
@@ -474,12 +517,31 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             <div className="flex items-center gap-2 text-sm" style={{ color: "var(--notion-text-muted)" }}>
               {viewMode === "project" ? (
                 <>
-                  <span>{selection.project}</span>
-                  <span>/</span>
-                  <span>{selection.module}</span>
-                  <span>/</span>
-                  <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-                    {selection.feature}
+                  <span className={!selection.module ? "font-semibold" : ""} style={{ color: !selection.module ? "var(--notion-text)" : undefined }}>
+                    {selection.project}
+                  </span>
+                  {selection.module && (
+                    <>
+                      <span>/</span>
+                      <span className={!selection.feature ? "font-semibold" : ""} style={{ color: !selection.feature ? "var(--notion-text)" : undefined }}>
+                        {selection.module}
+                      </span>
+                    </>
+                  )}
+                  {selection.feature && (
+                    <>
+                      <span>/</span>
+                      <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+                        {selection.feature}
+                      </span>
+                    </>
+                  )}
+                  {/* 레벨 표시 */}
+                  <span 
+                    className="ml-2 text-xs px-1.5 py-0.5 rounded"
+                    style={{ background: "var(--notion-bg-secondary)" }}
+                  >
+                    {selection.feature ? "Feature" : selection.module ? "Module" : "Project"}
                   </span>
                 </>
               ) : (

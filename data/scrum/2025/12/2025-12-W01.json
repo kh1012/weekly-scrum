@@ -9,8 +9,8 @@
       "name": "변창언",
       "domain": "Frontend",
       "project": "M-Connector",
-      "module": "-",
-      "feature": "DB Manager",
+      "module": "DB Manager",
+      "feature": "DB 테이블",
       "pastWeek": {
         "tasks": [
           {
@@ -432,8 +432,8 @@
       "name": "한내경",
       "domain": "Planning",
       "project": "M-Connector",
-      "module": "-",
-      "feature": "DB Manager",
+      "module": "DB Manager",
+      "feature": "DB 테이블",
       "pastWeek": {
         "tasks": [
           {
