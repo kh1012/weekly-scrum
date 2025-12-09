@@ -191,6 +191,9 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   
+  // 관계 유형 필터 (null이면 전체 표시)
+  const [activeRelation, setActiveRelation] = useState<Relation | null>(null);
+  
   // 드래그 vs 클릭 구분을 위한 ref
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const wasDragged = useRef(false);
@@ -204,6 +207,20 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
     () => buildNetworkData(items, dimensions.width, dimensions.height),
     [items, dimensions.width, dimensions.height]
   );
+
+  // 메타데이터 계산
+  const metadata = useMemo(() => {
+    const pairCount = edges.filter(e => e.relation === "pair").length;
+    const preCount = edges.filter(e => e.relation === "pre").length;
+    const postCount = edges.filter(e => e.relation === "post").length;
+    return {
+      nodeCount: initialNodes.length,
+      pairCount,
+      preCount,
+      postCount,
+      totalEdges: edges.length,
+    };
+  }, [initialNodes, edges]);
 
   // 노드 위치 초기화
   useEffect(() => {
@@ -369,8 +386,89 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
 
   const domains = Array.from(new Set(initialNodes.map((n) => n.domain))).sort();
 
+  // 관계 필터 토글
+  const toggleRelationFilter = (relation: Relation) => {
+    setActiveRelation(prev => prev === relation ? null : relation);
+  };
+
   return (
     <div className="h-full flex flex-col">
+      {/* 메타데이터 상단 바 */}
+      <div 
+        className="flex-shrink-0 flex items-center gap-3 px-3 py-2 mb-2 rounded-lg"
+        style={{ background: "var(--notion-bg-secondary)" }}
+      >
+        {/* 인원 수 */}
+        <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--notion-text-muted)" }}>
+          <span>👥</span>
+          <span className="font-medium">{metadata.nodeCount}명</span>
+        </div>
+
+        <div className="h-3 w-px" style={{ background: "var(--notion-border)" }} />
+
+        {/* Pair 관계 */}
+        <button
+          onClick={() => toggleRelationFilter("pair")}
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-all"
+          style={{
+            background: activeRelation === "pair" ? "rgba(59, 130, 246, 0.25)" : "rgba(59, 130, 246, 0.08)",
+            color: "#3b82f6",
+            boxShadow: activeRelation === "pair" ? "0 0 0 2px #3b82f6" : "none",
+          }}
+          title="Pair 관계만 보기"
+        >
+          <span style={{ fontSize: "10px" }}>━━</span>
+          <span className="font-medium">Pair</span>
+          <span className="font-bold">{metadata.pairCount}</span>
+        </button>
+
+        {/* Pre 관계 */}
+        <button
+          onClick={() => toggleRelationFilter("pre")}
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-all"
+          style={{
+            background: activeRelation === "pre" ? "rgba(245, 158, 11, 0.25)" : "rgba(245, 158, 11, 0.08)",
+            color: "#f59e0b",
+            boxShadow: activeRelation === "pre" ? "0 0 0 2px #f59e0b" : "none",
+          }}
+          title="Pre 관계만 보기 (선행 입력)"
+        >
+          <span style={{ fontSize: "10px" }}>→</span>
+          <span className="font-medium">Pre</span>
+          <span className="font-bold">{metadata.preCount}</span>
+        </button>
+
+        {/* Post 관계 */}
+        <button
+          onClick={() => toggleRelationFilter("post")}
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-all"
+          style={{
+            background: activeRelation === "post" ? "rgba(34, 197, 94, 0.25)" : "rgba(34, 197, 94, 0.08)",
+            color: "#22c55e",
+            boxShadow: activeRelation === "post" ? "0 0 0 2px #22c55e" : "none",
+          }}
+          title="Post 관계만 보기 (후행 출력)"
+        >
+          <span style={{ fontSize: "10px" }}>→</span>
+          <span className="font-medium">Post</span>
+          <span className="font-bold">{metadata.postCount}</span>
+        </button>
+
+        {/* 필터 초기화 */}
+        {activeRelation && (
+          <button
+            onClick={() => setActiveRelation(null)}
+            className="ml-auto text-xs px-2 py-1 rounded transition-colors"
+            style={{ 
+              background: "var(--notion-bg)",
+              color: "var(--notion-text-muted)",
+            }}
+          >
+            전체 보기
+          </button>
+        )}
+      </div>
+
       {/* 그래프 영역 */}
       <div
         ref={containerRef}
@@ -378,7 +476,7 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
         style={{
           background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
           border: "1px solid var(--notion-border)",
-          minHeight: "300px",
+          minHeight: "250px",
         }}
       >
         <svg
@@ -429,9 +527,15 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
             const isPair = edge.relation === "pair";
             const isPre = edge.relation === "pre";
             const isPost = edge.relation === "post";
-            const isConnected = activeNode
+            
+            // 노드 연결 여부
+            const isNodeConnected = activeNode
               ? edge.from === activeNode || edge.to === activeNode
               : true;
+            
+            // 관계 필터 적용
+            const isRelationActive = activeRelation === null || edge.relation === activeRelation;
+            const isConnected = isNodeConnected && isRelationActive;
 
             // 색상 정의
             // pair: 파란색, pre: 주황색, post: 초록색
@@ -474,7 +578,15 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
             const radius = getNodeRadius(node);
             const isActive = activeNode === node.id;
             const isConnected = activeConnections.has(node.id);
-            const opacity = activeNode ? (isActive || isConnected ? 1 : 0.2) : 1;
+            
+            // 관계 필터가 활성화된 경우, 해당 관계에 포함된 노드만 강조
+            const isInActiveRelation = activeRelation === null || edges.some(
+              e => e.relation === activeRelation && (e.from === node.id || e.to === node.id)
+            );
+            
+            const opacity = activeNode 
+              ? (isActive || isConnected ? 1 : 0.2) 
+              : (activeRelation ? (isInActiveRelation ? 1 : 0.25) : 1);
             const isBottleneck = node.preCount >= 2;
             const isDragging = draggedNode === node.id;
 

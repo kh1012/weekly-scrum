@@ -28,13 +28,13 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
       {/* 접힌 상태: 주요 내용만 표시 */}
       <button
         onClick={onToggle}
-        className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors hover:bg-opacity-50"
-        style={{ background: isExpanded ? "var(--notion-bg-hover)" : "transparent" }}
+        className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors"
+        style={{ background: "transparent" }}
         onMouseEnter={(e) => {
-          if (!isExpanded) e.currentTarget.style.background = "var(--notion-bg-hover)";
+          e.currentTarget.style.background = "rgba(0, 0, 0, 0.02)";
         }}
         onMouseLeave={(e) => {
-          if (!isExpanded) e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.background = "transparent";
         }}
       >
         {/* 확장/축소 아이콘 */}
@@ -109,7 +109,6 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
       {isExpanded && (
         <div
           className="px-4 pb-4 pt-2 ml-8"
-          style={{ background: "var(--notion-bg-hover)" }}
         >
           {/* 경로 정보 */}
           <div className="mb-3 text-xs" style={{ color: "var(--notion-text-muted)" }}>
