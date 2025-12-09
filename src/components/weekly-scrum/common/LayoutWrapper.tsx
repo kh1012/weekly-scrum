@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Header, Sidebar } from "./Header";
 
 interface LayoutWrapperProps {
@@ -11,8 +11,48 @@ interface LayoutWrapperProps {
 // max-w-full을 적용할 페이지 경로
 const FULL_WIDTH_PAGES = ["/matrix", "/quadrant", "/work-map", "/snapshots"];
 
+// localStorage 키
+const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
+
+// 저장 대상 페이지 목록 (복원 가능한 페이지)
+const SAVEABLE_PAGES = [
+  "/work-map",
+  "/snapshots",
+  "/cards",
+  "/matrix",
+  "/quadrant",
+  "/summary",
+  "/collaboration",
+  "/projects",
+  "/risks",
+  "/my",
+  "/report",
+  "/releases",
+];
+
+export function getLastVisitedPage(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(LAST_VISITED_PAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
+  const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // 현재 경로를 localStorage에 저장
+  useEffect(() => {
+    if (SAVEABLE_PAGES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+      try {
+        localStorage.setItem(LAST_VISITED_PAGE_KEY, pathname);
+      } catch {
+        // localStorage 사용 불가 시 무시
+      }
+    }
+  }, [pathname]);
 
   return (
     <div className="min-h-screen" style={{ background: "var(--notion-bg)" }}>
