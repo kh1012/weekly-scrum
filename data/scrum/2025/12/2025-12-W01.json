@@ -2,15 +2,15 @@
   "year": 2025,
   "month": 12,
   "week": "W01",
-  "range": "2025-12-02 ~ 2025-12-08",
+  "range": "2025-12-01 2025-12-05",
   "schemaVersion": 2,
   "items": [
     {
       "name": "변창언",
       "domain": "Frontend",
       "project": "M-Connector",
-      "module": "DB Manager",
-      "feature": "1차 기획, 디자인 반영",
+      "module": "-",
+      "feature": "DB Manager",
       "pastWeek": {
         "tasks": [
           {
@@ -432,8 +432,8 @@
       "name": "한내경",
       "domain": "Planning",
       "project": "M-Connector",
-      "module": "DB Manager",
-      "feature": "M-Connector 기획",
+      "module": "-",
+      "feature": "DB Manager",
       "pastWeek": {
         "tasks": [
           {
