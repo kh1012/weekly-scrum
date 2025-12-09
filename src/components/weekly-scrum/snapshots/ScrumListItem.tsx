@@ -51,9 +51,10 @@ export function ScrumListItem({
   // 아이템 스타일 클래스 결정
   const itemClasses = [
     "notion-card",
-    isSelectMode ? "selectable-card" : "interactive-card",
+    "transition-all",
+    isSelectMode ? "cursor-pointer" : "",
     isCompleted ? "opacity-60" : "",
-    isCompareSelected ? "selected" : "",
+    isCompareSelected ? "selected ring-2 ring-blue-500" : "",
   ].filter(Boolean).join(" ");
 
   return (

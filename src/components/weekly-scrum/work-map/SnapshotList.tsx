@@ -259,7 +259,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
   };
 
   return (
-    <div className="animate-card-reveal stagger-2">
+    <div>
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="text-xs font-medium" style={{ color: "var(--notion-text-muted)" }}>
@@ -268,7 +268,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
         <div className="flex items-center gap-2">
           <button
             onClick={expandAll}
-            className="px-3 py-1.5 text-xs rounded-lg transition-all interactive-btn"
+            className="px-3 py-1.5 text-xs rounded-lg transition-colors hover:bg-gray-100"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",
@@ -278,7 +278,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
           </button>
           <button
             onClick={collapseAll}
-            className="px-3 py-1.5 text-xs rounded-lg transition-all interactive-btn"
+            className="px-3 py-1.5 text-xs rounded-lg transition-colors hover:bg-gray-100"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",
@@ -291,7 +291,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
 
       {/* 리스트 */}
       <div
-        className="rounded-2xl overflow-hidden interactive-card"
+        className="rounded-2xl overflow-hidden"
         style={{ 
           background: "var(--notion-bg)", 
           border: "1px solid var(--notion-border)",
@@ -312,7 +312,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
         <div className="flex justify-center mt-5">
           <button
             onClick={() => setShowAll(!showAll)}
-            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-all interactive-btn"
+            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-colors hover:bg-gray-100"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-secondary)",

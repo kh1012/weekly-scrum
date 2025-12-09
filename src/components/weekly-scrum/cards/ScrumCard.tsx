@@ -182,7 +182,8 @@ export function ScrumCard({
   const cardClasses = [
     "notion-card",
     "p-4",
-    isSelectMode ? "selectable-card" : "interactive-card",
+    "transition-all",
+    isSelectMode ? "selectable-card cursor-pointer" : "",
     isCompleted ? "opacity-60" : "",
     isCompareSelected ? "selected animate-pulse-ring" : "",
   ].filter(Boolean).join(" ");
