@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import type { WorkMapSelection, TreeViewMode } from "./types";
 import { useWorkMapData } from "./useWorkMapData";
 import { DirectoryTree, PersonTree } from "./DirectoryTree";
 import { CollaborationNetworkV2 } from "./CollaborationNetworkV2";
 import { SnapshotList } from "./SnapshotList";
+import { useWorkMapPersistence } from "./persistence";
 
 interface WorkMapViewProps {
   items: ScrumItem[];
@@ -28,11 +29,31 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   const { projects, persons, getProjectByName, getModuleByName, getFeatureByName, getPersonFeatureItems } =
     useWorkMapData(items);
 
-  // 트리 뷰 모드 상태
-  const [viewMode, setViewMode] = useState<TreeViewMode>("project");
-  
-  // 100% 완료 항목 숨김 상태
-  const [hideCompleted, setHideCompleted] = useState(false);
+  // 초기 프로젝트/사람 이름 목록 (persistence 초기화용)
+  const initialProjects = useMemo(() => projects.map((p) => p.name), [projects]);
+  const initialPersons = useMemo(() => persons.map((p) => p.name), [persons]);
+
+  // 필터 상태 지속성 Hook
+  const {
+    hideCompleted,
+    setHideCompleted,
+    viewMode,
+    setViewMode,
+    expanded,
+    toggleProject,
+    toggleModule,
+    expandProjectPath,
+    personExpanded,
+    togglePerson,
+    toggleDomain,
+    togglePersonProject,
+    togglePersonModule,
+    expandPersonPath,
+    isInitialized,
+  } = useWorkMapPersistence({
+    initialProjects,
+    initialPersons,
+  });
 
   const [selection, setSelection] = useState<WorkMapSelection>({
     project: null,
@@ -195,8 +216,22 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
   // 뷰 모드 토글
   const toggleViewMode = () => {
-    setViewMode((prev) => (prev === "project" ? "person" : "project"));
+    setViewMode(viewMode === "project" ? "person" : "project");
   };
+
+  // 초기화 전 로딩 상태 표시
+  if (!isInitialized) {
+    return (
+      <div
+        className="flex items-center justify-center"
+        style={{ height: "calc(100vh - 120px)", minHeight: "600px" }}
+      >
+        <div className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+          로딩 중...
+        </div>
+      </div>
+    );
+  }
 
   // 모바일 뷰 렌더링
   if (isMobile) {
@@ -277,6 +312,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   onProjectView={handleProjectView}
                   onModuleView={handleModuleView}
                   hideCompleted={hideCompleted}
+                  expanded={expanded}
+                  onToggleProject={toggleProject}
+                  onToggleModule={toggleModule}
+                  onExpandPath={expandProjectPath}
                 />
               ) : (
                 <PersonTree
@@ -284,6 +323,12 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   selectedFeature={personSelection}
                   onFeatureSelect={handlePersonFeatureSelect}
                   hideCompleted={hideCompleted}
+                  expanded={personExpanded}
+                  onTogglePerson={togglePerson}
+                  onToggleDomain={toggleDomain}
+                  onToggleProject={togglePersonProject}
+                  onToggleModule={togglePersonModule}
+                  onExpandPath={expandPersonPath}
                 />
               )}
             </div>
@@ -480,6 +525,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               onProjectView={handleProjectView}
               onModuleView={handleModuleView}
               hideCompleted={hideCompleted}
+              expanded={expanded}
+              onToggleProject={toggleProject}
+              onToggleModule={toggleModule}
+              onExpandPath={expandProjectPath}
             />
           ) : (
             <PersonTree
@@ -487,6 +536,12 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               selectedFeature={personSelection}
               onFeatureSelect={handlePersonFeatureSelect}
               hideCompleted={hideCompleted}
+              expanded={personExpanded}
+              onTogglePerson={togglePerson}
+              onToggleDomain={toggleDomain}
+              onToggleProject={togglePersonProject}
+              onToggleModule={togglePersonModule}
+              onExpandPath={expandPersonPath}
             />
           )}
         </div>

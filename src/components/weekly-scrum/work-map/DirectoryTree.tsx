@@ -65,6 +65,11 @@ function NetworkIndicator({ size = "sm" }: { size?: "sm" | "xs" }) {
   );
 }
 
+export interface ExpandedState {
+  projects: Set<string>;
+  modules: Set<string>;
+}
+
 interface DirectoryTreeProps {
   projects: ProjectNode[];
   selectedFeature?: WorkMapSelection;
@@ -72,11 +77,11 @@ interface DirectoryTreeProps {
   onProjectView?: (project: string) => void;
   onModuleView?: (project: string, module: string) => void;
   hideCompleted?: boolean;
-}
-
-interface ExpandedState {
-  projects: Set<string>;
-  modules: Set<string>;
+  // Controlled mode props
+  expanded?: ExpandedState;
+  onToggleProject?: (projectName: string) => void;
+  onToggleModule?: (moduleKey: string) => void;
+  onExpandPath?: (projectName: string, moduleKey?: string) => void;
 }
 
 /**
@@ -89,47 +94,72 @@ export function DirectoryTree({
   onProjectView,
   onModuleView,
   hideCompleted = false,
+  // Controlled mode
+  expanded: externalExpanded,
+  onToggleProject,
+  onToggleModule,
+  onExpandPath,
 }: DirectoryTreeProps) {
-  const [expanded, setExpanded] = useState<ExpandedState>({
+  // Uncontrolled mode 내부 상태
+  const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({
     projects: new Set(projects.map((p) => p.name)),
     modules: new Set(),
   });
 
+  // Controlled/Uncontrolled 판단
+  const isControlled = externalExpanded !== undefined;
+  const expanded = isControlled ? externalExpanded : internalExpanded;
+
   // 선택된 피쳐가 있으면 해당 경로를 자동으로 펼침
   useEffect(() => {
     if (selectedFeature?.project && selectedFeature?.module) {
-      setExpanded((prev) => ({
-        projects: new Set([...prev.projects, selectedFeature.project!]),
-        modules: new Set([
-          ...prev.modules,
-          `${selectedFeature.project}/${selectedFeature.module}`,
-        ]),
-      }));
+      if (isControlled && onExpandPath) {
+        onExpandPath(
+          selectedFeature.project,
+          `${selectedFeature.project}/${selectedFeature.module}`
+        );
+      } else if (!isControlled) {
+        setInternalExpanded((prev) => ({
+          projects: new Set([...prev.projects, selectedFeature.project!]),
+          modules: new Set([
+            ...prev.modules,
+            `${selectedFeature.project}/${selectedFeature.module}`,
+          ]),
+        }));
+      }
     }
-  }, [selectedFeature]);
+  }, [selectedFeature, isControlled, onExpandPath]);
 
   const toggleProject = (projectName: string) => {
-    setExpanded((prev) => {
-      const newProjects = new Set(prev.projects);
-      if (newProjects.has(projectName)) {
-        newProjects.delete(projectName);
-      } else {
-        newProjects.add(projectName);
-      }
-      return { ...prev, projects: newProjects };
-    });
+    if (isControlled && onToggleProject) {
+      onToggleProject(projectName);
+    } else {
+      setInternalExpanded((prev) => {
+        const newProjects = new Set(prev.projects);
+        if (newProjects.has(projectName)) {
+          newProjects.delete(projectName);
+        } else {
+          newProjects.add(projectName);
+        }
+        return { ...prev, projects: newProjects };
+      });
+    }
   };
 
   const toggleModule = (moduleKey: string) => {
-    setExpanded((prev) => {
-      const newModules = new Set(prev.modules);
-      if (newModules.has(moduleKey)) {
-        newModules.delete(moduleKey);
-      } else {
-        newModules.add(moduleKey);
-      }
-      return { ...prev, modules: newModules };
-    });
+    if (isControlled && onToggleModule) {
+      onToggleModule(moduleKey);
+    } else {
+      setInternalExpanded((prev) => {
+        const newModules = new Set(prev.modules);
+        if (newModules.has(moduleKey)) {
+          newModules.delete(moduleKey);
+        } else {
+          newModules.add(moduleKey);
+        }
+        return { ...prev, modules: newModules };
+      });
+    }
   };
 
   // 모두 펼치기
@@ -140,18 +170,44 @@ export function DirectoryTree({
         allModules.add(`${p.name}/${m.name}`);
       });
     });
-    setExpanded({
-      projects: new Set(projects.map((p) => p.name)),
-      modules: allModules,
-    });
+    
+    if (isControlled) {
+      // Controlled mode에서는 각각 toggle 호출
+      projects.forEach((p) => {
+        if (!expanded.projects.has(p.name) && onToggleProject) {
+          onToggleProject(p.name);
+        }
+        p.modules.forEach((m) => {
+          const moduleKey = `${p.name}/${m.name}`;
+          if (!expanded.modules.has(moduleKey) && onToggleModule) {
+            onToggleModule(moduleKey);
+          }
+        });
+      });
+    } else {
+      setInternalExpanded({
+        projects: new Set(projects.map((p) => p.name)),
+        modules: allModules,
+      });
+    }
   };
 
   // 모두 접기
   const collapseAll = () => {
-    setExpanded({
-      projects: new Set(),
-      modules: new Set(),
-    });
+    if (isControlled) {
+      // Controlled mode에서는 각각 toggle 호출
+      expanded.projects.forEach((p) => {
+        if (onToggleProject) onToggleProject(p);
+      });
+      expanded.modules.forEach((m) => {
+        if (onToggleModule) onToggleModule(m);
+      });
+    } else {
+      setInternalExpanded({
+        projects: new Set(),
+        modules: new Set(),
+      });
+    }
   };
 
   // 전체 통계 계산
@@ -654,9 +710,21 @@ interface PersonTreeProps {
     feature: string
   ) => void;
   hideCompleted?: boolean;
+  // Controlled mode props
+  expanded?: PersonExpandedState;
+  onTogglePerson?: (name: string) => void;
+  onToggleDomain?: (key: string) => void;
+  onToggleProject?: (key: string) => void;
+  onToggleModule?: (key: string) => void;
+  onExpandPath?: (
+    personName: string,
+    domainKey?: string,
+    projectKey?: string,
+    moduleKey?: string
+  ) => void;
 }
 
-interface PersonExpandedState {
+export interface PersonExpandedState {
   persons: Set<string>;
   domains: Set<string>;
   projects: Set<string>;
@@ -680,13 +748,25 @@ export function PersonTree({
   selectedFeature,
   onFeatureSelect,
   hideCompleted = false,
+  // Controlled mode
+  expanded: externalExpanded,
+  onTogglePerson,
+  onToggleDomain,
+  onToggleProject,
+  onToggleModule,
+  onExpandPath,
 }: PersonTreeProps) {
-  const [expanded, setExpanded] = useState<PersonExpandedState>({
+  // Uncontrolled mode 내부 상태
+  const [internalExpanded, setInternalExpanded] = useState<PersonExpandedState>({
     persons: new Set(persons.map((p) => p.name)),
     domains: new Set(),
     projects: new Set(),
     modules: new Set(),
   });
+
+  // Controlled/Uncontrolled 판단
+  const isControlled = externalExpanded !== undefined;
+  const expanded = isControlled ? externalExpanded : internalExpanded;
 
   // 선택된 피쳐가 있으면 해당 경로를 자동으로 펼침
   useEffect(() => {
@@ -696,70 +776,93 @@ export function PersonTree({
       selectedFeature?.project &&
       selectedFeature?.module
     ) {
-      setExpanded((prev) => ({
-        persons: new Set([...prev.persons, selectedFeature.person!]),
-        domains: new Set([
-          ...prev.domains,
+      if (isControlled && onExpandPath) {
+        onExpandPath(
+          selectedFeature.person,
           `${selectedFeature.person}/${selectedFeature.domain}`,
-        ]),
-        projects: new Set([
-          ...prev.projects,
           `${selectedFeature.person}/${selectedFeature.domain}/${selectedFeature.project}`,
-        ]),
-        modules: new Set([
-          ...prev.modules,
-          `${selectedFeature.person}/${selectedFeature.domain}/${selectedFeature.project}/${selectedFeature.module}`,
-        ]),
-      }));
+          `${selectedFeature.person}/${selectedFeature.domain}/${selectedFeature.project}/${selectedFeature.module}`
+        );
+      } else if (!isControlled) {
+        setInternalExpanded((prev) => ({
+          persons: new Set([...prev.persons, selectedFeature.person!]),
+          domains: new Set([
+            ...prev.domains,
+            `${selectedFeature.person}/${selectedFeature.domain}`,
+          ]),
+          projects: new Set([
+            ...prev.projects,
+            `${selectedFeature.person}/${selectedFeature.domain}/${selectedFeature.project}`,
+          ]),
+          modules: new Set([
+            ...prev.modules,
+            `${selectedFeature.person}/${selectedFeature.domain}/${selectedFeature.project}/${selectedFeature.module}`,
+          ]),
+        }));
+      }
     }
-  }, [selectedFeature]);
+  }, [selectedFeature, isControlled, onExpandPath]);
 
   const togglePerson = (name: string) => {
-    setExpanded((prev) => {
-      const newPersons = new Set(prev.persons);
-      if (newPersons.has(name)) {
-        newPersons.delete(name);
-      } else {
-        newPersons.add(name);
-      }
-      return { ...prev, persons: newPersons };
-    });
+    if (isControlled && onTogglePerson) {
+      onTogglePerson(name);
+    } else {
+      setInternalExpanded((prev) => {
+        const newPersons = new Set(prev.persons);
+        if (newPersons.has(name)) {
+          newPersons.delete(name);
+        } else {
+          newPersons.add(name);
+        }
+        return { ...prev, persons: newPersons };
+      });
+    }
   };
 
   const toggleDomain = (key: string) => {
-    setExpanded((prev) => {
-      const newDomains = new Set(prev.domains);
-      if (newDomains.has(key)) {
-        newDomains.delete(key);
-      } else {
-        newDomains.add(key);
-      }
-      return { ...prev, domains: newDomains };
-    });
+    if (isControlled && onToggleDomain) {
+      onToggleDomain(key);
+    } else {
+      setInternalExpanded((prev) => {
+        const newDomains = new Set(prev.domains);
+        if (newDomains.has(key)) {
+          newDomains.delete(key);
+        } else {
+          newDomains.add(key);
+        }
+        return { ...prev, domains: newDomains };
+      });
+    }
   };
 
   const toggleProject = (key: string) => {
-    setExpanded((prev) => {
-      const newProjects = new Set(prev.projects);
-      if (newProjects.has(key)) {
-        newProjects.delete(key);
-      } else {
-        newProjects.add(key);
-      }
-      return { ...prev, projects: newProjects };
-    });
+    if (isControlled && onToggleProject) {
+      onToggleProject(key);
+    } else {
+      setInternalExpanded((prev) => {
+        const newProjects = new Set(prev.projects);
+        if (newProjects.has(key)) {
+          newProjects.delete(key);
+        } else {
+          newProjects.add(key);
+        }
+        return { ...prev, projects: newProjects };
+      });
+    }
   };
 
   const toggleModule = (key: string) => {
-    setExpanded((prev) => {
-      const newModules = new Set(prev.modules);
-      if (newModules.has(key)) {
-        newModules.delete(key);
-      } else {
-        newModules.add(key);
-      }
-      return { ...prev, modules: newModules };
-    });
+    if (isControlled && onToggleModule) {
+      onToggleModule(key);
+    } else {
+      setInternalExpanded((prev) => {
+        const newModules = new Set(prev.modules);
+        if (newModules.has(key)) {
+          newModules.add(key);
+        }
+        return { ...prev, modules: newModules };
+      });
+    }
   };
 
   // 모두 펼치기
@@ -782,22 +885,65 @@ export function PersonTree({
       });
     });
 
-    setExpanded({
-      persons: new Set(persons.map((p) => p.name)),
-      domains: allDomains,
-      projects: allProjects,
-      modules: allModules,
-    });
+    if (isControlled) {
+      // Controlled mode에서는 각각 toggle 호출
+      persons.forEach((person) => {
+        if (!expanded.persons.has(person.name) && onTogglePerson) {
+          onTogglePerson(person.name);
+        }
+        person.domains.forEach((domain) => {
+          const domainKey = `${person.name}/${domain.name}`;
+          if (!expanded.domains.has(domainKey) && onToggleDomain) {
+            onToggleDomain(domainKey);
+          }
+          domain.projects.forEach((project) => {
+            const projectKey = `${person.name}/${domain.name}/${project.name}`;
+            if (!expanded.projects.has(projectKey) && onToggleProject) {
+              onToggleProject(projectKey);
+            }
+            project.modules.forEach((module) => {
+              const moduleKey = `${person.name}/${domain.name}/${project.name}/${module.name}`;
+              if (!expanded.modules.has(moduleKey) && onToggleModule) {
+                onToggleModule(moduleKey);
+              }
+            });
+          });
+        });
+      });
+    } else {
+      setInternalExpanded({
+        persons: new Set(persons.map((p) => p.name)),
+        domains: allDomains,
+        projects: allProjects,
+        modules: allModules,
+      });
+    }
   };
 
   // 모두 접기
   const collapseAll = () => {
-    setExpanded({
-      persons: new Set(),
-      domains: new Set(),
-      projects: new Set(),
-      modules: new Set(),
-    });
+    if (isControlled) {
+      // Controlled mode에서는 각각 toggle 호출
+      expanded.persons.forEach((p) => {
+        if (onTogglePerson) onTogglePerson(p);
+      });
+      expanded.domains.forEach((d) => {
+        if (onToggleDomain) onToggleDomain(d);
+      });
+      expanded.projects.forEach((p) => {
+        if (onToggleProject) onToggleProject(p);
+      });
+      expanded.modules.forEach((m) => {
+        if (onToggleModule) onToggleModule(m);
+      });
+    } else {
+      setInternalExpanded({
+        persons: new Set(),
+        domains: new Set(),
+        projects: new Set(),
+        modules: new Set(),
+      });
+    }
   };
 
   // 전체 통계
