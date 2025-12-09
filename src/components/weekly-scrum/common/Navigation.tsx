@@ -68,7 +68,10 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     key: "extra",
     label: "추가 기능",
-    items: [{ key: "shares", label: "Shares", href: "/shares", emoji: "📣" }],
+    items: [
+      { key: "shares", label: "Shares", href: "/shares", emoji: "📣" },
+      { key: "releases", label: "릴리즈 노트", href: "/releases", emoji: "📝" },
+    ],
   },
 ];
 
@@ -164,7 +167,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
             className="text-xs"
             style={{ color: "var(--notion-text-muted)" }}
           >
-            v2.0
+            v2.1
           </div>
           <div
             className="flex items-center gap-1.5 text-xs"

@@ -517,28 +517,34 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* 뷰 모드 토글 */}
-              <button
-                onClick={toggleViewMode}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-colors"
-                style={{
-                  background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
-                  color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
-                  boxShadow: viewMode === "person" ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
-                }}
+              {/* 뷰 모드 토글 (스위치 형태) */}
+              <div 
+                className="flex items-center p-0.5 rounded-lg"
+                style={{ background: "var(--notion-bg-secondary)" }}
               >
-                {viewMode === "project" ? (
-                  <>
-                    <span>📁</span>
-                    <span>Project</span>
-                  </>
-                ) : (
-                  <>
-                    <span>👤</span>
-                    <span>Person</span>
-                  </>
-                )}
-              </button>
+                <button
+                  onClick={() => setViewMode("project")}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
+                  style={{
+                    background: viewMode === "project" ? "rgba(59, 130, 246, 0.15)" : "transparent",
+                    color: viewMode === "project" ? "#3b82f6" : "var(--notion-text-muted)",
+                  }}
+                >
+                  <span>📁</span>
+                  <span>Project</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("person")}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
+                  style={{
+                    background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "transparent",
+                    color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
+                  }}
+                >
+                  <span>👤</span>
+                  <span>Person</span>
+                </button>
+              </div>
 
               {/* 옵션 메뉴 */}
               <div className="relative" ref={optionsRef}>
@@ -653,15 +659,25 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             <div className="flex items-center gap-2 text-sm" style={{ color: "var(--notion-text-muted)" }}>
               {viewMode === "project" ? (
                 <>
-                  <span className={!selection.module ? "font-semibold" : ""} style={{ color: !selection.module ? "var(--notion-text)" : undefined }}>
+                  <button
+                    onClick={() => handleProjectView(selection.project!)}
+                    className={`hover:underline transition-colors ${!selection.module ? "font-semibold cursor-default" : "cursor-pointer"}`}
+                    style={{ color: !selection.module ? "var(--notion-text)" : undefined }}
+                    disabled={!selection.module}
+                  >
                     {selection.project}
-                  </span>
+                  </button>
                   {selection.module && (
                     <>
                       <span>/</span>
-                      <span className={!selection.feature ? "font-semibold" : ""} style={{ color: !selection.feature ? "var(--notion-text)" : undefined }}>
+                      <button
+                        onClick={() => handleModuleView(selection.project!, selection.module!)}
+                        className={`hover:underline transition-colors ${!selection.feature ? "font-semibold cursor-default" : "cursor-pointer"}`}
+                        style={{ color: !selection.feature ? "var(--notion-text)" : undefined }}
+                        disabled={!selection.feature}
+                      >
                         {selection.module}
-                      </span>
+                      </button>
                     </>
                   )}
                   {selection.feature && (
