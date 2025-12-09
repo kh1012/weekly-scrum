@@ -277,12 +277,15 @@ function ProjectItem({
         <button
           onClick={onToggle}
           className="flex-1 flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all"
-          style={{ background: isProjectSelected ? "var(--notion-bg-secondary)" : "transparent" }}
+          style={{ 
+            background: isProjectSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
+            boxShadow: isProjectSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.2)" : "none",
+          }}
           onMouseEnter={(e) => {
             if (!isProjectSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
           }}
           onMouseLeave={(e) => {
-            if (!isProjectSelected) e.currentTarget.style.background = "transparent";
+            if (!isProjectSelected) e.currentTarget.style.background = isProjectSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
           }}
         >
           {/* 화살표 */}
@@ -341,8 +344,9 @@ function ProjectItem({
             }}
             className="flex-shrink-0 px-2 py-1 text-xs rounded transition-colors"
             style={{
-              background: isProjectSelected ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-              color: isProjectSelected ? "var(--notion-accent)" : "var(--notion-text-muted)",
+              background: isProjectSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+              color: isProjectSelected ? "#3b82f6" : "var(--notion-text-muted)",
+              boxShadow: isProjectSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
             }}
             title={`${project.name} 전체 보기`}
           >
@@ -431,12 +435,15 @@ function ModuleItem({
         <button
           onClick={onToggle}
           className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md transition-all"
-          style={{ background: isModuleSelected ? "var(--notion-bg-secondary)" : "transparent" }}
+          style={{ 
+            background: isModuleSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
+            boxShadow: isModuleSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.2)" : "none",
+          }}
           onMouseEnter={(e) => {
             if (!isModuleSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
           }}
           onMouseLeave={(e) => {
-            if (!isModuleSelected) e.currentTarget.style.background = "transparent";
+            if (!isModuleSelected) e.currentTarget.style.background = isModuleSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
           }}
         >
           {/* 화살표 */}
@@ -492,8 +499,9 @@ function ModuleItem({
             }}
             className="flex-shrink-0 px-1.5 py-0.5 text-[10px] rounded transition-colors"
             style={{
-              background: isModuleSelected ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-              color: isModuleSelected ? "var(--notion-accent)" : "var(--notion-text-muted)",
+              background: isModuleSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+              color: isModuleSelected ? "#3b82f6" : "var(--notion-text-muted)",
+              boxShadow: isModuleSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
             }}
             title={`${module.name} 전체 보기`}
           >

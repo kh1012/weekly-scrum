@@ -226,8 +226,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     onClick={() => setHideCompleted(!hideCompleted)}
                     className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
                     style={{
-                      background: hideCompleted ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-                      color: hideCompleted ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                      background: hideCompleted ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+                      color: hideCompleted ? "#3b82f6" : "var(--notion-text-muted)",
+                      boxShadow: hideCompleted ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
                     }}
                     title={hideCompleted ? "100% 항목 표시" : "100% 항목 숨기기"}
                   >
@@ -239,8 +240,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     onClick={toggleViewMode}
                     className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
                     style={{
-                      background: viewMode === "person" ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-                      color: viewMode === "person" ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                      background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+                      color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
+                      boxShadow: viewMode === "person" ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
                     }}
                   >
                     {viewMode === "project" ? (
@@ -427,8 +429,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 onClick={() => setHideCompleted(!hideCompleted)}
                 className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
                 style={{
-                  background: hideCompleted ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-                  color: hideCompleted ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                  background: hideCompleted ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+                  color: hideCompleted ? "#3b82f6" : "var(--notion-text-muted)",
+                  boxShadow: hideCompleted ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
                 }}
                 title={hideCompleted ? "100% 항목 표시" : "100% 항목 숨기기"}
               >
@@ -440,8 +443,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 onClick={toggleViewMode}
                 className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
                 style={{
-                  background: viewMode === "person" ? "var(--notion-accent-light)" : "var(--notion-bg-secondary)",
-                  color: viewMode === "person" ? "var(--notion-accent)" : "var(--notion-text-muted)",
+                  background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+                  color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
+                  boxShadow: viewMode === "person" ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
                 }}
               >
                 {viewMode === "project" ? (
