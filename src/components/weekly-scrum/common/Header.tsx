@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { SideNavigation } from "./Navigation";
-import { StatsBar } from "./StatsBar";
 import { WeekSelector } from "./WeekSelector";
 import { SearchInput } from "./SearchInput";
 import { ExpandableFilters } from "./ExpandableFilters";
@@ -60,9 +59,9 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         borderBottom: "1px solid var(--notion-border)",
       }}
     >
-      {/* 데스크탑 3xl+ 레이아웃 (1440px 이상, 1행) */}
-      <div className="hidden 3xl:flex items-center justify-between h-11 px-3">
-        {/* 좌측: 사이드바 토글 + (로고) + 주차 + 필터 + 통계 */}
+      {/* 데스크탑 레이아웃 (lg 이상) - 1행 */}
+      <div className="hidden lg:flex items-center justify-between h-11 px-3">
+        {/* 좌측: 사이드바 토글 + (로고) + 주차 */}
         <div className="flex items-center gap-3">
           {onSidebarToggle && (
             <button
@@ -105,6 +104,11 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
             </>
           )}
           <WeekSelector />
+        </div>
+
+        {/* 우측: 검색 + 필터 */}
+        <div className="flex items-center gap-3">
+          <SearchInput />
           {!isMyDashboard && (
             <>
               <div
@@ -114,107 +118,43 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
               <ExpandableFilters />
             </>
           )}
-          <div
-            className="w-px h-5"
-            style={{ background: "var(--notion-border)" }}
-          />
-          <StatsBar />
-        </div>
-
-        {/* 우측: 검색 */}
-        <SearchInput />
-      </div>
-
-      {/* 데스크탑 lg~3xl 레이아웃 (1024px~1600px, 2행) */}
-      <div className="hidden lg:block 3xl:hidden">
-        {/* 1행: 사이드바 토글 + 로고 + 주차 + 검색 */}
-        <div
-          className="flex items-center justify-between h-11 px-3"
-          style={{ borderBottom: "1px solid var(--notion-border)" }}
-        >
-          <div className="flex items-center gap-3">
-            {onSidebarToggle && (
-              <button
-                onClick={onSidebarToggle}
-                className="notion-btn p-1.5"
-                title={isSidebarOpen ? "사이드바 접기" : "사이드바 열기"}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  style={{ color: "var(--notion-text-secondary)" }}
-                >
-                  {isSidebarOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 5l7 7-7 7M5 5l7 7-7 7"
-                    />
-                  )}
-                </svg>
-              </button>
-            )}
-            {!isSidebarOpen && (
-              <>
-                <Logo />
-                <div
-                  className="w-px h-5"
-                  style={{ background: "var(--notion-border)" }}
-                />
-              </>
-            )}
-            <WeekSelector />
-          </div>
-          <SearchInput />
-        </div>
-        {/* 2행: 필터 (좌측) + 통계 (우측) */}
-        <div className="flex items-center justify-between h-11 px-3">
-          <div className="flex items-center">
-            {!isMyDashboard && <ExpandableFilters />}
-          </div>
-          <StatsBar />
         </div>
       </div>
 
       {/* 모바일/태블릿 레이아웃 */}
       <div className="lg:hidden">
-        {/* 1행: 메뉴 + 로고 */}
+        {/* 1행: 메뉴 + 로고 + 검색 */}
         <div
-          className="flex items-center gap-2 h-11 px-3 relative"
+          className="flex items-center justify-between h-11 px-3 relative"
           style={{ borderBottom: "1px solid var(--notion-border)" }}
           ref={menuRef}
         >
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="notion-btn p-1.5"
-            aria-label="메뉴"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              style={{ color: "var(--notion-text-secondary)" }}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="notion-btn p-1.5"
+              aria-label="메뉴"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-          <Logo />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{ color: "var(--notion-text-secondary)" }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+            <Logo />
+          </div>
+
+          {/* 모바일 검색 */}
+          <SearchInput isMobile />
 
           {/* Popover 메뉴 */}
           {isMenuOpen && (
@@ -243,16 +183,10 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         {!isMyDashboard && (
           <div
             className="px-3 py-2 overflow-x-auto"
-            style={{ borderBottom: "1px solid var(--notion-border)" }}
           >
             <ExpandableFilters isMobile />
           </div>
         )}
-
-        {/* 4행: 검색 */}
-        <div className="px-3 py-2">
-          <SearchInput isMobile />
-        </div>
       </div>
     </header>
   );

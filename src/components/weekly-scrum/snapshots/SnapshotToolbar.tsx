@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import type { SnapshotViewMode } from "./types";
 
 export type DisplayMode = "card" | "list";
@@ -15,6 +15,13 @@ interface SnapshotToolbarProps {
   onClearCompare: () => void;
 }
 
+// 뷰 모드 배열을 컴포넌트 외부에 정의하여 참조 안정성 확보
+const VIEW_MODES: Array<{ key: SnapshotViewMode; label: string; icon: string }> = [
+  { key: "all", label: "전체 보기", icon: "📋" },
+  { key: "person", label: "사람별 보기", icon: "👤" },
+  { key: "continuity", label: "연속성 분석", icon: "🔗" },
+];
+
 export function SnapshotToolbar({
   viewMode,
   onViewModeChange,
@@ -24,28 +31,31 @@ export function SnapshotToolbar({
   onOpenCompare,
   onClearCompare,
 }: SnapshotToolbarProps) {
-  const viewModes: Array<{ key: SnapshotViewMode; label: string; icon: string }> = [
-    { key: "all", label: "전체 보기", icon: "📋" },
-    { key: "person", label: "사람별 보기", icon: "👤" },
-    { key: "continuity", label: "연속성 분석", icon: "🔗" },
-  ];
-
   // 탭 인디케이터 위치/크기 계산
   const tabsRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
+  // 인디케이터 위치 업데이트
   useEffect(() => {
-    if (!tabsRef.current) return;
-    const activeIndex = viewModes.findIndex((m) => m.key === viewMode);
-    const buttons = tabsRef.current.querySelectorAll("button");
-    if (buttons[activeIndex]) {
-      const button = buttons[activeIndex] as HTMLElement;
-      setIndicatorStyle({
-        left: button.offsetLeft,
-        width: button.offsetWidth,
-      });
-    }
-  }, [viewMode, viewModes]);
+    const updateIndicator = () => {
+      if (!tabsRef.current) return;
+      const activeIndex = VIEW_MODES.findIndex((m) => m.key === viewMode);
+      const buttons = tabsRef.current.querySelectorAll("button");
+      if (buttons[activeIndex]) {
+        const button = buttons[activeIndex] as HTMLElement;
+        setIndicatorStyle({
+          left: button.offsetLeft,
+          width: button.offsetWidth,
+        });
+      }
+    };
+
+    updateIndicator();
+    
+    // 리사이즈 시에도 업데이트
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
+  }, [viewMode]);
 
   return (
     <div className="flex flex-wrap items-center gap-4">
@@ -67,7 +77,7 @@ export function SnapshotToolbar({
           }}
         />
         
-        {viewModes.map((mode) => (
+        {VIEW_MODES.map((mode) => (
           <button
             key={mode.key}
             onClick={() => onViewModeChange(mode.key)}
