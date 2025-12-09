@@ -1,8 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVisitorCount } from "@/hooks/useVisitorCount";
+
+// 기본적으로 접혀있는 카테고리 키
+const COLLAPSED_BY_DEFAULT = ["analysis", "views", "personal"];
+const SNB_COLLAPSED_KEY = "snb-collapsed-categories";
 
 interface NavItem {
   key: string;
@@ -104,15 +109,72 @@ interface SideNavigationProps {
 export function SideNavigation({ onItemClick }: SideNavigationProps) {
   const isActive = useIsActive();
   const { count, isLoading } = useVisitorCount();
+  const pathname = usePathname();
+  
+  // 접힌 카테고리 상태
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
+    new Set(COLLAPSED_BY_DEFAULT)
+  );
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // localStorage에서 상태 불러오기
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SNB_COLLAPSED_KEY);
+      if (stored) {
+        setCollapsedCategories(new Set(JSON.parse(stored)));
+      }
+    } catch {
+      // 무시
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // 상태 저장
+  useEffect(() => {
+    if (!isInitialized) return;
+    try {
+      localStorage.setItem(
+        SNB_COLLAPSED_KEY,
+        JSON.stringify(Array.from(collapsedCategories))
+      );
+    } catch {
+      // 무시
+    }
+  }, [collapsedCategories, isInitialized]);
+
+  // 현재 활성화된 아이템이 있는 카테고리는 자동 펼침
+  useEffect(() => {
+    NAV_CATEGORIES.forEach((category) => {
+      const hasActiveItem = category.items.some((item) => isActive(item.href));
+      if (hasActiveItem && collapsedCategories.has(category.key)) {
+        setCollapsedCategories((prev) => {
+          const next = new Set(prev);
+          next.delete(category.key);
+          return next;
+        });
+      }
+    });
+  }, [pathname]);
+
+  // 카테고리 토글
+  const toggleCategory = (key: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   return (
-    <div
-      className="h-full flex flex-col"
-      style={{ background: "transparent" }}
-    >
+    <div className="h-full flex flex-col" style={{ background: "transparent" }}>
       {/* Header */}
       <div className="px-5 py-5 flex items-center gap-3">
-        <div 
+        <div
           className="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
           style={{
             background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
@@ -124,7 +186,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
         </div>
         <span
           className="font-bold text-base tracking-tight"
-          style={{ 
+          style={{
             color: "var(--notion-text)",
             letterSpacing: "-0.02em",
           }}
@@ -135,87 +197,151 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
 
       {/* Navigation Items */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
-        {NAV_CATEGORIES.map((category, categoryIndex) => (
-          <div 
-            key={category.key} 
-            className="mb-5 animate-slide-in-left"
-            style={{ animationDelay: `${categoryIndex * 0.05}s` }}
-          >
+        {NAV_CATEGORIES.map((category, categoryIndex) => {
+          const isCollapsed = collapsedCategories.has(category.key);
+          const hasActiveItem = category.items.some((item) => isActive(item.href));
+          const itemCount = category.items.length;
+
+          return (
             <div
-              className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider"
-              style={{ color: "var(--notion-text-muted)" }}
+              key={category.key}
+              className="mb-3 animate-slide-in-left"
+              style={{ animationDelay: `${categoryIndex * 0.05}s` }}
             >
-              {category.label}
-            </div>
-            <div className="space-y-1">
-              {category.items.map((item, itemIndex) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.key}
-                    href={item.href}
-                    onClick={onItemClick}
-                    className="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+              {/* 카테고리 헤더 (클릭 가능) */}
+              <button
+                onClick={() => toggleCategory(category.key)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group"
+                style={{
+                  background: hasActiveItem && isCollapsed 
+                    ? "rgba(59, 130, 246, 0.05)" 
+                    : "transparent",
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-3 h-3 transition-transform duration-200"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                     style={{
-                      background: active 
-                        ? "rgba(59, 130, 246, 0.1)" 
-                        : "transparent",
-                      color: active 
-                        ? "#3b82f6" 
-                        : "var(--notion-text-secondary)",
-                      transform: active ? "translateX(2px)" : "translateX(0)",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!active) {
-                        e.currentTarget.style.background = "rgba(0, 0, 0, 0.03)";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }
+                      color: "var(--notion-text-muted)",
+                      transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
                     }}
                   >
-                    <span 
-                      className="text-lg w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200"
-                      style={{
-                        background: active ? "rgba(59, 130, 246, 0.15)" : "transparent",
-                      }}
-                    >
-                      {item.emoji}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <span 
-                        className="block text-sm font-medium transition-colors duration-200"
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--notion-text-muted)" }}
+                  >
+                    {category.label}
+                  </span>
+                </div>
+                {isCollapsed && (
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded-full transition-all duration-200"
+                    style={{
+                      background: hasActiveItem 
+                        ? "rgba(59, 130, 246, 0.15)" 
+                        : "var(--notion-bg-secondary)",
+                      color: hasActiveItem 
+                        ? "#3b82f6" 
+                        : "var(--notion-text-muted)",
+                    }}
+                  >
+                    {itemCount}
+                  </span>
+                )}
+              </button>
+
+              {/* 아이템 목록 */}
+              <div
+                className="overflow-hidden transition-all duration-300 ease-out"
+                style={{
+                  maxHeight: isCollapsed ? "0px" : `${itemCount * 52}px`,
+                  opacity: isCollapsed ? 0 : 1,
+                }}
+              >
+                <div className="space-y-1 pt-1">
+                  {category.items.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        onClick={onItemClick}
+                        className="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
                         style={{
-                          color: active ? "#3b82f6" : "var(--notion-text)",
+                          background: active
+                            ? "rgba(59, 130, 246, 0.1)"
+                            : "transparent",
+                          color: active
+                            ? "#3b82f6"
+                            : "var(--notion-text-secondary)",
+                          transform: active ? "translateX(2px)" : "translateX(0)",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.background =
+                              "rgba(0, 0, 0, 0.03)";
+                            e.currentTarget.style.transform = "translateX(4px)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.background = "transparent";
+                            e.currentTarget.style.transform = "translateX(0)";
+                          }
                         }}
                       >
-                        {item.label}
-                      </span>
-                      {item.description && (
-                        <span 
-                          className="block text-[10px] mt-0.5 truncate"
-                          style={{ color: "var(--notion-text-muted)" }}
+                        <span
+                          className="text-lg w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200"
+                          style={{
+                            background: active
+                              ? "rgba(59, 130, 246, 0.15)"
+                              : "transparent",
+                          }}
                         >
-                          {item.description}
+                          {item.emoji}
                         </span>
-                      )}
-                    </div>
-                    {active && (
-                      <div 
-                        className="w-1.5 h-1.5 rounded-full animate-pulse"
-                        style={{ background: "#3b82f6" }}
-                      />
-                    )}
-                  </Link>
-                );
-              })}
+                        <div className="flex-1 min-w-0">
+                          <span
+                            className="block text-sm font-medium transition-colors duration-200"
+                            style={{
+                              color: active ? "#3b82f6" : "var(--notion-text)",
+                            }}
+                          >
+                            {item.label}
+                          </span>
+                          {item.description && (
+                            <span
+                              className="block text-[10px] mt-0.5 truncate"
+                              style={{ color: "var(--notion-text-muted)" }}
+                            >
+                              {item.description}
+                            </span>
+                          )}
+                        </div>
+                        {active && (
+                          <div
+                            className="w-1.5 h-1.5 rounded-full animate-pulse"
+                            style={{ background: "#3b82f6" }}
+                          />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
 
       {/* Footer with Visitor Count */}
@@ -226,7 +352,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
         <div className="flex items-center justify-between">
           <div
             className="text-xs font-medium px-2 py-1 rounded-lg"
-            style={{ 
+            style={{
               color: "var(--notion-text-muted)",
               background: "var(--notion-bg-secondary)",
             }}
@@ -235,7 +361,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
           </div>
           <div
             className="flex items-center gap-2 text-xs px-2 py-1 rounded-lg transition-all duration-200"
-            style={{ 
+            style={{
               color: "var(--notion-text-muted)",
               background: "var(--notion-bg-secondary)",
             }}
@@ -270,7 +396,7 @@ export function Navigation() {
   return (
     <nav
       className="flex items-center gap-1 px-1.5 py-1.5 rounded-xl"
-      style={{ 
+      style={{
         background: "var(--notion-bg-secondary)",
         boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.02)",
       }}
@@ -331,24 +457,22 @@ export function MobileNavigation({ onItemClick }: MobileNavigationProps) {
             onClick={onItemClick}
             className="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl transition-all duration-200 animate-scale-in"
             style={{
-              background: active
-                ? "rgba(59, 130, 246, 0.1)"
-                : "transparent",
-              color: active
-                ? "#3b82f6"
-                : "var(--notion-text-secondary)",
+              background: active ? "rgba(59, 130, 246, 0.1)" : "transparent",
+              color: active ? "#3b82f6" : "var(--notion-text-secondary)",
               animationDelay: `${index * 0.03}s`,
             }}
           >
-            <span 
+            <span
               className="text-xl w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
               style={{
-                background: active ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+                background: active
+                  ? "rgba(59, 130, 246, 0.15)"
+                  : "var(--notion-bg-secondary)",
               }}
             >
               {item.emoji}
             </span>
-            <span 
+            <span
               className="text-[11px] font-medium truncate w-full text-center"
               style={{
                 color: active ? "#3b82f6" : "var(--notion-text-secondary)",
