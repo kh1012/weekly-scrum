@@ -267,13 +267,15 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
 
               {/* 아이템 목록 */}
               <div
-                className="overflow-hidden transition-all duration-300 ease-out"
+                className="transition-all duration-300 ease-out"
                 style={{
-                  maxHeight: isCollapsed ? "0px" : `${itemCount * 52}px`,
+                  maxHeight: isCollapsed ? "0px" : `${itemCount * 56 + 8}px`,
                   opacity: isCollapsed ? 0 : 1,
+                  overflow: "hidden",
+                  marginTop: isCollapsed ? "0px" : "4px",
                 }}
               >
-                <div className="space-y-1 pt-1">
+                <div className="space-y-1">
                   {category.items.map((item) => {
                     const active = isActive(item.href);
                     return (
