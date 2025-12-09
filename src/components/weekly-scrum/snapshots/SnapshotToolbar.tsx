@@ -13,6 +13,8 @@ interface SnapshotToolbarProps {
   compareCount: number;
   onOpenCompare: () => void;
   onClearCompare: () => void;
+  isSelectMode: boolean;
+  onToggleSelectMode: () => void;
 }
 
 // 뷰 모드 배열을 컴포넌트 외부에 정의하여 참조 안정성 확보
@@ -30,6 +32,8 @@ export function SnapshotToolbar({
   compareCount,
   onOpenCompare,
   onClearCompare,
+  isSelectMode,
+  onToggleSelectMode,
 }: SnapshotToolbarProps) {
   // 탭 인디케이터 위치/크기 계산
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -124,6 +128,23 @@ export function SnapshotToolbar({
             )}
           </div>
         )}
+
+        {/* 선택 모드 토글 */}
+        <button
+          onClick={onToggleSelectMode}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          style={{
+            background: isSelectMode ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+            color: isSelectMode ? "#3b82f6" : "var(--notion-text-muted)",
+            border: isSelectMode ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid transparent",
+          }}
+          title="선택 모드 (카드를 클릭하여 선택)"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>선택</span>
+        </button>
 
         {/* 카드/리스트 토글 */}
         <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "white" }}>

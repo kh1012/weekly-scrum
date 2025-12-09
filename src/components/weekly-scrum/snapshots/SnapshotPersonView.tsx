@@ -20,6 +20,7 @@ interface SnapshotPersonViewProps {
   displayMode: DisplayMode;
   compareState: CompareState;
   onCompareToggle: (item: ScrumItem) => void;
+  isSelectMode?: boolean;
 }
 
 export function SnapshotPersonView({
@@ -27,6 +28,7 @@ export function SnapshotPersonView({
   displayMode,
   compareState,
   onCompareToggle,
+  isSelectMode = false,
 }: SnapshotPersonViewProps) {
   const [expandedPersons, setExpandedPersons] = useState<Set<string>>(new Set());
 
@@ -143,6 +145,7 @@ export function SnapshotPersonView({
                         showCompareCheckbox={true}
                         isCompareSelected={isSelected(item)}
                         onCompareToggle={onCompareToggle}
+                        isSelectMode={isSelectMode}
                       />
                     ))}
                   </div>
@@ -156,6 +159,7 @@ export function SnapshotPersonView({
                         showCompareCheckbox={true}
                         isCompareSelected={isSelected(item)}
                         onCompareToggle={onCompareToggle}
+                        isSelectMode={isSelectMode}
                       />
                     ))}
                   </div>

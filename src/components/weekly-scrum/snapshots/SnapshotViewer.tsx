@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import { useScrumContext } from "@/context/ScrumContext";
 import type { SnapshotViewMode, PersonGroup, CompareState } from "./types";
@@ -14,6 +14,7 @@ const STORAGE_KEY = "snapshot-viewer-state";
 
 interface StoredState {
   displayMode: DisplayMode;
+  isSelectMode?: boolean;
 }
 
 /**
@@ -28,6 +29,9 @@ export function SnapshotViewer() {
   // 디스플레이 모드 (카드/리스트)
   const [displayMode, setDisplayMode] = useState<DisplayMode>("card");
   
+  // 선택 모드
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  
   // 비교 상태
   const [compareState, setCompareState] = useState<CompareState>({
     selectedItems: [],
@@ -36,6 +40,10 @@ export function SnapshotViewer() {
 
   // 초기화 상태
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // 컨텍스트 메뉴 상태
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // localStorage에서 상태 불러오기
   useEffect(() => {
@@ -46,11 +54,42 @@ export function SnapshotViewer() {
         if (parsed.displayMode) {
           setDisplayMode(parsed.displayMode);
         }
+        if (parsed.isSelectMode !== undefined) {
+          setIsSelectMode(parsed.isSelectMode);
+        }
       }
     } catch {
       // 무시
     }
     setIsInitialized(true);
+  }, []);
+
+  // 선택 모드 변경 시 저장
+  useEffect(() => {
+    if (!isInitialized) return;
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      const current: StoredState = stored ? JSON.parse(stored) : { displayMode: "card" };
+      current.isSelectMode = isSelectMode;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+    } catch {
+      // 무시
+    }
+  }, [isSelectMode, isInitialized]);
+
+  // 컨텍스트 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!contextMenu) return;
+    
+    const handleClick = () => setContextMenu(null);
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [contextMenu]);
+
+  // 우클릭 핸들러
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
   }, []);
 
   // displayMode 변경 시 저장
@@ -154,6 +193,11 @@ export function SnapshotViewer() {
     setCompareState({ selectedItems: [], isCompareMode: false });
   }, []);
 
+  // 선택 모드 토글
+  const handleToggleSelectMode = useCallback(() => {
+    setIsSelectMode((prev) => !prev);
+  }, []);
+
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -163,7 +207,7 @@ export function SnapshotViewer() {
   }
 
   return (
-    <div className="space-y-4">
+    <div ref={containerRef} className="space-y-4" onContextMenu={handleContextMenu}>
       {/* 툴바 */}
       <SnapshotToolbar
         viewMode={viewMode}
@@ -173,6 +217,8 @@ export function SnapshotViewer() {
         compareCount={compareState.selectedItems.length}
         onOpenCompare={handleOpenCompare}
         onClearCompare={handleClearCompare}
+        isSelectMode={isSelectMode}
+        onToggleSelectMode={handleToggleSelectMode}
       />
 
       {/* 뷰 컨텐츠 */}
@@ -182,6 +228,7 @@ export function SnapshotViewer() {
           displayMode={displayMode}
           compareState={compareState}
           onCompareToggle={handleCompareToggle}
+          isSelectMode={isSelectMode}
         />
       )}
 
@@ -191,6 +238,7 @@ export function SnapshotViewer() {
           displayMode={displayMode}
           compareState={compareState}
           onCompareToggle={handleCompareToggle}
+          isSelectMode={isSelectMode}
         />
       )}
 
@@ -210,6 +258,34 @@ export function SnapshotViewer() {
           prevWeekKey={currentWeekIndex > 0 ? sortedWeekKeys[currentWeekIndex - 1] : null}
           nextWeekKey={currentWeekIndex < sortedWeekKeys.length - 1 ? sortedWeekKeys[currentWeekIndex + 1] : null}
         />
+      )}
+
+      {/* 컨텍스트 메뉴 */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 rounded-lg overflow-hidden animate-fadeIn"
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y,
+            background: "var(--notion-bg)",
+            boxShadow: "var(--notion-shadow-lg)",
+            border: "1px solid var(--notion-border)",
+          }}
+        >
+          <button
+            onClick={() => {
+              setIsSelectMode(!isSelectMode);
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors"
+            style={{ color: "var(--notion-text)" }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {isSelectMode ? "선택 모드 비활성화" : "선택 모드 활성화"}
+          </button>
+        </div>
       )}
     </div>
   );

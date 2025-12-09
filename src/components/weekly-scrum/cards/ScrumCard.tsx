@@ -19,6 +19,7 @@ interface ScrumCardProps {
   showCompareCheckbox?: boolean;
   isCompareSelected?: boolean;
   onCompareToggle?: (item: ScrumItem) => void;
+  isSelectMode?: boolean;
 }
 
 /**
@@ -118,6 +119,7 @@ export function ScrumCard({
   showCompareCheckbox = false,
   isCompareSelected = false,
   onCompareToggle,
+  isSelectMode = false,
 }: ScrumCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
@@ -169,10 +171,18 @@ export function ScrumCard({
     setIsMenuOpen(false);
   };
 
+  // 카드 클릭 핸들러 (선택 모드일 때)
+  const handleCardClick = () => {
+    if (isSelectMode && onCompareToggle) {
+      onCompareToggle(item);
+    }
+  };
+
   return (
     <div
-      className={`notion-card p-3 transition-all duration-150 ${isCompleted ? "opacity-60" : ""} ${isCompareSelected ? "ring-2 ring-blue-500" : ""}`}
+      className={`notion-card p-3 transition-all duration-150 ${isCompleted ? "opacity-60" : ""} ${isCompareSelected ? "ring-2 ring-blue-500" : ""} ${isSelectMode ? "cursor-pointer hover:shadow-md" : ""}`}
       style={{ borderColor: riskLevel >= 2 ? riskColor.border : 'var(--notion-border)' }}
+      onClick={handleCardClick}
     >
       {/* 복사 메시지 토스트 */}
       {copyMessage && (
@@ -191,14 +201,14 @@ export function ScrumCard({
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            {/* 비교 체크박스 */}
-            {showCompareCheckbox && (
-              <label className="flex items-center cursor-pointer mr-1">
+            {/* 비교 체크박스 - 선택 모드일 때만 표시 */}
+            {showCompareCheckbox && isSelectMode && (
+              <label className="flex items-center cursor-pointer mr-1" onClick={(e) => e.stopPropagation()}>
                 <input
                   type="checkbox"
                   checked={isCompareSelected}
                   onChange={() => onCompareToggle?.(item)}
-                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                 />
               </label>
             )}

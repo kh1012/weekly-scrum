@@ -16,6 +16,7 @@ interface ScrumListItemProps {
   showCompareCheckbox?: boolean;
   isCompareSelected?: boolean;
   onCompareToggle?: (item: ScrumItem) => void;
+  isSelectMode?: boolean;
 }
 
 const COLLAB_COLORS: Record<string, { bg: string; text: string }> = {
@@ -36,6 +37,7 @@ export function ScrumListItem({
   showCompareCheckbox = false,
   isCompareSelected = false,
   onCompareToggle,
+  isSelectMode = false,
 }: ScrumListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -54,16 +56,22 @@ export function ScrumListItem({
       {/* 접힌 상태: 주요 정보만 표시 */}
       <div
         className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          if (isSelectMode && onCompareToggle) {
+            onCompareToggle(item);
+          } else {
+            setIsExpanded(!isExpanded);
+          }
+        }}
       >
-        {/* 비교 체크박스 */}
-        {showCompareCheckbox && (
+        {/* 비교 체크박스 - 선택 모드일 때만 표시 */}
+        {showCompareCheckbox && isSelectMode && (
           <label className="flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
               checked={isCompareSelected}
               onChange={() => onCompareToggle?.(item)}
-              className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
             />
           </label>
         )}

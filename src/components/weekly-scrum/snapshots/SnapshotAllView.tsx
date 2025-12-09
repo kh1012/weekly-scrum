@@ -12,6 +12,7 @@ interface SnapshotAllViewProps {
   displayMode: DisplayMode;
   compareState: CompareState;
   onCompareToggle: (item: ScrumItem) => void;
+  isSelectMode?: boolean;
 }
 
 // 카드 그리드 스타일 (최소 320px, 최대 400px)
@@ -21,7 +22,7 @@ const cardGridStyle = {
   gap: "12px",
 };
 
-export function SnapshotAllView({ items, displayMode, compareState, onCompareToggle }: SnapshotAllViewProps) {
+export function SnapshotAllView({ items, displayMode, compareState, onCompareToggle, isSelectMode = false }: SnapshotAllViewProps) {
   if (items.length === 0) {
     return <EmptyState message="스냅샷이 없습니다" submessage="필터 조건을 변경해보세요" />;
   }
@@ -52,6 +53,7 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
                   showCompareCheckbox={true}
                   isCompareSelected={isSelected(item)}
                   onCompareToggle={onCompareToggle}
+                  isSelectMode={isSelectMode}
                 />
               ))}
             </div>
@@ -65,6 +67,7 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
                   showCompareCheckbox={true}
                   isCompareSelected={isSelected(item)}
                   onCompareToggle={onCompareToggle}
+                  isSelectMode={isSelectMode}
                 />
               ))}
             </div>
@@ -90,6 +93,7 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
                   showCompareCheckbox={true}
                   isCompareSelected={isSelected(item)}
                   onCompareToggle={onCompareToggle}
+                  isSelectMode={isSelectMode}
                 />
               ))}
             </div>
@@ -103,6 +107,7 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
                   showCompareCheckbox={true}
                   isCompareSelected={isSelected(item)}
                   onCompareToggle={onCompareToggle}
+                  isSelectMode={isSelectMode}
                 />
               ))}
             </div>
