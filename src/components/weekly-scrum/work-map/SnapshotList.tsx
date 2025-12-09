@@ -18,10 +18,10 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
   isExpanded: boolean;
   onToggle: () => void;
 }) {
-  const progressColor = getProgressColor(item.progressPercent);
+        const progressColor = getProgressColor(item.progressPercent);
 
-  return (
-    <div
+        return (
+          <div
       className="border-b last:border-b-0 transition-all duration-200"
       style={{ borderColor: "var(--notion-border)" }}
     >
@@ -97,13 +97,13 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
         {item.collaborators && item.collaborators.length > 0 && (
           <span
             className="flex-shrink-0 text-xs px-1.5 py-0.5 rounded-full"
-            style={{
+            style={{ 
               background: "rgba(59, 130, 246, 0.1)",
               color: "#3b82f6",
             }}
           >
             👥 {item.collaborators.length}
-          </span>
+                </span>
         )}
       </button>
 
@@ -115,9 +115,9 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
           {/* 경로 정보 */}
           <div className="mb-3 text-xs" style={{ color: "var(--notion-text-muted)" }}>
             📍 {item.project} {item.module ? `/ ${item.module}` : ""} / {item.topic}
-          </div>
+            </div>
 
-          {/* Progress 내용 */}
+            {/* Progress 내용 */}
           {item.progress.length > 0 && (
             <div className="mb-4">
               <div className="text-xs font-medium mb-2" style={{ color: "var(--notion-text-muted)" }}>
@@ -138,50 +138,50 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
             </div>
           )}
 
-          {/* Next */}
-          {item.next.length > 0 && (
+            {/* Next */}
+            {item.next.length > 0 && (
             <div className="mb-4">
               <div className="text-xs font-medium mb-2" style={{ color: "var(--notion-text-muted)" }}>
                 다음 계획 ({item.next.length})
-              </div>
+                </div>
               <ul className="space-y-1.5">
                 {item.next.map((n, i) => (
-                  <li
-                    key={i}
-                    className="text-sm flex items-start gap-2"
-                    style={{ color: "var(--notion-text-secondary)" }}
-                  >
-                    <span className="text-blue-500 mt-0.5 flex-shrink-0">→</span>
-                    <span className="break-words">{n}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                    <li
+                      key={i}
+                      className="text-sm flex items-start gap-2"
+                      style={{ color: "var(--notion-text-secondary)" }}
+                    >
+                      <span className="text-blue-500 mt-0.5 flex-shrink-0">→</span>
+                      <span className="break-words">{n}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          {/* Risk */}
-          {item.risk && item.risk.length > 0 && (
+            {/* Risk */}
+            {item.risk && item.risk.length > 0 && (
             <div className="mb-4">
               <div className="text-xs font-medium mb-2" style={{ color: "#ef4444" }}>
                 ⚠ 리스크 ({item.risk.length})
-              </div>
+                </div>
               <ul className="space-y-1.5">
-                {item.risk.map((r, i) => (
-                  <li
-                    key={i}
-                    className="text-sm flex items-start gap-2"
+                  {item.risk.map((r, i) => (
+                    <li
+                      key={i}
+                      className="text-sm flex items-start gap-2"
                     style={{ color: "var(--notion-text-secondary)" }}
-                  >
+                    >
                     <span className="text-red-500 mt-0.5 flex-shrink-0">•</span>
-                    <span className="break-words">{r}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                      <span className="break-words">{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          {/* Collaborators */}
-          {item.collaborators && item.collaborators.length > 0 && (
+            {/* Collaborators */}
+            {item.collaborators && item.collaborators.length > 0 && (
             <div>
               <div className="text-xs font-medium mb-2" style={{ color: "var(--notion-text-muted)" }}>
                 협업자 ({item.collaborators.length})
@@ -213,10 +213,10 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
               </div>
             </div>
           )}
-        </div>
-      )}
-    </div>
-  );
+              </div>
+            )}
+          </div>
+        );
 }
 
 export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {

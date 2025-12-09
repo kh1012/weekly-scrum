@@ -120,13 +120,13 @@ export function DirectoryTree({
         );
       } else if (!isControlled) {
         setInternalExpanded((prev) => ({
-          projects: new Set([...prev.projects, selectedFeature.project!]),
-          modules: new Set([
-            ...prev.modules,
-            `${selectedFeature.project}/${selectedFeature.module}`,
-          ]),
-        }));
-      }
+        projects: new Set([...prev.projects, selectedFeature.project!]),
+        modules: new Set([
+          ...prev.modules,
+          `${selectedFeature.project}/${selectedFeature.module}`,
+        ]),
+      }));
+    }
     }
   }, [selectedFeature, isControlled, onExpandPath]);
 
@@ -135,14 +135,14 @@ export function DirectoryTree({
       onToggleProject(projectName);
     } else {
       setInternalExpanded((prev) => {
-        const newProjects = new Set(prev.projects);
-        if (newProjects.has(projectName)) {
-          newProjects.delete(projectName);
-        } else {
-          newProjects.add(projectName);
-        }
-        return { ...prev, projects: newProjects };
-      });
+      const newProjects = new Set(prev.projects);
+      if (newProjects.has(projectName)) {
+        newProjects.delete(projectName);
+      } else {
+        newProjects.add(projectName);
+      }
+      return { ...prev, projects: newProjects };
+    });
     }
   };
 
@@ -151,14 +151,14 @@ export function DirectoryTree({
       onToggleModule(moduleKey);
     } else {
       setInternalExpanded((prev) => {
-        const newModules = new Set(prev.modules);
-        if (newModules.has(moduleKey)) {
-          newModules.delete(moduleKey);
-        } else {
-          newModules.add(moduleKey);
-        }
-        return { ...prev, modules: newModules };
-      });
+      const newModules = new Set(prev.modules);
+      if (newModules.has(moduleKey)) {
+        newModules.delete(moduleKey);
+      } else {
+        newModules.add(moduleKey);
+      }
+      return { ...prev, modules: newModules };
+    });
     }
   };
 
@@ -186,9 +186,9 @@ export function DirectoryTree({
       });
     } else {
       setInternalExpanded({
-        projects: new Set(projects.map((p) => p.name)),
-        modules: allModules,
-      });
+      projects: new Set(projects.map((p) => p.name)),
+      modules: allModules,
+    });
     }
   };
 
@@ -204,9 +204,9 @@ export function DirectoryTree({
       });
     } else {
       setInternalExpanded({
-        projects: new Set(),
-        modules: new Set(),
-      });
+      projects: new Set(),
+      modules: new Set(),
+    });
     }
   };
 
@@ -257,21 +257,21 @@ export function DirectoryTree({
             return metrics.progress < 100;
           })
           .map((project, index) => (
-            <ProjectItem
-              key={project.name}
-              project={project}
-              isExpanded={expanded.projects.has(project.name)}
-              expandedModules={expanded.modules}
-              selectedFeature={selectedFeature}
-              onToggle={() => toggleProject(project.name)}
-              onModuleToggle={toggleModule}
-              onFeatureSelect={onFeatureSelect}
+          <ProjectItem
+            key={project.name}
+            project={project}
+            isExpanded={expanded.projects.has(project.name)}
+            expandedModules={expanded.modules}
+            selectedFeature={selectedFeature}
+            onToggle={() => toggleProject(project.name)}
+            onModuleToggle={toggleModule}
+            onFeatureSelect={onFeatureSelect}
               onProjectView={onProjectView}
               onModuleView={onModuleView}
-              isFirst={index === 0}
+            isFirst={index === 0}
               hideCompleted={hideCompleted}
-            />
-          ))}
+          />
+        ))}
       </div>
     </div>
   );
@@ -330,8 +330,8 @@ function ProjectItem({
     <div className={`select-none ${isFirst ? "" : "mt-4"}`}>
       {/* 프로젝트 헤더 */}
       <div className="flex items-center gap-1">
-        <button
-          onClick={onToggle}
+      <button
+        onClick={onToggle}
           className="flex-1 h-9 flex items-center gap-2.5 px-2 rounded-lg transition-all"
           style={{ 
             background: isProjectSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
@@ -343,53 +343,53 @@ function ProjectItem({
           onMouseLeave={(e) => {
             if (!isProjectSelected) e.currentTarget.style.background = isProjectSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
           }}
+      >
+        {/* 화살표 */}
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className={`transition-transform flex-shrink-0 ${
+            isExpanded ? "rotate-90" : ""
+          }`}
+          style={{ color: "var(--notion-text-muted)" }}
         >
-          {/* 화살표 */}
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className={`transition-transform flex-shrink-0 ${
-              isExpanded ? "rotate-90" : ""
-            }`}
-            style={{ color: "var(--notion-text-muted)" }}
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
 
-          {/* 프로젝트명 */}
-          <span
-            className="flex-1 text-left font-semibold text-sm truncate"
-            style={{ color: "var(--notion-text)" }}
-          >
-            {project.name}
-          </span>
+        {/* 프로젝트명 */}
+        <span
+          className="flex-1 text-left font-semibold text-sm truncate"
+          style={{ color: "var(--notion-text)" }}
+        >
+          {project.name}
+        </span>
 
           {/* 네트워크 인디케이터 */}
           {hasNetwork && <NetworkIndicator size="sm" />}
 
-          {/* 완료 현황 */}
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
-            style={{
-              background: "var(--notion-bg)",
-              color: "var(--notion-text-muted)",
-            }}
-          >
-            {completedFeatures}/{totalFeatures}
-          </span>
+        {/* 완료 현황 */}
+        <span
+          className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
+          style={{
+            background: "var(--notion-bg)",
+            color: "var(--notion-text-muted)",
+          }}
+        >
+          {completedFeatures}/{totalFeatures}
+        </span>
 
-          {/* 진행률 */}
-          <span
-            className="text-xs font-bold flex-shrink-0"
-            style={{ color: progressColor }}
-          >
-            {metrics.progress}%
-          </span>
-        </button>
+        {/* 진행률 */}
+        <span
+          className="text-xs font-bold flex-shrink-0"
+          style={{ color: progressColor }}
+        >
+          {metrics.progress}%
+        </span>
+      </button>
 
         {/* 보기 버튼 - 프로젝트 버튼과 동일한 높이 */}
         {onProjectView && (
@@ -424,22 +424,22 @@ function ProjectItem({
               return metrics.progress < 100;
             })
             .map((module, index) => {
-              const moduleKey = `${project.name}/${module.name}`;
-              return (
-                <ModuleItem
-                  key={module.name}
-                  module={module}
-                  projectName={project.name}
-                  isExpanded={expandedModules.has(moduleKey)}
-                  selectedFeature={selectedFeature}
-                  onToggle={() => onModuleToggle(moduleKey)}
-                  onFeatureSelect={onFeatureSelect}
+            const moduleKey = `${project.name}/${module.name}`;
+            return (
+              <ModuleItem
+                key={module.name}
+                module={module}
+                projectName={project.name}
+                isExpanded={expandedModules.has(moduleKey)}
+                selectedFeature={selectedFeature}
+                onToggle={() => onModuleToggle(moduleKey)}
+                onFeatureSelect={onFeatureSelect}
                   onModuleView={onModuleView}
-                  isFirst={index === 0}
+                isFirst={index === 0}
                   hideCompleted={hideCompleted}
-                />
-              );
-            })}
+              />
+            );
+          })}
         </div>
       )}
     </div>
@@ -488,8 +488,8 @@ function ModuleItem({
     <div className={isFirst ? "" : "mt-2"}>
       {/* 모듈 헤더 */}
       <div className="flex items-center gap-1">
-        <button
-          onClick={onToggle}
+      <button
+        onClick={onToggle}
           className="flex-1 h-8 flex items-center gap-2 px-2 rounded-md transition-all"
           style={{ 
             background: isModuleSelected ? "rgba(59, 130, 246, 0.1)" : "transparent",
@@ -501,50 +501,50 @@ function ModuleItem({
           onMouseLeave={(e) => {
             if (!isModuleSelected) e.currentTarget.style.background = isModuleSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
           }}
+      >
+        {/* 화살표 */}
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className={`transition-transform flex-shrink-0 ${
+            isExpanded ? "rotate-90" : ""
+          }`}
+          style={{ color: "var(--notion-text-muted)" }}
         >
-          {/* 화살표 */}
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className={`transition-transform flex-shrink-0 ${
-              isExpanded ? "rotate-90" : ""
-            }`}
-            style={{ color: "var(--notion-text-muted)" }}
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
 
-          {/* 모듈명 */}
-          <span
-            className="flex-1 text-left font-medium text-[13px] truncate"
-            style={{ color: "var(--notion-text)" }}
-          >
-            {module.name}
-          </span>
+        {/* 모듈명 */}
+        <span
+          className="flex-1 text-left font-medium text-[13px] truncate"
+          style={{ color: "var(--notion-text)" }}
+        >
+          {module.name}
+        </span>
 
           {/* 네트워크 인디케이터 */}
           {hasNetwork && <NetworkIndicator size="xs" />}
 
-          {/* 완료 현황 */}
-          <span
-            className="text-[10px] flex-shrink-0"
-            style={{ color: "var(--notion-text-muted)" }}
-          >
-            {completedFeatures}/{module.features.length}
-          </span>
+        {/* 완료 현황 */}
+        <span
+          className="text-[10px] flex-shrink-0"
+          style={{ color: "var(--notion-text-muted)" }}
+        >
+          {completedFeatures}/{module.features.length}
+        </span>
 
-          {/* 진행률 */}
-          <span
-            className="text-xs font-bold flex-shrink-0"
-            style={{ color: progressColor }}
-          >
-            {metrics.progress}%
-          </span>
-        </button>
+        {/* 진행률 */}
+        <span
+          className="text-xs font-bold flex-shrink-0"
+          style={{ color: progressColor }}
+        >
+          {metrics.progress}%
+        </span>
+      </button>
 
         {/* 보기 버튼 - 모듈 버튼과 동일한 높이 */}
         {onModuleView && (
@@ -579,19 +579,19 @@ function ModuleItem({
               return metrics.progress < 100;
             })
             .map((feature) => (
-              <FeatureItem
-                key={feature.name}
-                feature={feature}
-                projectName={projectName}
-                moduleName={module.name}
-                isSelected={
-                  selectedFeature?.project === projectName &&
-                  selectedFeature?.module === module.name &&
-                  selectedFeature?.feature === feature.name
-                }
-                onSelect={onFeatureSelect}
-              />
-            ))}
+            <FeatureItem
+              key={feature.name}
+              feature={feature}
+              projectName={projectName}
+              moduleName={module.name}
+              isSelected={
+                selectedFeature?.project === projectName &&
+                selectedFeature?.module === module.name &&
+                selectedFeature?.feature === feature.name
+              }
+              onSelect={onFeatureSelect}
+            />
+          ))}
         </div>
       )}
     </div>

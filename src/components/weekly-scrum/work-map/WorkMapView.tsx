@@ -502,11 +502,11 @@ export function WorkMapView({ items }: WorkMapViewProps) {
           style={{ borderColor: "var(--notion-border)" }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🗺️</span>
-              <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-                Work Map
-              </span>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🗺️</span>
+            <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+              Work Map
+            </span>
               {hasActiveMultiFilters && (
                 <span 
                   className="px-1.5 py-0.5 rounded text-[10px] font-medium"
@@ -601,10 +601,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         {/* 트리 컨텐츠 */}
         <div className="flex-1 overflow-y-auto p-3">
           {viewMode === "project" ? (
-            <DirectoryTree
-              projects={projects}
-              selectedFeature={selection}
-              onFeatureSelect={handleFeatureSelect}
+          <DirectoryTree
+            projects={projects}
+            selectedFeature={selection}
+            onFeatureSelect={handleFeatureSelect}
               onProjectView={handleProjectView}
               onModuleView={handleModuleView}
               hideCompleted={hideCompleted}
@@ -669,7 +669,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   </button>
                   {selection.module && (
                     <>
-                      <span>/</span>
+              <span>/</span>
                       <button
                         onClick={() => handleModuleView(selection.project!, selection.module!)}
                         className={`hover:underline transition-colors ${!selection.feature ? "font-semibold cursor-default" : "cursor-pointer"}`}
@@ -682,10 +682,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   )}
                   {selection.feature && (
                     <>
-                      <span>/</span>
-                      <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-                        {selection.feature}
-                      </span>
+              <span>/</span>
+              <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+                {selection.feature}
+              </span>
                     </>
                   )}
                   {/* 레벨 표시 */}
@@ -722,22 +722,22 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             {/* 협업 네트워크 */}
             {hasCollaborators && (
               <div className="flex-shrink-0 flex flex-col">
-                <div
+              <div
                   className="rounded-2xl overflow-hidden"
-                  style={{
-                    background: "var(--notion-bg)",
-                    border: "1px solid var(--notion-border)",
+                style={{
+                  background: "var(--notion-bg)",
+                  border: "1px solid var(--notion-border)",
                     height: networkHeight,
-                  }}
-                >
-                  <div
+                }}
+              >
+                <div
                     className="px-5 py-4 border-b"
-                    style={{ borderColor: "var(--notion-border)" }}
-                  >
-                    <h2 className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
-                      Collaboration Network
-                    </h2>
-                  </div>
+                  style={{ borderColor: "var(--notion-border)" }}
+                >
+                  <h2 className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+                    Collaboration Network
+                  </h2>
+                </div>
                 <div className="p-4 h-[calc(100%-48px)]">
                   <CollaborationNetworkV2 
                     items={activeFeatureItems} 
@@ -785,7 +785,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             <div
               className="flex-1 overflow-y-auto"
               style={{ minHeight: "200px" }}
-            >
+              >
               <SnapshotList items={activeFeatureItems} />
             </div>
           </>

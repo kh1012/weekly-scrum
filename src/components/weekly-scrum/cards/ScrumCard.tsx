@@ -258,7 +258,7 @@ export function ScrumCard({
         
         {/* 우측: 진행률 + 메뉴 */}
         <div className="flex items-start gap-2">
-          <CircularProgress percent={item.progressPercent} isCompleted={isCompleted} />
+        <CircularProgress percent={item.progressPercent} isCompleted={isCompleted} />
           
           {/* 메뉴 버튼 */}
           <div className="relative" ref={menuRef}>
@@ -347,34 +347,34 @@ export function ScrumCard({
           <ContentSection label="Tasks" items={item.progress} />
           
           {/* Risk */}
-          {item.risk && item.risk.length > 0 && (
+        {item.risk && item.risk.length > 0 && (
             <ContentSection label="Risk" items={item.risk} color={riskColor.text} />
-          )}
-          {isRiskUnknown && (
+        )}
+        {isRiskUnknown && (
             <div className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>
               <span className="font-medium" style={{ color: 'var(--notion-text-tertiary)' }}>Risk: </span>
               <span>미정</span>
             </div>
-          )}
-          
-          {/* Collaborators */}
-          {item.collaborators && item.collaborators.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
+        )}
+
+      {/* Collaborators */}
+      {item.collaborators && item.collaborators.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap">
               <span className="text-[10px] font-medium" style={{ color: 'var(--notion-text-muted)' }}>Collaborators:</span>
-              {item.collaborators.map((collab, idx) => (
-                <span
-                  key={idx}
-                  className="text-[10px] px-1.5 py-0.5 rounded"
-                  style={{
-                    backgroundColor: COLLAB_COLORS[collab.relation]?.bg || 'var(--notion-bg-tertiary)',
-                    color: COLLAB_COLORS[collab.relation]?.text || 'var(--notion-text-secondary)',
-                  }}
-                >
-                  {collab.name}
-                  <span className="opacity-70 ml-0.5">({COLLAB_LABELS[collab.relation]})</span>
-                </span>
-              ))}
-            </div>
+            {item.collaborators.map((collab, idx) => (
+              <span
+                key={idx}
+                className="text-[10px] px-1.5 py-0.5 rounded"
+                style={{
+                  backgroundColor: COLLAB_COLORS[collab.relation]?.bg || 'var(--notion-bg-tertiary)',
+                  color: COLLAB_COLORS[collab.relation]?.text || 'var(--notion-text-secondary)',
+                }}
+              >
+                {collab.name}
+                <span className="opacity-70 ml-0.5">({COLLAB_LABELS[collab.relation]})</span>
+              </span>
+            ))}
+          </div>
           )}
         </div>
       </div>
@@ -440,13 +440,13 @@ function ContentSection({
     <div className="text-xs">
       <span className="font-medium" style={{ color: textColor }}>{label}:</span>
       <ul className="mt-0.5 space-y-0.5 ml-3">
-        {items.map((item, idx) => (
+          {items.map((item, idx) => (
           <li key={idx} className="flex items-start gap-1" style={{ color: 'var(--notion-text)' }}>
             <span className="text-[8px] mt-1" style={{ color: textColor }}>•</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
     </div>
   );
 }
