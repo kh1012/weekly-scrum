@@ -1047,11 +1047,9 @@ export function CollaborationNetworkV2({
                       name: node.name,
                       domain: node.domain,
                     });
-                    // 패널 닫기
-                    setSnapshotPanels((prev) =>
-                      prev.filter((p) => p.nodeId !== panel.nodeId)
-                    );
-                    if (selectedNode === panel.nodeId) setSelectedNode(null);
+                    // 모든 패널 닫기
+                    setSnapshotPanels([]);
+                    setSelectedNode(null);
                   }}
                   title="클릭하여 전체 스냅샷 보기"
                 >
@@ -1462,9 +1460,9 @@ export function CollaborationNetworkV2({
       {/* 중앙 모달 - 전체 스냅샷 리스트 */}
       {modalNode && (
         <div
-          className="fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden rounded-2xl"
+          className="fixed inset-0 z-[2000] flex items-center justify-center"
           style={{
-            background: "rgba(255, 255, 255, 0.3)",
+            background: "rgba(0, 0, 0, 0.3)",
             backdropFilter: "blur(8px)",
             WebkitBackdropFilter: "blur(8px)",
           }}

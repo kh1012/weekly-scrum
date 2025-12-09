@@ -36,10 +36,17 @@ export function SnapshotPersonView({
   onCompareToggle,
   isSelectMode = false,
 }: SnapshotPersonViewProps) {
-  const [expandedPersons, setExpandedPersons] = useState<Set<string>>(new Set());
+  const [expandedPersons, setExpandedPersons] = useState<Set<string>>(
+    new Set()
+  );
 
   if (personGroups.length === 0) {
-    return <EmptyState message="스냅샷이 없습니다" submessage="필터 조건을 변경해보세요" />;
+    return (
+      <EmptyState
+        message="스냅샷이 없습니다"
+        submessage="필터 조건을 변경해보세요"
+      />
+    );
   }
 
   const togglePerson = (name: string) => {
@@ -56,7 +63,10 @@ export function SnapshotPersonView({
 
   const isSelected = (item: ScrumItem) =>
     compareState.selectedItems.some(
-      (i) => i.name === item.name && i.topic === item.topic && i.project === item.project
+      (i) =>
+        i.name === item.name &&
+        i.topic === item.topic &&
+        i.project === item.project
     );
 
   return (
@@ -64,13 +74,16 @@ export function SnapshotPersonView({
       {personGroups.map((group, groupIndex) => {
         const isExpanded = expandedPersons.has(group.name);
         const avgProgress = Math.round(
-          group.items.reduce((sum, item) => sum + item.progressPercent, 0) / group.items.length
+          group.items.reduce((sum, item) => sum + item.progressPercent, 0) /
+            group.items.length
         );
 
         return (
           <div
             key={group.name}
-            className={`interactive-card rounded-2xl overflow-hidden animate-card-reveal ${getStaggerClass(groupIndex)}`}
+            className={`interactive-card rounded-2xl overflow-hidden animate-card-reveal ${getStaggerClass(
+              groupIndex
+            )}`}
             style={{
               background: "var(--notion-bg)",
               border: "1px solid var(--notion-border)",
@@ -93,10 +106,16 @@ export function SnapshotPersonView({
                   {group.name.slice(0, 2)}
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-base" style={{ color: "var(--notion-text)" }}>
+                  <div
+                    className="font-semibold text-base"
+                    style={{ color: "var(--notion-text)" }}
+                  >
                     {group.name}
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: "var(--notion-text-muted)" }}>
+                  <div
+                    className="text-xs mt-0.5"
+                    style={{ color: "var(--notion-text-muted)" }}
+                  >
                     {group.items.length}개 스냅샷 · 평균 {avgProgress}%
                   </div>
                 </div>
@@ -126,18 +145,33 @@ export function SnapshotPersonView({
                   )}
                 </div>
                 {/* 확장 아이콘 */}
-                <div 
+                <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
-                  style={{ background: isExpanded ? "rgba(59, 130, 246, 0.1)" : "transparent" }}
+                  style={{
+                    background: isExpanded
+                      ? "rgba(59, 130, 246, 0.1)"
+                      : "transparent",
+                  }}
                 >
                   <svg
-                    className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    style={{ color: isExpanded ? "#3b82f6" : "var(--notion-text-muted)" }}
+                    style={{
+                      color: isExpanded
+                        ? "#3b82f6"
+                        : "var(--notion-text-muted)",
+                    }}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -145,8 +179,8 @@ export function SnapshotPersonView({
 
             {/* 스냅샷 목록 */}
             {isExpanded && (
-              <div 
-                className="px-5 pb-5 pt-2 animate-content-fade"
+              <div
+                className="px-5 py-5 animate-content-fade"
                 style={{ borderTop: "1px solid var(--notion-border)" }}
               >
                 {displayMode === "card" ? (
@@ -154,7 +188,9 @@ export function SnapshotPersonView({
                     {group.items.map((item, index) => (
                       <div
                         key={`${group.name}-${item.project}-${item.topic}-${index}`}
-                        className={`animate-card-reveal ${getStaggerClass(index)}`}
+                        className={`animate-card-reveal ${getStaggerClass(
+                          index
+                        )}`}
                       >
                         <ScrumCard
                           item={item}
@@ -172,7 +208,9 @@ export function SnapshotPersonView({
                     {group.items.map((item, index) => (
                       <div
                         key={`${group.name}-${item.project}-${item.topic}-${index}`}
-                        className={`animate-list-item ${getStaggerClass(index)}`}
+                        className={`animate-list-item ${getStaggerClass(
+                          index
+                        )}`}
                       >
                         <ScrumListItem
                           item={item}
