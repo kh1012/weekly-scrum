@@ -359,16 +359,21 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
 
     if (dist === 0) return "";
 
-    const startX = source.x + (dx / dist) * sourceRadius;
-    const startY = source.y + (dy / dist) * sourceRadius;
-    const endX = target.x - (dx / dist) * (targetRadius + 8);
-    const endY = target.y - (dy / dist) * (targetRadius + 8);
+    // 수직 방향 벡터 (곡선 방향)
+    const perpX = -dy / dist;
+    const perpY = dx / dist;
+    
+    // 화살표 끝점 오프셋 (관계별로 다른 위치에 도착)
+    const endOffset = curveOffset * 8;
+    
+    const startX = source.x + (dx / dist) * sourceRadius + perpX * (curveOffset * 5);
+    const startY = source.y + (dy / dist) * sourceRadius + perpY * (curveOffset * 5);
+    const endX = target.x - (dx / dist) * (targetRadius + 8) + perpX * endOffset;
+    const endY = target.y - (dy / dist) * (targetRadius + 8) + perpY * endOffset;
 
     // 곡선 - 관계 유형에 따라 다른 방향으로 휘어짐
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
-    const perpX = -dy / dist;
-    const perpY = dx / dist;
     
     // 기본 곡률 + 관계별 오프셋 (pre: 위쪽, pair: 약간, post: 아래쪽)
     const baseCurve = Math.min(dist * 0.08, 20);
