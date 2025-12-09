@@ -792,20 +792,30 @@ export function CollaborationNetworkV2({
                   // 클릭 위치의 우측하단에 패널 생성 (viewport 기준)
                   const viewportWidth = window.innerWidth;
                   const viewportHeight = window.innerHeight;
-                  const clickX = e.clientX;
-                  const clickY = e.clientY;
+                  
+                  // 컨테이너의 위치를 고려하여 offset 계산
+                  // fixed 포지션이 부모 transform에 영향받을 수 있으므로
+                  const containerRect = containerRef.current?.getBoundingClientRect();
+                  const offsetX = containerRect?.left ?? 0;
+                  const offsetY = containerRect?.top ?? 0;
+                  
+                  // 마우스 클릭 위치에서 컨테이너 offset을 빼서 실제 위치 계산
+                  const clickX = e.clientX - offsetX;
+                  const clickY = e.clientY - offsetY;
 
                   // 창의 좌상단이 마우스 클릭 위치에 오도록 설정
                   // 화면을 벗어나지 않도록 경계 처리
                   const panelWidth = 380;
                   const panelHeight = 500;
+                  const containerWidth = containerRect?.width ?? viewportWidth;
+                  const containerHeight = containerRect?.height ?? viewportHeight;
                   const x = Math.max(
                     0,
-                    Math.min(clickX, viewportWidth - panelWidth)
+                    Math.min(clickX, containerWidth - panelWidth)
                   );
                   const y = Math.max(
                     0,
-                    Math.min(clickY, viewportHeight - panelHeight)
+                    Math.min(clickY, containerHeight - panelHeight)
                   );
 
                   setSnapshotPanels((prev) => [
@@ -985,7 +995,7 @@ export function CollaborationNetworkV2({
           return (
             <div
               key={panel.nodeId}
-              className="fixed rounded-xl flex flex-col select-none"
+              className="absolute rounded-xl flex flex-col select-none"
               style={{
                 left: panel.x,
                 top: panel.y,
@@ -1021,8 +1031,10 @@ export function CollaborationNetworkV2({
                   const handleMouseMove = (moveE: MouseEvent) => {
                     const dx = moveE.clientX - startX;
                     const dy = moveE.clientY - startY;
-                    const viewportWidth = window.innerWidth;
-                    const viewportHeight = window.innerHeight;
+                    // 컨테이너 크기 기준으로 경계 처리
+                    const containerRect = containerRef.current?.getBoundingClientRect();
+                    const containerWidth = containerRect?.width ?? window.innerWidth;
+                    const containerHeight = containerRect?.height ?? window.innerHeight;
                     setSnapshotPanels((prev) =>
                       prev.map((p) =>
                         p.nodeId === panel.nodeId
@@ -1030,11 +1042,11 @@ export function CollaborationNetworkV2({
                               ...p,
                               x: Math.max(
                                 0,
-                                Math.min(viewportWidth - 380, startPanelX + dx)
+                                Math.min(containerWidth - 380, startPanelX + dx)
                               ),
                               y: Math.max(
                                 0,
-                                Math.min(viewportHeight - 100, startPanelY + dy)
+                                Math.min(containerHeight - 100, startPanelY + dy)
                               ),
                             }
                           : p
