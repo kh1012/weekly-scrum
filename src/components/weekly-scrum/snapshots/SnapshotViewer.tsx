@@ -15,6 +15,7 @@ const STORAGE_KEY = "snapshot-viewer-state";
 interface StoredState {
   displayMode: DisplayMode;
   isSelectMode?: boolean;
+  viewMode?: SnapshotViewMode;
 }
 
 /**
@@ -57,6 +58,9 @@ export function SnapshotViewer() {
         if (parsed.isSelectMode !== undefined) {
           setIsSelectMode(parsed.isSelectMode);
         }
+        if (parsed.viewMode) {
+          setViewMode(parsed.viewMode);
+        }
       }
     } catch {
       // 무시
@@ -76,6 +80,19 @@ export function SnapshotViewer() {
       // 무시
     }
   }, [isSelectMode, isInitialized]);
+
+  // 뷰 모드 변경 시 저장
+  useEffect(() => {
+    if (!isInitialized) return;
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      const current: StoredState = stored ? JSON.parse(stored) : { displayMode: "card" };
+      current.viewMode = viewMode;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+    } catch {
+      // 무시
+    }
+  }, [viewMode, isInitialized]);
 
   // 컨텍스트 메뉴 외부 클릭 시 닫기
   useEffect(() => {
