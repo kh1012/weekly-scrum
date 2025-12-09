@@ -95,6 +95,7 @@ export function SnapshotViewer() {
   // displayMode 변경 시 저장
   const handleDisplayModeChange = useCallback((mode: DisplayMode) => {
     setDisplayMode(mode);
+    if (!isInitialized) return; // 초기화 전에는 저장하지 않음
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       const current: StoredState = stored ? JSON.parse(stored) : { displayMode: "card" };
@@ -103,7 +104,7 @@ export function SnapshotViewer() {
     } catch {
       // 무시
     }
-  }, []);
+  }, [isInitialized]);
 
   // 사람별 그룹화
   const personGroups = useMemo((): PersonGroup[] => {
