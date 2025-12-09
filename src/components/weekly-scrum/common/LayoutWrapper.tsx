@@ -64,7 +64,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       {/* 메인 영역 */}
       <div
         className={`transition-all duration-200 ${
-          isSidebarOpen ? "lg:ml-60" : "lg:ml-0"
+          isSidebarOpen ? "lg:ml-64" : "lg:ml-0"
         }`}
       >
         <Header
