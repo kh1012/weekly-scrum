@@ -9,7 +9,7 @@ interface LayoutWrapperProps {
 }
 
 // max-w-full을 적용할 페이지 경로
-const FULL_WIDTH_PAGES = ["/matrix", "/quadrant", "/work-map"];
+const FULL_WIDTH_PAGES = ["/matrix", "/quadrant", "/work-map", "/snapshots"];
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

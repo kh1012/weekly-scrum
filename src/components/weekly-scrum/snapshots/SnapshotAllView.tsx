@@ -14,6 +14,13 @@ interface SnapshotAllViewProps {
   onCompareToggle: (item: ScrumItem) => void;
 }
 
+// 카드 그리드 스타일 (최소 320px, 최대 400px)
+const cardGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+  gap: "12px",
+};
+
 export function SnapshotAllView({ items, displayMode, compareState, onCompareToggle }: SnapshotAllViewProps) {
   if (items.length === 0) {
     return <EmptyState message="스냅샷이 없습니다" submessage="필터 조건을 변경해보세요" />;
@@ -36,7 +43,7 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
       {inProgressItems.length > 0 && (
         <section>
           {displayMode === "card" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div style={cardGridStyle}>
               {inProgressItems.map((item, index) => (
                 <ScrumCard
                   key={`progress-${item.name}-${item.project}-${item.topic}-${index}`}
@@ -74,7 +81,7 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
             </span>
           </div>
           {displayMode === "card" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div style={cardGridStyle}>
               {completedItems.map((item, index) => (
                 <ScrumCard
                   key={`completed-${item.name}-${item.project}-${item.topic}-${index}`}

@@ -8,6 +8,13 @@ import { ScrumCard } from "../cards/ScrumCard";
 import { ScrumListItem } from "./ScrumListItem";
 import { EmptyState } from "../common/EmptyState";
 
+// 카드 그리드 스타일 (최소 320px, 최대 자동)
+const cardGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+  gap: "12px",
+};
+
 interface SnapshotPersonViewProps {
   personGroups: PersonGroup[];
   displayMode: DisplayMode;
@@ -127,7 +134,7 @@ export function SnapshotPersonView({
             {isExpanded && (
               <div className="px-4 pb-4">
                 {displayMode === "card" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  <div style={cardGridStyle}>
                     {group.items.map((item, index) => (
                       <ScrumCard
                         key={`${group.name}-${item.project}-${item.topic}-${index}`}
