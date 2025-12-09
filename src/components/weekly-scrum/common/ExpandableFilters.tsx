@@ -80,7 +80,7 @@ function FilterSection({
       >
         <span>{icon}</span>
         <span className="truncate max-w-[80px]">
-          {isFilterActive ? `${title} (${selectedCount})` : `${title} (전체)`}
+          {isFilterActive ? `${title} (${selectedCount})` : title}
         </span>
         <svg
           className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -296,7 +296,7 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
 
   if (isMobile) {
     return (
-      <div className="flex items-center gap-1 w-full overflow-x-auto pb-1">
+      <div className="flex items-center gap-1 w-full overflow-x-auto pb-1 pr-2">
         {/* 리셋 버튼 (좌측) */}
         <ResetButton isMobileStyle />
         
@@ -320,7 +320,7 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 pr-4">
       {/* 리셋 버튼 (좌측) */}
       <ResetButton />
       
