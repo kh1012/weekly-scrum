@@ -154,7 +154,11 @@ export function useWorkMapPersistence(): UseWorkMapPersistenceReturn {
     }
 
     setIsInitialized(true);
-    shouldSave.current = true;
+    
+    // 다음 렌더 사이클에 저장 활성화 (초기 상태 설정 완료 후)
+    setTimeout(() => {
+      shouldSave.current = true;
+    }, 0);
   }, []); // 초기 마운트 시에만 실행 (GNB 필터 변경 시 재초기화 방지)
 
   // 상태 변경 시 저장
