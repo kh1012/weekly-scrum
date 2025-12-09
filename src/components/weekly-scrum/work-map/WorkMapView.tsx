@@ -20,24 +20,53 @@ type MobileView = "tree" | "detail";
 export function WorkMapView({ items }: WorkMapViewProps) {
   // GNB 필터 적용
   const { multiFilters, hasActiveMultiFilters } = useScrumContext();
-  
+
   // GNB 필터가 적용된 아이템
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      if (multiFilters.members.length > 0 && !multiFilters.members.includes(item.name)) return false;
-      if (multiFilters.domains.length > 0 && !multiFilters.domains.includes(item.domain)) return false;
-      if (multiFilters.projects.length > 0 && !multiFilters.projects.includes(item.project)) return false;
-      if (multiFilters.modules.length > 0 && (!item.module || !multiFilters.modules.includes(item.module))) return false;
-      if (multiFilters.features.length > 0 && !multiFilters.features.includes(item.topic)) return false;
+      if (
+        multiFilters.members.length > 0 &&
+        !multiFilters.members.includes(item.name)
+      )
+        return false;
+      if (
+        multiFilters.domains.length > 0 &&
+        !multiFilters.domains.includes(item.domain)
+      )
+        return false;
+      if (
+        multiFilters.projects.length > 0 &&
+        !multiFilters.projects.includes(item.project)
+      )
+        return false;
+      if (
+        multiFilters.modules.length > 0 &&
+        (!item.module || !multiFilters.modules.includes(item.module))
+      )
+        return false;
+      if (
+        multiFilters.features.length > 0 &&
+        !multiFilters.features.includes(item.topic)
+      )
+        return false;
       return true;
     });
   }, [items, multiFilters]);
 
-  const { projects, persons, getProjectByName, getModuleByName, getFeatureByName, getPersonFeatureItems } =
-    useWorkMapData(filteredItems);
+  const {
+    projects,
+    persons,
+    getProjectByName,
+    getModuleByName,
+    getFeatureByName,
+    getPersonFeatureItems,
+  } = useWorkMapData(filteredItems);
 
   // 초기 프로젝트/사람 이름 목록 (persistence 초기화용)
-  const initialProjects = useMemo(() => projects.map((p) => p.name), [projects]);
+  const initialProjects = useMemo(
+    () => projects.map((p) => p.name),
+    [projects]
+  );
   const initialPersons = useMemo(() => persons.map((p) => p.name), [persons]);
 
   // 필터 상태 지속성 Hook
@@ -73,13 +102,16 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 옵션 메뉴 외부 클릭 감지
   useEffect(() => {
     if (!isOptionsOpen) return;
-    
+
     const handleClickOutside = (e: MouseEvent) => {
-      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+      if (
+        optionsRef.current &&
+        !optionsRef.current.contains(e.target as Node)
+      ) {
         setIsOptionsOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOptionsOpen]);
@@ -87,7 +119,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 트리 너비 조절 상태 (기본 450px, Tailwind의 w-[450px]에 해당)
   const [treeWidth, setTreeWidth] = useState(450);
   const isResizing = useRef(false);
-  
+
   // 네트워크 영역 높이 조절 상태 (기본 672px, 최대 960px)
   const [networkHeight, setNetworkHeight] = useState(672);
   const isNetworkResizing = useRef(false);
@@ -107,47 +139,54 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   }, []);
 
   // 리사이즈 핸들러
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    isResizing.current = true;
-    e.preventDefault();
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      isResizing.current = true;
+      e.preventDefault();
 
-    const startX = e.clientX;
-    const startWidth = treeWidth;
+      const startX = e.clientX;
+      const startWidth = treeWidth;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing.current) return;
-      const delta = e.clientX - startX;
-      // 최소 280px, 최대 700px
-      const newWidth = Math.max(280, Math.min(700, startWidth + delta));
-      setTreeWidth(newWidth);
-    };
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isResizing.current) return;
+        const delta = e.clientX - startX;
+        // 최소 280px, 최대 700px
+        const newWidth = Math.max(280, Math.min(700, startWidth + delta));
+        setTreeWidth(newWidth);
+      };
 
-    const handleMouseUp = () => {
-      isResizing.current = false;
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
+      const handleMouseUp = () => {
+        isResizing.current = false;
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  }, [treeWidth]);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [treeWidth]
+  );
 
   // 현재 선택된 레벨과 아이템 (프로젝트 뷰)
   const getSelectedItems = (): ScrumItem[] => {
     if (!selection.project) return [];
-    
+
     // 피쳐 레벨 선택
     if (selection.module && selection.feature) {
-      const feature = getFeatureByName(selection.project, selection.module, selection.feature);
+      const feature = getFeatureByName(
+        selection.project,
+        selection.module,
+        selection.feature
+      );
       return feature?.items || [];
     }
-    
+
     // 모듈 레벨 선택
     if (selection.module) {
       const module = getModuleByName(selection.project, selection.module);
       return module?.items || [];
     }
-    
+
     // 프로젝트 레벨 선택
     const project = getProjectByName(selection.project);
     return project?.items || [];
@@ -155,7 +194,11 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
   // 현재 선택된 피쳐 아이템 (사람 뷰)
   const selectedPersonFeatureItems =
-    personSelection.person && personSelection.domain && personSelection.project && personSelection.module && personSelection.feature
+    personSelection.person &&
+    personSelection.domain &&
+    personSelection.project &&
+    personSelection.module &&
+    personSelection.feature
       ? getPersonFeatureItems(
           personSelection.person,
           personSelection.domain,
@@ -166,20 +209,24 @@ export function WorkMapView({ items }: WorkMapViewProps) {
       : [];
 
   // 현재 활성화된 피쳐 아이템 (뷰 모드에 따라)
-  const activeFeatureItems = viewMode === "project" 
-    ? getSelectedItems()
-    : selectedPersonFeatureItems;
-  
+  const activeFeatureItems =
+    viewMode === "project" ? getSelectedItems() : selectedPersonFeatureItems;
+
   // 선택 레벨 표시용 문자열
   const getSelectionLabel = () => {
     if (!selection.project) return null;
-    if (selection.feature) return `${selection.project} / ${selection.module} / ${selection.feature}`;
+    if (selection.feature)
+      return `${selection.project} / ${selection.module} / ${selection.feature}`;
     if (selection.module) return `${selection.project} / ${selection.module}`;
     return selection.project;
   };
 
   // 피쳐 선택 핸들러 (프로젝트 뷰)
-  const handleFeatureSelect = (project: string, module: string, feature: string) => {
+  const handleFeatureSelect = (
+    project: string,
+    module: string,
+    feature: string
+  ) => {
     setSelection({ project, module, feature });
     // 모바일에서는 detail 뷰로 전환
     if (isMobile) {
@@ -250,14 +297,17 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 모바일 뷰 렌더링
   if (isMobile) {
     return (
-      <div className="h-full flex flex-col" style={{ minHeight: "calc(100vh - 120px)" }}>
+      <div
+        className="h-full flex flex-col"
+        style={{ minHeight: "calc(100vh - 120px)" }}
+      >
         {mobileView === "tree" ? (
           // 모바일: 트리 뷰 (전체 화면)
           <div className="flex-1 flex flex-col">
             {/* 트리 헤더 */}
             <div
               className="flex-shrink-0 px-4 py-3 border-b"
-              style={{ 
+              style={{
                 borderColor: "var(--notion-border)",
                 background: "var(--notion-bg)",
               }}
@@ -265,13 +315,19 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">🗺️</span>
-                  <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+                  <span
+                    className="font-semibold"
+                    style={{ color: "var(--notion-text)" }}
+                  >
                     Work Map
                   </span>
                   {hasActiveMultiFilters && (
-                    <span 
+                    <span
                       className="px-1 py-0.5 rounded text-[9px] font-medium"
-                      style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6" }}
+                      style={{
+                        background: "rgba(59, 130, 246, 0.15)",
+                        color: "#3b82f6",
+                      }}
                     >
                       필터
                     </span>
@@ -283,8 +339,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     onClick={toggleViewMode}
                     className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
                     style={{
-                      background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
-                      color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
+                      background:
+                        viewMode === "person"
+                          ? "rgba(59, 130, 246, 0.15)"
+                          : "var(--notion-bg-secondary)",
+                      color:
+                        viewMode === "person"
+                          ? "#3b82f6"
+                          : "var(--notion-text-muted)",
                     }}
                   >
                     {viewMode === "project" ? "📁" : "👤"}
@@ -295,21 +357,35 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     onClick={() => setIsOptionsOpen(!isOptionsOpen)}
                     className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
                     style={{
-                      background: isOptionsOpen ? "var(--notion-bg-secondary)" : "transparent",
+                      background: isOptionsOpen
+                        ? "var(--notion-bg-secondary)"
+                        : "transparent",
                       color: "var(--notion-text-muted)",
                     }}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      />
                     </svg>
                   </button>
                 </div>
               </div>
-              <div className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
-                {viewMode === "project" 
+              <div
+                className="text-xs mt-1"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                {viewMode === "project"
                   ? `${projects.length} projects · ${filteredItems.length} snapshots`
-                  : `${persons.length} members · ${filteredItems.length} snapshots`
-                }
+                  : `${persons.length} members · ${filteredItems.length} snapshots`}
               </div>
 
               {/* 모바일 옵션 드롭다운 */}
@@ -333,7 +409,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         }}
                         className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                       />
-                      <span className="text-xs" style={{ color: "var(--notion-text)" }}>
+                      <span
+                        className="text-xs"
+                        style={{ color: "var(--notion-text)" }}
+                      >
                         완료 항목 숨김
                       </span>
                     </label>
@@ -343,7 +422,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             </div>
 
             {/* 트리 컨텐츠 - 전체 화면 (스크롤 가능) */}
-            <div className="flex-1 overflow-y-auto p-3" style={{ background: "var(--notion-bg)" }}>
+            <div
+              className="flex-1 overflow-y-auto p-3"
+              style={{ background: "var(--notion-bg)" }}
+            >
               {viewMode === "project" ? (
                 <DirectoryTree
                   projects={projects}
@@ -379,7 +461,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             {/* 헤더 + 뒤로가기 */}
             <div
               className="flex-shrink-0 px-4 py-3 border-b flex items-center gap-3"
-              style={{ 
+              style={{
                 borderColor: "var(--notion-border)",
                 background: "var(--notion-bg)",
               }}
@@ -402,20 +484,21 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 </svg>
               </button>
               <div className="flex-1 min-w-0">
-                <div 
-                  className="text-sm font-medium truncate" 
+                <div
+                  className="text-sm font-medium truncate"
                   style={{ color: "var(--notion-text)" }}
                 >
-                  {viewMode === "project" ? selection.feature : personSelection.feature}
+                  {viewMode === "project"
+                    ? selection.feature
+                    : personSelection.feature}
                 </div>
-                <div 
-                  className="text-xs truncate" 
+                <div
+                  className="text-xs truncate"
                   style={{ color: "var(--notion-text-muted)" }}
                 >
-                  {viewMode === "project" 
+                  {viewMode === "project"
                     ? `${selection.project} / ${selection.module}`
-                    : `${personSelection.person} / ${personSelection.domain}`
-                  }
+                    : `${personSelection.person} / ${personSelection.domain}`}
                 </div>
               </div>
             </div>
@@ -438,15 +521,22 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         className="px-4 py-2 border-b"
                         style={{ borderColor: "var(--notion-border)" }}
                       >
-                        <h2 className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+                        <h2
+                          className="font-semibold text-sm"
+                          style={{ color: "var(--notion-text)" }}
+                        >
                           Collaboration Network
                         </h2>
                       </div>
                       <div className="p-2 h-[calc(100%-40px)]">
-                        <CollaborationNetworkV2 
-                          items={activeFeatureItems} 
+                        <CollaborationNetworkV2
+                          items={activeFeatureItems}
                           allItems={filteredItems}
-                          featureName={viewMode === "project" ? (selection.feature || undefined) : (personSelection.feature || undefined)}
+                          featureName={
+                            viewMode === "project"
+                              ? selection.feature || undefined
+                              : personSelection.feature || undefined
+                          }
                         />
                       </div>
                     </div>
@@ -469,7 +559,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   >
                     📄
                   </div>
-                  <div className="text-base font-medium mb-1" style={{ color: "var(--notion-text)" }}>
+                  <div
+                    className="text-base font-medium mb-1"
+                    style={{ color: "var(--notion-text)" }}
+                  >
                     데이터 없음
                   </div>
                 </div>
@@ -502,15 +595,21 @@ export function WorkMapView({ items }: WorkMapViewProps) {
           style={{ borderColor: "var(--notion-border)" }}
         >
           <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🗺️</span>
-            <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-              Work Map
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🗺️</span>
+              <span
+                className="font-semibold"
+                style={{ color: "var(--notion-text)" }}
+              >
+                Work Map
+              </span>
               {hasActiveMultiFilters && (
-                <span 
+                <span
                   className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                  style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6" }}
+                  style={{
+                    background: "rgba(59, 130, 246, 0.15)",
+                    color: "#3b82f6",
+                  }}
                 >
                   필터 적용됨
                 </span>
@@ -518,7 +617,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             </div>
             <div className="flex items-center gap-2">
               {/* 뷰 모드 토글 (스위치 형태) */}
-              <div 
+              <div
                 className="flex items-center p-0.5 rounded-lg"
                 style={{ background: "var(--notion-bg-secondary)" }}
               >
@@ -526,8 +625,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   onClick={() => setViewMode("project")}
                   className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
                   style={{
-                    background: viewMode === "project" ? "rgba(59, 130, 246, 0.15)" : "transparent",
-                    color: viewMode === "project" ? "#3b82f6" : "var(--notion-text-muted)",
+                    background:
+                      viewMode === "project"
+                        ? "rgba(59, 130, 246, 0.15)"
+                        : "transparent",
+                    color:
+                      viewMode === "project"
+                        ? "#3b82f6"
+                        : "var(--notion-text-muted)",
                   }}
                 >
                   <span>📁</span>
@@ -537,8 +642,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   onClick={() => setViewMode("person")}
                   className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
                   style={{
-                    background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "transparent",
-                    color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
+                    background:
+                      viewMode === "person"
+                        ? "rgba(59, 130, 246, 0.15)"
+                        : "transparent",
+                    color:
+                      viewMode === "person"
+                        ? "#3b82f6"
+                        : "var(--notion-text-muted)",
                   }}
                 >
                   <span>👤</span>
@@ -552,13 +663,25 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   onClick={() => setIsOptionsOpen(!isOptionsOpen)}
                   className="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
                   style={{
-                    background: isOptionsOpen ? "var(--notion-bg-secondary)" : "transparent",
+                    background: isOptionsOpen
+                      ? "var(--notion-bg-secondary)"
+                      : "transparent",
                     color: "var(--notion-text-muted)",
                   }}
                   title="옵션"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
                   </svg>
                 </button>
 
@@ -580,7 +703,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                           onChange={(e) => setHideCompleted(e.target.checked)}
                           className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                         />
-                        <span className="text-xs" style={{ color: "var(--notion-text)" }}>
+                        <span
+                          className="text-xs"
+                          style={{ color: "var(--notion-text)" }}
+                        >
                           완료 항목 숨김
                         </span>
                       </label>
@@ -590,21 +716,23 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               </div>
             </div>
           </div>
-          <div className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
-            {viewMode === "project" 
+          <div
+            className="text-xs mt-1"
+            style={{ color: "var(--notion-text-muted)" }}
+          >
+            {viewMode === "project"
               ? `${projects.length} projects · ${filteredItems.length} snapshots`
-              : `${persons.length} members · ${filteredItems.length} snapshots`
-            }
+              : `${persons.length} members · ${filteredItems.length} snapshots`}
           </div>
         </div>
 
         {/* 트리 컨텐츠 */}
         <div className="flex-1 overflow-y-auto p-3">
           {viewMode === "project" ? (
-          <DirectoryTree
-            projects={projects}
-            selectedFeature={selection}
-            onFeatureSelect={handleFeatureSelect}
+            <DirectoryTree
+              projects={projects}
+              selectedFeature={selection}
+              onFeatureSelect={handleFeatureSelect}
               onProjectView={handleProjectView}
               onModuleView={handleModuleView}
               hideCompleted={hideCompleted}
@@ -635,9 +763,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         className="w-1 flex-shrink-0 cursor-col-resize group relative"
         onMouseDown={handleMouseDown}
       >
-        <div
-          className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center"
-        >
+        <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
           <div
             className="w-1 h-8 rounded-full transition-colors group-hover:bg-blue-400"
             style={{ background: "var(--notion-border)" }}
@@ -656,24 +782,48 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               border: "1px solid var(--notion-border)",
             }}
           >
-            <div className="flex items-center gap-2 text-sm" style={{ color: "var(--notion-text-muted)" }}>
+            <div
+              className="flex items-center gap-2 text-sm"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
               {viewMode === "project" ? (
                 <>
                   <button
                     onClick={() => handleProjectView(selection.project!)}
-                    className={`hover:underline transition-colors ${!selection.module ? "font-semibold cursor-default" : "cursor-pointer"}`}
-                    style={{ color: !selection.module ? "var(--notion-text)" : undefined }}
+                    className={`hover:underline transition-colors ${
+                      !selection.module
+                        ? "font-semibold cursor-default"
+                        : "cursor-pointer"
+                    }`}
+                    style={{
+                      color: !selection.module
+                        ? "var(--notion-text)"
+                        : undefined,
+                    }}
                     disabled={!selection.module}
                   >
                     {selection.project}
                   </button>
                   {selection.module && (
                     <>
-              <span>/</span>
+                      <span>/</span>
                       <button
-                        onClick={() => handleModuleView(selection.project!, selection.module!)}
-                        className={`hover:underline transition-colors ${!selection.feature ? "font-semibold cursor-default" : "cursor-pointer"}`}
-                        style={{ color: !selection.feature ? "var(--notion-text)" : undefined }}
+                        onClick={() =>
+                          handleModuleView(
+                            selection.project!,
+                            selection.module!
+                          )
+                        }
+                        className={`hover:underline transition-colors ${
+                          !selection.feature
+                            ? "font-semibold cursor-default"
+                            : "cursor-pointer"
+                        }`}
+                        style={{
+                          color: !selection.feature
+                            ? "var(--notion-text)"
+                            : undefined,
+                        }}
                         disabled={!selection.feature}
                       >
                         {selection.module}
@@ -682,23 +832,33 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   )}
                   {selection.feature && (
                     <>
-              <span>/</span>
-              <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
-                {selection.feature}
-              </span>
+                      <span>/</span>
+                      <span
+                        className="font-semibold"
+                        style={{ color: "var(--notion-text)" }}
+                      >
+                        {selection.feature}
+                      </span>
                     </>
                   )}
                   {/* 레벨 표시 */}
-                  <span 
+                  <span
                     className="ml-2 text-xs px-1.5 py-0.5 rounded"
                     style={{ background: "var(--notion-bg-secondary)" }}
                   >
-                    {selection.feature ? "Feature" : selection.module ? "Module" : "Project"}
+                    {selection.feature
+                      ? "Feature"
+                      : selection.module
+                      ? "Module"
+                      : "Project"}
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="font-semibold" style={{ color: "var(--notion-accent)" }}>
+                  <span
+                    className="font-semibold"
+                    style={{ color: "var(--notion-accent)" }}
+                  >
                     {personSelection.person}
                   </span>
                   <span>/</span>
@@ -708,7 +868,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   <span>/</span>
                   <span>{personSelection.module}</span>
                   <span>/</span>
-                  <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+                  <span
+                    className="font-semibold"
+                    style={{ color: "var(--notion-text)" }}
+                  >
                     {personSelection.feature}
                   </span>
                 </>
@@ -718,37 +881,44 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         )}
 
         {activeFeatureItems.length > 0 ? (
-          <>
+          <div className="pb-6">
             {/* 협업 네트워크 */}
             {hasCollaborators && (
               <div className="flex-shrink-0 flex flex-col">
-              <div
-                  className="rounded-2xl overflow-hidden"
-                style={{
-                  background: "var(--notion-bg)",
-                  border: "1px solid var(--notion-border)",
-                    height: networkHeight,
-                }}
-              >
                 <div
-                    className="px-5 py-4 border-b"
-                  style={{ borderColor: "var(--notion-border)" }}
+                  className="rounded-2xl overflow-hidden"
+                  style={{
+                    background: "var(--notion-bg)",
+                    border: "1px solid var(--notion-border)",
+                    height: networkHeight,
+                  }}
                 >
-                  <h2 className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
-                    Collaboration Network
-                  </h2>
-                </div>
-                <div className="p-4 h-[calc(100%-48px)]">
-                  <CollaborationNetworkV2 
-                    items={activeFeatureItems} 
-                    allItems={filteredItems}
-                    featureName={viewMode === "project" ? (selection.feature || undefined) : (personSelection.feature || undefined)}
-                  />
-                </div>
+                  <div
+                    className="px-5 py-4 border-b"
+                    style={{ borderColor: "var(--notion-border)" }}
+                  >
+                    <h2
+                      className="font-semibold text-sm"
+                      style={{ color: "var(--notion-text)" }}
+                    >
+                      Collaboration Network
+                    </h2>
+                  </div>
+                  <div className="p-4 h-[calc(100%-48px)]">
+                    <CollaborationNetworkV2
+                      items={activeFeatureItems}
+                      allItems={filteredItems}
+                      featureName={
+                        viewMode === "project"
+                          ? selection.feature || undefined
+                          : personSelection.feature || undefined
+                      }
+                    />
+                  </div>
                 </div>
                 {/* 네트워크 높이 조절 핸들 */}
                 <div
-                  className="h-2 flex-shrink-0 cursor-row-resize group flex items-center justify-center"
+                  className="h-4 flex-shrink-0 cursor-row-resize group flex items-center justify-center"
                   onMouseDown={(e) => {
                     isNetworkResizing.current = true;
                     e.preventDefault();
@@ -759,13 +929,19 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     const handleMouseMove = (moveE: MouseEvent) => {
                       if (!isNetworkResizing.current) return;
                       const delta = moveE.clientY - startY;
-                      const newHeight = Math.max(250, Math.min(960, startHeight + delta));
+                      const newHeight = Math.max(
+                        250,
+                        Math.min(960, startHeight + delta)
+                      );
                       setNetworkHeight(newHeight);
                     };
 
                     const handleMouseUp = () => {
                       isNetworkResizing.current = false;
-                      document.removeEventListener("mousemove", handleMouseMove);
+                      document.removeEventListener(
+                        "mousemove",
+                        handleMouseMove
+                      );
                       document.removeEventListener("mouseup", handleMouseUp);
                     };
 
@@ -782,13 +958,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             )}
 
             {/* 스냅샷 목록 */}
-            <div
-              className="flex-1 overflow-y-auto"
-              style={{ minHeight: "200px" }}
-              >
+            <div className="flex-1" style={{ minHeight: "200px" }}>
               <SnapshotList items={activeFeatureItems} />
             </div>
-          </>
+          </div>
         ) : (
           /* 빈 상태 */
           <div
@@ -804,10 +977,16 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             >
               📄
             </div>
-            <div className="text-lg font-medium mb-2" style={{ color: "var(--notion-text)" }}>
+            <div
+              className="text-lg font-medium mb-2"
+              style={{ color: "var(--notion-text)" }}
+            >
               피쳐를 선택하세요
             </div>
-            <div className="text-sm text-center" style={{ color: "var(--notion-text-muted)" }}>
+            <div
+              className="text-sm text-center"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
               좌측 트리에서 피쳐를 선택하면
               <br />
               협업 네트워크와 스냅샷 정보가 표시됩니다

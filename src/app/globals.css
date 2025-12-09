@@ -65,10 +65,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  background: var(--notion-bg);
+  min-height: 100%;
+}
+
 body {
   background: var(--notion-bg);
   color: var(--notion-text);
-  min-height: 100vh;
+  min-height: 100%;
   line-height: 1.5;
   font-size: 14px;
 }
