@@ -11,10 +11,9 @@ v2 스냅샷은 다음 6가지 구조로 이루어진다.
 
 1. **헤더**: `[Domain / Project / Module / Feature]` 형식
 2. **Name**: 작성자 이름
-3. **Define**: Domain, Project, Module, Feature 명시
-4. **Past Week**: 지난 주 수행 내용 (Tasks, Risk, RiskLevel, Collaborators)
-5. **This Week**: 이번 주 계획 (Tasks)
-6. **Optional 필드**: Risk, RiskLevel, Collaborators는 값이 없으면 `None`으로 명시
+3. **Past Week**: 지난 주 수행 내용 (Tasks, Risk, RiskLevel, Collaborators)
+4. **This Week**: 이번 주 계획 (Tasks)
+5. **Optional 필드**: Risk, RiskLevel, Collaborators는 값이 없으면 `None`으로 명시
 
 ---
 
@@ -93,29 +92,11 @@ domain은 "이번 일을 어떤 **관점**에서 수행했는가"를 나타내�
 
 ---
 
-# 4. Define 블록
-
-Domain, Project, Module, Feature를 명시적으로 정의하는 블록.
-
-```
-* Define
-    * Domain: Frontend
-    * Project: MOTIIV
-    * Module: Spreadsheet
-    * Feature: Rich-note
-```
-
-**규칙:**
-- 헤더와 동일한 값을 가져야 한다.
-- 파서가 정확한 계층 구조를 인식하기 위해 필수로 작성한다.
-
----
-
-# 5. Past Week 블록
+# 4. Past Week 블록
 
 지난 주 실제 수행 내용을 기록하는 블록.
 
-## 5.1 Tasks (필수)
+## 4.1 Tasks (필수)
 
 한 줄당 하나의 task를 기록하며, **반드시 괄호 안에 진행률 %를 포함**한다.
 
@@ -132,7 +113,7 @@ Domain, Project, Module, Feature를 명시적으로 정의하는 블록.
 - 100%는 완료된 작업을 의미
 - 진행률을 기반으로 Feature/Module/Project 단위 집계가 이루어진다.
 
-## 5.2 Risk (Optional)
+## 4.2 Risk (Optional)
 
 작업 과정에서 발생한 리스크 또는 잠재적 문제 요소.
 
@@ -146,7 +127,7 @@ Domain, Project, Module, Feature를 명시적으로 정의하는 블록.
     * Risk: None
 ```
 
-## 5.3 RiskLevel (Optional)
+## 4.3 RiskLevel (Optional)
 
 리스크의 심각도 레벨 (숫자).
 
@@ -166,7 +147,7 @@ Domain, Project, Module, Feature를 명시적으로 정의하는 블록.
     * RiskLevel: None
 ```
 
-## 5.4 Collaborators (Optional)
+## 4.4 Collaborators (Optional)
 
 이번 주 실제 협업 흐름을 기록.
 
@@ -194,11 +175,11 @@ Domain, Project, Module, Feature를 명시적으로 정의하는 블록.
 
 ---
 
-# 6. This Week 블록
+# 5. This Week 블록
 
 이번 주 계획을 기록하는 블록.
 
-## 6.1 Tasks (필수)
+## 5.1 Tasks (필수)
 
 한 줄당 하나의 task를 기록하며, **진행률 없이 텍스트만 작성**한다.
 
@@ -209,9 +190,6 @@ Domain, Project, Module, Feature를 명시적으로 정의하는 블록.
         * Formula Tracer와 연동되는 하이라이트 UI 구현
         * 단축키 충돌 테스트 시나리오 작성 및 QA 공유
 ```
-
-**향후 확장:**
-- Collaborators 필드가 추가될 수 있다.
 
 ---
 
@@ -298,11 +276,6 @@ Risk, RiskLevel, Collaborators 세 필드는 모두 **Optional**이다.
 ```
 [Domain / Project / Module / Feature]
 * Name: {string}
-* Define
-    * Domain: {string}
-    * Project: {string}
-    * Module: {string}
-    * Feature: {string}
 * Past Week
     * Tasks
         * {task description} ({progress}%)
