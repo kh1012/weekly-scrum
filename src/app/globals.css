@@ -347,7 +347,11 @@ select option {
     color: var(--notion-text);
   }
 
-  /* 애니메이션 */
+  /* ============================================
+     Airbnb-Inspired Interaction Animations
+     ============================================ */
+
+  /* 기본 페이드 인 */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-4px); }
     to { opacity: 1; transform: translateY(0); }
@@ -355,5 +359,301 @@ select option {
 
   .animate-fadeIn {
     animation: fadeIn 0.2s ease-out;
+  }
+
+  /* Stagger 카드 등장 애니메이션 */
+  @keyframes cardReveal {
+    0% { 
+      opacity: 0; 
+      transform: translateY(20px) scale(0.98);
+    }
+    100% { 
+      opacity: 1; 
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-card-reveal {
+    animation: cardReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+  }
+
+  /* Stagger delay 클래스 (CSS custom property 사용) */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+  .stagger-7 { animation-delay: 0.35s; }
+  .stagger-8 { animation-delay: 0.4s; }
+
+  /* 슬라이드 인 (좌측에서) */
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* 슬라이드 인 (우측에서) */
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* 스케일 인 */
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Bounce 인 */
+  @keyframes bounceIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* 펄스 효과 (선택된 항목) */
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  }
+
+  .animate-pulse-ring {
+    animation: pulse-ring 1.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  /* ============================================
+     Airbnb-Style Card & Interactive Elements
+     ============================================ */
+
+  /* 인터랙티브 카드 (호버 리프트) */
+  .interactive-card {
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, box-shadow;
+  }
+
+  .interactive-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 12px 28px rgba(0, 0, 0, 0.08),
+      0 4px 10px rgba(0, 0, 0, 0.04);
+  }
+
+  .interactive-card:active {
+    transform: translateY(-2px) scale(0.99);
+  }
+
+  /* 선택 가능한 카드 (선택 모드) */
+  .selectable-card {
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    cursor: pointer;
+  }
+
+  .selectable-card:hover {
+    transform: scale(1.01);
+    box-shadow: 
+      0 8px 20px rgba(59, 130, 246, 0.1),
+      0 2px 8px rgba(59, 130, 246, 0.05);
+  }
+
+  .selectable-card.selected {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 
+      0 0 0 2px rgba(59, 130, 246, 0.2),
+      0 8px 20px rgba(59, 130, 246, 0.12);
+  }
+
+  /* 버튼 인터랙션 */
+  .interactive-btn {
+    transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, background;
+  }
+
+  .interactive-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .interactive-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* 툴바 탭 전환 */
+  @keyframes tabSlide {
+    from { opacity: 0.5; transform: scaleX(0.8); }
+    to { opacity: 1; transform: scaleX(1); }
+  }
+
+  .tab-indicator {
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* 섹션 헤더 등장 */
+  @keyframes sectionReveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-section-reveal {
+    animation: sectionReveal 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* 콘텐츠 영역 페이드 */
+  @keyframes contentFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .animate-content-fade {
+    animation: contentFade 0.4s ease-out forwards;
+  }
+
+  /* ============================================
+     Smooth Transitions for State Changes
+     ============================================ */
+
+  /* 뷰 전환 애니메이션 */
+  @keyframes viewTransition {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .view-transition-enter {
+    animation: viewTransition 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* 리스트 아이템 등장 */
+  @keyframes listItemReveal {
+    from { 
+      opacity: 0; 
+      transform: translateX(-10px);
+    }
+    to { 
+      opacity: 1; 
+      transform: translateX(0);
+    }
+  }
+
+  .animate-list-item {
+    animation: listItemReveal 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+  }
+
+  /* 트리 노드 확장/축소 */
+  @keyframes expandNode {
+    from { opacity: 0; height: 0; }
+    to { opacity: 1; height: auto; }
+  }
+
+  /* ============================================
+     Glassmorphism & Modern Effects
+     ============================================ */
+
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-border {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* 부드러운 그라데이션 배경 */
+  .gradient-subtle {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(249, 250, 251, 1) 100%
+    );
+  }
+
+  /* 섹션 구분 그라데이션 */
+  .section-gradient {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.02) 100%
+    );
+  }
+
+  /* ============================================
+     Loading States
+     ============================================ */
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--notion-bg-secondary) 25%,
+      var(--notion-bg-hover) 50%,
+      var(--notion-bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* ============================================
+     Focus & Accessibility
+     ============================================ */
+
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 
+      0 0 0 2px var(--notion-bg),
+      0 0 0 4px var(--notion-blue);
+  }
+
+  /* ============================================
+     Context Menu Animations
+     ============================================ */
+
+  @keyframes contextMenuIn {
+    from { 
+      opacity: 0; 
+      transform: scale(0.95) translateY(-4px);
+    }
+    to { 
+      opacity: 1; 
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .animate-context-menu {
+    animation: contextMenuIn 0.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* ============================================
+     Tooltip Animations
+     ============================================ */
+
+  @keyframes tooltipIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-tooltip {
+    animation: tooltipIn 0.15s ease-out forwards;
   }
 }

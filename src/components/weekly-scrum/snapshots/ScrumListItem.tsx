@@ -48,10 +48,21 @@ export function ScrumListItem({
   // risk가 null이면 미정 상태
   const isRiskUnknown = item.risk === null && item.riskLevel === null;
 
+  // 아이템 스타일 클래스 결정
+  const itemClasses = [
+    "notion-card",
+    isSelectMode ? "selectable-card" : "interactive-card",
+    isCompleted ? "opacity-60" : "",
+    isCompareSelected ? "selected" : "",
+  ].filter(Boolean).join(" ");
+
   return (
     <div
-      className={`notion-card transition-all duration-150 ${isCompleted ? "opacity-60" : ""} ${isCompareSelected ? "ring-2 ring-blue-500" : ""}`}
-      style={{ borderColor: riskLevel >= 2 ? riskColor.border : "var(--notion-border)" }}
+      className={itemClasses}
+      style={{ 
+        borderColor: riskLevel >= 2 ? riskColor.border : "var(--notion-border)",
+        borderRadius: "12px",
+      }}
     >
       {/* 접힌 상태: 주요 정보만 표시 */}
       <div

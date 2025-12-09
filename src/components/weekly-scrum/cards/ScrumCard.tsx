@@ -178,10 +178,22 @@ export function ScrumCard({
     }
   };
 
+  // 카드 스타일 클래스 결정
+  const cardClasses = [
+    "notion-card",
+    "p-4",
+    isSelectMode ? "selectable-card" : "interactive-card",
+    isCompleted ? "opacity-60" : "",
+    isCompareSelected ? "selected animate-pulse-ring" : "",
+  ].filter(Boolean).join(" ");
+
   return (
     <div
-      className={`notion-card p-3 transition-all duration-150 ${isCompleted ? "opacity-60" : ""} ${isCompareSelected ? "ring-2 ring-blue-500" : ""} ${isSelectMode ? "cursor-pointer hover:shadow-md" : ""}`}
-      style={{ borderColor: riskLevel >= 2 ? riskColor.border : 'var(--notion-border)' }}
+      className={cardClasses}
+      style={{ 
+        borderColor: riskLevel >= 2 ? riskColor.border : 'var(--notion-border)',
+        borderRadius: '12px',
+      }}
       onClick={handleCardClick}
     >
       {/* 복사 메시지 토스트 */}

@@ -484,12 +484,12 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 데스크톱 뷰 렌더링
   return (
     <div
-      className="flex"
+      className="flex gap-1"
       style={{ height: "calc(100vh - 120px)", minHeight: "600px" }}
     >
       {/* 좌측: 디렉토리 트리 */}
       <div
-        className="flex-shrink-0 rounded-xl overflow-hidden flex flex-col"
+        className="flex-shrink-0 rounded-2xl overflow-hidden flex flex-col animate-slide-in-left interactive-card"
         style={{
           width: treeWidth,
           background: "var(--notion-bg)",
@@ -646,11 +646,11 @@ export function WorkMapView({ items }: WorkMapViewProps) {
       </div>
 
       {/* 우측: 협업 네트워크 + 스냅샷 */}
-      <div className="flex-1 flex flex-col gap-4 min-w-0 ml-3">
+      <div className="flex-1 flex flex-col gap-4 min-w-0 ml-3 animate-slide-in-right">
         {/* 선택된 정보 헤더 */}
         {activeFeatureItems.length > 0 && (
           <div
-            className="flex-shrink-0 px-5 py-3 rounded-xl"
+            className="flex-shrink-0 px-5 py-4 rounded-2xl interactive-card animate-card-reveal"
             style={{
               background: "var(--notion-bg)",
               border: "1px solid var(--notion-border)",
@@ -721,9 +721,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
           <>
             {/* 협업 네트워크 */}
             {hasCollaborators && (
-              <div className="flex-shrink-0 flex flex-col">
+              <div className="flex-shrink-0 flex flex-col animate-card-reveal stagger-1">
                 <div
-                  className="rounded-xl overflow-hidden"
+                  className="rounded-2xl overflow-hidden interactive-card"
                   style={{
                     background: "var(--notion-bg)",
                     border: "1px solid var(--notion-border)",
@@ -732,7 +732,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   }}
                 >
                   <div
-                    className="px-4 py-3 border-b"
+                    className="px-5 py-4 border-b"
                     style={{ borderColor: "var(--notion-border)" }}
                   >
                     <h2 className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>

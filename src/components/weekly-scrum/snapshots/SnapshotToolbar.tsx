@@ -62,22 +62,26 @@ export function SnapshotToolbar({
   }, [viewMode]);
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-4 animate-slide-in-left">
       {/* 뷰 모드 탭 - 슬라이딩 인디케이터 */}
       <div 
         ref={tabsRef}
-        className="relative flex items-center gap-1 p-1 rounded-lg"
-        style={{ background: "white" }}
+        className="relative flex items-center gap-1 p-1.5 rounded-xl"
+        style={{ 
+          background: "var(--notion-bg-secondary)",
+          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+        }}
       >
         {/* 슬라이딩 인디케이터 */}
         <div
-          className="absolute rounded-md transition-all duration-200 ease-out"
+          className="absolute rounded-lg tab-indicator"
           style={{
             left: indicatorStyle.left,
             width: indicatorStyle.width,
-            top: 4,
-            bottom: 4,
-            background: "rgba(59, 130, 246, 0.15)",
+            top: 6,
+            bottom: 6,
+            background: "white",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
           }}
         />
         
@@ -85,42 +89,49 @@ export function SnapshotToolbar({
           <button
             key={mode.key}
             onClick={() => onViewModeChange(mode.key)}
-            className="relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+            className="relative z-10 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 interactive-btn"
             style={{
               color: viewMode === mode.key ? "#3b82f6" : "var(--notion-text-muted)",
             }}
           >
-            <span>{mode.icon}</span>
+            <span className="text-base">{mode.icon}</span>
             <span>{mode.label}</span>
           </button>
         ))}
       </div>
 
       {/* 우측 영역 */}
-      <div className="flex items-center gap-3 ml-auto">
+      <div className="flex items-center gap-3 ml-auto animate-slide-in-right">
         {/* 비교 기능 */}
         {compareCount > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
-              {compareCount}개 선택됨
+          <div className="flex items-center gap-2 animate-bounce-in">
+            <span 
+              className="text-xs font-medium px-2 py-1 rounded-lg"
+              style={{ 
+                color: "#3b82f6",
+                background: "rgba(59, 130, 246, 0.08)",
+              }}
+            >
+              {compareCount}개 선택
             </span>
             <button
               onClick={onClearCompare}
-              className="px-2 py-1 rounded text-xs transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all interactive-btn"
               style={{
                 background: "var(--notion-bg-secondary)",
                 color: "var(--notion-text-muted)",
               }}
             >
-              선택 취소
+              취소
             </button>
             {compareCount >= 2 && (
               <button
                 onClick={onOpenCompare}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold transition-all interactive-btn"
                 style={{
-                  background: "rgba(59, 130, 246, 0.15)",
-                  color: "#3b82f6",
+                  background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                  color: "white",
+                  boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)",
                 }}
               >
                 🔍 비교하기
@@ -132,11 +143,14 @@ export function SnapshotToolbar({
         {/* 선택 모드 토글 */}
         <button
           onClick={onToggleSelectMode}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all interactive-btn"
           style={{
-            background: isSelectMode ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+            background: isSelectMode 
+              ? "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.1))" 
+              : "var(--notion-bg-secondary)",
             color: isSelectMode ? "#3b82f6" : "var(--notion-text-muted)",
-            border: isSelectMode ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid transparent",
+            border: isSelectMode ? "1px solid rgba(59, 130, 246, 0.25)" : "1px solid transparent",
+            boxShadow: isSelectMode ? "0 2px 8px rgba(59, 130, 246, 0.1)" : "none",
           }}
           title="선택 모드 (카드를 클릭하여 선택)"
         >
@@ -147,13 +161,20 @@ export function SnapshotToolbar({
         </button>
 
         {/* 카드/리스트 토글 */}
-        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "white" }}>
+        <div 
+          className="flex items-center gap-1 p-1.5 rounded-xl" 
+          style={{ 
+            background: "var(--notion-bg-secondary)",
+            boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
           <button
             onClick={() => onDisplayModeChange("card")}
-            className="flex items-center justify-center w-7 h-7 rounded transition-all"
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all interactive-btn"
             style={{
-              background: displayMode === "card" ? "rgba(59, 130, 246, 0.15)" : "transparent",
+              background: displayMode === "card" ? "white" : "transparent",
               color: displayMode === "card" ? "#3b82f6" : "var(--notion-text-muted)",
+              boxShadow: displayMode === "card" ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
             }}
             title="카드 보기"
           >
@@ -166,10 +187,11 @@ export function SnapshotToolbar({
           </button>
           <button
             onClick={() => onDisplayModeChange("list")}
-            className="flex items-center justify-center w-7 h-7 rounded transition-all"
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all interactive-btn"
             style={{
-              background: displayMode === "list" ? "rgba(59, 130, 246, 0.15)" : "transparent",
+              background: displayMode === "list" ? "white" : "transparent",
               color: displayMode === "list" ? "#3b82f6" : "var(--notion-text-muted)",
+              boxShadow: displayMode === "list" ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
             }}
             title="리스트 보기"
           >

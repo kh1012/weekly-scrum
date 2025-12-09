@@ -22,19 +22,21 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
 
   return (
     <div
-      className="border-b last:border-b-0 transition-all"
+      className="border-b last:border-b-0 transition-all duration-200"
       style={{ borderColor: "var(--notion-border)" }}
     >
       {/* 접힌 상태: 주요 내용만 표시 */}
       <button
         onClick={onToggle}
-        className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors"
+        className="w-full text-left px-5 py-3.5 flex items-center gap-3 transition-all duration-200 group"
         style={{ background: "transparent" }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(0, 0, 0, 0.02)";
+          e.currentTarget.style.background = "rgba(0, 0, 0, 0.015)";
+          e.currentTarget.style.transform = "translateX(2px)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.transform = "translateX(0)";
         }}
       >
         {/* 확장/축소 아이콘 */}
@@ -108,7 +110,7 @@ function SnapshotListItem({ item, isExpanded, onToggle }: {
       {/* 확장된 상태: 전체 내용 */}
       {isExpanded && (
         <div
-          className="px-4 pb-4 pt-2 ml-8"
+          className="px-5 pb-5 pt-3 ml-8 animate-content-fade"
         >
           {/* 경로 정보 */}
           <div className="mb-3 text-xs" style={{ color: "var(--notion-text-muted)" }}>
@@ -257,16 +259,16 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
   };
 
   return (
-    <div>
+    <div className="animate-card-reveal stagger-2">
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+      <div className="flex items-center justify-between mb-4 px-1">
+        <div className="text-xs font-medium" style={{ color: "var(--notion-text-muted)" }}>
           {items.length}개 스냅샷
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button
             onClick={expandAll}
-            className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
+            className="px-3 py-1.5 text-xs rounded-lg transition-all interactive-btn"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",
@@ -276,7 +278,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
           </button>
           <button
             onClick={collapseAll}
-            className="px-2 py-1 text-xs rounded transition-colors hover:bg-opacity-80"
+            className="px-3 py-1.5 text-xs rounded-lg transition-all interactive-btn"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-muted)",
@@ -289,7 +291,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
 
       {/* 리스트 */}
       <div
-        className="rounded-xl overflow-hidden"
+        className="rounded-2xl overflow-hidden interactive-card"
         style={{ 
           background: "var(--notion-bg)", 
           border: "1px solid var(--notion-border)",
@@ -307,10 +309,10 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
 
       {/* 더보기/접기 버튼 */}
       {hasMore && (
-        <div className="flex justify-center mt-4">
+        <div className="flex justify-center mt-5">
           <button
             onClick={() => setShowAll(!showAll)}
-            className="px-4 py-2 text-sm rounded-lg transition-colors"
+            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-all interactive-btn"
             style={{
               background: "var(--notion-bg-secondary)",
               color: "var(--notion-text-secondary)",
