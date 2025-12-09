@@ -96,8 +96,10 @@ export function SnapshotViewer() {
   const handleDisplayModeChange = useCallback((mode: DisplayMode) => {
     setDisplayMode(mode);
     try {
-      const state: StoredState = { displayMode: mode };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const stored = localStorage.getItem(STORAGE_KEY);
+      const current: StoredState = stored ? JSON.parse(stored) : { displayMode: "card" };
+      current.displayMode = mode;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
     } catch {
       // 무시
     }
