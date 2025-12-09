@@ -116,8 +116,8 @@ function FilterSection({
             <span className="text-xs font-semibold" style={{ color: "var(--notion-text)" }}>
               {title}
             </span>
-            <div className="flex items-center gap-1">
-              {/* 전체 선택 버튼 */}
+            {/* 전체 선택 버튼 (일부 선택된 경우에만 표시) */}
+            {hasSelection && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -125,29 +125,13 @@ function FilterSection({
                 }}
                 className="px-2 py-0.5 text-[10px] rounded transition-colors"
                 style={{
-                  color: isAllSelected ? "#3b82f6" : "var(--notion-text-muted)",
-                  background: isAllSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+                  color: "#3b82f6",
+                  background: "rgba(59, 130, 246, 0.1)",
                 }}
               >
                 전체 선택
               </button>
-              {/* 전체 해제 버튼 */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // 모든 옵션을 선택하면 필터가 적용됨 (아무것도 표시 안됨 방지를 위해 하나만 남김)
-                  // 실제로는 빈 배열로 만들면 전체 표시이므로, 모든 값을 선택해서 필터링
-                  onSelectAll(enabledOptions.map((opt) => opt.value));
-                }}
-                className="px-2 py-0.5 text-[10px] rounded transition-colors"
-                style={{
-                  color: hasSelection && !isAllSelected ? "#ef4444" : "var(--notion-text-muted)",
-                  background: hasSelection && !isAllSelected ? "rgba(239, 68, 68, 0.1)" : "var(--notion-bg-secondary)",
-                }}
-              >
-                전체 해제
-              </button>
-            </div>
+            )}
           </div>
 
           {/* 옵션 목록 */}
