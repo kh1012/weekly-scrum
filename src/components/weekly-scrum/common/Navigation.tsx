@@ -146,7 +146,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
   // 초기 마운트 시에만 활성화된 아이템이 있는 카테고리 자동 펼침
   useEffect(() => {
     if (!isInitialized) return; // 초기화 전에만 실행
-    
+
     NAV_CATEGORIES.forEach((category) => {
       const hasActiveItem = category.items.some((item) => isActive(item.href));
       if (hasActiveItem && collapsedCategories.has(category.key)) {

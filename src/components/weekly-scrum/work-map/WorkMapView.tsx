@@ -62,13 +62,6 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     getPersonFeatureItems,
   } = useWorkMapData(filteredItems);
 
-  // 초기 프로젝트/사람 이름 목록 (persistence 초기화용)
-  const initialProjects = useMemo(
-    () => projects.map((p) => p.name),
-    [projects]
-  );
-  const initialPersons = useMemo(() => persons.map((p) => p.name), [persons]);
-
   // 필터 상태 지속성 Hook
   const {
     hideCompleted,
@@ -90,10 +83,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     personSelection,
     setPersonSelection,
     isInitialized,
-  } = useWorkMapPersistence({
-    initialProjects,
-    initialPersons,
-  });
+  } = useWorkMapPersistence();
 
   // 옵션 메뉴 상태
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);

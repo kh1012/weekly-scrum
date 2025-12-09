@@ -24,10 +24,10 @@ interface PersonExpandedState {
   modules: Set<string>;
 }
 
-interface UseWorkMapPersistenceOptions {
-  initialProjects?: string[];
-  initialPersons?: string[];
-}
+// interface UseWorkMapPersistenceOptions {
+//   initialProjects?: string[];
+//   initialPersons?: string[];
+// }
 
 interface UseWorkMapPersistenceReturn {
   // 기본 필터 상태
@@ -86,10 +86,7 @@ const defaultPersonSelection: PersonSelection = {
   feature: null,
 };
 
-export function useWorkMapPersistence(
-  options: UseWorkMapPersistenceOptions = {}
-): UseWorkMapPersistenceReturn {
-  const { initialProjects = [], initialPersons = [] } = options;
+export function useWorkMapPersistence(): UseWorkMapPersistenceReturn {
   const [isInitialized, setIsInitialized] = useState(false);
 
   // 기본 필터 상태
@@ -158,7 +155,7 @@ export function useWorkMapPersistence(
 
     setIsInitialized(true);
     shouldSave.current = true;
-  }, [initialProjects, initialPersons]);
+  }, []); // 초기 마운트 시에만 실행 (GNB 필터 변경 시 재초기화 방지)
 
   // 상태 변경 시 저장
   useEffect(() => {
