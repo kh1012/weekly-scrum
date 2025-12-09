@@ -509,7 +509,23 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
+          onClick={(e) => {
+            // SVG 배경 클릭 시 선택 해제
+            if (e.target === e.currentTarget) {
+              setSelectedNode(null);
+            }
+          }}
         >
+          {/* 배경 클릭 영역 */}
+          <rect
+            x={vbX}
+            y={vbY}
+            width={vbWidth}
+            height={vbHeight}
+            fill="transparent"
+            onClick={() => setSelectedNode(null)}
+          />
+
           <defs>
             {/* pre 화살표 마커 (주황색) */}
             <marker id="arrow-pre-v2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
@@ -797,10 +813,46 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
                 });
               }}
             >
-              {/* 헤더 (드래그 핸들) */}
+              {/* 헤더 (드래그 핸들) - 전체 헤더 드래그 가능 */}
               <div
-                className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
+                className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0 cursor-move"
                 style={{ borderColor: "var(--notion-border)" }}
+                onMouseDown={(e) => {
+                  // 버튼 클릭은 제외
+                  if ((e.target as HTMLElement).closest("button")) return;
+                  
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const startPanelX = panel.x;
+                  const startPanelY = panel.y;
+
+                  const handleMouseMove = (moveE: MouseEvent) => {
+                    const dx = moveE.clientX - startX;
+                    const dy = moveE.clientY - startY;
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    setSnapshotPanels(prev =>
+                      prev.map(p =>
+                        p.nodeId === panel.nodeId
+                          ? {
+                              ...p,
+                              x: Math.max(0, Math.min(viewportWidth - 380, startPanelX + dx)),
+                              y: Math.max(0, Math.min(viewportHeight - 100, startPanelY + dy)),
+                            }
+                          : p
+                      )
+                    );
+                  };
+
+                  const handleMouseUp = () => {
+                    document.removeEventListener("mousemove", handleMouseMove);
+                    document.removeEventListener("mouseup", handleMouseUp);
+                  };
+
+                  document.addEventListener("mousemove", handleMouseMove);
+                  document.addEventListener("mouseup", handleMouseUp);
+                }}
               >
                 {/* 이름 영역 - 클릭 시 중앙 모달 */}
                 <button
@@ -833,61 +885,18 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
                   </div>
                 </button>
                 
-                {/* 드래그 핸들 + 닫기 */}
-                <div className="flex items-center gap-2">
-                  {/* 드래그 핸들 */}
-                  <div
-                    className="w-8 h-8 flex items-center justify-center cursor-move rounded-full hover:bg-gray-100"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const startX = e.clientX;
-                      const startY = e.clientY;
-                      const startPanelX = panel.x;
-                      const startPanelY = panel.y;
-
-                      const handleMouseMove = (moveE: MouseEvent) => {
-                        const dx = moveE.clientX - startX;
-                        const dy = moveE.clientY - startY;
-                        const viewportWidth = window.innerWidth;
-                        const viewportHeight = window.innerHeight;
-                        setSnapshotPanels(prev =>
-                          prev.map(p =>
-                            p.nodeId === panel.nodeId
-                              ? {
-                                  ...p,
-                                  x: Math.max(0, Math.min(viewportWidth - 380, startPanelX + dx)),
-                                  y: Math.max(0, Math.min(viewportHeight - 100, startPanelY + dy)),
-                                }
-                              : p
-                          )
-                        );
-                      };
-
-                      const handleMouseUp = () => {
-                        document.removeEventListener("mousemove", handleMouseMove);
-                        document.removeEventListener("mouseup", handleMouseUp);
-                      };
-
-                      document.addEventListener("mousemove", handleMouseMove);
-                      document.addEventListener("mouseup", handleMouseUp);
-                    }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "var(--notion-text-muted)" }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                    </svg>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSnapshotPanels(prev => prev.filter(p => p.nodeId !== panel.nodeId));
-                      if (selectedNode === panel.nodeId) setSelectedNode(null);
-                    }}
-                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-sm"
-                    style={{ color: "var(--notion-text-muted)" }}
-                  >
-                    ✕
-                  </button>
-                </div>
+                {/* 닫기 버튼 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSnapshotPanels(prev => prev.filter(p => p.nodeId !== panel.nodeId));
+                    if (selectedNode === panel.nodeId) setSelectedNode(null);
+                  }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-sm"
+                  style={{ color: "var(--notion-text-muted)" }}
+                >
+                  ✕
+                </button>
               </div>
 
               {/* 필터 토글 */}
@@ -1147,8 +1156,12 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
       {/* 중앙 모달 - 전체 스냅샷 리스트 */}
       {modalNode && (
         <div
-          className="fixed inset-0 z-[2000] flex items-center justify-center"
-          style={{ background: "rgba(0, 0, 0, 0.5)" }}
+          className="fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden"
+          style={{ 
+            background: "rgba(0, 0, 0, 0.3)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
           onClick={() => setModalNode(null)}
         >
           <div
