@@ -1073,12 +1073,12 @@ export function CollaborationNetworkV2({
               return (
                 <div
                   key={panel.nodeId}
-                  className="fixed rounded-xl flex flex-col select-none"
+                  className="fixed rounded-xl flex flex-col select-none overflow-y-auto"
                   style={{
                     left: panel.x,
                     top: panel.y,
-                    width: "380px",
-                    maxHeight: "500px",
+                    width: "400px",
+                    maxHeight: "80vh",
                     background: "rgba(255,255,255,0.98)",
                     border: "1px solid var(--notion-border)",
                     boxShadow: "0 12px 32px rgba(0,0,0,0.2)",
@@ -1239,7 +1239,7 @@ export function CollaborationNetworkV2({
                   </div>
 
                   {/* 스냅샷 목록 */}
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+                  <div className="p-3 space-y-2.5">
                     {personSnapshots.length === 0 ? (
                       <div
                         className="text-center py-6 text-sm"
