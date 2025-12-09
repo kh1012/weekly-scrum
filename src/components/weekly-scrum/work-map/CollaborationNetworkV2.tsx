@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import type { ScrumItem, Relation } from "@/types/scrum";
 import { DOMAIN_COLORS } from "@/lib/colorDefines";
+import { ScrumCard } from "../cards/ScrumCard";
 
 interface CollaborationNetworkV2Props {
   items: ScrumItem[];
@@ -794,12 +795,19 @@ export function CollaborationNetworkV2({
                   const clickX = e.clientX;
                   const clickY = e.clientY;
 
+                  // 창의 좌상단이 마우스 클릭 위치에 오도록 설정
+                  // 화면을 벗어나지 않도록 경계 처리
+                  const panelWidth = 380;
+                  const panelHeight = 500;
+                  const x = Math.max(0, Math.min(clickX, viewportWidth - panelWidth));
+                  const y = Math.max(0, Math.min(clickY, viewportHeight - panelHeight));
+
                   setSnapshotPanels((prev) => [
                     ...prev,
                     {
                       nodeId: node.id,
-                      x: Math.min(clickX + 20, viewportWidth - 400),
-                      y: Math.min(clickY + 10, viewportHeight - 520),
+                      x,
+                      y,
                       showOnlyFeature: false,
                       expandedSnapshots: new Set<number>(),
                     },
@@ -1517,185 +1525,18 @@ export function CollaborationNetworkV2({
               </button>
             </div>
 
-            {/* 모달 본문 - 스냅샷 리스트 */}
+            {/* 모달 본문 - 스냅샷 카드 리스트 */}
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-4">
                 {(allItems || items)
                   .filter((snapshot) => snapshot.name === modalNode.name)
-                  .map((snapshot, idx) => {
-                    const progressColor =
-                      snapshot.progressPercent >= 80
-                        ? "#22c55e"
-                        : snapshot.progressPercent >= 50
-                        ? "#3b82f6"
-                        : "#f59e0b";
-
-                    return (
-                      <div
-                        key={idx}
-                        className="rounded-xl p-4"
-                        style={{
-                          background: "var(--notion-bg-secondary)",
-                          border: "1px solid var(--notion-border)",
-                        }}
-                      >
-                        {/* 상단: 도메인 + 피쳐명 + 진행률 */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span
-                              className="text-xs px-2 py-0.5 rounded flex-shrink-0"
-                              style={{
-                                background: `${getDomainColor(
-                                  snapshot.domain
-                                )}20`,
-                                color: getDomainColor(snapshot.domain),
-                              }}
-                            >
-                              {snapshot.domain}
-                            </span>
-                            <span
-                              className="font-semibold text-sm truncate"
-                              style={{ color: "var(--notion-text)" }}
-                              title={snapshot.topic}
-                            >
-                              {snapshot.topic}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                            {snapshot.risk && snapshot.risk.length > 0 && (
-                              <span
-                                className="text-xs"
-                                style={{ color: "#ef4444" }}
-                              >
-                                ⚠️
-                              </span>
-                            )}
-                            <span
-                              className="text-sm font-bold"
-                              style={{ color: progressColor }}
-                            >
-                              {snapshot.progressPercent}%
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* 경로 */}
-                        <div
-                          className="text-xs mb-3"
-                          style={{ color: "var(--notion-text-muted)" }}
-                        >
-                          📁 {snapshot.project} / {snapshot.module || "—"}
-                        </div>
-
-                        {/* 진행률 바 */}
-                        <div className="mb-3">
-                          <div
-                            className="h-1.5 rounded-full overflow-hidden"
-                            style={{ background: "var(--notion-bg)" }}
-                          >
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${snapshot.progressPercent}%`,
-                                background: progressColor,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* 완료된 작업 */}
-                        {snapshot.progress && snapshot.progress.length > 0 && (
-                          <div className="mb-2">
-                            <div
-                              className="text-xs font-medium mb-1"
-                              style={{ color: "var(--notion-text-muted)" }}
-                            >
-                              완료된 작업
-                            </div>
-                            <ul className="space-y-1">
-                              {snapshot.progress.slice(0, 3).map((p, i) => (
-                                <li
-                                  key={i}
-                                  className="text-xs flex items-start gap-1.5"
-                                  style={{
-                                    color: "var(--notion-text-secondary)",
-                                  }}
-                                >
-                                  <span className="text-green-500 flex-shrink-0">
-                                    ✓
-                                  </span>
-                                  <span>{p}</span>
-                                </li>
-                              ))}
-                              {snapshot.progress.length > 3 && (
-                                <li
-                                  className="text-xs"
-                                  style={{ color: "var(--notion-text-muted)" }}
-                                >
-                                  +{snapshot.progress.length - 3} more
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* 다음 계획 */}
-                        {snapshot.next && snapshot.next.length > 0 && (
-                          <div className="mb-2">
-                            <div
-                              className="text-xs font-medium mb-1"
-                              style={{ color: "var(--notion-text-muted)" }}
-                            >
-                              다음 계획
-                            </div>
-                            <ul className="space-y-1">
-                              {snapshot.next.slice(0, 2).map((n, i) => (
-                                <li
-                                  key={i}
-                                  className="text-xs flex items-start gap-1.5"
-                                  style={{
-                                    color: "var(--notion-text-secondary)",
-                                  }}
-                                >
-                                  <span className="text-blue-500 flex-shrink-0">
-                                    →
-                                  </span>
-                                  <span>{n}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* 리스크 */}
-                        {snapshot.risk && snapshot.risk.length > 0 && (
-                          <div>
-                            <div
-                              className="text-xs font-medium mb-1"
-                              style={{ color: "#ef4444" }}
-                            >
-                              리스크{" "}
-                              {snapshot.riskLevel !== null &&
-                                snapshot.riskLevel !== undefined &&
-                                `(R${snapshot.riskLevel})`}
-                            </div>
-                            <ul className="space-y-1">
-                              {snapshot.risk.map((r, i) => (
-                                <li
-                                  key={i}
-                                  className="text-xs flex items-start gap-1.5"
-                                  style={{ color: "#ef4444" }}
-                                >
-                                  <span className="flex-shrink-0">⚠</span>
-                                  <span>{r}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  .map((snapshot, idx) => (
+                    <ScrumCard
+                      key={`${snapshot.topic}-${idx}`}
+                      item={snapshot}
+                      isCompleted={snapshot.progressPercent >= 100}
+                    />
+                  ))}
               </div>
             </div>
           </div>
