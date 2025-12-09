@@ -51,6 +51,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     key: "views",
     label: "뷰",
     items: [
+      { key: "snapshots", label: "스냅샷 뷰어", href: "/snapshots", emoji: "📸" },
       { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
       { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
       { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
