@@ -10,9 +10,25 @@
  * - expandedDomains: 펼쳐진 도메인 목록
  * - expandedPersonProjects: 펼쳐진 사람-프로젝트 목록
  * - expandedPersonModules: 펼쳐진 사람-모듈 목록
+ * - selection: 선택된 프로젝트/모듈/피쳐 (프로젝트 뷰)
+ * - personSelection: 선택된 사람/도메인/프로젝트/모듈/피쳐 (사람 뷰)
  */
 
 export const STORAGE_KEY = "workmap-filter-state";
+
+export interface WorkMapSelection {
+  project: string | null;
+  module: string | null;
+  feature: string | null;
+}
+
+export interface PersonSelection {
+  person: string | null;
+  domain: string | null;
+  project: string | null;
+  module: string | null;
+  feature: string | null;
+}
 
 export interface WorkMapFilterState {
   hideCompleted: boolean;
@@ -23,6 +39,8 @@ export interface WorkMapFilterState {
   expandedDomains: string[];
   expandedPersonProjects: string[];
   expandedPersonModules: string[];
+  selection: WorkMapSelection | null;
+  personSelection: PersonSelection | null;
 }
 
 const defaultState: WorkMapFilterState = {
@@ -34,6 +52,8 @@ const defaultState: WorkMapFilterState = {
   expandedDomains: [],
   expandedPersonProjects: [],
   expandedPersonModules: [],
+  selection: null,
+  personSelection: null,
 };
 
 /**

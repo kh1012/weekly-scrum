@@ -8,26 +8,33 @@ import { DirectoryTree, PersonTree } from "./DirectoryTree";
 import { CollaborationNetworkV2 } from "./CollaborationNetworkV2";
 import { SnapshotList } from "./SnapshotList";
 import { useWorkMapPersistence } from "./persistence";
+import { useScrumContext } from "@/context/ScrumContext";
 
 interface WorkMapViewProps {
   items: ScrumItem[];
-}
-
-// 사람 뷰 선택 상태 타입
-interface PersonSelection {
-  person: string | null;
-  domain: string | null;
-  project: string | null;
-  module: string | null;
-  feature: string | null;
 }
 
 // 모바일 뷰 상태 타입
 type MobileView = "tree" | "detail";
 
 export function WorkMapView({ items }: WorkMapViewProps) {
+  // GNB 필터 적용
+  const { multiFilters, hasActiveMultiFilters } = useScrumContext();
+  
+  // GNB 필터가 적용된 아이템
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      if (multiFilters.members.length > 0 && !multiFilters.members.includes(item.name)) return false;
+      if (multiFilters.domains.length > 0 && !multiFilters.domains.includes(item.domain)) return false;
+      if (multiFilters.projects.length > 0 && !multiFilters.projects.includes(item.project)) return false;
+      if (multiFilters.modules.length > 0 && (!item.module || !multiFilters.modules.includes(item.module))) return false;
+      if (multiFilters.features.length > 0 && !multiFilters.features.includes(item.topic)) return false;
+      return true;
+    });
+  }, [items, multiFilters]);
+
   const { projects, persons, getProjectByName, getModuleByName, getFeatureByName, getPersonFeatureItems } =
-    useWorkMapData(items);
+    useWorkMapData(filteredItems);
 
   // 초기 프로젝트/사람 이름 목록 (persistence 초기화용)
   const initialProjects = useMemo(() => projects.map((p) => p.name), [projects]);
@@ -49,26 +56,33 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     togglePersonProject,
     togglePersonModule,
     expandPersonPath,
+    selection,
+    setSelection,
+    personSelection,
+    setPersonSelection,
     isInitialized,
   } = useWorkMapPersistence({
     initialProjects,
     initialPersons,
   });
 
-  const [selection, setSelection] = useState<WorkMapSelection>({
-    project: null,
-    module: null,
-    feature: null,
-  });
+  // 옵션 메뉴 상태
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const optionsRef = useRef<HTMLDivElement>(null);
 
-  // 사람 뷰 선택 상태
-  const [personSelection, setPersonSelection] = useState<PersonSelection>({
-    person: null,
-    domain: null,
-    project: null,
-    module: null,
-    feature: null,
-  });
+  // 옵션 메뉴 외부 클릭 감지
+  useEffect(() => {
+    if (!isOptionsOpen) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+        setIsOptionsOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOptionsOpen]);
 
   // 트리 너비 조절 상태 (기본 450px, Tailwind의 w-[450px]에 해당)
   const [treeWidth, setTreeWidth] = useState(450);
@@ -254,52 +268,78 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
                     Work Map
                   </span>
+                  {hasActiveMultiFilters && (
+                    <span 
+                      className="px-1 py-0.5 rounded text-[9px] font-medium"
+                      style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6" }}
+                    >
+                      필터
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* 100% 숨김 토글 */}
-                  <button
-                    onClick={() => setHideCompleted(!hideCompleted)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
-                    style={{
-                      background: hideCompleted ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
-                      color: hideCompleted ? "#3b82f6" : "var(--notion-text-muted)",
-                      boxShadow: hideCompleted ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
-                    }}
-                    title={hideCompleted ? "100% 항목 표시" : "100% 항목 숨기기"}
-                  >
-                    <span>✓</span>
-                    <span className="hidden sm:inline">100%</span>
-                  </button>
+                <div className="flex items-center gap-1">
                   {/* 뷰 모드 토글 */}
                   <button
                     onClick={toggleViewMode}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
                     style={{
                       background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
                       color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
-                      boxShadow: viewMode === "person" ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
                     }}
                   >
-                    {viewMode === "project" ? (
-                      <>
-                        <span>📁</span>
-                        <span>Project</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>👤</span>
-                        <span>Person</span>
-                      </>
-                    )}
+                    {viewMode === "project" ? "📁" : "👤"}
+                  </button>
+
+                  {/* 옵션 버튼 */}
+                  <button
+                    onClick={() => setIsOptionsOpen(!isOptionsOpen)}
+                    className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
+                    style={{
+                      background: isOptionsOpen ? "var(--notion-bg-secondary)" : "transparent",
+                      color: "var(--notion-text-muted)",
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
                   </button>
                 </div>
               </div>
               <div className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
                 {viewMode === "project" 
-                  ? `${projects.length} projects · ${items.length} snapshots`
-                  : `${persons.length} members · ${items.length} snapshots`
+                  ? `${projects.length} projects · ${filteredItems.length} snapshots`
+                  : `${persons.length} members · ${filteredItems.length} snapshots`
                 }
               </div>
+
+              {/* 모바일 옵션 드롭다운 */}
+              {isOptionsOpen && (
+                <div
+                  className="absolute right-3 top-14 w-44 rounded-lg overflow-hidden z-50 animate-fadeIn"
+                  style={{
+                    background: "var(--notion-bg)",
+                    boxShadow: "var(--notion-shadow-lg)",
+                    border: "1px solid var(--notion-border)",
+                  }}
+                >
+                  <div className="p-2">
+                    <label className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hideCompleted}
+                        onChange={(e) => {
+                          setHideCompleted(e.target.checked);
+                          setIsOptionsOpen(false);
+                        }}
+                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                      />
+                      <span className="text-xs" style={{ color: "var(--notion-text)" }}>
+                        완료 항목 숨김
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 트리 컨텐츠 - 전체 화면 (스크롤 가능) */}
@@ -405,7 +445,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       <div className="p-2 h-[calc(100%-40px)] overflow-hidden">
                         <CollaborationNetworkV2 
                           items={activeFeatureItems} 
-                          allItems={items}
+                          allItems={filteredItems}
                           featureName={viewMode === "project" ? (selection.feature || undefined) : (personSelection.feature || undefined)}
                         />
                       </div>
@@ -467,26 +507,20 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
                 Work Map
               </span>
+              {hasActiveMultiFilters && (
+                <span 
+                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                  style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6" }}
+                >
+                  필터 적용됨
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
-              {/* 100% 숨김 토글 */}
-              <button
-                onClick={() => setHideCompleted(!hideCompleted)}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors"
-                style={{
-                  background: hideCompleted ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
-                  color: hideCompleted ? "#3b82f6" : "var(--notion-text-muted)",
-                  boxShadow: hideCompleted ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
-                }}
-                title={hideCompleted ? "100% 항목 표시" : "100% 항목 숨기기"}
-              >
-                <span>✓</span>
-                <span>100%</span>
-              </button>
               {/* 뷰 모드 토글 */}
               <button
                 onClick={toggleViewMode}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-colors"
                 style={{
                   background: viewMode === "person" ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
                   color: viewMode === "person" ? "#3b82f6" : "var(--notion-text-muted)",
@@ -505,12 +539,55 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   </>
                 )}
               </button>
+
+              {/* 옵션 메뉴 */}
+              <div className="relative" ref={optionsRef}>
+                <button
+                  onClick={() => setIsOptionsOpen(!isOptionsOpen)}
+                  className="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+                  style={{
+                    background: isOptionsOpen ? "var(--notion-bg-secondary)" : "transparent",
+                    color: "var(--notion-text-muted)",
+                  }}
+                  title="옵션"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </button>
+
+                {/* 옵션 드롭다운 */}
+                {isOptionsOpen && (
+                  <div
+                    className="absolute right-0 top-full mt-1 w-48 rounded-lg overflow-hidden z-50 animate-fadeIn"
+                    style={{
+                      background: "var(--notion-bg)",
+                      boxShadow: "var(--notion-shadow-lg)",
+                      border: "1px solid var(--notion-border)",
+                    }}
+                  >
+                    <div className="p-2">
+                      <label className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={hideCompleted}
+                          onChange={(e) => setHideCompleted(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="text-xs" style={{ color: "var(--notion-text)" }}>
+                          완료 항목 숨김
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
             {viewMode === "project" 
-              ? `${projects.length} projects · ${items.length} snapshots`
-              : `${persons.length} members · ${items.length} snapshots`
+              ? `${projects.length} projects · ${filteredItems.length} snapshots`
+              : `${persons.length} members · ${filteredItems.length} snapshots`
             }
           </div>
         </div>
@@ -649,7 +726,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 <div className="p-4 h-[calc(100%-48px)] overflow-hidden">
                   <CollaborationNetworkV2 
                     items={activeFeatureItems} 
-                    allItems={items}
+                    allItems={filteredItems}
                     featureName={viewMode === "project" ? (selection.feature || undefined) : (personSelection.feature || undefined)}
                   />
                 </div>

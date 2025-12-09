@@ -8,6 +8,8 @@ import {
   parseQueryString,
   updateQueryString,
   type WorkMapFilterState,
+  type WorkMapSelection,
+  type PersonSelection,
 } from "./index";
 
 interface ExpandedState {
@@ -53,6 +55,12 @@ interface UseWorkMapPersistenceReturn {
     moduleKey?: string
   ) => void;
 
+  // 선택 상태
+  selection: WorkMapSelection;
+  setSelection: (selection: WorkMapSelection) => void;
+  personSelection: PersonSelection;
+  setPersonSelection: (selection: PersonSelection) => void;
+
   // 상태 초기화 여부
   isInitialized: boolean;
 }
@@ -64,6 +72,20 @@ interface UseWorkMapPersistenceReturn {
  * - QueryString 우선 적용
  * - 상태 변경 시 자동 저장
  */
+const defaultSelection: WorkMapSelection = {
+  project: null,
+  module: null,
+  feature: null,
+};
+
+const defaultPersonSelection: PersonSelection = {
+  person: null,
+  domain: null,
+  project: null,
+  module: null,
+  feature: null,
+};
+
 export function useWorkMapPersistence(
   options: UseWorkMapPersistenceOptions = {}
 ): UseWorkMapPersistenceReturn {
@@ -87,6 +109,10 @@ export function useWorkMapPersistence(
     projects: new Set<string>(),
     modules: new Set<string>(),
   });
+
+  // 선택 상태
+  const [selection, setSelectionState] = useState<WorkMapSelection>(defaultSelection);
+  const [personSelection, setPersonSelectionState] = useState<PersonSelection>(defaultPersonSelection);
 
   // 초기화 완료 후 저장 활성화 플래그
   const shouldSave = useRef(false);
@@ -131,6 +157,14 @@ export function useWorkMapPersistence(
       modules: new Set(mergedState.expandedPersonModules),
     });
 
+    // 선택 상태 복원
+    if (mergedState.selection) {
+      setSelectionState(mergedState.selection);
+    }
+    if (mergedState.personSelection) {
+      setPersonSelectionState(mergedState.personSelection);
+    }
+
     setIsInitialized(true);
     shouldSave.current = true;
   }, [initialProjects, initialPersons]);
@@ -148,11 +182,13 @@ export function useWorkMapPersistence(
       expandedDomains: Array.from(personExpanded.domains),
       expandedPersonProjects: Array.from(personExpanded.projects),
       expandedPersonModules: Array.from(personExpanded.modules),
+      selection,
+      personSelection,
     });
 
     // QueryString 업데이트
     updateQueryString({ hideCompleted, viewMode });
-  }, [hideCompleted, viewMode, expanded, personExpanded]);
+  }, [hideCompleted, viewMode, expanded, personExpanded, selection, personSelection]);
 
   // hideCompleted setter
   const setHideCompleted = useCallback((value: boolean) => {
@@ -290,6 +326,15 @@ export function useWorkMapPersistence(
     []
   );
 
+  // 선택 상태 setter
+  const setSelection = useCallback((newSelection: WorkMapSelection) => {
+    setSelectionState(newSelection);
+  }, []);
+
+  const setPersonSelection = useCallback((newSelection: PersonSelection) => {
+    setPersonSelectionState(newSelection);
+  }, []);
+
   return {
     hideCompleted,
     setHideCompleted,
@@ -305,6 +350,10 @@ export function useWorkMapPersistence(
     togglePersonProject,
     togglePersonModule,
     expandPersonPath,
+    selection,
+    setSelection,
+    personSelection,
+    setPersonSelection,
     isInitialized,
   };
 }
