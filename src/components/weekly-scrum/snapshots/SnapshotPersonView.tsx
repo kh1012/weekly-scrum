@@ -10,8 +10,6 @@ import { EmptyState } from "../common/EmptyState";
 
 interface SnapshotPersonViewProps {
   personGroups: PersonGroup[];
-  selectedPerson: string | null;
-  onPersonChange: (person: string | null) => void;
   displayMode: DisplayMode;
   compareState: CompareState;
   onCompareToggle: (item: ScrumItem) => void;
@@ -19,7 +17,6 @@ interface SnapshotPersonViewProps {
 
 export function SnapshotPersonView({
   personGroups,
-  selectedPerson,
   displayMode,
   compareState,
   onCompareToggle,
@@ -29,11 +26,6 @@ export function SnapshotPersonView({
   if (personGroups.length === 0) {
     return <EmptyState message="스냅샷이 없습니다" submessage="필터 조건을 변경해보세요" />;
   }
-
-  // 선택된 사람만 필터링
-  const displayGroups = selectedPerson
-    ? personGroups.filter((g) => g.name === selectedPerson)
-    : personGroups;
 
   const togglePerson = (name: string) => {
     setExpandedPersons((prev) => {
@@ -54,7 +46,7 @@ export function SnapshotPersonView({
 
   return (
     <div className="space-y-4">
-      {displayGroups.map((group) => {
+      {personGroups.map((group) => {
         const isExpanded = expandedPersons.has(group.name);
         const avgProgress = Math.round(
           group.items.reduce((sum, item) => sum + item.progressPercent, 0) / group.items.length
@@ -72,7 +64,7 @@ export function SnapshotPersonView({
             {/* 헤더 */}
             <button
               onClick={() => togglePerson(group.name)}
-              className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-gray-50/50"
+              className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-gray-50/50 text-left"
             >
               <div className="flex items-center gap-3">
                 {/* 아바타 */}
@@ -140,7 +132,7 @@ export function SnapshotPersonView({
                       <ScrumCard
                         key={`${group.name}-${item.project}-${item.topic}-${index}`}
                         item={item}
-                        isCompleted={item.progressPercent >= 100}
+                        isCompleted={false}
                         showCompareCheckbox={true}
                         isCompareSelected={isSelected(item)}
                         onCompareToggle={onCompareToggle}
@@ -153,7 +145,7 @@ export function SnapshotPersonView({
                       <ScrumListItem
                         key={`${group.name}-${item.project}-${item.topic}-${index}`}
                         item={item}
-                        isCompleted={item.progressPercent >= 100}
+                        isCompleted={false}
                         showCompareCheckbox={true}
                         isCompareSelected={isSelected(item)}
                         onCompareToggle={onCompareToggle}

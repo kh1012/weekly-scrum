@@ -32,10 +32,9 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
 
   return (
     <div className="space-y-6">
-      {/* 진행 중인 항목 */}
+      {/* 진행 중인 항목 (헤더 없이 바로 표시) */}
       {inProgressItems.length > 0 && (
         <section>
-          <SectionHeader color="bg-blue-500" title="진행 중" count={inProgressItems.length} />
           {displayMode === "card" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {inProgressItems.map((item, index) => (
@@ -69,14 +68,18 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
       {/* 완료된 항목 */}
       {completedItems.length > 0 && (
         <section>
-          <SectionHeader color="bg-green-500" title="완료" count={completedItems.length} />
+          <div className="flex items-center gap-2 mb-3 pt-4" style={{ borderTop: "1px solid var(--notion-border)" }}>
+            <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+              완료된 항목 ({completedItems.length})
+            </span>
+          </div>
           {displayMode === "card" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {completedItems.map((item, index) => (
                 <ScrumCard
                   key={`completed-${item.name}-${item.project}-${item.topic}-${index}`}
                   item={item}
-                  isCompleted={true}
+                  isCompleted={false}
                   showCompareCheckbox={true}
                   isCompareSelected={isSelected(item)}
                   onCompareToggle={onCompareToggle}
@@ -89,7 +92,7 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
                 <ScrumListItem
                   key={`completed-${item.name}-${item.project}-${item.topic}-${index}`}
                   item={item}
-                  isCompleted={true}
+                  isCompleted={false}
                   showCompareCheckbox={true}
                   isCompareSelected={isSelected(item)}
                   onCompareToggle={onCompareToggle}
@@ -99,20 +102,6 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
           )}
         </section>
       )}
-    </div>
-  );
-}
-
-function SectionHeader({ color, title, count }: { color: string; title: string; count: number }) {
-  return (
-    <div className="flex items-center gap-2 mb-3">
-      <div className={`w-2 h-2 rounded-full ${color}`} />
-      <h2 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
-        {title}
-      </h2>
-      <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
-        {count}개
-      </span>
     </div>
   );
 }

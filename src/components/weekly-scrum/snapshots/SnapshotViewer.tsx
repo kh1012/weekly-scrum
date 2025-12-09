@@ -28,9 +28,6 @@ export function SnapshotViewer() {
   // 디스플레이 모드 (카드/리스트)
   const [displayMode, setDisplayMode] = useState<DisplayMode>("card");
   
-  // 선택된 사람 (person 뷰에서)
-  const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
-  
   // 비교 상태
   const [compareState, setCompareState] = useState<CompareState>({
     selectedItems: [],
@@ -173,9 +170,6 @@ export function SnapshotViewer() {
         onViewModeChange={setViewMode}
         displayMode={displayMode}
         onDisplayModeChange={handleDisplayModeChange}
-        personGroups={personGroups}
-        selectedPerson={selectedPerson}
-        onPersonChange={setSelectedPerson}
         compareCount={compareState.selectedItems.length}
         onOpenCompare={handleOpenCompare}
         onClearCompare={handleClearCompare}
@@ -194,8 +188,6 @@ export function SnapshotViewer() {
       {viewMode === "person" && (
         <SnapshotPersonView
           personGroups={personGroups}
-          selectedPerson={selectedPerson}
-          onPersonChange={setSelectedPerson}
           displayMode={displayMode}
           compareState={compareState}
           onCompareToggle={handleCompareToggle}

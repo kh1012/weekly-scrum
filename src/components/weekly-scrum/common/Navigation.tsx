@@ -21,7 +21,7 @@ interface NavCategory {
 const NAV_CATEGORIES: NavCategory[] = [
   {
     key: "structure",
-    label: "구조 탐색",
+    label: "구조탐색 (v2)",
     items: [
       {
         key: "work-map",
@@ -29,6 +29,12 @@ const NAV_CATEGORIES: NavCategory[] = [
         href: "/work-map",
         emoji: "🗺️",
         description: "Project → Module → Feature",
+      },
+      {
+        key: "snapshots",
+        label: "스냅샷 뷰어",
+        href: "/snapshots",
+        emoji: "📸",
       },
     ],
   },
@@ -51,7 +57,6 @@ const NAV_CATEGORIES: NavCategory[] = [
     key: "views",
     label: "뷰",
     items: [
-      { key: "snapshots", label: "스냅샷 뷰어", href: "/snapshots", emoji: "📸" },
       { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
       { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
       { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
@@ -112,15 +117,6 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
           style={{ color: "var(--notion-text)" }}
         >
           Weekly Scrum
-        </span>
-        <span
-          className="text-xs px-1.5 py-0.5 rounded"
-          style={{
-            background: "var(--notion-accent-light)",
-            color: "var(--notion-accent)",
-          }}
-        >
-          v2
         </span>
       </div>
 
