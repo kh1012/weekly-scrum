@@ -209,11 +209,38 @@ export function ScrumProvider({
     return mergeDataInRange(allData, sortedWeekKeys, rangeStart, rangeEnd);
   }, [selectMode, selectedWeekKey, rangeStart, rangeEnd, allData, sortedWeekKeys]);
 
-  // 필터링된 아이템
+  // 필터링된 아이템 (multiFilters 적용)
   const filteredItems = useMemo(() => {
     if (!currentData) return [];
-    return filterItems(currentData.items, filters);
-  }, [currentData, filters]);
+    
+    // 기존 filters도 적용
+    let items = filterItems(currentData.items, filters);
+    
+    // multiFilters 적용
+    return items.filter((item) => {
+      // 멤버 필터 (빈 배열 = 모든 항목 표시)
+      if (multiFilters.members.length > 0 && !multiFilters.members.includes(item.name)) {
+        return false;
+      }
+      // 도메인 필터
+      if (multiFilters.domains.length > 0 && !multiFilters.domains.includes(item.domain)) {
+        return false;
+      }
+      // 프로젝트 필터
+      if (multiFilters.projects.length > 0 && !multiFilters.projects.includes(item.project)) {
+        return false;
+      }
+      // 모듈 필터
+      if (multiFilters.modules.length > 0 && (!item.module || !multiFilters.modules.includes(item.module))) {
+        return false;
+      }
+      // 피쳐 필터
+      if (multiFilters.features.length > 0 && !multiFilters.features.includes(item.topic)) {
+        return false;
+      }
+      return true;
+    });
+  }, [currentData, filters, multiFilters]);
 
   // 통계
   const stats = useMemo(() => calculateStats(filteredItems), [filteredItems]);

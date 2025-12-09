@@ -57,29 +57,36 @@ function FilterSection({
   const hasSelection = selectedCount > 0;
   // 빈 배열 = 전체 선택 (필터 미적용)
   const isAllSelected = !hasSelection;
-  const totalCount = enabledOptions.length;
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* 필터 버튼 */}
+      {/* 필터 버튼 - 전체 선택이면 파란색 활성화 */}
       <button
         onClick={onToggleExpand}
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
           isMobile ? "text-[11px] px-2 py-1" : ""
         }`}
         style={{
-          background: hasSelection
+          background: isAllSelected
             ? "rgba(59, 130, 246, 0.12)"
+            : hasSelection
+            ? "rgba(245, 158, 11, 0.12)"
             : "var(--notion-bg-secondary)",
-          color: hasSelection ? "#3b82f6" : "var(--notion-text-muted)",
-          border: hasSelection
+          color: isAllSelected
+            ? "#3b82f6"
+            : hasSelection
+            ? "#f59e0b"
+            : "var(--notion-text-muted)",
+          border: isAllSelected
             ? "1px solid rgba(59, 130, 246, 0.25)"
+            : hasSelection
+            ? "1px solid rgba(245, 158, 11, 0.25)"
             : "1px solid transparent",
         }}
       >
         <span>{icon}</span>
         <span className="truncate max-w-[80px]">
-          {hasSelection ? `${title} (${selectedCount})` : `${title} (전체)`}
+          {isAllSelected ? `${title} (전체)` : `${title} (${selectedCount})`}
         </span>
         <svg
           className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -107,24 +114,39 @@ function FilterSection({
             style={{ borderColor: "var(--notion-border)" }}
           >
             <span className="text-xs font-semibold" style={{ color: "var(--notion-text)" }}>
-              {title} {isAllSelected && <span style={{ color: "var(--notion-text-muted)" }}>(전체)</span>}
+              {title}
             </span>
             <div className="flex items-center gap-1">
-              {hasSelection && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onClear();
-                  }}
-                  className="px-2 py-0.5 text-[10px] rounded transition-colors"
-                  style={{ 
-                    color: "#3b82f6",
-                    background: "rgba(59, 130, 246, 0.1)",
-                  }}
-                >
-                  전체 선택
-                </button>
-              )}
+              {/* 전체 선택 버튼 */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClear();
+                }}
+                className="px-2 py-0.5 text-[10px] rounded transition-colors"
+                style={{
+                  color: isAllSelected ? "#3b82f6" : "var(--notion-text-muted)",
+                  background: isAllSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
+                }}
+              >
+                전체 선택
+              </button>
+              {/* 전체 해제 버튼 */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // 모든 옵션을 선택하면 필터가 적용됨 (아무것도 표시 안됨 방지를 위해 하나만 남김)
+                  // 실제로는 빈 배열로 만들면 전체 표시이므로, 모든 값을 선택해서 필터링
+                  onSelectAll(enabledOptions.map((opt) => opt.value));
+                }}
+                className="px-2 py-0.5 text-[10px] rounded transition-colors"
+                style={{
+                  color: hasSelection && !isAllSelected ? "#ef4444" : "var(--notion-text-muted)",
+                  background: hasSelection && !isAllSelected ? "rgba(239, 68, 68, 0.1)" : "var(--notion-bg-secondary)",
+                }}
+              >
+                전체 해제
+              </button>
             </div>
           </div>
 
@@ -266,16 +288,14 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
         {hasActiveMultiFilters && (
           <button
             onClick={resetMultiFilters}
-            className="flex-shrink-0 p-1.5 rounded-lg transition-colors"
+            className="flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors"
             style={{
-              background: "rgba(239, 68, 68, 0.1)",
-              color: "#ef4444",
+              background: "rgba(59, 130, 246, 0.1)",
+              color: "#3b82f6",
             }}
-            title="필터 초기화"
+            title="모두 전체 선택"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            초기화
           </button>
         )}
       </div>
@@ -301,19 +321,16 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
       {hasActiveMultiFilters && (
         <button
           onClick={resetMultiFilters}
-          className="p-1.5 rounded-lg transition-colors"
+          className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
           style={{
-            background: "rgba(239, 68, 68, 0.1)",
-            color: "#ef4444",
+            background: "rgba(59, 130, 246, 0.1)",
+            color: "#3b82f6",
           }}
-          title="필터 초기화"
+          title="모든 필터 초기화 (전체 선택)"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          초기화
         </button>
       )}
     </div>
   );
 }
-
