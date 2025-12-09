@@ -799,8 +799,14 @@ export function CollaborationNetworkV2({
                   // 화면을 벗어나지 않도록 경계 처리
                   const panelWidth = 380;
                   const panelHeight = 500;
-                  const x = Math.max(0, Math.min(clickX, viewportWidth - panelWidth));
-                  const y = Math.max(0, Math.min(clickY, viewportHeight - panelHeight));
+                  const x = Math.max(
+                    0,
+                    Math.min(clickX, viewportWidth - panelWidth)
+                  );
+                  const y = Math.max(
+                    0,
+                    Math.min(clickY, viewportHeight - panelHeight)
+                  );
 
                   setSnapshotPanels((prev) => [
                     ...prev,
