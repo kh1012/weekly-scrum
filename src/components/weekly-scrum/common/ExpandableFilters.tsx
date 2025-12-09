@@ -63,8 +63,8 @@ function FilterSection({
       {/* 필터 버튼 - 필터 적용 시 파란색 활성화 */}
       <button
         onClick={onToggleExpand}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-          isMobile ? "text-[11px] px-2 py-1" : ""
+        className={`flex items-center gap-1.5 px-3 rounded-xl text-xs font-medium transition-all ${
+          isMobile ? "h-8 text-[11px] px-2" : "h-9"
         }`}
         style={{
           background: isFilterActive
@@ -264,8 +264,8 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
         e.preventDefault();
         resetMultiFilters();
       }}
-      className={`flex items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95 ${
-        isMobileStyle ? "w-7 h-7" : "w-8 h-8"
+      className={`flex items-center justify-center rounded-xl transition-all hover:scale-105 active:scale-95 ${
+        isMobileStyle ? "w-8 h-8" : "w-9 h-9"
       }`}
       style={{
         background: hasActiveMultiFilters
@@ -279,7 +279,7 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
       title="필터 초기화 (전체 표시)"
     >
       <svg
-        className={isMobileStyle ? "w-3.5 h-3.5" : "w-4 h-4"}
+        className={isMobileStyle ? "w-4 h-4" : "w-4 h-4"}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

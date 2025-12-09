@@ -244,7 +244,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
     <div className="flex items-center gap-3">
       {/* 단일/범위 토글 */}
       <div
-        className="flex items-center p-1 rounded-xl"
+        className="flex items-center h-9 p-1 rounded-xl"
         style={{ 
           background: "var(--notion-bg-secondary)",
           boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)",
@@ -252,7 +252,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
       >
         <button
           onClick={() => handleModeChange("single")}
-          className="px-3 py-1.5 text-xs rounded-lg transition-all duration-200 interactive-btn"
+          className="h-7 px-3 text-xs rounded-lg transition-all duration-200 interactive-btn"
           style={{
             background:
               selectMode === "single" ? "white" : "transparent",
@@ -271,7 +271,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
         </button>
         <button
           onClick={() => handleModeChange("range")}
-          className="px-3 py-1.5 text-xs rounded-lg transition-all duration-200 interactive-btn"
+          className="h-7 px-3 text-xs rounded-lg transition-all duration-200 interactive-btn"
           style={{
             background:
               selectMode === "range" ? "white" : "transparent",
@@ -296,7 +296,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={selectedYear}
             onChange={(e) => handleYearChange(Number(e.target.value))}
-            className="notion-select rounded-lg px-3 py-1.5 font-medium"
+            className="notion-select h-9 rounded-xl px-3 text-sm font-medium"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
@@ -311,7 +311,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={selectedMonth}
             onChange={(e) => handleMonthChange(Number(e.target.value))}
-            className="notion-select rounded-lg px-3 py-1.5 font-medium"
+            className="notion-select h-9 rounded-xl px-3 text-sm font-medium"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
@@ -326,7 +326,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={selectedWeekKey.split("-")[2] || ""}
             onChange={(e) => handleWeekChange(e.target.value)}
-            className="notion-select rounded-lg px-3 py-1.5 font-medium"
+            className="notion-select h-9 rounded-xl px-3 text-sm font-medium"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
@@ -344,7 +344,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={rangeStart}
             onChange={(e) => setRangeStart(e.target.value)}
-            className="notion-select rounded-lg px-3 py-1.5 font-medium min-w-[150px]"
+            className="notion-select h-9 rounded-xl px-3 text-sm font-medium min-w-[150px]"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
@@ -357,7 +357,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             ))}
           </select>
           <span
-            className="text-xs font-medium px-1"
+            className="text-sm font-medium px-1"
             style={{ color: "var(--notion-text-muted)" }}
           >
             →
@@ -365,7 +365,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           <select
             value={rangeEnd}
             onChange={(e) => setRangeEnd(e.target.value)}
-            className="notion-select rounded-lg px-3 py-1.5 font-medium min-w-[150px]"
+            className="notion-select h-9 rounded-xl px-3 text-sm font-medium min-w-[150px]"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",

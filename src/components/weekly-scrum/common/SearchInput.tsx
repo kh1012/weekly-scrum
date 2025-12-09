@@ -119,7 +119,7 @@ export function SearchInput({ isMobile = false }: SearchInputProps) {
         onChange={handleChange}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        className={`w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ease-out focus:outline-none ${
+        className={`w-full h-9 pl-10 pr-10 text-sm font-medium rounded-xl transition-all duration-200 ease-out focus:outline-none ${
           isMobile ? "" : ""
         }`}
         style={{
