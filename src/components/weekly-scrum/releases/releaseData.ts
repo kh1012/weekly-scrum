@@ -10,8 +10,7 @@ export const RELEASES: Release[] = [
     changes: [
       {
         type: "feat",
-        description:
-          "GNB 필터 리셋 버튼 추가 - 모든 필터를 한 번에 초기화",
+        description: "GNB 필터 리셋 버튼 추가 - 모든 필터를 한 번에 초기화",
       },
       {
         type: "feat",
@@ -20,13 +19,11 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description:
-          "스냅샷 뷰어 카드/리스트 보기 토글 추가",
+        description: "스냅샷 뷰어 카드/리스트 보기 토글 추가",
       },
       {
         type: "feat",
-        description:
-          "Work Map breadcrumb 클릭 시 해당 레벨로 이동",
+        description: "Work Map breadcrumb 클릭 시 해당 레벨로 이동",
       },
       {
         type: "feat",
@@ -34,28 +31,23 @@ export const RELEASES: Release[] = [
       },
       {
         type: "improve",
-        description:
-          "GNB 필터 로직 개선 - 선택한 항목만 표시 (선택 포함 방식)",
+        description: "GNB 필터 로직 개선 - 선택한 항목만 표시 (선택 포함 방식)",
       },
       {
         type: "improve",
-        description:
-          "스냅샷 카드 v2 구조 적용 (Past Week/This Week)",
+        description: "스냅샷 카드 v2 구조 적용 (Past Week/This Week)",
       },
       {
         type: "improve",
-        description:
-          "Work Map Project/Person 토글 UI 개선",
+        description: "Work Map Project/Person 토글 UI 개선",
       },
       {
         type: "style",
-        description:
-          "스냅샷 뷰어 탭 슬라이딩 애니메이션 추가",
+        description: "스냅샷 뷰어 탭 슬라이딩 애니메이션 추가",
       },
       {
         type: "style",
-        description:
-          "필터 버튼 상태 표시 개선 (적용 시 파란색 활성화)",
+        description: "필터 버튼 상태 표시 개선 (적용 시 파란색 활성화)",
       },
     ],
   },
