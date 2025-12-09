@@ -2,50 +2,31 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
-    version: "2.1.1",
-    date: "2025-12-09",
-    title: "GNB 필터 개선 및 페이지 상태 복원",
-    summary: "GNB 필터 UI를 개선하고, 마지막 방문 페이지 복원 기능을 추가했습니다.",
-    changes: [
-      {
-        type: "feat",
-        description: "마지막 방문 페이지 localStorage 저장 및 자동 복원",
-      },
-      {
-        type: "feat",
-        description: "GNB 필터 좌측에 전체 필터 해제 리셋 버튼 추가",
-      },
-      {
-        type: "improve",
-        description: "개별 필터 UI 단순화 ('전체 해제' 버튼 제거)",
-      },
-      {
-        type: "improve",
-        description: "필터 상태에 따른 리셋 버튼 시각적 피드백 (빨간색 하이라이트)",
-      },
-      {
-        type: "style",
-        description: "필터 버튼 상태 표시 개선 (전체 선택: 파란색, 일부 선택: 주황색)",
-      },
-    ],
-  },
-  {
     version: "2.1.0",
     date: "2025-12-09",
-    title: "스냅샷 뷰어 v2 구조 및 Work Map 개선",
-    summary: "스냅샷 카드를 v2 구조(Past Week/This Week)로 전환하고, Work Map UI를 개선했습니다.",
+    title: "GNB 필터 개선 및 스냅샷 뷰어 v2",
+    summary:
+      "GNB 필터를 직관적인 선택 포함 방식으로 개선하고, 스냅샷 뷰어를 v2 구조로 업그레이드했습니다.",
     changes: [
       {
         type: "feat",
-        description: "스냅샷 뷰어에 카드/리스트 보기 토글 추가",
+        description:
+          "GNB 필터 리셋 버튼 추가 - 모든 필터를 한 번에 초기화",
       },
       {
         type: "feat",
-        description: "Work Map의 Project/Person 탭을 토글 형태로 변경",
+        description:
+          "마지막 방문 페이지 자동 복원 - 브라우저 종료 후에도 이전 페이지로 이동",
       },
       {
         type: "feat",
-        description: "Work Map breadcrumb 클릭 시 해당 레벨로 이동 기능 추가",
+        description:
+          "스냅샷 뷰어 카드/리스트 보기 토글 추가",
+      },
+      {
+        type: "feat",
+        description:
+          "Work Map breadcrumb 클릭 시 해당 레벨로 이동",
       },
       {
         type: "feat",
@@ -53,31 +34,28 @@ export const RELEASES: Release[] = [
       },
       {
         type: "improve",
-        description: "스냅샷 카드 v2 구조 적용 (Past Week/This Week)",
+        description:
+          "GNB 필터 로직 개선 - 선택한 항목만 표시 (선택 포함 방식)",
       },
       {
         type: "improve",
-        description: "스냅샷 뷰어 탭 슬라이딩 애니메이션 추가",
+        description:
+          "스냅샷 카드 v2 구조 적용 (Past Week/This Week)",
       },
       {
         type: "improve",
-        description: "스냅샷 뷰어 사람별 보기 필터 제거 (GNB 필터로 대체)",
+        description:
+          "Work Map Project/Person 토글 UI 개선",
       },
       {
         type: "style",
-        description: "뷰 모드 토글 스타일 개선 (흰색 배경, 파란색 하이라이트)",
+        description:
+          "스냅샷 뷰어 탭 슬라이딩 애니메이션 추가",
       },
       {
         type: "style",
-        description: "카드 내부 회색 배경 삭제 (진행률 바 제외)",
-      },
-      {
-        type: "style",
-        description: "컨텐츠 영역 개선 ('진행 중' 헤더 삭제, '완료된 항목' 하단 표시)",
-      },
-      {
-        type: "refactor",
-        description: "ScrumListItem 컴포넌트 추가 (리스트 형태 스냅샷 표시)",
+        description:
+          "필터 버튼 상태 표시 개선 (적용 시 파란색 활성화)",
       },
     ],
   },
@@ -85,11 +63,13 @@ export const RELEASES: Release[] = [
     version: "2.0.0",
     date: "2025-12-08",
     title: "GNB 필터 시스템 및 Work Map 옵션 메뉴",
-    summary: "GNB 영역에 확장 가능한 다중 필터 시스템을 추가하고, Work Map 옵션 메뉴를 개선했습니다.",
+    summary:
+      "GNB 영역에 확장 가능한 다중 필터 시스템을 추가하고, Work Map 옵션 메뉴를 개선했습니다.",
     changes: [
       {
         type: "feat",
-        description: "GNB 확장형 다중 필터 시스템 추가 (담당자/도메인/프로젝트/모듈/피쳐)",
+        description:
+          "GNB 확장형 다중 필터 시스템 추가 (담당자/도메인/프로젝트/모듈/피쳐)",
       },
       {
         type: "feat",
@@ -134,4 +114,3 @@ export const RELEASES: Release[] = [
     ],
   },
 ];
-
