@@ -344,8 +344,15 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
     return new Set(connected);
   }, [activeNode, edges]);
 
-  // 엣지 경로 계산 (곡선)
-  const getEdgePath = useCallback((source: { x: number; y: number }, target: { x: number; y: number }, sourceRadius: number, targetRadius: number) => {
+  // 엣지 경로 계산 (곡선) - curveOffset으로 관계별 곡선 분리
+  // curveOffset: pre=1 (상단), pair=0 (중앙), post=-1 (하단)
+  const getEdgePath = useCallback((
+    source: { x: number; y: number }, 
+    target: { x: number; y: number }, 
+    sourceRadius: number, 
+    targetRadius: number,
+    curveOffset: number = 0
+  ) => {
     const dx = target.x - source.x;
     const dy = target.y - source.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -357,14 +364,19 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
     const endX = target.x - (dx / dist) * (targetRadius + 8);
     const endY = target.y - (dy / dist) * (targetRadius + 8);
 
-    // 곡선
+    // 곡선 - 관계 유형에 따라 다른 방향으로 휘어짐
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
     const perpX = -dy / dist;
     const perpY = dx / dist;
-    const curve = Math.min(dist * 0.12, 25);
-    const ctrlX = midX + perpX * curve;
-    const ctrlY = midY + perpY * curve;
+    
+    // 기본 곡률 + 관계별 오프셋 (pre: 위쪽, pair: 약간, post: 아래쪽)
+    const baseCurve = Math.min(dist * 0.08, 20);
+    const offsetCurve = curveOffset * Math.min(dist * 0.15, 35);
+    const totalCurve = baseCurve + offsetCurve;
+    
+    const ctrlX = midX + perpX * totalCurve;
+    const ctrlY = midY + perpY * totalCurve;
 
     return `M ${startX} ${startY} Q ${ctrlX} ${ctrlY} ${endX} ${endY}`;
   }, []);
@@ -548,6 +560,9 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
             const actualSourceRadius = isPre ? targetRadius : sourceRadius;
             const actualTargetRadius = isPre ? sourceRadius : targetRadius;
 
+            // 관계 유형에 따른 곡선 오프셋 (pre: 상단, pair: 중앙, post: 하단)
+            const curveOffset = isPre ? 1 : isPair ? 0 : -1;
+
             // 마커 결정
             let markerEnd = undefined;
             if (isPre) {
@@ -559,7 +574,7 @@ export function CollaborationNetworkV2({ items, allItems, featureName }: Collabo
             return (
               <path
                 key={`edge-${idx}`}
-                d={getEdgePath(actualSource, actualTarget, actualSourceRadius, actualTargetRadius)}
+                d={getEdgePath(actualSource, actualTarget, actualSourceRadius, actualTargetRadius, curveOffset)}
                 fill="none"
                 stroke={strokeColor}
                 strokeWidth={isPair ? 2.5 : 2}
