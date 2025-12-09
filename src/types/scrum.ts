@@ -111,7 +111,7 @@ export interface WeeklyScrumData {
 export type WeeklyScrumDataUnion = WeeklyScrumData | WeeklyScrumDataV2;
 
 /**
- * 필터 상태 타입
+ * 필터 상태 타입 (단일 선택 - 레거시)
  */
 export interface FilterState {
   domain: string;
@@ -119,6 +119,27 @@ export interface FilterState {
   module: string;
   member: string;
   search: string;
+}
+
+/**
+ * 다중 선택 필터 상태 타입
+ */
+export interface MultiFilterState {
+  members: string[];
+  domains: string[];
+  projects: string[];
+  modules: string[];
+  features: string[];
+  search: string;
+}
+
+/**
+ * 필터 옵션 상태 (활성화/비활성화 포함)
+ */
+export interface FilterOptionState {
+  value: string;
+  enabled: boolean;
+  count: number;
 }
 
 /**

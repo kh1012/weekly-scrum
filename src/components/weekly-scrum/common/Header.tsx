@@ -6,7 +6,7 @@ import { SideNavigation } from "./Navigation";
 import { StatsBar } from "./StatsBar";
 import { WeekSelector } from "./WeekSelector";
 import { SearchInput } from "./SearchInput";
-import { Filters } from "./Filters";
+import { ExpandableFilters } from "./ExpandableFilters";
 
 interface HeaderProps {
   isSidebarOpen?: boolean;
@@ -111,7 +111,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                 className="w-px h-5"
                 style={{ background: "var(--notion-border)" }}
               />
-              <Filters />
+              <ExpandableFilters />
             </>
           )}
           <div
@@ -180,7 +180,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         {/* 2행: 필터 (좌측) + 통계 (우측) */}
         <div className="flex items-center justify-between h-11 px-3">
           <div className="flex items-center">
-            {!isMyDashboard && <Filters />}
+            {!isMyDashboard && <ExpandableFilters />}
           </div>
           <StatsBar />
         </div>
@@ -245,7 +245,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
             className="px-3 py-2 overflow-x-auto"
             style={{ borderBottom: "1px solid var(--notion-border)" }}
           >
-            <Filters isMobile />
+            <ExpandableFilters isMobile />
           </div>
         )}
 

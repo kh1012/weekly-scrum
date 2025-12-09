@@ -5,6 +5,7 @@ export { StatsBar } from "./StatsBar";
 export { WeekSelector } from "./WeekSelector";
 export { SearchInput } from "./SearchInput";
 export { Filters } from "./Filters";
+export { ExpandableFilters } from "./ExpandableFilters";
 export { CircularProgress } from "./CircularProgress";
 export { DomainBadge } from "./DomainBadge";
 export { EmptyState } from "./EmptyState";
