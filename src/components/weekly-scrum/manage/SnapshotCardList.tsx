@@ -188,7 +188,10 @@ export const SnapshotCardList = forwardRef<
             createPortal(
               <div
                 className="fixed w-36 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-[9999]"
-                style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+                style={{
+                  top: dropdownPosition.top,
+                  left: dropdownPosition.left,
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
