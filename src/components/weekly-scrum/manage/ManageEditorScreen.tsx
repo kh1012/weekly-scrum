@@ -175,6 +175,7 @@ export function ManageEditorScreen({
         <div className="flex-1 bg-white overflow-y-auto overflow-x-hidden">
           {selectedSnapshot ? (
             <SnapshotEditForm
+              key={selectedSnapshot.tempId}
               snapshot={selectedSnapshot}
               onUpdate={(updates) => onUpdateCard(selectedSnapshot.tempId, updates)}
             />
