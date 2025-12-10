@@ -62,9 +62,6 @@ export function ManageEditorScreen({
   // 편집 패널 너비 비율 (3열 모드에서 편집:미리보기 비율)
   const [editPanelRatio, setEditPanelRatio] = useState(0.5); // 0.3 ~ 0.7
   
-  // 우측 패널 모드: "edit" | "preview" (탭 토글 모드에서만 사용)
-  const [rightPanelMode, setRightPanelMode] = useState<"edit" | "preview">("edit");
-  
   // 화면 너비 상태
   const [canShowThreeColumns, setCanShowThreeColumns] = useState(false);
   const [useWideFormLayout, setUseWideFormLayout] = useState(false);
@@ -242,32 +239,6 @@ export function ManageEditorScreen({
             </button>
           </div>
 
-          {/* 우측 패널 모드 토글 (탭 모드에서만) */}
-          {!isThreeColumnMode && (
-            <div className="flex bg-gray-100 rounded-lg p-0.5">
-              <button
-                onClick={() => setRightPanelMode("edit")}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                  rightPanelMode === "edit"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                편집
-              </button>
-              <button
-                onClick={() => setRightPanelMode("preview")}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                  rightPanelMode === "preview"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                미리보기
-              </button>
-            </div>
-          )}
-
           {/* 전체 복사 드롭다운 */}
           <div className="relative">
             <button
@@ -385,30 +356,23 @@ export function ManageEditorScreen({
             </div>
           </>
         ) : (
-          // 탭 토글 모드
+          // 2열 모드: 편집만 표시
           <div className="flex-1 overflow-hidden min-w-0">
-            {rightPanelMode === "edit" ? (
-              <div className="h-full bg-white overflow-y-auto">
-                {selectedSnapshot ? (
-                  <SnapshotEditForm
-                    key={selectedSnapshot.tempId}
-                    snapshot={selectedSnapshot}
-                    onUpdate={(updates) =>
-                      onUpdateCard(selectedSnapshot.tempId, updates)
-                    }
-                    compact
-                    singleColumn
-                  />
-                ) : (
-                  <EmptyState />
-                )}
-              </div>
-            ) : (
-              <PlainTextPreview
-                snapshot={selectedSnapshot}
-                onCopy={handleCopyCurrentPlainText}
-              />
-            )}
+            <div className="h-full bg-white overflow-y-auto">
+              {selectedSnapshot ? (
+                <SnapshotEditForm
+                  key={selectedSnapshot.tempId}
+                  snapshot={selectedSnapshot}
+                  onUpdate={(updates) =>
+                    onUpdateCard(selectedSnapshot.tempId, updates)
+                  }
+                  compact
+                  singleColumn
+                />
+              ) : (
+                <EmptyState />
+              )}
+            </div>
           </div>
         )}
       </div>
