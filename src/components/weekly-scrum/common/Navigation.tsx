@@ -27,7 +27,7 @@ interface NavCategory {
 const NAV_CATEGORIES: NavCategory[] = [
   {
     key: "structure",
-    label: "구조탐색 (v2)",
+    label: "v2",
     items: [
       {
         key: "work-map",

@@ -81,33 +81,29 @@ export const ALL_MODULE_OPTIONS = [
  * 모듈 내 구체적인 기능 단위
  * 자주 사용되는 기능명 목록
  */
-export const FEATURE_OPTIONS = [
-  "Rich-note",
-  "Import-Engine",
-  "Login-Flow",
-  "Cell-Rendering",
-  "Formula-Tracer",
-  "Data-Validation",
-  "Export-Engine",
-  "Permission-System",
-  "Notification-Center",
-  "Search-Engine",
-] as const;
+export const FEATURE_OPTIONS = ["Rich note", "Formula-Tracer"] as const;
 
 /**
  * 팀원 이름 옵션
  */
 export const NAME_OPTIONS = [
-  "김현",
-  "김서연",
-  "박민수",
-  "조해용",
+  "이하영",
+  "손영민",
+  "변창언",
+  "김상리",
+  "김지원",
+  "양소희",
+  "한내경",
+  "윤재웅",
   "하성열",
-  "이준호",
-  "장지원",
-  "최유진",
-  "정민혁",
-  "송다은",
+  "조해용",
+  "도기봉",
+  "김희성",
+  "김용수",
+  "김현",
+  "김정빈",
+  "김태이",
+  "서상준",
 ] as const;
 
 /**

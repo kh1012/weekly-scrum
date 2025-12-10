@@ -79,19 +79,25 @@ export const SnapshotCardList = forwardRef<
   }, []);
 
   // 더블클릭 핸들러
-  const handleDoubleClick = useCallback((tempId: string) => {
-    toggleExpand(tempId);
-  }, [toggleExpand]);
+  const handleDoubleClick = useCallback(
+    (tempId: string) => {
+      toggleExpand(tempId);
+    },
+    [toggleExpand]
+  );
 
   // 컨텍스트 메뉴 핸들러
-  const handleContextMenu = useCallback((e: React.MouseEvent, snapshot: TempSnapshot) => {
-    e.preventDefault();
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      snapshot,
-    });
-  }, []);
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, snapshot: TempSnapshot) => {
+      e.preventDefault();
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        snapshot,
+      });
+    },
+    []
+  );
 
   // 컨텍스트 메뉴 닫기
   const closeContextMenu = useCallback(() => {
@@ -104,7 +110,9 @@ export const SnapshotCardList = forwardRef<
       <div className="px-4 py-3 border-b border-gray-100 bg-white/50 backdrop-blur-sm space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-800">카드 목록</span>
+            <span className="text-sm font-semibold text-gray-800">
+              카드 목록
+            </span>
             <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
               {snapshots.length}
             </span>
@@ -113,8 +121,18 @@ export const SnapshotCardList = forwardRef<
             onClick={onAddEmpty}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-full transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             추가
           </button>
@@ -127,14 +145,22 @@ export const SnapshotCardList = forwardRef<
             className={`
               absolute top-1 bottom-1 w-[calc(50%-2px)] bg-white rounded-lg shadow-sm
               transition-transform duration-300 ease-out
-              ${viewMode === "plaintext" ? "translate-x-[100%]" : "translate-x-0"}
+              ${
+                viewMode === "plaintext"
+                  ? "translate-x-[calc(100%-4px)]"
+                  : "translate-x-0"
+              }
             `}
           />
           <button
             onClick={() => viewMode !== "styled" && onToggleViewMode()}
             className={`
               relative flex-1 py-2 text-xs font-medium rounded-lg transition-colors duration-200 z-10
-              ${viewMode === "styled" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}
+              ${
+                viewMode === "styled"
+                  ? "text-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }
             `}
           >
             Styled
@@ -143,7 +169,11 @@ export const SnapshotCardList = forwardRef<
             onClick={() => viewMode !== "plaintext" && onToggleViewMode()}
             className={`
               relative flex-1 py-2 text-xs font-medium rounded-lg transition-colors duration-200 z-10
-              ${viewMode === "plaintext" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}
+              ${
+                viewMode === "plaintext"
+                  ? "text-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }
             `}
           >
             Plain Text
@@ -163,16 +193,17 @@ export const SnapshotCardList = forwardRef<
             { label: "Project", value: snapshot.project },
             { label: "Module", value: snapshot.module },
             { label: "Feature", value: snapshot.feature },
-          ].filter(tag => tag.value);
+          ].filter((tag) => tag.value);
 
           return (
             <div
               key={snapshot.tempId}
               className={`
                 relative rounded-2xl border transition-all duration-200 cursor-pointer
-                ${isSelected
-                  ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 shadow-sm"
-                  : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm"
+                ${
+                  isSelected
+                    ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 shadow-sm"
+                    : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm"
                 }
               `}
               onClick={() => onSelectCard(snapshot.tempId)}
@@ -186,13 +217,16 @@ export const SnapshotCardList = forwardRef<
                     {/* 이름 + 상태 */}
                     <div className="flex items-center gap-2 mb-1.5">
                       {/* 아바타 */}
-                      <div className={`
+                      <div
+                        className={`
                         w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-                        ${isSelected 
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white" 
-                          : "bg-gray-100 text-gray-600"
+                        ${
+                          isSelected
+                            ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
+                            : "bg-gray-100 text-gray-600"
                         }
-                      `}>
+                      `}
+                      >
                         {snapshot.name ? snapshot.name.charAt(0) : "?"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -201,7 +235,10 @@ export const SnapshotCardList = forwardRef<
                             {snapshot.name || "(이름 없음)"}
                           </span>
                           {snapshot.isDirty && (
-                            <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" title="수정됨" />
+                            <span
+                              className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"
+                              title="수정됨"
+                            />
                           )}
                         </div>
                       </div>
@@ -216,20 +253,27 @@ export const SnapshotCardList = forwardRef<
                     }}
                     className={`
                       p-1.5 rounded-lg transition-all duration-200
-                      ${isExpanded
-                        ? "bg-blue-100 text-blue-600"
-                        : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                      ${
+                        isExpanded
+                          ? "bg-blue-100 text-blue-600"
+                          : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                       }
                     `}
                   >
                     <svg
-                      className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={2}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -268,17 +312,20 @@ export const SnapshotCardList = forwardRef<
                       {snapshot.pastWeek.tasks.length} tasks
                     </span>
                   )}
-                  {snapshot.pastWeek.riskLevel !== null && snapshot.pastWeek.riskLevel > 0 && (
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
-                      snapshot.pastWeek.riskLevel === 1
-                        ? "bg-yellow-50 text-yellow-600"
-                        : snapshot.pastWeek.riskLevel === 2
-                        ? "bg-orange-50 text-orange-600"
-                        : "bg-red-50 text-red-600"
-                    }`}>
-                      Risk {snapshot.pastWeek.riskLevel}
-                    </span>
-                  )}
+                  {snapshot.pastWeek.riskLevel !== null &&
+                    snapshot.pastWeek.riskLevel > 0 && (
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
+                          snapshot.pastWeek.riskLevel === 1
+                            ? "bg-yellow-50 text-yellow-600"
+                            : snapshot.pastWeek.riskLevel === 2
+                            ? "bg-orange-50 text-orange-600"
+                            : "bg-red-50 text-red-600"
+                        }`}
+                      >
+                        Risk {snapshot.pastWeek.riskLevel}
+                      </span>
+                    )}
                 </div>
               </div>
 
@@ -291,27 +338,46 @@ export const SnapshotCardList = forwardRef<
                       {snapshot.pastWeek.tasks.length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                              />
                             </svg>
                             Past Week
                           </div>
                           <ul className="space-y-1.5">
                             {snapshot.pastWeek.tasks.map((task, i) => (
-                              <li key={i} className="flex items-center gap-2 text-xs">
-                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  task.progress === 100
-                                    ? "bg-emerald-500"
-                                    : task.progress >= 50
-                                    ? "bg-blue-500"
-                                    : "bg-gray-400"
-                                }`} />
-                                <span className="text-gray-700 flex-1">{task.title}</span>
-                                <span className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                                  task.progress === 100
-                                    ? "bg-emerald-50 text-emerald-600"
-                                    : "bg-gray-100 text-gray-500"
-                                }`}>
+                              <li
+                                key={i}
+                                className="flex items-center gap-2 text-xs"
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                    task.progress === 100
+                                      ? "bg-emerald-500"
+                                      : task.progress >= 50
+                                      ? "bg-blue-500"
+                                      : "bg-gray-400"
+                                  }`}
+                                />
+                                <span className="text-gray-700 flex-1">
+                                  {task.title}
+                                </span>
+                                <span
+                                  className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                    task.progress === 100
+                                      ? "bg-emerald-50 text-emerald-600"
+                                      : "bg-gray-100 text-gray-500"
+                                  }`}
+                                >
                                   {task.progress}%
                                 </span>
                               </li>
@@ -324,14 +390,27 @@ export const SnapshotCardList = forwardRef<
                       {snapshot.thisWeek.tasks.length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 7l5 5m0 0l-5 5m5-5H6"
+                              />
                             </svg>
                             This Week
                           </div>
                           <ul className="space-y-1.5">
                             {snapshot.thisWeek.tasks.map((task, i) => (
-                              <li key={i} className="flex items-center gap-2 text-xs text-gray-700">
+                              <li
+                                key={i}
+                                className="flex items-center gap-2 text-xs text-gray-700"
+                              >
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
                                 <span>{task}</span>
                               </li>
@@ -354,8 +433,18 @@ export const SnapshotCardList = forwardRef<
         {snapshots.length === 0 && (
           <div className="py-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
             </div>
             <p className="text-sm text-gray-500 mb-2">스냅샷이 없습니다</p>
@@ -387,8 +476,18 @@ export const SnapshotCardList = forwardRef<
               }}
               className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
             >
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <svg
+                className="w-4 h-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
               JSON 복사
             </button>
@@ -399,8 +498,18 @@ export const SnapshotCardList = forwardRef<
               }}
               className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
             >
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-4 h-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               Plain Text 복사
             </button>
@@ -412,8 +521,18 @@ export const SnapshotCardList = forwardRef<
               }}
               className="w-full px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-3"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
               삭제
             </button>

@@ -2,52 +2,11 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
-    version: "2.4.0",
-    date: "2025-12-10",
-    title: "스냅샷 관리 Airbnb 스타일 전면 개편",
-    summary:
-      "스냅샷 관리 화면을 Airbnb 스타일로 전면 개편하고, 더블클릭 확장/축소, 우클릭 컨텍스트 메뉴, Tab 키 순차 이동 기능을 추가했습니다.",
-    changes: [
-      {
-        type: "feat",
-        description: "카드 더블클릭으로 확장/축소 토글",
-      },
-      {
-        type: "feat",
-        description: "카드 우클릭 컨텍스트 메뉴 (JSON/Text 복사, 삭제)",
-      },
-      {
-        type: "feat",
-        description: "편집 폼 Tab 키로 순차적 필드 이동",
-      },
-      {
-        type: "style",
-        description: "진입 화면 Airbnb 스타일 (그라데이션, 호버 효과)",
-      },
-      {
-        type: "style",
-        description: "카드 리스트 Airbnb 스타일 (아바타, 태그, 프로그레스 바)",
-      },
-      {
-        type: "style",
-        description: "편집 폼 Airbnb 스타일 (라운드 입력창, 컬러 섹션)",
-      },
-      {
-        type: "style",
-        description: "툴바 Airbnb 스타일 (배경 블러, 토글 버튼)",
-      },
-      {
-        type: "style",
-        description: "토스트 알림 Airbnb 스타일 (진행 바, 부드러운 애니메이션)",
-      },
-    ],
-  },
-  {
     version: "2.3.0",
     date: "2025-12-10",
-    title: "스냅샷 관리 시스템 및 v2 스키마 정립",
+    title: "스냅샷 관리 시스템 및 Airbnb 스타일 전면 개편",
     summary:
-      "스냅샷 관리 페이지를 추가하고 v2 스키마 가이드/검증 문서를 정립했습니다. GNB 필터 반응형 개선 및 Work Map 상태 저장 버그를 수정했습니다.",
+      "스냅샷 관리 페이지를 추가하고 v2 스키마 가이드/검증 문서를 정립했습니다. 전체 화면을 Airbnb 스타일로 개편하고, 더블클릭 확장, 우클릭 컨텍스트 메뉴, Tab 키 순차 이동 기능을 추가했습니다.",
     changes: [
       {
         type: "feat",
@@ -63,7 +22,19 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description: "GNB 필터 반응형 개선 - 중간 화면에서 통합 버튼으로 표시",
+        description: "카드 더블클릭으로 확장/축소 토글",
+      },
+      {
+        type: "feat",
+        description: "카드 우클릭 컨텍스트 메뉴 (JSON/Text 복사, 삭제)",
+      },
+      {
+        type: "feat",
+        description: "편집 폼 Tab 키로 순차적 필드 이동",
+      },
+      {
+        type: "feat",
+        description: "GNB 필터 반응형 개선 - 1440px 이하에서 통합 버튼",
       },
       {
         type: "feat",
@@ -72,6 +43,10 @@ export const RELEASES: Release[] = [
       {
         type: "feat",
         description: "협업 네트워크 중앙 모달 - 전체 스냅샷 리스트 표시",
+      },
+      {
+        type: "feat",
+        description: "Collaborator relations 복수 선택 지원 (체크박스)",
       },
       {
         type: "improve",
@@ -84,6 +59,26 @@ export const RELEASES: Release[] = [
       {
         type: "improve",
         description: "SNB 버전 표시 - 최신 릴리즈 버전과 동적 연동",
+      },
+      {
+        type: "improve",
+        description: "Plain Text 복사 형식 개선 - 헤더 직후 Name 출력, 빈 줄로 구분",
+      },
+      {
+        type: "style",
+        description: "스냅샷 관리 전체 Airbnb 스타일 적용 (진입/카드/편집/토스트)",
+      },
+      {
+        type: "style",
+        description: "카드 리스트 메타 태그 표시 (Domain/Project/Module/Feature)",
+      },
+      {
+        type: "style",
+        description: "viewMode 토글 Airbnb 스타일 슬라이딩 탭",
+      },
+      {
+        type: "style",
+        description: "편집 폼 리스트 스타일 통일 (흰색 배경, hover 효과)",
       },
       {
         type: "style",
