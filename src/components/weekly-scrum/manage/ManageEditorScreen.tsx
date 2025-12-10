@@ -59,12 +59,18 @@ export function ManageEditorScreen({
   // 좌측 패널 너비 상태
   const [leftPanelWidth, setLeftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
   
+  // 편집 패널 너비 비율 (3열 모드에서 편집:미리보기 비율)
+  const [editPanelRatio, setEditPanelRatio] = useState(0.5); // 0.3 ~ 0.7
+  
   // 우측 패널 모드: "edit" | "preview" (탭 토글 모드에서만 사용)
   const [rightPanelMode, setRightPanelMode] = useState<"edit" | "preview">("edit");
   
   // 화면 너비 상태
   const [canShowThreeColumns, setCanShowThreeColumns] = useState(false);
   const [useWideFormLayout, setUseWideFormLayout] = useState(false);
+  
+  // 3열 모드 강제 토글
+  const [forceThreeColumn, setForceThreeColumn] = useState(false);
   
   // 드롭다운 상태
   const [isCopyDropdownOpen, setIsCopyDropdownOpen] = useState(false);
@@ -84,13 +90,24 @@ export function ManageEditorScreen({
     return () => window.removeEventListener("resize", checkWidth);
   }, [isSidebarOpen]);
 
-  // 리사이즈 핸들러
-  const handleResize = useCallback((delta: number) => {
+  // 좌측 패널 리사이즈 핸들러
+  const handleLeftResize = useCallback((delta: number) => {
     setLeftPanelWidth((prev) => {
       const next = prev + delta;
       return Math.max(MIN_LEFT_PANEL_WIDTH, Math.min(MAX_LEFT_PANEL_WIDTH, next));
     });
   }, []);
+
+  // 편집/미리보기 비율 리사이즈 핸들러
+  const handleEditPreviewResize = useCallback((delta: number) => {
+    if (!containerRef.current) return;
+    const containerWidth = containerRef.current.offsetWidth - leftPanelWidth - 10; // 핸들 너비 제외
+    const deltaRatio = delta / containerWidth;
+    setEditPanelRatio((prev) => {
+      const next = prev + deltaRatio;
+      return Math.max(0.25, Math.min(0.75, next)); // 25% ~ 75%
+    });
+  }, [leftPanelWidth]);
 
   // 전체 JSON 복사
   const handleCopyAllJson = async () => {
@@ -161,8 +178,8 @@ export function ManageEditorScreen({
     }
   }, [isCopyDropdownOpen]);
 
-  // 3열 모드 여부
-  const isThreeColumnMode = canShowThreeColumns;
+  // 3열 모드 여부 (자동 감지 또는 강제)
+  const isThreeColumnMode = forceThreeColumn || canShowThreeColumns;
 
   return (
     <div
@@ -201,6 +218,22 @@ export function ManageEditorScreen({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* 3열 모드 토글 버튼 */}
+          <button
+            onClick={() => setForceThreeColumn(!forceThreeColumn)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
+              isThreeColumnMode
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+            title={isThreeColumnMode ? "2열 모드로 전환" : "3열 모드로 전환"}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+            </svg>
+            {isThreeColumnMode ? "3열" : "2열"}
+          </button>
+
           {/* 우측 패널 모드 토글 (탭 모드에서만) */}
           {!isThreeColumnMode && (
             <div className="flex bg-gray-100 rounded-lg p-0.5">
@@ -309,13 +342,16 @@ export function ManageEditorScreen({
         </div>
 
         {/* 리사이즈 핸들 */}
-        <ResizeHandle onResize={handleResize} />
+        <ResizeHandle onResize={handleLeftResize} />
 
         {/* 우측: 편집 + Preview */}
         {isThreeColumnMode ? (
-          // 3열 모드: 편집 패널 | Preview 패널
+          // 3열 모드: 편집 패널 | Preview 패널 (리사이즈 가능)
           <>
-            <div className="flex-1 bg-white overflow-y-auto min-w-0">
+            <div 
+              className="bg-white overflow-y-auto min-w-0 shrink-0"
+              style={{ width: `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})` }}
+            >
               {selectedSnapshot ? (
                 <SnapshotEditForm
                   key={selectedSnapshot.tempId}
@@ -324,14 +360,16 @@ export function ManageEditorScreen({
                     onUpdateCard(selectedSnapshot.tempId, updates)
                   }
                   compact
-                  singleColumn={!useWideFormLayout}
+                  singleColumn
                 />
               ) : (
                 <EmptyState />
               )}
             </div>
-            <div className="w-px bg-gray-100 shrink-0" />
-            <div className="flex-1 overflow-hidden min-w-0">
+            <ResizeHandle onResize={handleEditPreviewResize} />
+            <div 
+              className="overflow-hidden min-w-0 flex-1"
+            >
               <PlainTextPreview
                 snapshot={selectedSnapshot}
                 onCopy={handleCopyCurrentPlainText}

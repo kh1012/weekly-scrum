@@ -105,7 +105,7 @@ export const SnapshotCardList = forwardRef<
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col" onClick={closeContextMenu}>
+    <div className="flex-1 flex flex-col min-h-0" onClick={closeContextMenu}>
       {/* 리스트 헤더 - Airbnb 스타일 */}
       <div className="px-4 py-3 border-b border-gray-100 bg-white/50 backdrop-blur-sm space-y-3">
         <div className="flex items-center justify-between">
