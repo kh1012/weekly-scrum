@@ -554,10 +554,10 @@ export function SnapshotEditForm({ snapshot, onUpdate }: SnapshotEditFormProps) 
   );
 
   return (
-    <div className="p-8 space-y-10 max-w-3xl">
-      {/* 헤더 - Airbnb 스타일 */}
-      <div className="pb-6 border-b border-gray-100">
-        <div className="flex items-center gap-3 mb-2">
+    <div className="h-full">
+      {/* 헤더 - 가로폭 100% */}
+      <div className="px-8 pt-8 pb-6 border-b border-gray-100">
+        <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -570,8 +570,10 @@ export function SnapshotEditForm({ snapshot, onUpdate }: SnapshotEditFormProps) 
         </div>
       </div>
 
-      {/* 메타 영역 */}
-      <section className="space-y-6">
+      {/* 콘텐츠 영역 - max-width 적용 */}
+      <div className="p-8 space-y-10 max-w-3xl">
+        {/* 메타 영역 */}
+        <section className="space-y-6">
         <div className="flex items-center gap-2">
           <div className="w-1 h-6 rounded-full bg-gray-900" />
           <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">메타 정보</h3>
@@ -656,18 +658,19 @@ export function SnapshotEditForm({ snapshot, onUpdate }: SnapshotEditFormProps) 
         </div>
       </section>
 
-      {/* This Week */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 rounded-full bg-emerald-500" />
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">This Week</h3>
-        </div>
+        {/* This Week */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-6 rounded-full bg-emerald-500" />
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">This Week</h3>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">Tasks</label>
-          <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} />
-        </div>
-      </section>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Tasks</label>
+            <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

@@ -26,6 +26,7 @@ interface SnapshotCardListProps {
   onCopyJson: (snapshot: TempSnapshot) => void;
   onCopyPlainText: (snapshot: TempSnapshot) => void;
   onAddEmpty: () => void;
+  onToggleViewMode: () => void;
 }
 
 interface ContextMenuState {
@@ -47,6 +48,7 @@ export const SnapshotCardList = forwardRef<
     onCopyJson,
     onCopyPlainText,
     onAddEmpty,
+    onToggleViewMode,
   },
   ref
 ) {
@@ -99,22 +101,54 @@ export const SnapshotCardList = forwardRef<
   return (
     <div className="flex-1 flex flex-col" onClick={closeContextMenu}>
       {/* 리스트 헤더 - Airbnb 스타일 */}
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white/50 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-800">카드 목록</span>
-          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-            {snapshots.length}
-          </span>
+      <div className="px-4 py-3 border-b border-gray-100 bg-white/50 backdrop-blur-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-800">카드 목록</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              {snapshots.length}
+            </span>
+          </div>
+          <button
+            onClick={onAddEmpty}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-full transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            추가
+          </button>
         </div>
-        <button
-          onClick={onAddEmpty}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-full transition-colors"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          추가
-        </button>
+
+        {/* Airbnb 스타일 탭 토글 */}
+        <div className="relative flex bg-gray-100 rounded-xl p-1">
+          {/* 슬라이딩 배경 */}
+          <div
+            className={`
+              absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm
+              transition-transform duration-300 ease-out
+              ${viewMode === "plaintext" ? "translate-x-[calc(100%+4px)]" : "translate-x-0"}
+            `}
+          />
+          <button
+            onClick={() => viewMode !== "styled" && onToggleViewMode()}
+            className={`
+              relative flex-1 py-2 text-xs font-medium rounded-lg transition-colors duration-200 z-10
+              ${viewMode === "styled" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}
+            `}
+          >
+            Styled
+          </button>
+          <button
+            onClick={() => viewMode !== "plaintext" && onToggleViewMode()}
+            className={`
+              relative flex-1 py-2 text-xs font-medium rounded-lg transition-colors duration-200 z-10
+              ${viewMode === "plaintext" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}
+            `}
+          >
+            Plain Text
+          </button>
+        </div>
       </div>
 
       {/* 카드 리스트 */}

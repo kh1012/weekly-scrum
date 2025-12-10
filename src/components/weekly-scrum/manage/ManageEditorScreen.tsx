@@ -116,22 +116,6 @@ export function ManageEditorScreen({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* 보기 모드 토글 */}
-          <button
-            onClick={handleToggleViewModeWithExpand}
-            className={`
-              px-4 py-2 text-sm font-medium rounded-xl transition-all
-              ${viewMode === "plaintext"
-                ? "bg-gray-900 text-white"
-                : "text-gray-600 hover:bg-gray-100"
-              }
-            `}
-          >
-            {viewMode === "styled" ? "Plain Text" : "Styled"}
-          </button>
-
-          <div className="h-6 w-px bg-gray-200 mx-2" />
-
           {/* 전체 복사 버튼들 */}
           <button
             onClick={handleCopyAllJson}
@@ -168,6 +152,7 @@ export function ManageEditorScreen({
             onCopyJson={handleCopyCardJson}
             onCopyPlainText={handleCopyCardPlainText}
             onAddEmpty={onAddEmpty}
+            onToggleViewMode={handleToggleViewModeWithExpand}
           />
         </div>
 
