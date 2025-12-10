@@ -15,16 +15,21 @@ interface HeaderProps {
 export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const filterPopoverRef = useRef<HTMLDivElement>(null);
 
   // 개인 대시보드 페이지인지 확인
   const isMyDashboard = pathname === "/my" || pathname === "/my/";
 
-  // 외부 클릭 시 메뉴 닫기
+  // 외부 클릭 시 메뉴/필터 팝오버 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
+      }
+      if (filterPopoverRef.current && !filterPopoverRef.current.contains(e.target as Node)) {
+        setIsFilterPopoverOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -34,13 +39,14 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
   // ESC 키로 닫기
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isMenuOpen) {
-        setIsMenuOpen(false);
+      if (e.key === "Escape") {
+        if (isMenuOpen) setIsMenuOpen(false);
+        if (isFilterPopoverOpen) setIsFilterPopoverOpen(false);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isFilterPopoverOpen]);
 
   const Logo = () => (
     <h1
@@ -118,7 +124,64 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                 className="w-px h-6 rounded-full"
                 style={{ background: "var(--notion-border)" }}
               />
-              <ExpandableFilters />
+              
+              {/* xl 이상: 필터 직접 표시 */}
+              <div className="hidden xl:block">
+                <ExpandableFilters />
+              </div>
+              
+              {/* lg~xl: 필터 버튼 + 팝오버 */}
+              <div className="xl:hidden relative" ref={filterPopoverRef}>
+                <button
+                  onClick={() => setIsFilterPopoverOpen(!isFilterPopoverOpen)}
+                  className="flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-medium transition-all"
+                  style={{
+                    background: isFilterPopoverOpen
+                      ? "rgba(59, 130, 246, 0.12)"
+                      : "var(--notion-bg-secondary)",
+                    color: isFilterPopoverOpen
+                      ? "#3b82f6"
+                      : "var(--notion-text-muted)",
+                    border: isFilterPopoverOpen
+                      ? "1px solid rgba(59, 130, 246, 0.25)"
+                      : "1px solid transparent",
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    />
+                  </svg>
+                  <span>필터</span>
+                  <svg
+                    className={`w-3 h-3 transition-transform ${isFilterPopoverOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* 필터 팝오버 */}
+                {isFilterPopoverOpen && (
+                  <div
+                    className="absolute top-full right-0 mt-2 p-3 rounded-2xl z-50 animate-context-menu"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.98)",
+                      backdropFilter: "blur(20px)",
+                      WebkitBackdropFilter: "blur(20px)",
+                      boxShadow: "0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06)",
+                      border: "1px solid rgba(0, 0, 0, 0.06)",
+                    }}
+                  >
+                    <ExpandableFilters />
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

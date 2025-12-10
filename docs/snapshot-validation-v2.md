@@ -54,39 +54,41 @@
 
 ### 3.1 필수 필드
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| name | string | O | 작성자 이름, 빈 문자열 불가 |
-| domain | string | O | 업무 관점 분류, 빈 문자열 불가 |
-| project | string | O | 프로젝트명, 빈 문자열 불가 |
-| module | string | O | 모듈명 (빈 문자열 허용) |
-| feature | string | O | 기능명, 빈 문자열 불가 |
-| pastWeek | object | O | 지난 주 블록 |
-| pastWeek.tasks | array | O | 작업 목록 (최소 1개 이상 권장) |
-| thisWeek | object | O | 이번 주 블록 |
-| thisWeek.tasks | array | O | 계획 목록 |
+| 필드           | 타입   | 필수 | 설명                           |
+| -------------- | ------ | ---- | ------------------------------ |
+| name           | string | O    | 작성자 이름, 빈 문자열 불가    |
+| domain         | string | O    | 업무 관점 분류, 빈 문자열 불가 |
+| project        | string | O    | 프로젝트명, 빈 문자열 불가     |
+| module         | string | O    | 모듈명 (빈 문자열 허용)        |
+| feature        | string | O    | 기능명, 빈 문자열 불가         |
+| pastWeek       | object | O    | 지난 주 블록                   |
+| pastWeek.tasks | array  | O    | 작업 목록 (최소 1개 이상 권장) |
+| thisWeek       | object | O    | 이번 주 블록                   |
+| thisWeek.tasks | array  | O    | 계획 목록                      |
 
 ### 3.2 선택 필드
 
-| 필드 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| pastWeek.risks | string[] \| null | null | 리스크 목록 |
-| pastWeek.riskLevel | 0 \| 1 \| 2 \| 3 \| null | null | 리스크 레벨 |
-| pastWeek.collaborators | array | [] | 협업자 목록 |
+| 필드                   | 타입                     | 기본값 | 설명        |
+| ---------------------- | ------------------------ | ------ | ----------- |
+| pastWeek.risks         | string[] \| null         | null   | 리스크 목록 |
+| pastWeek.riskLevel     | 0 \| 1 \| 2 \| 3 \| null | null   | 리스크 레벨 |
+| pastWeek.collaborators | array                    | []     | 협업자 목록 |
 
 ### 3.3 Task 구조
 
 **Past Week Task:**
+
 ```typescript
 {
-  title: string;    // 필수, 빈 문자열 불가
+  title: string; // 필수, 빈 문자열 불가
   progress: number; // 필수, 0-100 범위
 }
 ```
 
 **This Week Task:**
+
 ```typescript
-string // 빈 문자열 불가
+string; // 빈 문자열 불가
 ```
 
 ### 3.4 Collaborator 구조
@@ -103,22 +105,22 @@ string // 빈 문자열 불가
 ```typescript
 {
   name: string;
-  relation: "pair" | "pre" | "post"    // v1: 단일 값
+  relation: "pair" | "pre" | "post"; // v1: 단일 값
 }
 ```
 
 ### 3.5 유효한 Module 값 (MOTIIV 기준)
 
-| Module | 설명 |
-|--------|------|
-| Home | 홈 화면 |
-| Discovery | Article, Projects, Portfolio 등 |
-| Spreadsheet | 스프레드시트 기능 |
-| Workspace | Team Project 등 |
-| Account | 프로필, 계정, 설정 |
-| Engagement System | 인기 컨텐츠, 뱃지, 알림, 이메일 등 |
-| Navigation | IA, 메뉴 설계 변경, 페이지 구조 개편 등 |
-| Tracking | HubSpot, GA 등 활동 기반 데이터 추적 |
+| Module            | 설명                                    |
+| ----------------- | --------------------------------------- |
+| Home              | 홈 화면                                 |
+| Discovery         | Article, Projects, Portfolio 등         |
+| Spreadsheet       | 스프레드시트 기능                       |
+| Workspace         | Team Project 등                         |
+| Account           | 프로필, 계정, 설정                      |
+| Engagement System | 인기 컨텐츠, 뱃지, 알림, 이메일 등      |
+| Navigation        | IA, 메뉴 설계 변경, 페이지 구조 개편 등 |
+| Tracking          | HubSpot, GA 등 활동 기반 데이터 추적    |
 
 > 기타 프로젝트(M-Connector, M-Desk, Idea-forge)의 Module은 확정 시 추가 예정
 
@@ -128,35 +130,35 @@ string // 빈 문자열 불가
 
 ### 4.1 진행률 규칙
 
-| 규칙 | 설명 | 심각도 |
-|------|------|--------|
-| 범위 제한 | progress는 0-100 사이 | error |
-| 정수 권장 | 소수점은 경고만 발생 | warning |
-| 음수 불가 | 음수 값은 오류 | error |
+| 규칙      | 설명                  | 심각도  |
+| --------- | --------------------- | ------- |
+| 범위 제한 | progress는 0-100 사이 | error   |
+| 정수 권장 | 소수점은 경고만 발생  | warning |
+| 음수 불가 | 음수 값은 오류        | error   |
 
 ### 4.2 리스크 규칙
 
-| 규칙 | 설명 | 심각도 |
-|------|------|--------|
-| 레벨 범위 | riskLevel은 0, 1, 2, 3, null 중 하나 | error |
-| 일관성 | risks가 있으면 riskLevel도 있어야 함 | warning |
-| 빈 배열 처리 | risks: [] → null로 정규화 | info |
+| 규칙         | 설명                                 | 심각도  |
+| ------------ | ------------------------------------ | ------- |
+| 레벨 범위    | riskLevel은 0, 1, 2, 3, null 중 하나 | error   |
+| 일관성       | risks가 있으면 riskLevel도 있어야 함 | warning |
+| 빈 배열 처리 | risks: [] → null로 정규화            | info    |
 
 ### 4.3 협업자 규칙
 
-| 규칙 | 설명 | 심각도 |
-|------|------|--------|
-| 관계 유효성 | relations는 "pair", "pre", "post"만 허용 | error |
-| 중복 제거 | 같은 이름의 협업자 중복 시 경고 | warning |
-| 빈 relations | relations가 빈 배열이면 오류 | error |
+| 규칙         | 설명                                     | 심각도  |
+| ------------ | ---------------------------------------- | ------- |
+| 관계 유효성  | relations는 "pair", "pre", "post"만 허용 | error   |
+| 중복 제거    | 같은 이름의 협업자 중복 시 경고          | warning |
+| 빈 relations | relations가 빈 배열이면 오류             | error   |
 
 ### 4.4 텍스트 규칙
 
-| 규칙 | 설명 | 심각도 |
-|------|------|--------|
-| 빈 필수 필드 | name, domain, project, feature가 빈 문자열이면 오류 | error |
-| 공백 정리 | 앞뒤 공백은 자동 제거 권장 | info |
-| 특수문자 | 대부분 허용, 단 파서 구분자 제외 | info |
+| 규칙         | 설명                                                | 심각도 |
+| ------------ | --------------------------------------------------- | ------ |
+| 빈 필수 필드 | name, domain, project, feature가 빈 문자열이면 오류 | error  |
+| 공백 정리    | 앞뒤 공백은 자동 제거 권장                          | info   |
+| 특수문자     | 대부분 허용, 단 파서 구분자 제외                    | info   |
 
 ---
 
@@ -173,6 +175,7 @@ string // 빈 문자열 불가
 ```
 
 **규칙:**
+
 - `risk` 필드가 존재하고 `risks`가 없으면 → `risks`로 복사
 - 둘 다 존재하면 → `risks` 우선
 - `risk`가 문자열이면 → 배열로 감싸기
@@ -188,6 +191,7 @@ string // 빈 문자열 불가
 ```
 
 **규칙:**
+
 - `relation` 필드가 존재하고 `relations`가 없으면 → 배열로 변환
 - 둘 다 존재하면 → `relations` 우선
 
@@ -211,6 +215,7 @@ string // 빈 문자열 불가
 ```
 
 **규칙:**
+
 - Define 블록이 존재해도 무시 (헤더에서 추출)
 - 헤더와 Define이 충돌하면 → 헤더 우선
 
@@ -247,19 +252,19 @@ string // 빈 문자열 불가
 
 ### 6.2 상태 정의
 
-| 상태 | 조건 |
-|------|------|
-| ok | 오류 및 경고 없음 |
+| 상태    | 조건                  |
+| ------- | --------------------- |
+| ok      | 오류 및 경고 없음     |
 | warning | 경고만 있고 오류 없음 |
-| error | 오류가 하나 이상 존재 |
+| error   | 오류가 하나 이상 존재 |
 
 ### 6.3 메시지 유형
 
-| 유형 | 설명 |
-|------|------|
-| error | 스키마 위반, 반드시 수정 필요 |
-| warning | 권장사항 위반, 수정 권장 |
-| info | 참고 정보, 수정 불필요 |
+| 유형    | 설명                          |
+| ------- | ----------------------------- |
+| error   | 스키마 위반, 반드시 수정 필요 |
+| warning | 권장사항 위반, 수정 권장      |
+| info    | 참고 정보, 수정 불필요        |
 
 ---
 
@@ -275,9 +280,7 @@ string // 빈 문자열 불가
   "module": "Spreadsheet",
   "feature": "Rich-note",
   "pastWeek": {
-    "tasks": [
-      { "title": "컴포넌트 개발", "progress": 80 }
-    ],
+    "tasks": [{ "title": "컴포넌트 개발", "progress": 80 }],
     "risks": null,
     "riskLevel": null,
     "collaborators": []
@@ -289,6 +292,7 @@ string // 빈 문자열 불가
 ```
 
 **예상 결과:**
+
 ```json
 {
   "index": 0,
@@ -307,9 +311,7 @@ string // 빈 문자열 불가
   "module": "",
   "feature": "Rich-note",
   "pastWeek": {
-    "tasks": [
-      { "title": "컴포넌트 개발", "progress": 80.5 }
-    ],
+    "tasks": [{ "title": "컴포넌트 개발", "progress": 80.5 }],
     "risks": ["리스크 존재"],
     "riskLevel": null,
     "collaborators": []
@@ -321,6 +323,7 @@ string // 빈 문자열 불가
 ```
 
 **예상 결과:**
+
 ```json
 {
   "index": 0,
@@ -356,14 +359,10 @@ string // 빈 문자열 불가
   "module": "Spreadsheet",
   "feature": "Rich-note",
   "pastWeek": {
-    "tasks": [
-      { "title": "", "progress": 150 }
-    ],
+    "tasks": [{ "title": "", "progress": 150 }],
     "risks": null,
     "riskLevel": 5,
-    "collaborators": [
-      { "name": "김서연", "relations": ["invalid"] }
-    ]
+    "collaborators": [{ "name": "김서연", "relations": ["invalid"] }]
   },
   "thisWeek": {
     "tasks": ["계획"]
@@ -372,6 +371,7 @@ string // 빈 문자열 불가
 ```
 
 **예상 결과:**
+
 ```json
 {
   "index": 0,
@@ -417,7 +417,7 @@ string // 빈 문자열 불가
 
 ### 8.1 검증 요청 프롬프트
 
-```
+````
 아래 JSON 배열이 snapshot-validation-v2.md에 정의된 규칙을 모두 만족하는지 검사하세요.
 
 규칙 요약:
@@ -432,9 +432,10 @@ string // 빈 문자열 불가
 검증할 데이터:
 ```json
 [입력 데이터]
-```
+````
 
 응답 형식:
+
 ```json
 {
   "isValid": boolean,
@@ -447,30 +448,37 @@ string // 빈 문자열 불가
   ]
 }
 ```
+
 ```
 
 ### 8.2 수정 요청 프롬프트
 
 ```
+
 아래 스냅샷 데이터에서 발견된 오류를 수정해주세요.
 
 발견된 오류:
+
 - [오류 목록]
 
 원본 데이터:
+
 ```json
 [원본 데이터]
 ```
 
 수정 후 v2 스키마를 준수하는 JSON을 반환해주세요.
+
 ```
 
 ### 8.3 변환 요청 프롬프트 (v1 → v2)
 
 ```
+
 아래 v1 형식의 스냅샷 데이터를 v2 형식으로 변환해주세요.
 
 변환 규칙:
+
 1. topic → feature
 2. risk (문자열 또는 배열) → risks (배열)
 3. collaborator.relation → collaborator.relations (배열)
@@ -478,11 +486,13 @@ string // 빈 문자열 불가
 5. Define 블록 삭제 (헤더로 대체)
 
 원본 v1 데이터:
+
 ```json
 [v1 데이터]
 ```
 
 v2 형식으로 변환된 JSON을 반환해주세요.
+
 ```
 
 ---
@@ -526,3 +536,4 @@ v2 형식으로 변환된 JSON을 반환해주세요.
 | 심각도 | error > warning > info |
 | 하위 호환 | v1 필드 자동 변환 지원 |
 | Define 블록 | 무시 (헤더 우선) |
+```

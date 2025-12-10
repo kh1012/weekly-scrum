@@ -2,6 +2,55 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.3.0",
+    date: "2025-12-10",
+    title: "스냅샷 관리 시스템 및 v2 스키마 정립",
+    summary:
+      "스냅샷 관리 페이지를 추가하고 v2 스키마 가이드/검증 문서를 정립했습니다. GNB 필터 반응형 개선 및 Work Map 상태 저장 버그를 수정했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "스냅샷 관리 페이지 추가 - 데이터 로드/신규 생성/편집 기능",
+      },
+      {
+        type: "feat",
+        description: "v2 스키마 가이드 문서 (snapshot-guide-v2.md) 작성",
+      },
+      {
+        type: "feat",
+        description: "v2 스키마 검증 가이드 문서 (snapshot-validation-v2.md) 작성",
+      },
+      {
+        type: "feat",
+        description: "GNB 필터 반응형 개선 - 중간 화면에서 통합 버튼으로 표시",
+      },
+      {
+        type: "feat",
+        description: "Work Map 협업 네트워크 노드 패널 드래그 이동 지원",
+      },
+      {
+        type: "feat",
+        description: "협업 네트워크 중앙 모달 - 전체 스냅샷 리스트 표시",
+      },
+      {
+        type: "improve",
+        description: "스냅샷 뷰어 뷰 모드 localStorage 저장 (전체/사람별 등)",
+      },
+      {
+        type: "improve",
+        description: "Work Map 트리 펼침 상태 localStorage 저장 버그 수정",
+      },
+      {
+        type: "improve",
+        description: "SNB 버전 표시 - 최신 릴리즈 버전과 동적 연동",
+      },
+      {
+        type: "style",
+        description: "협업 네트워크 초기 높이 1.4배, 최대 높이 2배로 조정",
+      },
+    ],
+  },
+  {
     version: "2.2.0",
     date: "2025-12-09",
     title: "Airbnb 스타일 UI/UX 전면 개선",

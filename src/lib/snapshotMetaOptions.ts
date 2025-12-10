@@ -1,6 +1,6 @@
 /**
  * 스냅샷 메타 필드 옵션 정의
- * 
+ *
  * 이 파일은 스냅샷 편집 시 사용되는 콤보박스 옵션을 관리합니다.
  * 각 배열의 마지막 요소는 "사용자 정의"로, 자유 입력을 허용합니다.
  */
@@ -34,7 +34,7 @@ export const PROJECT_OPTIONS = [
 /**
  * Module 옵션 (프로젝트별)
  * 프로젝트 내부 하위 영역
- * 
+ *
  * MOTIIV 모듈 설명:
  * - Home: 홈 화면
  * - Discovery: Article, Projects, Portfolio 등
@@ -122,7 +122,11 @@ export const RISK_LEVEL_OPTIONS = [
   { value: 0, label: "없음", description: "리스크 없음" },
   { value: 1, label: "경미", description: "업무 외적 부담, 일정 영향 없음" },
   { value: 2, label: "중간", description: "병목 가능성 있음, 일정 영향 가능" },
-  { value: 3, label: "심각", description: "즉각적인 논의 필요, 일정 지연 확정" },
+  {
+    value: 3,
+    label: "심각",
+    description: "즉각적인 논의 필요, 일정 지연 확정",
+  },
 ] as const;
 
 /**
