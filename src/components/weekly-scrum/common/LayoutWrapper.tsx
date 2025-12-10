@@ -9,7 +9,13 @@ interface LayoutWrapperProps {
 }
 
 // max-w-full을 적용할 페이지 경로
-const FULL_WIDTH_PAGES = ["/matrix", "/quadrant", "/work-map", "/snapshots"];
+const FULL_WIDTH_PAGES = [
+  "/matrix",
+  "/quadrant",
+  "/work-map",
+  "/snapshots",
+  "/manage",
+];
 
 // localStorage 키
 const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";

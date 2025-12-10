@@ -2,7 +2,7 @@
 
 /**
  * 스냅샷 카드 리스트
- * 
+ *
  * 각 카드는 요약 정보를 가지며, 선택/삭제/복사 기능을 제공합니다.
  */
 
@@ -25,20 +25,22 @@ interface SnapshotCardListProps {
   onAddEmpty: () => void;
 }
 
-export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardListProps>(
-  function SnapshotCardList(
-    {
-      snapshots,
-      selectedId,
-      viewMode,
-      onSelectCard,
-      onDeleteCard,
-      onCopyJson,
-      onCopyPlainText,
-      onAddEmpty,
-    },
-    ref
-  ) {
+export const SnapshotCardList = forwardRef<
+  SnapshotCardListRef,
+  SnapshotCardListProps
+>(function SnapshotCardList(
+  {
+    snapshots,
+    selectedId,
+    viewMode,
+    onSelectCard,
+    onDeleteCard,
+    onCopyJson,
+    onCopyPlainText,
+    onAddEmpty,
+  },
+  ref
+) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
@@ -69,15 +71,23 @@ export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardList
     <div className="flex-1 flex flex-col">
       {/* 리스트 헤더 */}
       <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">
-          카드 목록
-        </span>
+        <span className="text-sm font-medium text-gray-700">카드 목록</span>
         <button
           onClick={onAddEmpty}
           className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           빈 카드 추가
         </button>
@@ -122,7 +132,10 @@ export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardList
                         {snapshot.name || "(이름 없음)"}
                       </span>
                       {snapshot.isDirty && (
-                        <span className="w-2 h-2 rounded-full bg-orange-400" title="수정됨" />
+                        <span
+                          className="w-2 h-2 rounded-full bg-orange-400"
+                          title="수정됨"
+                        />
                       )}
                       {snapshot.isOriginal && (
                         <span className="text-xs text-gray-400">원본</span>
@@ -145,12 +158,19 @@ export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardList
                       className="p-1 text-gray-400 hover:text-gray-600 rounded"
                     >
                       <svg
-                        className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 transition-transform ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </button>
 
@@ -163,8 +183,18 @@ export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardList
                         }}
                         className="p-1 text-gray-400 hover:text-gray-600 rounded"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                          />
                         </svg>
                       </button>
 
@@ -224,13 +254,17 @@ export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardList
                         <div>
                           <span className="text-gray-500">Past Week:</span>
                           <ul className="mt-1 space-y-0.5 text-gray-700">
-                            {snapshot.pastWeek.tasks.slice(0, 3).map((task, i) => (
-                              <li key={i} className="flex items-center gap-1">
-                                <span className="w-1 h-1 rounded-full bg-gray-400" />
-                                <span className="truncate">{task.title}</span>
-                                <span className="text-gray-400">({task.progress}%)</span>
-                              </li>
-                            ))}
+                            {snapshot.pastWeek.tasks
+                              .slice(0, 3)
+                              .map((task, i) => (
+                                <li key={i} className="flex items-center gap-1">
+                                  <span className="w-1 h-1 rounded-full bg-gray-400" />
+                                  <span className="truncate">{task.title}</span>
+                                  <span className="text-gray-400">
+                                    ({task.progress}%)
+                                  </span>
+                                </li>
+                              ))}
                             {snapshot.pastWeek.tasks.length > 3 && (
                               <li className="text-gray-400">
                                 +{snapshot.pastWeek.tasks.length - 3}개 더...
@@ -245,12 +279,14 @@ export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardList
                         <div>
                           <span className="text-gray-500">This Week:</span>
                           <ul className="mt-1 space-y-0.5 text-gray-700">
-                            {snapshot.thisWeek.tasks.slice(0, 3).map((task, i) => (
-                              <li key={i} className="flex items-center gap-1">
-                                <span className="w-1 h-1 rounded-full bg-blue-400" />
-                                <span className="truncate">{task}</span>
-                              </li>
-                            ))}
+                            {snapshot.thisWeek.tasks
+                              .slice(0, 3)
+                              .map((task, i) => (
+                                <li key={i} className="flex items-center gap-1">
+                                  <span className="w-1 h-1 rounded-full bg-blue-400" />
+                                  <span className="truncate">{task}</span>
+                                </li>
+                              ))}
                             {snapshot.thisWeek.tasks.length > 3 && (
                               <li className="text-gray-400">
                                 +{snapshot.thisWeek.tasks.length - 3}개 더...
@@ -280,4 +316,3 @@ export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardList
     </div>
   );
 });
-

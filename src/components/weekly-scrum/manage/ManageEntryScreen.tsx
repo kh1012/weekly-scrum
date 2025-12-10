@@ -2,7 +2,7 @@
 
 /**
  * 스냅샷 관리 초기 진입 화면
- * 
+ *
  * 두 개의 진입점:
  * - [데이터 불러오기]
  * - [새로 작성하기]
@@ -36,13 +36,11 @@ export function ManageEntryScreen({
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex items-center justify-center p-8">
+    <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
       <div className="max-w-3xl w-full">
         {/* 헤더 */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">
-            스냅샷 관리
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">스냅샷 관리</h1>
           <p className="text-gray-600">
             매주 스냅샷을 더 빠르고 편하게 작성할 수 있는 관리 화면입니다.
           </p>
@@ -136,4 +134,3 @@ export function ManageEntryScreen({
     </div>
   );
 }
-
