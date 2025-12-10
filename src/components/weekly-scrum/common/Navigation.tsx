@@ -41,6 +41,13 @@ const NAV_CATEGORIES: NavCategory[] = [
         href: "/snapshots",
         emoji: "📸",
       },
+      {
+        key: "manage",
+        label: "스냅샷 관리",
+        href: "/manage",
+        emoji: "✏️",
+        description: "스냅샷 작성/편집",
+      },
     ],
   },
   {
