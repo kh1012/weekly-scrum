@@ -11,6 +11,7 @@ import { useState, useCallback } from "react";
 import { useScrumContext } from "@/context/ScrumContext";
 import { ManageEntryScreen } from "./ManageEntryScreen";
 import { ManageEditorScreen } from "./ManageEditorScreen";
+import { ToastProvider } from "./Toast";
 import type { ManageState, TempSnapshot } from "./types";
 import { createEmptySnapshot, convertToTempSnapshot } from "./types";
 
@@ -157,17 +158,19 @@ export function ManageView() {
   const selectedSnapshot = state.snapshots.find((s) => s.tempId === state.selectedId) || null;
 
   return (
-    <ManageEditorScreen
-      snapshots={state.snapshots}
-      selectedSnapshot={selectedSnapshot}
-      viewMode={state.viewMode}
-      onSelectCard={handleSelectCard}
-      onDeleteCard={handleDeleteCard}
-      onUpdateCard={handleUpdateCard}
-      onAddEmpty={handleAddEmpty}
-      onToggleViewMode={handleToggleViewMode}
-      onBackToEntry={handleBackToEntry}
-    />
+    <ToastProvider>
+      <ManageEditorScreen
+        snapshots={state.snapshots}
+        selectedSnapshot={selectedSnapshot}
+        viewMode={state.viewMode}
+        onSelectCard={handleSelectCard}
+        onDeleteCard={handleDeleteCard}
+        onUpdateCard={handleUpdateCard}
+        onAddEmpty={handleAddEmpty}
+        onToggleViewMode={handleToggleViewMode}
+        onBackToEntry={handleBackToEntry}
+      />
+    </ToastProvider>
   );
 }
 

@@ -6,9 +6,13 @@
  * 각 카드는 요약 정보를 가지며, 선택/삭제/복사 기능을 제공합니다.
  */
 
-import { useState } from "react";
+import { useState, forwardRef, useImperativeHandle } from "react";
 import type { TempSnapshot } from "./types";
 import { tempSnapshotToPlainText } from "./types";
+
+export interface SnapshotCardListRef {
+  expandCard: (tempId: string) => void;
+}
 
 interface SnapshotCardListProps {
   snapshots: TempSnapshot[];
@@ -21,18 +25,33 @@ interface SnapshotCardListProps {
   onAddEmpty: () => void;
 }
 
-export function SnapshotCardList({
-  snapshots,
-  selectedId,
-  viewMode,
-  onSelectCard,
-  onDeleteCard,
-  onCopyJson,
-  onCopyPlainText,
-  onAddEmpty,
-}: SnapshotCardListProps) {
+export const SnapshotCardList = forwardRef<SnapshotCardListRef, SnapshotCardListProps>(
+  function SnapshotCardList(
+    {
+      snapshots,
+      selectedId,
+      viewMode,
+      onSelectCard,
+      onDeleteCard,
+      onCopyJson,
+      onCopyPlainText,
+      onAddEmpty,
+    },
+    ref
+  ) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  // 외부에서 카드 확장 제어
+  useImperativeHandle(ref, () => ({
+    expandCard: (tempId: string) => {
+      setExpandedIds((prev) => {
+        const next = new Set(prev);
+        next.add(tempId);
+        return next;
+      });
+    },
+  }));
 
   const toggleExpand = (tempId: string) => {
     setExpandedIds((prev) => {
@@ -260,5 +279,5 @@ export function SnapshotCardList({
       </div>
     </div>
   );
-}
+});
 

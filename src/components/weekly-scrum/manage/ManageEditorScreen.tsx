@@ -8,8 +8,10 @@
  * - 우측: 선택된 카드의 상세 편집 폼
  */
 
-import { SnapshotCardList } from "./SnapshotCardList";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { SnapshotCardList, SnapshotCardListRef } from "./SnapshotCardList";
 import { SnapshotEditForm } from "./SnapshotEditForm";
+import { useToast } from "./Toast";
 import type { TempSnapshot } from "./types";
 import { tempSnapshotToV2Json, tempSnapshotToPlainText } from "./types";
 
@@ -36,33 +38,65 @@ export function ManageEditorScreen({
   onToggleViewMode,
   onBackToEntry,
 }: ManageEditorScreenProps) {
+  const { showToast } = useToast();
+  const cardListRef = useRef<SnapshotCardListRef>(null);
+
   // 전체 JSON 복사
   const handleCopyAllJson = async () => {
-    const jsonData = snapshots.map(tempSnapshotToV2Json);
-    await navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+    try {
+      const jsonData = snapshots.map(tempSnapshotToV2Json);
+      await navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+      showToast(`${snapshots.length}개 스냅샷 JSON 복사 완료`, "success");
+    } catch {
+      showToast("복사 실패", "error");
+    }
   };
 
   // 전체 Plain Text 복사
   const handleCopyAllPlainText = async () => {
-    const plainTexts = snapshots.map(tempSnapshotToPlainText);
-    await navigator.clipboard.writeText(plainTexts.join("\n\n---\n\n"));
+    try {
+      const plainTexts = snapshots.map(tempSnapshotToPlainText);
+      await navigator.clipboard.writeText(plainTexts.join("\n\n---\n\n"));
+      showToast(`${snapshots.length}개 스냅샷 Text 복사 완료`, "success");
+    } catch {
+      showToast("복사 실패", "error");
+    }
   };
 
   // 개별 JSON 복사
   const handleCopyCardJson = async (snapshot: TempSnapshot) => {
-    const jsonData = tempSnapshotToV2Json(snapshot);
-    await navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+    try {
+      const jsonData = tempSnapshotToV2Json(snapshot);
+      await navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+      showToast("JSON 복사 완료", "success");
+    } catch {
+      showToast("복사 실패", "error");
+    }
   };
 
   // 개별 Plain Text 복사
   const handleCopyCardPlainText = async (snapshot: TempSnapshot) => {
-    await navigator.clipboard.writeText(tempSnapshotToPlainText(snapshot));
+    try {
+      await navigator.clipboard.writeText(tempSnapshotToPlainText(snapshot));
+      showToast("Plain Text 복사 완료", "success");
+    } catch {
+      showToast("복사 실패", "error");
+    }
+  };
+
+  // 보기 모드 전환 (선택된 카드 확장)
+  const handleToggleViewModeWithExpand = () => {
+    // 선택된 카드가 있으면 확장
+    if (selectedSnapshot) {
+      cardListRef.current?.expandCard(selectedSnapshot.tempId);
+    }
+    onToggleViewMode();
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col">
       {/* 상단 툴바 */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
           <button
             onClick={onBackToEntry}
@@ -82,7 +116,7 @@ export function ManageEditorScreen({
         <div className="flex items-center gap-2">
           {/* 보기 모드 토글 */}
           <button
-            onClick={onToggleViewMode}
+            onClick={handleToggleViewModeWithExpand}
             className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             {viewMode === "styled" ? "Plain Text 보기" : "Styled 보기"}
@@ -117,6 +151,7 @@ export function ManageEditorScreen({
         {/* 좌측: 카드 리스트 */}
         <div className="w-80 border-r border-gray-200 bg-gray-50 flex flex-col">
           <SnapshotCardList
+            ref={cardListRef}
             snapshots={snapshots}
             selectedId={selectedSnapshot?.tempId || null}
             viewMode={viewMode}

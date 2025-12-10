@@ -36,7 +36,7 @@ export function ManageEntryScreen({
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
+    <div className="h-[calc(100vh-3.5rem)] flex items-center justify-center p-8">
       <div className="max-w-3xl w-full">
         {/* 헤더 */}
         <div className="text-center mb-12">
