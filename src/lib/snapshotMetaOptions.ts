@@ -34,56 +34,46 @@ export const PROJECT_OPTIONS = [
 /**
  * Module 옵션 (프로젝트별)
  * 프로젝트 내부 하위 영역
+ * 
+ * MOTIIV 모듈 설명:
+ * - Home: 홈 화면
+ * - Discovery: Article, Projects, Portfolio 등
+ * - Spreadsheet: 스프레드시트 기능
+ * - Workspace: Team Project 등
+ * - Account: 프로필, 계정, 설정
+ * - Engagement System: 인기 컨텐츠, 뱃지, 알림, 이메일 등
+ * - Navigation: IA, 메뉴 설계 변경, 페이지 구조 개편 등
+ * - Tracking: HubSpot, GA 등 활동 기반 데이터 추적
  */
 export const MODULE_OPTIONS: Record<string, readonly string[]> = {
   MOTIIV: [
-    "Workspace",
-    "TeamProject",
-    "Spreadsheet",
     "Home",
-    "Profile",
-    "Badge",
-    "Notification",
+    "Discovery",
+    "Spreadsheet",
+    "Workspace",
+    "Account",
+    "Engagement System",
+    "Navigation",
+    "Tracking",
   ],
-  "M-Connector": [
-    "Import",
-    "Export",
-    "Sync",
-    "Template",
-  ],
-  "M-Desk": [
-    "Dashboard",
-    "Analytics",
-    "Settings",
-  ],
-  "Idea-forge": [
-    "Canvas",
-    "Library",
-    "Collaboration",
-  ],
+  "M-Connector": [],
+  "M-Desk": [],
+  "Idea-forge": [],
 } as const;
 
 /**
  * 모든 모듈 옵션 (프로젝트 무관)
+ * MOTIIV 기준 모듈 목록
  */
 export const ALL_MODULE_OPTIONS = [
-  "Workspace",
-  "TeamProject",
-  "Spreadsheet",
   "Home",
-  "Profile",
-  "Badge",
-  "Notification",
-  "Import",
-  "Export",
-  "Sync",
-  "Template",
-  "Dashboard",
-  "Analytics",
-  "Settings",
-  "Canvas",
-  "Library",
-  "Collaboration",
+  "Discovery",
+  "Spreadsheet",
+  "Workspace",
+  "Account",
+  "Engagement System",
+  "Navigation",
+  "Tracking",
 ] as const;
 
 /**
@@ -148,4 +138,3 @@ export type ProjectOption = (typeof PROJECT_OPTIONS)[number];
 export type NameOption = (typeof NAME_OPTIONS)[number];
 export type RelationOption = (typeof RELATION_OPTIONS)[number];
 export type RiskLevelOption = (typeof RISK_LEVEL_OPTIONS)[number];
-

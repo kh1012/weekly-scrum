@@ -39,10 +39,12 @@
 [Frontend / MOTIIV / Spreadsheet / Rich-note]
 
 * Name: 김서연
-* Define
-    * Domain: Frontend
-    ...
+* Past Week
+    * Tasks
+        ...
 ```
+
+> **참고**: Define 블록은 v2에서 삭제됨. 헤더에서 계층 정보를 추출.
 
 여러 스냅샷은 `---` 또는 빈 줄 두 개로 구분한다.
 
@@ -104,6 +106,21 @@ string // 빈 문자열 불가
   relation: "pair" | "pre" | "post"    // v1: 단일 값
 }
 ```
+
+### 3.5 유효한 Module 값 (MOTIIV 기준)
+
+| Module | 설명 |
+|--------|------|
+| Home | 홈 화면 |
+| Discovery | Article, Projects, Portfolio 등 |
+| Spreadsheet | 스프레드시트 기능 |
+| Workspace | Team Project 등 |
+| Account | 프로필, 계정, 설정 |
+| Engagement System | 인기 컨텐츠, 뱃지, 알림, 이메일 등 |
+| Navigation | IA, 메뉴 설계 변경, 페이지 구조 개편 등 |
+| Tracking | HubSpot, GA 등 활동 기반 데이터 추적 |
+
+> 기타 프로젝트(M-Connector, M-Desk, Idea-forge)의 Module은 확정 시 추가 예정
 
 ---
 
@@ -183,6 +200,19 @@ string // 빈 문자열 불가
 // v2 형식으로 변환
 { "feature": "Rich-note" }
 ```
+
+### 5.4 Define 블록 무시
+
+```
+* Define
+    * Domain: Frontend
+    * Project: MOTIIV
+    ...
+```
+
+**규칙:**
+- Define 블록이 존재해도 무시 (헤더에서 추출)
+- 헤더와 Define이 충돌하면 → 헤더 우선
 
 ---
 
@@ -397,6 +427,7 @@ string // 빈 문자열 불가
 4. collaborators.relations: "pair", "pre", "post"만 허용
 5. riskLevel: 0, 1, 2, 3, null만 허용
 6. 빈 필수 필드는 오류로 처리
+7. Define 블록은 무시 (헤더 우선)
 
 검증할 데이터:
 ```json
@@ -444,6 +475,7 @@ string // 빈 문자열 불가
 2. risk (문자열 또는 배열) → risks (배열)
 3. collaborator.relation → collaborator.relations (배열)
 4. plan/progress/next → pastWeek/thisWeek 구조
+5. Define 블록 삭제 (헤더로 대체)
 
 원본 v1 데이터:
 ```json
@@ -480,6 +512,7 @@ v2 형식으로 변환된 JSON을 반환해주세요.
 
 ### 하위 호환성 검증
 - [ ] v1 필드가 있으면 v2로 변환되었는가? (risk → risks, relation → relations)
+- [ ] Define 블록이 있으면 무시되었는가?
 
 ---
 
@@ -492,4 +525,4 @@ v2 형식으로 변환된 JSON을 반환해주세요.
 | 출력 | 검증 결과 (status, messages) |
 | 심각도 | error > warning > info |
 | 하위 호환 | v1 필드 자동 변환 지원 |
-
+| Define 블록 | 무시 (헤더 우선) |

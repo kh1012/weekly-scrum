@@ -197,24 +197,20 @@ export function tempSnapshotToV2Json(snapshot: TempSnapshot): ScrumItemV2 {
 }
 
 /**
- * TempSnapshot을 Plain Text로 변환
+ * TempSnapshot을 Plain Text로 변환 (v2 형식)
+ * 
+ * v2 형식에서는 Define 블록이 삭제되었습니다.
+ * 헤더 [Domain / Project / Module / Feature]가 계층 정보를 명시합니다.
  */
 export function tempSnapshotToPlainText(snapshot: TempSnapshot): string {
   const lines: string[] = [];
   
-  // 헤더
+  // 헤더 (계층 정보 명시)
   lines.push(`[${snapshot.domain} / ${snapshot.project} / ${snapshot.module} / ${snapshot.feature}]`);
   lines.push("");
   
   // Name
   lines.push(`* Name: ${snapshot.name}`);
-  
-  // Define 블록
-  lines.push("* Define");
-  lines.push(`    * Domain: ${snapshot.domain}`);
-  lines.push(`    * Project: ${snapshot.project}`);
-  lines.push(`    * Module: ${snapshot.module}`);
-  lines.push(`    * Feature: ${snapshot.feature}`);
   
   // Past Week
   lines.push("* Past Week");
@@ -225,14 +221,14 @@ export function tempSnapshotToPlainText(snapshot: TempSnapshot): string {
     });
   }
   
-  // Risk
+  // Risks (v2: 복수형)
   if (snapshot.pastWeek.risk && snapshot.pastWeek.risk.length > 0) {
-    lines.push("    * Risk");
+    lines.push("    * Risks");
     snapshot.pastWeek.risk.forEach((r) => {
       lines.push(`        * ${r}`);
     });
   } else {
-    lines.push("    * Risk: None");
+    lines.push("    * Risks: None");
   }
   
   // RiskLevel

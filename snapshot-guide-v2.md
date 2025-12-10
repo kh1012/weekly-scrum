@@ -9,18 +9,20 @@
 
 v2 스냅샷은 다음 구조로 이루어진다.
 
-1. **헤더**: `[Domain / Project / Module / Feature]` 형식
+1. **헤더**: `[Domain / Project / Module / Feature]` 형식 (계층 정보 명시)
 2. **Name**: 작성자 이름
-3. **Define**: 계층 정보 명시 (Domain/Project/Module/Feature)
-4. **Past Week**: 지난 주 수행 내용 (Tasks, Risks, RiskLevel, Collaborators)
-5. **This Week**: 이번 주 계획 (Tasks)
-6. **Optional 필드**: Risks, RiskLevel, Collaborators는 값이 없으면 `None`으로 명시
+3. **Past Week**: 지난 주 수행 내용 (Tasks, Risks, RiskLevel, Collaborators)
+4. **This Week**: 이번 주 계획 (Tasks)
+5. **Optional 필드**: Risks, RiskLevel, Collaborators는 값이 없으면 `None`으로 명시
+
+> **참고**: 기존 Define 블록은 헤더와 중복되어 v2에서 삭제됨
 
 ---
 
 # 2. 헤더 구조
 
-스냅샷의 첫 줄은 아래와 같은 4단계 구조로 이루어진다.
+스냅샷의 첫 줄은 아래와 같은 4단계 계층 구조로 이루어진다.  
+이 헤더가 스냅샷의 분류 정보를 명시하는 유일한 영역이다.
 
 ```
 [Domain / Project / Module / Feature]
@@ -65,14 +67,24 @@ domain은 "이번 일을 어떤 **관점**에서 수행했는가"를 나타내�
 
 ## 2.3 Module (프로젝트 내부 하위 영역)
 
-프로젝트별 모듈 예시 (MOTIIV 기준):
-- Workspace
-- TeamProject
-- Spreadsheet
-- Home
-- Profile
-- Badge
-- Notification
+프로젝트별 모듈 목록이다.
+
+### MOTIIV 모듈
+
+| Module | 설명 |
+|--------|------|
+| Home | 홈 화면 |
+| Discovery | Article, Projects, Portfolio 등 |
+| Spreadsheet | 스프레드시트 기능 |
+| Workspace | Team Project 등 |
+| Account | 프로필, 계정, 설정 |
+| Engagement System | 인기 컨텐츠, 뱃지, 알림, 이메일 등 |
+| Navigation | IA, 메뉴 설계 변경, 페이지 구조 개편 등 |
+| Tracking | HubSpot, GA 등 활동 기반 데이터 추적 |
+
+### 기타 프로젝트
+
+M-Connector, M-Desk, Idea-forge는 확정 시 추가 예정
 
 > 각 프로젝트별로 자유롭게 정의한다.
 
@@ -265,11 +277,6 @@ Risks, RiskLevel, Collaborators 세 필드는 모두 **Optional**이다.
 [Frontend / MOTIIV / Spreadsheet / Rich-note]
 
 * Name: 김서연
-* Define
-    * Domain: Frontend
-    * Project: MOTIIV
-    * Module: Spreadsheet
-    * Feature: Rich-note
 * Past Week
     * Tasks
         * Rich-note 편집 패널 구조 리팩토링 (50%)
@@ -333,7 +340,7 @@ Risks, RiskLevel, Collaborators 세 필드는 모두 **Optional**이다.
 | 주간 구조 | Plan → Progress → Next | Past Week → This Week |
 | 진행률 | Progress 필드에 % 포함 | Past Week Tasks 각 항목에 % 포함 |
 | 계획 | Plan 필드 | This Week Tasks |
-| Define 블록 | 없음 | 필수 (Domain/Project/Module/Feature 명시) |
+| **Define 블록** | 없음 (일부 버전에서 존재) | **삭제** (헤더와 중복) |
 | Optional 필드 | 생략 가능 | 반드시 `None` 명시 |
 | **Risk 필드명** | `risk` | `risks` (복수형) |
 | **Collaborator 관계** | `relation` (단일) | `relations` (배열) |
@@ -360,11 +367,6 @@ Risks, RiskLevel, Collaborators 세 필드는 모두 **Optional**이다.
 ```
 [Domain / Project / Module / Feature]
 * Name: {string}
-* Define
-    * Domain: {string}
-    * Project: {string}
-    * Module: {string}
-    * Feature: {string}
 * Past Week
     * Tasks
         * {task description} ({progress}%)
@@ -446,13 +448,12 @@ interface WeeklyScrumDataV2 {
 
 스냅샷 v2 포맷은 다음 원칙을 따른다.
 
-1. **계층 구조**: Domain → Project → Module → Feature
+1. **계층 구조**: Domain → Project → Module → Feature (헤더에서 명시)
 2. **주간 구조**: Past Week (Tasks + Risks + RiskLevel + Collaborators) → This Week (Tasks)
 3. **진행률**: Past Week Tasks 각 항목에 % 포함
 4. **Optional 필드**: 값이 없으면 반드시 `None` 명시
 5. **Collaborators**: 이름(relation1, relation2, ...) 형식 (복수 관계 지원)
-6. **Define 블록**: 계층 정보를 명시적으로 정의 (파서 정확성 보장)
+6. **Define 블록 삭제**: 헤더와 중복되어 제거
 7. **필드명 변경**: `risk` → `risks`, `relation` → `relations`
 
 본 가이드는 파서, 대시보드, AI 분석 기준에서 동일하게 적용된다.
-
