@@ -144,7 +144,7 @@ export const SnapshotCardList = forwardRef<
               </svg>
             </button>
             {isCopyDropdownOpen && (
-              <div className="absolute left-0 top-full mt-1 w-36 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-50">
+              <div className="absolute left-0 top-full mt-1 w-36 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-[9999]">
                 <button
                   onClick={() => { onCopyAllJson(); setIsCopyDropdownOpen(false); }}
                   className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
