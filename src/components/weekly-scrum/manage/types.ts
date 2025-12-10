@@ -233,9 +233,8 @@ export function tempSnapshotToV2Json(snapshot: TempSnapshot): ScrumItemV2 {
 export function tempSnapshotToPlainText(snapshot: TempSnapshot): string {
   const lines: string[] = [];
   
-  // 헤더 (계층 정보 명시)
+  // 헤더 (계층 정보 명시) - 바로 다음 줄에 Name이 오도록
   lines.push(`[${snapshot.domain} / ${snapshot.project} / ${snapshot.module} / ${snapshot.feature}]`);
-  lines.push("");
   
   // Name
   lines.push(`* Name: ${snapshot.name}`);

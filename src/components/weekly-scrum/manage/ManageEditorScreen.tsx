@@ -56,7 +56,8 @@ export function ManageEditorScreen({
   const handleCopyAllPlainText = async () => {
     try {
       const plainTexts = snapshots.map(tempSnapshotToPlainText);
-      await navigator.clipboard.writeText(plainTexts.join("\n\n---\n\n"));
+      // 스냅샷 구분: 빈 줄 2개
+      await navigator.clipboard.writeText(plainTexts.join("\n\n\n"));
       showToast(`${snapshots.length}개 스냅샷 Text 복사 완료`, "success");
     } catch {
       showToast("복사 실패", "error");
