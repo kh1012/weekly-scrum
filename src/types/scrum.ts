@@ -17,10 +17,15 @@ export type Relation = "pair" | "pre" | "post";
 
 /**
  * 협업자 타입
+ * - relation: 단일 값 (기존 코드 호환)
+ * - relations: 배열 (v2, 복수 선택 지원)
  */
 export interface Collaborator {
   name: string;
+  /** 기본 협업 관계 (하위 호환성) */
   relation: Relation;
+  /** v2: 복수 관계 선택 (선택) */
+  relations?: Relation[];
 }
 
 /**

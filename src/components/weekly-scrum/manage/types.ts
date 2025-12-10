@@ -86,6 +86,26 @@ export function createEmptySnapshot(): TempSnapshot {
 }
 
 /**
+ * relation을 relations 배열로 변환하는 헬퍼
+ */
+function normalizeRelations(
+  collab: { name: string; relation?: string; relations?: string[] }
+): ("pair" | "pre" | "post")[] {
+  // relations 배열이 있으면 사용
+  if (collab.relations && Array.isArray(collab.relations)) {
+    return collab.relations.filter((r): r is "pair" | "pre" | "post" => 
+      ["pair", "pre", "post"].includes(r)
+    );
+  }
+  // relation 단일 값이 있으면 배열로 변환
+  if (collab.relation && ["pair", "pre", "post"].includes(collab.relation)) {
+    return [collab.relation as "pair" | "pre" | "post"];
+  }
+  // 기본값
+  return ["pair"];
+}
+
+/**
  * v1 ScrumItem을 TempSnapshot으로 변환
  */
 export function convertToTempSnapshot(
@@ -101,12 +121,12 @@ export function convertToTempSnapshot(
     next?: string[];
     risk?: string[] | null;
     riskLevel?: number | null;
-    collaborators?: { name: string; relation: string }[];
+    collaborators?: { name: string; relation?: string; relations?: string[] }[];
     pastWeek?: {
       tasks: { title: string; progress: number }[];
       risk: string[] | null;
       riskLevel: number | null;
-      collaborators: { name: string; relation: string }[];
+      collaborators: { name: string; relation?: string; relations?: string[] }[];
     };
     thisWeek?: {
       tasks: string[];
@@ -134,10 +154,14 @@ export function convertToTempSnapshot(
         tasks: item.pastWeek.tasks,
         risk: item.pastWeek.risk,
         riskLevel: item.pastWeek.riskLevel as 0 | 1 | 2 | 3 | null,
-        collaborators: item.pastWeek.collaborators.map((c) => ({
-          name: c.name,
-          relation: c.relation as "pair" | "pre" | "post",
-        })),
+        collaborators: item.pastWeek.collaborators.map((c) => {
+          const relations = normalizeRelations(c);
+          return {
+            name: c.name,
+            relation: relations[0], // 하위 호환성
+            relations,
+          };
+        }),
       },
       thisWeek: {
         tasks: item.thisWeek.tasks,
@@ -170,10 +194,14 @@ export function convertToTempSnapshot(
       tasks: progressTasks,
       risk: item.risk || null,
       riskLevel: item.riskLevel as 0 | 1 | 2 | 3 | null,
-      collaborators: (item.collaborators || []).map((c) => ({
-        name: c.name,
-        relation: c.relation as "pair" | "pre" | "post",
-      })),
+      collaborators: (item.collaborators || []).map((c) => {
+        const relations = normalizeRelations(c);
+        return {
+          name: c.name,
+          relation: relations[0], // 하위 호환성
+          relations,
+        };
+      }),
     },
     thisWeek: {
       tasks: item.next || [],
@@ -238,7 +266,8 @@ export function tempSnapshotToPlainText(snapshot: TempSnapshot): string {
   if (snapshot.pastWeek.collaborators.length > 0) {
     lines.push("    * Collaborators");
     snapshot.pastWeek.collaborators.forEach((c) => {
-      lines.push(`        * ${c.name} (${c.relation})`);
+      const relationsStr = (c.relations || []).join(", ");
+      lines.push(`        * ${c.name} (${relationsStr})`);
     });
   } else {
     lines.push("    * Collaborators: None");
