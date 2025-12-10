@@ -2,6 +2,47 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.4.0",
+    date: "2025-12-10",
+    title: "스냅샷 관리 Airbnb 스타일 전면 개편",
+    summary:
+      "스냅샷 관리 화면을 Airbnb 스타일로 전면 개편하고, 더블클릭 확장/축소, 우클릭 컨텍스트 메뉴, Tab 키 순차 이동 기능을 추가했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "카드 더블클릭으로 확장/축소 토글",
+      },
+      {
+        type: "feat",
+        description: "카드 우클릭 컨텍스트 메뉴 (JSON/Text 복사, 삭제)",
+      },
+      {
+        type: "feat",
+        description: "편집 폼 Tab 키로 순차적 필드 이동",
+      },
+      {
+        type: "style",
+        description: "진입 화면 Airbnb 스타일 (그라데이션, 호버 효과)",
+      },
+      {
+        type: "style",
+        description: "카드 리스트 Airbnb 스타일 (아바타, 태그, 프로그레스 바)",
+      },
+      {
+        type: "style",
+        description: "편집 폼 Airbnb 스타일 (라운드 입력창, 컬러 섹션)",
+      },
+      {
+        type: "style",
+        description: "툴바 Airbnb 스타일 (배경 블러, 토글 버튼)",
+      },
+      {
+        type: "style",
+        description: "토스트 알림 Airbnb 스타일 (진행 바, 부드러운 애니메이션)",
+      },
+    ],
+  },
+  {
     version: "2.3.0",
     date: "2025-12-10",
     title: "스냅샷 관리 시스템 및 v2 스키마 정립",

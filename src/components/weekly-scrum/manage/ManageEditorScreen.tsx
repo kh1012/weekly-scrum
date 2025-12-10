@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * 스냅샷 관리 편집 화면
+ * 스냅샷 관리 편집 화면 - Airbnb 스타일
  *
  * 2단 레이아웃:
  * - 좌측: 스냅샷 카드 리스트
  * - 우측: 선택된 카드의 상세 편집 폼
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useRef } from "react";
 import { SnapshotCardList, SnapshotCardListRef } from "./SnapshotCardList";
 import { SnapshotEditForm } from "./SnapshotEditForm";
 import { useToast } from "./Toast";
@@ -86,7 +86,6 @@ export function ManageEditorScreen({
 
   // 보기 모드 전환 (선택된 카드 확장)
   const handleToggleViewModeWithExpand = () => {
-    // 선택된 카드가 있으면 확장
     if (selectedSnapshot) {
       cardListRef.current?.expandCard(selectedSnapshot.tempId);
     }
@@ -94,92 +93,71 @@ export function ManageEditorScreen({
   };
 
   return (
-    <div className="flex flex-col w-full border border-gray-200 rounded-2xl">
-      {/* 상단 툴바 */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0 rounded-t-2xl">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col w-full border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
+      {/* 상단 툴바 - Airbnb 스타일 */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-5 py-4 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-5">
           <button
             onClick={onBackToEntry}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span className="text-sm">처음으로</span>
+            <span className="text-sm font-medium">처음으로</span>
           </button>
-          <div className="h-4 w-px bg-gray-300" />
-          <span className="text-sm text-gray-500">
-            {snapshots.length}개 스냅샷
-          </span>
+          
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-sm font-medium text-gray-700">
+              {snapshots.length}개 스냅샷
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           {/* 보기 모드 토글 */}
           <button
             onClick={handleToggleViewModeWithExpand}
-            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className={`
+              px-4 py-2 text-sm font-medium rounded-xl transition-all
+              ${viewMode === "plaintext"
+                ? "bg-gray-900 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+              }
+            `}
           >
-            {viewMode === "styled" ? "Plain Text 보기" : "Styled 보기"}
+            {viewMode === "styled" ? "Plain Text" : "Styled"}
           </button>
 
-          <div className="h-4 w-px bg-gray-300" />
+          <div className="h-6 w-px bg-gray-200 mx-2" />
 
           {/* 전체 복사 버튼들 */}
           <button
             onClick={handleCopyAllJson}
-            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1.5"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            전체 JSON
+            JSON
           </button>
           <button
             onClick={handleCopyAllPlainText}
-            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1.5"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            전체 Text
+            Text
           </button>
         </div>
       </div>
 
       {/* 메인 콘텐츠 */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex min-h-0">
         {/* 좌측: 카드 리스트 */}
-        <div className="w-80 border-r border-gray-200 bg-gray-50 flex flex-col rounded-bl-2xl">
+        <div className="w-80 border-r border-gray-100 bg-gradient-to-b from-gray-50 to-white flex flex-col">
           <SnapshotCardList
             ref={cardListRef}
             snapshots={snapshots}
@@ -194,31 +172,22 @@ export function ManageEditorScreen({
         </div>
 
         {/* 우측: 편집 폼 */}
-        <div className="flex-1 bg-white overflow-y-auto overflow-x-hidden rounded-br-2xl">
+        <div className="flex-1 bg-white overflow-y-auto overflow-x-hidden">
           {selectedSnapshot ? (
             <SnapshotEditForm
               snapshot={selectedSnapshot}
-              onUpdate={(updates) =>
-                onUpdateCard(selectedSnapshot.tempId, updates)
-              }
+              onUpdate={(updates) => onUpdateCard(selectedSnapshot.tempId, updates)}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-400">
+            <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <svg
-                  className="w-16 h-16 mx-auto mb-4 text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <p>스냅샷을 선택하세요</p>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 text-sm">스냅샷을 선택하세요</p>
+                <p className="text-gray-300 text-xs mt-1">또는 좌측에서 새 카드를 추가하세요</p>
               </div>
             </div>
           )}
