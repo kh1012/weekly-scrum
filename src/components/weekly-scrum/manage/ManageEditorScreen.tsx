@@ -69,8 +69,8 @@ export function ManageEditorScreen({
   const [canShowThreeColumns, setCanShowThreeColumns] = useState(false);
   const [useWideFormLayout, setUseWideFormLayout] = useState(false);
   
-  // 3열 모드 강제 토글
-  const [forceThreeColumn, setForceThreeColumn] = useState(false);
+  // 3열 모드 강제 토글 (기본: 3열)
+  const [forceThreeColumn, setForceThreeColumn] = useState(true);
   
   // 드롭다운 상태
   const [isCopyDropdownOpen, setIsCopyDropdownOpen] = useState(false);
@@ -218,21 +218,29 @@ export function ManageEditorScreen({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* 3열 모드 토글 버튼 */}
-          <button
-            onClick={() => setForceThreeColumn(!forceThreeColumn)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
-              isThreeColumnMode
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-            title={isThreeColumnMode ? "2열 모드로 전환" : "3열 모드로 전환"}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-            </svg>
-            {isThreeColumnMode ? "3열" : "2열"}
-          </button>
+          {/* 2열 | 3열 토글 버튼 */}
+          <div className="flex bg-gray-100 rounded-lg p-0.5">
+            <button
+              onClick={() => setForceThreeColumn(false)}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                !isThreeColumnMode
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              2열
+            </button>
+            <button
+              onClick={() => setForceThreeColumn(true)}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                isThreeColumnMode
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              3열
+            </button>
+          </div>
 
           {/* 우측 패널 모드 토글 (탭 모드에서만) */}
           {!isThreeColumnMode && (
