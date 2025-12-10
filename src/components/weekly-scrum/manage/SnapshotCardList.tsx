@@ -9,7 +9,15 @@
  * - 부드러운 애니메이션
  */
 
-import { useState, forwardRef, useImperativeHandle, useCallback, useEffect } from "react";
+import {
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
+import { createPortal } from "react-dom";
 import type { TempSnapshot } from "./types";
 
 export interface SnapshotCardListRef {
@@ -104,6 +112,8 @@ export const SnapshotCardList = forwardRef<
   }, []);
 
   const [isCopyDropdownOpen, setIsCopyDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const copyButtonRef = useRef<HTMLButtonElement>(null);
 
   // 드롭다운 외부 클릭 닫기
   useEffect(() => {
@@ -114,60 +124,116 @@ export const SnapshotCardList = forwardRef<
     }
   }, [isCopyDropdownOpen]);
 
+  // 드롭다운 열릴 때 위치 계산
+  const handleOpenDropdown = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (copyButtonRef.current) {
+      const rect = copyButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+      });
+    }
+    setIsCopyDropdownOpen((prev) => !prev);
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col min-h-0" onClick={closeContextMenu}>
       {/* 리스트 헤더 - h-12 통일 */}
       <div className="h-12 px-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-800">
-            카드 목록
-          </span>
+          <span className="text-sm font-semibold text-gray-800">카드 목록</span>
           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
             {snapshots.length}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {/* 전체 복사 드롭다운 */}
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsCopyDropdownOpen(!isCopyDropdownOpen);
-              }}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-all"
+          <button
+            ref={copyButtonRef}
+            onClick={handleOpenDropdown}
+            className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-all"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              <svg className={`w-3 h-3 transition-transform ${isCopyDropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {isCopyDropdownOpen && (
-              <div className="absolute left-0 top-full mt-1 w-36 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-[9999]">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+            <svg
+              className={`w-3 h-3 transition-transform ${
+                isCopyDropdownOpen ? "rotate-180" : ""
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+          {/* 드롭다운 메뉴 - Portal로 렌더링 */}
+          {isCopyDropdownOpen &&
+            createPortal(
+              <div
+                className="fixed w-36 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-[9999]"
+                style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
-                  onClick={() => { onCopyAllJson(); setIsCopyDropdownOpen(false); }}
+                  onClick={() => {
+                    onCopyAllJson();
+                    setIsCopyDropdownOpen(false);
+                  }}
                   className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                 >
-                  <span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">J</span>
+                  <span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
+                    J
+                  </span>
                   JSON 전체
                 </button>
                 <button
-                  onClick={() => { onCopyAllPlainText(); setIsCopyDropdownOpen(false); }}
+                  onClick={() => {
+                    onCopyAllPlainText();
+                    setIsCopyDropdownOpen(false);
+                  }}
                   className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                 >
-                  <span className="w-4 h-4 rounded bg-gray-100 flex items-center justify-center text-gray-600 text-[10px] font-bold">T</span>
+                  <span className="w-4 h-4 rounded bg-gray-100 flex items-center justify-center text-gray-600 text-[10px] font-bold">
+                    T
+                  </span>
                   Text 전체
                 </button>
-              </div>
+              </div>,
+              document.body
             )}
-          </div>
           <button
             onClick={onAddEmpty}
             className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             추가
           </button>
@@ -330,17 +396,48 @@ export const SnapshotCardList = forwardRef<
                     {snapshot.pastWeek.tasks.length > 0 && (
                       <div>
                         <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
                           </svg>
                           Past Week
                         </div>
                         <ul className="space-y-1.5">
                           {snapshot.pastWeek.tasks.map((task, i) => (
-                            <li key={i} className="flex items-center gap-2 text-xs">
-                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${task.progress === 100 ? "bg-emerald-500" : task.progress >= 50 ? "bg-blue-500" : "bg-gray-400"}`} />
-                              <span className="text-gray-700 flex-1">{task.title}</span>
-                              <span className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${task.progress === 100 ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"}`}>{task.progress}%</span>
+                            <li
+                              key={i}
+                              className="flex items-center gap-2 text-xs"
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                  task.progress === 100
+                                    ? "bg-emerald-500"
+                                    : task.progress >= 50
+                                    ? "bg-blue-500"
+                                    : "bg-gray-400"
+                                }`}
+                              />
+                              <span className="text-gray-700 flex-1">
+                                {task.title}
+                              </span>
+                              <span
+                                className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                  task.progress === 100
+                                    ? "bg-emerald-50 text-emerald-600"
+                                    : "bg-gray-100 text-gray-500"
+                                }`}
+                              >
+                                {task.progress}%
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -350,14 +447,27 @@ export const SnapshotCardList = forwardRef<
                     {snapshot.thisWeek.tasks.length > 0 && (
                       <div>
                         <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 7l5 5m0 0l-5 5m5-5H6"
+                            />
                           </svg>
                           This Week
                         </div>
                         <ul className="space-y-1.5">
                           {snapshot.thisWeek.tasks.map((task, i) => (
-                            <li key={i} className="flex items-center gap-2 text-xs text-gray-700">
+                            <li
+                              key={i}
+                              className="flex items-center gap-2 text-xs text-gray-700"
+                            >
                               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
                               <span>{task}</span>
                             </li>
