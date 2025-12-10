@@ -153,16 +153,16 @@ function TaskEditor({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
       {tasks.map((task, index) => (
-        <div key={index} className="group flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+        <div key={index} className="group flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
           <input
             type="text"
             value={task.title}
             onChange={(e) => updateTask(index, "title", e.target.value)}
             placeholder="작업 내용..."
             tabIndex={baseTabIndex + index * 2}
-            className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+            className="flex-1 px-3 py-2 bg-transparent border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white"
           />
           <div className="flex items-center gap-2 shrink-0">
             <input
@@ -172,7 +172,7 @@ function TaskEditor({
               min={0}
               max={100}
               tabIndex={baseTabIndex + index * 2 + 1}
-              className="w-16 px-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+              className="w-16 px-2 py-2 bg-transparent border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white"
             />
             <span className="text-sm text-gray-500">%</span>
           </div>
@@ -192,7 +192,7 @@ function TaskEditor({
         type="button"
         onClick={addTask}
         tabIndex={-1}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -230,9 +230,9 @@ function ThisWeekTaskEditor({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
       {tasks.map((task, index) => (
-        <div key={index} className="group flex items-center gap-3 p-3 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors">
+        <div key={index} className="group flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
           <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
           <input
             type="text"
@@ -240,7 +240,7 @@ function ThisWeekTaskEditor({
             onChange={(e) => updateTask(index, e.target.value)}
             placeholder="계획 작업..."
             tabIndex={baseTabIndex + index}
-            className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+            className="flex-1 px-3 py-2 bg-transparent border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white"
           />
           <button
             type="button"
@@ -258,7 +258,7 @@ function ThisWeekTaskEditor({
         type="button"
         onClick={addTask}
         tabIndex={-1}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -415,12 +415,12 @@ function CollaboratorEditor({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
       {collaborators.map((collab, index) => {
         const relations = collab.relations || [];
         
         return (
-          <div key={index} className="group flex items-center gap-3 p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors">
+          <div key={index} className="group flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
             {/* 이름 */}
             <div className="flex-1 min-w-0">
               {isCustomMode(index, collab.name) ? (
@@ -464,8 +464,8 @@ function CollaboratorEditor({
               )}
             </div>
 
-            {/* 관계 - 복수 선택 체크박스 */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            {/* 관계 - 복수 선택 체크박스 (사이즈 고정) */}
+            <div className="flex items-center gap-1 shrink-0">
               {RELATION_OPTIONS.map((rel) => {
                 const isSelected = relations.includes(rel);
                 return (
@@ -475,22 +475,17 @@ function CollaboratorEditor({
                     onClick={() => toggleRelation(index, rel)}
                     tabIndex={-1}
                     className={`
-                      px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5
+                      w-12 py-1.5 text-xs font-medium rounded-md transition-all text-center
                       ${isSelected
                         ? rel === "pair"
                           ? "bg-purple-600 text-white"
                           : rel === "pre"
                           ? "bg-blue-600 text-white"
                           : "bg-emerald-600 text-white"
-                        : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                       }
                     `}
                   >
-                    {isSelected && (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
                     {rel}
                   </button>
                 );
@@ -514,7 +509,7 @@ function CollaboratorEditor({
         type="button"
         onClick={addCollaborator}
         tabIndex={-1}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-100 rounded-xl transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

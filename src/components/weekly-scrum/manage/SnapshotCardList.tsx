@@ -125,9 +125,9 @@ export const SnapshotCardList = forwardRef<
           {/* 슬라이딩 배경 */}
           <div
             className={`
-              absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm
+              absolute top-1 bottom-1 w-[calc(50%-2px)] bg-white rounded-lg shadow-sm
               transition-transform duration-300 ease-out
-              ${viewMode === "plaintext" ? "translate-x-[calc(100%+4px)]" : "translate-x-0"}
+              ${viewMode === "plaintext" ? "translate-x-[100%]" : "translate-x-0"}
             `}
           />
           <button

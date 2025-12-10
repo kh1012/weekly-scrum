@@ -56,8 +56,8 @@ export function ManageEditorScreen({
   const handleCopyAllPlainText = async () => {
     try {
       const plainTexts = snapshots.map(tempSnapshotToPlainText);
-      // 스냅샷 구분: 빈 줄 2개
-      await navigator.clipboard.writeText(plainTexts.join("\n\n\n"));
+      // 스냅샷 구분: 빈 줄 1개
+      await navigator.clipboard.writeText(plainTexts.join("\n\n"));
       showToast(`${snapshots.length}개 스냅샷 Text 복사 완료`, "success");
     } catch {
       showToast("복사 실패", "error");
@@ -102,12 +102,22 @@ export function ManageEditorScreen({
             onClick={onBackToEntry}
             className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             <span className="text-sm font-medium">처음으로</span>
           </button>
-          
+
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400" />
             <span className="text-sm font-medium text-gray-700">
@@ -122,8 +132,18 @@ export function ManageEditorScreen({
             onClick={handleCopyAllJson}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
             JSON
           </button>
@@ -131,8 +151,18 @@ export function ManageEditorScreen({
             onClick={handleCopyAllPlainText}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             Text
           </button>
@@ -163,18 +193,32 @@ export function ManageEditorScreen({
             <SnapshotEditForm
               key={selectedSnapshot.tempId}
               snapshot={selectedSnapshot}
-              onUpdate={(updates) => onUpdateCard(selectedSnapshot.tempId, updates)}
+              onUpdate={(updates) =>
+                onUpdateCard(selectedSnapshot.tempId, updates)
+              }
             />
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg
+                    className="w-10 h-10 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                 </div>
                 <p className="text-gray-400 text-sm">스냅샷을 선택하세요</p>
-                <p className="text-gray-300 text-xs mt-1">또는 좌측에서 새 카드를 추가하세요</p>
+                <p className="text-gray-300 text-xs mt-1">
+                  또는 좌측에서 새 카드를 추가하세요
+                </p>
               </div>
             </div>
           )}
