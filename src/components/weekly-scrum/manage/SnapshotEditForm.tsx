@@ -86,7 +86,7 @@ function MetaField({
         <select
           value={options.includes(value as never) ? value : ""}
           onChange={handleSelectChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10"
         >
           <option value="">선택...</option>
           {options.map((opt) => (
@@ -301,6 +301,8 @@ function RiskEditor({
 
 /**
  * Collaborator 편집 컴포넌트
+ * - 이름: 콤보박스 + 직접 입력 지원
+ * - 관계: 체크박스로 다중 선택 (현재 타입상 단일 relation 유지)
  */
 function CollaboratorEditor({
   collaborators,
@@ -309,6 +311,9 @@ function CollaboratorEditor({
   collaborators: Collaborator[];
   onChange: (collaborators: Collaborator[]) => void;
 }) {
+  // 각 협업자별 직접 입력 모드 상태
+  const [customModes, setCustomModes] = useState<Record<number, boolean>>({});
+
   const addCollaborator = () => {
     onChange([...collaborators, { name: "", relation: "pair" }]);
   };
@@ -323,62 +328,113 @@ function CollaboratorEditor({
     onChange(newCollaborators);
   };
 
+  const toggleCustomMode = (index: number, enable: boolean) => {
+    setCustomModes((prev) => ({ ...prev, [index]: enable }));
+    if (enable) {
+      updateCollaborator(index, "name", "");
+    }
+  };
+
   const removeCollaborator = (index: number) => {
     onChange(collaborators.filter((_, i) => i !== index));
+    // customModes 정리
+    setCustomModes((prev) => {
+      const newModes: Record<number, boolean> = {};
+      Object.keys(prev).forEach((key) => {
+        const k = parseInt(key, 10);
+        if (k < index) {
+          newModes[k] = prev[k];
+        } else if (k > index) {
+          newModes[k - 1] = prev[k];
+        }
+      });
+      return newModes;
+    });
+  };
+
+  // 값이 옵션에 없으면 자동으로 직접 입력 모드
+  const isCustomMode = (index: number, name: string) => {
+    if (customModes[index] !== undefined) return customModes[index];
+    return name !== "" && !NAME_OPTIONS.includes(name as never);
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {collaborators.map((collab, index) => (
-        <div key={index} className="flex items-center gap-2">
+        <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
           {/* 이름 입력 */}
-          <select
-            value={NAME_OPTIONS.includes(collab.name as never) ? collab.name : ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === CUSTOM_INPUT_VALUE) {
-                updateCollaborator(index, "name", "");
-              } else {
-                updateCollaborator(index, "name", val);
-              }
-            }}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">이름 선택...</option>
-            {NAME_OPTIONS.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-            <option value={CUSTOM_INPUT_VALUE}>직접 입력...</option>
-          </select>
+          <div className="flex-1 min-w-0">
+            {isCustomMode(index, collab.name) ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={collab.name}
+                  onChange={(e) => updateCollaborator(index, "name", e.target.value)}
+                  placeholder="협업자 이름 입력..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => toggleCustomMode(index, false)}
+                  className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg hover:bg-white"
+                >
+                  목록
+                </button>
+              </div>
+            ) : (
+              <select
+                value={NAME_OPTIONS.includes(collab.name as never) ? collab.name : ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === CUSTOM_INPUT_VALUE) {
+                    toggleCustomMode(index, true);
+                  } else {
+                    updateCollaborator(index, "name", val);
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10 bg-white"
+              >
+                <option value="">이름 선택...</option>
+                {NAME_OPTIONS.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+                <option value={CUSTOM_INPUT_VALUE}>직접 입력...</option>
+              </select>
+            )}
+          </div>
 
-          {/* 관계 선택 */}
-          <div className="flex gap-1">
+          {/* 관계 선택 - 체크박스 형태 */}
+          <div className="flex items-center gap-2 shrink-0">
             {RELATION_OPTIONS.map((rel) => (
-              <button
+              <label
                 key={rel}
-                type="button"
-                onClick={() => updateCollaborator(index, "relation", rel)}
-                className={`px-2 py-1 text-xs rounded transition-colors ${
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer transition-colors ${
                   collab.relation === rel
                     ? rel === "pair"
                       ? "bg-purple-100 text-purple-700 border border-purple-300"
                       : rel === "pre"
                       ? "bg-blue-100 text-blue-700 border border-blue-300"
                       : "bg-green-100 text-green-700 border border-green-300"
-                    : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                 }`}
               >
-                {rel}
-              </button>
+                <input
+                  type="checkbox"
+                  checked={collab.relation === rel}
+                  onChange={() => updateCollaborator(index, "relation", rel)}
+                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                />
+                <span className="text-xs font-medium">{rel}</span>
+              </label>
             ))}
           </div>
 
           <button
             type="button"
             onClick={() => removeCollaborator(index)}
-            className="p-2 text-gray-400 hover:text-red-500 rounded"
+            className="p-2 text-gray-400 hover:text-red-500 rounded shrink-0"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

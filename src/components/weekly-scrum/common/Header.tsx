@@ -28,7 +28,10 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
       }
-      if (filterPopoverRef.current && !filterPopoverRef.current.contains(e.target as Node)) {
+      if (
+        filterPopoverRef.current &&
+        !filterPopoverRef.current.contains(e.target as Node)
+      ) {
         setIsFilterPopoverOpen(false);
       }
     };
@@ -51,7 +54,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
   const Logo = () => (
     <h1
       className="font-bold text-sm tracking-tight"
-      style={{ 
+      style={{
         color: "var(--notion-text)",
         letterSpacing: "-0.02em",
       }}
@@ -90,16 +93,16 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                style={{ 
+                style={{
                   transform: isSidebarOpen ? "rotate(0deg)" : "rotate(180deg)",
                 }}
               >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                  />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                />
               </svg>
             </button>
           )}
@@ -124,14 +127,14 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                 className="w-px h-6 rounded-full"
                 style={{ background: "var(--notion-border)" }}
               />
-              
-              {/* xl 이상: 필터 직접 표시 */}
-              <div className="hidden xl:block">
+
+              {/* 1440px 이상: 필터 직접 표시 */}
+              <div className="hidden wide:block">
                 <ExpandableFilters />
               </div>
-              
-              {/* lg~xl: 필터 버튼 + 팝오버 */}
-              <div className="xl:hidden relative" ref={filterPopoverRef}>
+
+              {/* lg~1440px: 필터 버튼 + 팝오버 */}
+              <div className="wide:hidden relative" ref={filterPopoverRef}>
                 <button
                   onClick={() => setIsFilterPopoverOpen(!isFilterPopoverOpen)}
                   className="flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-medium transition-all"
@@ -147,7 +150,12 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                       : "1px solid transparent",
                   }}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -157,12 +165,19 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                   </svg>
                   <span>필터</span>
                   <svg
-                    className={`w-3 h-3 transition-transform ${isFilterPopoverOpen ? "rotate-180" : ""}`}
+                    className={`w-3 h-3 transition-transform ${
+                      isFilterPopoverOpen ? "rotate-180" : ""
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
@@ -174,7 +189,8 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                       background: "rgba(255, 255, 255, 0.98)",
                       backdropFilter: "blur(20px)",
                       WebkitBackdropFilter: "blur(20px)",
-                      boxShadow: "0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06)",
+                      boxShadow:
+                        "0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06)",
                       border: "1px solid rgba(0, 0, 0, 0.06)",
                     }}
                   >
@@ -196,33 +212,35 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           ref={menuRef}
         >
           <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 interactive-btn"
               style={{
-                background: isMenuOpen ? "rgba(59, 130, 246, 0.1)" : "var(--notion-bg-secondary)",
+                background: isMenuOpen
+                  ? "rgba(59, 130, 246, 0.1)"
+                  : "var(--notion-bg-secondary)",
                 color: isMenuOpen ? "#3b82f6" : "var(--notion-text-secondary)",
               }}
-            aria-label="메뉴"
-          >
-            <svg
+              aria-label="메뉴"
+            >
+              <svg
                 className="w-5 h-5 transition-transform duration-200"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
                 style={{
                   transform: isMenuOpen ? "rotate(90deg)" : "rotate(0deg)",
                 }}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-          <Logo />
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+            <Logo />
           </div>
 
           {/* 모바일 검색 */}
@@ -236,7 +254,8 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                 background: "rgba(255, 255, 255, 0.98)",
                 backdropFilter: "blur(20px)",
                 WebkitBackdropFilter: "blur(20px)",
-                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06)",
+                boxShadow:
+                  "0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06)",
                 border: "1px solid rgba(0, 0, 0, 0.06)",
               }}
             >
@@ -255,9 +274,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
 
         {/* 3행: 필터 (개인 대시보드가 아닐 때만) */}
         {!isMyDashboard && (
-          <div
-            className="px-4 py-3 overflow-x-auto"
-          >
+          <div className="px-4 py-3 overflow-x-auto">
             <ExpandableFilters isMobile />
           </div>
         )}
@@ -278,7 +295,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
     <aside
       className="hidden lg:flex flex-col fixed top-0 left-0 h-full w-64 z-30 animate-slide-in-left"
       style={{
-        background: "linear-gradient(180deg, rgba(251, 251, 250, 1) 0%, rgba(248, 248, 247, 1) 100%)",
+        background:
+          "linear-gradient(180deg, rgba(251, 251, 250, 1) 0%, rgba(248, 248, 247, 1) 100%)",
         borderRight: "1px solid rgba(0, 0, 0, 0.05)",
         boxShadow: "2px 0 8px rgba(0, 0, 0, 0.02)",
       }}
