@@ -609,15 +609,12 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   );
 
   // 컴팩트 모드 스타일
-  const headerPadding = compact ? "px-4 pt-4 pb-3" : "px-8 pt-8 pb-6";
   const contentPadding = compact ? "p-4 space-y-6" : "p-8 space-y-10";
   const sectionSpace = compact ? "space-y-4" : "space-y-6";
   const innerSpace = compact ? "space-y-5" : "space-y-8";
   const gridGap = compact ? "gap-3" : "gap-5";
   const labelMargin = compact ? "mb-2" : "mb-3";
   const labelSize = compact ? "text-xs" : "text-sm";
-  const iconSize = compact ? "w-8 h-8" : "w-10 h-10";
-  const titleSize = compact ? "text-lg" : "text-xl";
   const barHeight = compact ? "h-5" : "h-6";
   const buttonPadding = compact ? "px-3 py-1.5" : "px-4 py-2.5";
   const buttonText = compact ? "text-xs" : "text-sm";
@@ -627,24 +624,14 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   const gridCols = singleColumn ? "grid-cols-1" : "grid-cols-2";
 
   return (
-    <div className="h-full">
-      {/* 헤더 - 가로폭 100% */}
-      <div className={`${headerPadding} border-b border-gray-100`}>
-        <div className="flex items-center gap-3">
-          <div className={`${iconSize} rounded-xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center`}>
-            <svg className={compact ? "w-4 h-4 text-white" : "w-5 h-5 text-white"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </div>
-          <div>
-            <h2 className={`${titleSize} font-bold text-gray-900`}>스냅샷 편집</h2>
-            <p className={`${labelSize} text-gray-500`}>v2 스키마 기준</p>
-          </div>
-        </div>
+    <div className="h-full flex flex-col">
+      {/* 헤더 - h-12 통일 */}
+      <div className="h-12 px-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm flex items-center shrink-0">
+        <span className="text-sm font-semibold text-gray-800">스냅샷 편집</span>
       </div>
 
-      {/* 콘텐츠 영역 - max-width 적용 */}
-      <div className={`${contentPadding} ${compact ? "max-w-2xl" : "max-w-3xl"}`}>
+      {/* 콘텐츠 영역 - 스크롤 가능 */}
+      <div className={`flex-1 overflow-y-auto ${contentPadding} ${compact ? "max-w-2xl" : "max-w-3xl"}`}>
         {/* 메타 영역 */}
         <section className={sectionSpace}>
           <div className="flex items-center gap-2">

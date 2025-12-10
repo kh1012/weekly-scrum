@@ -20,13 +20,11 @@ import { tempSnapshotToV2Json, tempSnapshotToPlainText } from "./types";
 interface ManageEditorScreenProps {
   snapshots: TempSnapshot[];
   selectedSnapshot: TempSnapshot | null;
-  viewMode: "styled" | "plaintext";
   isSidebarOpen: boolean;
   onSelectCard: (tempId: string) => void;
   onDeleteCard: (tempId: string) => void;
   onUpdateCard: (tempId: string, updates: Partial<TempSnapshot>) => void;
   onAddEmpty: () => void;
-  onToggleViewMode: () => void;
   onBackToEntry: () => void;
 }
 
@@ -43,13 +41,11 @@ const WIDE_FORM_MIN_WIDTH = 1800;
 export function ManageEditorScreen({
   snapshots,
   selectedSnapshot,
-  viewMode,
   isSidebarOpen,
   onSelectCard,
   onDeleteCard,
   onUpdateCard,
   onAddEmpty,
-  onToggleViewMode,
   onBackToEntry,
 }: ManageEditorScreenProps) {
   const { showToast } = useToast();
@@ -68,9 +64,6 @@ export function ManageEditorScreen({
   
   // 3열 모드 강제 토글 (기본: 3열)
   const [forceThreeColumn, setForceThreeColumn] = useState(true);
-  
-  // 드롭다운 상태
-  const [isCopyDropdownOpen, setIsCopyDropdownOpen] = useState(false);
 
   // 화면 크기 감지
   useEffect(() => {
@@ -115,7 +108,6 @@ export function ManageEditorScreen({
     } catch {
       showToast("복사 실패", "error");
     }
-    setIsCopyDropdownOpen(false);
   };
 
   // 전체 Plain Text 복사
@@ -127,7 +119,6 @@ export function ManageEditorScreen({
     } catch {
       showToast("복사 실패", "error");
     }
-    setIsCopyDropdownOpen(false);
   };
 
   // 개별 JSON 복사
@@ -158,22 +149,6 @@ export function ManageEditorScreen({
     }
   };
 
-  // 보기 모드 전환 (선택된 카드 확장)
-  const handleToggleViewModeWithExpand = () => {
-    if (selectedSnapshot) {
-      cardListRef.current?.expandCard(selectedSnapshot.tempId);
-    }
-    onToggleViewMode();
-  };
-
-  // 드롭다운 외부 클릭 닫기
-  useEffect(() => {
-    const handleClickOutside = () => setIsCopyDropdownOpen(false);
-    if (isCopyDropdownOpen) {
-      document.addEventListener("click", handleClickOutside);
-      return () => document.removeEventListener("click", handleClickOutside);
-    }
-  }, [isCopyDropdownOpen]);
 
   // 3열 모드 여부 (자동 감지 또는 강제)
   const isThreeColumnMode = forceThreeColumn || canShowThreeColumns;
@@ -238,64 +213,6 @@ export function ManageEditorScreen({
               3열
             </button>
           </div>
-
-          {/* 전체 복사 드롭다운 */}
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsCopyDropdownOpen(!isCopyDropdownOpen);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              전체 복사
-              <svg
-                className={`w-3 h-3 transition-transform ${isCopyDropdownOpen ? "rotate-180" : ""}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {isCopyDropdownOpen && (
-              <div className="absolute right-0 top-full mt-1 w-40 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-50">
-                <button
-                  onClick={handleCopyAllJson}
-                  className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
-                    J
-                  </span>
-                  JSON 전체 복사
-                </button>
-                <button
-                  onClick={handleCopyAllPlainText}
-                  className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <span className="w-4 h-4 rounded bg-gray-100 flex items-center justify-center text-gray-600 text-[10px] font-bold">
-                    T
-                  </span>
-                  Text 전체 복사
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -310,13 +227,13 @@ export function ManageEditorScreen({
             ref={cardListRef}
             snapshots={snapshots}
             selectedId={selectedSnapshot?.tempId || null}
-            viewMode={viewMode}
             onSelectCard={onSelectCard}
             onDeleteCard={onDeleteCard}
             onCopyJson={handleCopyCardJson}
             onCopyPlainText={handleCopyCardPlainText}
             onAddEmpty={onAddEmpty}
-            onToggleViewMode={handleToggleViewModeWithExpand}
+            onCopyAllJson={handleCopyAllJson}
+            onCopyAllPlainText={handleCopyAllPlainText}
           />
         </div>
 

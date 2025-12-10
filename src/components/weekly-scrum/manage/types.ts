@@ -36,8 +36,6 @@ export interface ManageState {
   snapshots: TempSnapshot[];
   /** 현재 선택된 스냅샷 ID */
   selectedId: string | null;
-  /** 전체 보기 모드 */
-  viewMode: "styled" | "plaintext";
 }
 
 /**

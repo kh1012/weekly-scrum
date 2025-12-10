@@ -22,7 +22,6 @@ const initialState: ManageState = {
   screen: "entry",
   snapshots: [],
   selectedId: null,
-  viewMode: "styled",
 };
 
 export function ManageView() {
@@ -151,14 +150,6 @@ export function ManageView() {
     }));
   }, []);
 
-  // 보기 모드 전환
-  const handleToggleViewMode = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      viewMode: prev.viewMode === "styled" ? "plaintext" : "styled",
-    }));
-  }, []);
-
   // 초기 화면으로 돌아가기
   const handleBackToEntry = useCallback(() => {
     setState(initialState);
@@ -197,13 +188,11 @@ export function ManageView() {
       <ManageEditorScreen
         snapshots={state.snapshots}
         selectedSnapshot={selectedSnapshot}
-        viewMode={state.viewMode}
         isSidebarOpen={isSidebarOpen}
         onSelectCard={handleSelectCard}
         onDeleteCard={handleDeleteCard}
         onUpdateCard={handleUpdateCard}
         onAddEmpty={handleAddEmpty}
-        onToggleViewMode={handleToggleViewMode}
         onBackToEntry={handleBackToEntry}
       />
     </ToastProvider>
