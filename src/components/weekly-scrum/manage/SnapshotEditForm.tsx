@@ -25,13 +25,26 @@ import {
 interface SnapshotEditFormProps {
   snapshot: TempSnapshot;
   onUpdate: (updates: Partial<TempSnapshot>) => void;
+  /** 컴팩트 모드: padding/margin 30~40% 축소 */
+  compact?: boolean;
 }
 
-// 공통 입력 스타일
+// 공통 입력 스타일 (일반 모드)
 const inputStyles = `
   w-full px-4 py-3 
   border border-gray-200 rounded-xl 
   text-sm text-gray-900 placeholder-gray-400
+  bg-white
+  transition-all duration-200
+  focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent
+  hover:border-gray-300
+`;
+
+// 컴팩트 입력 스타일
+const inputStylesCompact = `
+  w-full px-3 py-2 
+  border border-gray-200 rounded-lg 
+  text-xs text-gray-900 placeholder-gray-400
   bg-white
   transition-all duration-200
   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent
@@ -45,6 +58,13 @@ const selectStyles = `
   bg-[length:1.5rem_1.5rem] bg-[right_0.75rem_center] bg-no-repeat pr-12
 `;
 
+const selectStylesCompact = `
+  ${inputStylesCompact}
+  appearance-none cursor-pointer
+  bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%239ca3af%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] 
+  bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10
+`;
+
 /**
  * 콤보박스 + 사용자 정의 입력 컴포넌트
  */
@@ -55,6 +75,7 @@ function MetaField({
   onChange,
   placeholder,
   tabIndex,
+  compact,
 }: {
   label: string;
   value: string;
@@ -62,6 +83,7 @@ function MetaField({
   onChange: (value: string) => void;
   placeholder?: string;
   tabIndex?: number;
+  compact?: boolean;
 }) {
   const [isCustom, setIsCustom] = useState(
     !options.includes(value as never) && value !== ""
@@ -78,9 +100,12 @@ function MetaField({
     }
   };
 
+  const inputClass = compact ? inputStylesCompact : inputStyles;
+  const selectClass = compact ? selectStylesCompact : selectStyles;
+
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
+    <div className={compact ? "space-y-1" : "space-y-2"}>
+      <label className={`block font-medium text-gray-700 ${compact ? "text-xs" : "text-sm"}`}>
         {label}
       </label>
       {isCustom ? (
@@ -91,13 +116,15 @@ function MetaField({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder || `${label} 입력...`}
             tabIndex={tabIndex}
-            className={inputStyles}
+            className={inputClass}
           />
           <button
             type="button"
             onClick={() => setIsCustom(false)}
             tabIndex={-1}
-            className="px-4 py-3 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shrink-0"
+            className={`font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors shrink-0 ${
+              compact ? "px-2.5 py-2 text-xs rounded-lg" : "px-4 py-3 text-sm rounded-xl"
+            }`}
           >
             목록
           </button>
@@ -107,7 +134,7 @@ function MetaField({
           value={options.includes(value as never) ? value : ""}
           onChange={handleSelectChange}
           tabIndex={tabIndex}
-          className={selectStyles}
+          className={selectClass}
         >
           <option value="">선택...</option>
           {options.map((opt) => (
@@ -129,10 +156,12 @@ function TaskEditor({
   tasks,
   onChange,
   baseTabIndex,
+  compact,
 }: {
   tasks: PastWeekTask[];
   onChange: (tasks: PastWeekTask[]) => void;
   baseTabIndex: number;
+  compact?: boolean;
 }) {
   const addTask = () => {
     onChange([...tasks, { title: "", progress: 0 }]);
@@ -153,18 +182,20 @@ function TaskEditor({
   };
 
   return (
-    <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
+    <div className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {tasks.map((task, index) => (
-        <div key={index} className="group flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
+        <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
           <input
             type="text"
             value={task.title}
             onChange={(e) => updateTask(index, "title", e.target.value)}
             placeholder="작업 내용..."
             tabIndex={baseTabIndex + index * 2}
-            className="flex-1 px-3 py-2 bg-transparent border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white"
+            className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
+              compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+            }`}
           />
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <input
               type="number"
               value={task.progress}
@@ -172,17 +203,19 @@ function TaskEditor({
               min={0}
               max={100}
               tabIndex={baseTabIndex + index * 2 + 1}
-              className="w-16 px-2 py-2 bg-transparent border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white"
+              className={`bg-transparent border border-gray-200 text-center focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
+                compact ? "w-12 px-1.5 py-1.5 rounded text-xs" : "w-16 px-2 py-2 rounded-lg text-sm"
+              }`}
             />
-            <span className="text-sm text-gray-500">%</span>
+            <span className={compact ? "text-xs text-gray-500" : "text-sm text-gray-500"}>%</span>
           </div>
           <button
             type="button"
             onClick={() => removeTask(index)}
             tabIndex={-1}
-            className="p-2 text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -192,9 +225,11 @@ function TaskEditor({
         type="button"
         onClick={addTask}
         tabIndex={-1}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
+        }`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         작업 추가
@@ -210,10 +245,12 @@ function ThisWeekTaskEditor({
   tasks,
   onChange,
   baseTabIndex,
+  compact,
 }: {
   tasks: string[];
   onChange: (tasks: string[]) => void;
   baseTabIndex: number;
+  compact?: boolean;
 }) {
   const addTask = () => {
     onChange([...tasks, ""]);
@@ -230,25 +267,27 @@ function ThisWeekTaskEditor({
   };
 
   return (
-    <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
+    <div className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {tasks.map((task, index) => (
-        <div key={index} className="group flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+        <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
+          <div className={`rounded-full bg-emerald-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
           <input
             type="text"
             value={task}
             onChange={(e) => updateTask(index, e.target.value)}
             placeholder="계획 작업..."
             tabIndex={baseTabIndex + index}
-            className="flex-1 px-3 py-2 bg-transparent border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white"
+            className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
+              compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+            }`}
           />
           <button
             type="button"
             onClick={() => removeTask(index)}
             tabIndex={-1}
-            className="p-2 text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -258,9 +297,11 @@ function ThisWeekTaskEditor({
         type="button"
         onClick={addTask}
         tabIndex={-1}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
+        }`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         계획 추가
@@ -276,10 +317,12 @@ function RiskEditor({
   risks,
   onChange,
   baseTabIndex,
+  compact,
 }: {
   risks: string[] | null;
   onChange: (risks: string[] | null) => void;
   baseTabIndex: number;
+  compact?: boolean;
 }) {
   const actualRisks = risks || [];
 
@@ -299,25 +342,27 @@ function RiskEditor({
   };
 
   return (
-    <div className="space-y-3">
+    <div className={compact ? "space-y-2" : "space-y-3"}>
       {actualRisks.map((risk, index) => (
-        <div key={index} className="group flex items-center gap-3 p-3 bg-orange-50 rounded-xl hover:bg-orange-100 transition-colors">
-          <div className="w-2 h-2 rounded-full bg-orange-400 shrink-0" />
+        <div key={index} className={`group flex items-center gap-2 bg-orange-50 hover:bg-orange-100 transition-colors ${compact ? "p-2 rounded-lg" : "p-3 rounded-xl"}`}>
+          <div className={`rounded-full bg-orange-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
           <input
             type="text"
             value={risk}
             onChange={(e) => updateRisk(index, e.target.value)}
             placeholder="리스크 내용..."
             tabIndex={baseTabIndex + index}
-            className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+            className={`flex-1 bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
+              compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+            }`}
           />
           <button
             type="button"
             onClick={() => removeRisk(index)}
             tabIndex={-1}
-            className="p-2 text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -327,9 +372,11 @@ function RiskEditor({
         type="button"
         onClick={addRisk}
         tabIndex={-1}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 rounded-xl transition-colors"
+        className={`flex items-center gap-2 font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 transition-colors ${
+          compact ? "px-2.5 py-1.5 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"
+        }`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         리스크 추가
@@ -345,10 +392,12 @@ function CollaboratorEditor({
   collaborators,
   onChange,
   baseTabIndex,
+  compact,
 }: {
   collaborators: Collaborator[];
   onChange: (collaborators: Collaborator[]) => void;
   baseTabIndex: number;
+  compact?: boolean;
 }) {
   const [customModes, setCustomModes] = useState<Record<number, boolean>>({});
 
@@ -415,12 +464,12 @@ function CollaboratorEditor({
   };
 
   return (
-    <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
+    <div className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {collaborators.map((collab, index) => {
         const relations = collab.relations || [];
         
         return (
-          <div key={index} className="group flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
+          <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
             {/* 이름 */}
             <div className="flex-1 min-w-0">
               {isCustomMode(index, collab.name) ? (
@@ -431,13 +480,17 @@ function CollaboratorEditor({
                     onChange={(e) => updateName(index, e.target.value)}
                     placeholder="협업자 이름..."
                     tabIndex={baseTabIndex + index}
-                    className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className={`flex-1 bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
+                      compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+                    }`}
                   />
                   <button
                     type="button"
                     onClick={() => toggleCustomMode(index, false)}
                     tabIndex={-1}
-                    className="px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-white"
+                    className={`text-gray-600 border border-gray-200 hover:bg-white ${
+                      compact ? "px-2 py-1.5 text-xs rounded" : "px-3 py-2 text-sm rounded-lg"
+                    }`}
                   >
                     목록
                   </button>
@@ -453,7 +506,9 @@ function CollaboratorEditor({
                     }
                   }}
                   tabIndex={baseTabIndex + index}
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%239ca3af%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10"
+                  className={`w-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%239ca3af%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10 ${
+                    compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+                  }`}
                 >
                   <option value="">선택...</option>
                   {NAME_OPTIONS.map((name) => (
@@ -475,7 +530,8 @@ function CollaboratorEditor({
                     onClick={() => toggleRelation(index, rel)}
                     tabIndex={-1}
                     className={`
-                      w-12 py-1.5 text-xs font-medium rounded-md transition-all text-center
+                      font-medium rounded-md transition-all text-center
+                      ${compact ? "w-10 py-1 text-[10px]" : "w-12 py-1.5 text-xs"}
                       ${isSelected
                         ? rel === "pair"
                           ? "bg-purple-600 text-white"
@@ -496,9 +552,9 @@ function CollaboratorEditor({
               type="button"
               onClick={() => removeCollaborator(index)}
               tabIndex={-1}
-              className="p-2 text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+              className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -509,9 +565,11 @@ function CollaboratorEditor({
         type="button"
         onClick={addCollaborator}
         tabIndex={-1}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
+        }`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         협업자 추가
@@ -520,7 +578,7 @@ function CollaboratorEditor({
   );
 }
 
-export function SnapshotEditForm({ snapshot, onUpdate }: SnapshotEditFormProps) {
+export function SnapshotEditForm({ snapshot, onUpdate, compact = false }: SnapshotEditFormProps) {
   const moduleOptions = snapshot.project && MODULE_OPTIONS[snapshot.project]
     ? MODULE_OPTIONS[snapshot.project]
     : ALL_MODULE_OPTIONS;
@@ -548,121 +606,136 @@ export function SnapshotEditForm({ snapshot, onUpdate }: SnapshotEditFormProps) 
     [onUpdate]
   );
 
+  // 컴팩트 모드 스타일
+  const headerPadding = compact ? "px-4 pt-4 pb-3" : "px-8 pt-8 pb-6";
+  const contentPadding = compact ? "p-4 space-y-6" : "p-8 space-y-10";
+  const sectionSpace = compact ? "space-y-4" : "space-y-6";
+  const innerSpace = compact ? "space-y-5" : "space-y-8";
+  const gridGap = compact ? "gap-3" : "gap-5";
+  const labelMargin = compact ? "mb-2" : "mb-3";
+  const labelSize = compact ? "text-xs" : "text-sm";
+  const iconSize = compact ? "w-8 h-8" : "w-10 h-10";
+  const titleSize = compact ? "text-lg" : "text-xl";
+  const barHeight = compact ? "h-5" : "h-6";
+  const buttonPadding = compact ? "px-3 py-1.5" : "px-4 py-2.5";
+  const buttonText = compact ? "text-xs" : "text-sm";
+  const buttonRadius = compact ? "rounded-lg" : "rounded-xl";
+
   return (
     <div className="h-full">
       {/* 헤더 - 가로폭 100% */}
-      <div className="px-8 pt-8 pb-6 border-b border-gray-100">
+      <div className={`${headerPadding} border-b border-gray-100`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className={`${iconSize} rounded-xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center`}>
+            <svg className={compact ? "w-4 h-4 text-white" : "w-5 h-5 text-white"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">스냅샷 편집</h2>
-            <p className="text-sm text-gray-500">v2 스키마 기준</p>
+            <h2 className={`${titleSize} font-bold text-gray-900`}>스냅샷 편집</h2>
+            <p className={`${labelSize} text-gray-500`}>v2 스키마 기준</p>
           </div>
         </div>
       </div>
 
       {/* 콘텐츠 영역 - max-width 적용 */}
-      <div className="p-8 space-y-10 max-w-3xl">
+      <div className={`${contentPadding} ${compact ? "max-w-2xl" : "max-w-3xl"}`}>
         {/* 메타 영역 */}
-        <section className="space-y-6">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 rounded-full bg-gray-900" />
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">메타 정보</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-5">
-          <MetaField label="Name" value={snapshot.name} options={NAME_OPTIONS} onChange={(v) => handleMetaChange("name", v)} placeholder="작성자 이름" tabIndex={1} />
-          <MetaField label="Domain" value={snapshot.domain} options={DOMAIN_OPTIONS} onChange={(v) => handleMetaChange("domain", v)} tabIndex={2} />
-          <MetaField label="Project" value={snapshot.project} options={PROJECT_OPTIONS} onChange={(v) => handleMetaChange("project", v)} tabIndex={3} />
-          <MetaField label="Module" value={snapshot.module} options={moduleOptions} onChange={(v) => handleMetaChange("module", v)} tabIndex={4} />
-          <div className="col-span-2">
-            <MetaField label="Feature" value={snapshot.feature} options={FEATURE_OPTIONS} onChange={(v) => handleMetaChange("feature", v)} placeholder="기능명 (예: Rich-note)" tabIndex={5} />
+        <section className={sectionSpace}>
+          <div className="flex items-center gap-2">
+            <div className={`w-1 ${barHeight} rounded-full bg-gray-900`} />
+            <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>메타 정보</h3>
           </div>
-        </div>
-      </section>
+          <div className={`grid grid-cols-2 ${gridGap}`}>
+            <MetaField label="Name" value={snapshot.name} options={NAME_OPTIONS} onChange={(v) => handleMetaChange("name", v)} placeholder="작성자 이름" tabIndex={1} compact={compact} />
+            <MetaField label="Domain" value={snapshot.domain} options={DOMAIN_OPTIONS} onChange={(v) => handleMetaChange("domain", v)} tabIndex={2} compact={compact} />
+            <MetaField label="Project" value={snapshot.project} options={PROJECT_OPTIONS} onChange={(v) => handleMetaChange("project", v)} tabIndex={3} compact={compact} />
+            <MetaField label="Module" value={snapshot.module} options={moduleOptions} onChange={(v) => handleMetaChange("module", v)} tabIndex={4} compact={compact} />
+            <div className="col-span-2">
+              <MetaField label="Feature" value={snapshot.feature} options={FEATURE_OPTIONS} onChange={(v) => handleMetaChange("feature", v)} placeholder="기능명 (예: Rich-note)" tabIndex={5} compact={compact} />
+            </div>
+          </div>
+        </section>
 
-      {/* Past Week */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 rounded-full bg-blue-500" />
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Past Week</h3>
-        </div>
-
-        <div className="space-y-8">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Tasks</label>
-            <TaskEditor tasks={snapshot.pastWeek.tasks} onChange={(tasks) => handlePastWeekChange("tasks", tasks)} baseTabIndex={10} />
+        {/* Past Week */}
+        <section className={sectionSpace}>
+          <div className="flex items-center gap-2">
+            <div className={`w-1 ${barHeight} rounded-full bg-blue-500`} />
+            <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>Past Week</h3>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Risks</label>
-            <RiskEditor risks={snapshot.pastWeek.risk} onChange={(risks) => handlePastWeekChange("risk", risks)} baseTabIndex={50} />
-          </div>
+          <div className={innerSpace}>
+            <div>
+              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Tasks</label>
+              <TaskEditor tasks={snapshot.pastWeek.tasks} onChange={(tasks) => handlePastWeekChange("tasks", tasks)} baseTabIndex={10} compact={compact} />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Risk Level</label>
-            <div className="flex flex-wrap gap-2">
-              {RISK_LEVEL_OPTIONS.map((option) => (
+            <div>
+              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risks</label>
+              <RiskEditor risks={snapshot.pastWeek.risk} onChange={(risks) => handlePastWeekChange("risk", risks)} baseTabIndex={50} compact={compact} />
+            </div>
+
+            <div>
+              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risk Level</label>
+              <div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
+                {RISK_LEVEL_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handlePastWeekChange("riskLevel", option.value as 0 | 1 | 2 | 3)}
+                    tabIndex={-1}
+                    className={`
+                      ${buttonPadding} ${buttonText} font-medium ${buttonRadius} transition-all
+                      ${snapshot.pastWeek.riskLevel === option.value
+                        ? option.value === 0
+                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
+                          : option.value === 1
+                          ? "bg-yellow-500 text-white shadow-lg shadow-yellow-500/25"
+                          : option.value === 2
+                          ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
+                          : "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }
+                    `}
+                    title={option.description}
+                  >
+                    {option.label}
+                  </button>
+                ))}
                 <button
-                  key={option.value}
                   type="button"
-                  onClick={() => handlePastWeekChange("riskLevel", option.value as 0 | 1 | 2 | 3)}
+                  onClick={() => handlePastWeekChange("riskLevel", null)}
                   tabIndex={-1}
                   className={`
-                    px-4 py-2.5 text-sm font-medium rounded-xl transition-all
-                    ${snapshot.pastWeek.riskLevel === option.value
-                      ? option.value === 0
-                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                        : option.value === 1
-                        ? "bg-yellow-500 text-white shadow-lg shadow-yellow-500/25"
-                        : option.value === 2
-                        ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
-                        : "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+                    ${buttonPadding} ${buttonText} font-medium ${buttonRadius} transition-all
+                    ${snapshot.pastWeek.riskLevel === null
+                      ? "bg-gray-900 text-white"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }
                   `}
-                  title={option.description}
                 >
-                  {option.label}
+                  None
                 </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => handlePastWeekChange("riskLevel", null)}
-                tabIndex={-1}
-                className={`
-                  px-4 py-2.5 text-sm font-medium rounded-xl transition-all
-                  ${snapshot.pastWeek.riskLevel === null
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }
-                `}
-              >
-                None
-              </button>
+              </div>
+            </div>
+
+            <div>
+              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Collaborators</label>
+              <CollaboratorEditor collaborators={snapshot.pastWeek.collaborators} onChange={(collabs) => handlePastWeekChange("collaborators", collabs)} baseTabIndex={70} compact={compact} />
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Collaborators</label>
-            <CollaboratorEditor collaborators={snapshot.pastWeek.collaborators} onChange={(collabs) => handlePastWeekChange("collaborators", collabs)} baseTabIndex={70} />
-          </div>
-        </div>
-      </section>
+        </section>
 
         {/* This Week */}
-        <section className="space-y-6">
+        <section className={sectionSpace}>
           <div className="flex items-center gap-2">
-            <div className="w-1 h-6 rounded-full bg-emerald-500" />
-            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">This Week</h3>
+            <div className={`w-1 ${barHeight} rounded-full bg-emerald-500`} />
+            <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>This Week</h3>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Tasks</label>
-            <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} />
+            <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Tasks</label>
+            <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} compact={compact} />
           </div>
         </section>
       </div>

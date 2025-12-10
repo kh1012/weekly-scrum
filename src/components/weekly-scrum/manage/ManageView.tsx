@@ -7,13 +7,16 @@
  * 나중에 실제 저장 기능이 필요할 때 연결할 수 있도록 설계되었습니다.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useScrumContext } from "@/context/ScrumContext";
 import { ManageEntryScreen } from "./ManageEntryScreen";
 import { ManageEditorScreen } from "./ManageEditorScreen";
 import { ToastProvider } from "./Toast";
 import type { ManageState, TempSnapshot } from "./types";
 import { createEmptySnapshot, convertToTempSnapshot } from "./types";
+
+// SNB 상태 감지를 위한 로컬 스토리지 키
+const SIDEBAR_STATE_KEY = "sidebar-open";
 
 const initialState: ManageState = {
   screen: "entry",
@@ -25,6 +28,38 @@ const initialState: ManageState = {
 export function ManageView() {
   const [state, setState] = useState<ManageState>(initialState);
   const { allData, weeks } = useScrumContext();
+  
+  // SNB 상태 감지
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  useEffect(() => {
+    // 초기 상태 로드
+    const stored = localStorage.getItem(SIDEBAR_STATE_KEY);
+    if (stored !== null) {
+      setIsSidebarOpen(stored === "true");
+    }
+    
+    // 스토리지 변경 감지
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === SIDEBAR_STATE_KEY && e.newValue !== null) {
+        setIsSidebarOpen(e.newValue === "true");
+      }
+    };
+    
+    // 주기적 폴링 (같은 탭 내 변경 감지)
+    const interval = setInterval(() => {
+      const current = localStorage.getItem(SIDEBAR_STATE_KEY);
+      if (current !== null) {
+        setIsSidebarOpen(current === "true");
+      }
+    }, 500);
+    
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   // 새로 작성하기
   const handleNewSnapshot = useCallback(() => {
@@ -163,6 +198,7 @@ export function ManageView() {
         snapshots={state.snapshots}
         selectedSnapshot={selectedSnapshot}
         viewMode={state.viewMode}
+        isSidebarOpen={isSidebarOpen}
         onSelectCard={handleSelectCard}
         onDeleteCard={handleDeleteCard}
         onUpdateCard={handleUpdateCard}

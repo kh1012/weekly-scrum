@@ -4,13 +4,14 @@ export const RELEASES: Release[] = [
   {
     version: "2.3.0",
     date: "2025-12-10",
-    title: "스냅샷 관리 시스템 및 Airbnb 스타일 전면 개편",
+    title: "스냅샷 관리 시스템 기능 추가",
     summary:
-      "스냅샷 관리 페이지를 추가하고 v2 스키마 가이드/검증 문서를 정립했습니다. 전체 화면을 Airbnb 스타일로 개편하고, 더블클릭 확장, 우클릭 컨텍스트 메뉴, Tab 키 순차 이동 기능을 추가했습니다.",
+      "스냅샷 관리 페이지를 추가하고 v2 스키마 가이드/검증 문서를 정립했습니다.",
     changes: [
       {
         type: "feat",
-        description: "스냅샷 관리 페이지 추가 - 데이터 로드/신규 생성/편집 기능",
+        description:
+          "스냅샷 관리 페이지 추가 - 데이터 로드/신규 생성/편집 기능",
       },
       {
         type: "feat",
@@ -18,7 +19,8 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description: "v2 스키마 검증 가이드 문서 (snapshot-validation-v2.md) 작성",
+        description:
+          "v2 스키마 검증 가이드 문서 (snapshot-validation-v2.md) 작성",
       },
       {
         type: "feat",
@@ -38,23 +40,27 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description: "Work Map 협업 네트워크 노드 패널 드래그 이동 지원",
-      },
-      {
-        type: "feat",
-        description: "협업 네트워크 중앙 모달 - 전체 스냅샷 리스트 표시",
-      },
-      {
-        type: "feat",
         description: "Collaborator relations 복수 선택 지원 (체크박스)",
       },
       {
-        type: "improve",
-        description: "스냅샷 뷰어 뷰 모드 localStorage 저장 (전체/사람별 등)",
+        type: "feat",
+        description: "좌측 카드 목록 패널 드래그로 너비 조절 가능",
+      },
+      {
+        type: "feat",
+        description: "Plain Text Preview 패널 추가 (3열 모드 / 탭 토글)",
+      },
+      {
+        type: "feat",
+        description: "편집 폼 컴팩트 모드 UI (정보 밀도 향상)",
+      },
+      {
+        type: "feat",
+        description: "전체 복사 드롭다운 버튼 (JSON/Text 통합)",
       },
       {
         type: "improve",
-        description: "Work Map 트리 펼침 상태 localStorage 저장 버그 수정",
+        description: "전체 패널 동일 높이 + 개별 스크롤 구조",
       },
       {
         type: "improve",
@@ -62,15 +68,18 @@ export const RELEASES: Release[] = [
       },
       {
         type: "improve",
-        description: "Plain Text 복사 형식 개선 - 헤더 직후 Name 출력, 빈 줄로 구분",
+        description:
+          "Plain Text 복사 형식 개선 - 헤더 직후 Name 출력, 빈 줄로 구분",
       },
       {
         type: "style",
-        description: "스냅샷 관리 전체 Airbnb 스타일 적용 (진입/카드/편집/토스트)",
+        description:
+          "스냅샷 관리 전체 Airbnb 스타일 적용 (진입/카드/편집/토스트)",
       },
       {
         type: "style",
-        description: "카드 리스트 메타 태그 표시 (Domain/Project/Module/Feature)",
+        description:
+          "카드 리스트 메타 태그 표시 (Domain/Project/Module/Feature)",
       },
       {
         type: "style",

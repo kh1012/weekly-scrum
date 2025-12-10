@@ -10,6 +10,8 @@ export { ManageEntryScreen } from "./ManageEntryScreen";
 export { ManageEditorScreen } from "./ManageEditorScreen";
 export { SnapshotCardList } from "./SnapshotCardList";
 export { SnapshotEditForm } from "./SnapshotEditForm";
+export { PlainTextPreview } from "./PlainTextPreview";
+export { ResizeHandle } from "./ResizeHandle";
 export { DataLoadModal } from "./DataLoadModal";
 export type { TempSnapshot, ManageState } from "./types";
 
