@@ -123,15 +123,13 @@ export const SnapshotCardList = forwardRef<
           const isSelected = snapshot.tempId === selectedId;
           const isExpanded = expandedIds.has(snapshot.tempId);
 
-          // 요약 정보
-          const summary = [
-            snapshot.domain,
-            snapshot.project,
-            snapshot.module,
-            snapshot.feature,
-          ]
-            .filter(Boolean)
-            .join(" / ");
+          // 메타 태그 정보
+          const metaTags = [
+            { label: "Domain", value: snapshot.domain },
+            { label: "Project", value: snapshot.project },
+            { label: "Module", value: snapshot.module },
+            { label: "Feature", value: snapshot.feature },
+          ].filter(tag => tag.value);
 
           return (
             <div
@@ -165,16 +163,13 @@ export const SnapshotCardList = forwardRef<
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-gray-900 truncate">
+                          <span className="text-sm font-semibold text-gray-900">
                             {snapshot.name || "(이름 없음)"}
                           </span>
                           {snapshot.isDirty && (
                             <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" title="수정됨" />
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 truncate mt-0.5">
-                          {summary || "(분류 없음)"}
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -205,20 +200,42 @@ export const SnapshotCardList = forwardRef<
                   </button>
                 </div>
 
-                {/* 태그 */}
-                <div className="flex items-center gap-1.5 mt-3">
+                {/* 메타 태그 (여러 줄로 나열) */}
+                {metaTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {metaTags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
+                          tag.label === "Domain"
+                            ? "bg-purple-50 text-purple-600"
+                            : tag.label === "Project"
+                            ? "bg-blue-50 text-blue-600"
+                            : tag.label === "Module"
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-amber-50 text-amber-600"
+                        }`}
+                      >
+                        {tag.value}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* 상태 태그 */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {snapshot.isOriginal && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500">
                       원본
                     </span>
                   )}
                   {snapshot.pastWeek.tasks.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-600">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600">
                       {snapshot.pastWeek.tasks.length} tasks
                     </span>
                   )}
                   {snapshot.pastWeek.riskLevel !== null && snapshot.pastWeek.riskLevel > 0 && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
                       snapshot.pastWeek.riskLevel === 1
                         ? "bg-yellow-50 text-yellow-600"
                         : snapshot.pastWeek.riskLevel === 2
@@ -246,23 +263,25 @@ export const SnapshotCardList = forwardRef<
                             Past Week
                           </div>
                           <ul className="space-y-1.5">
-                            {snapshot.pastWeek.tasks.slice(0, 3).map((task, i) => (
+                            {snapshot.pastWeek.tasks.map((task, i) => (
                               <li key={i} className="flex items-center gap-2 text-xs">
-                                <div className="w-full max-w-[180px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
-                                    style={{ width: `${task.progress}%` }}
-                                  />
-                                </div>
-                                <span className="text-gray-700 truncate flex-1">{task.title}</span>
-                                <span className="text-gray-400 shrink-0">{task.progress}%</span>
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                  task.progress === 100
+                                    ? "bg-emerald-500"
+                                    : task.progress >= 50
+                                    ? "bg-blue-500"
+                                    : "bg-gray-400"
+                                }`} />
+                                <span className="text-gray-700 flex-1">{task.title}</span>
+                                <span className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                  task.progress === 100
+                                    ? "bg-emerald-50 text-emerald-600"
+                                    : "bg-gray-100 text-gray-500"
+                                }`}>
+                                  {task.progress}%
+                                </span>
                               </li>
                             ))}
-                            {snapshot.pastWeek.tasks.length > 3 && (
-                              <li className="text-xs text-gray-400">
-                                +{snapshot.pastWeek.tasks.length - 3}개 더
-                              </li>
-                            )}
                           </ul>
                         </div>
                       )}
@@ -276,24 +295,19 @@ export const SnapshotCardList = forwardRef<
                             </svg>
                             This Week
                           </div>
-                          <ul className="space-y-1">
-                            {snapshot.thisWeek.tasks.slice(0, 3).map((task, i) => (
+                          <ul className="space-y-1.5">
+                            {snapshot.thisWeek.tasks.map((task, i) => (
                               <li key={i} className="flex items-center gap-2 text-xs text-gray-700">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                <span className="truncate">{task}</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                                <span>{task}</span>
                               </li>
                             ))}
-                            {snapshot.thisWeek.tasks.length > 3 && (
-                              <li className="text-xs text-gray-400">
-                                +{snapshot.thisWeek.tasks.length - 3}개 더
-                              </li>
-                            )}
                           </ul>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono overflow-x-auto max-h-40 bg-gray-50 rounded-lg p-3">
+                    <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono bg-gray-50 rounded-lg p-3">
                       {tempSnapshotToPlainText(snapshot)}
                     </pre>
                   )}
