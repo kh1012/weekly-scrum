@@ -33,10 +33,12 @@ interface ManageEditorScreenProps {
 // 좌측 패널 크기 제한
 const MIN_LEFT_PANEL_WIDTH = 240;
 const MAX_LEFT_PANEL_WIDTH = 480;
-const DEFAULT_LEFT_PANEL_WIDTH = 320;
+const DEFAULT_LEFT_PANEL_WIDTH = 280;
 
-// 3열 모드 최소 너비
-const THREE_COLUMN_MIN_WIDTH = 1400;
+// 3열 모드 최소 너비 (노트북 14인치 SNB 닫힌 상태 기준)
+const THREE_COLUMN_MIN_WIDTH = 1200;
+// 2열 편집폼 너비 (Full HD 이상)
+const WIDE_FORM_MIN_WIDTH = 1800;
 
 export function ManageEditorScreen({
   snapshots,
@@ -62,6 +64,7 @@ export function ManageEditorScreen({
   
   // 화면 너비 상태
   const [canShowThreeColumns, setCanShowThreeColumns] = useState(false);
+  const [useWideFormLayout, setUseWideFormLayout] = useState(false);
   
   // 드롭다운 상태
   const [isCopyDropdownOpen, setIsCopyDropdownOpen] = useState(false);
@@ -72,6 +75,8 @@ export function ManageEditorScreen({
       const width = window.innerWidth;
       // SNB가 닫혀있고 화면이 충분히 넓으면 3열 모드
       setCanShowThreeColumns(!isSidebarOpen && width >= THREE_COLUMN_MIN_WIDTH);
+      // 충분히 넓은 화면에서만 2열 폼 레이아웃 사용
+      setUseWideFormLayout(width >= WIDE_FORM_MIN_WIDTH);
     };
     
     checkWidth();
@@ -319,6 +324,7 @@ export function ManageEditorScreen({
                     onUpdateCard(selectedSnapshot.tempId, updates)
                   }
                   compact
+                  singleColumn={!useWideFormLayout}
                 />
               ) : (
                 <EmptyState />
@@ -345,6 +351,7 @@ export function ManageEditorScreen({
                       onUpdateCard(selectedSnapshot.tempId, updates)
                     }
                     compact
+                    singleColumn
                   />
                 ) : (
                   <EmptyState />

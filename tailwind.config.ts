@@ -9,8 +9,8 @@ const config: Config = {
   theme: {
     extend: {
       screens: {
-        'wide': '1440px', // 1440px 이상에서 GNB 필터 직접 표시
-        '3xl': '1600px',
+        'wide': '1680px', // SNB(250px) 열림 상태에서도 GNB 필터 표시 (1440+250=1690 고려)
+        '3xl': '1920px',  // Full HD 이상
       },
       colors: {
         primary: {

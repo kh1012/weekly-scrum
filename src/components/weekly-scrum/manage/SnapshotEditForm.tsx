@@ -27,6 +27,8 @@ interface SnapshotEditFormProps {
   onUpdate: (updates: Partial<TempSnapshot>) => void;
   /** 컴팩트 모드: padding/margin 30~40% 축소 */
   compact?: boolean;
+  /** 1열 레이아웃 모드: 좁은 화면에서 메타 필드를 1열로 배치 */
+  singleColumn?: boolean;
 }
 
 // 공통 입력 스타일 (일반 모드)
@@ -578,7 +580,7 @@ function CollaboratorEditor({
   );
 }
 
-export function SnapshotEditForm({ snapshot, onUpdate, compact = false }: SnapshotEditFormProps) {
+export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleColumn = false }: SnapshotEditFormProps) {
   const moduleOptions = snapshot.project && MODULE_OPTIONS[snapshot.project]
     ? MODULE_OPTIONS[snapshot.project]
     : ALL_MODULE_OPTIONS;
@@ -620,6 +622,9 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false }: Snapsh
   const buttonPadding = compact ? "px-3 py-1.5" : "px-4 py-2.5";
   const buttonText = compact ? "text-xs" : "text-sm";
   const buttonRadius = compact ? "rounded-lg" : "rounded-xl";
+  
+  // 1열/2열 그리드 레이아웃
+  const gridCols = singleColumn ? "grid-cols-1" : "grid-cols-2";
 
   return (
     <div className="h-full">
@@ -646,12 +651,12 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false }: Snapsh
             <div className={`w-1 ${barHeight} rounded-full bg-gray-900`} />
             <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>메타 정보</h3>
           </div>
-          <div className={`grid grid-cols-2 ${gridGap}`}>
+          <div className={`grid ${gridCols} ${gridGap}`}>
             <MetaField label="Name" value={snapshot.name} options={NAME_OPTIONS} onChange={(v) => handleMetaChange("name", v)} placeholder="작성자 이름" tabIndex={1} compact={compact} />
             <MetaField label="Domain" value={snapshot.domain} options={DOMAIN_OPTIONS} onChange={(v) => handleMetaChange("domain", v)} tabIndex={2} compact={compact} />
             <MetaField label="Project" value={snapshot.project} options={PROJECT_OPTIONS} onChange={(v) => handleMetaChange("project", v)} tabIndex={3} compact={compact} />
             <MetaField label="Module" value={snapshot.module} options={moduleOptions} onChange={(v) => handleMetaChange("module", v)} tabIndex={4} compact={compact} />
-            <div className="col-span-2">
+            <div className={singleColumn ? "" : "col-span-2"}>
               <MetaField label="Feature" value={snapshot.feature} options={FEATURE_OPTIONS} onChange={(v) => handleMetaChange("feature", v)} placeholder="기능명 (예: Rich-note)" tabIndex={5} compact={compact} />
             </div>
           </div>
