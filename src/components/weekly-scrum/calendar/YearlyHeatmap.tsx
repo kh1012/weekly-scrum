@@ -502,7 +502,7 @@ function StatCard({
       
       {/* 툴팁 */}
       {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl z-50 max-w-[180px] text-center leading-relaxed whitespace-normal">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl z-50 min-w-[160px] max-w-[240px] text-center leading-relaxed whitespace-normal">
           {tooltip}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
         </div>
