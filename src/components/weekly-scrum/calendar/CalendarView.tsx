@@ -13,9 +13,7 @@ import type { WeeklyScrumDataUnion, ScrumItem } from "@/types/scrum";
 import {
   convertToRawSnapshots,
   aggregateCalendarData,
-  getCurrentMonth,
-  getPrevMonth,
-  getNextMonth,
+  getAvailableMonths,
   formatMonthLabel,
 } from "@/lib/calendarAggregation";
 import { CalendarGrid } from "./CalendarGrid";
@@ -77,7 +75,7 @@ export function CalendarView({
   // 상태 관리
   const [mode, setMode] = useState<CalendarMode>("project");
   const [viewTab, setViewTab] = useState<ViewTab>("calendar");
-  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
+  const [selectedMonth, setSelectedMonth] = useState<string>("all"); // 기본값: 전체
   const [selectedWeek, setSelectedWeek] = useState<WeekKey | null>(null);
   const [selectedInitiative, setSelectedInitiative] = useState<string | null>(
     null
@@ -88,6 +86,11 @@ export function CalendarView({
   const allRawSnapshots = useMemo(() => {
     return convertToRawSnapshots(weeklyDataList);
   }, [weeklyDataList]);
+
+  // 사용 가능한 월 목록
+  const availableMonths = useMemo(() => {
+    return getAvailableMonths(allRawSnapshots);
+  }, [allRawSnapshots]);
 
   // Raw Snapshot 변환 및 집계
   const { weeks, projectRangeSummary, memberRangeSummary, rawSnapshots } =
@@ -134,19 +137,12 @@ export function CalendarView({
     setSelectedMember(null);
   }, []);
 
-  const handlePrevMonth = useCallback(() => {
-    setSelectedMonth(getPrevMonth(selectedMonth));
+  const handleMonthChange = useCallback((month: string) => {
+    setSelectedMonth(month);
     setSelectedWeek(null);
     setSelectedInitiative(null);
     setSelectedMember(null);
-  }, [selectedMonth]);
-
-  const handleNextMonth = useCallback(() => {
-    setSelectedMonth(getNextMonth(selectedMonth));
-    setSelectedWeek(null);
-    setSelectedInitiative(null);
-    setSelectedMember(null);
-  }, [selectedMonth]);
+  }, []);
 
   const handleSelectWeek = useCallback((weekKey: WeekKey) => {
     setSelectedWeek(weekKey);
@@ -174,13 +170,19 @@ export function CalendarView({
     );
   }, [weeks, selectedWeek]);
 
+  // 현재 선택된 기간 레이블
+  const periodLabel = useMemo(() => {
+    if (selectedMonth === "all") return "전체 기간";
+    return formatMonthLabel(selectedMonth);
+  }, [selectedMonth]);
+
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50/50 p-6">
       {/* 상단 토글 - 캘린더/히트맵 선택 */}
       <div className="shrink-0 mb-4 flex items-center justify-center">
         <SlidingToggle
           options={[
-            { value: "calendar" as ViewTab, label: "📅 월간 캘린더" },
+            { value: "calendar" as ViewTab, label: "📅 주간 캘린더" },
             { value: "heatmap" as ViewTab, label: "🔥 연간 히트맵" },
           ]}
           value={viewTab}
@@ -195,35 +197,26 @@ export function CalendarView({
             {/* 캘린더 헤더 */}
             <div className="shrink-0 px-6 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                {/* 월 선택 */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handlePrevMonth}
-                    className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
-                  >
-                    <svg
-                      className="w-4 h-4 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                  </button>
-                  <h2 className="text-lg font-bold text-gray-900 min-w-[140px] text-center">
-                    {formatMonthLabel(selectedMonth)}
+                {/* 기간 필터 */}
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {periodLabel}
                   </h2>
-                  <button
-                    onClick={handleNextMonth}
-                    className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
-                  >
+                  <div className="relative">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => handleMonthChange(e.target.value)}
+                      className="appearance-none bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium pl-3 pr-8 py-2 rounded-xl cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    >
+                      <option value="all">전체 기간</option>
+                      {availableMonths.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
                     <svg
-                      className="w-4 h-4 text-gray-600"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -232,31 +225,36 @@ export function CalendarView({
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M9 5l7 7-7 7"
+                        d="M19 9l-7 7-7-7"
                       />
                     </svg>
-                  </button>
+                  </div>
                 </div>
 
-                {/* 필터 안내 */}
-                {filteredItems && filteredItems.length > 0 && (
-                  <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                      />
-                    </svg>
-                    <span>{rawSnapshots.length}개 스냅샷</span>
+                {/* 요약 정보 */}
+                <div className="flex items-center gap-3">
+                  <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                    <span className="font-semibold text-gray-700">{weeks.length}</span> 주
                   </div>
-                )}
+                  {filteredItems && filteredItems.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                        />
+                      </svg>
+                      <span>{rawSnapshots.length}개 스냅샷</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

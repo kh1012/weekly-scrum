@@ -646,7 +646,7 @@ export function createMemberFocusRangeSummary(
  */
 export function aggregateCalendarData(
   rawSnapshots: RawSnapshot[],
-  selectedMonth: string
+  selectedMonth: string // "all" 또는 "YYYY-MM" 형식
 ): {
   weeks: WeekAggregation[];
   projectRangeSummary: ProjectFocusRangeSummary;
@@ -655,8 +655,9 @@ export function aggregateCalendarData(
   // 1. 주 단위 집계
   const allWeeks = aggregateByWeek(rawSnapshots);
 
-  // 2. 선택 월 필터링
-  const filteredWeeks = filterByMonth(allWeeks, selectedMonth);
+  // 2. 선택 월 필터링 ("all"이면 전체)
+  const filteredWeeks =
+    selectedMonth === "all" ? allWeeks : filterByMonth(allWeeks, selectedMonth);
 
   // 3. 기간 요약 생성
   const projectRangeSummary = createProjectFocusRangeSummary(filteredWeeks);
@@ -725,4 +726,31 @@ export function formatWeekLabel(week: WeekAggregation): string {
     2,
     "0"
   )} · ${startStr} ~ ${endStr}`;
+}
+
+/**
+ * RawSnapshot 목록에서 사용 가능한 월 목록 추출
+ * @returns { value: string, label: string }[] - value: "YYYY-MM", label: "YYYY년 M월"
+ */
+export function getAvailableMonths(
+  snapshots: RawSnapshot[]
+): { value: string; label: string }[] {
+  const monthSet = new Set<string>();
+
+  snapshots.forEach((snapshot) => {
+    // weekStart에서 월 추출
+    const [year, month] = snapshot.weekStart.split("-");
+    monthSet.add(`${year}-${month}`);
+    // weekEnd에서도 월 추출 (주가 월 경계를 넘는 경우)
+    const [endYear, endMonth] = snapshot.weekEnd.split("-");
+    monthSet.add(`${endYear}-${endMonth}`);
+  });
+
+  // 정렬 (최신순)
+  const sortedMonths = Array.from(monthSet).sort().reverse();
+
+  return sortedMonths.map((m) => ({
+    value: m,
+    label: formatMonthLabel(m),
+  }));
 }
