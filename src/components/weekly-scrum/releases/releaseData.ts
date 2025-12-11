@@ -14,7 +14,8 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description: "캘린더/히트맵 슬라이딩 토글 분리 (자연스러운 translate 애니메이션)",
+        description:
+          "캘린더/히트맵 슬라이딩 토글 분리 (자연스러운 translate 애니메이션)",
       },
       {
         type: "feat",
@@ -62,7 +63,8 @@ export const RELEASES: Release[] = [
       },
       {
         type: "style",
-        description: "ScrumCard Airbnb 스타일 전면 개선 (상단 도메인 바, 라운드 카드)",
+        description:
+          "ScrumCard Airbnb 스타일 전면 개선 (상단 도메인 바, 라운드 카드)",
       },
       {
         type: "style",
