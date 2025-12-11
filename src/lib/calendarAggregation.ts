@@ -94,8 +94,9 @@ export function parseWeekIndex(weekStr: string): number {
  * 날짜 범위 문자열에서 시작/종료일 추출
  * 지원 형식:
  * - "2025-12-01 2025-12-05" (공백 구분)
- * - "03.10 ~ 03.14" (~ 구분)
- * - "12.01 ~ 12.05" (~ 구분)
+ * - "2025-12-01 ~ 2025-12-07" (~ 구분, YYYY-MM-DD)
+ * - "03.10 ~ 03.14" (~ 구분, MM.DD)
+ * - "12.01 ~ 12.05" (~ 구분, MM.DD)
  */
 export function parseDateRange(
   rangeStr: string,
@@ -114,10 +115,15 @@ export function parseDateRange(
     };
   }
 
-  // 형식 2: "03.10 ~ 03.14" (~ 구분)
+  // 형식 2: ~ 구분
   const tildeParts = rangeStr.split("~").map((s) => s.trim());
   if (tildeParts.length === 2) {
     const formatDate = (dateStr: string) => {
+      // YYYY-MM-DD 형식이면 그대로 반환
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dateStr;
+      }
+      // MM.DD 형식이면 year를 붙여서 YYYY-MM-DD로 변환
       const [month, day] = dateStr.split(".").map((n) => n.padStart(2, "0"));
       return `${year}-${month}-${day}`;
     };
