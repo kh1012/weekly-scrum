@@ -215,10 +215,10 @@ export function CalendarView({
                 <div className="relative" ref={periodDropdownRef}>
                   <button
                     onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all border ${
                       selectedMonth !== "all"
-                        ? "bg-blue-50 text-blue-600 border border-blue-200"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-transparent"
                     }`}
                   >
                     <span>📅</span>
@@ -282,7 +282,7 @@ export function CalendarView({
                       <div className="h-px bg-gray-100" />
 
                       {/* 월별 목록 */}
-                      <div className="max-h-60 overflow-y-auto py-1">
+                      <div className="max-h-60 overflow-y-auto">
                         {availableMonths.map((m) => (
                           <button
                             key={m.value}
