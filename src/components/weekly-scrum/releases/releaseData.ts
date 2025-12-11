@@ -2,6 +2,55 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.4.0",
+    date: "2025-12-11",
+    title: "Calendar View 추가",
+    summary:
+      "주 단위 스냅샷 데이터를 달력 형태로 재구성하여 프로젝트/멤버 집중도를 시각화하는 Calendar View를 추가했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "Calendar View 페이지 추가 (/calendar)",
+      },
+      {
+        type: "feat",
+        description: "프로젝트 집중도 모드 - 프로젝트별 기여도 시각화",
+      },
+      {
+        type: "feat",
+        description: "멤버 집중도 모드 - 멤버별 기여도 시각화",
+      },
+      {
+        type: "feat",
+        description: "주 단위 막대 그래프로 상위 3개 프로젝트/멤버 표시",
+      },
+      {
+        type: "feat",
+        description: "기간 요약 패널 - 참여 프로젝트/멤버/모듈/피처 통계",
+      },
+      {
+        type: "feat",
+        description: "프로젝트/멤버 랭킹 리스트 (focusScore 기준)",
+      },
+      {
+        type: "feat",
+        description: "선택된 주/프로젝트/멤버 상세 정보 표시",
+      },
+      {
+        type: "feat",
+        description: "월 단위 네비게이션 (이전/다음 월 이동)",
+      },
+      {
+        type: "improve",
+        description: "Calendar 페이지 GNB 단순화 (자체 월 선택기 사용)",
+      },
+      {
+        type: "improve",
+        description: "SNB에 Calendar 메뉴 추가 (v2 카테고리)",
+      },
+    ],
+  },
+  {
     version: "2.3.0",
     date: "2025-12-10",
     title: "스냅샷 관리 시스템 기능 추가",
