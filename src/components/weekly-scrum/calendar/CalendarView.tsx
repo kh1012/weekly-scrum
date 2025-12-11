@@ -201,7 +201,13 @@ export function CalendarView({
                     <select
                       value={selectedMonth}
                       onChange={(e) => handleMonthChange(e.target.value)}
-                      className="appearance-none bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-semibold pl-3 pr-8 py-2 rounded-xl cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-semibold pl-3 pr-8 py-2 rounded-xl cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                      style={{
+                        WebkitAppearance: "none",
+                        MozAppearance: "none",
+                        appearance: "none",
+                        backgroundImage: "none",
+                      }}
                     >
                       <option value="all">전체 기간</option>
                       {availableMonths.map((m) => (
