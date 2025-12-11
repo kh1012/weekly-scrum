@@ -113,13 +113,15 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           {!isSidebarOpen && (
             <>
               <Logo />
-              <div
-                className="w-px h-6 rounded-full"
-                style={{ background: "var(--notion-border)" }}
-              />
+              {!isManagePage && (
+                <div
+                  className="w-px h-6 rounded-full"
+                  style={{ background: "var(--notion-border)" }}
+                />
+              )}
             </>
           )}
-          <WeekSelector />
+          {!isManagePage && <WeekSelector />}
         </div>
 
         {/* 우측: 검색 + 필터 */}
@@ -268,13 +270,15 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           )}
         </div>
 
-        {/* 2행: 주차 선택 */}
-        <div
-          className="px-4 py-3"
-          style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.04)" }}
-        >
-          <WeekSelector isMobile />
-        </div>
+        {/* 2행: 주차 선택 (manage 페이지가 아닐 때만) */}
+        {!isManagePage && (
+          <div
+            className="px-4 py-3"
+            style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.04)" }}
+          >
+            <WeekSelector isMobile />
+          </div>
+        )}
 
         {/* 3행: 필터 (필터 숨김 페이지가 아닐 때만) */}
         {!hideFilters && (
