@@ -5,6 +5,7 @@
  *
  * 최근 12개월간의 주간 기여도를 시각화 (월별 세로 레이아웃)
  * 데이터의 weekStart를 기반으로 해당 월의 주차 위치에 표시
+ * 반응형 디자인으로 viewport에 맞게 네모칸 크기 조정
  */
 
 import { useMemo } from "react";
@@ -244,53 +245,53 @@ export function YearlyHeatmap({
   }
 
   return (
-    <div className="p-8 space-y-10">
+    <div className="p-6 lg:p-8 space-y-8 lg:space-y-10">
       {/* 헤더 - Airbnb 스타일 */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">최근 12개월 기여도</h2>
-          <p className="text-gray-500 mt-1">
+          <h2 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">최근 12개월 기여도</h2>
+          <p className="text-gray-500 mt-1 text-sm lg:text-base">
             월별 주간 활동 현황을 한눈에 확인하세요
           </p>
         </div>
         {/* 요약 통계 - 인라인 */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4 lg:gap-8">
           <div className="text-right">
-            <p className="text-3xl font-bold text-gray-900">{stats.totalTasks}</p>
-            <p className="text-xs text-gray-500 font-medium">완료된 작업</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stats.totalTasks}</p>
+            <p className="text-[10px] lg:text-xs text-gray-500 font-medium">완료된 작업</p>
           </div>
-          <div className="w-px h-10 bg-gray-200" />
+          <div className="w-px h-8 lg:h-10 bg-gray-200" />
           <div className="text-right">
-            <p className="text-3xl font-bold text-gray-900">{stats.activeWeeks}</p>
-            <p className="text-xs text-gray-500 font-medium">활동 주</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stats.activeWeeks}</p>
+            <p className="text-[10px] lg:text-xs text-gray-500 font-medium">활동 주</p>
           </div>
-          <div className="w-px h-10 bg-gray-200" />
+          <div className="w-px h-8 lg:h-10 bg-gray-200" />
           <div className="text-right">
-            <p className="text-3xl font-bold text-gray-900">{stats.memberCount}</p>
-            <p className="text-xs text-gray-500 font-medium">참여 멤버</p>
+            <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stats.memberCount}</p>
+            <p className="text-[10px] lg:text-xs text-gray-500 font-medium">참여 멤버</p>
           </div>
         </div>
       </div>
 
       {/* 팀 전체 히트맵 - Airbnb 카드 스타일 */}
-      <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm hover:shadow-md transition-shadow overflow-visible">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-2xl lg:rounded-3xl border border-gray-100 p-5 lg:p-8 shadow-sm hover:shadow-md transition-shadow overflow-visible">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-200">
-              <span className="text-white text-lg">👥</span>
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl lg:rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-200">
+              <span className="text-white text-base lg:text-lg">👥</span>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">팀 전체 기여도</h3>
-              <p className="text-xs text-gray-500">월별 주간 완료 작업 수</p>
+              <h3 className="text-base lg:text-lg font-bold text-gray-900">팀 전체 기여도</h3>
+              <p className="text-[10px] lg:text-xs text-gray-500">월별 주간 완료 작업 수</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-[10px] lg:text-xs text-gray-500">
             <span>적음</span>
-            <div className="flex gap-1">
+            <div className="flex gap-0.5 lg:gap-1">
               {TEAM_GRASS_COLORS.map((color, i) => (
                 <div
                   key={i}
-                  className="w-5 h-5 rounded-lg transition-transform hover:scale-110"
+                  className="w-4 h-4 lg:w-5 lg:h-5 rounded-md lg:rounded-lg transition-transform hover:scale-110"
                   style={{ backgroundColor: color }}
                 />
               ))}
@@ -299,17 +300,17 @@ export function YearlyHeatmap({
           </div>
         </div>
 
-        {/* 월별 세로 잔디 그리드 */}
-        <div className="overflow-visible">
-          <div className="flex gap-3">
+        {/* 월별 세로 잔디 그리드 - 반응형 */}
+        <div className="overflow-x-auto overflow-y-visible pb-2">
+          <div className="flex justify-between min-w-[600px] lg:min-w-0 gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
             {months.map((monthData) => (
-              <div key={`${monthData.year}-${monthData.month}`} className="flex flex-col items-center">
+              <div key={`${monthData.year}-${monthData.month}`} className="flex-1 flex flex-col items-center">
                 {/* 월 레이블 */}
-                <div className="text-xs font-semibold text-gray-500 mb-2 h-5 flex items-center">
+                <div className="text-[10px] lg:text-xs font-semibold text-gray-500 mb-1.5 lg:mb-2 h-4 lg:h-5 flex items-center">
                   {monthData.label}
                 </div>
                 {/* 주 단위 칸들 (세로) */}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-0.5 lg:gap-1">
                   {Array.from({ length: MAX_WEEKS_PER_MONTH }).map((_, weekIdx) => {
                     const key = getMonthWeekKey(monthData.year, monthData.month, weekIdx);
                     const value = teamWeeklyData.weekData.get(key) || 0;
@@ -322,15 +323,15 @@ export function YearlyHeatmap({
                         className="group relative"
                       >
                         <div
-                          className={`w-7 h-7 rounded-lg transition-all cursor-default ${
-                            isCurrentWeek ? "ring-2 ring-teal-400 ring-offset-2" : ""
+                          className={`w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 xl:w-10 xl:h-10 rounded-md lg:rounded-lg transition-all cursor-default ${
+                            isCurrentWeek ? "ring-2 ring-teal-400 ring-offset-1 lg:ring-offset-2" : ""
                           } hover:scale-110 hover:z-10`}
                           style={{ backgroundColor: TEAM_GRASS_COLORS[level] }}
                         />
                         {/* 툴팁 */}
-                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100] shadow-xl">
+                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 lg:ml-3 px-2 lg:px-3 py-1.5 lg:py-2 bg-gray-900 text-white text-[10px] lg:text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100] shadow-xl">
                           <div className="font-medium">{monthData.year}년 {monthData.label} {weekIdx + 1}주차</div>
-                          <div className="mt-1 text-teal-300 font-bold">{value}건 완료</div>
+                          <div className="mt-0.5 lg:mt-1 text-teal-300 font-bold">{value}건 완료</div>
                           <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
                         </div>
                       </div>
@@ -344,24 +345,24 @@ export function YearlyHeatmap({
       </div>
 
       {/* 멤버별 히트맵 - Airbnb 카드 스타일 */}
-      <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm hover:shadow-md transition-shadow overflow-visible">
-        <div className="flex items-center justify-between mb-8">
+      <div className="bg-white rounded-2xl lg:rounded-3xl border border-gray-100 p-5 lg:p-8 shadow-sm hover:shadow-md transition-shadow overflow-visible">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow-lg shadow-pink-200">
-              <span className="text-white text-lg">👤</span>
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl lg:rounded-2xl bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow-lg shadow-pink-200">
+              <span className="text-white text-base lg:text-lg">👤</span>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">멤버별 기여도</h3>
-              <p className="text-xs text-gray-500">개인별 상대 기여지수</p>
+              <h3 className="text-base lg:text-lg font-bold text-gray-900">멤버별 기여도</h3>
+              <p className="text-[10px] lg:text-xs text-gray-500">개인별 상대 기여지수</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-[10px] lg:text-xs text-gray-500">
             <span>적음</span>
-            <div className="flex gap-1">
+            <div className="flex gap-0.5 lg:gap-1">
               {MEMBER_GRASS_COLORS.map((color, i) => (
                 <div
                   key={i}
-                  className="w-5 h-5 rounded-lg transition-transform hover:scale-110"
+                  className="w-4 h-4 lg:w-5 lg:h-5 rounded-md lg:rounded-lg transition-transform hover:scale-110"
                   style={{ backgroundColor: color }}
                 />
               ))}
@@ -370,7 +371,7 @@ export function YearlyHeatmap({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 lg:space-y-4">
           {members.map((memberName, memberIdx) => {
             const weekMap = memberWeeklyData.memberData.get(memberName);
             const personalMax = memberWeeklyData.memberMaxValues.get(memberName) || 0;
@@ -379,17 +380,17 @@ export function YearlyHeatmap({
             return (
               <div 
                 key={memberName} 
-                className="flex items-start gap-4 group/member hover:bg-gray-50 -mx-4 px-4 py-3 rounded-xl transition-colors overflow-visible"
+                className="flex items-start gap-3 lg:gap-4 group/member hover:bg-gray-50 -mx-3 lg:-mx-4 px-3 lg:px-4 py-2 lg:py-3 rounded-xl transition-colors overflow-visible"
               >
                 {/* 멤버 정보 */}
-                <div className="w-32 shrink-0 flex items-center gap-2 pt-5">
+                <div className="w-24 lg:w-32 shrink-0 flex items-center gap-2 pt-4 lg:pt-5">
                   <div className="relative">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 shadow-sm">
+                    <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs lg:text-sm font-bold text-gray-600 shadow-sm">
                       {memberName.charAt(0)}
                     </div>
                     {/* 순위 뱃지 */}
                     {memberIdx < 3 && (
-                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow ${
+                      <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 lg:w-4 lg:h-4 rounded-full flex items-center justify-center text-[8px] lg:text-[9px] font-bold text-white shadow ${
                         memberIdx === 0 ? "bg-amber-400" : memberIdx === 1 ? "bg-gray-400" : "bg-orange-400"
                       }`}>
                         {memberIdx + 1}
@@ -397,26 +398,26 @@ export function YearlyHeatmap({
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 truncate">{memberName}</p>
-                    <p className="text-[10px] text-gray-400">{totalDone}건</p>
+                    <p className="text-[11px] lg:text-xs font-semibold text-gray-900 truncate">{memberName}</p>
+                    <p className="text-[9px] lg:text-[10px] text-gray-400">{totalDone}건</p>
                   </div>
                 </div>
 
-                {/* 월별 세로 잔디 - 1월~12월 전체 */}
-                <div className="flex-1 overflow-visible">
-                  <div className="flex gap-3">
+                {/* 월별 세로 잔디 - 1월~12월 전체 - 반응형 */}
+                <div className="flex-1 overflow-x-auto overflow-y-visible pb-1">
+                  <div className="flex justify-between min-w-[500px] lg:min-w-0 gap-1 sm:gap-1.5 lg:gap-2 xl:gap-3">
                     {months.map((monthData) => (
-                      <div key={`${memberName}-${monthData.year}-${monthData.month}`} className="flex flex-col items-center">
+                      <div key={`${memberName}-${monthData.year}-${monthData.month}`} className="flex-1 flex flex-col items-center">
                         {/* 월 레이블 (첫 멤버만) */}
                         {memberIdx === 0 && (
-                          <div className="text-[10px] font-medium text-gray-400 mb-2 h-4 flex items-center">
+                          <div className="text-[9px] lg:text-[10px] font-medium text-gray-400 mb-1 lg:mb-1.5 h-3 lg:h-4 flex items-center">
                             {monthData.label}
                           </div>
                         )}
-                        {memberIdx > 0 && <div className="h-4 mb-2" />}
+                        {memberIdx > 0 && <div className="h-3 lg:h-4 mb-1 lg:mb-1.5" />}
                         
                         {/* 주 단위 칸들 (세로) */}
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-0.5 lg:gap-1">
                           {Array.from({ length: MAX_WEEKS_PER_MONTH }).map((_, weekIdx) => {
                             const key = getMonthWeekKey(monthData.year, monthData.month, weekIdx);
                             const value = weekMap?.get(key) || 0;
@@ -429,13 +430,13 @@ export function YearlyHeatmap({
                                 className="group/cell relative"
                               >
                                 <div
-                                  className={`w-7 h-7 rounded-lg transition-all ${
+                                  className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 rounded-md lg:rounded-lg transition-all ${
                                     isCurrentWeek ? "ring-2 ring-pink-400 ring-offset-1" : ""
                                   } hover:scale-110`}
                                   style={{ backgroundColor: MEMBER_GRASS_COLORS[level] }}
                                 />
                                 {/* 툴팁 */}
-                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-md opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100]">
+                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-[9px] lg:text-[10px] rounded-md opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100]">
                                   {monthData.label} {weekIdx + 1}주: {value}건
                                 </div>
                               </div>
@@ -453,7 +454,7 @@ export function YearlyHeatmap({
       </div>
 
       {/* 통계 카드 - Airbnb 스타일 */}
-      <div className="grid grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
         <StatCard
           label="최고 주간 기록"
           value={stats.maxWeekTasks}
@@ -527,17 +528,17 @@ function StatCard({
 
   return (
     <div
-      className={`p-5 rounded-2xl bg-gradient-to-br ${config.bg} border ${config.border} shadow-sm hover:shadow-md ${config.shadow} transition-all`}
+      className={`p-4 lg:p-5 rounded-xl lg:rounded-2xl bg-gradient-to-br ${config.bg} border ${config.border} shadow-sm hover:shadow-md ${config.shadow} transition-all`}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-500 font-medium mb-1">{label}</p>
-          <p className="text-3xl font-bold text-gray-900">
+          <p className="text-xs lg:text-sm text-gray-500 font-medium mb-0.5 lg:mb-1">{label}</p>
+          <p className="text-2xl lg:text-3xl font-bold text-gray-900">
             {value}
-            <span className="text-base font-medium text-gray-400 ml-1">{unit}</span>
+            <span className="text-sm lg:text-base font-medium text-gray-400 ml-0.5 lg:ml-1">{unit}</span>
           </p>
         </div>
-        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-sm">
+        <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white flex items-center justify-center text-xl lg:text-2xl shadow-sm">
           {emoji}
         </div>
       </div>
