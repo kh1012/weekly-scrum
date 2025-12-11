@@ -14,7 +14,6 @@ import {
   convertToRawSnapshots,
   aggregateCalendarData,
   getAvailableMonths,
-  formatMonthLabel,
 } from "@/lib/calendarAggregation";
 import { CalendarGrid } from "./CalendarGrid";
 import { CalendarMetaPanel } from "./CalendarMetaPanel";
@@ -174,12 +173,6 @@ export function CalendarView({
     );
   }, [weeks, selectedWeek]);
 
-  // 현재 선택된 기간 레이블
-  const periodLabel = useMemo(() => {
-    if (selectedMonth === "all") return "전체 기간";
-    return formatMonthLabel(selectedMonth);
-  }, [selectedMonth]);
-
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50/50 p-6">
       {/* 상단 토글 - 캘린더/히트맵 선택 */}
@@ -203,14 +196,12 @@ export function CalendarView({
               <div className="flex items-center justify-between">
                 {/* 기간 필터 */}
                 <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-bold text-gray-900">
-                    {periodLabel}
-                  </h2>
+                  <span className="text-sm text-gray-500">📅 기간</span>
                   <div className="relative">
                     <select
                       value={selectedMonth}
                       onChange={(e) => handleMonthChange(e.target.value)}
-                      className="appearance-none bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium pl-3 pr-8 py-2 rounded-xl cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                      className="appearance-none bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-semibold pl-3 pr-8 py-2 rounded-xl cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
                     >
                       <option value="all">전체 기간</option>
                       {availableMonths.map((m) => (

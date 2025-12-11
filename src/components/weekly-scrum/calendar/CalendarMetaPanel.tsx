@@ -125,7 +125,7 @@ function ProjectFocusPanel({
             color="emerald"
           />
           <SummaryItem
-            label="진행 피처"
+            label="진행 기능"
             value={summary.totalFeatureCount}
             unit="개"
             color="orange"
@@ -268,17 +268,19 @@ function ModuleFocusPanel({ summary, selectedWeek }: ModuleFocusPanelProps) {
               데이터가 없습니다
             </p>
           ) : (
-            summary.modules.slice(0, 8).map((item, idx) => (
-              <RankingItem
-                key={item.moduleName}
-                rank={idx + 1}
-                name={item.moduleName}
-                weekCount={item.weekCount}
-                doneCount={item.doneTaskCount}
-                plannedCount={item.plannedTaskCount}
-                isSelected={false}
-              />
-            ))
+            summary.modules
+              .slice(0, 8)
+              .map((item, idx) => (
+                <RankingItem
+                  key={item.moduleName}
+                  rank={idx + 1}
+                  name={item.moduleName}
+                  weekCount={item.weekCount}
+                  doneCount={item.doneTaskCount}
+                  plannedCount={item.plannedTaskCount}
+                  isSelected={false}
+                />
+              ))
           )}
         </div>
       </div>
@@ -367,17 +369,19 @@ function FeatureFocusPanel({ summary, selectedWeek }: FeatureFocusPanelProps) {
               데이터가 없습니다
             </p>
           ) : (
-            summary.features.slice(0, 8).map((item, idx) => (
-              <RankingItem
-                key={item.featureName}
-                rank={idx + 1}
-                name={item.featureName}
-                weekCount={item.weekCount}
-                doneCount={item.doneTaskCount}
-                plannedCount={item.plannedTaskCount}
-                isSelected={false}
-              />
-            ))
+            summary.features
+              .slice(0, 8)
+              .map((item, idx) => (
+                <RankingItem
+                  key={item.featureName}
+                  rank={idx + 1}
+                  name={item.featureName}
+                  weekCount={item.weekCount}
+                  doneCount={item.doneTaskCount}
+                  plannedCount={item.plannedTaskCount}
+                  isSelected={false}
+                />
+              ))
           )}
         </div>
       </div>
@@ -622,7 +626,7 @@ function SelectedInitiativeDetail({
           color="emerald"
         />
         <DetailRow
-          label="진행 피처"
+          label="진행 기능"
           values={Array.from(initiative.features)}
           color="purple"
         />
@@ -668,7 +672,7 @@ function SelectedMemberDetail({
           color="emerald"
         />
         <DetailRow
-          label="진행 피처"
+          label="진행 기능"
           values={Array.from(member.features)}
           color="orange"
         />
