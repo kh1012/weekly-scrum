@@ -3,7 +3,7 @@
 /**
  * Yearly Heatmap 컴포넌트 (GitHub 기여도 잔디 스타일)
  *
- * 최근 1년간의 주간 기여도를 시각화 (주 단위로 집계)
+ * 최근 12개월간의 주간 기여도를 시각화 (월 기준 X축)
  */
 
 import { useMemo } from "react";
@@ -32,43 +32,102 @@ const MEMBER_GRASS_COLORS = [
   "#db2777", // 4 (pink-600)
 ];
 
-// 월 이름 (약어)
-const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// 월 이름
+const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+interface WeekData {
+  year: number;
+  month: number; // 0-11
+  week: number; // ISO 주차
+  weekOfMonth: number; // 월 내 주차 (1-5)
+  startDate: Date;
+}
+
+interface MonthGroup {
+  year: number;
+  month: number; // 0-11
+  label: string;
+  weeks: WeekData[];
+}
 
 /**
- * 최근 52주(1년)의 주차 목록 생성
+ * 최근 12개월의 주차 목록 생성 (월별 그룹)
  */
-function getLast52Weeks(): { year: number; week: number; startDate: Date; month: number }[] {
-  const weeks: { year: number; week: number; startDate: Date; month: number }[] = [];
+function getLast12Months(): MonthGroup[] {
   const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
   
-  // 오늘이 속한 주의 월요일 찾기
-  const currentMonday = new Date(today);
-  const day = currentMonday.getDay();
-  const diff = currentMonday.getDate() - day + (day === 0 ? -6 : 1);
-  currentMonday.setDate(diff);
-  currentMonday.setHours(0, 0, 0, 0);
+  const months: MonthGroup[] = [];
   
-  // 52주 전부터 시작
-  for (let i = 51; i >= 0; i--) {
-    const weekStart = new Date(currentMonday);
-    weekStart.setDate(currentMonday.getDate() - (i * 7));
+  // 12개월 전부터 현재까지
+  for (let i = 11; i >= 0; i--) {
+    let targetMonth = currentMonth - i;
+    let targetYear = currentYear;
     
-    // ISO 주차 계산
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-    const yearStart = new Date(d.getFullYear(), 0, 1);
-    const weekNumber = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    while (targetMonth < 0) {
+      targetMonth += 12;
+      targetYear -= 1;
+    }
     
-    weeks.push({
-      year: d.getFullYear(),
-      week: weekNumber,
-      startDate: weekStart,
-      month: weekStart.getMonth(),
+    const monthStart = new Date(targetYear, targetMonth, 1);
+    const monthEnd = new Date(targetYear, targetMonth + 1, 0);
+    
+    const weeks: WeekData[] = [];
+    let weekOfMonth = 1;
+    
+    // 해당 월의 첫 번째 월요일 찾기
+    const firstMonday = new Date(monthStart);
+    const dayOfWeek = firstMonday.getDay();
+    const diff = dayOfWeek === 0 ? 1 : dayOfWeek === 1 ? 0 : 8 - dayOfWeek;
+    firstMonday.setDate(firstMonday.getDate() + diff);
+    
+    // 월의 첫 날부터 첫 월요일 전까지의 주
+    if (monthStart.getDay() !== 1) {
+      const isoWeek = getISOWeek(monthStart);
+      weeks.push({
+        year: targetYear,
+        month: targetMonth,
+        week: isoWeek,
+        weekOfMonth: weekOfMonth++,
+        startDate: new Date(monthStart),
+      });
+    }
+    
+    // 월요일 기준으로 주 추가
+    let currentMonday = new Date(firstMonday);
+    while (currentMonday <= monthEnd) {
+      const isoWeek = getISOWeek(currentMonday);
+      weeks.push({
+        year: targetYear,
+        month: targetMonth,
+        week: isoWeek,
+        weekOfMonth: weekOfMonth++,
+        startDate: new Date(currentMonday),
+      });
+      currentMonday.setDate(currentMonday.getDate() + 7);
+    }
+    
+    months.push({
+      year: targetYear,
+      month: targetMonth,
+      label: `${MONTH_LABELS[targetMonth]}`,
+      weeks,
     });
   }
   
-  return weeks;
+  return months;
+}
+
+/**
+ * ISO 주차 계산
+ */
+function getISOWeek(date: Date): number {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
 /**
@@ -97,19 +156,12 @@ function getDoneTaskCount(snapshot: RawSnapshot): number {
   return snapshot.pastWeekTasks.filter((t) => t.progress >= 100).length;
 }
 
-/**
- * 날짜 포맷 (MM.DD)
- */
-function formatDate(date: Date): string {
-  return `${(date.getMonth() + 1).toString().padStart(2, "0")}.${date.getDate().toString().padStart(2, "0")}`;
-}
-
 export function YearlyHeatmap({
   rawSnapshots,
   memberRangeSummary,
 }: YearlyHeatmapProps) {
-  // 최근 52주 목록
-  const weeks = useMemo(() => getLast52Weeks(), []);
+  // 최근 12개월 (월별 그룹)
+  const months = useMemo(() => getLast12Months(), []);
 
   // 주별 데이터 집계 (팀 전체)
   const teamWeeklyData = useMemo(() => {
@@ -170,24 +222,6 @@ export function YearlyHeatmap({
       .map(([name]) => name);
   }, [memberWeeklyData]);
 
-  // 월 레이블 위치 계산
-  const monthLabels = useMemo(() => {
-    const labels: { month: string; colStart: number }[] = [];
-    let lastMonth = -1;
-    
-    weeks.forEach((week, idx) => {
-      if (week.month !== lastMonth) {
-        labels.push({
-          month: MONTH_LABELS[week.month],
-          colStart: idx,
-        });
-        lastMonth = week.month;
-      }
-    });
-    
-    return labels;
-  }, [weeks]);
-
   // 통계 계산
   const stats = useMemo(() => {
     let totalTasks = 0;
@@ -231,9 +265,9 @@ export function YearlyHeatmap({
       {/* 헤더 - Airbnb 스타일 */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">최근 1년 기여도</h2>
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">최근 12개월 기여도</h2>
           <p className="text-gray-500 mt-1">
-            지난 52주간의 팀 활동 현황을 한눈에 확인하세요
+            월별 주간 활동 현황을 한눈에 확인하세요
           </p>
         </div>
         {/* 요약 통계 - 인라인 */}
@@ -264,7 +298,7 @@ export function YearlyHeatmap({
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">팀 전체 기여도</h3>
-              <p className="text-xs text-gray-500">주 단위 완료 작업 수</p>
+              <p className="text-xs text-gray-500">월별 주간 완료 작업 수</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -282,58 +316,46 @@ export function YearlyHeatmap({
           </div>
         </div>
 
-        {/* 주 단위 잔디 그리드 */}
-        <div className="relative">
-          {/* 월 레이블 */}
-          <div className="flex mb-3 pl-1">
-            {monthLabels.map((label, idx) => (
-              <div
-                key={idx}
-                className="text-xs font-medium text-gray-400"
-                style={{
-                  position: "absolute",
-                  left: `${label.colStart * 18 + 4}px`,
-                }}
-              >
-                {label.month}
+        {/* 월별 잔디 그리드 */}
+        <div className="overflow-x-auto">
+          <div className="flex gap-6">
+            {months.map((monthGroup, monthIdx) => (
+              <div key={`${monthGroup.year}-${monthGroup.month}`} className="flex flex-col items-center">
+                {/* 월 레이블 */}
+                <div className="text-xs font-medium text-gray-500 mb-2">
+                  {monthGroup.label}
+                </div>
+                {/* 주 단위 칸들 */}
+                <div className="flex gap-1">
+                  {monthGroup.weeks.map((week, weekIdx) => {
+                    const key = getWeekKey(week.year, week.week);
+                    const value = teamWeeklyData.weekData.get(key) || 0;
+                    const level = getLevel(value, teamWeeklyData.maxValue);
+                    const isCurrentWeek = monthIdx === months.length - 1 && weekIdx === monthGroup.weeks.length - 1;
+
+                    return (
+                      <div
+                        key={`${week.year}-${week.week}`}
+                        className="group relative"
+                      >
+                        <div
+                          className={`w-6 h-6 rounded-lg transition-all cursor-default ${
+                            isCurrentWeek ? "ring-2 ring-teal-400 ring-offset-1" : ""
+                          } hover:scale-125 hover:z-10`}
+                          style={{ backgroundColor: TEAM_GRASS_COLORS[level] }}
+                        />
+                        {/* 툴팁 */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl">
+                          <div className="font-medium">{week.year}년 {week.week}주차</div>
+                          <div className="mt-1 text-teal-300 font-bold">{value}건 완료</div>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ))}
-          </div>
-
-          {/* 잔디 그리드 - 주 단위 */}
-          <div className="flex gap-1.5 mt-8 overflow-x-auto pb-2">
-            {weeks.map((week, weekIdx) => {
-              const key = getWeekKey(week.year, week.week);
-              const value = teamWeeklyData.weekData.get(key) || 0;
-              const level = getLevel(value, teamWeeklyData.maxValue);
-              const isFuture = week.startDate > new Date();
-              const isCurrentWeek = weekIdx === weeks.length - 1;
-              const weekEnd = new Date(week.startDate);
-              weekEnd.setDate(weekEnd.getDate() + 6);
-
-              return (
-                <div
-                  key={weekIdx}
-                  className={`group relative shrink-0`}
-                >
-                  <div
-                    className={`w-4 h-4 rounded-md transition-all cursor-default ${
-                      isCurrentWeek ? "ring-2 ring-teal-400 ring-offset-1" : ""
-                    } hover:scale-125 hover:z-10`}
-                    style={{
-                      backgroundColor: isFuture ? "#f9fafb" : TEAM_GRASS_COLORS[level],
-                    }}
-                  />
-                  {/* 툴팁 */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl">
-                    <div className="font-medium">{week.year}년 {week.week}주차</div>
-                    <div className="text-gray-300">{formatDate(week.startDate)} ~ {formatDate(weekEnd)}</div>
-                    <div className="mt-1 text-teal-300 font-bold">{value}건 완료</div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       </div>
@@ -377,7 +399,7 @@ export function YearlyHeatmap({
                 className="flex items-center gap-5 group/member hover:bg-gray-50 -mx-4 px-4 py-3 rounded-2xl transition-colors"
               >
                 {/* 멤버 정보 */}
-                <div className="w-40 shrink-0 flex items-center gap-3">
+                <div className="w-36 shrink-0 flex items-center gap-3">
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 shadow-sm">
                       {memberName.charAt(0)}
@@ -397,35 +419,34 @@ export function YearlyHeatmap({
                   </div>
                 </div>
 
-                {/* 주간 잔디 */}
+                {/* 월별 주간 잔디 */}
                 <div className="flex-1 overflow-x-auto">
-                  <div className="flex gap-1">
-                    {weeks.map((week, weekIdx) => {
-                      const key = getWeekKey(week.year, week.week);
-                      const value = weekMap?.get(key) || 0;
-                      const level = getLevel(value, personalMax);
-                      const isFuture = week.startDate > new Date();
-                      const weekEnd = new Date(week.startDate);
-                      weekEnd.setDate(weekEnd.getDate() + 6);
+                  <div className="flex gap-4">
+                    {months.map((monthGroup) => (
+                      <div key={`${memberName}-${monthGroup.year}-${monthGroup.month}`} className="flex gap-0.5">
+                        {monthGroup.weeks.map((week) => {
+                          const key = getWeekKey(week.year, week.week);
+                          const value = weekMap?.get(key) || 0;
+                          const level = getLevel(value, personalMax);
 
-                      return (
-                        <div
-                          key={weekIdx}
-                          className="group/cell relative shrink-0"
-                        >
-                          <div
-                            className="w-2.5 h-2.5 rounded-sm transition-all hover:scale-150"
-                            style={{
-                              backgroundColor: isFuture ? "#f9fafb" : MEMBER_GRASS_COLORS[level],
-                            }}
-                          />
-                          {/* 툴팁 */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-md opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                            {week.week}주: {value}건
-                          </div>
-                        </div>
-                      );
-                    })}
+                          return (
+                            <div
+                              key={`${memberName}-${week.year}-${week.week}`}
+                              className="group/cell relative"
+                            >
+                              <div
+                                className="w-4 h-4 rounded-md transition-all hover:scale-125"
+                                style={{ backgroundColor: MEMBER_GRASS_COLORS[level] }}
+                              />
+                              {/* 툴팁 */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-md opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                                {week.week}주: {value}건
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -486,25 +507,21 @@ function StatCard({
     blue: {
       bg: "from-blue-50 to-blue-100/50",
       border: "border-blue-100",
-      text: "text-blue-600",
       shadow: "shadow-blue-100",
     },
     emerald: {
       bg: "from-emerald-50 to-emerald-100/50",
       border: "border-emerald-100",
-      text: "text-emerald-600",
       shadow: "shadow-emerald-100",
     },
     purple: {
       bg: "from-purple-50 to-purple-100/50",
       border: "border-purple-100",
-      text: "text-purple-600",
       shadow: "shadow-purple-100",
     },
     amber: {
       bg: "from-amber-50 to-amber-100/50",
       border: "border-amber-100",
-      text: "text-amber-600",
       shadow: "shadow-amber-100",
     },
   };
@@ -523,7 +540,7 @@ function StatCard({
             <span className="text-base font-medium text-gray-400 ml-1">{unit}</span>
           </p>
         </div>
-        <div className={`w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-sm`}>
+        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-sm">
           {emoji}
         </div>
       </div>
