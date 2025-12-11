@@ -38,11 +38,21 @@ const MEMBER_COLORS = [
 // 월 레이블
 const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 
+interface WeekData {
+  index: number;        // 52주 그리드에서의 인덱스 (0-51)
+  year: number;         // ISO 주차 연도
+  week: number;         // ISO 주차 (1-53)
+  month: number;        // 시작일의 월 (0-11)
+  startDate: Date;      // 주의 시작일 (월요일)
+  endDate: Date;        // 주의 종료일 (일요일)
+  key: string;          // 고유 키
+}
+
 /**
  * 최근 52주 데이터 생성
  */
-function getLast52Weeks(): { year: number; week: number; month: number; startDate: Date }[] {
-  const weeks: { year: number; week: number; month: number; startDate: Date }[] = [];
+function getLast52Weeks(): WeekData[] {
+  const weeks: WeekData[] = [];
   const today = new Date();
   
   // 현재 주의 월요일 찾기
@@ -57,17 +67,25 @@ function getLast52Weeks(): { year: number; week: number; month: number; startDat
     const weekStart = new Date(currentMonday);
     weekStart.setDate(currentMonday.getDate() - i * 7);
     
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
     // ISO 주차 계산
     const d = new Date(weekStart);
     d.setDate(d.getDate() + 4 - (d.getDay() || 7));
     const yearStart = new Date(d.getFullYear(), 0, 1);
     const weekNumber = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
     
+    const key = `${d.getFullYear()}-W${weekNumber.toString().padStart(2, "0")}`;
+    
     weeks.push({
+      index: 51 - i,
       year: d.getFullYear(),
       week: weekNumber,
       month: weekStart.getMonth(),
       startDate: weekStart,
+      endDate: weekEnd,
+      key,
     });
   }
   
@@ -77,7 +95,7 @@ function getLast52Weeks(): { year: number; week: number; month: number; startDat
 /**
  * 월별 주차 시작 인덱스 계산
  */
-function getMonthStartIndices(weeks: { month: number }[]): { month: number; index: number }[] {
+function getMonthStartIndices(weeks: WeekData[]): { month: number; index: number }[] {
   const indices: { month: number; index: number }[] = [];
   let lastMonth = -1;
   
@@ -92,10 +110,20 @@ function getMonthStartIndices(weeks: { month: number }[]): { month: number; inde
 }
 
 /**
- * 주 키 생성
+ * 날짜에서 ISO 주차 키 계산
+ * weekStart: "YYYY-MM-DD" 형식
  */
-function getWeekKey(year: number, week: number): string {
-  return `${year}-W${week.toString().padStart(2, "0")}`;
+function getISOWeekKey(weekStart: string): string {
+  const [year, month, day] = weekStart.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  
+  // ISO 주차 계산
+  const d = new Date(date);
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNumber = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  
+  return `${d.getFullYear()}-W${weekNumber.toString().padStart(2, "0")}`;
 }
 
 /**
@@ -130,17 +158,15 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
   // 52주 데이터
   const weeks = useMemo(() => getLast52Weeks(), []);
   const monthIndices = useMemo(() => getMonthStartIndices(weeks), [weeks]);
-  const currentWeekKey = useMemo(() => {
-    const lastWeek = weeks[weeks.length - 1];
-    return getWeekKey(lastWeek.year, lastWeek.week);
-  }, [weeks]);
+  const currentWeekKey = useMemo(() => weeks[weeks.length - 1].key, [weeks]);
 
-  // 팀 전체 데이터 집계
+  // 팀 전체 데이터 집계 (weekStart 기반 ISO 주차 매칭)
   const teamData = useMemo(() => {
     const weekData: Map<string, number> = new Map();
     
     rawSnapshots.forEach((snapshot) => {
-      const key = getWeekKey(snapshot.year, snapshot.weekIndex);
+      // weekStart를 기반으로 ISO 주차 키 계산
+      const key = getISOWeekKey(snapshot.weekStart);
       const current = weekData.get(key) || 0;
       weekData.set(key, current + getDoneTaskCount(snapshot));
     });
@@ -151,12 +177,13 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
     return { weekData, maxValue };
   }, [rawSnapshots]);
 
-  // 멤버별 데이터 집계
+  // 멤버별 데이터 집계 (weekStart 기반 ISO 주차 매칭)
   const memberData = useMemo(() => {
     const data: Map<string, { weekData: Map<string, number>; maxValue: number; total: number }> = new Map();
     
     rawSnapshots.forEach((snapshot) => {
-      const key = getWeekKey(snapshot.year, snapshot.weekIndex);
+      // weekStart를 기반으로 ISO 주차 키 계산
+      const key = getISOWeekKey(snapshot.weekStart);
       const doneCount = getDoneTaskCount(snapshot);
       
       if (!data.has(snapshot.memberName)) {
@@ -272,21 +299,18 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
 
         {/* 52주 히트맵 그리드 */}
         <div className="flex gap-[2px]">
-          {weeks.map((week, idx) => {
-            const key = getWeekKey(week.year, week.week);
-            const value = teamData.weekData.get(key) || 0;
+          {weeks.map((week) => {
+            const value = teamData.weekData.get(week.key) || 0;
             const level = getLevel(value, teamData.maxValue);
-            const isCurrentWeek = key === currentWeekKey;
-            const isHovered = hoveredWeek === `team-${key}`;
-            const endDate = new Date(week.startDate);
-            endDate.setDate(endDate.getDate() + 6);
+            const isCurrentWeek = week.key === currentWeekKey;
+            const isHovered = hoveredWeek === `team-${week.key}`;
 
             return (
               <div
-                key={key}
+                key={week.key}
                 className="relative group"
                 style={{ width: `${100 / 52}%` }}
-                onMouseEnter={() => setHoveredWeek(`team-${key}`)}
+                onMouseEnter={() => setHoveredWeek(`team-${week.key}`)}
                 onMouseLeave={() => setHoveredWeek(null)}
               >
                 <div
@@ -301,7 +325,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
                 {isHovered && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl z-50 whitespace-nowrap">
                     <div className="font-medium">{week.year}년 {week.week}주차</div>
-                    <div className="text-gray-300 text-[10px]">{formatDate(week.startDate)} ~ {formatDate(endDate)}</div>
+                    <div className="text-gray-300 text-[10px]">{formatDate(week.startDate)} ~ {formatDate(week.endDate)}</div>
                     <div className="text-emerald-300 font-semibold mt-0.5">{value}건 완료</div>
                     <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
                   </div>
@@ -371,20 +395,17 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
                 {/* 52주 히트맵 */}
                 <div className="flex-1 flex gap-px">
                   {weeks.map((week) => {
-                    const key = getWeekKey(week.year, week.week);
-                    const value = info.weekData.get(key) || 0;
+                    const value = info.weekData.get(week.key) || 0;
                     const level = getLevel(value, info.maxValue);
-                    const isCurrentWeek = key === currentWeekKey;
-                    const isHovered = hoveredWeek === `${memberName}-${key}`;
-                    const endDate = new Date(week.startDate);
-                    endDate.setDate(endDate.getDate() + 6);
+                    const isCurrentWeek = week.key === currentWeekKey;
+                    const isHovered = hoveredWeek === `${memberName}-${week.key}`;
 
                     return (
                       <div
-                        key={key}
+                        key={week.key}
                         className="relative group/cell"
                         style={{ width: `${100 / 52}%` }}
-                        onMouseEnter={() => setHoveredWeek(`${memberName}-${key}`)}
+                        onMouseEnter={() => setHoveredWeek(`${memberName}-${week.key}`)}
                         onMouseLeave={() => setHoveredWeek(null)}
                       >
                         <div
