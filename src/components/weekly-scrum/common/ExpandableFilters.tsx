@@ -314,7 +314,7 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
 
   if (isMobile) {
     return (
-      <div className="flex items-center gap-1 w-full overflow-x-auto pb-1 pr-2">
+      <div className="flex items-center gap-1 flex-wrap">
         {/* 리셋 버튼 (좌측) */}
         <ResetButton isMobileStyle />
         

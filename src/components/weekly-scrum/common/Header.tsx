@@ -288,7 +288,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
 
         {/* 3행: 필터 (필터 숨김 페이지가 아닐 때만) */}
         {!hideFilters && (
-          <div className="px-4 py-3 overflow-x-auto">
+          <div className="px-4 py-3">
             <ExpandableFilters isMobile />
           </div>
         )}
