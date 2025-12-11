@@ -149,7 +149,7 @@
     {
       "name": "김정빈",
       "domain": "Backend",
-      "project": "Idea-forge",
+      "project": "IdeaForge",
       "module": "지원",
       "feature": "백엔드 이슈 지원",
       "pastWeek": {
@@ -530,7 +530,7 @@
     {
       "name": "김상리",
       "domain": "Frontend",
-      "project": "Idea-forge",
+      "project": "IdeaForge",
       "module": "llm",
       "feature": "llm 구조 변경 및 테스트",
       "pastWeek": {
@@ -608,7 +608,7 @@
     {
       "name": "김지원",
       "domain": "Frontend",
-      "project": "Idea-forge",
+      "project": "IdeaForge",
       "module": "1.8.3",
       "feature": "개발 협의 및 진행",
       "pastWeek": {

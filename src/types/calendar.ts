@@ -14,9 +14,11 @@ import type { WeeklyScrumDataUnion, ScrumItemV2, ScrumItem } from "./scrum";
 /**
  * 캘린더 모드 타입
  * - project: 프로젝트별 뷰
+ * - module: 모듈별 뷰
+ * - feature: 기능별 뷰
  * - member: 멤버별 뷰
  */
-export type CalendarMode = "project" | "member";
+export type CalendarMode = "project" | "module" | "feature" | "member";
 
 /**
  * 주 단위 키
@@ -69,6 +71,36 @@ export interface InitiativeAggregation {
 }
 
 /**
+ * 모듈 집계 - 해당 주 기준
+ */
+export interface ModuleAggregation {
+  moduleName: string;
+  initiatives: Set<string>;
+  domains: Set<string>;
+  features: Set<string>;
+  members: Set<string>;
+  plannedTaskCount: number;
+  doneTaskCount: number;
+  avgCompletionRate: number; // 0~1
+  focusScore: number;
+}
+
+/**
+ * 기능 집계 - 해당 주 기준
+ */
+export interface FeatureAggregation {
+  featureName: string;
+  initiatives: Set<string>;
+  domains: Set<string>;
+  modules: Set<string>;
+  members: Set<string>;
+  plannedTaskCount: number;
+  doneTaskCount: number;
+  avgCompletionRate: number; // 0~1
+  focusScore: number;
+}
+
+/**
  * 멤버 집계 - 해당 주 기준
  */
 export interface MemberAggregation {
@@ -91,8 +123,12 @@ export interface WeekAggregation {
   weekStart: string;
   weekEnd: string;
   initiatives: InitiativeAggregation[];
+  modules: ModuleAggregation[];
+  features: FeatureAggregation[];
   members: MemberAggregation[];
   totalInitiativeFocus: number;
+  totalModuleFocus: number;
+  totalFeatureFocus: number;
   totalMemberFocus: number;
 }
 
@@ -133,6 +169,64 @@ export interface ProjectFocusRangeSummary extends RangeSummaryBase {
   totalInitiativeCount: number;
   totalModuleCount: number;
   totalFeatureCount: number;
+  totalMemberCount: number;
+  totalDoneTaskCount: number;
+  totalPlannedTaskCount: number;
+}
+
+/**
+ * 모듈별 기간 요약 - 개별 모듈 정보
+ */
+export interface ModuleFocusItem {
+  moduleName: string;
+  weekCount: number;
+  initiatives: Set<string>;
+  features: Set<string>;
+  members: Set<string>;
+  doneTaskCount: number;
+  plannedTaskCount: number;
+  focusScore: number;
+  avgCompletionRate: number;
+}
+
+/**
+ * 모듈별 기간 요약
+ */
+export interface ModuleFocusRangeSummary extends RangeSummaryBase {
+  mode: "module";
+  modules: ModuleFocusItem[];
+  totalModuleCount: number;
+  totalInitiativeCount: number;
+  totalFeatureCount: number;
+  totalMemberCount: number;
+  totalDoneTaskCount: number;
+  totalPlannedTaskCount: number;
+}
+
+/**
+ * 기능별 기간 요약 - 개별 기능 정보
+ */
+export interface FeatureFocusItem {
+  featureName: string;
+  weekCount: number;
+  initiatives: Set<string>;
+  modules: Set<string>;
+  members: Set<string>;
+  doneTaskCount: number;
+  plannedTaskCount: number;
+  focusScore: number;
+  avgCompletionRate: number;
+}
+
+/**
+ * 기능별 기간 요약
+ */
+export interface FeatureFocusRangeSummary extends RangeSummaryBase {
+  mode: "feature";
+  features: FeatureFocusItem[];
+  totalFeatureCount: number;
+  totalInitiativeCount: number;
+  totalModuleCount: number;
   totalMemberCount: number;
   totalDoneTaskCount: number;
   totalPlannedTaskCount: number;

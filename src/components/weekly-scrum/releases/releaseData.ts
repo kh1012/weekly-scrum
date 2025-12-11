@@ -4,10 +4,22 @@ export const RELEASES: Release[] = [
   {
     version: "2.4.0",
     date: "2025-12-11",
-    title: "Calendar View & 스냅샷 UI 대폭 개선",
+    title: "Calendar View & ISO 주차 기반 전면 개편",
     summary:
-      "주 단위 스냅샷 데이터를 달력 형태로 재구성하여 프로젝트/멤버 집중도를 시각화하는 Calendar View를 추가하고, GitHub 잔디 스타일 히트맵과 Pinterest Masonry 레이아웃 등 전반적인 UI/UX를 대폭 개선했습니다.",
+      "ISO 주차 기반으로 데이터 스키마를 전면 개편하고, 연간 캘린더/히트맵 뷰를 추가했습니다. 프로젝트/모듈/기능/멤버 4가지 필터로 Tasks 기준 집계를 확인할 수 있습니다.",
     changes: [
+      {
+        type: "feat",
+        description: "ISO 주차 기준 데이터 스키마 전면 마이그레이션 (v3)",
+      },
+      {
+        type: "feat",
+        description: "연간 캘린더 뷰 - 전체 기간 + 월별 필터 드롭다운",
+      },
+      {
+        type: "feat",
+        description: "4개 필터 탭 - 프로젝트/모듈/기능/멤버별 Tasks 집계",
+      },
       {
         type: "feat",
         description: "Calendar View 페이지 추가 (/calendar)",
@@ -16,10 +28,6 @@ export const RELEASES: Release[] = [
         type: "feat",
         description:
           "캘린더/히트맵 슬라이딩 토글 분리 (자연스러운 translate 애니메이션)",
-      },
-      {
-        type: "feat",
-        description: "프로젝트/멤버 집중도 토글을 Meta Panel 상단으로 이동",
       },
       {
         type: "feat",
@@ -54,6 +62,10 @@ export const RELEASES: Release[] = [
         description: "GNB 검색/필터와 연동 - 필터링된 데이터로 캘린더 표시",
       },
       {
+        type: "feat",
+        description: "GNB WeekSelector에 ISO 주차 날짜 범위 표시",
+      },
+      {
         type: "improve",
         description: "SnapshotToolbar 선택 버튼 높이 통일",
       },
@@ -72,7 +84,7 @@ export const RELEASES: Release[] = [
       },
       {
         type: "fix",
-        description: "스냅샷 데이터 range 필드 파싱 오류 수정",
+        description: "스냅샷 데이터 range 필드 파싱 오류 수정 (YYYY-MM-DD ~ 형식)",
       },
     ],
   },

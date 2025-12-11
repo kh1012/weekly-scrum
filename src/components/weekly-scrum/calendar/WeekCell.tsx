@@ -58,7 +58,18 @@ export function WeekCell({
   const label = formatWeekLabel(week);
 
   const allItems = useMemo(() => {
-    return mode === "project" ? week.initiatives : week.members;
+    switch (mode) {
+      case "project":
+        return week.initiatives;
+      case "module":
+        return week.modules;
+      case "feature":
+        return week.features;
+      case "member":
+        return week.members;
+      default:
+        return week.initiatives;
+    }
   }, [week, mode]);
 
   // 표시할 항목
@@ -69,11 +80,21 @@ export function WeekCell({
 
   // 최대 focusScore 계산 (막대 비율용)
   const maxFocus = useMemo(() => {
-    const total = mode === "project" ? week.totalInitiativeFocus : week.totalMemberFocus;
-    return total > 0 ? total : 1;
+    switch (mode) {
+      case "project":
+        return week.totalInitiativeFocus > 0 ? week.totalInitiativeFocus : 1;
+      case "module":
+        return week.totalModuleFocus > 0 ? week.totalModuleFocus : 1;
+      case "feature":
+        return week.totalFeatureFocus > 0 ? week.totalFeatureFocus : 1;
+      case "member":
+        return week.totalMemberFocus > 0 ? week.totalMemberFocus : 1;
+      default:
+        return 1;
+    }
   }, [week, mode]);
 
-  const colors = mode === "project" ? PROJECT_COLORS : MEMBER_COLORS;
+  const colors = mode === "project" || mode === "module" ? PROJECT_COLORS : MEMBER_COLORS;
   const totalCount = allItems.length;
   const hasMore = totalCount > DEFAULT_VISIBLE_COUNT;
 
@@ -118,9 +139,23 @@ export function WeekCell({
           </div>
         ) : (
           visibleItems.map((item, idx) => {
-            const name = mode === "project"
-              ? (item as typeof week.initiatives[0]).initiativeName
-              : (item as typeof week.members[0]).memberName;
+            let name: string;
+            switch (mode) {
+              case "project":
+                name = (item as typeof week.initiatives[0]).initiativeName;
+                break;
+              case "module":
+                name = (item as typeof week.modules[0]).moduleName;
+                break;
+              case "feature":
+                name = (item as typeof week.features[0]).featureName;
+                break;
+              case "member":
+                name = (item as typeof week.members[0]).memberName;
+                break;
+              default:
+                name = "Unknown";
+            }
             const focusScore = item.focusScore;
             const percentage = Math.round((focusScore / maxFocus) * 100);
             const color = colors[idx % colors.length];
@@ -133,9 +168,10 @@ export function WeekCell({
                   e.stopPropagation();
                   if (mode === "project") {
                     onSelectInitiative(name);
-                  } else {
+                  } else if (mode === "member") {
                     onSelectMember(name);
                   }
+                  // module, feature 모드에서는 별도 선택 핸들러가 없음
                 }}
                 className="group/item"
               >

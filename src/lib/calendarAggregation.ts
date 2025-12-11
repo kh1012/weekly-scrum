@@ -9,10 +9,16 @@ import type {
   WeekKey,
   WeekAggregation,
   InitiativeAggregation,
+  ModuleAggregation,
+  FeatureAggregation,
   MemberAggregation,
   ProjectFocusRangeSummary,
+  ModuleFocusRangeSummary,
+  FeatureFocusRangeSummary,
   MemberFocusRangeSummary,
   ProjectFocusItem,
+  ModuleFocusItem,
+  FeatureFocusItem,
   MemberFocusItem,
 } from "@/types/calendar";
 import type {
@@ -374,6 +380,116 @@ function aggregateMembers(snapshots: RawSnapshot[]): MemberAggregation[] {
 }
 
 /**
+ * 주 단위 모듈 집계
+ */
+function aggregateModules(snapshots: RawSnapshot[]): ModuleAggregation[] {
+  const moduleMap = new Map<string, ModuleAggregation>();
+
+  snapshots.forEach((snapshot) => {
+    const name = snapshot.module || "기타";
+
+    if (!moduleMap.has(name)) {
+      moduleMap.set(name, {
+        moduleName: name,
+        initiatives: new Set(),
+        domains: new Set(),
+        features: new Set(),
+        members: new Set(),
+        plannedTaskCount: 0,
+        doneTaskCount: 0,
+        avgCompletionRate: 0,
+        focusScore: 0,
+      });
+    }
+
+    const agg = moduleMap.get(name)!;
+    if (snapshot.project) agg.initiatives.add(snapshot.project);
+    if (snapshot.domain) agg.domains.add(snapshot.domain);
+    if (snapshot.feature) agg.features.add(snapshot.feature);
+    if (snapshot.memberName) agg.members.add(snapshot.memberName);
+
+    // task 집계
+    snapshot.pastWeekTasks.forEach((task) => {
+      agg.plannedTaskCount += 1;
+      if (task.progress >= 100) {
+        agg.doneTaskCount += 1;
+      }
+    });
+  });
+
+  // avgCompletionRate 및 focusScore 계산
+  moduleMap.forEach((agg) => {
+    agg.avgCompletionRate =
+      agg.plannedTaskCount > 0 ? agg.doneTaskCount / agg.plannedTaskCount : 0;
+    agg.focusScore = computeFocusScore(
+      agg.plannedTaskCount,
+      agg.doneTaskCount,
+      agg.avgCompletionRate
+    );
+  });
+
+  // focusScore 기준 내림차순 정렬
+  return Array.from(moduleMap.values()).sort(
+    (a, b) => b.focusScore - a.focusScore
+  );
+}
+
+/**
+ * 주 단위 기능 집계
+ */
+function aggregateFeatures(snapshots: RawSnapshot[]): FeatureAggregation[] {
+  const featureMap = new Map<string, FeatureAggregation>();
+
+  snapshots.forEach((snapshot) => {
+    const name = snapshot.feature || "기타";
+
+    if (!featureMap.has(name)) {
+      featureMap.set(name, {
+        featureName: name,
+        initiatives: new Set(),
+        domains: new Set(),
+        modules: new Set(),
+        members: new Set(),
+        plannedTaskCount: 0,
+        doneTaskCount: 0,
+        avgCompletionRate: 0,
+        focusScore: 0,
+      });
+    }
+
+    const agg = featureMap.get(name)!;
+    if (snapshot.project) agg.initiatives.add(snapshot.project);
+    if (snapshot.domain) agg.domains.add(snapshot.domain);
+    if (snapshot.module) agg.modules.add(snapshot.module);
+    if (snapshot.memberName) agg.members.add(snapshot.memberName);
+
+    // task 집계
+    snapshot.pastWeekTasks.forEach((task) => {
+      agg.plannedTaskCount += 1;
+      if (task.progress >= 100) {
+        agg.doneTaskCount += 1;
+      }
+    });
+  });
+
+  // avgCompletionRate 및 focusScore 계산
+  featureMap.forEach((agg) => {
+    agg.avgCompletionRate =
+      agg.plannedTaskCount > 0 ? agg.doneTaskCount / agg.plannedTaskCount : 0;
+    agg.focusScore = computeFocusScore(
+      agg.plannedTaskCount,
+      agg.doneTaskCount,
+      agg.avgCompletionRate
+    );
+  });
+
+  // focusScore 기준 내림차순 정렬
+  return Array.from(featureMap.values()).sort(
+    (a, b) => b.focusScore - a.focusScore
+  );
+}
+
+/**
  * 주 단위 집계 생성
  */
 export function aggregateByWeek(snapshots: RawSnapshot[]): WeekAggregation[] {
@@ -385,6 +501,8 @@ export function aggregateByWeek(snapshots: RawSnapshot[]): WeekAggregation[] {
     const firstSnapshot = weekSnapshots[0];
 
     const initiatives = aggregateInitiatives(weekSnapshots);
+    const modules = aggregateModules(weekSnapshots);
+    const features = aggregateFeatures(weekSnapshots);
     const members = aggregateMembers(weekSnapshots);
 
     aggregations.push({
@@ -392,11 +510,15 @@ export function aggregateByWeek(snapshots: RawSnapshot[]): WeekAggregation[] {
       weekStart: firstSnapshot.weekStart,
       weekEnd: firstSnapshot.weekEnd,
       initiatives,
+      modules,
+      features,
       members,
       totalInitiativeFocus: initiatives.reduce(
         (sum, i) => sum + i.focusScore,
         0
       ),
+      totalModuleFocus: modules.reduce((sum, m) => sum + m.focusScore, 0),
+      totalFeatureFocus: features.reduce((sum, f) => sum + f.focusScore, 0),
       totalMemberFocus: members.reduce((sum, m) => sum + m.focusScore, 0),
     });
   });
@@ -538,6 +660,204 @@ export function createProjectFocusRangeSummary(
 }
 
 /**
+ * 모듈별 기간 요약 생성
+ */
+export function createModuleFocusRangeSummary(
+  weeks: WeekAggregation[]
+): ModuleFocusRangeSummary {
+  if (weeks.length === 0) {
+    return {
+      mode: "module",
+      rangeStart: "",
+      rangeEnd: "",
+      weekCount: 0,
+      modules: [],
+      totalModuleCount: 0,
+      totalInitiativeCount: 0,
+      totalFeatureCount: 0,
+      totalMemberCount: 0,
+      totalDoneTaskCount: 0,
+      totalPlannedTaskCount: 0,
+    };
+  }
+
+  const moduleMap = new Map<string, ModuleFocusItem>();
+  const allInitiatives = new Set<string>();
+  const allFeatures = new Set<string>();
+  const allMembers = new Set<string>();
+
+  weeks.forEach((week) => {
+    week.modules.forEach((module) => {
+      const name = module.moduleName;
+
+      if (!moduleMap.has(name)) {
+        moduleMap.set(name, {
+          moduleName: name,
+          weekCount: 0,
+          initiatives: new Set(),
+          features: new Set(),
+          members: new Set(),
+          doneTaskCount: 0,
+          plannedTaskCount: 0,
+          focusScore: 0,
+          avgCompletionRate: 0,
+        });
+      }
+
+      const item = moduleMap.get(name)!;
+      item.weekCount += 1;
+      item.doneTaskCount += module.doneTaskCount;
+      item.plannedTaskCount += module.plannedTaskCount;
+      module.initiatives.forEach((i) => {
+        item.initiatives.add(i);
+        allInitiatives.add(i);
+      });
+      module.features.forEach((f) => {
+        item.features.add(f);
+        allFeatures.add(f);
+      });
+      module.members.forEach((m) => {
+        item.members.add(m);
+        allMembers.add(m);
+      });
+      item.focusScore += module.focusScore;
+    });
+  });
+
+  // avgCompletionRate 계산
+  moduleMap.forEach((item) => {
+    item.avgCompletionRate =
+      item.plannedTaskCount > 0
+        ? item.doneTaskCount / item.plannedTaskCount
+        : 0;
+  });
+
+  const modules = Array.from(moduleMap.values()).sort(
+    (a, b) => b.focusScore - a.focusScore
+  );
+
+  let totalDone = 0;
+  let totalPlanned = 0;
+  modules.forEach((m) => {
+    totalDone += m.doneTaskCount;
+    totalPlanned += m.plannedTaskCount;
+  });
+
+  return {
+    mode: "module",
+    rangeStart: weeks[0].weekStart,
+    rangeEnd: weeks[weeks.length - 1].weekEnd,
+    weekCount: weeks.length,
+    modules,
+    totalModuleCount: modules.length,
+    totalInitiativeCount: allInitiatives.size,
+    totalFeatureCount: allFeatures.size,
+    totalMemberCount: allMembers.size,
+    totalDoneTaskCount: totalDone,
+    totalPlannedTaskCount: totalPlanned,
+  };
+}
+
+/**
+ * 기능별 기간 요약 생성
+ */
+export function createFeatureFocusRangeSummary(
+  weeks: WeekAggregation[]
+): FeatureFocusRangeSummary {
+  if (weeks.length === 0) {
+    return {
+      mode: "feature",
+      rangeStart: "",
+      rangeEnd: "",
+      weekCount: 0,
+      features: [],
+      totalFeatureCount: 0,
+      totalInitiativeCount: 0,
+      totalModuleCount: 0,
+      totalMemberCount: 0,
+      totalDoneTaskCount: 0,
+      totalPlannedTaskCount: 0,
+    };
+  }
+
+  const featureMap = new Map<string, FeatureFocusItem>();
+  const allInitiatives = new Set<string>();
+  const allModules = new Set<string>();
+  const allMembers = new Set<string>();
+
+  weeks.forEach((week) => {
+    week.features.forEach((feature) => {
+      const name = feature.featureName;
+
+      if (!featureMap.has(name)) {
+        featureMap.set(name, {
+          featureName: name,
+          weekCount: 0,
+          initiatives: new Set(),
+          modules: new Set(),
+          members: new Set(),
+          doneTaskCount: 0,
+          plannedTaskCount: 0,
+          focusScore: 0,
+          avgCompletionRate: 0,
+        });
+      }
+
+      const item = featureMap.get(name)!;
+      item.weekCount += 1;
+      item.doneTaskCount += feature.doneTaskCount;
+      item.plannedTaskCount += feature.plannedTaskCount;
+      feature.initiatives.forEach((i) => {
+        item.initiatives.add(i);
+        allInitiatives.add(i);
+      });
+      feature.modules.forEach((m) => {
+        item.modules.add(m);
+        allModules.add(m);
+      });
+      feature.members.forEach((m) => {
+        item.members.add(m);
+        allMembers.add(m);
+      });
+      item.focusScore += feature.focusScore;
+    });
+  });
+
+  // avgCompletionRate 계산
+  featureMap.forEach((item) => {
+    item.avgCompletionRate =
+      item.plannedTaskCount > 0
+        ? item.doneTaskCount / item.plannedTaskCount
+        : 0;
+  });
+
+  const features = Array.from(featureMap.values()).sort(
+    (a, b) => b.focusScore - a.focusScore
+  );
+
+  let totalDone = 0;
+  let totalPlanned = 0;
+  features.forEach((f) => {
+    totalDone += f.doneTaskCount;
+    totalPlanned += f.plannedTaskCount;
+  });
+
+  return {
+    mode: "feature",
+    rangeStart: weeks[0].weekStart,
+    rangeEnd: weeks[weeks.length - 1].weekEnd,
+    weekCount: weeks.length,
+    features,
+    totalFeatureCount: features.length,
+    totalInitiativeCount: allInitiatives.size,
+    totalModuleCount: allModules.size,
+    totalMemberCount: allMembers.size,
+    totalDoneTaskCount: totalDone,
+    totalPlannedTaskCount: totalPlanned,
+  };
+}
+
+/**
  * 멤버별 기간 요약 생성
  */
 export function createMemberFocusRangeSummary(
@@ -650,6 +970,8 @@ export function aggregateCalendarData(
 ): {
   weeks: WeekAggregation[];
   projectRangeSummary: ProjectFocusRangeSummary;
+  moduleRangeSummary: ModuleFocusRangeSummary;
+  featureRangeSummary: FeatureFocusRangeSummary;
   memberRangeSummary: MemberFocusRangeSummary;
 } {
   // 1. 주 단위 집계
@@ -661,11 +983,15 @@ export function aggregateCalendarData(
 
   // 3. 기간 요약 생성
   const projectRangeSummary = createProjectFocusRangeSummary(filteredWeeks);
+  const moduleRangeSummary = createModuleFocusRangeSummary(filteredWeeks);
+  const featureRangeSummary = createFeatureFocusRangeSummary(filteredWeeks);
   const memberRangeSummary = createMemberFocusRangeSummary(filteredWeeks);
 
   return {
     weeks: filteredWeeks,
     projectRangeSummary,
+    moduleRangeSummary,
+    featureRangeSummary,
     memberRangeSummary,
   };
 }

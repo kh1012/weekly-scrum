@@ -65,7 +65,7 @@
     * Tasks
         * 추가적 에러 핸들링 방안 고민
 
-[Backend / Idea-forge / 지원 / 백엔드 이슈 지원]
+[Backend / IdeaForge / 지원 / 백엔드 이슈 지원]
 * Name: 김정빈
 * Past Week
     * Tasks
@@ -247,7 +247,7 @@
         * 홈 개편 초안 작성
         * 성과 데이터 기반 인사이트 도출 계속 진행
 
-[Frontend / Idea-forge / llm / llm 구조 변경 및 테스트]
+[Frontend / IdeaForge / llm / llm 구조 변경 및 테스트]
 * Name: 김상리
 * Past Week
     * Tasks
@@ -280,7 +280,7 @@
         * 블로그 페이지 제작
         * 세부 기능 구현
 
-[Frontend / Idea-forge / 1.8.3 / 개발 협의 및 진행]
+[Frontend / IdeaForge / 1.8.3 / 개발 협의 및 진행]
 * Name: 김지원
 * Past Week
     * Tasks

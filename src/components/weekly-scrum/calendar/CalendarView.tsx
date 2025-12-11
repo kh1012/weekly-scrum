@@ -93,34 +93,38 @@ export function CalendarView({
   }, [allRawSnapshots]);
 
   // Raw Snapshot 변환 및 집계
-  const { weeks, projectRangeSummary, memberRangeSummary, rawSnapshots } =
-    useMemo(() => {
-      // 필터링된 아이템이 있으면 해당 멤버/프로젝트만 필터링
-      let filteredRaw = allRawSnapshots;
-      if (filteredItems && filteredItems.length > 0) {
-        const allowedMembers = new Set(filteredItems.map((item) => item.name));
-        const allowedProjects = new Set(
-          filteredItems.map((item) => item.project)
-        );
-        const allowedDomains = new Set(
-          filteredItems.map((item) => item.domain)
-        );
+  const {
+    weeks,
+    projectRangeSummary,
+    moduleRangeSummary,
+    featureRangeSummary,
+    memberRangeSummary,
+    rawSnapshots,
+  } = useMemo(() => {
+    // 필터링된 아이템이 있으면 해당 멤버/프로젝트만 필터링
+    let filteredRaw = allRawSnapshots;
+    if (filteredItems && filteredItems.length > 0) {
+      const allowedMembers = new Set(filteredItems.map((item) => item.name));
+      const allowedProjects = new Set(
+        filteredItems.map((item) => item.project)
+      );
+      const allowedDomains = new Set(filteredItems.map((item) => item.domain));
 
-        filteredRaw = allRawSnapshots.filter((snapshot) => {
-          const memberMatch =
-            allowedMembers.size === 0 ||
-            allowedMembers.has(snapshot.memberName);
-          const projectMatch =
-            allowedProjects.size === 0 || allowedProjects.has(snapshot.project);
-          const domainMatch =
-            allowedDomains.size === 0 || allowedDomains.has(snapshot.domain);
-          return memberMatch && projectMatch && domainMatch;
-        });
-      }
+      filteredRaw = allRawSnapshots.filter((snapshot) => {
+        const memberMatch =
+          allowedMembers.size === 0 ||
+          allowedMembers.has(snapshot.memberName);
+        const projectMatch =
+          allowedProjects.size === 0 || allowedProjects.has(snapshot.project);
+        const domainMatch =
+          allowedDomains.size === 0 || allowedDomains.has(snapshot.domain);
+        return memberMatch && projectMatch && domainMatch;
+      });
+    }
 
-      const aggregated = aggregateCalendarData(filteredRaw, selectedMonth);
-      return { ...aggregated, rawSnapshots: filteredRaw };
-    }, [allRawSnapshots, filteredItems, selectedMonth]);
+    const aggregated = aggregateCalendarData(filteredRaw, selectedMonth);
+    return { ...aggregated, rawSnapshots: filteredRaw };
+  }, [allRawSnapshots, filteredItems, selectedMonth]);
 
   // 기본 주 선택 (마지막 주)
   useEffect(() => {
@@ -274,23 +278,36 @@ export function CalendarView({
 
               {/* 우측: Meta Panel */}
               <div className="w-[380px] border-l border-gray-100 bg-gray-50/50 overflow-auto">
-                {/* 모드 토글 */}
+                {/* 모드 토글 - 4개 탭 */}
                 <div className="p-4 border-b border-gray-100 bg-white">
-                  <SlidingToggle
-                    options={[
-                      {
-                        value: "project" as CalendarMode,
-                        label: "프로젝트별",
-                      },
-                      { value: "member" as CalendarMode, label: "멤버별" },
-                    ]}
-                    value={mode}
-                    onChange={handleModeChange}
-                  />
+                  <div className="grid grid-cols-4 gap-1 p-1 bg-gray-100/80 rounded-xl">
+                    {(
+                      [
+                        { value: "project", label: "프로젝트" },
+                        { value: "module", label: "모듈" },
+                        { value: "feature", label: "기능" },
+                        { value: "member", label: "멤버" },
+                      ] as { value: CalendarMode; label: string }[]
+                    ).map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleModeChange(opt.value)}
+                        className={`px-2 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                          mode === opt.value
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <CalendarMetaPanel
                   mode={mode}
                   projectRangeSummary={projectRangeSummary}
+                  moduleRangeSummary={moduleRangeSummary}
+                  featureRangeSummary={featureRangeSummary}
                   memberRangeSummary={memberRangeSummary}
                   selectedWeek={selectedWeekData}
                   selectedInitiative={selectedInitiative}

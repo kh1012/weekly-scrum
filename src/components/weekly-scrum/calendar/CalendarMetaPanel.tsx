@@ -10,12 +10,16 @@ import type {
   CalendarMode,
   WeekAggregation,
   ProjectFocusRangeSummary,
+  ModuleFocusRangeSummary,
+  FeatureFocusRangeSummary,
   MemberFocusRangeSummary,
 } from "@/types/calendar";
 
 interface CalendarMetaPanelProps {
   mode: CalendarMode;
   projectRangeSummary: ProjectFocusRangeSummary;
+  moduleRangeSummary: ModuleFocusRangeSummary;
+  featureRangeSummary: FeatureFocusRangeSummary;
   memberRangeSummary: MemberFocusRangeSummary;
   selectedWeek: WeekAggregation | null;
   selectedInitiative: string | null;
@@ -25,6 +29,8 @@ interface CalendarMetaPanelProps {
 export function CalendarMetaPanel({
   mode,
   projectRangeSummary,
+  moduleRangeSummary,
+  featureRangeSummary,
   memberRangeSummary,
   selectedWeek,
   selectedInitiative,
@@ -36,6 +42,24 @@ export function CalendarMetaPanel({
         summary={projectRangeSummary}
         selectedWeek={selectedWeek}
         selectedInitiative={selectedInitiative}
+      />
+    );
+  }
+
+  if (mode === "module") {
+    return (
+      <ModuleFocusPanel
+        summary={moduleRangeSummary}
+        selectedWeek={selectedWeek}
+      />
+    );
+  }
+
+  if (mode === "feature") {
+    return (
+      <FeatureFocusPanel
+        summary={featureRangeSummary}
+        selectedWeek={selectedWeek}
       />
     );
   }
@@ -159,6 +183,204 @@ function ProjectFocusPanel({
           initiativeName={selectedInitiative}
         />
       )}
+    </div>
+  );
+}
+
+// ========================================
+// 모듈별 패널
+// ========================================
+
+interface ModuleFocusPanelProps {
+  summary: ModuleFocusRangeSummary;
+  selectedWeek: WeekAggregation | null;
+}
+
+function ModuleFocusPanel({ summary, selectedWeek }: ModuleFocusPanelProps) {
+  const avgRate =
+    summary.totalPlannedTaskCount > 0
+      ? Math.round(
+          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+        )
+      : 0;
+
+  return (
+    <div className="p-5 space-y-6">
+      {/* 상단 요약 카드 */}
+      <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <h3 className="text-sm font-bold text-gray-900 mb-5 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+            📦
+          </span>
+          기간 요약
+        </h3>
+        <div className="grid grid-cols-2 gap-5">
+          <SummaryItem
+            label="진행 모듈"
+            value={summary.totalModuleCount}
+            unit="개"
+            color="emerald"
+          />
+          <SummaryItem
+            label="참여 프로젝트"
+            value={summary.totalInitiativeCount}
+            unit="개"
+            color="blue"
+          />
+          <SummaryItem
+            label="진행 기능"
+            value={summary.totalFeatureCount}
+            unit="개"
+            color="purple"
+          />
+          <SummaryItem
+            label="참여 멤버"
+            value={summary.totalMemberCount}
+            unit="명"
+            color="violet"
+          />
+          <SummaryItem
+            label="완료 Task"
+            value={summary.totalDoneTaskCount}
+            unit="건"
+            color="pink"
+          />
+          <SummaryItem
+            label="평균 달성률"
+            value={avgRate}
+            unit="%"
+            color="cyan"
+          />
+        </div>
+      </div>
+
+      {/* 모듈 랭킹 */}
+      <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-xl bg-yellow-100 flex items-center justify-center">
+            🏆
+          </span>
+          모듈 랭킹
+        </h3>
+        <div className="space-y-2">
+          {summary.modules.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">
+              데이터가 없습니다
+            </p>
+          ) : (
+            summary.modules.slice(0, 8).map((item, idx) => (
+              <RankingItem
+                key={item.moduleName}
+                rank={idx + 1}
+                name={item.moduleName}
+                weekCount={item.weekCount}
+                doneCount={item.doneTaskCount}
+                plannedCount={item.plannedTaskCount}
+                isSelected={false}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================================
+// 기능별 패널
+// ========================================
+
+interface FeatureFocusPanelProps {
+  summary: FeatureFocusRangeSummary;
+  selectedWeek: WeekAggregation | null;
+}
+
+function FeatureFocusPanel({ summary, selectedWeek }: FeatureFocusPanelProps) {
+  const avgRate =
+    summary.totalPlannedTaskCount > 0
+      ? Math.round(
+          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+        )
+      : 0;
+
+  return (
+    <div className="p-5 space-y-6">
+      {/* 상단 요약 카드 */}
+      <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <h3 className="text-sm font-bold text-gray-900 mb-5 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
+            ✨
+          </span>
+          기간 요약
+        </h3>
+        <div className="grid grid-cols-2 gap-5">
+          <SummaryItem
+            label="진행 기능"
+            value={summary.totalFeatureCount}
+            unit="개"
+            color="orange"
+          />
+          <SummaryItem
+            label="참여 프로젝트"
+            value={summary.totalInitiativeCount}
+            unit="개"
+            color="blue"
+          />
+          <SummaryItem
+            label="진행 모듈"
+            value={summary.totalModuleCount}
+            unit="개"
+            color="emerald"
+          />
+          <SummaryItem
+            label="참여 멤버"
+            value={summary.totalMemberCount}
+            unit="명"
+            color="violet"
+          />
+          <SummaryItem
+            label="완료 Task"
+            value={summary.totalDoneTaskCount}
+            unit="건"
+            color="pink"
+          />
+          <SummaryItem
+            label="평균 달성률"
+            value={avgRate}
+            unit="%"
+            color="cyan"
+          />
+        </div>
+      </div>
+
+      {/* 기능 랭킹 */}
+      <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-xl bg-yellow-100 flex items-center justify-center">
+            🏆
+          </span>
+          기능 랭킹
+        </h3>
+        <div className="space-y-2">
+          {summary.features.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">
+              데이터가 없습니다
+            </p>
+          ) : (
+            summary.features.slice(0, 8).map((item, idx) => (
+              <RankingItem
+                key={item.featureName}
+                rank={idx + 1}
+                name={item.featureName}
+                weekCount={item.weekCount}
+                doneCount={item.doneTaskCount}
+                plannedCount={item.plannedTaskCount}
+                isSelected={false}
+              />
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
