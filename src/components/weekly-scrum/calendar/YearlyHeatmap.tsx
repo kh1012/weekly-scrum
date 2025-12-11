@@ -380,7 +380,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
             const info = memberData.get(memberName)!;
             
             return (
-              <div key={memberName} className="flex items-center gap-3 group/row hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors">
+              <div key={memberName} className="flex items-center gap-3 py-1">
                 {/* 멤버 정보 */}
                 <div className="w-24 shrink-0 flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-500 shadow-inner">
