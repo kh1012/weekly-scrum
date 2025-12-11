@@ -178,216 +178,253 @@ export function ScrumCard({
     }
   };
 
-  // 카드 스타일 클래스 결정
-  const cardClasses = [
-    "notion-card",
-    "p-4",
-    "transition-all",
-    isSelectMode ? "selectable-card cursor-pointer" : "",
-    isCompareSelected ? "selected animate-pulse-ring" : "",
-  ].filter(Boolean).join(" ");
-
   return (
     <div
-      className={cardClasses}
+      className={`
+        group relative overflow-hidden rounded-2xl border transition-all duration-300
+        ${isSelectMode ? "cursor-pointer" : ""}
+        ${isCompareSelected 
+          ? "border-blue-400 shadow-lg shadow-blue-100 ring-2 ring-blue-100" 
+          : "border-gray-100 hover:border-gray-200 hover:shadow-lg"
+        }
+      `}
       style={{ 
-        borderColor: riskLevel >= 2 ? riskColor.border : 'var(--notion-border)',
-        borderRadius: '12px',
+        background: riskLevel >= 2 
+          ? `linear-gradient(135deg, ${riskColor.bg}20, white)` 
+          : "white",
       }}
       onClick={handleCardClick}
     >
       {/* 복사 메시지 토스트 */}
       {copyMessage && (
         <div 
-          className="absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-medium z-10 animate-fadeIn"
+          className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-xs font-medium z-20 shadow-lg animate-bounce-in"
           style={{ 
-            background: "var(--notion-text)", 
-            color: "var(--notion-bg)",
+            background: "#1f2937", 
+            color: "white",
           }}
         >
           {copyMessage}
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            {/* 비교 체크박스 - 선택 모드일 때만 표시 */}
-            {showCompareCheckbox && isSelectMode && (
-              <label className="flex items-center cursor-pointer mr-1" onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  checked={isCompareSelected}
-                  onChange={() => onCompareToggle?.(item)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                />
-              </label>
-            )}
-            <span
-              className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-              style={{ background: domainColor.bg, color: domainColor.text }}
-            >
-              {item.domain}
-            </span>
-            <span style={{ color: 'var(--notion-text-muted)' }} className="text-xs">/</span>
-            <span className="text-xs font-medium truncate" style={{ color: 'var(--notion-text-secondary)' }}>
-              {item.project}
-            </span>
-            {item.module && (
-              <>
-                <span style={{ color: 'var(--notion-text-muted)' }} className="text-xs">/</span>
-                <span className="text-xs font-medium truncate" style={{ color: 'var(--notion-text-tertiary)' }}>
-                  {item.module}
-                </span>
-              </>
-            )}
-            {riskLevel > 0 && (
-              <span className="ml-auto">
-                <RiskLevelBadge level={riskLevel as RiskLevel} size="sm" />
-              </span>
-            )}
-          </div>
-          <h3 className="text-sm font-semibold truncate leading-tight" style={{ color: 'var(--notion-text)' }}>
-            {item.topic}
-          </h3>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--notion-text-muted)' }}>
-            {item.name}
-          </p>
-        </div>
-        
-        {/* 우측: 진행률 + 메뉴 */}
-        <div className="flex items-start gap-2">
-        <CircularProgress percent={item.progressPercent} isCompleted={isCompleted} />
-          
-          {/* 메뉴 버튼 */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-1 rounded hover:bg-gray-100 transition-colors"
-              style={{ color: "var(--notion-text-muted)" }}
-              title="메뉴"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="5" r="2" />
-                <circle cx="12" cy="12" r="2" />
-                <circle cx="12" cy="19" r="2" />
-              </svg>
-            </button>
-            
-            {/* 드롭다운 메뉴 */}
-            {isMenuOpen && (
-              <div
-                className="absolute right-0 top-full mt-1 w-44 rounded-lg overflow-hidden z-50 animate-fadeIn"
-                style={{
-                  background: "var(--notion-bg)",
-                  boxShadow: "var(--notion-shadow-lg)",
-                  border: "1px solid var(--notion-border)",
-                }}
+      {/* 상단 도메인 색상 바 */}
+      <div 
+        className="h-1.5 w-full"
+        style={{ background: `linear-gradient(90deg, ${domainColor.text}, ${domainColor.text}80)` }}
+      />
+
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex-1 min-w-0">
+            {/* 태그 라인 */}
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
+              {/* 비교 체크박스 - 선택 모드일 때만 표시 */}
+              {showCompareCheckbox && isSelectMode && (
+                <label className="flex items-center cursor-pointer mr-1" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={isCompareSelected}
+                    onChange={() => onCompareToggle?.(item)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                  />
+                </label>
+              )}
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                style={{ background: domainColor.bg, color: domainColor.text }}
               >
-                <button
-                  onClick={handleCopyJson}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-gray-50 transition-colors"
-                  style={{ color: "var(--notion-text)" }}
+                {item.domain}
+              </span>
+              <span className="text-gray-300">·</span>
+              <span className="text-xs font-medium text-gray-600 truncate">
+                {item.project}
+              </span>
+              {item.module && (
+                <>
+                  <span className="text-gray-300">·</span>
+                  <span className="text-xs text-gray-400 truncate">
+                    {item.module}
+                  </span>
+                </>
+              )}
+            </div>
+            
+            {/* Feature 제목 */}
+            <h3 className="text-base font-bold text-gray-900 leading-tight mb-1">
+              {item.topic}
+            </h3>
+            
+            {/* 담당자 + 리스크 */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">
+                  {item.name.charAt(0)}
+                </div>
+                <span className="text-xs font-medium text-gray-600">{item.name}</span>
+              </div>
+              {riskLevel > 0 && (
+                <RiskLevelBadge level={riskLevel as RiskLevel} size="sm" />
+              )}
+            </div>
+          </div>
+          
+          {/* 우측: 진행률 + 메뉴 */}
+          <div className="flex items-start gap-2">
+            <CircularProgress percent={item.progressPercent} isCompleted={isCompleted} />
+            
+            {/* 메뉴 버튼 */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all opacity-0 group-hover:opacity-100"
+                title="메뉴"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+              
+              {/* 드롭다운 메뉴 */}
+              {isMenuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 w-48 rounded-xl overflow-hidden z-50 shadow-xl border border-gray-100 bg-white animate-fadeIn"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                  JSON으로 복사하기
-                </button>
-                <button
-                  onClick={handleCopyPlainText}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-gray-50 transition-colors"
-                  style={{ color: "var(--notion-text)" }}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Plain Text로 복사하기
-                </button>
+                  <button
+                    onClick={handleCopyJson}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                    </span>
+                    JSON으로 복사
+                  </button>
+                  <button
+                    onClick={handleCopyPlainText}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </span>
+                    Plain Text로 복사
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 진행률 카드 */}
+        {item.planPercent !== undefined && item.planPercent > 0 && (
+          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span>계획 <span className="font-semibold text-gray-900">{item.planPercent}%</span></span>
+                <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+                <span>실제 <span className="font-semibold text-gray-900">{item.progressPercent}%</span></span>
+              </div>
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                style={{ background: achievementColor.bg, color: achievementColor.text }}
+              >
+                {achievementRate}% 달성
+              </span>
+            </div>
+            <div className="h-2 rounded-full overflow-hidden bg-gray-200">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.min(achievementRate, 100)}%`,
+                  background: `linear-gradient(90deg, ${achievementColor.text}, ${achievementColor.text}cc)`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Past Week */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div 
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: PROGRESS_COLORS.completed.text }}
+            />
+            <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+              Past Week
+            </span>
+          </div>
+          <div className="space-y-2 pl-4 border-l-2" style={{ borderColor: `${PROGRESS_COLORS.completed.text}40` }}>
+            {/* Tasks with progress bars */}
+            <TaskList tasks={item.progress} label="Tasks" />
+            
+            {/* Risk */}
+            {item.risk && item.risk.length > 0 && (
+              <div className="mt-2">
+                <span className="text-[10px] font-semibold text-red-500 uppercase">Risk:</span>
+                <ul className="mt-1 space-y-1">
+                  {item.risk.map((risk, idx) => (
+                    <li key={idx} className="text-xs text-gray-700 flex items-start gap-1.5">
+                      <span className="text-red-400 text-[8px] mt-1">⚠</span>
+                      {risk}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {isRiskUnknown && (
+              <div className="text-xs text-gray-400">
+                <span className="font-medium">Risk:</span> 미정
+              </div>
+            )}
+
+            {/* Collaborators */}
+            {item.collaborators && item.collaborators.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                <span className="text-[10px] font-medium text-gray-400">with:</span>
+                {item.collaborators.map((collab, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: COLLAB_COLORS[collab.relation]?.bg || '#f3f4f6',
+                      color: COLLAB_COLORS[collab.relation]?.text || '#6b7280',
+                    }}
+                  >
+                    <span className="font-medium">{collab.name}</span>
+                    <span className="opacity-60">{COLLAB_LABELS[collab.relation]}</span>
+                  </span>
+                ))}
               </div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* 진행률 바 */}
-      {item.planPercent !== undefined && item.planPercent > 0 && (
-        <div className="mb-3 p-2 rounded" style={{ background: 'var(--notion-bg-secondary)' }}>
-          <div className="flex items-center justify-between text-[10px] mb-1">
-            <span style={{ color: 'var(--notion-text-muted)' }}>계획 {item.planPercent}% → 실제 {item.progressPercent}%</span>
-            <span
-              className="px-1.5 py-0.5 rounded text-[9px] font-medium"
-              style={{ background: achievementColor.bg, color: achievementColor.text }}
-            >
-              {achievementRate}% 달성
+        {/* This Week */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div 
+              className="w-1.5 h-1.5 rounded-full bg-blue-500"
+            />
+            <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+              This Week
             </span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--notion-border)' }}>
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${Math.min(achievementRate, 100)}%`,
-                background: achievementColor.text,
-              }}
-            />
+          <div className="space-y-2 pl-4 border-l-2 border-blue-100">
+            <TaskList tasks={item.next} label="Tasks" isNext />
           </div>
-        </div>
-      )}
-
-      {/* Past Week - v2 구조 */}
-      <div className="mb-3">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="text-[10px] font-semibold" style={{ color: PROGRESS_COLORS.completed.text }}>
-            Past Week
-          </span>
-        </div>
-        <div className="space-y-1.5 pl-2" style={{ borderLeft: `2px solid ${PROGRESS_COLORS.completed.text}` }}>
-          {/* Tasks */}
-          <ContentSection label="Tasks" items={item.progress} />
-          
-          {/* Risk */}
-        {item.risk && item.risk.length > 0 && (
-            <ContentSection label="Risk" items={item.risk} color={riskColor.text} />
-        )}
-        {isRiskUnknown && (
-            <div className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>
-              <span className="font-medium" style={{ color: 'var(--notion-text-tertiary)' }}>Risk: </span>
-              <span>미정</span>
-            </div>
-        )}
-
-      {/* Collaborators */}
-      {item.collaborators && item.collaborators.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-[10px] font-medium" style={{ color: 'var(--notion-text-muted)' }}>Collaborators:</span>
-            {item.collaborators.map((collab, idx) => (
-              <span
-                key={idx}
-                className="text-[10px] px-1.5 py-0.5 rounded"
-                style={{
-                  backgroundColor: COLLAB_COLORS[collab.relation]?.bg || 'var(--notion-bg-tertiary)',
-                  color: COLLAB_COLORS[collab.relation]?.text || 'var(--notion-text-secondary)',
-                }}
-              >
-                {collab.name}
-                <span className="opacity-70 ml-0.5">({COLLAB_LABELS[collab.relation]})</span>
-              </span>
-            ))}
-          </div>
-          )}
-        </div>
-      </div>
-
-      {/* This Week - v2 구조 */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="text-[10px] font-semibold" style={{ color: 'var(--notion-blue)' }}>
-            This Week
-          </span>
-        </div>
-        <div className="space-y-1.5 pl-2" style={{ borderLeft: '2px solid var(--notion-blue)' }}>
-          <ContentSection label="Tasks" items={item.next} />
         </div>
       </div>
     </div>
@@ -395,9 +432,9 @@ export function ScrumCard({
 }
 
 const COLLAB_COLORS: Record<string, { bg: string; text: string }> = {
-  pair: { bg: 'var(--notion-blue-bg)', text: 'var(--notion-blue)' },
-  pre: { bg: 'var(--notion-orange-bg)', text: 'var(--notion-orange)' },
-  post: { bg: 'var(--notion-green-bg)', text: 'var(--notion-green)' },
+  pair: { bg: '#dbeafe', text: '#2563eb' },
+  pre: { bg: '#ffedd5', text: '#ea580c' },
+  post: { bg: '#dcfce7', text: '#16a34a' },
 };
 
 const COLLAB_LABELS: Record<string, string> = {
@@ -406,47 +443,77 @@ const COLLAB_LABELS: Record<string, string> = {
   post: '후행',
 };
 
-/** v2 구조용 콘텐츠 섹션 (회색 배경 없음) */
-function ContentSection({ 
-  label, 
-  items, 
-  color 
+/** Task 리스트 컴포넌트 - 프로그래스 바 포함 */
+function TaskList({ 
+  tasks, 
+  label,
+  isNext = false,
 }: { 
-  label: string; 
-  items: string[]; 
-  color?: string;
+  tasks: string[]; 
+  label: string;
+  isNext?: boolean;
 }) {
-  const textColor = color || 'var(--notion-text)';
-  
-  if (!items || items.length === 0) {
+  if (!tasks || tasks.length === 0) {
     return (
-      <div className="text-xs" style={{ color: 'var(--notion-text-muted)' }}>
-        <span className="font-medium" style={{ color: textColor }}>{label}: </span>
-        <span>-</span>
-      </div>
-    );
-  }
-
-  if (items.length === 1) {
-    return (
-      <div className="text-xs" style={{ color: 'var(--notion-text)' }}>
-        <span className="font-medium" style={{ color: textColor }}>{label}: </span>
-        <span>{items[0]}</span>
+      <div className="text-xs text-gray-400">
+        <span className="font-medium">{label}:</span> -
       </div>
     );
   }
 
   return (
-    <div className="text-xs">
-      <span className="font-medium" style={{ color: textColor }}>{label}:</span>
-      <ul className="mt-0.5 space-y-0.5 ml-3">
-          {items.map((item, idx) => (
-          <li key={idx} className="flex items-start gap-1" style={{ color: 'var(--notion-text)' }}>
-            <span className="text-[8px] mt-1" style={{ color: textColor }}>•</span>
-              <span>{item}</span>
+    <div>
+      <span className="text-[10px] font-semibold text-gray-500 uppercase">{label}:</span>
+      <ul className="mt-1.5 space-y-2">
+        {tasks.map((task, idx) => {
+          const progress = extractTaskProgress(task);
+          const taskText = task.replace(/\s*\(\d+%\)\s*$/, '').trim();
+          
+          return (
+            <li key={idx} className="group/task">
+              <div className="flex items-start gap-2">
+                <span className="text-gray-300 mt-0.5">•</span>
+                <div className="flex-1">
+                  <span className="text-xs text-gray-700">{taskText}</span>
+                  {progress !== null && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            progress >= 100 
+                              ? 'bg-emerald-500' 
+                              : progress >= 50 
+                                ? 'bg-blue-500' 
+                                : 'bg-amber-500'
+                          }`}
+                          style={{ width: `${Math.min(progress, 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-bold tabular-nums ${
+                        progress >= 100 
+                          ? 'text-emerald-600' 
+                          : progress >= 50 
+                            ? 'text-blue-600' 
+                            : 'text-amber-600'
+                      }`}>
+                        {progress}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </li>
-          ))}
-        </ul>
+          );
+        })}
+      </ul>
     </div>
   );
+}
+
+/**
+ * Task 문자열에서 진행률 추출 (예: "작업 완료 (100%)" -> 100)
+ */
+function extractTaskProgress(task: string): number | null {
+  const match = task.match(/\((\d+)%\)/);
+  return match ? parseInt(match[1], 10) : null;
 }

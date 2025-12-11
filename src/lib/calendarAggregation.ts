@@ -15,7 +15,11 @@ import type {
   ProjectFocusItem,
   MemberFocusItem,
 } from "@/types/calendar";
-import type { WeeklyScrumDataUnion, ScrumItemV2, ScrumItem } from "@/types/scrum";
+import type {
+  WeeklyScrumDataUnion,
+  ScrumItemV2,
+  ScrumItem,
+} from "@/types/scrum";
 import { isV2Data } from "@/types/scrum";
 
 // ========================================
@@ -37,13 +41,25 @@ export function parseTaskCompletionRate(taskText: string): number {
 
   // 키워드 기반
   const upperText = taskText.toUpperCase();
-  if (upperText.includes("(DONE)") || upperText.includes("[DONE]") || upperText.includes("완료")) {
+  if (
+    upperText.includes("(DONE)") ||
+    upperText.includes("[DONE]") ||
+    upperText.includes("완료")
+  ) {
     return 1.0;
   }
-  if (upperText.includes("(HALF)") || upperText.includes("[HALF]") || upperText.includes("진행중")) {
+  if (
+    upperText.includes("(HALF)") ||
+    upperText.includes("[HALF]") ||
+    upperText.includes("진행중")
+  ) {
     return 0.5;
   }
-  if (upperText.includes("(TODO)") || upperText.includes("[TODO]") || upperText.includes("예정")) {
+  if (
+    upperText.includes("(TODO)") ||
+    upperText.includes("[TODO]") ||
+    upperText.includes("예정")
+  ) {
     return 0.0;
   }
 
@@ -86,7 +102,11 @@ export function parseDateRange(
 ): { weekStart: string; weekEnd: string } {
   // 형식 1: "2025-12-01 2025-12-05" (공백 구분, YYYY-MM-DD 형식)
   const spaceParts = rangeStr.split(/\s+/).filter(Boolean);
-  if (spaceParts.length === 2 && spaceParts[0].includes("-") && spaceParts[1].includes("-")) {
+  if (
+    spaceParts.length === 2 &&
+    spaceParts[0].includes("-") &&
+    spaceParts[1].includes("-")
+  ) {
     return {
       weekStart: spaceParts[0],
       weekEnd: spaceParts[1],
@@ -124,7 +144,10 @@ export function convertToRawSnapshots(
 
   weeklyDataList.forEach((weeklyData) => {
     const weekIndex = parseWeekIndex(weeklyData.week);
-    const { weekStart, weekEnd } = parseDateRange(weeklyData.range, weeklyData.year);
+    const { weekStart, weekEnd } = parseDateRange(
+      weeklyData.range,
+      weeklyData.year
+    );
 
     if (isV2Data(weeklyData)) {
       // v2 데이터
@@ -199,12 +222,14 @@ function groupByWeek(snapshots: RawSnapshot[]): Map<string, RawSnapshot[]> {
 /**
  * 주 단위 프로젝트(이니셔티브) 집계
  */
-function aggregateInitiatives(snapshots: RawSnapshot[]): InitiativeAggregation[] {
+function aggregateInitiatives(
+  snapshots: RawSnapshot[]
+): InitiativeAggregation[] {
   const initiativeMap = new Map<string, InitiativeAggregation>();
 
   snapshots.forEach((snapshot) => {
     const name = snapshot.project || "기타";
-    
+
     if (!initiativeMap.has(name)) {
       initiativeMap.set(name, {
         initiativeName: name,
@@ -259,7 +284,7 @@ function aggregateMembers(snapshots: RawSnapshot[]): MemberAggregation[] {
 
   snapshots.forEach((snapshot) => {
     const name = snapshot.memberName || "익명";
-    
+
     if (!memberMap.has(name)) {
       memberMap.set(name, {
         memberName: name,
@@ -326,7 +351,10 @@ export function aggregateByWeek(snapshots: RawSnapshot[]): WeekAggregation[] {
       weekEnd: firstSnapshot.weekEnd,
       initiatives,
       members,
-      totalInitiativeFocus: initiatives.reduce((sum, i) => sum + i.focusScore, 0),
+      totalInitiativeFocus: initiatives.reduce(
+        (sum, i) => sum + i.focusScore,
+        0
+      ),
       totalMemberFocus: members.reduce((sum, m) => sum + m.focusScore, 0),
     });
   });
@@ -351,15 +379,15 @@ export function filterByMonth(
   selectedMonth: string
 ): WeekAggregation[] {
   const [year, month] = selectedMonth.split("-").map(Number);
-  
+
   return weeks.filter((week) => {
     // weekStart 또는 weekEnd가 해당 월에 포함되는지 확인
     const startDate = new Date(week.weekStart);
     const endDate = new Date(week.weekEnd);
-    
+
     const monthStart = new Date(year, month - 1, 1);
     const monthEnd = new Date(year, month, 0);
-    
+
     return (
       (startDate >= monthStart && startDate <= monthEnd) ||
       (endDate >= monthStart && endDate <= monthEnd) ||
@@ -369,7 +397,7 @@ export function filterByMonth(
 }
 
 /**
- * 프로젝트 집중도 기간 요약 생성
+ * 프로젝트별 기간 요약 생성
  */
 export function createProjectFocusRangeSummary(
   weeks: WeekAggregation[]
@@ -398,7 +426,7 @@ export function createProjectFocusRangeSummary(
   weeks.forEach((week) => {
     week.initiatives.forEach((initiative) => {
       const name = initiative.initiativeName;
-      
+
       if (!initiativeMap.has(name)) {
         initiativeMap.set(name, {
           initiativeName: name,
@@ -436,7 +464,9 @@ export function createProjectFocusRangeSummary(
   // avgCompletionRate 계산
   initiativeMap.forEach((item) => {
     item.avgCompletionRate =
-      item.plannedTaskCount > 0 ? item.doneTaskCount / item.plannedTaskCount : 0;
+      item.plannedTaskCount > 0
+        ? item.doneTaskCount / item.plannedTaskCount
+        : 0;
   });
 
   const initiatives = Array.from(initiativeMap.values()).sort(
@@ -466,7 +496,7 @@ export function createProjectFocusRangeSummary(
 }
 
 /**
- * 멤버 집중도 기간 요약 생성
+ * 멤버별 기간 요약 생성
  */
 export function createMemberFocusRangeSummary(
   weeks: WeekAggregation[]
@@ -495,7 +525,7 @@ export function createMemberFocusRangeSummary(
   weeks.forEach((week) => {
     week.members.forEach((member) => {
       const name = member.memberName;
-      
+
       if (!memberMap.has(name)) {
         memberMap.set(name, {
           memberName: name,
@@ -533,7 +563,9 @@ export function createMemberFocusRangeSummary(
   // avgCompletionRate 계산
   memberMap.forEach((item) => {
     item.avgCompletionRate =
-      item.plannedTaskCount > 0 ? item.doneTaskCount / item.plannedTaskCount : 0;
+      item.plannedTaskCount > 0
+        ? item.doneTaskCount / item.plannedTaskCount
+        : 0;
   });
 
   const members = Array.from(memberMap.values()).sort(
@@ -647,6 +679,8 @@ export function formatWeekLabel(week: WeekAggregation): string {
   const endParts = week.weekEnd.split("-");
   const startStr = `${startParts[1]}.${startParts[2]}`;
   const endStr = `${endParts[1]}.${endParts[2]}`;
-  return `W${String(week.key.weekIndex).padStart(2, "0")} · ${startStr} ~ ${endStr}`;
+  return `W${String(week.key.weekIndex).padStart(
+    2,
+    "0"
+  )} · ${startStr} ~ ${endStr}`;
 }
-

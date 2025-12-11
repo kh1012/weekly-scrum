@@ -15,13 +15,6 @@ interface SnapshotAllViewProps {
   isSelectMode?: boolean;
 }
 
-// 카드 그리드 스타일 (최소 320px, 최대 자동)
-const cardGridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-  gap: "16px",
-};
-
 export function SnapshotAllView({ items, displayMode, compareState, onCompareToggle, isSelectMode = false }: SnapshotAllViewProps) {
   if (items.length === 0) {
     return <EmptyState message="스냅샷이 없습니다" submessage="필터 조건을 변경해보세요" />;
@@ -50,11 +43,15 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
       {inProgressItems.length > 0 && (
         <section className="animate-section-reveal">
           {displayMode === "card" ? (
-            <div style={cardGridStyle}>
+            // Pinterest/Masonry 스타일 - CSS columns 사용
+            <div 
+              className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4"
+              style={{ columnFill: "balance" }}
+            >
               {inProgressItems.map((item, index) => (
                 <div
                   key={`progress-${item.name}-${item.project}-${item.topic}-${index}`}
-                  className={`animate-card-reveal ${getStaggerClass(index)}`}
+                  className={`break-inside-avoid mb-4 animate-card-reveal ${getStaggerClass(index)}`}
                 >
                   <ScrumCard
                     item={item}
@@ -107,11 +104,15 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
             </span>
           </div>
           {displayMode === "card" ? (
-            <div style={cardGridStyle}>
+            // Pinterest/Masonry 스타일 - CSS columns 사용
+            <div 
+              className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4"
+              style={{ columnFill: "balance" }}
+            >
               {completedItems.map((item, index) => (
                 <div
                   key={`completed-${item.name}-${item.project}-${item.topic}-${index}`}
-                  className={`animate-card-reveal ${getStaggerClass(index)}`}
+                  className={`break-inside-avoid mb-4 animate-card-reveal ${getStaggerClass(index)}`}
                   style={{ animationDelay: `${0.2 + (index % 8) * 0.05}s` }}
                 >
                   <ScrumCard

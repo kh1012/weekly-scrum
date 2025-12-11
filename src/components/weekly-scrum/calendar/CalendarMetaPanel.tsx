@@ -50,7 +50,7 @@ export function CalendarMetaPanel({
 }
 
 // ========================================
-// 프로젝트 집중도 패널
+// 프로젝트별 패널
 // ========================================
 
 interface ProjectFocusPanelProps {
@@ -66,7 +66,9 @@ function ProjectFocusPanel({
 }: ProjectFocusPanelProps) {
   const avgRate =
     summary.totalPlannedTaskCount > 0
-      ? Math.round((summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100)
+      ? Math.round(
+          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+        )
       : 0;
 
   return (
@@ -80,12 +82,42 @@ function ProjectFocusPanel({
           기간 요약
         </h3>
         <div className="grid grid-cols-2 gap-5">
-          <SummaryItem label="참여 프로젝트" value={summary.totalInitiativeCount} unit="개" color="blue" />
-          <SummaryItem label="참여 멤버" value={summary.totalMemberCount} unit="명" color="purple" />
-          <SummaryItem label="진행 모듈" value={summary.totalModuleCount} unit="개" color="emerald" />
-          <SummaryItem label="진행 피처" value={summary.totalFeatureCount} unit="개" color="orange" />
-          <SummaryItem label="완료 Task" value={summary.totalDoneTaskCount} unit="건" color="pink" />
-          <SummaryItem label="평균 달성률" value={avgRate} unit="%" color="cyan" />
+          <SummaryItem
+            label="참여 프로젝트"
+            value={summary.totalInitiativeCount}
+            unit="개"
+            color="blue"
+          />
+          <SummaryItem
+            label="참여 멤버"
+            value={summary.totalMemberCount}
+            unit="명"
+            color="purple"
+          />
+          <SummaryItem
+            label="진행 모듈"
+            value={summary.totalModuleCount}
+            unit="개"
+            color="emerald"
+          />
+          <SummaryItem
+            label="진행 피처"
+            value={summary.totalFeatureCount}
+            unit="개"
+            color="orange"
+          />
+          <SummaryItem
+            label="완료 Task"
+            value={summary.totalDoneTaskCount}
+            unit="건"
+            color="pink"
+          />
+          <SummaryItem
+            label="평균 달성률"
+            value={avgRate}
+            unit="%"
+            color="cyan"
+          />
         </div>
       </div>
 
@@ -99,19 +131,23 @@ function ProjectFocusPanel({
         </h3>
         <div className="space-y-2">
           {summary.initiatives.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">데이터가 없습니다</p>
+            <p className="text-sm text-gray-400 text-center py-4">
+              데이터가 없습니다
+            </p>
           ) : (
-            summary.initiatives.slice(0, 8).map((item, idx) => (
-              <RankingItem
-                key={item.initiativeName}
-                rank={idx + 1}
-                name={item.initiativeName}
-                weekCount={item.weekCount}
-                doneCount={item.doneTaskCount}
-                plannedCount={item.plannedTaskCount}
-                isSelected={selectedInitiative === item.initiativeName}
-              />
-            ))
+            summary.initiatives
+              .slice(0, 8)
+              .map((item, idx) => (
+                <RankingItem
+                  key={item.initiativeName}
+                  rank={idx + 1}
+                  name={item.initiativeName}
+                  weekCount={item.weekCount}
+                  doneCount={item.doneTaskCount}
+                  plannedCount={item.plannedTaskCount}
+                  isSelected={selectedInitiative === item.initiativeName}
+                />
+              ))
           )}
         </div>
       </div>
@@ -128,7 +164,7 @@ function ProjectFocusPanel({
 }
 
 // ========================================
-// 멤버 집중도 패널
+// 멤버별 패널
 // ========================================
 
 interface MemberFocusPanelProps {
@@ -148,7 +184,9 @@ function MemberFocusPanel({
       : "0";
   const avgRate =
     summary.totalPlannedTaskCount > 0
-      ? Math.round((summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100)
+      ? Math.round(
+          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+        )
       : 0;
 
   return (
@@ -162,12 +200,42 @@ function MemberFocusPanel({
           기간 요약
         </h3>
         <div className="grid grid-cols-2 gap-5">
-          <SummaryItem label="참여 멤버" value={summary.totalMemberCount} unit="명" color="violet" />
-          <SummaryItem label="평균 프로젝트" value={avgInitiatives} unit="개/인" color="blue" />
-          <SummaryItem label="참여 프로젝트" value={summary.totalInitiativeCount} unit="개" color="emerald" />
-          <SummaryItem label="진행 모듈" value={summary.totalModuleCount} unit="개" color="orange" />
-          <SummaryItem label="완료 Task" value={summary.totalDoneTaskCount} unit="건" color="pink" />
-          <SummaryItem label="평균 달성률" value={avgRate} unit="%" color="cyan" />
+          <SummaryItem
+            label="참여 멤버"
+            value={summary.totalMemberCount}
+            unit="명"
+            color="violet"
+          />
+          <SummaryItem
+            label="평균 프로젝트"
+            value={avgInitiatives}
+            unit="개/인"
+            color="blue"
+          />
+          <SummaryItem
+            label="참여 프로젝트"
+            value={summary.totalInitiativeCount}
+            unit="개"
+            color="emerald"
+          />
+          <SummaryItem
+            label="진행 모듈"
+            value={summary.totalModuleCount}
+            unit="개"
+            color="orange"
+          />
+          <SummaryItem
+            label="완료 Task"
+            value={summary.totalDoneTaskCount}
+            unit="건"
+            color="pink"
+          />
+          <SummaryItem
+            label="평균 달성률"
+            value={avgRate}
+            unit="%"
+            color="cyan"
+          />
         </div>
       </div>
 
@@ -181,29 +249,30 @@ function MemberFocusPanel({
         </h3>
         <div className="space-y-2">
           {summary.members.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">데이터가 없습니다</p>
+            <p className="text-sm text-gray-400 text-center py-4">
+              데이터가 없습니다
+            </p>
           ) : (
-            summary.members.slice(0, 8).map((item, idx) => (
-              <RankingItem
-                key={item.memberName}
-                rank={idx + 1}
-                name={item.memberName}
-                weekCount={item.weekCount}
-                doneCount={item.doneTaskCount}
-                plannedCount={item.plannedTaskCount}
-                isSelected={selectedMember === item.memberName}
-              />
-            ))
+            summary.members
+              .slice(0, 8)
+              .map((item, idx) => (
+                <RankingItem
+                  key={item.memberName}
+                  rank={idx + 1}
+                  name={item.memberName}
+                  weekCount={item.weekCount}
+                  doneCount={item.doneTaskCount}
+                  plannedCount={item.plannedTaskCount}
+                  isSelected={selectedMember === item.memberName}
+                />
+              ))
           )}
         </div>
       </div>
 
       {/* 선택된 멤버 상세 */}
       {selectedMember && selectedWeek && (
-        <SelectedMemberDetail
-          week={selectedWeek}
-          memberName={selectedMember}
-        />
+        <SelectedMemberDetail week={selectedWeek} memberName={selectedMember} />
       )}
     </div>
   );
@@ -213,7 +282,14 @@ function MemberFocusPanel({
 // 공통 서브 컴포넌트
 // ========================================
 
-type ColorType = "blue" | "purple" | "emerald" | "orange" | "pink" | "cyan" | "violet";
+type ColorType =
+  | "blue"
+  | "purple"
+  | "emerald"
+  | "orange"
+  | "pink"
+  | "cyan"
+  | "violet";
 
 function SummaryItem({
   label,
@@ -262,7 +338,8 @@ function RankingItem({
   plannedCount: number;
   isSelected: boolean;
 }) {
-  const rate = plannedCount > 0 ? Math.round((doneCount / plannedCount) * 100) : 0;
+  const rate =
+    plannedCount > 0 ? Math.round((doneCount / plannedCount) * 100) : 0;
 
   return (
     <div
@@ -300,7 +377,9 @@ function SelectedInitiativeDetail({
   week: WeekAggregation;
   initiativeName: string;
 }) {
-  const initiative = week.initiatives.find((i) => i.initiativeName === initiativeName);
+  const initiative = week.initiatives.find(
+    (i) => i.initiativeName === initiativeName
+  );
   if (!initiative) return null;
 
   return (
@@ -310,12 +389,25 @@ function SelectedInitiativeDetail({
         {initiativeName}
       </h3>
       <div className="space-y-4">
-        <DetailRow label="참여 멤버" values={Array.from(initiative.members)} color="blue" />
-        <DetailRow label="진행 모듈" values={Array.from(initiative.modules)} color="emerald" />
-        <DetailRow label="진행 피처" values={Array.from(initiative.features)} color="purple" />
+        <DetailRow
+          label="참여 멤버"
+          values={Array.from(initiative.members)}
+          color="blue"
+        />
+        <DetailRow
+          label="진행 모듈"
+          values={Array.from(initiative.modules)}
+          color="emerald"
+        />
+        <DetailRow
+          label="진행 피처"
+          values={Array.from(initiative.features)}
+          color="purple"
+        />
         <div className="pt-3 border-t border-blue-200/50">
           <p className="text-xs text-blue-700 font-medium">
-            이 주에 {initiative.doneTaskCount}/{initiative.plannedTaskCount} Task 완료
+            이 주에 {initiative.doneTaskCount}/{initiative.plannedTaskCount}{" "}
+            Task 완료
             <span className="text-blue-500 ml-1">
               ({Math.round(initiative.avgCompletionRate * 100)}%)
             </span>
@@ -343,9 +435,21 @@ function SelectedMemberDetail({
         {memberName}
       </h3>
       <div className="space-y-4">
-        <DetailRow label="참여 프로젝트" values={Array.from(member.initiatives)} color="violet" />
-        <DetailRow label="진행 모듈" values={Array.from(member.modules)} color="emerald" />
-        <DetailRow label="진행 피처" values={Array.from(member.features)} color="orange" />
+        <DetailRow
+          label="참여 프로젝트"
+          values={Array.from(member.initiatives)}
+          color="violet"
+        />
+        <DetailRow
+          label="진행 모듈"
+          values={Array.from(member.modules)}
+          color="emerald"
+        />
+        <DetailRow
+          label="진행 피처"
+          values={Array.from(member.features)}
+          color="orange"
+        />
         <div className="pt-3 border-t border-violet-200/50">
           <p className="text-xs text-violet-700 font-medium">
             이 주에 {member.doneTaskCount}/{member.plannedTaskCount} Task 완료
@@ -359,13 +463,13 @@ function SelectedMemberDetail({
   );
 }
 
-function DetailRow({ 
-  label, 
-  values, 
-  color 
-}: { 
-  label: string; 
-  values: string[]; 
+function DetailRow({
+  label,
+  values,
+  color,
+}: {
+  label: string;
+  values: string[];
   color: "blue" | "emerald" | "purple" | "violet" | "orange";
 }) {
   const colorClasses = {

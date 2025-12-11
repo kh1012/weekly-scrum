@@ -1,12 +1,13 @@
 "use client";
 
 /**
- * Week Cell 컴포넌트 (Airbnb 스타일)
+ * Week Cell 컴포넌트 (Airbnb 스타일 + Pinterest 확장)
  *
  * 개별 주에 대한 프로젝트/멤버 막대 그래프 표시
+ * 더보기 클릭 시 전체 항목 표시
  */
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import type { CalendarMode, WeekKey, WeekAggregation } from "@/types/calendar";
 import { formatWeekLabel } from "@/lib/calendarAggregation";
 
@@ -43,6 +44,8 @@ const MEMBER_COLORS = [
   { bg: "bg-green-500", hover: "hover:bg-green-600", light: "bg-green-50" },
 ];
 
+const DEFAULT_VISIBLE_COUNT = 4;
+
 export function WeekCell({
   week,
   mode,
@@ -51,15 +54,18 @@ export function WeekCell({
   onSelectInitiative,
   onSelectMember,
 }: WeekCellProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const label = formatWeekLabel(week);
 
-  // 상위 4개 항목만 표시
-  const topItems = useMemo(() => {
-    if (mode === "project") {
-      return week.initiatives.slice(0, 4);
-    }
-    return week.members.slice(0, 4);
+  const allItems = useMemo(() => {
+    return mode === "project" ? week.initiatives : week.members;
   }, [week, mode]);
+
+  // 표시할 항목
+  const visibleItems = useMemo(() => {
+    if (isExpanded) return allItems;
+    return allItems.slice(0, DEFAULT_VISIBLE_COUNT);
+  }, [allItems, isExpanded]);
 
   // 최대 focusScore 계산 (막대 비율용)
   const maxFocus = useMemo(() => {
@@ -68,16 +74,26 @@ export function WeekCell({
   }, [week, mode]);
 
   const colors = mode === "project" ? PROJECT_COLORS : MEMBER_COLORS;
-  const totalCount = mode === "project" ? week.initiatives.length : week.members.length;
+  const totalCount = allItems.length;
+  const hasMore = totalCount > DEFAULT_VISIBLE_COUNT;
+
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
 
   return (
     <div
       onClick={() => onSelectWeek(week.key)}
       className={`group p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
         selected
-          ? "border-gray-900 bg-white shadow-lg scale-[1.02]"
+          ? "border-gray-900 bg-white shadow-lg"
           : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-md"
       }`}
+      style={{
+        // Pinterest 스타일: 확장 시 자연스럽게 높이 증가
+        minHeight: isExpanded ? "auto" : undefined,
+      }}
     >
       {/* 주차 레이블 */}
       <div className="flex items-center justify-between mb-4">
@@ -96,12 +112,12 @@ export function WeekCell({
 
       {/* 막대 그래프 */}
       <div className="space-y-2.5">
-        {topItems.length === 0 ? (
+        {visibleItems.length === 0 ? (
           <div className="text-xs text-gray-400 py-4 text-center">
             데이터 없음
           </div>
         ) : (
-          topItems.map((item, idx) => {
+          visibleItems.map((item, idx) => {
             const name = mode === "project"
               ? (item as typeof week.initiatives[0]).initiativeName
               : (item as typeof week.members[0]).memberName;
@@ -143,12 +159,29 @@ export function WeekCell({
         )}
       </div>
 
-      {/* 더 보기 표시 */}
-      {totalCount > 4 && (
+      {/* 더 보기 / 접기 버튼 */}
+      {hasMore && (
         <div className="mt-3 pt-3 border-t border-gray-100">
-          <span className="text-xs text-gray-400 group-hover:text-gray-500 transition-colors">
-            +{totalCount - 4}개 더 보기
-          </span>
+          <button
+            onClick={handleToggleExpand}
+            className="w-full text-xs text-gray-500 hover:text-gray-700 font-medium py-1 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+          >
+            {isExpanded ? (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+                접기
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+                +{totalCount - DEFAULT_VISIBLE_COUNT}개 더 보기
+              </>
+            )}
+          </button>
         </div>
       )}
     </div>

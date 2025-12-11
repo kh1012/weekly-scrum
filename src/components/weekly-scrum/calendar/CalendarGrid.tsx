@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * Calendar Grid 컴포넌트 (Airbnb 스타일)
+ * Calendar Grid 컴포넌트 (Pinterest/Masonry 스타일)
  *
  * 주 단위 막대 그래프를 표시하는 캘린더 그리드
+ * CSS columns를 사용한 Masonry 레이아웃
  */
 
 import type { CalendarMode, WeekKey, WeekAggregation } from "@/types/calendar";
@@ -68,23 +69,30 @@ export function CalendarGrid({
         </span>
       </div>
 
-      {/* 주차 카드 그리드 */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {/* Pinterest/Masonry 스타일 그리드 - CSS columns 사용 */}
+      <div 
+        className="columns-1 md:columns-2 xl:columns-3 2xl:columns-4 gap-4"
+        style={{ columnFill: "balance" }}
+      >
         {weeks.map((week) => {
           const isSelected =
             selectedWeek?.year === week.key.year &&
             selectedWeek?.weekIndex === week.key.weekIndex;
 
           return (
-            <WeekCell
+            <div 
               key={`${week.key.year}-${week.key.weekIndex}`}
-              week={week}
-              mode={mode}
-              selected={isSelected}
-              onSelectWeek={onSelectWeek}
-              onSelectInitiative={onSelectInitiative}
-              onSelectMember={onSelectMember}
-            />
+              className="break-inside-avoid mb-4"
+            >
+              <WeekCell
+                week={week}
+                mode={mode}
+                selected={isSelected}
+                onSelectWeek={onSelectWeek}
+                onSelectInitiative={onSelectInitiative}
+                onSelectMember={onSelectMember}
+              />
+            </div>
           );
         })}
       </div>

@@ -4,9 +4,9 @@ export const RELEASES: Release[] = [
   {
     version: "2.4.0",
     date: "2025-12-11",
-    title: "Calendar View 추가 및 개선",
+    title: "Calendar View & 스냅샷 UI 대폭 개선",
     summary:
-      "주 단위 스냅샷 데이터를 달력 형태로 재구성하여 프로젝트/멤버 집중도를 시각화하는 Calendar View를 추가하고, 멤버별 히트맵 및 GNB 필터 연동 기능을 구현했습니다.",
+      "주 단위 스냅샷 데이터를 달력 형태로 재구성하여 프로젝트/멤버 집중도를 시각화하는 Calendar View를 추가하고, GitHub 잔디 스타일 히트맵과 Pinterest Masonry 레이아웃 등 전반적인 UI/UX를 대폭 개선했습니다.",
     changes: [
       {
         type: "feat",
@@ -14,15 +14,31 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description: "프로젝트 집중도 모드 - 프로젝트별 기여도 시각화",
+        description: "캘린더/히트맵 슬라이딩 토글 분리 (자연스러운 translate 애니메이션)",
       },
       {
         type: "feat",
-        description: "멤버 집중도 모드 - 멤버별 기여도 시각화",
+        description: "프로젝트/멤버 집중도 토글을 Meta Panel 상단으로 이동",
       },
       {
         type: "feat",
-        description: "멤버별 히트맵 뷰 추가 - 주간 기여도를 히트맵으로 시각화",
+        description: "GitHub 잔디 스타일 히트맵 - 개인별 상대기여지수 시각화",
+      },
+      {
+        type: "feat",
+        description: "팀 전체 기여도 잔디 추가 (주간 집중도 한눈에 파악)",
+      },
+      {
+        type: "feat",
+        description: "WeekCell 더보기 클릭 시 확장/접기 토글 기능",
+      },
+      {
+        type: "feat",
+        description: "Pinterest Masonry 레이아웃 - Calendar Grid & Snapshots",
+      },
+      {
+        type: "feat",
+        description: "ScrumCard Task별 프로그래스 바 추가",
       },
       {
         type: "feat",
@@ -34,27 +50,19 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description: "프로젝트/멤버 랭킹 리스트 (focusScore 기준)",
-      },
-      {
-        type: "feat",
-        description: "선택된 주/프로젝트/멤버 상세 정보 표시",
-      },
-      {
-        type: "feat",
-        description: "월 단위 네비게이션 (이전/다음 월 이동)",
-      },
-      {
-        type: "feat",
         description: "GNB 검색/필터와 연동 - 필터링된 데이터로 캘린더 표시",
       },
       {
         type: "improve",
-        description: "Calendar 페이지 GNB에 검색/필터 표시 (주차 선택기만 숨김)",
+        description: "SnapshotToolbar 선택 버튼 높이 통일",
       },
       {
         type: "improve",
         description: "SNB에 Calendar 메뉴 추가 (v2 카테고리)",
+      },
+      {
+        type: "style",
+        description: "ScrumCard Airbnb 스타일 전면 개선 (상단 도메인 바, 라운드 카드)",
       },
       {
         type: "style",

@@ -13,8 +13,8 @@ import type { WeeklyScrumDataUnion, ScrumItemV2, ScrumItem } from "./scrum";
 
 /**
  * 캘린더 모드 타입
- * - project: 프로젝트 집중도 뷰
- * - member: 멤버 집중도 뷰
+ * - project: 프로젝트별 뷰
+ * - member: 멤버별 뷰
  */
 export type CalendarMode = "project" | "member";
 
@@ -110,7 +110,7 @@ export interface RangeSummaryBase {
 }
 
 /**
- * 프로젝트 집중도 기간 요약 - 개별 프로젝트 정보
+ * 프로젝트별 기간 요약 - 개별 프로젝트 정보
  */
 export interface ProjectFocusItem {
   initiativeName: string;
@@ -125,7 +125,7 @@ export interface ProjectFocusItem {
 }
 
 /**
- * 프로젝트 집중도 기간 요약
+ * 프로젝트별 기간 요약
  */
 export interface ProjectFocusRangeSummary extends RangeSummaryBase {
   mode: "project";
@@ -139,7 +139,7 @@ export interface ProjectFocusRangeSummary extends RangeSummaryBase {
 }
 
 /**
- * 멤버 집중도 기간 요약 - 개별 멤버 정보
+ * 멤버별 기간 요약 - 개별 멤버 정보
  */
 export interface MemberFocusItem {
   memberName: string;
@@ -154,7 +154,7 @@ export interface MemberFocusItem {
 }
 
 /**
- * 멤버 집중도 기간 요약
+ * 멤버별 기간 요약
  */
 export interface MemberFocusRangeSummary extends RangeSummaryBase {
   mode: "member";
@@ -190,7 +190,7 @@ export interface CalendarViewState {
  * 기존 WeeklyScrumData를 RawSnapshot[]으로 변환하는 함수 타입
  */
 export type ConvertToRawSnapshots = (
-  weeklyData: WeeklyScrumDataUnion[],
+  weeklyData: WeeklyScrumDataUnion[]
 ) => RawSnapshot[];
 
 /**
@@ -240,4 +240,3 @@ export interface SerializableMemberAggregation {
   avgCompletionRate: number;
   focusScore: number;
 }
-

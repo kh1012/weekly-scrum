@@ -140,10 +140,10 @@ export function SnapshotToolbar({
           </div>
         )}
 
-        {/* 선택 모드 토글 */}
+        {/* 선택 모드 토글 - 다른 버튼과 높이 맞춤 */}
         <button
           onClick={onToggleSelectMode}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all interactive-btn"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all interactive-btn h-[42px]"
           style={{
             background: isSelectMode 
               ? "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.1))" 
