@@ -7,7 +7,7 @@
  * 프로젝트/멤버 집중도를 시각화
  */
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { CalendarMode, WeekKey } from "@/types/calendar";
 import type { WeeklyScrumDataUnion, ScrumItem } from "@/types/scrum";
 import {
@@ -80,6 +80,23 @@ export function CalendarView({
     null
   );
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+  const periodDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 기간 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!isPeriodDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        periodDropdownRef.current &&
+        !periodDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsPeriodDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isPeriodDropdownOpen]);
 
   // Raw Snapshot 전체 (필터링 전)
   const allRawSnapshots = useMemo(() => {
@@ -194,42 +211,116 @@ export function CalendarView({
             {/* 캘린더 헤더 */}
             <div className="shrink-0 px-6 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                {/* 기간 필터 */}
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">📅 기간</span>
-                  <div className="relative">
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => handleMonthChange(e.target.value)}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-semibold pl-3 pr-8 py-2 rounded-xl cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
-                      style={{
-                        WebkitAppearance: "none",
-                        MozAppearance: "none",
-                        appearance: "none",
-                        backgroundImage: "none",
-                      }}
-                    >
-                      <option value="all">전체 기간</option>
-                      {availableMonths.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
+                {/* 기간 필터 - 커스텀 드롭다운 */}
+                <div className="relative" ref={periodDropdownRef}>
+                  <button
+                    onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                      selectedMonth !== "all"
+                        ? "bg-blue-50 text-blue-600 border border-blue-200"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <span>📅</span>
+                    <span>
+                      {selectedMonth === "all"
+                        ? "전체 기간"
+                        : availableMonths.find((m) => m.value === selectedMonth)
+                            ?.label || selectedMonth}
+                    </span>
                     <svg
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
+                      className={`w-4 h-4 transition-transform ${
+                        isPeriodDropdownOpen ? "rotate-180" : ""
+                      }`}
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
-                      strokeWidth={2}
+                      viewBox="0 0 24 24"
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
+                        strokeWidth={2}
                         d="M19 9l-7 7-7-7"
                       />
                     </svg>
-                  </div>
+                  </button>
+
+                  {/* 드롭다운 패널 */}
+                  {isPeriodDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden animate-fadeIn">
+                      {/* 전체 기간 */}
+                      <button
+                        onClick={() => {
+                          handleMonthChange("all");
+                          setIsPeriodDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                          selectedMonth === "all"
+                            ? "bg-blue-50 text-blue-600 font-semibold"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {selectedMonth === "all" && (
+                          <svg
+                            className="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                        <span className={selectedMonth === "all" ? "" : "ml-6"}>
+                          전체 기간
+                        </span>
+                      </button>
+
+                      {/* 구분선 */}
+                      <div className="h-px bg-gray-100" />
+
+                      {/* 월별 목록 */}
+                      <div className="max-h-60 overflow-y-auto py-1">
+                        {availableMonths.map((m) => (
+                          <button
+                            key={m.value}
+                            onClick={() => {
+                              handleMonthChange(m.value);
+                              setIsPeriodDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                              selectedMonth === m.value
+                                ? "bg-blue-50 text-blue-600 font-semibold"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {selectedMonth === m.value && (
+                              <svg
+                                className="w-4 h-4"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                            <span
+                              className={
+                                selectedMonth === m.value ? "" : "ml-6"
+                              }
+                            >
+                              {m.label}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 요약 정보 */}
