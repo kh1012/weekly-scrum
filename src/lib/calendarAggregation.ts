@@ -75,23 +75,37 @@ export function parseWeekIndex(weekStr: string): number {
 
 /**
  * 날짜 범위 문자열에서 시작/종료일 추출
- * 예: "03.10 ~ 03.14" -> { start: "03.10", end: "03.14" }
+ * 지원 형식:
+ * - "2025-12-01 2025-12-05" (공백 구분)
+ * - "03.10 ~ 03.14" (~ 구분)
+ * - "12.01 ~ 12.05" (~ 구분)
  */
 export function parseDateRange(
   rangeStr: string,
   year: number
 ): { weekStart: string; weekEnd: string } {
-  const parts = rangeStr.split("~").map((s) => s.trim());
-  if (parts.length === 2) {
+  // 형식 1: "2025-12-01 2025-12-05" (공백 구분, YYYY-MM-DD 형식)
+  const spaceParts = rangeStr.split(/\s+/).filter(Boolean);
+  if (spaceParts.length === 2 && spaceParts[0].includes("-") && spaceParts[1].includes("-")) {
+    return {
+      weekStart: spaceParts[0],
+      weekEnd: spaceParts[1],
+    };
+  }
+
+  // 형식 2: "03.10 ~ 03.14" (~ 구분)
+  const tildeParts = rangeStr.split("~").map((s) => s.trim());
+  if (tildeParts.length === 2) {
     const formatDate = (dateStr: string) => {
       const [month, day] = dateStr.split(".").map((n) => n.padStart(2, "0"));
       return `${year}-${month}-${day}`;
     };
     return {
-      weekStart: formatDate(parts[0]),
-      weekEnd: formatDate(parts[1]),
+      weekStart: formatDate(tildeParts[0]),
+      weekEnd: formatDate(tildeParts[1]),
     };
   }
+
   // 파싱 실패 시 기본값
   return { weekStart: `${year}-01-01`, weekEnd: `${year}-01-07` };
 }

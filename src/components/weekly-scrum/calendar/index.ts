@@ -6,4 +6,5 @@ export { CalendarView } from "./CalendarView";
 export { CalendarGrid } from "./CalendarGrid";
 export { WeekCell } from "./WeekCell";
 export { CalendarMetaPanel } from "./CalendarMetaPanel";
+export { MemberHeatmap } from "./MemberHeatmap";
 

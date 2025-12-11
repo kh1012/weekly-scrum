@@ -1,14 +1,12 @@
 "use client";
 
 /**
- * Calendar Grid 컴포넌트
+ * Calendar Grid 컴포넌트 (Airbnb 스타일)
  *
  * 주 단위 막대 그래프를 표시하는 캘린더 그리드
  */
 
-import { useMemo } from "react";
 import type { CalendarMode, WeekKey, WeekAggregation } from "@/types/calendar";
-import { formatWeekLabel } from "@/lib/calendarAggregation";
 import { WeekCell } from "./WeekCell";
 
 interface CalendarGridProps {
@@ -30,47 +28,66 @@ export function CalendarGrid({
 }: CalendarGridProps) {
   if (weeks.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <svg
-            className="w-12 h-12 mx-auto mb-4 text-gray-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <p className="text-sm">이 달에 스냅샷 데이터가 없습니다</p>
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <svg
+              className="w-10 h-10 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            데이터가 없습니다
+          </h3>
+          <p className="text-sm text-gray-500 max-w-[240px] mx-auto">
+            이 달에 스냅샷 데이터가 없거나 필터 조건에 맞는 데이터가 없습니다
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {weeks.map((week) => {
-        const isSelected =
-          selectedWeek?.year === week.key.year &&
-          selectedWeek?.weekIndex === week.key.weekIndex;
+    <div className="space-y-4">
+      {/* 그리드 헤더 */}
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          {mode === "project" ? "프로젝트별 주간 현황" : "멤버별 주간 현황"}
+        </h2>
+        <span className="text-xs text-gray-400">
+          {weeks.length}개 주차
+        </span>
+      </div>
 
-        return (
-          <WeekCell
-            key={`${week.key.year}-${week.key.weekIndex}`}
-            week={week}
-            mode={mode}
-            selected={isSelected}
-            onSelectWeek={onSelectWeek}
-            onSelectInitiative={onSelectInitiative}
-            onSelectMember={onSelectMember}
-          />
-        );
-      })}
+      {/* 주차 카드 그리드 */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {weeks.map((week) => {
+          const isSelected =
+            selectedWeek?.year === week.key.year &&
+            selectedWeek?.weekIndex === week.key.weekIndex;
+
+          return (
+            <WeekCell
+              key={`${week.key.year}-${week.key.weekIndex}`}
+              week={week}
+              mode={mode}
+              selected={isSelected}
+              onSelectWeek={onSelectWeek}
+              onSelectInitiative={onSelectInitiative}
+              onSelectMember={onSelectMember}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
-

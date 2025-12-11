@@ -4,9 +4,9 @@ export const RELEASES: Release[] = [
   {
     version: "2.4.0",
     date: "2025-12-11",
-    title: "Calendar View 추가",
+    title: "Calendar View 추가 및 개선",
     summary:
-      "주 단위 스냅샷 데이터를 달력 형태로 재구성하여 프로젝트/멤버 집중도를 시각화하는 Calendar View를 추가했습니다.",
+      "주 단위 스냅샷 데이터를 달력 형태로 재구성하여 프로젝트/멤버 집중도를 시각화하는 Calendar View를 추가하고, 멤버별 히트맵 및 GNB 필터 연동 기능을 구현했습니다.",
     changes: [
       {
         type: "feat",
@@ -22,7 +22,11 @@ export const RELEASES: Release[] = [
       },
       {
         type: "feat",
-        description: "주 단위 막대 그래프로 상위 3개 프로젝트/멤버 표시",
+        description: "멤버별 히트맵 뷰 추가 - 주간 기여도를 히트맵으로 시각화",
+      },
+      {
+        type: "feat",
+        description: "주 단위 막대 그래프로 상위 4개 프로젝트/멤버 표시",
       },
       {
         type: "feat",
@@ -41,12 +45,24 @@ export const RELEASES: Release[] = [
         description: "월 단위 네비게이션 (이전/다음 월 이동)",
       },
       {
+        type: "feat",
+        description: "GNB 검색/필터와 연동 - 필터링된 데이터로 캘린더 표시",
+      },
+      {
         type: "improve",
-        description: "Calendar 페이지 GNB 단순화 (자체 월 선택기 사용)",
+        description: "Calendar 페이지 GNB에 검색/필터 표시 (주차 선택기만 숨김)",
       },
       {
         type: "improve",
         description: "SNB에 Calendar 메뉴 추가 (v2 카테고리)",
+      },
+      {
+        type: "style",
+        description: "전체 Airbnb 스타일 UI/UX 적용",
+      },
+      {
+        type: "fix",
+        description: "스냅샷 데이터 range 필드 파싱 오류 수정",
       },
     ],
   },

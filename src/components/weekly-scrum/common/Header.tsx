@@ -23,12 +23,14 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
   const isMyDashboard = pathname === "/my" || pathname === "/my/";
   // 스냅샷 관리 페이지인지 확인
   const isManagePage = pathname === "/manage" || pathname === "/manage/";
-  // 캘린더 페이지인지 확인 (자체 월 선택기 사용)
+  // 캘린더 페이지인지 확인 (주차 선택기만 숨김, 검색/필터는 표시)
   const isCalendarPage = pathname === "/calendar" || pathname === "/calendar/";
-  // GNB 컴포넌트 숨김 페이지
-  const hideAllControls = isManagePage || isCalendarPage;
+  // GNB 컴포넌트 완전 숨김 페이지 (manage만)
+  const hideAllControls = isManagePage;
+  // 주차 선택기 숨김 페이지 (calendar는 자체 월 선택기 사용)
+  const hideWeekSelector = isManagePage || isCalendarPage;
   // 필터 숨김 페이지
-  const hideFilters = isMyDashboard || hideAllControls;
+  const hideFilters = isMyDashboard || isManagePage;
 
   // 외부 클릭 시 메뉴/필터 팝오버 닫기
   useEffect(() => {
@@ -117,7 +119,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           {!isSidebarOpen && (
             <>
               <Logo />
-              {!hideAllControls && (
+              {!hideWeekSelector && (
                 <div
                   className="w-px h-6 rounded-full"
                   style={{ background: "var(--notion-border)" }}
@@ -125,7 +127,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
               )}
             </>
           )}
-          {!hideAllControls && <WeekSelector />}
+          {!hideWeekSelector && <WeekSelector />}
         </div>
 
         {/* 우측: 검색 + 필터 */}
@@ -275,7 +277,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         </div>
 
         {/* 2행: 주차 선택 (자체 선택기가 없는 페이지만) */}
-        {!hideAllControls && (
+        {!hideWeekSelector && (
           <div
             className="px-4 py-3"
             style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.04)" }}

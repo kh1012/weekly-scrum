@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Week Cell 컴포넌트
+ * Week Cell 컴포넌트 (Airbnb 스타일)
  *
  * 개별 주에 대한 프로젝트/멤버 막대 그래프 표시
  */
@@ -19,28 +19,28 @@ interface WeekCellProps {
   onSelectMember: (name: string) => void;
 }
 
-// 프로젝트별 색상 팔레트
+// 프로젝트별 색상 팔레트 (Airbnb 스타일)
 const PROJECT_COLORS = [
-  "bg-blue-500",
-  "bg-emerald-500",
-  "bg-purple-500",
-  "bg-orange-500",
-  "bg-pink-500",
-  "bg-cyan-500",
-  "bg-amber-500",
-  "bg-indigo-500",
+  { bg: "bg-blue-500", hover: "hover:bg-blue-600", light: "bg-blue-50" },
+  { bg: "bg-emerald-500", hover: "hover:bg-emerald-600", light: "bg-emerald-50" },
+  { bg: "bg-purple-500", hover: "hover:bg-purple-600", light: "bg-purple-50" },
+  { bg: "bg-orange-500", hover: "hover:bg-orange-600", light: "bg-orange-50" },
+  { bg: "bg-pink-500", hover: "hover:bg-pink-600", light: "bg-pink-50" },
+  { bg: "bg-cyan-500", hover: "hover:bg-cyan-600", light: "bg-cyan-50" },
+  { bg: "bg-amber-500", hover: "hover:bg-amber-600", light: "bg-amber-50" },
+  { bg: "bg-indigo-500", hover: "hover:bg-indigo-600", light: "bg-indigo-50" },
 ];
 
 // 멤버별 색상 팔레트
 const MEMBER_COLORS = [
-  "bg-violet-500",
-  "bg-rose-500",
-  "bg-teal-500",
-  "bg-lime-500",
-  "bg-fuchsia-500",
-  "bg-sky-500",
-  "bg-red-500",
-  "bg-green-500",
+  { bg: "bg-violet-500", hover: "hover:bg-violet-600", light: "bg-violet-50" },
+  { bg: "bg-rose-500", hover: "hover:bg-rose-600", light: "bg-rose-50" },
+  { bg: "bg-teal-500", hover: "hover:bg-teal-600", light: "bg-teal-50" },
+  { bg: "bg-lime-500", hover: "hover:bg-lime-600", light: "bg-lime-50" },
+  { bg: "bg-fuchsia-500", hover: "hover:bg-fuchsia-600", light: "bg-fuchsia-50" },
+  { bg: "bg-sky-500", hover: "hover:bg-sky-600", light: "bg-sky-50" },
+  { bg: "bg-red-500", hover: "hover:bg-red-600", light: "bg-red-50" },
+  { bg: "bg-green-500", hover: "hover:bg-green-600", light: "bg-green-50" },
 ];
 
 export function WeekCell({
@@ -53,12 +53,12 @@ export function WeekCell({
 }: WeekCellProps) {
   const label = formatWeekLabel(week);
 
-  // 상위 3개 항목만 표시
+  // 상위 4개 항목만 표시
   const topItems = useMemo(() => {
     if (mode === "project") {
-      return week.initiatives.slice(0, 3);
+      return week.initiatives.slice(0, 4);
     }
-    return week.members.slice(0, 3);
+    return week.members.slice(0, 4);
   }, [week, mode]);
 
   // 최대 focusScore 계산 (막대 비율용)
@@ -68,30 +68,38 @@ export function WeekCell({
   }, [week, mode]);
 
   const colors = mode === "project" ? PROJECT_COLORS : MEMBER_COLORS;
+  const totalCount = mode === "project" ? week.initiatives.length : week.members.length;
 
   return (
     <div
       onClick={() => onSelectWeek(week.key)}
-      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+      className={`group p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
         selected
-          ? "border-blue-500 bg-blue-50/50 shadow-sm"
-          : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"
+          ? "border-gray-900 bg-white shadow-lg scale-[1.02]"
+          : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-md"
       }`}
     >
       {/* 주차 레이블 */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-gray-900">{label}</span>
-        <span className="text-xs text-gray-500">
-          {mode === "project"
-            ? `${week.initiatives.length}개 프로젝트`
-            : `${week.members.length}명 참여`}
-        </span>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <span className="text-sm font-bold text-gray-900">{label.split("·")[0].trim()}</span>
+          <span className="block text-xs text-gray-400 mt-0.5">
+            {label.split("·")[1]?.trim()}
+          </span>
+        </div>
+        <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+          selected ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
+        }`}>
+          {totalCount}개
+        </div>
       </div>
 
       {/* 막대 그래프 */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {topItems.length === 0 ? (
-          <div className="text-xs text-gray-400 py-2">데이터 없음</div>
+          <div className="text-xs text-gray-400 py-4 text-center">
+            데이터 없음
+          </div>
         ) : (
           topItems.map((item, idx) => {
             const name = mode === "project"
@@ -113,20 +121,20 @@ export function WeekCell({
                     onSelectMember(name);
                   }
                 }}
-                className="group cursor-pointer"
+                className="group/item"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-gray-700 truncate flex-1 group-hover:text-blue-600 transition-colors">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-gray-700 truncate flex-1 group-hover/item:text-gray-900 transition-colors">
                     {name}
                   </span>
-                  <span className="text-xs text-gray-500 shrink-0">
-                    {doneCount}건 완료
+                  <span className="text-[10px] font-semibold text-gray-500 ml-2 shrink-0 tabular-nums">
+                    {doneCount}건
                   </span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${color} rounded-full transition-all group-hover:opacity-80`}
-                    style={{ width: `${Math.max(percentage, 5)}%` }}
+                    className={`h-full ${color.bg} rounded-full transition-all duration-500 group-hover/item:opacity-80`}
+                    style={{ width: `${Math.max(percentage, 8)}%` }}
                   />
                 </div>
               </div>
@@ -136,12 +144,13 @@ export function WeekCell({
       </div>
 
       {/* 더 보기 표시 */}
-      {(mode === "project" ? week.initiatives.length : week.members.length) > 3 && (
-        <div className="mt-2 text-xs text-gray-400 text-center">
-          +{(mode === "project" ? week.initiatives.length : week.members.length) - 3}개 더
+      {totalCount > 4 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <span className="text-xs text-gray-400 group-hover:text-gray-500 transition-colors">
+            +{totalCount - 4}개 더 보기
+          </span>
         </div>
       )}
     </div>
   );
 }
-
