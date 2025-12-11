@@ -36,6 +36,12 @@ const NAV_CATEGORIES: NavCategory[] = [
         emoji: "🗺️",
       },
       {
+        key: "calendar",
+        label: "Calendar",
+        href: "/calendar",
+        emoji: "📅",
+      },
+      {
         key: "snapshots",
         label: "Snapshots",
         href: "/snapshots",

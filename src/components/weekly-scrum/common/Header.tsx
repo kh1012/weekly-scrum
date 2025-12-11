@@ -23,8 +23,12 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
   const isMyDashboard = pathname === "/my" || pathname === "/my/";
   // 스냅샷 관리 페이지인지 확인
   const isManagePage = pathname === "/manage" || pathname === "/manage/";
+  // 캘린더 페이지인지 확인 (자체 월 선택기 사용)
+  const isCalendarPage = pathname === "/calendar" || pathname === "/calendar/";
+  // GNB 컴포넌트 숨김 페이지
+  const hideAllControls = isManagePage || isCalendarPage;
   // 필터 숨김 페이지
-  const hideFilters = isMyDashboard || isManagePage;
+  const hideFilters = isMyDashboard || hideAllControls;
 
   // 외부 클릭 시 메뉴/필터 팝오버 닫기
   useEffect(() => {
@@ -113,7 +117,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           {!isSidebarOpen && (
             <>
               <Logo />
-              {!isManagePage && (
+              {!hideAllControls && (
                 <div
                   className="w-px h-6 rounded-full"
                   style={{ background: "var(--notion-border)" }}
@@ -121,12 +125,12 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
               )}
             </>
           )}
-          {!isManagePage && <WeekSelector />}
+          {!hideAllControls && <WeekSelector />}
         </div>
 
         {/* 우측: 검색 + 필터 */}
         <div className="flex items-center gap-4">
-          {!isManagePage && <SearchInput />}
+          {!hideAllControls && <SearchInput />}
           {!hideFilters && (
             <>
               <div
@@ -250,7 +254,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           </div>
 
           {/* 모바일 검색 */}
-          {!isManagePage && <SearchInput isMobile />}
+          {!hideAllControls && <SearchInput isMobile />}
 
           {/* Popover 메뉴 */}
           {isMenuOpen && (
@@ -270,8 +274,8 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           )}
         </div>
 
-        {/* 2행: 주차 선택 (manage 페이지가 아닐 때만) */}
-        {!isManagePage && (
+        {/* 2행: 주차 선택 (자체 선택기가 없는 페이지만) */}
+        {!hideAllControls && (
           <div
             className="px-4 py-3"
             style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.04)" }}
