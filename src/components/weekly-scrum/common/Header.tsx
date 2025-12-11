@@ -21,6 +21,10 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
 
   // 개인 대시보드 페이지인지 확인
   const isMyDashboard = pathname === "/my" || pathname === "/my/";
+  // 스냅샷 관리 페이지인지 확인
+  const isManagePage = pathname === "/manage" || pathname === "/manage/";
+  // 필터 숨김 페이지
+  const hideFilters = isMyDashboard || isManagePage;
 
   // 외부 클릭 시 메뉴/필터 팝오버 닫기
   useEffect(() => {
@@ -121,7 +125,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
         {/* 우측: 검색 + 필터 */}
         <div className="flex items-center gap-4">
           <SearchInput />
-          {!isMyDashboard && (
+          {!hideFilters && (
             <>
               <div
                 className="w-px h-6 rounded-full"
@@ -272,8 +276,8 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           <WeekSelector isMobile />
         </div>
 
-        {/* 3행: 필터 (개인 대시보드가 아닐 때만) */}
-        {!isMyDashboard && (
+        {/* 3행: 필터 (필터 숨김 페이지가 아닐 때만) */}
+        {!hideFilters && (
           <div className="px-4 py-3 overflow-x-auto">
             <ExpandableFilters isMobile />
           </div>
