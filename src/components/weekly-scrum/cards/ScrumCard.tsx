@@ -208,12 +208,6 @@ export function ScrumCard({
         </div>
       )}
 
-      {/* 상단 도메인 색상 바 */}
-      <div 
-        className="h-1.5 w-full"
-        style={{ background: `linear-gradient(90deg, ${domainColor.text}, ${domainColor.text}80)` }}
-      />
-
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4">

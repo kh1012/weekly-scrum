@@ -15,7 +15,11 @@ const FULL_WIDTH_PAGES = [
   "/work-map",
   "/snapshots",
   "/manage",
+  "/calendar",
 ];
+
+// padding 없는 페이지 경로
+const NO_PADDING_PAGES = ["/calendar"];
 
 // localStorage 키
 const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
@@ -92,9 +96,14 @@ export function MainContent({ children }: { children: ReactNode }) {
     (p) => pathname === p || pathname === p + "/"
   );
 
+  // padding 없는 페이지 확인
+  const useNoPadding = NO_PADDING_PAGES.some(
+    (p) => pathname === p || pathname === p + "/"
+  );
+
   return (
     <main
-      className={`mx-auto px-4 py-6 sm:px-6 lg:px-8 ${
+      className={`mx-auto ${useNoPadding ? "" : "px-4 py-6 sm:px-6 lg:px-8"} ${
         useFullWidth ? "max-w-full" : "max-w-6xl"
       }`}
     >
