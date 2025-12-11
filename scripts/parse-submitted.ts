@@ -73,10 +73,10 @@ interface ScrumItemV2 {
  * v3 주간 스크럼 데이터 타입 (ISO 주차 기준)
  */
 interface WeeklyScrumDataV3 {
-  year: number;           // ISO 주차가 속한 연도
-  week: string;           // ISO 주차 (W01 ~ W53)
-  weekStart: string;      // 주 시작일 (YYYY-MM-DD, 월요일)
-  weekEnd: string;        // 주 종료일 (YYYY-MM-DD, 일요일)
+  year: number; // ISO 주차가 속한 연도
+  week: string; // ISO 주차 (W01 ~ W53)
+  weekStart: string; // 주 시작일 (YYYY-MM-DD, 월요일)
+  weekEnd: string; // 주 종료일 (YYYY-MM-DD, 일요일)
   schemaVersion: 3;
   items: ScrumItemV2[];
 }
@@ -91,32 +91,39 @@ interface WeeklyScrumDataV3 {
  * - 주의 시작은 월요일
  * - 1월 4일이 포함된 주가 해당 연도의 첫 번째 주
  */
-function getISOWeekInfo(date: Date): { year: number; week: number; weekStart: Date; weekEnd: Date } {
+function getISOWeekInfo(date: Date): {
+  year: number;
+  week: number;
+  weekStart: Date;
+  weekEnd: Date;
+} {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  
+
   // 해당 주의 목요일 찾기 (ISO 주차 결정에 사용)
   const thursday = new Date(d);
   thursday.setDate(d.getDate() + 4 - (d.getDay() || 7));
-  
+
   // ISO 연도의 첫 번째 목요일 (1월 4일이 포함된 주의 목요일)
   const yearStart = new Date(thursday.getFullYear(), 0, 4);
   const firstThursday = new Date(yearStart);
   firstThursday.setDate(yearStart.getDate() + 4 - (yearStart.getDay() || 7));
-  
+
   // 주차 계산
-  const weekNumber = Math.ceil(((thursday.getTime() - firstThursday.getTime()) / 86400000 + 1) / 7);
-  
+  const weekNumber = Math.ceil(
+    ((thursday.getTime() - firstThursday.getTime()) / 86400000 + 1) / 7
+  );
+
   // 주의 시작일 (월요일) 계산
   const weekStart = new Date(d);
   const dayOfWeek = d.getDay();
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   weekStart.setDate(d.getDate() + diffToMonday);
-  
+
   // 주의 종료일 (일요일) 계산
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 6);
-  
+
   return {
     year: thursday.getFullYear(),
     week: weekNumber,
@@ -143,23 +150,27 @@ function formatDate(date: Date): string {
  */
 function parseDateRange(rangeStr: string): { start: Date; end: Date } | null {
   // 공백 구분 형식
-  const spaceMatch = rangeStr.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})$/);
+  const spaceMatch = rangeStr.match(
+    /^(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})$/
+  );
   if (spaceMatch) {
     return {
       start: new Date(spaceMatch[1]),
       end: new Date(spaceMatch[2]),
     };
   }
-  
+
   // ~ 구분 형식
-  const tildeMatch = rangeStr.match(/^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/);
+  const tildeMatch = rangeStr.match(
+    /^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/
+  );
   if (tildeMatch) {
     return {
       start: new Date(tildeMatch[1]),
       end: new Date(tildeMatch[2]),
     };
   }
-  
+
   return null;
 }
 
@@ -184,12 +195,12 @@ interface ParseError {
 function extractTaskWithProgress(text: string): PastWeekTask {
   // (%) 또는 % 형태 매칭
   const match = text.match(/^(.+?)\s*\((\d+)%\)\s*$/);
-    if (match) {
+  if (match) {
     return {
       title: match[1].trim(),
       progress: parseInt(match[2], 10),
     };
-    }
+  }
 
   // 괄호 없이 %만 있는 경우
   const simpleMatch = text.match(/^(.+?)\s+(\d+)%\s*$/);
@@ -213,17 +224,17 @@ function extractTaskWithProgress(text: string): PastWeekTask {
  */
 function parseRiskLevel(riskLevelText: string): RiskLevel | null {
   const trimmed = riskLevelText.trim().toLowerCase();
-  
+
   // "none", "?" 또는 빈 값은 null (미정)
   if (trimmed === "none" || trimmed === "?" || trimmed === "") {
     return null;
   }
-  
+
   const level = parseInt(trimmed, 10);
   if (!isNaN(level) && level >= 0 && level <= 3) {
     return level as RiskLevel;
   }
-  
+
   return null;
 }
 
@@ -251,7 +262,7 @@ function parseHeader(headerLine: string): {
     // 부족한 부분은 빈 문자열로 채움
     while (parts.length < 4) {
       parts.push("");
-  }
+    }
   }
 
   return {
@@ -267,11 +278,11 @@ function parseHeader(headerLine: string): {
  */
 function parseRelation(rawRelation: string): Relation | null {
   const relation = rawRelation.toLowerCase().trim();
-  
+
   if (relation === "pair" || relation === "pre" || relation === "post") {
     return relation as Relation;
   }
-  
+
   // 레거시 relation 마이그레이션
   if (relation === "waiting-on") {
     return "pre";
@@ -279,7 +290,7 @@ function parseRelation(rawRelation: string): Relation | null {
   if (relation === "review" || relation === "handoff") {
     return "pre";
   }
-  
+
   return null;
 }
 
@@ -290,17 +301,17 @@ function parseRelation(rawRelation: string): Relation | null {
 function parseCollaboratorItem(text: string): Collaborator | null {
   // "이름 (relation)" 형태 파싱
   const match = text.match(/^(.+?)\s*\((.+?)\)$/);
-    if (match) {
-      const name = match[1].trim();
-      const rawRelation = match[2].trim();
+  if (match) {
+    const name = match[1].trim();
+    const rawRelation = match[2].trim();
     const relation = parseRelation(rawRelation);
 
-      if (relation) {
+    if (relation) {
       return { name, relation };
-      } else {
+    } else {
       console.warn(`유효하지 않은 relation: ${rawRelation} (${text})`);
-      }
     }
+  }
   return null;
 }
 
@@ -378,7 +389,7 @@ function parseDefineBlock(
 
   for (const line of lines) {
     const trimmed = line.trim();
-    
+
     // Define 섹션 시작 감지
     if (trimmed.match(/^[*-]\s*Define\s*$/i)) {
       inDefine = true;
@@ -391,11 +402,13 @@ function parseDefineBlock(
         trimmed.match(/^[*-]\s*(Past Week|This Week|Name)\s*$/i) ||
         trimmed.match(/^[*-]\s*(Past Week|This Week|Name):/i)
       ) {
-      break;
-    }
+        break;
+      }
 
       // Define 내부 필드 파싱
-      const fieldMatch = trimmed.match(/^[*-]\s*(Domain|Project|Module|Feature):\s*(.+)$/i);
+      const fieldMatch = trimmed.match(
+        /^[*-]\s*(Domain|Project|Module|Feature):\s*(.+)$/i
+      );
       if (fieldMatch) {
         const field = fieldMatch[1].toLowerCase() as keyof typeof result;
         result[field] = fieldMatch[2].trim();
@@ -426,7 +439,7 @@ function parsePastWeekBlock(lines: string[]): PastWeek {
       break;
     }
   }
-  
+
   if (pastWeekStart < 0) {
     return {
       tasks: [],
@@ -434,7 +447,7 @@ function parsePastWeekBlock(lines: string[]): PastWeek {
       riskLevel: null,
       collaborators: [],
     };
-}
+  }
 
   const pastWeekLines = lines.slice(pastWeekStart, pastWeekEnd);
 
@@ -492,9 +505,9 @@ function parseThisWeekBlock(lines: string[]): ThisWeek {
 
   // Tasks 추출
   const taskTexts = extractSectionItems(thisWeekLines, "Tasks");
-  
+
   // "None" 필터링
-  const filteredTasks = taskTexts.filter(t => t.toLowerCase() !== "none");
+  const filteredTasks = taskTexts.filter((t) => t.toLowerCase() !== "none");
 
   return { tasks: filteredTasks };
 }
@@ -502,7 +515,10 @@ function parseThisWeekBlock(lines: string[]): ThisWeek {
 /**
  * 텍스트 블록 하나를 ScrumItemV2로 파싱합니다.
  */
-function parseBlockV2(block: string, startLine: number): { item: ScrumItemV2 | null; errors: ParseError[] } {
+function parseBlockV2(
+  block: string,
+  startLine: number
+): { item: ScrumItemV2 | null; errors: ParseError[] } {
   const errors: ParseError[] = [];
   const rawLines = block.split("\n");
   const lines = rawLines.filter((l) => l.trim().length > 0);
@@ -580,7 +596,10 @@ function parseBlockV2(block: string, startLine: number): { item: ScrumItemV2 | n
 /**
  * submitted.txt 전체를 파싱하여 ScrumItemV2 배열로 변환합니다.
  */
-function parseSubmittedTextV2(content: string): { items: ScrumItemV2[]; errors: ParseError[] } {
+function parseSubmittedTextV2(content: string): {
+  items: ScrumItemV2[];
+  errors: ParseError[];
+} {
   // 빈 줄로 블록 구분
   const blocks = content.split(/\n\s*\n/).filter((block) => block.trim());
 
@@ -620,10 +639,12 @@ function main(): void {
 
   const rangeStr = args[0];
   const dateRange = parseDateRange(rangeStr);
-  
+
   if (!dateRange) {
     console.error(`날짜 범위 파싱 실패: ${rangeStr}`);
-    console.error('올바른 형식: "2025-12-01 2025-12-05" 또는 "2025-12-01 ~ 2025-12-05"');
+    console.error(
+      '올바른 형식: "2025-12-01 2025-12-05" 또는 "2025-12-01 ~ 2025-12-05"'
+    );
     process.exit(1);
   }
 
@@ -631,9 +652,17 @@ function main(): void {
   const isoInfo = getISOWeekInfo(dateRange.start);
   const weekStr = `W${isoInfo.week.toString().padStart(2, "0")}`;
 
-  console.log(`📅 날짜 범위: ${formatDate(dateRange.start)} ~ ${formatDate(dateRange.end)}`);
+  console.log(
+    `📅 날짜 범위: ${formatDate(dateRange.start)} ~ ${formatDate(
+      dateRange.end
+    )}`
+  );
   console.log(`📆 ISO 주차: ${isoInfo.year}년 ${weekStr}`);
-  console.log(`📆 주간 범위: ${formatDate(isoInfo.weekStart)} ~ ${formatDate(isoInfo.weekEnd)}`);
+  console.log(
+    `📆 주간 범위: ${formatDate(isoInfo.weekStart)} ~ ${formatDate(
+      isoInfo.weekEnd
+    )}`
+  );
   console.log("");
 
   // submitted-scrum.txt 읽기

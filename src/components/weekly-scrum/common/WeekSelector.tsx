@@ -51,6 +51,20 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
     return availableWeeks[0]?.week || "";
   }, [selectedWeekKey, availableWeeks]);
 
+  // 선택된 주차의 날짜 범위
+  const selectedWeekRange = useMemo(() => {
+    const weekData = weeks.find((w) => w.key === selectedWeekKey);
+    if (weekData?.weekStart && weekData?.weekEnd) {
+      // YYYY-MM-DD → MM.DD 형식으로 변환
+      const formatShort = (dateStr: string) => {
+        const [, month, day] = dateStr.split("-");
+        return `${parseInt(month, 10)}.${parseInt(day, 10)}`;
+      };
+      return `${formatShort(weekData.weekStart)} ~ ${formatShort(weekData.weekEnd)}`;
+    }
+    return null;
+  }, [weeks, selectedWeekKey]);
+
   const allWeekOptions = sortedWeekKeys.map((key) => {
     const d = allData[key];
     return { key, label: `${d.year}년 ${d.week}` };
@@ -171,7 +185,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             <select
               value={selectedWeek}
               onChange={(e) => handleWeekChange(e.target.value)}
-              className="notion-select text-xs py-2 px-3 w-24 rounded-xl font-medium"
+              className="notion-select text-xs py-2 px-3 w-20 rounded-xl font-medium"
               style={{ background: "var(--notion-bg-secondary)", border: "none" }}
             >
               {availableWeeks.map((w) => (
@@ -180,6 +194,18 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
                 </option>
               ))}
             </select>
+            {/* 주차 날짜 범위 표시 */}
+            {selectedWeekRange && (
+              <span 
+                className="text-[10px] px-2 py-1 rounded-lg shrink-0"
+                style={{ 
+                  color: "var(--notion-text-muted)",
+                  background: "var(--notion-bg-tertiary)",
+                }}
+              >
+                {selectedWeekRange}
+              </span>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -303,6 +329,18 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
               </option>
             ))}
           </select>
+          {/* 주차 날짜 범위 표시 */}
+          {selectedWeekRange && (
+            <span 
+              className="text-xs px-2 py-1 rounded-lg"
+              style={{ 
+                color: "var(--notion-text-muted)",
+                background: "var(--notion-bg-tertiary)",
+              }}
+            >
+              {selectedWeekRange}
+            </span>
+          )}
         </div>
       ) : (
         <div className="flex items-center gap-2">

@@ -149,7 +149,7 @@ export function convertToRawSnapshots(
     if (isV3Data(weeklyData)) {
       const v3Data = weeklyData as WeeklyScrumDataV3;
       const weekIndex = parseWeekIndex(v3Data.week);
-      
+
       v3Data.items.forEach((item: ScrumItemV2, idx) => {
         snapshots.push({
           id: `${v3Data.year}-${weekIndex}-${idx}`,
@@ -179,7 +179,7 @@ export function convertToRawSnapshots(
         weeklyData.range,
         weeklyData.year
       );
-      
+
       weeklyData.items.forEach((item: ScrumItemV2, idx) => {
         snapshots.push({
           id: `${weeklyData.year}-${weekIndex}-${idx}`,
@@ -201,14 +201,14 @@ export function convertToRawSnapshots(
       });
       return;
     }
-    
+
     // v1: 레거시
     const weekIndex = parseWeekIndex(weeklyData.week);
     const { weekStart, weekEnd } = parseDateRange(
       weeklyData.range,
       weeklyData.year
     );
-    
+
     weeklyData.items.forEach((item: ScrumItem, idx) => {
       const progress = item.progress || [];
       snapshots.push({
