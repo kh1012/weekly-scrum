@@ -126,7 +126,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
 
         {/* 우측: 검색 + 필터 */}
         <div className="flex items-center gap-4">
-          <SearchInput />
+          {!isManagePage && <SearchInput />}
           {!hideFilters && (
             <>
               <div
@@ -250,7 +250,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           </div>
 
           {/* 모바일 검색 */}
-          <SearchInput isMobile />
+          {!isManagePage && <SearchInput isMobile />}
 
           {/* Popover 메뉴 */}
           {isMenuOpen && (
