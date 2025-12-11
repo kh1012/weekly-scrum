@@ -1,7 +1,15 @@
 import "server-only";
 import * as fs from "fs";
 import * as path from "path";
-import type { WeeklyScrumData, WeekOption, ScrumItem, ScrumItemV2 } from "@/types/scrum";
+import type { 
+  WeeklyScrumData, 
+  WeeklyScrumDataV2, 
+  WeeklyScrumDataV3,
+  WeeklyScrumDataUnion,
+  WeekOption, 
+  ScrumItem, 
+  ScrumItemV2 
+} from "@/types/scrum";
 
 /**
  * v2 ScrumItem을 v1 ScrumItem으로 변환
@@ -110,9 +118,26 @@ function migrateScrumItem(item: Record<string, unknown>): ScrumItem {
 
 /**
  * WeeklyScrumData를 마이그레이션합니다.
- * v2 스키마일 경우 v1으로 변환합니다.
+ * v3/v2 스키마일 경우 v1으로 변환합니다.
  */
 function migrateWeeklyScrumData(data: Record<string, unknown>): WeeklyScrumData {
+  // v3 스키마 감지 (ISO 주차 기준)
+  if (data.schemaVersion === 3) {
+    const v3Data = data as unknown as WeeklyScrumDataV3;
+    const v1Items = v3Data.items.map(convertV2ToV1Item);
+    
+    // weekStart에서 월 추출
+    const [, month] = v3Data.weekStart.split("-").map(Number);
+    
+    return {
+      year: v3Data.year,
+      month: month,
+      week: v3Data.week,
+      range: `${v3Data.weekStart} ~ ${v3Data.weekEnd}`,
+      items: v1Items,
+    };
+  }
+  
   // v2 스키마 감지
   if (data.schemaVersion === 2) {
     const v2Items = data.items as ScrumItemV2[];
@@ -139,6 +164,7 @@ function migrateWeeklyScrumData(data: Record<string, unknown>): WeeklyScrumData 
 
 /**
  * 사용 가능한 모든 주차 목록을 가져옵니다.
+ * v3 (ISO 주차) 및 v2 (월 내 주차) 폴더 구조 모두 지원
  */
 export function getAvailableWeeks(): WeekOption[] {
   const dataDir = path.join(process.cwd(), "data", "scrum");
@@ -156,35 +182,75 @@ export function getAvailableWeeks(): WeekOption[] {
 
   for (const year of years) {
     const yearDir = path.join(dataDir, year);
-    const months = fs
-      .readdirSync(yearDir)
-      .filter((f) => fs.statSync(path.join(yearDir, f)).isDirectory())
-      .sort()
-      .reverse();
+    const entries = fs.readdirSync(yearDir);
+    
+    for (const entry of entries) {
+      const entryPath = path.join(yearDir, entry);
+      const stat = fs.statSync(entryPath);
+      
+      if (stat.isFile() && entry.endsWith(".json")) {
+        // v3 형식: YYYY/YYYY-WXX.json (ISO 주차)
+        const content = fs.readFileSync(entryPath, "utf-8");
+        const data = JSON.parse(content) as WeeklyScrumDataUnion;
+        
+        if (data.schemaVersion === 3) {
+          const v3Data = data as WeeklyScrumDataV3;
+          weeks.push({
+            year: v3Data.year,
+            week: v3Data.week,
+            weekStart: v3Data.weekStart,
+            weekEnd: v3Data.weekEnd,
+            key: `${v3Data.year}-${v3Data.week}`,
+            label: `${v3Data.year}년 ${v3Data.week}`,
+            filePath: entryPath,
+          });
+        }
+      } else if (stat.isDirectory()) {
+        // v2 형식: YYYY/MM/YYYY-MM-WXX.json (월 내 주차)
+        const monthDir = entryPath;
+        const files = fs
+          .readdirSync(monthDir)
+          .filter((f) => f.endsWith(".json"))
+          .sort()
+          .reverse();
 
-    for (const month of months) {
-      const monthDir = path.join(yearDir, month);
-      const files = fs
-        .readdirSync(monthDir)
-        .filter((f) => f.endsWith(".json"))
-        .sort()
-        .reverse();
-
-      for (const file of files) {
-        const filePath = path.join(monthDir, file);
-        const content = fs.readFileSync(filePath, "utf-8");
-        const data = JSON.parse(content) as WeeklyScrumData;
-        weeks.push({
-          year: data.year,
-          month: data.month,
-          week: data.week,
-          key: `${data.year}-${data.month}-${data.week}`,
-          label: `${data.year}년 ${data.month}월 ${data.week}`,
-          filePath,
-        });
+        for (const file of files) {
+          const filePath = path.join(monthDir, file);
+          const content = fs.readFileSync(filePath, "utf-8");
+          const data = JSON.parse(content) as WeeklyScrumDataUnion;
+          
+          if (data.schemaVersion === 2 || !data.schemaVersion) {
+            // v2 또는 v1 레거시 데이터를 v3 형식 WeekOption으로 변환
+            const v2Data = data as WeeklyScrumDataV2;
+            
+            // range에서 날짜 추출
+            const rangeParts = v2Data.range.split(/\s*~\s*|\s+/);
+            const weekStart = rangeParts[0] || "";
+            const weekEnd = rangeParts[rangeParts.length - 1] || "";
+            
+            weeks.push({
+              year: v2Data.year,
+              week: v2Data.week,
+              weekStart,
+              weekEnd,
+              key: `${v2Data.year}-${v2Data.month}-${v2Data.week}`,
+              label: `${v2Data.year}년 ${v2Data.month}월 ${v2Data.week}`,
+              filePath,
+            });
+          }
+        }
       }
     }
   }
+
+  // 키 기준 정렬 (최신순)
+  weeks.sort((a, b) => {
+    // weekStart로 정렬 (최신이 먼저)
+    if (a.weekStart && b.weekStart) {
+      return b.weekStart.localeCompare(a.weekStart);
+    }
+    return b.key.localeCompare(a.key);
+  });
 
   return weeks;
 }
@@ -206,23 +272,38 @@ export function getAllScrumData(): Record<string, WeeklyScrumData> {
 
   for (const year of years) {
     const yearDir = path.join(dataDir, year);
-    const months = fs
-      .readdirSync(yearDir)
-      .filter((f) => fs.statSync(path.join(yearDir, f)).isDirectory());
+    const entries = fs.readdirSync(yearDir);
 
-    for (const month of months) {
-      const monthDir = path.join(yearDir, month);
-      const files = fs
-        .readdirSync(monthDir)
-        .filter((f) => f.endsWith(".json"));
-
-      for (const file of files) {
-        const filePath = path.join(monthDir, file);
-        const content = fs.readFileSync(filePath, "utf-8");
+    for (const entry of entries) {
+      const entryPath = path.join(yearDir, entry);
+      const stat = fs.statSync(entryPath);
+      
+      if (stat.isFile() && entry.endsWith(".json")) {
+        // v3 형식: YYYY/YYYY-WXX.json
+        const content = fs.readFileSync(entryPath, "utf-8");
         const rawData = JSON.parse(content) as Record<string, unknown>;
         const data = migrateWeeklyScrumData(rawData);
-        const key = `${data.year}-${data.month}-${data.week}`;
+        
+        // v3는 year-week 키 사용
+        const key = `${data.year}-${data.week}`;
         allData[key] = data;
+      } else if (stat.isDirectory()) {
+        // v2 형식: YYYY/MM/YYYY-MM-WXX.json
+        const monthDir = entryPath;
+        const files = fs
+          .readdirSync(monthDir)
+          .filter((f) => f.endsWith(".json"));
+
+        for (const file of files) {
+          const filePath = path.join(monthDir, file);
+          const content = fs.readFileSync(filePath, "utf-8");
+          const rawData = JSON.parse(content) as Record<string, unknown>;
+          const data = migrateWeeklyScrumData(rawData);
+          
+          // v2/v1은 year-month-week 키 사용
+          const key = `${data.year}-${data.month}-${data.week}`;
+          allData[key] = data;
+        }
       }
     }
   }

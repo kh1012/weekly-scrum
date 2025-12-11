@@ -24,6 +24,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
     setRangeEnd,
   } = useScrumContext();
 
+  // 사용 가능한 연도 목록
   const years = useMemo(() => {
     const set = new Set(weeks.map((w) => w.year));
     return Array.from(set).sort((a, b) => b - a);
@@ -31,23 +32,28 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
 
   const selectedYear = currentData?.year ?? years[0];
 
-  const months = useMemo(() => {
-    const filtered = weeks.filter((w) => w.year === selectedYear);
-    const set = new Set(filtered.map((w) => w.month));
-    return Array.from(set).sort((a, b) => b - a);
+  // 선택된 연도의 주차 목록
+  const availableWeeks = useMemo(() => {
+    return weeks.filter((w) => w.year === selectedYear);
   }, [weeks, selectedYear]);
 
-  const selectedMonth = currentData?.month ?? months[0];
-
-  const availableWeeks = useMemo(() => {
-    return weeks.filter(
-      (w) => w.year === selectedYear && w.month === selectedMonth
-    );
-  }, [weeks, selectedYear, selectedMonth]);
+  // 현재 선택된 주차
+  const selectedWeek = useMemo(() => {
+    const parts = selectedWeekKey.split("-");
+    // v3 형식: YYYY-WXX
+    if (parts.length === 2 && parts[1].startsWith("W")) {
+      return parts[1];
+    }
+    // v2 형식: YYYY-MM-WXX (레거시 호환)
+    if (parts.length === 3) {
+      return parts[2];
+    }
+    return availableWeeks[0]?.week || "";
+  }, [selectedWeekKey, availableWeeks]);
 
   const allWeekOptions = sortedWeekKeys.map((key) => {
     const d = allData[key];
-    return { key, label: `${d.year}년 ${d.month}월 ${d.week}` };
+    return { key, label: `${d.year}년 ${d.week}` };
   });
 
   const handleModeChange = (mode: SelectMode) => {
@@ -59,29 +65,15 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
   };
 
   const handleYearChange = (year: number) => {
-    const newMonths = weeks.filter((w) => w.year === year);
-    const monthSet = new Set(newMonths.map((w) => w.month));
-    const sortedMonths = Array.from(monthSet).sort((a, b) => b - a);
-    const newMonth = sortedMonths[0];
-    const newWeeks = weeks.filter(
-      (w) => w.year === year && w.month === newMonth
-    );
-    if (newWeeks.length > 0) {
-      setSelectedWeekKey(newWeeks[0].key);
-    }
-  };
-
-  const handleMonthChange = (month: number) => {
-    const newWeeks = weeks.filter(
-      (w) => w.year === selectedYear && w.month === month
-    );
+    const newWeeks = weeks.filter((w) => w.year === year);
     if (newWeeks.length > 0) {
       setSelectedWeekKey(newWeeks[0].key);
     }
   };
 
   const handleWeekChange = (week: string) => {
-    setSelectedWeekKey(`${selectedYear}-${selectedMonth}-${week}`);
+    // v3 형식 키 생성
+    setSelectedWeekKey(`${selectedYear}-${week}`);
   };
 
   // 모바일 레이아웃
@@ -177,21 +169,9 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
               ))}
             </select>
             <select
-              value={selectedMonth}
-              onChange={(e) => handleMonthChange(Number(e.target.value))}
-              className="notion-select text-xs py-2 px-3 w-20 rounded-xl font-medium"
-              style={{ background: "var(--notion-bg-secondary)", border: "none" }}
-            >
-              {months.map((month) => (
-                <option key={month} value={month}>
-                  {month}월
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedWeekKey.split("-")[2] || ""}
+              value={selectedWeek}
               onChange={(e) => handleWeekChange(e.target.value)}
-              className="notion-select text-xs py-2 px-3 w-20 rounded-xl font-medium"
+              className="notion-select text-xs py-2 px-3 w-24 rounded-xl font-medium"
               style={{ background: "var(--notion-bg-secondary)", border: "none" }}
             >
               {availableWeeks.map((w) => (
@@ -309,22 +289,7 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
             ))}
           </select>
           <select
-            value={selectedMonth}
-            onChange={(e) => handleMonthChange(Number(e.target.value))}
-            className="notion-select h-9 rounded-xl px-3 text-sm font-medium"
-            style={{
-              background: "var(--notion-bg-secondary)",
-              border: "none",
-            }}
-          >
-            {months.map((month) => (
-              <option key={month} value={month}>
-                {month}월
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedWeekKey.split("-")[2] || ""}
+            value={selectedWeek}
             onChange={(e) => handleWeekChange(e.target.value)}
             className="notion-select h-9 rounded-xl px-3 text-sm font-medium"
             style={{

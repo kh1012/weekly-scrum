@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 // ========================================
-// 타입 정의 (v2 스키마)
+// 타입 정의 (v3 스키마 - ISO 주차 기준)
 // ========================================
 
 /**
@@ -70,15 +70,97 @@ interface ScrumItemV2 {
 }
 
 /**
- * v2 주간 스크럼 데이터 타입
+ * v3 주간 스크럼 데이터 타입 (ISO 주차 기준)
  */
-interface WeeklyScrumDataV2 {
-  year: number;
-  month: number;
-  week: string;
-  range: string;
-  schemaVersion: 2;
+interface WeeklyScrumDataV3 {
+  year: number;           // ISO 주차가 속한 연도
+  week: string;           // ISO 주차 (W01 ~ W53)
+  weekStart: string;      // 주 시작일 (YYYY-MM-DD, 월요일)
+  weekEnd: string;        // 주 종료일 (YYYY-MM-DD, 일요일)
+  schemaVersion: 3;
   items: ScrumItemV2[];
+}
+
+// ========================================
+// ISO 주차 계산 유틸리티
+// ========================================
+
+/**
+ * 날짜에서 ISO 주차 정보를 계산합니다.
+ * ISO 8601 기준:
+ * - 주의 시작은 월요일
+ * - 1월 4일이 포함된 주가 해당 연도의 첫 번째 주
+ */
+function getISOWeekInfo(date: Date): { year: number; week: number; weekStart: Date; weekEnd: Date } {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  
+  // 해당 주의 목요일 찾기 (ISO 주차 결정에 사용)
+  const thursday = new Date(d);
+  thursday.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  
+  // ISO 연도의 첫 번째 목요일 (1월 4일이 포함된 주의 목요일)
+  const yearStart = new Date(thursday.getFullYear(), 0, 4);
+  const firstThursday = new Date(yearStart);
+  firstThursday.setDate(yearStart.getDate() + 4 - (yearStart.getDay() || 7));
+  
+  // 주차 계산
+  const weekNumber = Math.ceil(((thursday.getTime() - firstThursday.getTime()) / 86400000 + 1) / 7);
+  
+  // 주의 시작일 (월요일) 계산
+  const weekStart = new Date(d);
+  const dayOfWeek = d.getDay();
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  weekStart.setDate(d.getDate() + diffToMonday);
+  
+  // 주의 종료일 (일요일) 계산
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  
+  return {
+    year: thursday.getFullYear(),
+    week: weekNumber,
+    weekStart,
+    weekEnd,
+  };
+}
+
+/**
+ * 날짜를 YYYY-MM-DD 형식으로 포맷합니다.
+ */
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 날짜 범위 문자열을 파싱합니다.
+ * 지원 형식:
+ * - "2025-12-01 2025-12-05" (공백 구분)
+ * - "2025-12-01 ~ 2025-12-05" (~ 구분)
+ */
+function parseDateRange(rangeStr: string): { start: Date; end: Date } | null {
+  // 공백 구분 형식
+  const spaceMatch = rangeStr.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})$/);
+  if (spaceMatch) {
+    return {
+      start: new Date(spaceMatch[1]),
+      end: new Date(spaceMatch[2]),
+    };
+  }
+  
+  // ~ 구분 형식
+  const tildeMatch = rangeStr.match(/^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/);
+  if (tildeMatch) {
+    return {
+      start: new Date(tildeMatch[1]),
+      end: new Date(tildeMatch[2]),
+    };
+  }
+  
+  return null;
 }
 
 // ========================================
@@ -362,7 +444,9 @@ function parsePastWeekBlock(lines: string[]): PastWeek {
 
   // Risk 추출
   const riskTexts = extractSectionItems(pastWeekLines, "Risk");
-  const filteredRisks = riskTexts.filter(
+  const risksTexts = extractSectionItems(pastWeekLines, "Risks");
+  const allRisks = [...riskTexts, ...risksTexts];
+  const filteredRisks = allRisks.filter(
     (r) => r.toLowerCase() !== "none" && r !== "?" && r !== "-"
   );
   const risk = filteredRisks.length > 0 ? filteredRisks : null;
@@ -408,8 +492,11 @@ function parseThisWeekBlock(lines: string[]): ThisWeek {
 
   // Tasks 추출
   const taskTexts = extractSectionItems(thisWeekLines, "Tasks");
+  
+  // "None" 필터링
+  const filteredTasks = taskTexts.filter(t => t.toLowerCase() !== "none");
 
-  return { tasks: taskTexts };
+  return { tasks: filteredTasks };
 }
 
 /**
@@ -522,18 +609,32 @@ function parseSubmittedTextV2(content: string): { items: ScrumItemV2[]; errors: 
 function main(): void {
   const args = process.argv.slice(2);
 
-  if (args.length < 4) {
-    console.error("사용법: yarn scrum:parse <year> <month> <week> <range>");
-    console.error('예시: yarn scrum:parse 2025 01 W01 "2025-01-06 ~ 2025-01-12"');
+  if (args.length < 1) {
+    console.error("사용법: yarn scrum:parse <range>");
+    console.error('예시: yarn scrum:parse "2025-12-01 2025-12-05"');
+    console.error('예시: yarn scrum:parse "2025-12-01 ~ 2025-12-05"');
+    console.error("");
+    console.error("ISO 주차가 자동으로 계산됩니다.");
     process.exit(1);
   }
 
-  const [yearStr, monthStr, week, range] = args;
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
+  const rangeStr = args[0];
+  const dateRange = parseDateRange(rangeStr);
+  
+  if (!dateRange) {
+    console.error(`날짜 범위 파싱 실패: ${rangeStr}`);
+    console.error('올바른 형식: "2025-12-01 2025-12-05" 또는 "2025-12-01 ~ 2025-12-05"');
+    process.exit(1);
+  }
 
-  // 월을 2자리로 패딩
-  const monthPadded = month.toString().padStart(2, "0");
+  // ISO 주차 정보 계산 (주 시작일 기준)
+  const isoInfo = getISOWeekInfo(dateRange.start);
+  const weekStr = `W${isoInfo.week.toString().padStart(2, "0")}`;
+
+  console.log(`📅 날짜 범위: ${formatDate(dateRange.start)} ~ ${formatDate(dateRange.end)}`);
+  console.log(`📆 ISO 주차: ${isoInfo.year}년 ${weekStr}`);
+  console.log(`📆 주간 범위: ${formatDate(isoInfo.weekStart)} ~ ${formatDate(isoInfo.weekEnd)}`);
+  console.log("");
 
   // submitted-scrum.txt 읽기
   const submittedPath = path.join(process.cwd(), "data", "submitted-scrum.txt");
@@ -562,30 +663,29 @@ function main(): void {
     console.warn("파싱된 항목이 없습니다.");
   }
 
-  // 결과 JSON 생성 (v2 스키마)
-  const result: WeeklyScrumDataV2 = {
-    year,
-    month,
-    week,
-    range,
-    schemaVersion: 2,
+  // 결과 JSON 생성 (v3 스키마 - ISO 주차 기준)
+  const result: WeeklyScrumDataV3 = {
+    year: isoInfo.year,
+    week: weekStr,
+    weekStart: formatDate(isoInfo.weekStart),
+    weekEnd: formatDate(isoInfo.weekEnd),
+    schemaVersion: 3,
     items,
   };
 
-  // 저장 경로 생성
+  // 저장 경로 생성 (ISO 연도별 폴더)
   const outputDir = path.join(
     process.cwd(),
     "data",
     "scrum",
-    year.toString(),
-    monthPadded
+    isoInfo.year.toString()
   );
 
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  const outputFileName = `${year}-${monthPadded}-${week}.json`;
+  const outputFileName = `${isoInfo.year}-${weekStr}.json`;
   const outputPath = path.join(outputDir, outputFileName);
 
   // JSON 파일 저장
@@ -593,7 +693,7 @@ function main(): void {
 
   console.log(`✅ 파싱 완료: ${items.length}개 항목`);
   console.log(`📁 저장 위치: ${outputPath}`);
-  console.log(`📋 스키마 버전: v2`);
+  console.log(`📋 스키마 버전: v3 (ISO 주차 기준)`);
 
   if (errors.length > 0) {
     console.log(`⚠️  경고: ${errors.length}개`);

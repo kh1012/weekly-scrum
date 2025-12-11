@@ -19,14 +19,15 @@ export default function ScrumLayout({
   // 데이터가 없으면 Mock 데이터 사용
   if (Object.keys(allData).length === 0) {
     const mockData = getMockData();
-    const mockKey = `${mockData.year}-${mockData.month}-${mockData.week}`;
+    const mockKey = `${mockData.year}-${mockData.week}`;
     const mockWeeks: WeekOption[] = [
       {
         year: mockData.year,
-        month: mockData.month,
         week: mockData.week,
+        weekStart: mockData.range.split(" ~ ")[0],
+        weekEnd: mockData.range.split(" ~ ")[1],
         key: mockKey,
-        label: `${mockData.year}년 ${mockData.month}월 ${mockData.week}`,
+        label: `${mockData.year}년 ${mockData.week}`,
         filePath: "",
       },
     ];

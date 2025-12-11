@@ -17,10 +17,11 @@ import type {
 } from "@/types/calendar";
 import type {
   WeeklyScrumDataUnion,
+  WeeklyScrumDataV3,
   ScrumItemV2,
   ScrumItem,
 } from "@/types/scrum";
-import { isV2Data } from "@/types/scrum";
+import { isV2Data, isV3Data } from "@/types/scrum";
 
 // ========================================
 // 유틸리티 함수
@@ -136,6 +137,7 @@ export function parseDateRange(
 
 /**
  * 기존 WeeklyScrumDataUnion을 RawSnapshot[]으로 변환
+ * v3 (ISO 주차), v2 (월 내 주차), v1 (레거시) 모두 지원
  */
 export function convertToRawSnapshots(
   weeklyDataList: WeeklyScrumDataUnion[]
@@ -143,14 +145,41 @@ export function convertToRawSnapshots(
   const snapshots: RawSnapshot[] = [];
 
   weeklyDataList.forEach((weeklyData) => {
-    const weekIndex = parseWeekIndex(weeklyData.week);
-    const { weekStart, weekEnd } = parseDateRange(
-      weeklyData.range,
-      weeklyData.year
-    );
+    // v3: ISO 주차 기준
+    if (isV3Data(weeklyData)) {
+      const v3Data = weeklyData as WeeklyScrumDataV3;
+      const weekIndex = parseWeekIndex(v3Data.week);
+      
+      v3Data.items.forEach((item: ScrumItemV2, idx) => {
+        snapshots.push({
+          id: `${v3Data.year}-${weekIndex}-${idx}`,
+          year: v3Data.year,
+          weekIndex,
+          weekStart: v3Data.weekStart,
+          weekEnd: v3Data.weekEnd,
+          domain: item.domain || "",
+          project: item.project || "",
+          module: item.module || "",
+          feature: item.feature || "",
+          memberName: item.name || "",
+          pastWeekTasks: item.pastWeek.tasks.map((t) => ({
+            title: t.title,
+            progress: t.progress,
+          })),
+          thisWeekTasks: item.thisWeek.tasks,
+        });
+      });
+      return;
+    }
 
+    // v2: 월 내 주차 기준
     if (isV2Data(weeklyData)) {
-      // v2 데이터
+      const weekIndex = parseWeekIndex(weeklyData.week);
+      const { weekStart, weekEnd } = parseDateRange(
+        weeklyData.range,
+        weeklyData.year
+      );
+      
       weeklyData.items.forEach((item: ScrumItemV2, idx) => {
         snapshots.push({
           id: `${weeklyData.year}-${weekIndex}-${idx}`,
@@ -170,29 +199,36 @@ export function convertToRawSnapshots(
           thisWeekTasks: item.thisWeek.tasks,
         });
       });
-    } else {
-      // v1 데이터
-      weeklyData.items.forEach((item: ScrumItem, idx) => {
-        const progress = item.progress || [];
-        snapshots.push({
-          id: `${weeklyData.year}-${weekIndex}-${idx}`,
-          year: weeklyData.year,
-          weekIndex,
-          weekStart,
-          weekEnd,
-          domain: item.domain || "",
-          project: item.project || "",
-          module: item.module || "",
-          feature: item.topic || "",
-          memberName: item.name || "",
-          pastWeekTasks: progress.map((p) => ({
-            title: p,
-            progress: parseTaskCompletionRate(p) * 100,
-          })),
-          thisWeekTasks: item.next || [],
-        });
-      });
+      return;
     }
+    
+    // v1: 레거시
+    const weekIndex = parseWeekIndex(weeklyData.week);
+    const { weekStart, weekEnd } = parseDateRange(
+      weeklyData.range,
+      weeklyData.year
+    );
+    
+    weeklyData.items.forEach((item: ScrumItem, idx) => {
+      const progress = item.progress || [];
+      snapshots.push({
+        id: `${weeklyData.year}-${weekIndex}-${idx}`,
+        year: weeklyData.year,
+        weekIndex,
+        weekStart,
+        weekEnd,
+        domain: item.domain || "",
+        project: item.project || "",
+        module: item.module || "",
+        feature: item.topic || "",
+        memberName: item.name || "",
+        pastWeekTasks: progress.map((p) => ({
+          title: p,
+          progress: parseTaskCompletionRate(p) * 100,
+        })),
+        thisWeekTasks: item.next || [],
+      });
+    });
   });
 
   return snapshots;

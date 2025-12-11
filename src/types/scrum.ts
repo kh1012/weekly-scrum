@@ -87,7 +87,23 @@ export interface ScrumItem {
 }
 
 /**
- * v2 주간 스크럼 데이터 타입
+ * v3 주간 스크럼 데이터 타입 (ISO 주차 기준)
+ * - 폴더 구조: data/scrum/YYYY/YYYY-WXX.json
+ * - week: ISO 연간 주차 (W01 ~ W53)
+ */
+export interface WeeklyScrumDataV3 {
+  year: number;           // ISO 주차가 속한 연도
+  week: string;           // ISO 주차 (W01 ~ W53)
+  weekStart: string;      // 주 시작일 (YYYY-MM-DD, 월요일)
+  weekEnd: string;        // 주 종료일 (YYYY-MM-DD, 일요일)
+  schemaVersion: 3;
+  items: ScrumItemV2[];
+}
+
+/**
+ * v2 주간 스크럼 데이터 타입 (레거시 - 월 내 주차)
+ * - 폴더 구조: data/scrum/YYYY/MM/YYYY-MM-WXX.json
+ * - week: 월 내 주차 (W01 ~ W05)
  */
 export interface WeeklyScrumDataV2 {
   year: number;
@@ -111,9 +127,9 @@ export interface WeeklyScrumData {
 }
 
 /**
- * 통합 주간 스크럼 데이터 타입 (v1 또는 v2)
+ * 통합 주간 스크럼 데이터 타입 (v1, v2, v3)
  */
-export type WeeklyScrumDataUnion = WeeklyScrumData | WeeklyScrumDataV2;
+export type WeeklyScrumDataUnion = WeeklyScrumData | WeeklyScrumDataV2 | WeeklyScrumDataV3;
 
 /**
  * 필터 상태 타입 (단일 선택 - 레거시)
@@ -148,15 +164,16 @@ export interface FilterOptionState {
 }
 
 /**
- * 주차 옵션 타입
+ * 주차 옵션 타입 (v3 - ISO 주차 기준)
  */
 export interface WeekOption {
-  year: number;
-  month: number;
-  week: string;
-  key: string;
-  label: string;
-  filePath: string;
+  year: number;           // ISO 연도
+  week: string;           // ISO 주차 (W01 ~ W53)
+  weekStart: string;      // 주 시작일 (YYYY-MM-DD)
+  weekEnd: string;        // 주 종료일 (YYYY-MM-DD)
+  key: string;            // 고유 키 (YYYY-WXX)
+  label: string;          // 표시 레이블
+  filePath: string;       // 파일 경로
 }
 
 /**
@@ -213,7 +230,7 @@ export interface ScrumStats {
 }
 
 // ========================================
-// v2 → v1 변환 유틸리티 (하위 호환성)
+// v2/v3 → v1 변환 유틸리티 (하위 호환성)
 // ========================================
 
 /**
@@ -261,6 +278,23 @@ export function convertV2ToV1Data(data: WeeklyScrumDataV2): WeeklyScrumData {
 }
 
 /**
+ * v3 WeeklyScrumData를 v1 WeeklyScrumData로 변환
+ */
+export function convertV3ToV1Data(data: WeeklyScrumDataV3): WeeklyScrumData {
+  // weekStart에서 월 추출
+  const [year, month] = data.weekStart.split("-").map(Number);
+  
+  return {
+    year: data.year,
+    month: month,
+    week: data.week,
+    range: `${data.weekStart} ~ ${data.weekEnd}`,
+    schemaVersion: 1,
+    items: data.items.map(convertV2ToV1Item),
+  };
+}
+
+/**
  * 데이터가 v2 스키마인지 확인
  */
 export function isV2Data(data: WeeklyScrumDataUnion): data is WeeklyScrumDataV2 {
@@ -268,9 +302,19 @@ export function isV2Data(data: WeeklyScrumDataUnion): data is WeeklyScrumDataV2 
 }
 
 /**
- * 데이터를 v1 형태로 정규화 (v1이면 그대로, v2면 변환)
+ * 데이터가 v3 스키마인지 확인
+ */
+export function isV3Data(data: WeeklyScrumDataUnion): data is WeeklyScrumDataV3 {
+  return data.schemaVersion === 3;
+}
+
+/**
+ * 데이터를 v1 형태로 정규화 (v1이면 그대로, v2/v3면 변환)
  */
 export function normalizeToV1(data: WeeklyScrumDataUnion): WeeklyScrumData {
+  if (isV3Data(data)) {
+    return convertV3ToV1Data(data);
+  }
   if (isV2Data(data)) {
     return convertV2ToV1Data(data);
   }
