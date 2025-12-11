@@ -1,330 +1,548 @@
-# Cursor V2 작업 요청: 스냅샷 관리 메뉴 개발 + 문서 정비 + v2 검증 지침 작성
+당신은 Next.js 15 + TypeScript 기반으로 이미 구축된 "Weekly Scrum 대시보드"에 새로운 Calendar View를 추가하는 시니어 프론트엔드 엔지니어입니다.
 
-아래 내용은 통째로 복사해서 Cursor에 붙여서 실행할 작업 지시문이다.  
-중요한 점: 디렉토리 구조와 파일 위치는 **지금 프로젝트에 이미 존재하는 구조를 최우선**으로 따르고,  
-새로 제안된 구조는 참고용으로만 사용해라.
+목표는 **주 단위 스냅샷 데이터를 달력(Calendar) 형태로 재구성해서, 관리자/개인이 한 달 동안 어디에 집중했는지 한눈에 보이게 하는 것**입니다.  
+이 기능은 "위클리 스크럼" 사이트의 상위 메뉴 중 하나로 동작하며, **관리자 관점(프로젝트 중심)** 과 **개인 관점(멤버 중심)** 을 모두 지원해야 합니다.
 
----
+아래 요구사항을 꼼꼼히 읽고, 반드시 다음 순서로 작업하세요:
 
-## 0. 작업 전 공통 규칙
+1. 개념 정리
+2. 데이터 모델 정리
+3. UI 구조 설계
+4. 컴포넌트/훅/유틸 분리 계획
+5. 실제 코드 작성
 
-1. 프로젝트 구조를 먼저 스캔해서, 스냅샷 관련 코드/문서/컴포넌트/훅/유틸이 어디에 있는지 파악하고 짧게 요약해라.
-2. 새로운 코드나 파일을 만들 때는 **기존 패턴과 네이밍, 디렉토리 구조를 최대한 그대로 따를 것**.
-3. 이 문서에서 제안하는 디렉토리(예: src/defines 등)는 “추천안”일 뿐이며,  
-   실제 적용은 기존 구조에 자연스럽게 녹아들도록 조정해라.
-4. 모든 변경 후에는 타입체크 및 빌드가 통과하는지 확인해라.
-
----
-
-## 1. 스냅샷 관리 메뉴 페이지 구현
-
-### 1-1. 개요
-
-목표: 매주 스냅샷을 더 빠르고 편하게 작성할 수 있는 **관리 전용 화면**을 만든다.
-
-특징:
-
-- 기존 스냅샷을 이름/주차 기준으로 불러오기
-- 새 스냅샷 카드 생성
-- 여러 장의 스냅샷을 동시에 편집
-- JSON / Plain Text 형식으로 클립보드 복사
-- 이 화면의 모든 데이터는 **임시 데이터**이며, 어디에도 직접 저장하지 않는다.
-
-새 페이지/컴포넌트/훅을 만들 때,
-
-- 먼저 기존 스냅샷 관련 라우트/컴포넌트 위치를 확인하고,
-- 그 구조에 맞춰 파일을 생성해라. (예: app/snapshots/manage/page.tsx 등)
+각 단계에서 **텍스트로 설계 → 내가 수용 가능한지 확인 가능한 요약 → 그 다음 코드** 순서로 진행합니다.  
+단계별 산출물은 모두 마크다운 텍스트로 먼저 보여준 뒤, 이어서 파일 단위 코드 제안을 하세요.
 
 ---
 
-### 1-2. 초기 진입 화면
+## 0. 전제: 기존 Weekly Scrum / Snapshot 데이터
 
-초기 진입 시 화면에는 두 개의 진입점이 있어야 한다.
+이미 시스템에는 "주 단위 스냅샷" 데이터가 존재한다고 가정합니다. 스키마는 대략 다음과 같은 개념을 포함합니다. (정확한 필드명은 추후 매핑)
 
-- [데이터 불러오기]
-- [새로 작성하기]
+- 주 단위 스냅샷 개념:
+  - year (예: 2025)
+  - weekIndex (ISO week number 또는 내부 주차 인덱스)
+  - weekStart, weekEnd (YYYY-MM-DD)
+- 업무 메타:
+  - domain (예: Planning, Frontend, Backend, Design, Content 등)
+  - project (예: MOTIIV, M-Connector, Desk, Profile 등)
+  - module (예: Spreadsheet, Workspace, Engagement System, Navigation 등)
+  - feature (보다 세부 기능 단위)
+  - name (스냅샷 작성자 이름, 즉 멤버명)
+- 작업 내용:
+  - pastWeek.tasks / thisWeek.tasks (텍스트 배열, 내부에는 "설명 + %", 혹은 status 키워드(DONE/HALF/TODO) 등이 섞일 수 있음)
+- 주차 식별자:
+  - year + weekIndex 조합, 또는 별도의 weekId
 
-단순한 카드 두 개, 혹은 버튼 두 개로 구성해도 된다.  
-향후 “최근 작업 이어서 하기” 같은 기능을 붙일 수 있도록, 적당히 여유 있는 레이아웃으로 설계해라.
-
----
-
-### 1-3. “데이터 불러오기” 기능
-
-사용자는 두 가지 방식으로 기존 스냅샷을 불러올 수 있다.
-
-#### A. 이름 기준 선택
-
-- 왼쪽: 이름 체크박스 리스트
-  - 전체 선택 / 개별 선택 지원
-- 오른쪽: 선택된 이름들에서 실제로 스냅샷이 존재하는 주차 리스트
-  - 예: [ ] 2025-12-W01 (2025-12-01 ~ 2025-12-05)
-  - 전체 선택 / 개별 선택 지원
-- 선택된 (이름 × 주차) 조합만큼 관리 페이지의 편집 리스트에 스냅샷 카드가 추가된다.
-
-#### B. 주차 기준 선택
-
-- 왼쪽: 주차 체크박스 리스트
-  - 예: [ ] 2025-12-W01 (2025-12-01 ~ 2025-12-05)
-  - 전체 선택 / 개별 선택 지원
-- 오른쪽: 해당 주차에 실제로 스냅샷이 존재하는 이름 리스트
-  - 전체 선택 / 개별 선택 지원
-- 선택된 (주차 × 이름) 조합만큼 스냅샷 카드가 추가된다.
-
-#### 공통 요구사항
-
-- 이미 추가된 (이름, 주차) 조합은 **중복으로 추가되지 않도록** 방어 로직을 넣어라.
-- 이름/주차 메타 정보를 읽어오는 로직은 훅이나 유틸 함수로 분리해서 공통으로 사용해라.
-- 불러온 데이터는 모두 **v2 스키마 형태**로 맞춰서 관리 페이지 상태에 적재되도록 변환 헬퍼를 작성해라.
-  - v1 형식이 섞여 있다면 v2로 매핑하는 곳을 한 군데로 모아 두는 것을 목표로 한다.
+당신은 이 데이터를 **Calendar View용 집계 데이터**로 변환하는 유틸 계층부터 설계·구현해야 합니다.
 
 ---
 
-### 1-4. “새로 작성하기” 기능
+## 1. 상위 메뉴·모드 설계 (관리자 / 개인 관점)
 
-- [새로 작성하기] 버튼을 누르면 바로 편집 화면으로 이동한다.
-- 이 때 기본적으로 **빈 스냅샷 카드 1개**를 생성해서 편집 리스트에 넣어둔다.
-- 추가 카드는 편집 화면 내의 “+ 빈 카드 추가” 버튼으로 생성한다.
+### 1-1. 관리자가 실제로 보고 싶은 질문
 
----
+관리자(리더)는 이 화면에서 주로 다음 질문에 답을 얻고자 합니다.
 
-### 1-5. 편집 화면 레이아웃
+1. "이번 달 동안 우리 팀이 어떤 프로젝트(또는 워크스트림)에 가장 집중했는가?"
+2. "주별로 보면, 어떤 주에 어떤 프로젝트에 힘을 실었는가?"
+3. "특정 멤버는 한 달 동안 어디에 시간을 썼고, 무엇을 얼마나 완료했는가?"
 
-편집 화면은 다음과 같은 2단 구조로 만든다.
+이를 위해 Calendar View 상단에 두 가지 모드를 둡니다.
 
-- 좌측: 스냅샷 카드 리스트 (각 카드가 접힌 상태로 요약)
-- 우측: 선택된 카드의 상세 편집 폼
+- 모드 1: "프로젝트 집중도" (Project Focus)
+- 모드 2: "멤버 집중도" (Member Focus)
 
-#### 좌측: 카드 리스트
+내부 상태 타입(참고용 개념):
 
-기능 요구사항:
+- CalendarMode = 'project' | 'member'
 
-- 각 카드는 다음 정도의 요약 정보를 가진다.
-  - 대략 domain / project / module / feature / name / week 조합 중 적절한 것
-- 카드 단위 기능:
-  - 카드 선택 (우측 편집 영역 활성화)
-  - 접기 / 펼치기
-  - 카드 삭제
-  - 카드 단위 JSON 복사
-  - 카드 단위 Plain Text 복사
-  - 카드 단위 Styled 보기 ↔ Plain Text 보기 토글
-- 리스트 상단 혹은 하단:
-  - “+ 빈 카드 추가” 버튼
-- 전체 공통 기능(리스트 상단 등):
-  - 전체 카드 보기 모드 토글: Styled 카드 UI ↔ Plain Text 일괄 전환
-  - 전체 카드 JSON 클립보드 복사
-  - 전체 카드 Plain Text 클립보드 복사 (각 카드는 빈 줄 하나로 구분해서 붙여넣기 좋게)
+UI 상단 탭 레이블은 다음과 같이 고정합니다.
 
-이 화면에서 다루는 데이터는 전부 **임시 상태**이므로, 주석에 반드시 “임시 작업 공간용 상태”라는 설명을 남겨라. 나중에 실제 저장 기능이 필요할 때 연결할 수 있도록 상태/구조를 설계해라.
-
-#### 우측: 카드 상세 편집 폼
-
-아래 2장에서 설명하는 v2 스키마 기준 편집 필드 구성을 따른다.
+- 탭 1: "프로젝트 집중도"
+- 탭 2: "멤버 집중도"
 
 ---
 
-## 2. 카드 상세 편집 폼 구성 (v2 스키마 기준)
+### 1-2. "프로젝트" / "개인" 네이밍 전략
 
-여기서 중요한 포인트는 다음이다.
+관리자/팀원 모두에게 이질감이 적으면서 추후 확장이 가능한 네이밍을 사용합니다.
 
-- 메타 필드(domain, project, module, feature)는 **고정 옵션이 있는 콤보박스**이지만,
-- 이 고정 옵션들을 코드에서 쉽게 관리할 수 있도록 **별도 배열로 분리**한다.
-- define.ts 같은 파일 이름과 위치는 기존 프로젝트 스타일에 맞춰 결정하고,
-  마지막에 “실제로 어떤 경로에 무엇을 만들었는지”를 요약해라.
+- 프로젝트/업무 단위 축(Work 단위) 후보:
+  - 프로젝트 (Project)
+  - 이니셔티브 (Initiative)
+  - 워크스트림 (Workstream)
+- 사람 축(개인) 후보:
+  - 멤버 (Member)
+  - 기여자 (Contributor)
+  - 플레이어 (Player)
 
-### 2-1. 메타 영역
+**구현 가이드 (중요)**
 
-대상 필드:
+- 내부(타입/유틸/로직)에서는:
+  - initiative (프로젝트 이상의 개념까지 포괄)
+  - member (멤버)
+- 화면(UI 텍스트)에서는:
+  - "프로젝트", "멤버" 라벨 사용
+  - 모드 탭 라벨은 "프로젝트 집중도", "멤버 집중도"
 
-- domain
-- project
-- module
-- feature
+이렇게 하면,
 
-요구사항:
-
-- 기본 입력 방식은 고정 옵션이 들어간 **콤보박스**.
-- 콤보박스 항목의 실제 값 목록은 코드 상의 배열로 관리한다.
-- 예시로 아래와 같은 배열이 필요하다. (실제 값은 프로젝트 상황에 맞게 조정)
-
-  - DOMAIN_OPTIONS
-  - PROJECT_OPTIONS
-  - MODULE_OPTIONS
-  - FEATURE_OPTIONS
-
-- 배열 정의 위치는 예를 들어 다음과 같을 수 있다.
-  - src/defines/snapshotMeta.ts
-  - 또는 기존에 options/constants/defines를 관리하는 파일이 이미 있다면 그 구조에 맞춰 넣어라.
-- 각 콤보박스의 마지막에는 “사용자 정의” 항목을 둔다.
-  - 사용자가 “사용자 정의”를 선택하면 해당 필드는 즉시 **텍스트 입력 필드**로 전환되어 자유롭게 입력 가능해야 한다.
-
-중요: 실제 구현 시에는 반드시 기존 코드베이스 내에 “상수/옵션/정의”를 모아둔 위치가 있는지 먼저 확인하고,  
-그 위치를 재사용하거나 확장하는 방식으로 작업해라. 이 문서에 적힌 경로는 예시일 뿐이다.
-
-### 2-2. 일반 텍스트 필드
-
-단일 문자열로 다루는 필드들이다.
-
-- name
-  - 전체 구성원 이름 리스트에서 선택하는 콤보박스 + “사용자 정의” 전환 지원
-  - 이름 리스트 역시 배열로 분리해서 코드 상에서 관리한다.
-  - 예시 배열 이름:
-    - NAME_OPTIONS
-    - 실제 위치는 기존 구조 보고 맞춰라. (예: src/defines/names.ts 등)
-- 그 외 v2 스키마상 단일 문자열 필드
-  - 예시: pastWeek.title, thisWeek.title 등
-  - 실제 필드명은 이미 정의된 v2 스키마 문서를 기준으로 맞춘다.
-
-### 2-3. 멀티라인 텍스트 필드
-
-기본 높이가 넉넉한 textarea로 구성한다.
-
-- pastWeek.tasks
-- pastWeek.risks (또는 v2 스키마에 정의된 위험 관련 필드 이름)
-- thisWeek.tasks
-
-요구사항:
-
-- 줄바꿈 여러 개를 허용한다.
-- 내부 상태는 상황에 따라 문자열 또는 배열로 관리해도 되지만,
-  최종적으로는 **v2 스키마에서 정의한 형태**로 변환해서 저장/복사해야 한다.
-- Plain Text ↔ JSON 변환 로직은 별도 유틸 함수로 분리해두면 좋다.
-
-### 2-4. collaborators
-
-v2 스키마 구조를 그대로 사용한다.  
-예상 구조(실제 스키마 정의 파일을 확인해서 맞춰라):
-
-- collaborators: 배열
-  - 각 항목: { name: string, relations: string[] }
-
-#### collaborator.name
-
-- NAME_OPTIONS 기반 콤보박스
-- “사용자 정의” 선택 시 텍스트 입력 필드로 전환
-- NAME_OPTIONS 배열은 별도 정의 파일(예: src/defines/names.ts)에서 관리하되,  
-  실제 위치는 기존 프로젝트 패턴에 맞춰 정리한다.
-
-#### collaborator.relations
-
-- 가능한 값: "pair", "pre", "post"
-- 이 값들을 배열로 관리한다. 예시 이름: RELATION_OPTIONS
-- UI는 RELATION_OPTIONS를 기준으로 한 **복수 선택 체크박스**
-- 내부 저장 형식은 relations: string[]  
-  (실제 타입은 ("pair" | "pre" | "post")[] 형태로 제한하는 것이 이상적이다.)
+- 지금은 "프로젝트"로 보이지만,
+- 나중에 캠페인·제품군 등 더 큰 단위로 확장할 때도 `initiative`라는 내부 개념을 유지할 수 있습니다.
 
 ---
 
-## 3. v2 스키마 문서 정비
+## 2. Calendar View가 풀어야 할 문제 정의
 
-이미 존재하는 snapshot-guide-v2.md 파일을 최신 상태로 업데이트한다.
+### 2-1. 현재 스냅샷만으로는 어려운 점
 
-### 3-1. snapshot-guide-v2.md 업데이트
+1. 주 단위 스냅샷이 쌓이기만 하면, **시간의 흐름과 집중 포인트가 직관적으로 보이지 않는다.**
+2. 관리자 입장에서는,
+   - "이번 달에 가장 오래/깊게 가져간 프로젝트가 무엇인지"
+   - "어떤 주에 어떤 프로젝트에 특히 힘을 실었는지"
+     를 빠르게 보기 어렵다.
+3. 개인 입장에서는,
+   - "내가 한 달 동안 어디에 시간을 썼는지"
+   - "어떤 프로젝트/모듈/피처에 얼만큼 기여했는지"
+     를 한눈에 돌아보기 어렵다.
 
-해야 할 일:
+### 2-2. Calendar View가 제공해야 할 답
 
-1. 현재 코드 상의 v2 스키마 타입/구조를 확인하고,  
-   문서에 적힌 내용과 실제 구현이 일치하는지 비교해라.
-2. 다음 변경 사항이 문서에 명확히 반영되었는지 확인하고, 없다면 보완해라.
-   - risk → risks (키 이름 변경)
-   - collaborator 관계: 단일 relation → relations 배열
-3. Plan / Progress / Next / Risks / Collaborators 등 각 필드에 대해
-   - 필수 여부
-   - 타입
-   - 작성 규칙
-   - 예시
-     를 꼼꼼히 정리해라.
-4. JSON 예시와 Plain Text 예시를 v2 기준으로 갱신해라.
-5. “메타 옵션(domain/project/module/feature가 콤보박스 + 사용자 정의 입력으로 동작한다”는 점도 문서에 반영해라.
+Calendar View는 다음을 직관적으로 보여줘야 합니다.
 
-문서의 목표는:
-
-- 팀원이 이 문서만 보고도 스냅샷을 제대로 작성할 수 있고,
-- 타입 정의와 1:1로 상응하는 **단일 진실의 근원(SSOT)** 이 되는 것이다.
-
----
-
-## 3-2. snapshot-validation-v2.md 신규 작성
-
-새로운 검증 지침 문서를 만든다.  
-목표: AI 또는 스크립트가 스냅샷 데이터를 검증할 때 참고하는 룰북.
-
-권장 구조:
-
-1. Purpose
-   - 이 문서가 무엇을 위한 것인지 명확하게 적는다.
-2. Input Format
-   - 스냅샷 검증 시 어떤 형식의 데이터를 입력으로 받는지 설명한다.
-   - 예: JSON 배열, 각 원소가 하나의 스냅샷, 혹은 특정 Plain Text 포맷 등.
-3. Schema Rules
-   - v2 스키마 구조 정의
-   - 필수/선택 필드
-   - 각 필드의 타입 및 허용 값
-   - domain/project/module/feature/collaborators 구조 등
-4. Content Rules
-   - Plan/Progress/Next에는 반드시 퍼센트(%)가 들어가야 하는지 등의 규칙
-   - Risks를 어떻게 작성해야 하는지 (비워도 되는지, 최소 내용 등)
-   - Collaborators.name과 relations에 대한 제약사항
-5. Backward Compatibility Rules
-   - 과거 v1 형식이 들어왔을 때 어떻게 처리할지 정의한다.
-   - 예: risk만 있고 risks가 없을 때 변환 규칙, relation만 있고 relations 없을 때 처리 등.
-6. Validation Output Format
-   - 검증 결과를 어떤 형식으로 반환해야 하는지 정의.
-   - 예: 각 스냅샷마다 status (ok / warning / error)와 messages 배열 등.
-7. Examples
-   - 올바른 예제와 잘못된 예제를 함께 제공하고,  
-     각각 어떤 검증 결과가 나와야 하는지 예측값을 적는다.
-8. AI Prompt Template
-   - “아래 JSON 배열이 snapshot-validation-v2.md에 정의된 규칙을 모두 만족하는지 검사하라”와 같은 템플릿을 구체적으로 적어둔다.
-   - AI가 어떻게 응답해야 하는지까지 포함한다.
+1. 월 단위 / 선택 기간 전체에서:
+   - 프로젝트 단위로:
+     - 몇 주 동안 등장했는지 (집중 지속 기간)
+     - 해당 기간 동안 완료한 task 수 / 계획된 task 수
+     - 관여한 멤버, 모듈, 피처의 다양성
+   - 멤버 단위로:
+     - 몇 주 동안 등장했는지
+     - 참여한 프로젝트/모듈/피처의 개수와 목록
+     - 완료 task 수 / 계획 task 수
+2. 주 단위(캘린더 셀)로:
+   - 프로젝트 모드일 때:
+     - 한 주에 **어떤 프로젝트에 얼마나 집중했는지** (상위 몇 개 막대 그래프)
+   - 멤버 모드일 때:
+     - 한 주에 **어떤 멤버가 얼마나 기여했는지** (상위 몇 명 막대 그래프)
+3. 우측 패널 메타데이터:
+   - 선택된 기간 및 선택된 주/프로젝트/멤버 기준으로:
+     - 참여 프로젝트 개수·목록
+     - 참여 모듈 개수·목록
+     - 참여 피처 개수·목록
+     - 완료 task 수, 계획 task 수, 평균 달성률
+     - (옵션) 집중도 점수 (예: 완료 task 수를 기반으로 한 스코어)
 
 ---
 
-## 4. 디렉토리 / 파일 구조에 대한 지침
+## 3. 데이터 모델 설계 (개념 수준)
 
-이 문서에서 예시로 제안한 구조는 다음과 같다.
+여기서는 개념적인 타입 이름만 정의합니다. 실제 TypeScript 타입은 구현 단계에서 제안하도록 합니다.
 
-- 스냅샷 메타 옵션 정의
-  - 예: src/defines/snapshotMeta.ts
-- 이름 리스트 정의
-  - 예: src/defines/names.ts
-- v2 스키마 가이드 문서
-  - 예: docs/snapshot-guide-v2.md
-- v2 검증 지침 문서
-  - 예: docs/snapshot-validation-v2.md
-- 스냅샷 관리 페이지
-  - 예: app/snapshots/manage/page.tsx (또는 프로젝트 구조에 적합한 위치)
+### 3-1. 입력: Raw Snapshot (최소 스키마)
 
-하지만 실제 구현 시에는 반드시 다음 순서를 따르라.
+개념적으로 최소한 다음 필드를 갖는다고 가정합니다.
 
-1. 먼저 기존 프로젝트의 디렉토리 구조와 네이밍 패턴을 확인한다.
-2. 이미 options/constants/defines/configs 등의 파일이 존재한다면,  
-   그 위치와 스타일을 **최대한 재사용**한다.
-3. 새로운 디렉토리나 파일을 만들었다면,
-   - 왜 그렇게 배치했는지,
-   - 어떤 역할을 하는지,
-     를 코드 상단 주석이나 커밋 메시지, 혹은 요약 코멘트로 남겨라.
-4. 최종적으로 실제로 구성된 구조(경로, 파일명)를 간략히 정리해서 남겨라.
+- id: 고유 ID
+- year: 연도 (예: 2025)
+- weekIndex: 주차 인덱스 (ISO week number 또는 내부 기준)
+- weekStart: 문자열 (YYYY-MM-DD)
+- weekEnd: 문자열 (YYYY-MM-DD)
+- domain: 문자열
+- project: 문자열 (initiative로 매핑)
+- module: 문자열
+- feature: 문자열
+- memberName: 문자열 (스냅샷 작성자, 혹은 담당자)
+- pastWeekTasks: 문자열 배열
+- thisWeekTasks: 문자열 배열
+
+task 문자열 안에는 `%` 또는 `(DONE)/(HALF)/(TODO)` 같은 키워드 기반으로 달성률을 추정할 수 있다고 가정합니다.
+
+### 3-2. 주 단위 캘린더 집계 모델 (Week Aggregation)
+
+캘린더에서 한 칸(주)을 표현하기 위해 "주 단위 집계 객체"를 설계합니다.
+
+- WeekKey:
+
+  - year
+  - weekIndex
+
+- InitiativeAggregation (해당 주 기준 프로젝트 집계):
+
+  - initiativeName: 문자열 (기존 project)
+  - domains: Set<string>
+  - modules: Set<string>
+  - features: Set<string>
+  - members: Set<string>
+  - plannedTaskCount: number
+  - doneTaskCount: number
+  - avgCompletionRate: number (0~1 사이)
+  - focusScore: number  
+    (기본값: doneTaskCount, 또는 doneTaskCount \* avgCompletionRate)
+
+- MemberAggregation (해당 주 기준 멤버 집계):
+
+  - memberName: 문자열
+  - initiatives: Set<string>
+  - domains: Set<string>
+  - modules: Set<string>
+  - features: Set<string>
+  - plannedTaskCount: number
+  - doneTaskCount: number
+  - avgCompletionRate: number
+  - focusScore: number
+
+- WeekAggregation:
+  - key: WeekKey
+  - weekStart: 문자열
+  - weekEnd: 문자열
+  - initiatives: InitiativeAggregation[]
+  - members: MemberAggregation[]
+  - totalInitiativeFocus: number (모든 initiative의 focusScore 합)
+  - totalMemberFocus: number (모든 member의 focusScore 합)
+
+**focusScore 규칙(초기 버전)**
+
+- 단순하게 `focusScore = doneTaskCount` 로 시작합니다.
+- 나중에 필요하면 `doneTaskCount + plannedTaskCount * 0.3` 등으로 조정할 수 있도록 별도 유틸 함수로 분리합니다.
 
 ---
 
-## 5. 마무리 체크리스트
+### 3-3. 기간(월/범위) 단위 집계 모델 (Range Summary)
 
-마지막으로 아래 항목을 모두 충족했는지 확인해라.
+우측 메타 패널에서 사용할, 선택된 기간(예: 한 달)에 대한 집계 모델을 설계합니다.
 
-- 스냅샷 관리 페이지에서
-  - 데이터 불러오기(이름 기준 / 주차 기준)가 동작하는지
-  - 새로 작성하기가 동작하는지
-  - 카드 생성 / 삭제 / 선택 / 편집이 정상 동작하는지
-  - 개별 카드 및 전체 카드에 대해 JSON/Plain Text 복사가 잘 되는지
-- 메타 필드(domain/project/module/feature/relations/name)의 옵션이  
-  코드 상의 배열로 분리되어 있고, 사용자 정의 입력 전환이 잘 동작하는지
-- snapshot-guide-v2.md 가 실제 v2 스키마와 일치하는지
-- snapshot-validation-v2.md 가 작성되어 있고,  
-  실제 예제 JSON을 넣었을 때 어떤 식으로 검증해야 하는지 명확히 정의되어 있는지
-- 타입체크와 빌드가 모두 통과하는지
+- RangeSummaryBase:
+
+  - rangeStart: 문자열 (YYYY-MM-DD)
+  - rangeEnd: 문자열 (YYYY-MM-DD)
+  - weekCount: number
+
+- ProjectFocusRangeSummary (mode: project):
+
+  - mode: 'project'
+  - initiatives: 배열 (각 원소는 다음 정보 포함)
+    - initiativeName
+    - weekCount (해당 프로젝트가 등장한 주 수)
+    - doneTaskCount
+    - plannedTaskCount
+    - modules: Set<string>
+    - features: Set<string>
+    - members: Set<string>
+    - focusScore: number
+  - totalInitiativeCount
+  - totalModuleCount
+  - totalFeatureCount
+  - totalMemberCount
+
+- MemberFocusRangeSummary (mode: member):
+  - mode: 'member'
+  - members: 배열 (각 원소는 다음 정보 포함)
+    - memberName
+    - weekCount (해당 멤버가 등장한 주 수)
+    - initiatives: Set<string>
+    - modules: Set<string>
+    - features: Set<string>
+    - doneTaskCount
+    - plannedTaskCount
+    - focusScore
+  - totalMemberCount
+  - totalInitiativeCount
+  - totalModuleCount
+  - totalFeatureCount
 
 ---
 
-여기까지가 전체 작업 지시문이다.  
-이제 위 내용을 순차적으로 수행하면서, 단계별 변경 사항과 구조를 정리해줘.
+## 4. UI 구조 설계
+
+### 4-1. 전체 레이아웃 (좌: 캘린더, 우: 메타 패널)
+
+상위 페이지(예: CalendarViewPage)는 대략 다음 구조를 가집니다.
+
+- 상단 바:
+  - 좌측:
+    - 월 선택 또는 기간 선택 (예: `<` 2025년 3월 `>`)
+  - 우측:
+    - 탭: "프로젝트 집중도" / "멤버 집중도"
+- 본문:
+  - 좌측: CalendarGrid
+  - 우측: CalendarMetaPanel
+
+**상태(개념)**
+
+- mode: 'project' | 'member'
+- selectedMonth: "YYYY-MM" (예: "2025-03")
+- selectedWeek: (year, weekIndex) 또는 null
+- selectedInitiative: 문자열 또는 null
+- selectedMember: 문자열 또는 null
+
+### 4-2. CalendarGrid 설계
+
+- 입력:
+
+  - weeks: WeekAggregation[] (선택된 월/범위에 해당하는 주 목록)
+  - mode: 'project' | 'member'
+  - selectedWeek
+  - onSelectWeek
+  - onSelectInitiative
+  - onSelectMember
+
+- 렌더링:
+  - 표면적으로는 "달력"처럼 보이지만, **실제 핵심은 week 단위 row**입니다.
+  - 각 주에 대해 WeekCell을 렌더링합니다.
+  - UI는 실제 요일 그리드까지 구현할지, week 리스트 형태로 보여줄지는 구현 시에 선택할 수 있습니다.  
+    (초기 버전은 "주 리스트 + 각 주에 막대 그래프" 방식으로 단순하게 시작하는 것을 권장)
+
+### 4-3. WeekCell 설계
+
+- 주차 label:
+  - 예: "W12 · 03.17 ~ 03.23"
+- 프로젝트 모드일 때:
+  - 해당 주의 InitiativeAggregation 배열을 focusScore 기준으로 정렬
+  - 상위 N개(예: 3개) 프로젝트만 막대로 표시
+  - 각 막대:
+    - 길이: focusScore 비율
+    - 색: 프로젝트별 일관된 색 (간단한 색상 팔레트)
+    - 텍스트: 프로젝트명 + 완료 task 수
+  - 막대 클릭 시:
+    - selectedWeek + selectedInitiative를 갱신
+- 멤버 모드일 때:
+  - MemberAggregation 배열을 focusScore 기준으로 정렬
+  - 상위 N명(예: 3명) 멤버 막대 표시
+  - 막대 클릭 시:
+    - selectedWeek + selectedMember 갱신
+
+---
+
+### 4-4. 우측 CalendarMetaPanel 설계
+
+**프로젝트 모드 (Project Focus)**
+
+- 상단 요약 카드:
+  - "이 달/기간의 프로젝트 집중도 요약"
+  - 참여 프로젝트 수
+  - 참여 멤버 수
+  - 진행 모듈 수
+  - 진행 피처 수
+- 중단 리스트:
+  - 프로젝트 랭킹 (focusScore 순)
+  - 각 행에:
+    - 프로젝트명
+    - 등장 주차 수 (weekCount)
+    - 완료 task 수 / 계획 task 수
+    - 평균 completion rate
+    - 모듈 수 / 피처 수 / 멤버 수
+- 하단 상세:
+  - 선택된 주 + 프로젝트 기준 상세:
+    - 참여 멤버 목록
+    - 모듈/피처 목록
+    - 완료한 task 리스트 (해당 주)
+
+**멤버 모드 (Member Focus)**
+
+- 상단 요약 카드:
+  - 참여 멤버 수
+  - 멤버당 평균 프로젝트 수
+  - 멤버당 평균 모듈/피처 수
+- 중단 리스트:
+  - 멤버 랭킹 (focusScore 순)
+  - 각 행에:
+    - 멤버명
+    - 등장 주차 수
+    - 참여 프로젝트 수
+    - 완료 task 수
+- 하단 상세:
+  - 선택된 주 + 멤버 기준 상세:
+    - 해당 주에 어떤 프로젝트/모듈/피처에 기여했는지
+    - 완료 task 리스트
+
+---
+
+## 5. 캘린더 내 주 단위 표시 규칙
+
+### 5-1. 주차 계산 규칙
+
+- 주차는 현재 Weekly Scrum 시스템에서 사용 중인 기준(ISO week 등)을 그대로 따른다.
+- 월 View에서:
+  - selectedMonth (예: "2025-03")에 포함되는 모든 주차를 가져온다.
+  - weekStart 또는 weekEnd가 해당 월에 포함되면 그 주를 렌더링 대상에 포함한다.
+- Week label 표기:
+  - "W{weekIndex} · MM.DD ~ MM.DD" 형태 사용
+
+### 5-2. 선택/상호작용 규칙
+
+- 기본 선택:
+  - 현재 월의 마지막 주를 기본 선택 주로 지정 (selectedWeek 기본값)
+- 상호작용:
+  - WeekCell 클릭:
+    - 해당 week를 selectedWeek로 설정
+  - WeekCell 내부 막대(프로젝트/멤버) 클릭:
+    - selectedInitiative 또는 selectedMember 설정
+    - 우측 패널 상세 영역을 해당 조합 기준으로 갱신
+
+---
+
+## 6. 컴포넌트/훅/유틸 분리 전략
+
+### 6-1. 주요 컴포넌트 (파일 단위 설계)
+
+1. CalendarViewPage
+
+   - 역할:
+     - 상단 모드 탭 / 월 선택
+     - raw snapshot 데이터를 주입받고, 집계 훅 호출
+     - 좌측 CalendarGrid / 우측 CalendarMetaPanel 렌더
+   - 상태:
+     - mode ('project' | 'member')
+     - selectedMonth ("YYYY-MM")
+     - selectedWeek (year + weekIndex or null)
+     - selectedInitiative (string or null)
+     - selectedMember (string or null)
+
+2. CalendarGrid
+
+   - props:
+     - weeks (WeekAggregation[])
+     - mode
+     - selectedWeek
+     - onSelectWeek
+     - onSelectInitiative
+     - onSelectMember
+   - 역할:
+     - 주 리스트/그리드 렌더
+     - WeekCell 구성
+
+3. WeekCell
+
+   - props:
+     - week (WeekAggregation)
+     - mode
+     - selected (boolean)
+     - onSelectWeek
+     - onSelectInitiative
+     - onSelectMember
+   - 역할:
+     - 주차 라벨 표시
+     - 상위 프로젝트/멤버 막대 그래프 표시
+
+4. CalendarMetaPanel
+   - props:
+     - mode
+     - projectRangeSummary (ProjectFocusRangeSummary)
+     - memberRangeSummary (MemberFocusRangeSummary)
+     - selectedWeek
+     - selectedInitiative
+     - selectedMember
+   - 역할:
+     - 현재 모드에 따라:
+       - 상단 요약 카드
+       - 랭킹 리스트
+       - 선택 상세
+
+### 6-2. 훅 / 유틸
+
+1. useCalendarAggregation(rawSnapshots, selectedMonth)
+
+   - 반환:
+     - weeks: WeekAggregation[]
+     - projectRangeSummary: ProjectFocusRangeSummary
+     - memberRangeSummary: MemberFocusRangeSummary
+   - 내부 처리 순서:
+     - (1) selectedMonth / 기간에 포함되는 스냅샷 필터링
+     - (2) 주 단위 그룹핑 (year + weekIndex)
+     - (3) 각 주 내에서 initiative, member 별 집계
+     - (4) 전체 기간 기준 range summary 생성
+
+2. parseTaskCompletionRate(taskText)
+
+   - 역할:
+     - 문자열에서 `%` 숫자를 추출
+     - 혹은 "(DONE)/(HALF)/(TODO)" 키워드 기반으로 1.0/0.5/0.0 등으로 해석
+     - 없으면 0.0 반환
+
+3. computeFocusScore(plannedCount, doneCount, avgRate)
+   - 초기 구현:
+     - 단순히 doneCount 또는 doneCount \* avgRate 반환
+   - 이후 필요시 가중치 조정 가능하도록 별도 함수로 유지
+
+---
+
+## 7. 구현 순서 (Cursor에게 반드시 지킬 것)
+
+당신(Cursor)은 아래 순서대로 작업을 진행해야 합니다.
+
+1. 분석/계획 단계 (텍스트만)
+
+   - 이 프롬프트에 기반해서:
+     - 실제 TypeScript 타입 정의(파일 단위 계획)
+     - 컴포넌트 구조 (파일명, 컴포넌트명)
+     - 상태 관리 전략 (로컬 상태 vs 전역 스토어)
+   - 위 내용을 마크다운으로 먼저 출력할 것.
+   - 이 단계에서는 코드 작성 금지.
+
+2. 타입 및 유틸 구현
+
+   - 예: `types/calendar.ts` 파일에:
+     - WeekKey
+     - WeekAggregation
+     - ProjectFocusRangeSummary
+     - MemberFocusRangeSummary
+     - RawSnapshot (입력 타입)
+   - 예: `lib/calendarAggregation.ts` 파일에:
+     - 순수 집계 함수 (rawSnapshots → WeekAggregation[] → RangeSummary)
+     - parseTaskCompletionRate
+     - computeFocusScore
+   - 먼저 순수 함수 기반 집계 로직을 작성하고, 이후 `useCalendarAggregation` 훅으로 감쌀 것.
+
+3. Mock 데이터 기반 CalendarViewPage 스켈레톤
+
+   - 실제 데이터 연동 전:
+     - mockSnapshots를 상단에 선언해 end-to-end UI가 돌아가도록 구성
+   - `app/calendar/page.tsx` 또는 적절한 위치에:
+     - CalendarViewPage 구현
+     - 모드 탭 / 월 선택 / 좌우 레이아웃 / CalendarGrid / CalendarMetaPanel 연결
+
+4. WeekCell 시각화 구현
+
+   - 프로젝트 모드:
+     - 상위 3개 프로젝트에 대한 막대 그래프 구현 (단순 div width 비율)
+   - 멤버 모드:
+     - 상위 3명 멤버에 대한 막대 그래프 구현
+
+5. CalendarMetaPanel 구현
+
+   - 프로젝트 모드:
+     - 요약 카드 + 프로젝트 랭킹 + 선택 주/프로젝트 상세
+   - 멤버 모드:
+     - 요약 카드 + 멤버 랭킹 + 선택 주/멤버 상세
+
+6. 리팩터링 및 설명
+   - 구현 완료 후:
+     - 디렉토리 구조
+     - 각 컴포넌트/훅/유틸의 책임
+     - 향후 확장 포인트 (분기 뷰, 필터(도메인/프로젝트/멤버), 더 깊은 그래프 등)
+   - 을 마크다운으로 정리해서 함께 제공할 것.
+
+---
+
+## 8. 스타일 및 기술 스택 전제
+
+- 사용 스택:
+  - Next.js 15 App Router
+  - TypeScript
+- 스타일:
+  - 프로젝트에서 이미 사용하는 스타일 방식을 그대로 따른다.
+  - Tailwind, styled-jsx, Emotion 등 기존 패턴을 존중하며, 새로운 스타일 시스템을 도입하지 않는다.
+- 우선순위:
+  - 첫 버전에서는 **정보 구조와 읽기 쉬운 레이아웃**에 집중
+  - 미니 차트/그래프는 복잡한 라이브러리 대신, 단순한 div width 비율 기반부터 시작
+  - any 사용을 피하고, 모든 주요 props에 명시적인 타입을 부여
+
+---
+
+### 최종 지시
+
+1. 이 문서를 바탕으로, 먼저 **"Calendar View 전체 설계 요약"** 을 텍스트로 출력하라. (타입/파일 구조/상태 구조 포함)
+2. 그 다음, 내가 한 번에 복사해서 사용할 수 있도록 **파일 단위 코드**를 순차적으로 제안하라.
+3. 코드 블럭은 **각 파일당 하나의 완결된 블럭**으로 제안하며, **중간에 끊기거나 닫히지 않는 코드 블럭이 없도록** 주의하라.
