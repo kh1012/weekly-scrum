@@ -188,15 +188,37 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
     <div className="h-full flex flex-col" style={{ background: "transparent" }}>
       {/* Header */}
       <div className="px-5 py-5 flex items-center gap-3">
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
-          style={{
-            background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-            color: "white",
-            fontWeight: 700,
-          }}
-        >
-          W
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            {/* Background */}
+            <rect width="32" height="32" rx="8" fill="url(#lionGradientNav)" />
+            {/* Mane */}
+            <circle cx="16" cy="16" r="12" fill="#F59E0B" />
+            {/* Mane spikes */}
+            <path d="M16 4C17 6 18 7 16 9C14 7 15 6 16 4Z" fill="#D97706" />
+            <path d="M22 6C21 8 21 9 19 9C20 7 21 7 22 6Z" fill="#D97706" />
+            <path d="M10 6C11 8 11 9 13 9C12 7 11 7 10 6Z" fill="#D97706" />
+            <path d="M26 10C24 10 23 11 23 13C24 12 25 11 26 10Z" fill="#D97706" />
+            <path d="M6 10C8 10 9 11 9 13C8 12 7 11 6 10Z" fill="#D97706" />
+            {/* Face */}
+            <ellipse cx="16" cy="17" rx="8" ry="7" fill="#FCD34D" />
+            {/* Eyes */}
+            <ellipse cx="13" cy="15" rx="1.5" ry="2" fill="#1a1a2e" />
+            <ellipse cx="19" cy="15" rx="1.5" ry="2" fill="#1a1a2e" />
+            <circle cx="13.4" cy="14.5" r="0.5" fill="white" />
+            <circle cx="19.4" cy="14.5" r="0.5" fill="white" />
+            {/* Nose */}
+            <path d="M16 17L14.5 19L17.5 19Z" fill="#92400E" />
+            {/* Mouth */}
+            <path d="M16 19.5C14.5 21 13.5 20.5 13 20" stroke="#92400E" strokeWidth="0.6" strokeLinecap="round" fill="none" />
+            <path d="M16 19.5C17.5 21 18.5 20.5 19 20" stroke="#92400E" strokeWidth="0.6" strokeLinecap="round" fill="none" />
+            <defs>
+              <linearGradient id="lionGradientNav" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#059669" />
+                <stop offset="100%" stopColor="#047857" />
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
         <span
           className="font-bold text-base tracking-tight"

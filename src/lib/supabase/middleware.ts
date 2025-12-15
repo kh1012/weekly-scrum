@@ -32,9 +32,11 @@ export async function updateSession(request: NextRequest) {
 
   // 테스트용 바이패스 체크 (localhost에서만 활성화)
   const bypassKey = request.nextUrl.searchParams.get("bypass");
-  const existingBypassCookie = request.cookies.get("dev-bypass")?.value === "true";
+  const existingBypassCookie =
+    request.cookies.get("dev-bypass")?.value === "true";
   const isBypassEnabled =
-    isLocalhost(request) && (bypassKey === DEV_BYPASS_KEY || existingBypassCookie);
+    isLocalhost(request) &&
+    (bypassKey === DEV_BYPASS_KEY || existingBypassCookie);
 
   if (isBypassEnabled) {
     console.log("[DEV] Auth bypass enabled for:", request.nextUrl.pathname);
