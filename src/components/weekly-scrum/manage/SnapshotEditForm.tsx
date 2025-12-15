@@ -432,45 +432,40 @@ function RiskEditor({
   };
 
   return (
-    <div className={compact ? "space-y-2" : "space-y-3"}>
+    <div className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {/* 리스크 목록 */}
-      {hasRisks ? (
-        <>
-          {actualRisks.map((risk, index) => (
-            <div key={index} className={`group flex items-center gap-2 bg-orange-50 hover:bg-orange-100 transition-colors ${compact ? "p-2 rounded-lg" : "p-3 rounded-xl"}`}>
-              <div className={`rounded-full bg-orange-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
-              <input
-                type="text"
-                value={risk}
-                onChange={(e) => updateRisk(index, e.target.value)}
-                placeholder="리스크 내용..."
-                tabIndex={baseTabIndex + index}
-                className={`flex-1 bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
-                  compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => removeRisk(index)}
-                tabIndex={-1}
-                className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
-              >
-                <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ))}
-        </>
-      ) : null}
-
-      {/* 리스크 추가 버튼 (항상 표시) */}
+      {actualRisks.map((risk, index) => (
+        <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
+          <div className={`rounded-full bg-orange-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
+          <input
+            type="text"
+            value={risk}
+            onChange={(e) => updateRisk(index, e.target.value)}
+            placeholder="리스크 내용..."
+            tabIndex={baseTabIndex + index}
+            className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
+              compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+            }`}
+          />
+          <button
+            type="button"
+            onClick={() => removeRisk(index)}
+            tabIndex={-1}
+            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all shrink-0 ${compact ? "p-1" : "p-2"}`}
+          >
+            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      ))}
+      {/* 리스크 추가 버튼 */}
       <button
         type="button"
         onClick={onAddRisk}
         tabIndex={-1}
-        className={`flex items-center gap-2 font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 transition-colors ${
-          compact ? "px-2.5 py-1.5 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"
+        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
         }`}
       >
         <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -794,12 +789,15 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
               <button
                 type="button"
                 onClick={() => {
-                  // This Week tasks를 Past Week tasks 형태로 변환 (progress 0%)
+                  // This Week tasks를 Past Week로 이동 (This Week은 비움)
                   const newTasks = snapshot.thisWeek.tasks.map((title) => ({
                     title,
                     progress: 0,
                   }));
-                  handlePastWeekChange("tasks", newTasks);
+                  onUpdate({
+                    pastWeek: { ...snapshot.pastWeek, tasks: newTasks },
+                    thisWeek: { tasks: [] },
+                  });
                 }}
                 className={`flex items-center gap-1.5 font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors ${
                   compact ? "px-2 py-1 text-[10px] rounded-md" : "px-3 py-1.5 text-xs rounded-lg"
