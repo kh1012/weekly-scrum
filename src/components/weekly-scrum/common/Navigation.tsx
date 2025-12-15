@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVisitorCount } from "@/hooks/useVisitorCount";
 import { RELEASES } from "../releases/releaseData";
+import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 
-// 기본적으로 접혀있는 카테고리 키
-const COLLAPSED_BY_DEFAULT = ["analysis", "views", "personal"];
-const SNB_COLLAPSED_KEY = "snb-collapsed-categories";
+// localStorage 키
+const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
 
 interface NavItem {
   key: string;
@@ -22,12 +22,21 @@ interface NavCategory {
   key: string;
   label: string;
   items: NavItem[];
+  /** admin/owner만 볼 수 있는 섹션인지 */
+  adminOnly?: boolean;
 }
 
-const NAV_CATEGORIES: NavCategory[] = [
+/**
+ * SNB 메뉴 구조 (update.md 요구사항 반영)
+ * - 업무: Work Map, Calendar, Snapshots
+ * - 개인공간: Manage
+ * - 관리자: Admin Dashboard, All Snapshots, Plans (조건부)
+ * - 기타: Release Notes
+ */
+const BASE_NAV_CATEGORIES: NavCategory[] = [
   {
-    key: "structure",
-    label: "v2",
+    key: "work",
+    label: "업무",
     items: [
       {
         key: "work-map",
@@ -47,85 +56,116 @@ const NAV_CATEGORIES: NavCategory[] = [
         href: "/snapshots",
         emoji: "📸",
       },
+    ],
+  },
+  {
+    key: "personal",
+    label: "개인공간",
+    items: [
       {
         key: "manage",
         label: "Manage",
         href: "/manage",
         emoji: "✏️",
+        description: "내 스냅샷 관리",
       },
     ],
   },
   {
-    key: "analysis",
-    label: "분석",
+    key: "admin",
+    label: "관리자",
+    adminOnly: true,
     items: [
-      { key: "summary", label: "요약", href: "/summary", emoji: "📊" },
-      { key: "quadrant", label: "사분면", href: "/quadrant", emoji: "🎯" },
-      { key: "risks", label: "리스크", href: "/risks", emoji: "⚠️" },
       {
-        key: "collaboration",
-        label: "팀 협업",
-        href: "/collaboration",
-        emoji: "🤝",
+        key: "admin-dashboard",
+        label: "Dashboard",
+        href: "/admin",
+        emoji: "🏠",
       },
-    ],
-  },
-  {
-    key: "views",
-    label: "뷰",
-    items: [
-      { key: "cards", label: "카드", href: "/cards", emoji: "🗂" },
-      { key: "projects", label: "프로젝트", href: "/projects", emoji: "📁" },
-      { key: "matrix", label: "매트릭스", href: "/matrix", emoji: "📋" },
-    ],
-  },
-  {
-    key: "personal",
-    label: "개인화",
-    items: [
-      { key: "my", label: "개인 대시보드", href: "/my", emoji: "👤" },
-      { key: "report", label: "개인 리포트", href: "/report", emoji: "📋" },
+      {
+        key: "admin-snapshots",
+        label: "All Snapshots",
+        href: "/admin/snapshots",
+        emoji: "📋",
+      },
+      {
+        key: "admin-plans",
+        label: "Plans",
+        href: "/admin/plans",
+        emoji: "📆",
+      },
     ],
   },
   {
     key: "extra",
-    label: "추가 기능",
+    label: "기타",
     items: [
-      { key: "shares", label: "Shares", href: "/shares", emoji: "📣" },
-      { key: "releases", label: "릴리즈 노트", href: "/releases", emoji: "📝" },
+      {
+        key: "releases",
+        label: "릴리즈 노트",
+        href: "/releases",
+        emoji: "📝",
+      },
     ],
   },
 ];
 
-// 플랫 아이템 (하위 호환용)
-const NAV_ITEMS: NavItem[] = NAV_CATEGORIES.flatMap((cat) => cat.items);
+/**
+ * role에 따라 메뉴 필터링
+ */
+function getNavCategories(role: WorkspaceRole): NavCategory[] {
+  const isAdmin = role === "admin" || role === "owner";
+
+  return BASE_NAV_CATEGORIES.filter((category) => {
+    if (category.adminOnly && !isAdmin) {
+      return false;
+    }
+    return true;
+  });
+}
 
 function useIsActive() {
   const pathname = usePathname();
 
   return (href: string) => {
-    if (href === "/summary") {
-      return (
-        pathname === "/" || pathname === "/summary" || pathname === "/summary/"
-      );
+    // 정확히 일치하거나 하위 경로인 경우
+    if (href === "/admin") {
+      return pathname === "/admin" || pathname === "/admin/";
     }
-    return pathname === href || pathname === href + "/";
+    if (pathname === href || pathname === href + "/") {
+      return true;
+    }
+    // /admin/snapshots는 /admin/snapshots/xxx도 활성화
+    if (href !== "/" && pathname.startsWith(href + "/")) {
+      return true;
+    }
+    return false;
   };
 }
 
 // Notion 스타일 Side Navigation
 interface SideNavigationProps {
   onItemClick?: () => void;
+  /** 현재 유저의 workspace role */
+  role?: WorkspaceRole;
 }
 
-export function SideNavigation({ onItemClick }: SideNavigationProps) {
+export function SideNavigation({
+  onItemClick,
+  role = "member",
+}: SideNavigationProps) {
   const isActive = useIsActive();
   const { count, isLoading } = useVisitorCount();
-  const pathname = usePathname();
+
+  // role에 따른 메뉴 구성
+  const navCategories = getNavCategories(role);
+
+  // 기본적으로 접혀있는 카테고리
+  const defaultCollapsed = ["extra"];
 
   // 접힌 카테고리 상태
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
-    new Set(COLLAPSED_BY_DEFAULT)
+    new Set(defaultCollapsed)
   );
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -155,22 +195,6 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
     }
   }, [collapsedCategories, isInitialized]);
 
-  // 초기 마운트 시에만 활성화된 아이템이 있는 카테고리 자동 펼침
-  useEffect(() => {
-    if (!isInitialized) return; // 초기화 전에만 실행
-
-    NAV_CATEGORIES.forEach((category) => {
-      const hasActiveItem = category.items.some((item) => isActive(item.href));
-      if (hasActiveItem && collapsedCategories.has(category.key)) {
-        setCollapsedCategories((prev) => {
-          const next = new Set(prev);
-          next.delete(category.key);
-          return next;
-        });
-      }
-    });
-  }, []); // 빈 배열로 변경하여 초기 마운트 시에만 실행
-
   // 카테고리 토글
   const toggleCategory = (key: string) => {
     setCollapsedCategories((prev) => {
@@ -189,14 +213,19 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
       {/* Header */}
       <div className="px-5 py-5 flex items-center gap-3">
         <div className="w-8 h-8 flex items-center justify-center">
-          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <svg
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-full"
+          >
             {/* Background */}
             <rect width="32" height="32" rx="8" fill="#FF385C" />
             {/* Geometric "W" curve - Airbnb style */}
-            <path 
+            <path
               d="M6 10 Q9 10, 10.5 16 Q12 22, 16 22 Q20 22, 21.5 16 Q23 10, 26 10"
-              stroke="white" 
-              strokeWidth="2.5" 
+              stroke="white"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"
@@ -215,12 +244,13 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
 
       {/* Navigation Items */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
-        {NAV_CATEGORIES.map((category, categoryIndex) => {
+        {navCategories.map((category, categoryIndex) => {
           const isCollapsed = collapsedCategories.has(category.key);
           const hasActiveItem = category.items.some((item) =>
             isActive(item.href)
           );
           const itemCount = category.items.length;
+          const isAdminSection = category.adminOnly;
 
           return (
             <div
@@ -235,7 +265,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                 style={{
                   background:
                     hasActiveItem && isCollapsed
-                      ? "rgba(59, 130, 246, 0.05)"
+                      ? isAdminSection
+                        ? "rgba(239, 68, 68, 0.05)"
+                        : "rgba(59, 130, 246, 0.05)"
                       : "transparent",
                 }}
               >
@@ -246,7 +278,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                     style={{
-                      color: "var(--notion-text-muted)",
+                      color: isAdminSection
+                        ? "rgba(239, 68, 68, 0.6)"
+                        : "var(--notion-text-muted)",
                       transform: isCollapsed
                         ? "rotate(-90deg)"
                         : "rotate(0deg)",
@@ -261,20 +295,39 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                   </svg>
                   <span
                     className="text-[11px] font-semibold uppercase tracking-wider"
-                    style={{ color: "var(--notion-text-muted)" }}
+                    style={{
+                      color: isAdminSection
+                        ? "rgba(239, 68, 68, 0.8)"
+                        : "var(--notion-text-muted)",
+                    }}
                   >
                     {category.label}
                   </span>
+                  {isAdminSection && (
+                    <span
+                      className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                      style={{
+                        background: "rgba(239, 68, 68, 0.1)",
+                        color: "rgb(239, 68, 68)",
+                      }}
+                    >
+                      Admin
+                    </span>
+                  )}
                 </div>
                 {isCollapsed && (
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded-full transition-all duration-200"
                     style={{
                       background: hasActiveItem
-                        ? "rgba(59, 130, 246, 0.15)"
+                        ? isAdminSection
+                          ? "rgba(239, 68, 68, 0.15)"
+                          : "rgba(59, 130, 246, 0.15)"
                         : "var(--notion-bg-secondary)",
                       color: hasActiveItem
-                        ? "#3b82f6"
+                        ? isAdminSection
+                          ? "rgb(239, 68, 68)"
+                          : "#3b82f6"
                         : "var(--notion-text-muted)",
                     }}
                   >
@@ -296,6 +349,13 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                 <div className="space-y-1">
                   {category.items.map((item) => {
                     const active = isActive(item.href);
+                    const accentColor = isAdminSection
+                      ? "rgb(239, 68, 68)"
+                      : "#3b82f6";
+                    const accentBg = isAdminSection
+                      ? "rgba(239, 68, 68, 0.1)"
+                      : "rgba(59, 130, 246, 0.1)";
+
                     return (
                       <Link
                         key={item.key}
@@ -303,11 +363,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                         onClick={onItemClick}
                         className="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
                         style={{
-                          background: active
-                            ? "rgba(59, 130, 246, 0.1)"
-                            : "transparent",
+                          background: active ? accentBg : "transparent",
                           color: active
-                            ? "#3b82f6"
+                            ? accentColor
                             : "var(--notion-text-secondary)",
                           transform: active
                             ? "translateX(2px)"
@@ -331,7 +389,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                           className="text-lg w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200"
                           style={{
                             background: active
-                              ? "rgba(59, 130, 246, 0.15)"
+                              ? isAdminSection
+                                ? "rgba(239, 68, 68, 0.15)"
+                                : "rgba(59, 130, 246, 0.15)"
                               : "transparent",
                           }}
                         >
@@ -341,7 +401,9 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                           <span
                             className="block text-sm font-medium transition-colors duration-200"
                             style={{
-                              color: active ? "#3b82f6" : "var(--notion-text)",
+                              color: active
+                                ? accentColor
+                                : "var(--notion-text)",
                             }}
                           >
                             {item.label}
@@ -358,7 +420,7 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
                         {active && (
                           <div
                             className="w-1.5 h-1.5 rounded-full animate-pulse"
-                            style={{ background: "#3b82f6" }}
+                            style={{ background: accentColor }}
                           />
                         )}
                       </Link>
@@ -406,72 +468,27 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
   );
 }
 
-// 기존 Navigation (하위 호환용)
-export function Navigation() {
-  const isActive = useIsActive();
-
-  // 우선순위: Work Map, 요약, 사분면, 리스크, 팀 협업, 개인
-  const priorityItems = [
-    NAV_ITEMS.find((i) => i.key === "work-map"),
-    NAV_ITEMS.find((i) => i.key === "summary"),
-    NAV_ITEMS.find((i) => i.key === "quadrant"),
-    NAV_ITEMS.find((i) => i.key === "risks"),
-    NAV_ITEMS.find((i) => i.key === "collaboration"),
-    NAV_ITEMS.find((i) => i.key === "my"),
-  ].filter(Boolean) as NavItem[];
-
-  return (
-    <nav
-      className="flex items-center gap-1 px-1.5 py-1.5 rounded-xl"
-      style={{
-        background: "var(--notion-bg-secondary)",
-        boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.02)",
-      }}
-    >
-      {priorityItems.map((item) => {
-        const active = isActive(item.href);
-        return (
-          <Link
-            key={item.key}
-            href={item.href}
-            className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all duration-200 interactive-btn"
-            style={{
-              background: active ? "white" : "transparent",
-              color: active ? "#3b82f6" : "var(--notion-text-secondary)",
-              boxShadow: active
-                ? "0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)"
-                : "none",
-              fontWeight: active ? 600 : 500,
-            }}
-          >
-            <span className="text-base">{item.emoji}</span>
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
 // 모바일 네비게이션
 interface MobileNavigationProps {
   onItemClick?: () => void;
+  role?: WorkspaceRole;
 }
 
-export function MobileNavigation({ onItemClick }: MobileNavigationProps) {
+export function MobileNavigation({
+  onItemClick,
+  role = "member",
+}: MobileNavigationProps) {
   const isActive = useIsActive();
+  const navCategories = getNavCategories(role);
 
-  // 모바일 우선순위 메뉴
-  const mobileItems = [
-    NAV_ITEMS.find((i) => i.key === "work-map"),
-    NAV_ITEMS.find((i) => i.key === "summary"),
-    NAV_ITEMS.find((i) => i.key === "quadrant"),
-    NAV_ITEMS.find((i) => i.key === "risks"),
-    NAV_ITEMS.find((i) => i.key === "collaboration"),
-    NAV_ITEMS.find((i) => i.key === "cards"),
-    NAV_ITEMS.find((i) => i.key === "my"),
-    NAV_ITEMS.find((i) => i.key === "shares"),
-  ].filter(Boolean) as NavItem[];
+  // 모바일에서는 주요 메뉴만 표시
+  const mobileItems = navCategories
+    .flatMap((cat) => cat.items)
+    .filter((item) =>
+      ["work-map", "calendar", "snapshots", "manage", "releases"].includes(
+        item.key
+      )
+    );
 
   return (
     <nav className="grid grid-cols-4 gap-2 p-2">

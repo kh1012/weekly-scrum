@@ -7,13 +7,16 @@ import { WeekSelector } from "./WeekSelector";
 import { SearchInput } from "./SearchInput";
 import { ExpandableFilters } from "./ExpandableFilters";
 import { UserProfile } from "./UserProfile";
+import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 
 interface HeaderProps {
   isSidebarOpen?: boolean;
   onSidebarToggle?: () => void;
+  /** 현재 유저의 workspace role */
+  role?: WorkspaceRole;
 }
 
-export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
+export function Header({ isSidebarOpen = true, onSidebarToggle, role }: HeaderProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
@@ -282,7 +285,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
                 border: "1px solid rgba(0, 0, 0, 0.06)",
               }}
             >
-              <SideNavigation onItemClick={() => setIsMenuOpen(false)} />
+              <SideNavigation onItemClick={() => setIsMenuOpen(false)} role={role} />
             </div>
           )}
         </div>
@@ -311,9 +314,11 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
 // PC 사이드바 컴포넌트
 interface SidebarProps {
   isOpen: boolean;
+  /** 현재 유저의 workspace role */
+  role?: WorkspaceRole;
 }
 
-export function Sidebar({ isOpen }: SidebarProps) {
+export function Sidebar({ isOpen, role }: SidebarProps) {
   if (!isOpen) return null;
 
   return (
@@ -326,7 +331,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         boxShadow: "2px 0 8px rgba(0, 0, 0, 0.02)",
       }}
     >
-      <SideNavigation />
+      <SideNavigation role={role} />
     </aside>
   );
 }

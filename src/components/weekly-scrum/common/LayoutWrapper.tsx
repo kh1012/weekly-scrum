@@ -3,9 +3,12 @@
 import { usePathname } from "next/navigation";
 import { ReactNode, useState, useEffect } from "react";
 import { Header, Sidebar } from "./Header";
+import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 
 interface LayoutWrapperProps {
   children: ReactNode;
+  /** 현재 유저의 workspace role */
+  role?: WorkspaceRole;
 }
 
 // max-w-full을 적용할 페이지 경로
@@ -49,7 +52,7 @@ export function getLastVisitedPage(): string | null {
   }
 }
 
-export function LayoutWrapper({ children }: LayoutWrapperProps) {
+export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -69,7 +72,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   return (
     <div className="min-h-screen" style={{ background: "var(--notion-bg)" }}>
       {/* PC 사이드바 */}
-      <Sidebar isOpen={isSidebarOpen} />
+      <Sidebar isOpen={isSidebarOpen} role={role} />
 
       {/* 메인 영역 */}
       <div
@@ -80,6 +83,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         <Header
           isSidebarOpen={isSidebarOpen}
           onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          role={role}
         />
         {children}
       </div>

@@ -1,6 +1,6 @@
 // Common Components
 export { Header, Sidebar } from "./Header";
-export { Navigation } from "./Navigation";
+export { SideNavigation, MobileNavigation } from "./Navigation";
 export { StatsBar } from "./StatsBar";
 export { WeekSelector } from "./WeekSelector";
 export { SearchInput } from "./SearchInput";
