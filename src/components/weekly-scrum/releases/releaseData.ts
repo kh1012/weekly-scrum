@@ -2,6 +2,59 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.4.1",
+    date: "2025-12-15",
+    title: "Manage 편집 UX 개선 & 히트맵 반응형 레이아웃",
+    summary:
+      "스냅샷 편집 폼의 UX를 전반적으로 개선하고, 연간 히트맵에 반응형 분기별 그리드 레이아웃을 적용했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "YearlyHeatmap 반응형 분기별 그리드 (lg:4열, md:2열, xs:1열)",
+      },
+      {
+        type: "feat",
+        description: "CollaboratorEditor 단일/멀티 선택 모드 토글",
+      },
+      {
+        type: "feat",
+        description: "This Week에서 가져오기 - 복사가 아닌 이동으로 변경",
+      },
+      {
+        type: "improve",
+        description: "RiskEditor UI를 TaskEditor와 동일한 스타일로 통일",
+      },
+      {
+        type: "improve",
+        description: "CollaboratorEditor 관계 아이콘 직관적 화살표로 변경",
+      },
+      {
+        type: "improve",
+        description: "SnapshotEditForm 전체 너비 사용 (max-width 제한 제거)",
+      },
+      {
+        type: "improve",
+        description: "ManageEditorScreen 미리보기 꺼진 상태에서도 리사이즈 가능",
+      },
+      {
+        type: "style",
+        description: "멤버별 히트맵 카드 레이아웃 (이름+건수 좌측, 히트맵 우측)",
+      },
+      {
+        type: "style",
+        description: "팀/멤버 헤더 아이콘 SVG로 변경 (흰색 강조)",
+      },
+      {
+        type: "fix",
+        description: "RiskEditor 리스크 추가 시 risk와 riskLevel 동시 업데이트",
+      },
+      {
+        type: "fix",
+        description: "SnapshotCardList 헤더 1줄 + ... 옵션 메뉴 통합",
+      },
+    ],
+  },
+  {
     version: "2.4.0",
     date: "2025-12-11",
     title: "Calendar View & ISO 주차 기반 전면 개편",
