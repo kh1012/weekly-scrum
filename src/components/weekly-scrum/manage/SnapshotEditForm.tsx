@@ -396,23 +396,20 @@ function ThisWeekTaskEditor({
 
 /**
  * Risk 편집 컴포넌트 - 리스크 추가 버튼 기본 제공
- * - 리스크 없으면: Risks: None, RiskLevel: None
- * - 리스크 추가 시: RiskLevel 선택 가능 (기본값 0)
+ * RiskLevel 선택은 상위에서 Risks 레이블 우측에 표시
  */
 function RiskEditor({
   risks,
-  riskLevel,
   onChange,
   onAddRisk,
-  onRiskLevelChange,
+  onRemoveAllRisks,
   baseTabIndex,
   compact,
 }: {
   risks: string[] | null;
-  riskLevel: 0 | 1 | 2 | 3 | null;
   onChange: (risks: string[] | null) => void;
   onAddRisk: () => void;
-  onRiskLevelChange?: (level: 0 | 1 | 2 | 3 | null) => void;
+  onRemoveAllRisks: () => void;
   baseTabIndex: number;
   compact?: boolean;
 }) {
@@ -428,20 +425,11 @@ function RiskEditor({
   const removeRisk = (index: number) => {
     const newRisks = actualRisks.filter((_, i) => i !== index);
     if (newRisks.length === 0) {
-      // 모든 리스크 삭제 시 null로 설정
-      onChange(null);
-      onRiskLevelChange?.(null);
+      onRemoveAllRisks();
     } else {
       onChange(newRisks);
     }
   };
-
-  const RISK_LEVELS = [
-    { value: 0, label: "없음", color: "bg-emerald-500" },
-    { value: 1, label: "경미", color: "bg-yellow-500" },
-    { value: 2, label: "중간", color: "bg-orange-500" },
-    { value: 3, label: "심각", color: "bg-rose-500" },
-  ];
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
@@ -473,28 +461,6 @@ function RiskEditor({
               </button>
             </div>
           ))}
-          
-          {/* RiskLevel 선택 (리스크가 있을 때만) */}
-          <div className="flex items-center gap-1.5 pt-1">
-            <span className={`text-gray-500 ${compact ? "text-xs" : "text-sm"}`}>Level:</span>
-            {RISK_LEVELS.map((level) => (
-              <button
-                key={level.value}
-                type="button"
-                onClick={() => onRiskLevelChange?.(level.value as 0 | 1 | 2 | 3)}
-                className={`
-                  ${compact ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-sm"} 
-                  rounded font-medium transition-all
-                  ${riskLevel === level.value
-                    ? `${level.color} text-white`
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                  }
-                `}
-              >
-                {level.label}
-              </button>
-            ))}
-          </div>
         </>
       ) : null}
 
@@ -857,10 +823,37 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
             </div>
 
             <div onFocus={() => onFocusSection?.("pastWeek.risks")}>
-              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risks</label>
+              <div className={`flex items-center justify-between ${labelMargin}`}>
+                <label className={`${labelSize} font-medium text-gray-700`}>Risks</label>
+                {/* RiskLevel 선택 (리스크가 있을 때만) */}
+                {snapshot.pastWeek.risk && snapshot.pastWeek.risk.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    {[
+                      { value: 0, label: "없음", color: "bg-emerald-500" },
+                      { value: 1, label: "경미", color: "bg-yellow-500" },
+                      { value: 2, label: "중간", color: "bg-orange-500" },
+                      { value: 3, label: "심각", color: "bg-rose-500" },
+                    ].map((level) => (
+                      <button
+                        key={level.value}
+                        type="button"
+                        onClick={() => handlePastWeekChange("riskLevel", level.value as 0 | 1 | 2 | 3)}
+                        className={`
+                          px-1.5 py-0.5 text-[10px] rounded font-medium transition-all
+                          ${snapshot.pastWeek.riskLevel === level.value
+                            ? `${level.color} text-white`
+                            : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                          }
+                        `}
+                      >
+                        {level.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <RiskEditor 
                 risks={snapshot.pastWeek.risk}
-                riskLevel={snapshot.pastWeek.riskLevel}
                 onChange={(risks) => handlePastWeekChange("risk", risks)}
                 onAddRisk={() => {
                   // risk와 riskLevel을 한 번에 업데이트
@@ -873,7 +866,15 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
                     },
                   });
                 }}
-                onRiskLevelChange={(level) => handlePastWeekChange("riskLevel", level)}
+                onRemoveAllRisks={() => {
+                  onUpdate({
+                    pastWeek: {
+                      ...snapshot.pastWeek,
+                      risk: null,
+                      riskLevel: null,
+                    },
+                  });
+                }}
                 baseTabIndex={50} 
                 compact={compact} 
               />
