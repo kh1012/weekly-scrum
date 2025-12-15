@@ -1,358 +1,210 @@
-[목표]
-기존 “외부에서 스크럼 텍스트/데이터를 생성하면 자동 파싱하여(주차 개념 없이) 스냅샷에 채워넣는 보조 도구”에서,
-Supabase 기반 “개인화된 스냅샷 관리(Manage)”로 전환한다.
+[추가 목표(누락 보완)]
+기존 “관리자 메뉴(전체 스냅샷 관리 + Plans)” 프롬프팅에 아래 2가지를 반드시 추가한다.
 
-단, 기존 작성 편의 기능(임시저장/카드편집/복제/삭제/미리보기/옵션/리스크/진행률/덮어쓰기 등)은 100% 유지한다.
-새로 달라지는 점은, 이제 사용자가 Manage(스냅샷 관리)에서 “연도 + ISO 주차”를 먼저 선택한 다음,
-해당 주차 컨텍스트에서 여러 개의 스냅샷(카드/항목)을 작성/편집/발행(CRUD)할 수 있어야 한다.
+1. “멤버 관리” 메뉴 추가
 
-[배경/기존 동작]
+- 가입한 사용자 목록을 불러와서(워크스페이스 기준)
+  a) profiles.display_name 수정
+  b) workspace_members.role 변경(member/leader/admin)
+  가 가능해야 한다.
+- 단, admin/leader만 접근 가능.
+- 보안상 UI 숨김만으로 끝내지 말고, 서버/DB에서 권한을 강제한다(RLS/route-guard).
 
-- 기존에는 주차(ISO) 개념을 UI에서 선택하지 않아도 됐음
-- 외부에서 생성한 데이터(예: 2025-W49, 2025-W50)를 스크립트로 JSON으로 만들고,
-  이를 앱이 자동 파싱하여 입력값으로 채워 넣는 형태였음
-- 파일명/키: 2025-W49, 2025-W50
-- 주차 범위 예:
-  - 2025-W49 = 12-01 ~ 12-07
-  - 2025-W50 = 12-08 ~ 12-14
-- 이제는 개인화된 공간이므로, “주차 컨텍스트”가 앱 내부에서 먼저 확정되어야 함
+2. “전체 스냅샷 관리”에서 3개 리소스를 CRUD 할 수 있어야 한다.
 
-[새 요구사항 1: Manage(스냅샷 관리)에서 ‘주차 컨텍스트’를 먼저 선택]
-(기존 내용 그대로 유지)
-
-[새 요구사항 2: 주차 데이터 모델링(ISO 기반)]
-(기존 내용 그대로 유지)
-
-[새 요구사항 3: 기존 작성 편의 기능 100% 유지 + “주차 컨텍스트”에 종속]
-(기존 내용 그대로 유지)
-
-[새 요구사항 4: 기존 “외부 데이터 파싱” 경험을 대체하는 ‘Import’ 옵션]
-(기존 내용 그대로 유지)
+- 관리 대상 3개(필수):
+  A) snapshots
+  B) snapshot_entries
+  C) snapshot_meta_options
+- admin/leader는 워크스페이스 전체 범위에서 CRUD 가능.
+- member는 본인 author_id 범위에서만 CRUD(기존 정책 유지).
 
 ────────────────────────────────────────
-[새 요구사항 5: SNB(사이드 네비게이션) 구조 전면 정리]
-────────────────────────────────────────
+[중요 전제(반드시 반영)]
 
-목표:
-기존 “보조 도구/실험용” 성격의 메뉴들을 제거하고,
-현재 서비스의 역할에 맞게 **개인화된 업무 공간 중심의 SNB 구조**로 재편한다.
+- Supabase의 auth.users 목록은 anon key로 직접 조회 불가(보안 영역).
+- 따라서 “가입한 Users 목록”은 아래 중 하나로 구현해야 한다(선택 강요하지 말고 구현 가이드로 포함).
 
-1. SNB에서 아래 메뉴만 유지하고, 나머지는 전부 제거한다.
+권장 구현(현실적):
 
-- Work Map
-- Calendar
-- Snapshots
-- Manage
-- Release Notes
-
-2. SNB를 “섹션(카테고리)” 단위로 명확히 구분한다.
-
-- 섹션 구분은 시각적으로 명확해야 하며(헤더/구분선/타이포 등),
-  단순 정렬이 아니라 의미 있는 정보 구조여야 한다.
-
-3. 섹션 구조는 아래를 기본으로 한다.
-
-- 업무
-
-  - Work Map
-  - Calendar
-  - Snapshots
-
-- 개인공간
-
-  - Manage ← (중요) 반드시 이 섹션으로 분리
-
-- 기타
-  - Release Notes
-
-4. Manage 메뉴의 의미 재정의
-
-- Manage는 더 이상 “설정/실험/보조” 메뉴가 아니다.
-- “내 스냅샷을 관리하는 개인화된 공간”의 진입점이다.
-- Manage 하위에서 스냅샷 관리(연도/주차 선택, 작성, 편집, Import 등)가 이루어진다.
-- 기존 Snapshots 메뉴는 “조회/회고/히스토리 중심”으로 유지하거나,
-  필요 시 Manage와 역할을 구분한다.
-
-5. 구현 가이드
-
-- SNB 정의가 상수/배열/설정 파일로 관리되고 있다면,
-  해당 정의를 직접 수정하여 불필요한 메뉴를 제거한다.
-- 조건부 렌더링(if feature flag 등)으로 숨기는 것이 아니라,
-  실제 메뉴 정의에서 삭제한다.
-- 라우트 자체가 더 이상 필요 없는 경우,
-  dead route 및 관련 컴포넌트도 함께 정리한다.
-
-6. 접근 제어
-
-- 로그인하지 않은 사용자는 SNB 자체가 렌더링되지 않아야 한다.
-- 로그인 + profiles 온보딩 완료 이후에만 SNB 노출.
+- 멤버 목록은 “workspace_members JOIN profiles”로 구성한다.
+  => 즉, ‘가입 + 온보딩 완료(프로필 생성)’된 사용자만 멤버 관리 대상이 된다.
+- 만약 온보딩 이전 사용자까지 포함해야 한다면:
+  - Edge Function 또는 Server Route에서 service_role로 auth admin list users를 조회하는 방식이 필요
+  - (이번 PR에서는 복잡도 높으므로 기본은 workspace_members+profiles 기반으로 한다)
 
 ────────────────────────────────────────
+[새 요구사항 6: 관리자 메뉴 - 멤버 관리(Member Management)]
 
-[UI/라우팅 요구사항]
-(기존 내용 그대로 유지)
+1. SNB에 “관리자” 섹션이 노출되는 조건(기존 유지)
 
-[구현 가이드]
-(기존 내용 그대로 유지)
+- workspace_members.role in ('admin','leader') 인 사용자에게만 “관리자” 섹션 노출
 
-[작업 단계 - 순서 고정]
+2. 관리자 섹션 하위 메뉴에 “멤버 관리”를 추가한다.
 
-1. 기존 스냅샷 작성 편의 기능 목록화(체크리스트 문서화)
-2. ISO week 유틸 구현 및 주차 컨텍스트 라우팅 추가
-3. snapshots 모델에 year/iso_week/week_start/end 매핑 적용
-4. Manage > Week Picker / Week Context 화면 추가
-5. 기존 편집기/임시저장 기능을 Week Context에 연결
-6. Import(JSON 붙여넣기) 기능 구현
-7. CRUD(서버 액션) 연결 및 RLS 권한 검증
-8. SNB 메뉴 정리
-   - 지정된 메뉴만 유지
-   - 섹션 구조 적용
-   - Manage를 “개인공간”으로 분리
+- /app/admin/members
 
-[출력 요구]
+3. 멤버 관리 화면 기능(MVP)
 
-- 변경/생성 파일 목록
-- 각 파일 전체 코드(중간 생략 금지)
-- ISO week 계산 방식 설명 + 테스트 케이스
-- 기존 기능 체크리스트 문서(docs/snapshot-feature-checklist.md)
-- SNB 구조 변경 전/후 요약
-- 테스트 시나리오
-  - 2025 W49 선택 → 신규 draft 생성 → entries 편집 → 임시저장 → publish
-  - 2025 W50 선택 → Import JSON 붙여넣기 → 미리보기 → 생성
-  - 다른 유저로 로그인 시 타인 데이터 수정 불가
+- 목록 조회(워크스페이스 범위)
+  - join: workspace_members + profiles
+  - 표시 컬럼:
+    - display_name
+    - email
+    - role
+    - user_id
+    - created_at(가능하면)
+- 편집 기능
+  A) display_name 수정
+  B) role 변경(드롭다운: member/leader/admin)
+- 저장 시 서버 액션으로 update 실행(클라이언트 direct update 금지)
+- UX:
+  - 변경 감지(Dirty state)
+  - 저장 성공/실패 토스트
+  - 본인 role을 강등하는 액션은 경고(confirm) 표시(옵션)
 
-[완료 조건]
+4. 권한/보안(필수)
 
-- 사용자가 Manage에서 연도+ISO 주차를 먼저 선택하고,
-  해당 주차 컨텍스트에서 여러 스냅샷을 작성/편집/발행/관리할 수 있다.
-- 기존 작성 편의 기능은 하나도 빠지지 않는다.
-- Supabase 기반으로 데이터가 영속 저장된다.
-- SNB는 지정된 메뉴만 남고, Manage는 “개인공간” 섹션으로 명확히 분리된다.
-
-[목표]
-Supabase(Auth + Postgres + RLS) 기반 “개인화된 스냅샷 관리(Manage)” 구조에 더해,
-workspace_members.role이 admin 또는 leader 인 사용자에게만 “관리자 메뉴”를 SNB에 추가한다.
-
-관리자 메뉴에서는:
-
-1. 전체 스냅샷 관리(워크스페이스 전체 사용자 데이터 조회/관리)
-2. 일정표(Plans) 기능 CRUD (워크스페이스 단위 계획 데이터)
-   를 제공한다.
-
-중요: 일반 사용자(member)는 본인 스냅샷만 CRUD 가능하고,
-관리자(admin/leader)만 전체 데이터 관리와 plans CRUD가 가능해야 한다.
-(기능/UX에서 숨김 + DB RLS에서 차단 둘 다 필요)
+- /app/admin/members 접근 시 서버에서 role 체크 후 차단
+- DB RLS로도 차단:
+  - admin/leader만 workspace_members.role을 update 가능
+  - admin/leader만 다른 사람 profiles.display_name을 update 가능
 
 ────────────────────────────────────────
-[현재 상태 / 전제]
+[새 요구사항 7: 관리자 기능 - 전체 스냅샷 관리(3개 리소스 CRUD)]
+관리자 메뉴의 “전체 스냅샷 관리”는 단순 조회가 아니라, 아래 3개를 CRUD 할 수 있어야 한다.
 
-- Next.js App Router 사용
-- Supabase 구성 완료
-  - workspace_members 테이블 존재 (workspace_id, user_id, role)
-  - role 타입 workspace_role(enum) 사용
-  - snapshots / snapshot_entries / plans / plan_assignees 테이블 존재 (Table Editor에 확인됨)
-  - RLS 적용 (Phase 3 기반) + is_workspace_member / is_workspace_admin_or_leader 같은 함수가 존재하거나, 존재하지 않으면 직접 정책 구현
-- SNB는 “업무 / 개인공간 / 기타” 섹션으로 정리 중이며, 기본 메뉴는
-  - Work Map
-  - Calendar
-  - Snapshots
-  - Manage(개인공간)
-  - Release Notes
-    만 남기는 방향
+A) snapshots (워크스페이스 전체)
 
-────────────────────────────────────────
-[새 요구사항 1: 관리자 메뉴(SNB) 조건부 추가]
+- 목록: 필터(year/week, week_start_date, author, status)
+- 상세: snapshot + entries 같이 보기
+- 수정: (필요 최소만) title/status/week_start_date 조정 등 (스키마에 있는 필드만)
+- 삭제: 정책 허용 시 가능(아니면 버튼 비활성 + 정책 안내)
 
-1. 접속한 사용자가 아래 조건을 만족할 때만 SNB에 “관리자” 섹션을 추가한다.
+B) snapshot_entries
 
-- workspace_members.role in ('admin', 'leader')
+- snapshot 상세 화면에서 entries를 CRUD
+  - entry 추가/수정/삭제/복제/정렬(기존 편의 기능을 admin 화면에서도 최소 제공)
+- author_id는 원칙적으로 원본 작성자 유지(필요 시 관리자 변경 옵션은 MVP에서는 제외)
 
-2. SNB 섹션 구조는 다음을 기본으로 한다.
+C) snapshot_meta_options
 
-- 업무
-  - Work Map
-  - Calendar
-  - Snapshots
-- 개인공간
-  - Manage
-- 관리자 (조건부: admin/leader만 노출)
-  - Admin Dashboard (또는 Admin Home)
-  - All Snapshots
-  - Plans
-- 기타
-  - Release Notes
-
-3. 구현 원칙
-
-- UI에서 메뉴 노출을 숨기는 것만으로 끝내지 말 것.
-- 실제 라우트 접근도 서버에서 권한 체크하여 차단해야 함.
-  (middleware 또는 각 페이지 server component에서 role 체크 후 redirect/403)
+- /app/admin/meta-options (또는 /app/admin/snapshot-meta-options)
+- category별 목록/정렬(order_index) + 생성/수정/삭제
+- 기존 정적 옵션(snapshotMetaOptions.ts) 완전 대체를 목표로 함
+- 주의:
+  - member는 읽기만
+  - admin/leader만 수정 가능
 
 ────────────────────────────────────────
-[새 요구사항 2: role 조회 방식 표준화]
+[누락 보완: 반드시 필요한 RLS 정책/제약(Cursor가 체크 후 반영)]
+아래 중 빠진 것이 있으면 추가/수정한다. (SQL은 “제안 블록”으로 출력)
 
-1. 현재 로그인 유저의 role을 “항상 동일한 경로”로 가져오도록 공통 유틸을 만든다.
+1. workspace_members 유니크 제약
 
-- src/lib/auth/getWorkspaceRole.ts (server)
-  - 입력: workspaceId
-  - 출력: 'member' | 'leader' | 'admin' | null
-  - 내부에서 supabase.auth.getUser() → workspace_members 조회
+- unique(workspace_id, user_id) 없으면 upsert 불가
+- 있으면 그대로 사용
 
-2. SNB 렌더링 시 role 기반으로 메뉴 배열을 구성한다.
+2. profiles 업데이트 정책
 
-- role === admin/leader 인 경우에만 관리자 섹션 삽입
+- 현재는 본인만 update 가능할 가능성이 높음
+- admin/leader가 타인의 display_name을 수정하려면 정책 추가 필요
 
-3. role 조회는 서버에서 수행하는 것을 기본으로 한다.
+3. workspace_members 업데이트 정책
 
-- 클라이언트에서 role을 신뢰하지 말 것(UX용 보조만 가능)
+- admin/leader만 role 변경 가능해야 함
+- member는 update 불가
 
-────────────────────────────────────────
-[새 요구사항 3: 관리자 기능 - 전체 스냅샷 관리]
+4. snapshot_meta_options 업데이트 정책
 
-1. 관리자만 접근 가능한 라우트 추가
+- admin/leader만 insert/update/delete 가능
+- member는 select만
 
-- /app/admin
-- /app/admin/snapshots
-- /app/admin/snapshots/[snapshotId]
+5. snapshots / snapshot_entries 관리자 CRUD 정책
 
-2. 기능 범위(MVP)
-
-- 전체 스냅샷 목록 조회(워크스페이스 단위)
-  - 필터: year/week, author_name 또는 author_id, status(draft/published)
-  - 정렬: 최신 주차 우선
-- 스냅샷 상세 조회 + entries 조회
-- (선택) 삭제/상태 변경
-  - RLS가 허용하는 범위 내에서만
-  - 허용하지 않는다면 UI에 “권한 정책상 불가” 안내 및 정책 수정 제안
-
-3. 데이터 접근은 반드시 RLS를 준수한다.
-
-- 관리자 조회/수정/삭제 권한이 필요하면 RLS 정책이 이를 허용해야 한다.
-- 현재 정책이 작성자만 접근 가능한 경우, “관리자 조회”가 실패할 수 있으므로
-  - 필요한 정책을 제안/추가하되, SQL은 별도 섹션으로 분리하여 제공한다.
+- admin/leader는 workspace 범위 CRUD 가능하도록 policy가 필요
+- 기존 “작성자만 수정/삭제” 정책이 있다면,
+  admin/leader 예외를 추가해야 관리자 CRUD가 동작함
+- 정책이 없으면 UI에서 403 발생 → Cursor가 그 에러를 근거로 정책 제안
 
 ────────────────────────────────────────
-[새 요구사항 4: 관리자 기능 - Plans(일정표) CRUD]
-중요: Plans는 “워크스페이스 단위” 데이터이며,
-관리자(admin/leader)만 CRUD 가능하게 한다. (member는 읽기만 또는 접근 불가 중 택1)
+[단계별 구현 계획(순서 고정)]
+Step 1) role 조회 유틸 확정(기존 요구 유지)
 
-1. DB 테이블은 현재 Supabase에 이미 존재하는 것을 그대로 사용한다.
+- getWorkspaceRole(workspaceId) 서버 유틸
+- admin/leader 여부 boolean helper 추가: isAdminOrLeader(role)
 
-- public.plans
-- public.plan_assignees
-  (테이블/컬럼은 Cursor가 프로젝트에서 supabase 타입/쿼리로 확인하여 정확히 맞출 것)
+Step 2) 관리자 섹션 + “멤버 관리” 메뉴 SNB 추가
 
-2. Plans 화면 라우팅
+- 조건부 렌더링 + 메뉴 정의에서 실제 추가
 
-- /app/admin/plans
-  - plans 목록 + 필터(프로젝트/모듈/피쳐/상태/담당자)
-  - 새 plan 생성 버튼
-- /app/admin/plans/new
-  - plan 생성 폼
-- /app/admin/plans/[planId]
-  - plan 상세 + 편집 진입
-- /app/admin/plans/[planId]/edit
-  - plan 수정 폼
-    (구조는 프로젝트 컨벤션에 맞게 조정 가능)
+Step 3) /app/admin/\*\* route guard 강화
 
-3. Plans 데이터 모델링 규칙(기존 대화 기반 핵심만 반영)
+- admin/leader 아니면 redirect(/app) 또는 403 페이지
 
-- plan의 단위는 feature까지 포함 가능
-  - project/module/feature 개념을 사용
-- plan에는 상태(stage)가 있고 한글로 직관적으로 표시(예: 컨셉기획/상세기획/디자인/BE/FE/QA/릴리즈 등)
-- 담당자는 복수 지정 가능(옵션)이며, 기획/개발/디자인 등 역할 구분은 추후 확장 가능
-  - 지금은 plan_assignees를 사용해 N:M 관계로 구성
-- “배포/스프린트/릴리즈” 류의 이벤트성 항목은 title만 있어도 되지만,
-  지금 MVP는 “feature 계획 CRUD”부터 안정화한다.
+Step 4) 멤버 관리 화면 구현
 
-4. 권한
+- 데이터 소스: workspace_members JOIN profiles
+- 서버 액션:
+  - updateDisplayName(userId, displayName)
+  - updateMemberRole(userId, role)
+- 변경 사항 저장/롤백 UX
 
-- admin/leader: plans CRUD 가능
-- member: (선택지)
-  - A안: 조회만 가능(워크스페이스 멤버)
-  - B안: 아예 접근 불가
-    Cursor는 A안을 기본으로 구현하되, B안으로 바꾸기 쉽도록 구성한다.
+Step 5) 전체 스냅샷 관리 CRUD 확장
 
-5. 서버 액션 기반 CRUD
+- 기존 admin snapshots 화면이 있으면 확장, 없으면 신규 생성
+- snapshots 상세에서 entries CRUD 제공
+- snapshot_meta_options 관리 페이지 추가 + CRUD
 
-- create/update/delete는 Server Actions 또는 Route Handler로만 수행
-- 클라이언트 직접 insert/update/delete 금지
+Step 6) RLS 이슈 해결
 
-────────────────────────────────────────
-[새 요구사항 5: 단계별 구현 계획(중요, 순서 고정)]
-Step 1) role 조회 유틸 확립
+- 구현 중 403이 발생하면:
+  - 어떤 요청이 막혔는지 로그로 특정
+  - 필요한 policy SQL을 “별도 블록”으로 제안
+  - (사용자에게 실행을 강요하지 말고 선택지로 제공)
 
-- getWorkspaceRole(server) 구현
-- 기본 workspaceId = DEFAULT_WORKSPACE_ID 사용
-- role 조회 실패 케이스 로깅(멤버 row 없음, RLS 거부 등)
+Step 7) 테스트 시나리오 수행
 
-Step 2) SNB 조건부 섹션 추가
-
-- role이 admin/leader면 “관리자” 섹션 노출
-- member면 관리자 섹션 미노출
-- SNB에서 기존 불필요 메뉴 제거 유지
-
-Step 3) 관리자 라우트 가드 추가
-
-- /app/admin/\*\* 진입 시 role 체크
-- admin/leader 아니면 /app로 redirect 또는 403 화면
-- 서버 컴포넌트에서 체크(권장) + 필요 시 middleware 보조
-
-Step 4) 전체 스냅샷 관리(MVP) 구현
-
-- 목록/상세 조회 우선
-- 삭제/상태변경은 RLS 확인 후 단계적으로
-
-Step 5) Plans CRUD(MVP) 구현
-
-- 목록/생성/수정/삭제
-- plan_assignees 연동(담당자 다중 선택)
-- 필터/정렬은 최소 기능부터
-
-Step 6) 테스트/검증
-
-- member 계정: 관리자 메뉴 미노출 + /app/admin 직접 접근 차단
-- admin/leader 계정: 관리자 메뉴 노출 + 전체 스냅샷 조회 + plans CRUD 가능
+- member:
+  - 관리자 섹션 미노출
+  - /app/admin/\* 접근 차단
+  - 본인 snapshot CRUD만 가능
+- leader/admin:
+  - 관리자 섹션 노출
+  - 멤버 관리에서 display_name/role 수정 가능
+  - 전체 스냅샷 관리에서 snapshots/entries/meta_options CRUD 가능(정책 허용 범위)
 
 ────────────────────────────────────────
-[구현 가이드(파일 제안)]
+[구현 파일 가이드(예시)]
 
-- src/lib/auth/getWorkspaceRole.ts (server)
-- src/lib/data/adminSnapshots.ts
-  - listAllSnapshots({ workspaceId, filters })
-  - getSnapshotDetailAdmin({ snapshotId, workspaceId })
-- src/lib/data/plans.ts
-  - listPlans({ workspaceId, filters })
-  - getPlan({ planId })
-  - createPlan(...)
-  - updatePlan(...)
-  - deletePlan(...)
-  - assign/unassign assignees via plan_assignees
-- src/app/(app)/admin/layout.tsx
-  - role guard
-- src/app/(app)/admin/snapshots/\*
-- src/app/(app)/admin/plans/\*
-- SNB 컴포넌트/메뉴 정의 파일(프로젝트에서 찾아 수정)
+- src/lib/auth/getWorkspaceRole.ts
+- src/lib/data/members.ts
+  - listMembers(workspaceId)
+  - updateMemberRole(workspaceId, userId, role)
+  - updateDisplayName(userId, displayName)
+- src/app/(app)/admin/members/page.tsx (+ actions)
+- src/app/(app)/admin/meta-options/page.tsx (+ actions)
+- src/app/(app)/admin/snapshots/\*\* (기존이 있으면 확장)
+- SNB 메뉴 정의 파일(프로젝트에서 탐색 후 수정)
 
 ────────────────────────────────────────
 [출력 요구]
 
 1. 변경/생성 파일 목록
 2. 각 파일 전체 코드(중간 생략 금지)
-3. SNB 섹션 구조 변경 코드(조건부 관리자 섹션 포함)
-4. admin route guard 구현 코드
-5. Plans CRUD 화면/서버 액션/데이터 레이어 전체
-6. 테스트 시나리오(계정별)
-   - member: 관리자 메뉴 없음 + 관리자 페이지 접근 차단
-   - leader/admin: 관리자 메뉴 노출 + 전체 스냅샷 조회 + plans CRUD 가능
-7. RLS 정책 이슈가 발생하면:
-   - 어떤 API가 어떤 에러(403 등)를 내는지
-   - 필요한 정책(SQL)을 “별도 블록”으로 제안 (즉시 실행은 강요하지 말 것)
+3. 관리자 메뉴(SNB) 변경 코드(섹션 구조 포함)
+4. 멤버 관리 화면(목록/수정/저장) 전체
+5. 전체 스냅샷 관리: snapshots / snapshot_entries / snapshot_meta_options CRUD UI + 서버 액션
+6. RLS 정책 누락 시:
+
+- 어떤 동작이 막혔는지(에러 메시지/코드)
+- 필요한 SQL 정책을 별도 블록으로 제안
+
+7. 테스트 시나리오 및 결과 체크리스트
 
 [완료 조건]
 
-- workspace_members.role이 admin/leader인 사용자만 관리자 메뉴가 보인다.
-- /app/admin/\*\* 는 admin/leader만 접근 가능하다.
-- 관리자는 전체 스냅샷을 조회/관리할 수 있다(최소 조회).
-- 관리자는 plans를 CRUD할 수 있다(현재 Supabase의 plans/plan_assignees 테이블 기반).
-- member는 본인 스냅샷 CRUD만 가능하고, 관리자 기능은 접근/노출 모두 불가하다.
+- admin/leader만 “관리자” 섹션 + “멤버 관리” 메뉴가 보인다.
+- 멤버 관리에서 profiles.display_name 수정 및 workspace_members.role 변경이 가능하다(서버 액션 기반).
+- 전체 스냅샷 관리에서 snapshots / snapshot_entries / snapshot_meta_options 3개 리소스를 워크스페이스 범위로 CRUD 가능하다(RLS 정책 일치).
+- member는 관리자 기능에 접근/수정이 불가능하다(UI/DB 모두).
