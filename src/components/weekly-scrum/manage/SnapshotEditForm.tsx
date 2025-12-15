@@ -364,20 +364,35 @@ function ThisWeekTaskEditor({
 }
 
 /**
- * Risk 편집 컴포넌트
+ * Risk 편집 컴포넌트 - "리스크 없음" 토글 추가
  */
 function RiskEditor({
   risks,
   onChange,
+  onRiskLevelChange,
   baseTabIndex,
   compact,
 }: {
   risks: string[] | null;
   onChange: (risks: string[] | null) => void;
+  onRiskLevelChange?: (level: 0 | 1 | 2 | 3 | null) => void;
   baseTabIndex: number;
   compact?: boolean;
 }) {
+  // "리스크 없음" 상태 (risks가 null이고 빈 배열이 아닌 경우)
+  const isNoRisk = risks === null;
   const actualRisks = risks || [];
+
+  const handleToggleNoRisk = () => {
+    if (isNoRisk) {
+      // "리스크 없음" 해제 → 빈 배열로 시작
+      onChange([]);
+    } else {
+      // "리스크 없음" 설정 → null로 설정하고 riskLevel도 null로
+      onChange(null);
+      onRiskLevelChange?.(null);
+    }
+  };
 
   const addRisk = () => {
     onChange([...actualRisks, ""]);
@@ -386,54 +401,99 @@ function RiskEditor({
   const updateRisk = (index: number, value: string) => {
     const newRisks = [...actualRisks];
     newRisks[index] = value;
-    onChange(newRisks.length > 0 ? newRisks : null);
+    onChange(newRisks);
   };
 
   const removeRisk = (index: number) => {
     const newRisks = actualRisks.filter((_, i) => i !== index);
-    onChange(newRisks.length > 0 ? newRisks : null);
+    onChange(newRisks.length > 0 ? newRisks : []);
   };
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
-      {actualRisks.map((risk, index) => (
-        <div key={index} className={`group flex items-center gap-2 bg-orange-50 hover:bg-orange-100 transition-colors ${compact ? "p-2 rounded-lg" : "p-3 rounded-xl"}`}>
-          <div className={`rounded-full bg-orange-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
-          <input
-            type="text"
-            value={risk}
-            onChange={(e) => updateRisk(index, e.target.value)}
-            placeholder="리스크 내용..."
-            tabIndex={baseTabIndex + index}
-            className={`flex-1 bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
-              compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
-            }`}
-          />
-          <button
-            type="button"
-            onClick={() => removeRisk(index)}
-            tabIndex={-1}
-            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
-          >
-            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      ))}
+      {/* 리스크 없음 토글 */}
       <button
         type="button"
-        onClick={addRisk}
-        tabIndex={-1}
-        className={`flex items-center gap-2 font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 transition-colors ${
-          compact ? "px-2.5 py-1.5 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"
-        }`}
+        onClick={handleToggleNoRisk}
+        className={`
+          flex items-center gap-2 font-medium transition-all
+          ${compact ? "px-3 py-2 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"}
+          ${isNoRisk
+            ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }
+        `}
       >
-        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        리스크 추가
+        {isNoRisk ? (
+          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )}
+        리스크 없음
       </button>
+
+      {/* 리스크 목록 (비활성화 시 숨김) */}
+      {!isNoRisk && (
+        <>
+          {actualRisks.map((risk, index) => (
+            <div key={index} className={`group flex items-center gap-2 bg-orange-50 hover:bg-orange-100 transition-colors ${compact ? "p-2 rounded-lg" : "p-3 rounded-xl"}`}>
+              <div className={`rounded-full bg-orange-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
+              <input
+                type="text"
+                value={risk}
+                onChange={(e) => updateRisk(index, e.target.value)}
+                placeholder="리스크 내용..."
+                tabIndex={baseTabIndex + index}
+                className={`flex-1 bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
+                  compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => removeRisk(index)}
+                tabIndex={-1}
+                className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
+              >
+                <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addRisk}
+            tabIndex={-1}
+            className={`flex items-center gap-2 font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 transition-colors ${
+              compact ? "px-2.5 py-1.5 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"
+            }`}
+          >
+            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            리스크 추가
+          </button>
+          
+          {/* 안내 문구 */}
+          <p className={`text-gray-400 ${compact ? "text-[10px]" : "text-xs"}`}>
+            💡 리스크가 없으면 &quot;리스크 없음&quot; 버튼을 클릭하세요
+          </p>
+        </>
+      )}
+
+      {/* 리스크 없음 상태 안내 */}
+      {isNoRisk && (
+        <div className={`flex items-center gap-2 text-emerald-600 ${compact ? "text-xs" : "text-sm"}`}>
+          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          현재 리스크가 없습니다
+        </div>
+      )}
     </div>
   );
 }
@@ -715,7 +775,13 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
 
             <div>
               <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risks</label>
-              <RiskEditor risks={snapshot.pastWeek.risk} onChange={(risks) => handlePastWeekChange("risk", risks)} baseTabIndex={50} compact={compact} />
+              <RiskEditor 
+                risks={snapshot.pastWeek.risk} 
+                onChange={(risks) => handlePastWeekChange("risk", risks)} 
+                onRiskLevelChange={(level) => handlePastWeekChange("riskLevel", level)}
+                baseTabIndex={50} 
+                compact={compact} 
+              />
             </div>
 
             <div>
