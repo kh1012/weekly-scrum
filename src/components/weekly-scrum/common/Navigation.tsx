@@ -114,7 +114,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
  * role에 따라 메뉴 필터링
  */
 function getNavCategories(role: WorkspaceRole): NavCategory[] {
-  const isAdmin = role === "admin" || role === "owner";
+  const isAdmin = role === "admin" || role === "leader";
 
   return BASE_NAV_CATEGORIES.filter((category) => {
     if (category.adminOnly && !isAdmin) {
@@ -214,22 +214,37 @@ export function SideNavigation({
       <div className="px-5 py-5 flex items-center gap-3">
         <div className="w-8 h-8 flex items-center justify-center">
           <svg
-            viewBox="0 0 32 32"
+            viewBox="0 0 64 64"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className="w-full h-full"
           >
             {/* Background */}
-            <rect width="32" height="32" rx="8" fill="#FF385C" />
-            {/* Geometric "W" curve - Airbnb style */}
-            <path
-              d="M6 10 Q9 10, 10.5 16 Q12 22, 16 22 Q20 22, 21.5 16 Q23 10, 26 10"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
+            <rect width="64" height="64" rx="12" fill="#F76D57"/>
+            
+            {/* Popcorn/Ice cream top (cream color) */}
+            <g transform="translate(3, 2) scale(0.9)">
+              <path fill="#F9EBB2" d="M56,13.998c-1.237,0-2.387-0.375-3.343-1.018c-0.671-0.451-1.242-1.037-1.685-1.715
+                c-0.055,0.82-0.352,1.564-0.825,2.174c-0.731,0.941-1.862,1.559-3.147,1.559c-0.839,0-1.616-0.262-2.26-0.703
+                c-0.594-0.408-1.065-0.975-1.369-1.635c-0.328,0.658-0.772,1.248-1.309,1.742c-1.069,0.988-2.493,1.596-4.062,1.596
+                c-1.583,0-3.02-0.619-4.092-1.619c-0.498-0.467-0.917-1.014-1.233-1.625c-0.429,0.533-0.948,0.986-1.532,1.348
+                c-0.915,0.564-1.989,0.896-3.143,0.896c-2.048,0-3.854-1.029-4.937-2.596c-0.412-0.596-0.715-1.27-0.89-1.994
+                c-0.437,0.572-1.015,1.027-1.693,1.299c-0.459,0.184-0.956,0.291-1.48,0.291c-2.209,0-4-1.791-4-4s1.791-4,4-4
+                c0.839,0,1.616,0.26,2.26,0.703c0.594,0.406,1.065,0.975,1.369,1.637c0.327-0.662,0.771-1.25,1.308-1.746
+                C25.006,3.605,26.431,2.998,28,2.998c1.583,0,3.02,0.617,4.092,1.619c0.498,0.467,0.917,1.014,1.233,1.623
+                c0.429-0.531,0.948-0.986,1.532-1.348C35.772,4.328,36.846,3.998,38,3.998c0.445,0,0.878,0.053,1.296,0.145
+                c0.675,0.148,1.305,0.412,1.873,0.768c0.188-0.66,0.524-1.26,0.996-1.732c0.725-0.729,1.727-1.18,2.835-1.18
+                c1.729,0,3.188,1.104,3.747,2.641c0.08,0.221,0.145,0.449,0.185,0.684c0.503,0.17,0.978,0.402,1.41,0.693
+                c0.143-0.406,0.326-0.791,0.548-1.15c1.056-1.719,2.946-2.867,5.11-2.867c3.313,0,6,2.686,6,6C62,11.311,59.313,13.998,56,13.998z"/>
+            </g>
+            
+            {/* Container base (coral) */}
+            <rect x="16" y="22" width="32" height="38" rx="3" fill="#F76D57"/>
+            
+            {/* Container lines (dark) */}
+            <line x1="26" y1="24" x2="26" y2="56" stroke="#394240" strokeWidth="2"/>
+            <line x1="32" y1="24" x2="32" y2="56" stroke="#394240" strokeWidth="2"/>
+            <line x1="38" y1="24" x2="38" y2="56" stroke="#394240" strokeWidth="2"/>
           </svg>
         </div>
         <span

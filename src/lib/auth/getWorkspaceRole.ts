@@ -2,8 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * Workspace Role 타입
+ * - admin: 관리자 (전체 데이터 관리 권한)
+ * - leader: 리더 (관리자와 동일 권한)
+ * - member: 일반 멤버
  */
-export type WorkspaceRole = "owner" | "admin" | "member" | null;
+export type WorkspaceRole = "admin" | "leader" | "member" | null;
 
 /**
  * 현재 로그인 유저의 workspace role을 조회 (Server Only)
@@ -64,12 +67,18 @@ export async function getWorkspaceRole(
 }
 
 /**
- * 현재 유저가 관리자(admin 또는 owner)인지 확인
+ * 현재 유저가 관리자(admin 또는 leader)인지 확인
  */
-export async function isAdminOrOwner(workspaceId?: string): Promise<boolean> {
+export async function isAdminOrLeader(workspaceId?: string): Promise<boolean> {
   const role = await getWorkspaceRole(workspaceId);
-  return role === "admin" || role === "owner";
+  return role === "admin" || role === "leader";
 }
+
+/**
+ * isAdminOrOwner는 isAdminOrLeader의 별칭 (하위 호환)
+ * @deprecated isAdminOrLeader 사용 권장
+ */
+export const isAdminOrOwner = isAdminOrLeader;
 
 /**
  * 현재 유저의 role 정보와 함께 유저 정보도 반환
