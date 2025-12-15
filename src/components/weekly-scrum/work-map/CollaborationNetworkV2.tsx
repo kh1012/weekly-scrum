@@ -30,6 +30,17 @@ interface NetworkEdge {
   relation: Relation;
 }
 
+// relations 배열에서 첫 번째 relation 가져오기
+function getPrimaryRelation(collab: { relation?: Relation; relations?: Relation[] }): Relation {
+  return collab.relations?.[0] || collab.relation || "pair";
+}
+
+// relations에 특정 relation이 포함되어 있는지 확인
+function hasRelation(collab: { relation?: Relation; relations?: Relation[] }, rel: Relation): boolean {
+  const rels = collab.relations || (collab.relation ? [collab.relation] : []);
+  return rels.includes(rel);
+}
+
 /**
  * 협업 네트워크 데이터 빌드
  */
@@ -88,9 +99,9 @@ function buildNetworkData(
         const authorNode = nodesMap.get(authorKey)!;
         const collabNode = nodesMap.get(collabKey)!;
 
-        if (collab.relation === "pair") {
+        if (hasRelation(collab, "pair")) {
           authorNode.pairCount++;
-        } else if (collab.relation === "pre") {
+        } else if (hasRelation(collab, "pre")) {
           // pre: 협업자가 나에게 선행 입력 제공 → 협업자의 preCount 증가
           collabNode.preCount++;
         }
@@ -98,7 +109,7 @@ function buildNetworkData(
         edges.push({
           from: authorKey,
           to: collabKey,
-          relation: collab.relation,
+          relation: getPrimaryRelation(collab),
         });
       }
     }

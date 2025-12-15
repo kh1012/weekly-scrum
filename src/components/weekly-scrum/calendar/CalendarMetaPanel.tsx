@@ -88,12 +88,37 @@ function ProjectFocusPanel({
   selectedWeek,
   selectedInitiative,
 }: ProjectFocusPanelProps) {
+  // 선택된 주차가 있으면 해당 주차 데이터, 없으면 전체 기간 데이터
+  const displayData = selectedWeek
+    ? {
+        totalInitiativeCount: selectedWeek.initiatives.length,
+        totalMemberCount: new Set(
+          selectedWeek.initiatives.flatMap((i) => Array.from(i.members))
+        ).size,
+        totalModuleCount: selectedWeek.modules.length,
+        totalFeatureCount: selectedWeek.features.length,
+        totalDoneTaskCount: selectedWeek.initiatives.reduce(
+          (sum, i) => sum + i.doneTaskCount,
+          0
+        ),
+        totalPlannedTaskCount: selectedWeek.initiatives.reduce(
+          (sum, i) => sum + i.plannedTaskCount,
+          0
+        ),
+      }
+    : summary;
+
   const avgRate =
-    summary.totalPlannedTaskCount > 0
+    displayData.totalPlannedTaskCount > 0
       ? Math.round(
-          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+          (displayData.totalDoneTaskCount / displayData.totalPlannedTaskCount) *
+            100
         )
       : 0;
+
+  const headerText = selectedWeek
+    ? `W${String(selectedWeek.key.weekIndex).padStart(2, "0")} 요약`
+    : "기간 요약";
 
   return (
     <div className="p-5 space-y-6">
@@ -103,36 +128,36 @@ function ProjectFocusPanel({
           <span className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
             📊
           </span>
-          기간 요약
+          {headerText}
         </h3>
         <div className="grid grid-cols-2 gap-5">
           <SummaryItem
             label="참여 프로젝트"
-            value={summary.totalInitiativeCount}
+            value={displayData.totalInitiativeCount}
             unit="개"
             color="blue"
           />
           <SummaryItem
             label="참여 멤버"
-            value={summary.totalMemberCount}
+            value={displayData.totalMemberCount}
             unit="명"
             color="purple"
           />
           <SummaryItem
             label="진행 모듈"
-            value={summary.totalModuleCount}
+            value={displayData.totalModuleCount}
             unit="개"
             color="emerald"
           />
           <SummaryItem
             label="진행 기능"
-            value={summary.totalFeatureCount}
+            value={displayData.totalFeatureCount}
             unit="개"
             color="orange"
           />
           <SummaryItem
             label="완료 Task"
-            value={summary.totalDoneTaskCount}
+            value={displayData.totalDoneTaskCount}
             unit="건"
             color="pink"
           />
@@ -197,12 +222,37 @@ interface ModuleFocusPanelProps {
 }
 
 function ModuleFocusPanel({ summary, selectedWeek }: ModuleFocusPanelProps) {
+  // 선택된 주차가 있으면 해당 주차 데이터, 없으면 전체 기간 데이터
+  const displayData = selectedWeek
+    ? {
+        totalModuleCount: selectedWeek.modules.length,
+        totalInitiativeCount: selectedWeek.initiatives.length,
+        totalFeatureCount: selectedWeek.features.length,
+        totalMemberCount: new Set(
+          selectedWeek.initiatives.flatMap((i) => Array.from(i.members))
+        ).size,
+        totalDoneTaskCount: selectedWeek.modules.reduce(
+          (sum, m) => sum + m.doneTaskCount,
+          0
+        ),
+        totalPlannedTaskCount: selectedWeek.modules.reduce(
+          (sum, m) => sum + m.plannedTaskCount,
+          0
+        ),
+      }
+    : summary;
+
   const avgRate =
-    summary.totalPlannedTaskCount > 0
+    displayData.totalPlannedTaskCount > 0
       ? Math.round(
-          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+          (displayData.totalDoneTaskCount / displayData.totalPlannedTaskCount) *
+            100
         )
       : 0;
+
+  const headerText = selectedWeek
+    ? `W${String(selectedWeek.key.weekIndex).padStart(2, "0")} 요약`
+    : "기간 요약";
 
   return (
     <div className="p-5 space-y-6">
@@ -212,36 +262,36 @@ function ModuleFocusPanel({ summary, selectedWeek }: ModuleFocusPanelProps) {
           <span className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
             📦
           </span>
-          기간 요약
+          {headerText}
         </h3>
         <div className="grid grid-cols-2 gap-5">
           <SummaryItem
             label="진행 모듈"
-            value={summary.totalModuleCount}
+            value={displayData.totalModuleCount}
             unit="개"
             color="emerald"
           />
           <SummaryItem
             label="참여 프로젝트"
-            value={summary.totalInitiativeCount}
+            value={displayData.totalInitiativeCount}
             unit="개"
             color="blue"
           />
           <SummaryItem
             label="진행 기능"
-            value={summary.totalFeatureCount}
+            value={displayData.totalFeatureCount}
             unit="개"
             color="purple"
           />
           <SummaryItem
             label="참여 멤버"
-            value={summary.totalMemberCount}
+            value={displayData.totalMemberCount}
             unit="명"
             color="violet"
           />
           <SummaryItem
             label="완료 Task"
-            value={summary.totalDoneTaskCount}
+            value={displayData.totalDoneTaskCount}
             unit="건"
             color="pink"
           />
@@ -298,12 +348,37 @@ interface FeatureFocusPanelProps {
 }
 
 function FeatureFocusPanel({ summary, selectedWeek }: FeatureFocusPanelProps) {
+  // 선택된 주차가 있으면 해당 주차 데이터, 없으면 전체 기간 데이터
+  const displayData = selectedWeek
+    ? {
+        totalFeatureCount: selectedWeek.features.length,
+        totalInitiativeCount: selectedWeek.initiatives.length,
+        totalModuleCount: selectedWeek.modules.length,
+        totalMemberCount: new Set(
+          selectedWeek.initiatives.flatMap((i) => Array.from(i.members))
+        ).size,
+        totalDoneTaskCount: selectedWeek.features.reduce(
+          (sum, f) => sum + f.doneTaskCount,
+          0
+        ),
+        totalPlannedTaskCount: selectedWeek.features.reduce(
+          (sum, f) => sum + f.plannedTaskCount,
+          0
+        ),
+      }
+    : summary;
+
   const avgRate =
-    summary.totalPlannedTaskCount > 0
+    displayData.totalPlannedTaskCount > 0
       ? Math.round(
-          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+          (displayData.totalDoneTaskCount / displayData.totalPlannedTaskCount) *
+            100
         )
       : 0;
+
+  const headerText = selectedWeek
+    ? `W${String(selectedWeek.key.weekIndex).padStart(2, "0")} 요약`
+    : "기간 요약";
 
   return (
     <div className="p-5 space-y-6">
@@ -313,36 +388,36 @@ function FeatureFocusPanel({ summary, selectedWeek }: FeatureFocusPanelProps) {
           <span className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
             ✨
           </span>
-          기간 요약
+          {headerText}
         </h3>
         <div className="grid grid-cols-2 gap-5">
           <SummaryItem
             label="진행 기능"
-            value={summary.totalFeatureCount}
+            value={displayData.totalFeatureCount}
             unit="개"
             color="orange"
           />
           <SummaryItem
             label="참여 프로젝트"
-            value={summary.totalInitiativeCount}
+            value={displayData.totalInitiativeCount}
             unit="개"
             color="blue"
           />
           <SummaryItem
             label="진행 모듈"
-            value={summary.totalModuleCount}
+            value={displayData.totalModuleCount}
             unit="개"
             color="emerald"
           />
           <SummaryItem
             label="참여 멤버"
-            value={summary.totalMemberCount}
+            value={displayData.totalMemberCount}
             unit="명"
             color="violet"
           />
           <SummaryItem
             label="완료 Task"
-            value={summary.totalDoneTaskCount}
+            value={displayData.totalDoneTaskCount}
             unit="건"
             color="pink"
           />
@@ -404,16 +479,38 @@ function MemberFocusPanel({
   selectedWeek,
   selectedMember,
 }: MemberFocusPanelProps) {
+  // 선택된 주차가 있으면 해당 주차 데이터, 없으면 전체 기간 데이터
+  const displayData = selectedWeek
+    ? {
+        totalMemberCount: selectedWeek.members.length,
+        totalInitiativeCount: selectedWeek.initiatives.length,
+        totalModuleCount: selectedWeek.modules.length,
+        totalDoneTaskCount: selectedWeek.members.reduce(
+          (sum, m) => sum + m.doneTaskCount,
+          0
+        ),
+        totalPlannedTaskCount: selectedWeek.members.reduce(
+          (sum, m) => sum + m.plannedTaskCount,
+          0
+        ),
+      }
+    : summary;
+
   const avgInitiatives =
-    summary.totalMemberCount > 0
-      ? (summary.totalInitiativeCount / summary.totalMemberCount).toFixed(1)
+    displayData.totalMemberCount > 0
+      ? (displayData.totalInitiativeCount / displayData.totalMemberCount).toFixed(1)
       : "0";
   const avgRate =
-    summary.totalPlannedTaskCount > 0
+    displayData.totalPlannedTaskCount > 0
       ? Math.round(
-          (summary.totalDoneTaskCount / summary.totalPlannedTaskCount) * 100
+          (displayData.totalDoneTaskCount / displayData.totalPlannedTaskCount) *
+            100
         )
       : 0;
+
+  const headerText = selectedWeek
+    ? `W${String(selectedWeek.key.weekIndex).padStart(2, "0")} 요약`
+    : "기간 요약";
 
   return (
     <div className="p-5 space-y-6">
@@ -423,12 +520,12 @@ function MemberFocusPanel({
           <span className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center">
             📊
           </span>
-          기간 요약
+          {headerText}
         </h3>
         <div className="grid grid-cols-2 gap-5">
           <SummaryItem
             label="참여 멤버"
-            value={summary.totalMemberCount}
+            value={displayData.totalMemberCount}
             unit="명"
             color="violet"
           />
@@ -440,19 +537,19 @@ function MemberFocusPanel({
           />
           <SummaryItem
             label="참여 프로젝트"
-            value={summary.totalInitiativeCount}
+            value={displayData.totalInitiativeCount}
             unit="개"
             color="emerald"
           />
           <SummaryItem
             label="진행 모듈"
-            value={summary.totalModuleCount}
+            value={displayData.totalModuleCount}
             unit="개"
             color="orange"
           />
           <SummaryItem
             label="완료 Task"
-            value={summary.totalDoneTaskCount}
+            value={displayData.totalDoneTaskCount}
             unit="건"
             color="pink"
           />

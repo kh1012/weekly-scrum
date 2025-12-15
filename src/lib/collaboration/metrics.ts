@@ -2,7 +2,7 @@
  * 협업 지표 계산 유틸리티
  */
 
-import type { ScrumItem, Relation } from "@/types/scrum";
+import type { ScrumItem, Relation, Collaborator } from "@/types/scrum";
 import type {
   CollaborationEdge,
   CollaborationNode,
@@ -12,6 +12,17 @@ import type {
   BottleneckNode,
 } from "./types";
 
+// relations 배열에서 첫 번째 relation 가져오기
+function getPrimaryRelation(collab: Collaborator): Relation {
+  return collab.relations?.[0] || collab.relation || "pair";
+}
+
+// relations에 특정 relation이 포함되어 있는지 확인
+function hasRelation(collab: Collaborator, rel: Relation): boolean {
+  const rels = collab.relations || (collab.relation ? [collab.relation] : []);
+  return rels.includes(rel);
+}
+
 /**
  * 멤버별 pair 협업 수 계산
  */
@@ -19,7 +30,7 @@ export function getPairCountPerMember(items: ScrumItem[]): Map<string, number> {
   const pairCounts = new Map<string, number>();
 
   for (const item of items) {
-    const pairs = item.collaborators?.filter((c) => c.relation === "pair") ?? [];
+    const pairs = item.collaborators?.filter((c) => hasRelation(c, "pair")) ?? [];
     const currentCount = pairCounts.get(item.name) ?? 0;
     pairCounts.set(item.name, currentCount + pairs.length);
   }
@@ -169,10 +180,11 @@ export function getCollaborationEdges(items: ScrumItem[]): CollaborationEdge[] {
     for (const collab of item.collaborators) {
       // pre: 협업자 → 나 (협업자가 source, 내가 target)
       // post, pair: 나 → 협업자 (내가 source, 협업자가 target)
-      const source = collab.relation === "pre" ? collab.name : item.name;
-      const target = collab.relation === "pre" ? item.name : collab.name;
+      const rel = getPrimaryRelation(collab);
+      const source = hasRelation(collab, "pre") ? collab.name : item.name;
+      const target = hasRelation(collab, "pre") ? item.name : collab.name;
       
-      const key = `${source}->${target}:${collab.relation}`;
+      const key = `${source}->${target}:${rel}`;
       const existing = edgeMap.get(key);
       if (existing) {
         existing.count++;
@@ -180,7 +192,7 @@ export function getCollaborationEdges(items: ScrumItem[]): CollaborationEdge[] {
         edgeMap.set(key, {
           source,
           target,
-          relation: collab.relation,
+          relation: rel,
           count: 1,
         });
       }
@@ -274,11 +286,11 @@ export function getCollaborationMatrix(
       const cell = matrixMap.get(key);
       if (!cell) continue;
 
-      if (collab.relation === "pair") {
+      if (hasRelation(collab, "pair")) {
         cell.pairCount++;
-      } else if (collab.relation === "pre") {
+      } else if (hasRelation(collab, "pre")) {
         cell.preCount++;
-      } else if (collab.relation === "post") {
+      } else if (hasRelation(collab, "post")) {
         cell.postCount++;
       }
       cell.totalCount++;
@@ -318,24 +330,23 @@ export function getMemberSummary(
   for (const item of memberItems) {
     if (!item.collaborators) continue;
     for (const collab of item.collaborators) {
-      const key = `${collab.name}:${collab.relation}`;
+      const rel = getPrimaryRelation(collab);
+      const key = `${collab.name}:${rel}`;
       const existing = collabStats.get(key);
       if (existing) {
         existing.count++;
       } else {
-        collabStats.set(key, { relation: collab.relation, count: 1 });
+        collabStats.set(key, { relation: rel, count: 1 });
       }
 
-      switch (collab.relation) {
-        case "pair":
-          pairCount++;
-          break;
-        case "pre":
-          preCount++;
-          break;
-        case "post":
-          postCount++;
-          break;
+      if (hasRelation(collab, "pair")) {
+        pairCount++;
+      }
+      if (hasRelation(collab, "pre")) {
+        preCount++;
+      }
+      if (hasRelation(collab, "post")) {
+        postCount++;
       }
     }
   }

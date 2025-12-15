@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // 본인의 모든 스냅샷과 엔트리 조회
+  // 본인의 모든 스냅샷과 엔트리 조회 (새 DB 스키마: risks, collaborators 별도 컬럼)
   const { data: snapshots, error } = await supabase
     .from("snapshots")
     .select(`
@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
         project,
         module,
         feature,
-        past_week_tasks,
-        this_week_tasks,
-        risk,
+        past_week,
+        this_week,
+        risks,
         risk_level,
         collaborators
       )

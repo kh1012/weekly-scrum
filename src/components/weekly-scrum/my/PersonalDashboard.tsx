@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 개인 공간 대시보드 - Airbnb 스타일
+ * 개인 공간 대시보드 - Trendy Airbnb 스타일
  * 
  * 주요 기능:
  * - 스냅샷 관리 카드
@@ -31,241 +31,297 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-10rem)]">
-      {/* 헤더 */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {userName ? `안녕하세요, ${userName}님` : "개인 대시보드"}
+    <div className="min-h-[calc(100vh-10rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      {/* 헤더 - 더 대담한 타이포그래피 */}
+      <div className="mb-10">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-xs font-medium text-emerald-600 uppercase tracking-wider">
+            Active
+          </span>
+        </div>
+        <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-3">
+          {userName ? (
+            <>
+              안녕하세요,{" "}
+              <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+                {userName}
+              </span>
+              님
+            </>
+          ) : (
+            "개인 대시보드"
+          )}
         </h1>
-        <p className="text-gray-500">
-          개인 업무 현황을 한눈에 확인하고 관리하세요
+        <p className="text-lg text-gray-500 font-light">
+          업무 현황을 한눈에 확인하고 관리하세요
         </p>
       </div>
 
-      {/* 통계 카드 */}
+      {/* 통계 카드 - 글래스모피즘 스타일 */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10">
+          <GlassStatCard
             label="전체 스냅샷"
             value={stats.totalSnapshots}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            }
-            color="blue"
+            trend="+3"
+            trendUp
+            gradientFrom="from-blue-500"
+            gradientTo="to-cyan-400"
           />
-          <StatCard
+          <GlassStatCard
             label="이번 주 진척률"
             value={`${stats.thisWeekProgress}%`}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            }
-            color="emerald"
+            trend="+12%"
+            trendUp
+            gradientFrom="from-emerald-500"
+            gradientTo="to-teal-400"
           />
-          <StatCard
+          <GlassStatCard
             label="진행 중 프로젝트"
             value={stats.activeProjects}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
-            }
-            color="purple"
+            gradientFrom="from-violet-500"
+            gradientTo="to-purple-400"
           />
-          <StatCard
+          <GlassStatCard
             label="협업자"
             value={stats.collaborators}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            }
-            color="amber"
+            trend="+2"
+            trendUp
+            gradientFrom="from-amber-500"
+            gradientTo="to-orange-400"
           />
         </div>
       )}
 
-      {/* 빠른 접근 카드들 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* 스냅샷 관리 카드 - 메인 */}
-        <ActionCard
+      {/* 빠른 접근 카드들 - 대형 인터랙티브 카드 */}
+      <div className="space-y-6">
+        {/* 메인 카드 - 스냅샷 관리 */}
+        <HeroCard
           title="스냅샷 관리"
-          description="주차별 스냅샷을 조회하고 편집하세요. 새 스냅샷을 작성하거나 기존 스냅샷을 수정할 수 있습니다."
-          icon={
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          }
-          gradientFrom="from-rose-500"
-          gradientTo="to-pink-600"
-          shadowColor="shadow-rose-500/25"
+          subtitle="주차별 스냅샷 조회 및 관리"
+          description="새 스냅샷을 작성하거나 기존 스냅샷을 수정하세요. 프로젝트별, 모듈별로 업무를 정리할 수 있습니다."
+          icon="📋"
           onClick={() => handleNavigate("/manage/snapshots")}
-          primary
+          gradientFrom="from-rose-500"
+          gradientVia="via-pink-500"
+          gradientTo="to-fuchsia-500"
         />
 
-        {/* 새 스냅샷 작성 */}
-        <ActionCard
-          title="새 스냅샷 작성"
-          description="이번 주 스냅샷을 새로 작성합니다. 데이터 불러오기 또는 빈 상태에서 시작할 수 있습니다."
-          icon={
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-          }
-          gradientFrom="from-emerald-500"
-          gradientTo="to-teal-600"
-          shadowColor="shadow-emerald-500/25"
-          onClick={() => {
-            // 현재 주차로 이동
-            const now = new Date();
-            const jan4 = new Date(now.getFullYear(), 0, 4);
-            const dayOfWeek = jan4.getDay() || 7;
-            const firstMonday = new Date(jan4);
-            firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
-            const diff = now.getTime() - firstMonday.getTime();
-            const week = Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
-            const year = now.getFullYear();
-            handleNavigate(`/manage/snapshots/${year}/${week}/new`);
-          }}
-        />
+        {/* 서브 카드들 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <InteractiveCard
+            title="새 스냅샷 작성"
+            description="이번 주 스냅샷을 새로 작성합니다"
+            icon="✏️"
+            badge="Quick Action"
+            onClick={() => {
+              const now = new Date();
+              const jan4 = new Date(now.getFullYear(), 0, 4);
+              const dayOfWeek = jan4.getDay() || 7;
+              const firstMonday = new Date(jan4);
+              firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
+              const diff = now.getTime() - firstMonday.getTime();
+              const week = Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
+              const year = now.getFullYear();
+              handleNavigate(`/manage/snapshots/${year}/${week}/new`);
+            }}
+            gradientFrom="from-emerald-400"
+            gradientTo="to-cyan-400"
+          />
 
-        {/* 업무 현황 보기 */}
-        <ActionCard
-          title="업무 현황"
-          description="개인 업무 통계, 진척률 추이, 협업 현황 등을 상세히 확인합니다."
-          icon={
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          }
-          gradientFrom="from-blue-500"
-          gradientTo="to-indigo-600"
-          shadowColor="shadow-blue-500/25"
-          onClick={() => handleNavigate("/my/stats")}
-          disabled
-          disabledText="준비 중"
-        />
+          <InteractiveCard
+            title="업무 현황"
+            description="개인 통계, 진척률 추이, 협업 현황 확인"
+            icon="📊"
+            badge="Coming Soon"
+            disabled
+            onClick={() => handleNavigate("/my/stats")}
+            gradientFrom="from-blue-400"
+            gradientTo="to-indigo-400"
+          />
+        </div>
       </div>
 
-      {/* 하단 안내 */}
-      <div className="mt-12 text-center">
-        <p className="text-sm text-gray-400">
-          데이터는 Supabase에 안전하게 저장됩니다 · 새로고침해도 데이터가 유지됩니다
-        </p>
+      {/* 하단 안내 - 미니멀 스타일 */}
+      <div className="mt-16 py-6 border-t border-gray-100">
+        <div className="flex items-center justify-center gap-6 text-xs text-gray-400">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>실시간 동기화</span>
+          </div>
+          <span className="text-gray-200">·</span>
+          <span>Supabase 안전 저장</span>
+          <span className="text-gray-200">·</span>
+          <span>자동 백업</span>
+        </div>
       </div>
     </div>
   );
 }
 
-// 통계 카드
-function StatCard({
+// 글래스모피즘 통계 카드
+function GlassStatCard({
   label,
   value,
-  icon,
-  color,
+  trend,
+  trendUp,
+  gradientFrom,
+  gradientTo,
 }: {
   label: string;
   value: string | number;
-  icon: React.ReactNode;
-  color: "blue" | "emerald" | "purple" | "amber";
+  trend?: string;
+  trendUp?: boolean;
+  gradientFrom: string;
+  gradientTo: string;
 }) {
-  const colorClasses = {
-    blue: "bg-blue-50 text-blue-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    purple: "bg-purple-50 text-purple-600",
-    amber: "bg-amber-50 text-amber-600",
-  };
-
   return (
-    <div className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClasses[color]}`}>
-          {icon}
+    <div className="group relative p-5 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-lg shadow-gray-200/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden">
+      {/* 배경 그라데이션 원 */}
+      <div className={`absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-20 group-hover:opacity-30 group-hover:scale-125 transition-all duration-500`} />
+      
+      <div className="relative">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="text-3xl font-black text-gray-900">{value}</span>
+          {trend && (
+            <span className={`text-xs font-semibold ${trendUp ? "text-emerald-500" : "text-red-500"}`}>
+              {trend}
+            </span>
+          )}
         </div>
-        <div>
-          <div className="text-2xl font-bold text-gray-900">{value}</div>
-          <div className="text-xs text-gray-500">{label}</div>
-        </div>
+        <span className="text-sm text-gray-500 font-medium">{label}</span>
       </div>
     </div>
   );
 }
 
-// 액션 카드
-function ActionCard({
+// 히어로 카드 (메인)
+function HeroCard({
+  title,
+  subtitle,
+  description,
+  icon,
+  onClick,
+  gradientFrom,
+  gradientVia,
+  gradientTo,
+}: {
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  onClick: () => void;
+  gradientFrom: string;
+  gradientVia: string;
+  gradientTo: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="group relative w-full p-8 rounded-[2rem] overflow-hidden text-left transition-all duration-500 hover:shadow-2xl hover:scale-[1.01]"
+    >
+      {/* 배경 그라데이션 */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientVia} ${gradientTo}`} />
+      
+      {/* 노이즈 텍스처 */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" /%3E%3C/filter%3E%3Crect width="100%" height="100%" filter="url(%23noise)" /%3E%3C/svg%3E")' }} />
+      
+      {/* 움직이는 그라데이션 원 */}
+      <div className="absolute -bottom-20 -right-20 w-60 h-60 rounded-full bg-white/10 group-hover:scale-150 transition-transform duration-700" />
+      <div className="absolute top-10 right-40 w-32 h-32 rounded-full bg-white/5 group-hover:translate-x-10 transition-transform duration-500" />
+
+      <div className="relative flex items-start justify-between">
+        <div className="flex-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white/90 text-xs font-semibold mb-4">
+            <span>{icon}</span>
+            <span>{subtitle}</span>
+          </div>
+          
+          <h2 className="text-3xl font-black text-white mb-3 group-hover:translate-x-2 transition-transform duration-300">
+            {title}
+          </h2>
+          
+          <p className="text-white/70 text-sm max-w-md leading-relaxed">
+            {description}
+          </p>
+        </div>
+
+        {/* 화살표 */}
+        <div className="shrink-0 w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 group-hover:scale-110 transition-all duration-300">
+          <svg className="w-6 h-6 text-white group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// 인터랙티브 카드 (서브)
+function InteractiveCard({
   title,
   description,
   icon,
+  badge,
+  onClick,
+  disabled,
   gradientFrom,
   gradientTo,
-  shadowColor,
-  onClick,
-  primary,
-  disabled,
-  disabledText,
 }: {
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon: string;
+  badge?: string;
+  onClick: () => void;
+  disabled?: boolean;
   gradientFrom: string;
   gradientTo: string;
-  shadowColor: string;
-  onClick: () => void;
-  primary?: boolean;
-  disabled?: boolean;
-  disabledText?: string;
 }) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`group relative p-6 bg-white rounded-3xl border text-left overflow-hidden transition-all duration-300 ${
+      className={`group relative w-full p-6 rounded-3xl bg-white border text-left overflow-hidden transition-all duration-300 ${
         disabled
           ? "border-gray-100 opacity-60 cursor-not-allowed"
-          : primary
-          ? "border-gray-200 hover:border-gray-300 hover:shadow-xl"
-          : "border-gray-200 hover:border-gray-300 hover:shadow-lg"
+          : "border-gray-100 hover:border-gray-200 hover:shadow-xl hover:scale-[1.02]"
       }`}
     >
-      {/* 배경 그라데이션 */}
+      {/* 호버 그라데이션 배경 */}
       {!disabled && (
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom.replace("from-", "from-").replace("-500", "-50")} via-white ${gradientTo.replace("to-", "to-").replace("-600", "-50")} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
       )}
 
-      <div className="relative">
-        <div className="flex items-center gap-4 mb-4">
-          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradientFrom} ${gradientTo} flex items-center justify-center shadow-lg ${shadowColor} ${!disabled && "group-hover:scale-110"} transition-transform duration-300 text-white`}>
-            {icon}
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {title}
-            </h2>
-            {disabled && disabledText && (
-              <span className="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 rounded-full mt-1">
-                {disabledText}
+      <div className="relative flex items-start gap-4">
+        {/* 아이콘 */}
+        <div className={`shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br ${gradientFrom} ${gradientTo} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+          {icon}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+            {badge && (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                disabled ? "bg-gray-100 text-gray-400" : "bg-emerald-100 text-emerald-600"
+              }`}>
+                {badge}
               </span>
             )}
           </div>
+          <p className="text-sm text-gray-500">{description}</p>
         </div>
 
-        <p className="text-gray-600 text-sm leading-relaxed">
-          {description}
-        </p>
+        {/* 화살표 */}
+        {!disabled && (
+          <div className="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+            <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        )}
       </div>
-
-      {/* 화살표 */}
-      {!disabled && (
-        <div className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
-      )}
     </button>
   );
 }
-

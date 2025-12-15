@@ -4,11 +4,13 @@ import type { TreeNode, FlatRow } from "./types";
 /**
  * Plans 데이터로 트리 구조 생성
  * - type='feature' plans: project > module > feature 계층
- * - type!='feature' plans: Events 그룹
+ * - type='sprint' plans: 스프린트 그룹
+ * - type='release' plans: 릴리즈 그룹
  */
 export function buildTreeFromPlans(plans: PlanWithAssignees[]): TreeNode[] {
   const featurePlans = plans.filter((p) => p.type === "feature");
-  const eventPlans = plans.filter((p) => p.type !== "feature");
+  const sprintPlans = plans.filter((p) => p.type === "sprint");
+  const releasePlans = plans.filter((p) => p.type === "release");
 
   // Project Map 구조: project -> module -> feature -> plans
   const projectMap = new Map<
@@ -90,14 +92,14 @@ export function buildTreeFromPlans(plans: PlanWithAssignees[]): TreeNode[] {
     tree.push(projectNode);
   }
 
-  // Events Group (type != 'feature')
-  if (eventPlans.length > 0) {
-    const eventsNode: TreeNode = {
-      id: "events-group",
+  // Release Group (type = 'release') - 최상단
+  if (releasePlans.length > 0) {
+    const releaseNode: TreeNode = {
+      id: "release-group",
       type: "events",
-      label: "이벤트 / 마일스톤",
-      children: eventPlans.map((plan) => ({
-        id: `event-${plan.id}`,
+      label: "🚀 릴리즈",
+      children: releasePlans.map((plan) => ({
+        id: `release-${plan.id}`,
         type: "feature" as const,
         label: plan.title,
         plans: [plan],
@@ -106,7 +108,31 @@ export function buildTreeFromPlans(plans: PlanWithAssignees[]): TreeNode[] {
       expanded: true,
       level: 0,
     };
-    tree.unshift(eventsNode);
+    tree.unshift(releaseNode);
+  }
+
+  // Sprint Group (type = 'sprint') - 릴리즈 다음
+  if (sprintPlans.length > 0) {
+    const sprintNode: TreeNode = {
+      id: "sprint-group",
+      type: "events",
+      label: "🏃 스프린트",
+      children: sprintPlans.map((plan) => ({
+        id: `sprint-${plan.id}`,
+        type: "feature" as const,
+        label: plan.title,
+        plans: [plan],
+        level: 1,
+      })),
+      expanded: true,
+      level: 0,
+    };
+    // 릴리즈 그룹이 있으면 그 다음에, 없으면 맨 앞에
+    if (releasePlans.length > 0) {
+      tree.splice(1, 0, sprintNode);
+    } else {
+      tree.unshift(sprintNode);
+    }
   }
 
   return tree;

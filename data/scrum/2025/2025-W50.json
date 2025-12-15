@@ -76,10 +76,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "DB 추가 항목 검증 (Value Section 제외)",
-          "매뉴얼 작성"
-        ]
+        "tasks": ["DB 추가 항목 검증 (Value Section 제외)", "매뉴얼 작성"]
       }
     },
     {
@@ -148,9 +145,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "아이디어 포지 + rpm-system 권한 문제 해결"
-        ]
+        "tasks": ["아이디어 포지 + rpm-system 권한 문제 해결"]
       }
     },
     {
@@ -170,9 +165,7 @@
             "progress": 40
           }
         ],
-        "risk": [
-          "레거시가 기억나지 않음.."
-        ],
+        "risk": ["레거시가 기억나지 않음.."],
         "riskLevel": 1,
         "collaborators": [
           {
@@ -186,9 +179,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "MDesk 핫픽스 과제 진행"
-        ]
+        "tasks": ["MDesk 핫픽스 과제 진행"]
       }
     },
     {
@@ -258,9 +249,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "SpreadJS - Core 성능개선"
-        ]
+        "tasks": ["SpreadJS - Core 성능개선"]
       }
     },
     {
@@ -290,9 +279,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "상세기획 공유"
-        ]
+        "tasks": ["상세기획 공유"]
       }
     },
     {
@@ -361,9 +348,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "워크스페이스 > 릴리즈 범위 세부 기획 완료 (100%)"
-        ]
+        "tasks": ["워크스페이스 > 릴리즈 범위 세부 기획 완료 (100%)"]
       }
     },
     {
@@ -397,10 +382,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "QA 반영",
-          "Result Table - 데이터 연결"
-        ]
+        "tasks": ["QA 반영", "Result Table - 데이터 연결"]
       }
     },
     {
@@ -438,10 +420,7 @@
         ]
       },
       "thisWeek": {
-        "tasks": [
-          "메인페이지 제작 완료(100%)",
-          "검색결과페이지 제작(70%)"
-        ]
+        "tasks": ["메인페이지 제작 완료(100%)", "검색결과페이지 제작(70%)"]
       }
     },
     {
@@ -530,6 +509,32 @@
           "프로필 > Activity 페이지 상세 기획 완료",
           "프로필 홈 상세 기획 완료"
         ]
+      }
+    },
+    {
+      "name": "김현",
+      "domain": "Frontend",
+      "project": "MOTIIV",
+      "module": "Profile",
+      "feature": "프로필 페이지 정의",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "프로필 페이지 개발",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "도기봉",
+            "relation": "post"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": ["프로필 페이지 개발 완료"]
       }
     }
   ]

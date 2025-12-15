@@ -3,9 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Plan 타입 (DB plan_type enum)
  * - feature: 기능 개발 계획 (domain/project/module/feature 필수)
- * - event: 이벤트성 계획 (릴리즈/배포 등, title만 필수)
+ * - sprint: 스프린트 (title, start_date, end_date)
+ * - release: 릴리즈 (title, start_date, end_date)
  */
-export type PlanType = "feature" | "event";
+export type PlanType = "feature" | "sprint" | "release";
 
 /**
  * Plan 상태

@@ -29,7 +29,8 @@ const STATUS_OPTIONS: { value: PlanStatus; label: string }[] = [
 
 const TYPE_OPTIONS: { value: PlanType; label: string }[] = [
   { value: "feature", label: "기능" },
-  { value: "event", label: "이벤트" },
+  { value: "sprint", label: "스프린트" },
+  { value: "release", label: "릴리즈" },
 ];
 
 const GROUP_OPTIONS: { value: GroupByOption; label: string }[] = [

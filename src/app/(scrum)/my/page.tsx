@@ -26,12 +26,12 @@ export default async function MyPage() {
     
     userName = profile?.display_name;
 
-    // 통계 조회
+    // 통계 조회 - author_id 필드 사용
     const { data: snapshots } = await supabase
       .from("snapshots")
       .select("id")
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-      .eq("created_by", user.id);
+      .eq("author_id", user.id);
 
     stats.totalSnapshots = snapshots?.length || 0;
 
@@ -47,49 +47,65 @@ export default async function MyPage() {
 
     const { data: thisWeekSnapshots } = await supabase
       .from("snapshots")
-      .select("id, entries:snapshot_entries(past_week_tasks)")
+      .select("id, entries:snapshot_entries(past_week)")
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-      .eq("created_by", user.id)
+      .eq("author_id", user.id)
       .eq("year", now.getFullYear())
       .eq("week", weekLabel);
 
+    // 프로젝트와 협업자 수는 전체 스냅샷에서 계산
+    const snapshotIds = snapshots?.map(s => s.id) || [];
+    const { data: allEntries } = snapshotIds.length > 0 ? await supabase
+      .from("snapshot_entries")
+      .select("project, collaborators, past_week")
+      .in("snapshot_id", snapshotIds) : { data: [] };
+
+    const projects = new Set<string>();
+    const collaboratorNames = new Set<string>();
+    let totalProgress = 0;
+    let taskCount = 0;
+
+    if (allEntries) {
+      for (const entry of allEntries) {
+        if (entry.project) projects.add(entry.project);
+        
+        // collaborators에서 이름 추출
+        const collabs = entry.collaborators as { name: string }[] || [];
+        for (const c of collabs) {
+          if (c.name) collaboratorNames.add(c.name);
+        }
+
+        // 진척률 계산 - past_week.tasks 사용
+        const pastWeek = entry.past_week as { tasks?: { title: string; progress: number }[] } || {};
+        const tasks = pastWeek.tasks || [];
+        for (const task of tasks) {
+          totalProgress += task.progress || 0;
+          taskCount++;
+        }
+      }
+    }
+
+    // 이번 주 스냅샷의 진척률만 따로 계산
     if (thisWeekSnapshots && thisWeekSnapshots.length > 0) {
-      let totalProgress = 0;
-      let taskCount = 0;
-      const projects = new Set<string>();
-      const collaboratorNames = new Set<string>();
+      let thisWeekTotal = 0;
+      let thisWeekTaskCount = 0;
 
       for (const snapshot of thisWeekSnapshots) {
         for (const entry of snapshot.entries || []) {
-          const tasks = entry.past_week_tasks as { title: string; progress: number }[] || [];
+          const pastWeek = entry.past_week as { tasks?: { title: string; progress: number }[] } || {};
+          const tasks = pastWeek.tasks || [];
           for (const task of tasks) {
-            totalProgress += task.progress;
-            taskCount++;
+            thisWeekTotal += task.progress || 0;
+            thisWeekTaskCount++;
           }
         }
       }
 
-      stats.thisWeekProgress = taskCount > 0 ? Math.round(totalProgress / taskCount) : 0;
-
-      // 프로젝트와 협업자 수는 전체 스냅샷에서 계산
-      const { data: allEntries } = await supabase
-        .from("snapshot_entries")
-        .select("project, collaborators")
-        .in("snapshot_id", snapshots?.map(s => s.id) || []);
-
-      if (allEntries) {
-        for (const entry of allEntries) {
-          if (entry.project) projects.add(entry.project);
-          const collabs = entry.collaborators as { name: string }[] || [];
-          for (const c of collabs) {
-            if (c.name) collaboratorNames.add(c.name);
-          }
-        }
-      }
-
-      stats.activeProjects = projects.size;
-      stats.collaborators = collaboratorNames.size;
+      stats.thisWeekProgress = thisWeekTaskCount > 0 ? Math.round(thisWeekTotal / thisWeekTaskCount) : 0;
     }
+
+    stats.activeProjects = projects.size;
+    stats.collaborators = collaboratorNames.size;
   }
 
   return (

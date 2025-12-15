@@ -6,10 +6,10 @@
  * - 좌측/상단: 연도 + ISO 주차 선택 UI
  * - 중앙: 스냅샷 목록 (Pinterest/리스트 토글)
  * - 우측: 주차 메타데이터 요약 (접힘/더보기)
- * - 우측 상단: 주차별 편집하기 / 새로 작성하기 버튼
+ * - 우측 상단: 편집하기 / 새로 작성하기 버튼
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { WeekSelector } from "./WeekSelector";
 import { SnapshotList } from "./SnapshotList";
@@ -26,16 +26,40 @@ interface SnapshotsMainViewProps {
   workspaceId: string;
 }
 
+interface PastWeekTask {
+  title: string;
+  progress: number;
+}
+
+interface PastWeekData {
+  tasks?: PastWeekTask[];
+}
+
+interface ThisWeekData {
+  tasks?: string[];
+}
+
+interface Collaborator {
+  name: string;
+  relation?: "pair" | "pre" | "post";
+  relations?: ("pair" | "pre" | "post")[];
+}
+
 export interface SnapshotSummary {
   id: string;
-  title: string | null;
   created_at: string;
   updated_at: string;
   entriesCount: number;
   entries: {
+    domain: string;
     project: string;
     module: string | null;
     feature: string | null;
+    past_week?: PastWeekData;
+    this_week?: ThisWeekData;
+    risks?: string[];
+    risk_level?: number;
+    collaborators?: Collaborator[];
   }[];
 }
 
@@ -48,9 +72,21 @@ export interface WeekStatsData {
   totalEntries: number;
 }
 
+// localStorage 키
+const SNAPSHOTS_STATE_KEY = "snapshots-main-view-state";
+
+interface SnapshotsViewState {
+  selectedYear: number;
+  selectedWeek: number;
+  viewMode: "grid" | "list";
+}
+
 export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProps) {
   const router = useRouter();
   const currentWeek = getCurrentISOWeek();
+  
+  // localStorage에서 상태 복원
+  const [isStateInitialized, setIsStateInitialized] = useState(false);
   
   // 주차 선택 상태
   const [selectedYear, setSelectedYear] = useState(currentWeek.year);
@@ -59,13 +95,132 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
   // 뷰 모드
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
+  // 전체 펼치기/접기 상태
+  const [allExpanded, setAllExpanded] = useState(false);
+  
+  // localStorage에서 상태 복원
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem(SNAPSHOTS_STATE_KEY);
+      if (savedState) {
+        const parsed: SnapshotsViewState = JSON.parse(savedState);
+        if (parsed.selectedYear) setSelectedYear(parsed.selectedYear);
+        if (parsed.selectedWeek) setSelectedWeek(parsed.selectedWeek);
+        if (parsed.viewMode) setViewMode(parsed.viewMode);
+      }
+    } catch {
+      // 무시
+    }
+    setIsStateInitialized(true);
+  }, []);
+  
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (!isStateInitialized) return;
+    try {
+      const stateToSave: SnapshotsViewState = {
+        selectedYear,
+        selectedWeek,
+        viewMode,
+      };
+      localStorage.setItem(SNAPSHOTS_STATE_KEY, JSON.stringify(stateToSave));
+    } catch {
+      // 무시
+    }
+  }, [selectedYear, selectedWeek, viewMode, isStateInitialized]);
+  
   // 스냅샷 목록
   const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // 초기 로딩 상태
+  
+  // 주차별 스냅샷 갯수 맵 (key: "년도-주차", value: 갯수)
+  const [snapshotCountByWeek, setSnapshotCountByWeek] = useState<Map<string, number>>(new Map());
   
   // 메타데이터
   const [weekStats, setWeekStats] = useState<WeekStatsData | null>(null);
   const [isMetaPanelExpanded, setIsMetaPanelExpanded] = useState(false);
+  
+  // 필터 상태 (다중 선택)
+  const [projectFilters, setProjectFilters] = useState<Set<string>>(new Set());
+  const [moduleFilters, setModuleFilters] = useState<Set<string>>(new Set());
+  const [featureFilters, setFeatureFilters] = useState<Set<string>>(new Set());
+  
+  // 필터 드롭다운 상태
+  const [isProjectFilterOpen, setIsProjectFilterOpen] = useState(false);
+  const [isModuleFilterOpen, setIsModuleFilterOpen] = useState(false);
+  const [isFeatureFilterOpen, setIsFeatureFilterOpen] = useState(false);
+  
+  // 필터 토글 함수
+  const toggleProjectFilter = (project: string) => {
+    setProjectFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(project)) next.delete(project);
+      else next.add(project);
+      return next;
+    });
+  };
+  const toggleModuleFilter = (module: string) => {
+    setModuleFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(module)) next.delete(module);
+      else next.add(module);
+      return next;
+    });
+  };
+  const toggleFeatureFilter = (feature: string) => {
+    setFeatureFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(feature)) next.delete(feature);
+      else next.add(feature);
+      return next;
+    });
+  };
+  
+  // 필터 옵션 추출
+  const filterOptions = useMemo(() => {
+    const projects = new Set<string>();
+    const modules = new Set<string>();
+    const features = new Set<string>();
+    
+    snapshots.forEach((s) => {
+      s.entries.forEach((e) => {
+        if (e.project) projects.add(e.project);
+        if (e.module) modules.add(e.module);
+        if (e.feature) features.add(e.feature);
+      });
+    });
+    
+    return {
+      projects: Array.from(projects).sort(),
+      modules: Array.from(modules).sort(),
+      features: Array.from(features).sort(),
+    };
+  }, [snapshots]);
+  
+  // 필터링된 스냅샷
+  const filteredSnapshots = useMemo(() => {
+    return snapshots.filter((s) => {
+      const matchesProject = projectFilters.size === 0 || s.entries.some((e) => projectFilters.has(e.project));
+      const matchesModule = moduleFilters.size === 0 || s.entries.some((e) => e.module && moduleFilters.has(e.module));
+      const matchesFeature = featureFilters.size === 0 || s.entries.some((e) => e.feature && featureFilters.has(e.feature));
+      return matchesProject && matchesModule && matchesFeature;
+    });
+  }, [snapshots, projectFilters, moduleFilters, featureFilters]);
+  
+  // 필터 초기화
+  const clearFilters = () => {
+    setProjectFilters(new Set());
+    setModuleFilters(new Set());
+    setFeatureFilters(new Set());
+  };
+  
+  const totalFilterCount = projectFilters.size + moduleFilters.size + featureFilters.size;
+  const hasActiveFilters = totalFilterCount > 0;
+
+  // 초기 마운트 시 프로그래스바 시작
+  useEffect(() => {
+    navigationProgress.start();
+  }, []);
 
   // 스냅샷 목록 조회
   const fetchSnapshots = useCallback(async () => {
@@ -94,81 +249,230 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
     fetchSnapshots();
   }, [fetchSnapshots]);
 
-  // 주차별 편집하기
+  // 주차별 스냅샷 갯수 조회
+  const fetchSnapshotCounts = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}&year=${selectedYear}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        const counts = data.counts || {};
+        setSnapshotCountByWeek(new Map(Object.entries(counts).map(([k, v]) => [k, v as number])));
+      }
+    } catch (error) {
+      console.error("Failed to fetch snapshot counts:", error);
+    }
+  }, [selectedYear, workspaceId, userId]);
+
+  useEffect(() => {
+    fetchSnapshotCounts();
+  }, [fetchSnapshotCounts]);
+
+  // 편집하기
   const handleEditWeek = () => {
     navigationProgress.start();
     router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/edit`);
   };
 
-  // 새로 작성하기
-  const handleNewSnapshot = () => {
+  // 새로 작성하기 모달 상태
+  const [isNewSnapshotModalOpen, setIsNewSnapshotModalOpen] = useState(false);
+
+  // 기존 데이터 불러오기 선택
+  const handleLoadExistingData = () => {
+    setIsNewSnapshotModalOpen(false);
     navigationProgress.start();
-    router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/new`);
+    router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=load`);
+  };
+
+  // 빈 스냅샷 생성 선택
+  const handleCreateEmpty = () => {
+    setIsNewSnapshotModalOpen(false);
+    navigationProgress.start();
+    router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=empty`);
   };
 
   const weekRange = formatWeekRange(selectedYear, selectedWeek);
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col border border-gray-200 rounded-3xl overflow-hidden shadow-sm bg-white">
-      {/* 헤더 영역 */}
-      <div className="shrink-0 px-6 py-4 bg-white border-b border-gray-100">
+    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
+      {/* 헤더 영역 - 글래스모피즘 */}
+      <div className="shrink-0 px-6 py-5 bg-gradient-to-r from-white via-white to-slate-50/50 border-b border-gray-100">
         <div className="flex items-center justify-between">
-          {/* 좌측: 주차 선택 */}
-          <div className="flex items-center gap-6">
+          {/* 좌측: 타이틀 */}
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/25">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">스냅샷 관리</h1>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">스냅샷 관리</h1>
+              <p className="text-sm text-gray-500">
                 주차별 스냅샷 조회 및 관리
               </p>
             </div>
-            
-            <div className="h-8 w-px bg-gray-200" />
-            
-            <WeekSelector
-              year={selectedYear}
-              week={selectedWeek}
-              onYearChange={setSelectedYear}
-              onWeekChange={setSelectedWeek}
-            />
-            
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-sm font-medium text-gray-600">{weekRange}</span>
-            </div>
           </div>
 
-          {/* 우측: 액션 버튼 */}
+          {/* 우측: 필터 + 액션 버튼 */}
           <div className="flex items-center gap-3">
-            {/* 뷰 모드 토글 */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            {/* 필터 드롭다운 (체크박스 형태) */}
+            <div className="flex items-center gap-2">
+              {/* 필터 초기화 (Reset) 버튼 - 항상 표시, 필터 없으면 비활성화 */}
               <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === "grid" 
-                    ? "bg-white text-gray-900 shadow-sm" 
-                    : "text-gray-500 hover:text-gray-700"
+                onClick={clearFilters}
+                disabled={!hasActiveFilters}
+                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                  hasActiveFilters 
+                    ? "text-gray-700 bg-gray-100 hover:bg-gray-200" 
+                    : "text-gray-300 bg-gray-50 cursor-not-allowed"
                 }`}
-                title="그리드 보기"
+                title="필터 초기화"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
+                Reset
               </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === "list" 
-                    ? "bg-white text-gray-900 shadow-sm" 
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-                title="리스트 보기"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-              </button>
+
+              <div className="w-px h-4 bg-gray-200" />
+
+              {/* 프로젝트 필터 */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setIsProjectFilterOpen(!isProjectFilterOpen);
+                    setIsModuleFilterOpen(false);
+                    setIsFeatureFilterOpen(false);
+                  }}
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                    projectFilters.size > 0 ? "bg-blue-50 text-blue-600 border border-blue-200" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <span>Project</span>
+                  {projectFilters.size > 0 && (
+                    <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      {projectFilters.size}
+                    </span>
+                  )}
+                  <svg className={`w-3 h-3 transition-transform ${isProjectFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isProjectFilterOpen && (
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                    {filterOptions.projects.map((p) => (
+                      <label
+                        key={p}
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={projectFilters.has(p)}
+                          onChange={() => toggleProjectFilter(p)}
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className={projectFilters.has(p) ? "font-medium text-blue-600" : "text-gray-700"}>{p}</span>
+                      </label>
+                    ))}
+                    {filterOptions.projects.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-gray-400">항목 없음</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* 모듈 필터 */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setIsModuleFilterOpen(!isModuleFilterOpen);
+                    setIsProjectFilterOpen(false);
+                    setIsFeatureFilterOpen(false);
+                  }}
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                    moduleFilters.size > 0 ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <span>Module</span>
+                  {moduleFilters.size > 0 && (
+                    <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      {moduleFilters.size}
+                    </span>
+                  )}
+                  <svg className={`w-3 h-3 transition-transform ${isModuleFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isModuleFilterOpen && (
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                    {filterOptions.modules.map((m) => (
+                      <label
+                        key={m}
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={moduleFilters.has(m)}
+                          onChange={() => toggleModuleFilter(m)}
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className={moduleFilters.has(m) ? "font-medium text-emerald-600" : "text-gray-700"}>{m}</span>
+                      </label>
+                    ))}
+                    {filterOptions.modules.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-gray-400">항목 없음</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* 기능 필터 */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setIsFeatureFilterOpen(!isFeatureFilterOpen);
+                    setIsProjectFilterOpen(false);
+                    setIsModuleFilterOpen(false);
+                  }}
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                    featureFilters.size > 0 ? "bg-amber-50 text-amber-600 border border-amber-200" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <span>Feature</span>
+                  {featureFilters.size > 0 && (
+                    <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      {featureFilters.size}
+                    </span>
+                  )}
+                  <svg className={`w-3 h-3 transition-transform ${isFeatureFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isFeatureFilterOpen && (
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                    {filterOptions.features.map((f) => (
+                      <label
+                        key={f}
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={featureFilters.has(f)}
+                          onChange={() => toggleFeatureFilter(f)}
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className={featureFilters.has(f) ? "font-medium text-amber-600" : "text-gray-700"}>{f}</span>
+                      </label>
+                    ))}
+                    {filterOptions.features.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-gray-400">항목 없음</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
             </div>
 
             <div className="h-6 w-px bg-gray-200" />
@@ -176,19 +480,21 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
             <button
               onClick={handleEditWeek}
               disabled={snapshots.length === 0}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              주차별 편집하기
+              편집하기
             </button>
 
             <button
-              onClick={handleNewSnapshot}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors"
+              onClick={() => setIsNewSnapshotModalOpen(true)}
+              disabled={snapshots.length > 0}
+              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl hover:from-gray-800 hover:to-gray-700 hover:shadow-lg hover:shadow-gray-900/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              title={snapshots.length > 0 ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요." : ""}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               새로 작성하기
@@ -198,25 +504,193 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
       </div>
 
       {/* 메인 콘텐츠 영역 */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        {/* 스냅샷 목록 */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <SnapshotList
-            snapshots={snapshots}
-            isLoading={isLoading}
-            viewMode={viewMode}
-            onRefresh={fetchSnapshots}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* 서브 메뉴 영역 - 글래스 효과 */}
+        <div className="shrink-0 flex items-center justify-between px-6 py-3 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm border-b border-gray-100">
+          {/* 좌측: WeekSelector */}
+          <WeekSelector
+            year={selectedYear}
+            week={selectedWeek}
+            onYearChange={setSelectedYear}
+            onWeekChange={setSelectedWeek}
+            snapshotCount={snapshots.length}
+            snapshotCountByWeek={snapshotCountByWeek}
+          />
+          
+          {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
+          <div className="flex items-center gap-3">
+            {/* 뷰 모드 토글 */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1.5 rounded-md transition-colors ${
+                  viewMode === "grid"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                title="그리드 뷰"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 rounded-md transition-colors ${
+                  viewMode === "list"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                title="리스트 뷰"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* 전체 펼치기/접기 버튼 */}
+            {filteredSnapshots.length > 0 && (
+              <button
+                onClick={() => setAllExpanded(!allExpanded)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  allExpanded 
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200" 
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                <svg 
+                  className={`w-3.5 h-3.5 transition-transform ${allExpanded ? "rotate-180" : ""}`} 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+                {allExpanded ? "전체 접기" : "전체 펼치기"}
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* 스냅샷 목록 영역 - Bottom Sheet를 위한 relative 컨테이너 */}
+        <div className="flex-1 relative min-h-0 overflow-hidden">
+          {/* 스냅샷 목록 */}
+          <div className="h-full overflow-y-auto p-6 pb-24 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30">
+            <SnapshotList
+              snapshots={filteredSnapshots}
+              isLoading={isLoading}
+              viewMode={viewMode}
+              onRefresh={fetchSnapshots}
+              year={selectedYear}
+              week={selectedWeek}
+              allExpanded={allExpanded}
+            />
+          </div>
+
+          {/* 메타데이터 패널 - Bottom Sheet 스타일 */}
+          <WeekMetaPanel
+            stats={weekStats}
+            isExpanded={isMetaPanelExpanded}
+            onToggle={() => setIsMetaPanelExpanded(!isMetaPanelExpanded)}
+            snapshotCount={snapshots.length}
           />
         </div>
-
-        {/* 우측 메타데이터 패널 */}
-        <WeekMetaPanel
-          stats={weekStats}
-          isExpanded={isMetaPanelExpanded}
-          onToggle={() => setIsMetaPanelExpanded(!isMetaPanelExpanded)}
-          snapshotCount={snapshots.length}
-        />
       </div>
+
+      {/* 새로 작성하기 모달 - 트렌디 스타일 */}
+      {isNewSnapshotModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* 배경 오버레이 - 블러 강화 */}
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            onClick={() => setIsNewSnapshotModalOpen(false)}
+          />
+          
+          {/* 모달 콘텐츠 */}
+          <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full p-10 animate-fadeIn">
+            {/* 배경 장식 */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/10 blur-3xl" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-3xl" />
+            
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => setIsNewSnapshotModalOpen(false)}
+              className="absolute top-5 right-5 p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all hover:rotate-90 duration-300"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* 헤더 */}
+            <div className="relative text-center mb-10">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-100 text-rose-600 text-xs font-semibold mb-4">
+                <span>✨</span>
+                <span>새 스냅샷</span>
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">작성 방법을 선택하세요</h2>
+              <p className="text-gray-500">
+                {selectedYear}년 W{selectedWeek.toString().padStart(2, "0")} ({weekRange})
+              </p>
+            </div>
+
+            {/* 선택 카드 */}
+            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* 데이터 불러오기 */}
+              <button
+                onClick={handleLoadExistingData}
+                className="group relative p-7 bg-white rounded-2xl border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative">
+                  <div className="w-14 h-14 mb-5 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">데이터 불러오기</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    이전 주차의 데이터를 복사하여 시작합니다. 프로젝트 이력이 유지됩니다.
+                  </p>
+                </div>
+                {/* 화살표 */}
+                <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+
+              {/* 새로 작성하기 */}
+              <button
+                onClick={handleCreateEmpty}
+                className="group relative p-7 bg-white rounded-2xl border-2 border-gray-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative">
+                  <div className="w-14 h-14 mb-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-emerald-700 transition-colors">새로 작성하기</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    빈 스냅샷으로 시작합니다. 편집 화면에서 새로 입력합니다.
+                  </p>
+                </div>
+                {/* 화살표 */}
+                <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

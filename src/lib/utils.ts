@@ -81,6 +81,9 @@ export function calculateCollaboratorStats(items: ScrumItem[]): CollaboratorStat
     if (!item.collaborators) return;
 
     item.collaborators.forEach((collab) => {
+      // relations 우선, relation은 fallback
+      const rels = collab.relations || (collab.relation ? [collab.relation] : []);
+      
       if (!stats[collab.name]) {
         stats[collab.name] = {
           name: collab.name,
@@ -93,7 +96,12 @@ export function calculateCollaboratorStats(items: ScrumItem[]): CollaboratorStat
         };
       }
       stats[collab.name].count++;
-      stats[collab.name].relations[collab.relation]++;
+      // 모든 relations에 대해 카운트 증가
+      rels.forEach((rel) => {
+        if (rel in stats[collab.name].relations) {
+          stats[collab.name].relations[rel]++;
+        }
+      });
     });
   });
 

@@ -22,20 +22,25 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // 스냅샷 목록 조회
+  // 스냅샷 목록 조회 (새 DB 스키마: risks, collaborators 별도 컬럼)
   const { data: snapshots, error } = await supabase
     .from("snapshots")
     .select(`
       id,
-      title,
       created_at,
       updated_at,
       entries:snapshot_entries(
         id,
+        name,
+        domain,
         project,
         module,
         feature,
-        past_week_tasks
+        past_week,
+        this_week,
+        risks,
+        risk_level,
+        collaborators
       )
     `)
     .eq("workspace_id", workspaceId)
@@ -51,23 +56,28 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // 스냅샷 요약 데이터 생성
+  // 스냅샷 요약 데이터 생성 (past_week, this_week, risks, collaborators 포함)
   const snapshotSummaries = (snapshots || []).map((snapshot) => ({
     id: snapshot.id,
-    title: snapshot.title,
     created_at: snapshot.created_at,
     updated_at: snapshot.updated_at,
     entriesCount: snapshot.entries?.length || 0,
-    entries: (snapshot.entries || []).map((e) => ({
+    entries: (snapshot.entries || []).map((e: Record<string, unknown>) => ({
+      domain: e.domain,
       project: e.project,
       module: e.module,
       feature: e.feature,
+      past_week: e.past_week,
+      this_week: e.this_week,
+      risks: e.risks,
+      risk_level: e.risk_level,
+      collaborators: e.collaborators,
     })),
   }));
 
-  // 모든 엔트리를 모아서 통계 계산
+  // 모든 엔트리를 모아서 통계 계산 (DB 형식 그대로 전달)
   const allEntries = (snapshots || []).flatMap((s) => s.entries || []);
-  const stats = computeWeekStats(allEntries as Parameters<typeof computeWeekStats>[0]);
+  const stats = computeWeekStats(allEntries as unknown as Parameters<typeof computeWeekStats>[0]);
 
   return NextResponse.json({
     snapshots: snapshotSummaries,

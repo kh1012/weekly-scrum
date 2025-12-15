@@ -60,13 +60,13 @@ function convertEntryToTempSnapshot(entry: SnapshotEntryRow): TempSnapshot {
     module: entry.module || "",
     feature: entry.feature || "",
     pastWeek: {
-      tasks: (entry.past_week_tasks as PastWeekTask[]) || [],
-      risk: entry.risk,
+      tasks: (entry.past_week?.tasks as PastWeekTask[]) || [],
+      risk: (entry.risk?.items as string[]) || null,
       riskLevel: entry.risk_level as 0 | 1 | 2 | 3 | null,
-      collaborators: (entry.collaborators as Collaborator[]) || [],
+      collaborators: (entry.past_week?.collaborators as Collaborator[]) || [],
     },
     thisWeek: {
-      tasks: entry.this_week_tasks || [],
+      tasks: entry.this_week?.tasks || [],
     },
   };
 }

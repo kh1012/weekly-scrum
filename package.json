@@ -10,6 +10,7 @@
     "lint": "next lint",
     "scrum:parse": "tsx scripts/parse-submitted.ts",
     "db:migrate": "tsx scripts/migrate-static-data-to-supabase.ts",
+    "migrate:legacy": "tsx scripts/migrate-legacy-snapshots.ts",
     "predeploy": "npm run build && touch out/.nojekyll",
     "deploy": "gh-pages -d out --dotfiles"
   },

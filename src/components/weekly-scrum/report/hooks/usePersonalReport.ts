@@ -185,17 +185,23 @@ export function usePersonalReport() {
     memberItems.forEach((item) => {
       if (!item.collaborators) return;
       item.collaborators.forEach((collab: Collaborator) => {
+        // relations 우선, relation은 fallback
+        const rels = collab.relations || (collab.relation ? [collab.relation] : []);
         const existing = collabMap.get(collab.name);
         if (existing) {
           existing.count++;
-          existing.relations[collab.relation]++;
+          rels.forEach((rel) => {
+            if (rel in existing.relations) {
+              existing.relations[rel]++;
+            }
+          });
         } else {
           collabMap.set(collab.name, {
             count: 1,
             relations: {
-              pair: collab.relation === "pair" ? 1 : 0,
-              pre: collab.relation === "pre" ? 1 : 0,
-              post: collab.relation === "post" ? 1 : 0,
+              pair: rels.includes("pair") ? 1 : 0,
+              pre: rels.includes("pre") ? 1 : 0,
+              post: rels.includes("post") ? 1 : 0,
             },
           });
         }

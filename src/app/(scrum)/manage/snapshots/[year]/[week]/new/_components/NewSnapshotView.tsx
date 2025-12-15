@@ -4,12 +4,12 @@
  * 새로 작성하기 화면
  *
  * 시작 옵션:
- * 1. 데이터 불러오기 (기존 주차별 데이터 / JSON 붙여넣기)
+ * 1. 데이터 불러오기 (기존 주차별 데이터에서 불러오기)
  * 2. 새로 작성하기 (빈 상태에서 시작)
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatWeekRange } from "@/lib/date/isoWeek";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import {
@@ -79,15 +79,37 @@ function NewSnapshotViewInner({
   displayName,
 }: NewSnapshotViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const cardListRef = useRef<SnapshotCardListRef>(null);
 
+  // URL에서 mode 파라미터 확인 (load: 데이터 불러오기 모달, empty: 빈 편집)
+  const urlMode = searchParams.get("mode");
+
   // 화면 모드: entry (진입점) / editor (편집)
-  const [mode, setMode] = useState<"entry" | "editor">("entry");
+  const [mode, setMode] = useState<"entry" | "editor">(() => {
+    // URL에서 mode=empty면 바로 editor로 시작
+    if (urlMode === "empty") return "editor";
+    return "entry";
+  });
 
   // 엔트리들
-  const [tempSnapshots, setTempSnapshots] = useState<TempSnapshot[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tempSnapshots, setTempSnapshots] = useState<TempSnapshot[]>(() => {
+    // URL에서 mode=empty면 빈 스냅샷 하나 생성
+    if (urlMode === "empty") {
+      const emptySnapshot = createEmptySnapshot();
+      emptySnapshot.name = displayName;
+      return [emptySnapshot];
+    }
+    return [];
+  });
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    if (urlMode === "empty") {
+      // 초기 selectedId는 tempSnapshots 첫 번째에서 가져올 것이므로 별도 생성 불필요
+      return null;
+    }
+    return null;
+  });
 
   // 패널 상태
   const [leftPanelWidth, setLeftPanelWidth] = useState(
@@ -99,12 +121,8 @@ function NewSnapshotViewInner({
   const forceThreeColumn = true;
   const [isSaving, setIsSaving] = useState(false);
 
-  // JSON 붙여넣기 상태
-  const [jsonInput, setJsonInput] = useState("");
-  const [parseError, setParseError] = useState<string | null>(null);
-
-  // 데이터 불러오기 모달 상태
-  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
+  // 데이터 불러오기 모달 상태 (URL에서 mode=load면 자동 열기)
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(urlMode === "load");
   const [myWeeklyData, setMyWeeklyData] = useState<WeekData[]>([]);
   const [isLoadingMyData, setIsLoadingMyData] = useState(false);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
@@ -134,6 +152,17 @@ function NewSnapshotViewInner({
     }
   }, [isLoadModalOpen, myWeeklyData.length, fetchMyEntries]);
 
+  // URL mode=empty로 시작 시 초기 selectedId 설정
+  useEffect(() => {
+    if (
+      urlMode === "empty" &&
+      tempSnapshots.length > 0 &&
+      selectedId === null
+    ) {
+      setSelectedId(tempSnapshots[0].tempId);
+    }
+  }, [urlMode, tempSnapshots, selectedId]);
+
   // 선택된 주차의 엔트리 불러오기
   const handleLoadFromWeeks = () => {
     if (selectedWeeks.size === 0) return;
@@ -142,21 +171,29 @@ function NewSnapshotViewInner({
     selectedWeeks.forEach((weekKey) => {
       const weekData = myWeeklyData.find((w) => w.key === weekKey);
       if (weekData) {
-        weekData.entries.forEach((entry) => {
+        weekData.entries.forEach((entry: Record<string, unknown>) => {
+          // 새 DB 스키마: risks, collaborators 별도 컬럼
+          const pastWeekData = entry.past_week as
+            | { tasks?: PastWeekTask[] }
+            | undefined;
+          const thisWeekData = entry.this_week as
+            | { tasks?: string[] }
+            | undefined;
+
           const snapshot = convertToTempSnapshot({
-            name: entry.name,
-            domain: entry.domain,
-            project: entry.project,
-            module: entry.module ?? undefined,
-            feature: entry.feature ?? undefined,
+            name: (entry.name as string) || "",
+            domain: (entry.domain as string) || "",
+            project: (entry.project as string) || "",
+            module: (entry.module as string) ?? undefined,
+            feature: (entry.feature as string) ?? undefined,
             pastWeek: {
-              tasks: entry.past_week_tasks || [],
-              risk: entry.risk,
-              riskLevel: entry.risk_level,
-              collaborators: entry.collaborators || [],
+              tasks: pastWeekData?.tasks || [],
+              risk: (entry.risks as string[]) || null,
+              riskLevel: entry.risk_level as number | null,
+              collaborators: (entry.collaborators as Collaborator[]) || [],
             },
             thisWeek: {
-              tasks: entry.this_week_tasks || [],
+              tasks: thisWeekData?.tasks || [],
             },
           });
           loadedSnapshots.push(snapshot);
@@ -203,44 +240,6 @@ function NewSnapshotViewInner({
     setMode("editor");
   };
 
-  // JSON 불러오기
-  const handleImportJson = () => {
-    setParseError(null);
-
-    try {
-      const parsed = JSON.parse(jsonInput);
-      const items = Array.isArray(parsed) ? parsed : [parsed];
-
-      if (items.length === 0) {
-        setParseError("데이터가 비어있습니다.");
-        return;
-      }
-
-      const snapshots = items.map((item, index) => {
-        // 기본 필수 필드 검증
-        if (!item.name && !item.domain && !item.project) {
-          throw new Error(
-            `항목 ${index + 1}: name, domain, project 중 하나는 필수입니다.`
-          );
-        }
-        return convertToTempSnapshot(item);
-      });
-
-      setTempSnapshots(snapshots);
-      setSelectedId(snapshots[0].tempId);
-      setMode("editor");
-      showToast(`${snapshots.length}개 항목을 불러왔습니다.`, "success");
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        setParseError("JSON 형식이 올바르지 않습니다.");
-      } else if (error instanceof Error) {
-        setParseError(error.message);
-      } else {
-        setParseError("알 수 없는 오류가 발생했습니다.");
-      }
-    }
-  };
-
   // 카드 선택
   const handleSelectCard = useCallback((tempId: string) => {
     setSelectedId(tempId);
@@ -265,6 +264,10 @@ function NewSnapshotViewInner({
 
   // 카드 복제
   const handleDuplicateCard = useCallback((tempId: string) => {
+    const newTempId = `temp-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+
     setTempSnapshots((prev) => {
       const target = prev.find((s) => s.tempId === tempId);
       if (!target) return prev;
@@ -272,9 +275,7 @@ function NewSnapshotViewInner({
       const now = new Date();
       const duplicated: TempSnapshot = {
         ...target,
-        tempId: `temp-${Date.now()}-${Math.random()
-          .toString(36)
-          .substring(2, 9)}`,
+        tempId: newTempId,
         isOriginal: false,
         isDirty: true,
         createdAt: now,
@@ -296,9 +297,11 @@ function NewSnapshotViewInner({
       const targetIndex = prev.findIndex((s) => s.tempId === tempId);
       const newSnapshots = [...prev];
       newSnapshots.splice(targetIndex + 1, 0, duplicated);
-      setSelectedId(duplicated.tempId);
       return newSnapshots;
     });
+
+    // 상태 업데이트 후 복제된 카드 선택
+    setSelectedId(newTempId);
   }, []);
 
   // 카드 업데이트
@@ -499,16 +502,20 @@ function NewSnapshotViewInner({
           <div className="max-w-4xl w-full px-6">
             {/* 진입점 카드들 - Airbnb 스타일 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* 데이터 불러오기 */}
-              <div className="group relative p-8 bg-white rounded-3xl border border-gray-200 hover:border-gray-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden">
+              {/* 데이터 불러오기 - 전체 카드 클릭 가능 */}
+              <button
+                onClick={() => setIsLoadModalOpen(true)}
+                className="group relative p-8 bg-white rounded-3xl border border-gray-200 hover:border-gray-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden cursor-pointer"
+              >
                 {/* 배경 그라데이션 */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                <div className="relative">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform duration-300">
+                <div className="relative flex flex-col h-full">
+                  {/* 상단: 타이틀 섹션 */}
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform duration-300 shrink-0">
                       <svg
-                        className="w-7 h-7 text-white"
+                        className="w-6 h-6 text-white"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -521,69 +528,23 @@ function NewSnapshotViewInner({
                         />
                       </svg>
                     </div>
-                    <div className="flex-1">
-                      <h2 className="text-xl font-semibold text-gray-900">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">
                         데이터 불러오기
                       </h2>
                       <p className="text-sm text-gray-500 mt-0.5">
-                        기존 데이터 / JSON 붙여넣기
+                        기존 주차 데이터에서 불러오기
                       </p>
                     </div>
                   </div>
 
-                  {/* 기존 주차별 데이터 불러오기 버튼 */}
-                  <button
-                    onClick={() => setIsLoadModalOpen(true)}
-                    className="w-full mb-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    내 기존 주차 데이터에서 불러오기
-                  </button>
-
-                  <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-200" />
-                    </div>
-                    <div className="relative flex justify-center text-xs">
-                      <span className="px-2 bg-white text-gray-400">또는</span>
-                    </div>
+                  {/* 하단: 설명 텍스트 */}
+                  <div className="mt-auto space-y-1 text-xs text-gray-400">
+                    <p>• 이전 주차의 스냅샷 데이터를 복사해서 시작</p>
+                    <p>• 동일 프로젝트/모듈 작업 이력 유지</p>
                   </div>
-
-                  <textarea
-                    value={jsonInput}
-                    onChange={(e) => {
-                      setJsonInput(e.target.value);
-                      setParseError(null);
-                    }}
-                    placeholder="JSON 데이터를 붙여넣으세요..."
-                    className="w-full h-20 p-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none font-mono"
-                  />
-
-                  {parseError && (
-                    <p className="mt-2 text-sm text-red-600">{parseError}</p>
-                  )}
-
-                  <button
-                    onClick={handleImportJson}
-                    disabled={!jsonInput.trim()}
-                    className="w-full mt-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    불러오기
-                  </button>
                 </div>
-              </div>
+              </button>
 
               {/* 새로 작성하기 */}
               <button
@@ -593,8 +554,9 @@ function NewSnapshotViewInner({
                 {/* 배경 그라데이션 */}
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                <div className="relative">
-                  <div className="flex items-center gap-4 mb-6">
+                <div className="relative flex flex-col h-full">
+                  {/* 상단: 아이콘과 타이틀 */}
+                  <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 transition-transform duration-300">
                       <svg
                         className="w-7 h-7 text-white"
@@ -610,28 +572,15 @@ function NewSnapshotViewInner({
                         />
                       </svg>
                     </div>
-                    <div className="flex-1">
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        새로 작성하기
-                      </h2>
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        빈 스냅샷 생성
-                      </p>
-                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      새로 작성하기
+                    </h2>
                   </div>
 
-                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                    빈 스냅샷 카드를 생성하여 처음부터 작성합니다. 편집 화면에서
-                    필요한 정보를 입력할 수 있습니다.
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                      v2 스키마
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                      편집 폼 지원
-                    </span>
+                  {/* 하단: 설명 텍스트 */}
+                  <div className="mt-auto pt-6 space-y-1.5 text-sm text-gray-500">
+                    <p>빈 스냅샷 카드를 생성하여 처음부터 작성</p>
+                    <p>편집 화면에서 필요한 정보를 입력</p>
                   </div>
                 </div>
 

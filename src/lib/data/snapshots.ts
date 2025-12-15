@@ -36,7 +36,7 @@ export interface Snapshot {
   week_end_date: string;
   year: number;
   week: string;
-  created_by: string | null;
+  author_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -51,7 +51,7 @@ export interface SnapshotInsert {
   week_end_date: string;
   year: number;
   week: string;
-  created_by?: string | null;
+  author_id?: string | null;
 }
 
 export interface SnapshotEntryInsert {

@@ -59,8 +59,8 @@ export function computeWeekStats(entries: SnapshotEntryRow[]): WeekStats {
       domainCounts[entry.domain] = (domainCounts[entry.domain] || 0) + 1;
     }
 
-    // 평균 진행률 계산
-    const tasks = entry.past_week_tasks as PastWeekTask[] || [];
+    // 평균 진행률 계산 (past_week jsonb의 tasks 배열에서 가져옴)
+    const tasks = (entry.past_week?.tasks as PastWeekTask[] | undefined) || [];
     if (tasks.length > 0) {
       const entryAvg = tasks.reduce((sum, t) => sum + (t.progress || 0), 0) / tasks.length;
       totalProgress += entryAvg;

@@ -173,19 +173,23 @@ export function ScrumListItem({
                 {item.collaborators && item.collaborators.length > 0 && (
                   <div className="flex items-center gap-1 flex-wrap">
                     <span className="text-[10px] font-medium" style={{ color: "var(--notion-text-muted)" }}>Collaborators:</span>
-                    {item.collaborators.map((collab, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[10px] px-1.5 py-0.5 rounded"
-                        style={{
-                          backgroundColor: COLLAB_COLORS[collab.relation]?.bg || "var(--notion-bg-tertiary)",
-                          color: COLLAB_COLORS[collab.relation]?.text || "var(--notion-text-secondary)",
-                        }}
-                      >
-                        {collab.name}
-                        <span className="opacity-70 ml-0.5">({COLLAB_LABELS[collab.relation]})</span>
-                      </span>
-                    ))}
+                    {item.collaborators.map((collab, idx) => {
+                      // relations 우선, relation은 fallback
+                      const rel = collab.relations?.[0] || collab.relation || "pair";
+                      return (
+                        <span
+                          key={idx}
+                          className="text-[10px] px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: COLLAB_COLORS[rel]?.bg || "var(--notion-bg-tertiary)",
+                            color: COLLAB_COLORS[rel]?.text || "var(--notion-text-secondary)",
+                          }}
+                        >
+                          {collab.name}
+                          <span className="opacity-70 ml-0.5">({COLLAB_LABELS[rel]})</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>

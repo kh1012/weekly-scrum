@@ -35,7 +35,7 @@ export async function listMySnapshotsByWeek({
     .from("snapshots")
     .select("*, entries:snapshot_entries(*)")
     .eq("workspace_id", workspaceId)
-    .eq("created_by", userId)
+    .eq("author_id", userId)
     .eq("week_start_date", weekStartDate)
     .order("updated_at", { ascending: false });
 
@@ -72,7 +72,7 @@ export async function getSnapshot({
     .select("*, entries:snapshot_entries(*)")
     .eq("id", snapshotId)
     .eq("workspace_id", workspaceId)
-    .eq("created_by", userId)
+    .eq("author_id", userId)
     .single();
 
   if (error) {
@@ -103,7 +103,7 @@ export async function listMySnapshotWeeks({
     .from("snapshots")
     .select("year, week, week_start_date, week_end_date")
     .eq("workspace_id", workspaceId)
-    .eq("created_by", userId)
+    .eq("author_id", userId)
     .order("week_start_date", { ascending: false });
 
   if (error) {

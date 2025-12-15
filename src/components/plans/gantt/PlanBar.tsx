@@ -4,7 +4,7 @@ import { memo, useState, useCallback } from "react";
 import type { PlanWithAssignees } from "@/lib/data/plans";
 import type { GanttMode, DragType } from "./types";
 import { getStageColor } from "@/lib/ui/stageColor";
-import { ROW_HEIGHT, formatDateRange } from "./useGanttLayout";
+import { ROW_HEIGHT } from "./useGanttLayout";
 
 interface PlanBarProps {
   plan: PlanWithAssignees;
@@ -17,7 +17,44 @@ interface PlanBarProps {
 }
 
 /**
+ * 날짜 범위 포맷 (짧은 형태: Dec 1-4)
+ */
+function formatShortDateRange(startDate: string | null, endDate: string | null): string {
+  if (!startDate || !endDate) return "";
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const startMonth = monthNames[start.getMonth()];
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  
+  // 같은 달이면 "Dec 1-4", 다른 달이면 "Dec 1-Jan 4"
+  if (start.getMonth() === end.getMonth()) {
+    return `${startMonth} ${startDay}–${endDay}`;
+  }
+  const endMonth = monthNames[end.getMonth()];
+  return `${startMonth} ${startDay}–${endMonth} ${endDay}`;
+}
+
+/**
+ * Plan type에 따른 배경색
+ */
+function getTypeStyle(type: string) {
+  switch (type) {
+    case "sprint":
+      return { bg: "rgba(139, 92, 246, 0.15)", border: "rgba(139, 92, 246, 0.3)", text: "#8b5cf6" };
+    case "release":
+      return { bg: "rgba(236, 72, 153, 0.15)", border: "rgba(236, 72, 153, 0.3)", text: "#ec4899" };
+    default: // feature
+      return null; // stage color 사용
+  }
+}
+
+/**
  * Plan 막대 컴포넌트
+ * - 상단: 도메인/기간 표시
+ * - 하단: 타이틀 표시
  */
 export const PlanBar = memo(function PlanBar({
   plan,
@@ -30,7 +67,11 @@ export const PlanBar = memo(function PlanBar({
 }: PlanBarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const stageColor = getStageColor(plan.stage);
+  const typeStyle = getTypeStyle(plan.type);
   const isAdmin = mode === "admin";
+  
+  // type에 따라 스타일 결정
+  const colorStyle = typeStyle || stageColor;
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent, type: DragType) => {
@@ -42,26 +83,28 @@ export const PlanBar = memo(function PlanBar({
     [isAdmin, onResizeStart, plan.id]
   );
 
-  // 날짜 범위 툴팁
-  const tooltip =
-    plan.start_date && plan.end_date
-      ? formatDateRange(new Date(plan.start_date), new Date(plan.end_date))
-      : "일정 미지정";
+  // 날짜 범위 (짧은 형태)
+  const dateLabel = formatShortDateRange(plan.start_date, plan.end_date);
+  
+  // 도메인 라벨 (sprint/release는 type 표시)
+  const domainLabel = plan.type === "feature" 
+    ? (plan.domain || "") 
+    : plan.type === "sprint" ? "Sprint" : "Release";
 
   return (
     <div
-      className="absolute flex items-center gap-1 px-2 rounded cursor-pointer transition-all group"
+      className="absolute flex flex-col justify-center px-2 py-1 rounded cursor-pointer transition-all group"
       style={{
         left,
         width,
-        height: ROW_HEIGHT - 8,
-        top: 4,
-        background: stageColor.bg,
-        border: `1px solid ${isSelected ? stageColor.text : stageColor.border}`,
+        height: ROW_HEIGHT - 6,
+        top: 3,
+        background: colorStyle.bg,
+        border: `1px solid ${isSelected ? colorStyle.text : colorStyle.border}`,
         boxShadow: isSelected
-          ? `0 0 0 2px ${stageColor.text}40`
+          ? `0 0 0 2px ${colorStyle.text}40`
           : isHovered
-            ? `0 2px 8px rgba(0, 0, 0, 0.1)`
+            ? `0 2px 8px rgba(0, 0, 0, 0.12)`
             : "none",
         zIndex: isSelected ? 10 : isHovered ? 5 : 1,
       }}
@@ -71,43 +114,49 @@ export const PlanBar = memo(function PlanBar({
         e.stopPropagation();
         onSelect?.();
       }}
-      title={tooltip}
     >
       {/* Left Resize Handle (Admin only) */}
       {isAdmin && (
         <div
-          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ background: `${stageColor.text}30` }}
+          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity rounded-l"
+          style={{ background: `${colorStyle.text}30` }}
           onMouseDown={(e) => handleMouseDown(e, "resize-left")}
         />
       )}
 
-      {/* Title */}
+      {/* 상단: 도메인/기간 */}
+      <div className="flex items-center justify-between gap-1">
+        {width > 60 && domainLabel && (
+          <span
+            className="text-[9px] font-semibold uppercase tracking-wide truncate"
+            style={{ color: colorStyle.text, opacity: 0.8 }}
+          >
+            {domainLabel}
+          </span>
+        )}
+        {width > 80 && dateLabel && (
+          <span
+            className="text-[9px] font-medium truncate shrink-0"
+            style={{ color: colorStyle.text, opacity: 0.7 }}
+          >
+            {dateLabel}
+          </span>
+        )}
+      </div>
+
+      {/* 하단: 타이틀 */}
       <span
-        className="flex-1 truncate text-xs font-medium"
-        style={{ color: stageColor.text }}
+        className="truncate text-xs font-medium leading-tight"
+        style={{ color: colorStyle.text }}
       >
         {plan.title}
       </span>
 
-      {/* Stage Badge */}
-      {width > 80 && (
-        <span
-          className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded"
-          style={{
-            background: stageColor.text + "20",
-            color: stageColor.text,
-          }}
-        >
-          {plan.stage}
-        </span>
-      )}
-
       {/* Right Resize Handle (Admin only) */}
       {isAdmin && (
         <div
-          className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ background: `${stageColor.text}30` }}
+          className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity rounded-r"
+          style={{ background: `${colorStyle.text}30` }}
           onMouseDown={(e) => handleMouseDown(e, "resize-right")}
         />
       )}

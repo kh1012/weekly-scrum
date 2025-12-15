@@ -62,7 +62,7 @@ export async function createSnapshotAction(input: CreateSnapshotInput) {
       week: input.week,
       week_start_date: input.weekStart,
       week_end_date: input.weekEnd,
-      created_by: user.id,
+      author_id: user.id,
     })
     .select("id")
     .single();

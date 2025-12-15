@@ -388,19 +388,23 @@ export function ScrumCard({
             {item.collaborators && item.collaborators.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap mt-2">
                 <span className="text-[10px] font-medium text-gray-400">with:</span>
-                {item.collaborators.map((collab, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
-                    style={{
-                      backgroundColor: COLLAB_COLORS[collab.relation]?.bg || '#f3f4f6',
-                      color: COLLAB_COLORS[collab.relation]?.text || '#6b7280',
-                    }}
-                  >
-                    <span className="font-medium">{collab.name}</span>
-                    <span className="opacity-60">{COLLAB_LABELS[collab.relation]}</span>
-                  </span>
-                ))}
+                {item.collaborators.map((collab, idx) => {
+                  // relations 우선, relation은 fallback
+                  const relation = collab.relations?.[0] || collab.relation || "pair";
+                  return (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: COLLAB_COLORS[relation]?.bg || '#f3f4f6',
+                        color: COLLAB_COLORS[relation]?.text || '#6b7280',
+                      }}
+                    >
+                      <span className="font-medium">{collab.name}</span>
+                      <span className="opacity-60">{COLLAB_LABELS[relation]}</span>
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>

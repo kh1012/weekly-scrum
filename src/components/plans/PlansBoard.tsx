@@ -16,6 +16,7 @@ import type { PlansBoardProps, FilterState, GroupByOption } from "./types";
 import type { PlanStatus } from "@/lib/data/plans";
 
 type ViewMode = "list" | "gantt";
+type MonthRangeOption = 3 | 4 | 5 | 6;
 
 /**
  * 메인 Plans 보드 컴포넌트
@@ -37,6 +38,7 @@ export function PlansBoard({
   const [filters, setFilters] = useState<FilterState>({});
   const [groupBy, setGroupBy] = useState<GroupByOption>("none");
   const [viewMode, setViewMode] = useState<ViewMode>("gantt"); // 기본: 간트 뷰
+  const [monthRange, setMonthRange] = useState<MonthRangeOption>(3); // 기본: 3개월
 
   // 월 변경 시 서버에서 새 데이터 fetch (URL 파라미터 변경)
   const handleMonthChange = (month: string) => {
@@ -117,15 +119,19 @@ export function PlansBoard({
     [mode, router]
   );
 
-  // 간트 뷰용 날짜 범위 계산
-  const getMonthRange = () => {
+  // 간트 뷰용 날짜 범위 계산 (현재 월 기준 전, 현재, 후 개월)
+  const getMultiMonthRange = () => {
     const [year, month] = selectedMonth.split("-").map(Number);
-    const rangeStart = new Date(year, month - 1, 1);
-    const rangeEnd = new Date(year, month, 0);
+    // 선택된 월을 중심으로 전후 개월 포함
+    const monthsBefore = Math.floor((monthRange - 1) / 2);
+    const monthsAfter = monthRange - 1 - monthsBefore;
+    
+    const rangeStart = new Date(year, month - 1 - monthsBefore, 1);
+    const rangeEnd = new Date(year, month + monthsAfter, 0); // 마지막 달의 마지막 일
     return { rangeStart, rangeEnd };
   };
 
-  const { rangeStart, rangeEnd } = getMonthRange();
+  const { rangeStart, rangeEnd } = getMultiMonthRange();
 
   const isAdmin = mode === "admin";
   const totalCount = initialPlans.length + undatedPlans.length;
@@ -240,6 +246,32 @@ export function PlansBoard({
             selectedMonth={selectedMonth}
             onChange={handleMonthChange}
           />
+
+          {/* 개월 수 선택 (간트 뷰에서만 표시) */}
+          {viewMode === "gantt" && (
+            <div
+              className="flex items-center rounded-lg overflow-hidden"
+              style={{
+                background: "var(--notion-bg-secondary)",
+                border: "1px solid var(--notion-border)",
+              }}
+            >
+              {([3, 4, 5, 6] as MonthRangeOption[]).map((num) => (
+                <button
+                  key={num}
+                  onClick={() => setMonthRange(num)}
+                  className="px-2.5 py-1.5 text-xs font-medium transition-colors"
+                  style={{
+                    background: monthRange === num ? "var(--notion-bg)" : "transparent",
+                    color: monthRange === num ? "var(--notion-text)" : "var(--notion-text-muted)",
+                    boxShadow: monthRange === num ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                  }}
+                >
+                  {num}개월
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* 새 계획 버튼 (admin 모드만) */}
           {isAdmin && (

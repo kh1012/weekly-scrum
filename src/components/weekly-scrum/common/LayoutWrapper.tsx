@@ -23,6 +23,7 @@ const FULL_WIDTH_PAGES = [
   "/calendar",
   "/my",
   "/admin",
+  "/plans",
 ];
 
 // 동적 경로 패턴 (하위 경로 모두 포함)

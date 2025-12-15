@@ -36,13 +36,12 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
     .from("snapshots")
     .select(`
       id,
-      title,
       created_at,
       updated_at,
       entries:snapshot_entries(*)
     `)
     .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-    .eq("created_by", user.id)
+    .eq("author_id", user.id)
     .eq("week_start_date", weekStartDate)
     .order("updated_at", { ascending: false });
 
@@ -51,15 +50,12 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
     notFound();
   }
 
-  if (!snapshots || snapshots.length === 0) {
-    redirect(`/manage/snapshots/${year}/${week}/new`);
-  }
-
+  // 스냅샷이 없어도 빈 배열로 전달 (EditSnapshotsView에서 임시 카드 초기화)
   return (
     <EditSnapshotsView
       year={year}
       week={week}
-      snapshots={snapshots}
+      snapshots={snapshots || []}
       userId={user.id}
       workspaceId={DEFAULT_WORKSPACE_ID}
     />

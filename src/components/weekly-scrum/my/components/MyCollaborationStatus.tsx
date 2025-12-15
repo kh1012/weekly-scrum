@@ -4,7 +4,7 @@ import type { ScrumItem, Relation } from "@/types/scrum";
 
 interface CollaborationTarget {
   name: string;
-  relation: Relation;
+  relations: Relation[];
   topic: string;
   project: string;
 }
@@ -25,6 +25,17 @@ const RELATION_LABELS: Record<Relation, { label: string; color: string }> = {
   pre: { label: "선행", color: "var(--notion-orange)" },
   post: { label: "후행", color: "var(--notion-green)" },
 };
+
+// relations 배열에서 첫 번째 relation 또는 기본값
+function getPrimaryRelation(relations?: Relation[]): Relation {
+  return relations?.[0] || "pair";
+}
+
+// relations 배열이 특정 relation을 포함하는지
+function hasRelation(relations?: Relation[], rel?: Relation): boolean {
+  if (!rel) return false;
+  return relations?.includes(rel) ?? false;
+}
 
 export function MyCollaborationStatus({
   waitingForMe,
@@ -119,7 +130,8 @@ export function MyCollaborationStatus({
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {postPartners.map((item, idx) => {
-              const config = RELATION_LABELS[item.relation];
+              const rel = getPrimaryRelation(item.relations);
+              const config = RELATION_LABELS[rel];
               return (
                 <span
                   key={idx}
@@ -139,7 +151,7 @@ export function MyCollaborationStatus({
       )}
 
       {/* 기타 협업자 (pair) */}
-      {myCollaborators.filter((c) => c.relation === "pair").length > 0 && (
+      {myCollaborators.filter((c) => hasRelation(c.relations, "pair")).length > 0 && (
         <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--notion-border)" }}>
           <h4
             className="text-sm font-medium mb-2"
@@ -149,9 +161,10 @@ export function MyCollaborationStatus({
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {myCollaborators
-              .filter((c) => c.relation === "pair")
+              .filter((c) => hasRelation(c.relations, "pair"))
               .map((item, idx) => {
-                const config = RELATION_LABELS[item.relation];
+                const rel = getPrimaryRelation(item.relations);
+                const config = RELATION_LABELS[rel];
                 return (
                   <span
                     key={idx}
@@ -180,7 +193,8 @@ function CollaborationItem({
   item: CollaborationTarget;
   showRelation?: boolean;
 }) {
-  const config = RELATION_LABELS[item.relation];
+  const rel = getPrimaryRelation(item.relations);
+  const config = RELATION_LABELS[rel];
   return (
     <div
       className="flex items-center justify-between p-2 rounded"
@@ -219,6 +233,12 @@ export function calculateCollaborationStatus(
   postPartners: CollaborationTarget[];
   myCollaborators: CollaborationTarget[];
 } {
+  // relations 배열에서 특정 relation 확인하는 헬퍼
+  const collabHasRelation = (collab: { relation?: Relation; relations?: Relation[] }, rel: Relation) => {
+    const rels = collab.relations || (collab.relation ? [collab.relation] : []);
+    return rels.includes(rel);
+  };
+
   // 나를 pre로 지정한 다른 사람들 (나를 기다리는 사람들)
   const waitingForMe: CollaborationTarget[] = [];
   allItems.forEach((item) => {
@@ -226,10 +246,10 @@ export function calculateCollaborationStatus(
     if (!item.collaborators) return;
 
     item.collaborators.forEach((collab) => {
-      if (collab.name === memberName && collab.relation === "pre") {
+      if (collab.name === memberName && collabHasRelation(collab, "pre")) {
         waitingForMe.push({
           name: item.name,
-          relation: collab.relation,
+          relations: collab.relations || (collab.relation ? [collab.relation] : ["pre"]),
           topic: item.topic,
           project: item.project,
         });
@@ -243,10 +263,10 @@ export function calculateCollaborationStatus(
     if (!item.collaborators) return;
 
     item.collaborators.forEach((collab) => {
-      if (collab.relation === "pre") {
+      if (collabHasRelation(collab, "pre")) {
         iAmWaitingFor.push({
           name: collab.name,
-          relation: collab.relation,
+          relations: collab.relations || (collab.relation ? [collab.relation] : ["pre"]),
           topic: item.topic,
           project: item.project,
         });
@@ -260,10 +280,10 @@ export function calculateCollaborationStatus(
     if (!item.collaborators) return;
 
     item.collaborators.forEach((collab) => {
-      if (collab.relation === "post") {
+      if (collabHasRelation(collab, "post")) {
         postPartners.push({
           name: collab.name,
-          relation: collab.relation,
+          relations: collab.relations || (collab.relation ? [collab.relation] : ["post"]),
           topic: item.topic,
           project: item.project,
         });
@@ -279,7 +299,7 @@ export function calculateCollaborationStatus(
     item.collaborators.forEach((collab) => {
       myCollaborators.push({
         name: collab.name,
-        relation: collab.relation,
+        relations: collab.relations || (collab.relation ? [collab.relation] : []),
         topic: item.topic,
         project: item.project,
       });

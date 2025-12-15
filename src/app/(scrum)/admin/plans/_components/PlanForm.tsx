@@ -27,7 +27,8 @@ interface PlanFormProps {
 
 const TYPE_OPTIONS: { value: PlanType; label: string }[] = [
   { value: "feature", label: "기능 (Feature)" },
-  { value: "event", label: "이벤트 (Event)" },
+  { value: "sprint", label: "스프린트 (Sprint)" },
+  { value: "release", label: "릴리즈 (Release)" },
 ];
 
 const STATUS_OPTIONS: { value: PlanStatus; label: string }[] = [

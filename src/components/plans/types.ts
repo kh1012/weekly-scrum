@@ -71,7 +71,8 @@ export const STATUS_CONFIG: Record<PlanStatus, { label: string; color: string; b
  */
 export const TYPE_CONFIG: Record<PlanType, { label: string; emoji: string; color: string }> = {
   feature: { label: "기능", emoji: "🔧", color: "#8b5cf6" },
-  event: { label: "이벤트", emoji: "📅", color: "#ec4899" },
+  sprint: { label: "스프린트", emoji: "🏃", color: "#8b5cf6" },
+  release: { label: "릴리즈", emoji: "🚀", color: "#ec4899" },
 };
 
 /**

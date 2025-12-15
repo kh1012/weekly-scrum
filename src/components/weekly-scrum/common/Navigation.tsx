@@ -18,6 +18,7 @@ interface NavItem {
   href: string;
   emoji: string;
   description?: string;
+  disabled?: boolean;
 }
 
 interface NavCategory {
@@ -30,7 +31,7 @@ interface NavCategory {
 
 /**
  * SNB 메뉴 구조 (update2.md 요구사항 반영)
- * - 업무: Work Map, Calendar, Snapshots, Plans (전원 조회 전용)
+ * - 업무: Work Map, Flow, Snapshots, Plans (전원 조회 전용)
  * - 개인공간: Manage
  * - 관리자: Admin Dashboard, All Snapshots, All Plans (CRUD)
  * - 기타: Release Notes
@@ -48,9 +49,9 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
       },
       {
         key: "calendar",
-        label: "Calendar",
+        label: "Flow",
         href: "/calendar",
-        emoji: "📅",
+        emoji: "🔄",
       },
       {
         key: "snapshots",
@@ -63,7 +64,8 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         label: "Plans",
         href: "/plans",
         emoji: "📆",
-        description: "일정 계획 조회",
+        description: "Coming Soon",
+        disabled: true,
       },
     ],
   },
@@ -353,6 +355,39 @@ export function SideNavigation({
                     const accentBg = isAdminSection
                       ? "rgba(247, 109, 87, 0.1)"
                       : "rgba(59, 130, 246, 0.1)";
+
+                    // disabled 상태 처리
+                    if (item.disabled) {
+                      return (
+                        <div
+                          key={item.key}
+                          className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-not-allowed opacity-50"
+                          title={item.description || "Coming Soon"}
+                        >
+                          <span
+                            className="text-lg w-7 h-7 flex items-center justify-center rounded-lg"
+                            style={{ background: "transparent" }}
+                          >
+                            {item.emoji}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="text-sm font-medium"
+                                style={{ color: "var(--notion-text-muted)" }}
+                              >
+                                {item.label}
+                              </span>
+                              <span
+                                className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-500"
+                              >
+                                Coming Soon
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
 
                     return (
                       <Link

@@ -23,6 +23,11 @@ interface NetworkEdge {
   relation: Relation;
 }
 
+// relations 배열에서 첫 번째 relation 가져오기
+function getPrimaryRelation(collab: { relation?: Relation; relations?: Relation[] }): Relation {
+  return collab.relations?.[0] || collab.relation || "pair";
+}
+
 interface ViewState {
   scale: number;
   offsetX: number;
@@ -76,7 +81,7 @@ function buildNetworkData(
         edges.push({
           from: authorKey,
           to: collabKey,
-          relation: collab.relation,
+          relation: getPrimaryRelation(collab),
         });
       }
     }

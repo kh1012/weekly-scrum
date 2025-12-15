@@ -404,36 +404,67 @@ export const SnapshotCardList = forwardRef<
                 {/* 카드 헤더 */}
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      {/* 이름 + 상태 */}
-                      <div className="flex items-center gap-2 mb-1.5">
-                        {/* 아바타 */}
-                        <div
-                          className={`
-                          w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-                          ${
-                            isSelected
-                              ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
-                              : "bg-gray-100 text-gray-600"
-                          }
-                        `}
-                        >
-                          {snapshot.name ? snapshot.name.charAt(0) : "?"}
+                    <div className="flex-1 min-w-0 flex flex-col gap-2">
+                      {/* 메타 태그 (domain, project, module, feature 순) - EntryCard 스타일 */}
+                      {snapshot.domain && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Domain</span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                            {snapshot.domain}
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-900">
-                              {snapshot.name || "(이름 없음)"}
-                            </span>
-                            {snapshot.isDirty && (
-                              <span
-                                className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"
-                                title="수정됨"
-                              />
-                            )}
+                      )}
+                      {snapshot.project && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Project</span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                            {snapshot.project}
+                          </span>
+                        </div>
+                      )}
+                      {snapshot.module && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Module</span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                            {snapshot.module}
+                          </span>
+                        </div>
+                      )}
+                      {snapshot.feature && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Feature</span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                            {snapshot.feature}
+                          </span>
+                        </div>
+                      )}
+                      {/* 진행률 표시 */}
+                      {(() => {
+                        const tasks = snapshot.pastWeek?.tasks || [];
+                        const avgProgress = tasks.length > 0 
+                          ? Math.round(tasks.reduce((sum, t) => sum + t.progress, 0) / tasks.length)
+                          : null;
+                        return avgProgress !== null && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-gray-400 w-12 shrink-0">진행률</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-blue-500 rounded-full transition-all"
+                                  style={{ width: `${avgProgress}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-medium text-gray-600">{avgProgress}%</span>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        );
+                      })()}
+                      {snapshot.isDirty && (
+                        <span
+                          className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"
+                          title="수정됨"
+                        />
+                      )}
                     </div>
 
                   <div className="flex items-center gap-1">
@@ -499,28 +530,6 @@ export const SnapshotCardList = forwardRef<
                     </button>
                   </div>
                 </div>
-
-                {/* 메타 태그 (여러 줄로 나열) */}
-                {metaTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {metaTags.map((tag, i) => (
-                      <span
-                        key={i}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
-                          tag.label === "Domain"
-                            ? "bg-purple-50 text-purple-600"
-                            : tag.label === "Project"
-                            ? "bg-blue-50 text-blue-600"
-                            : tag.label === "Module"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-amber-50 text-amber-600"
-                        }`}
-                      >
-                        {tag.value}
-                      </span>
-                    ))}
-                  </div>
-                )}
 
                 {/* 상태 태그 */}
                 <div className="flex flex-wrap gap-1.5 mt-2">

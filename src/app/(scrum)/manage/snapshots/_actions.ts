@@ -29,8 +29,6 @@ export interface SnapshotEntryPayload {
 }
 
 export interface UpdateSnapshotPayload {
-  title?: string;
-  status?: string;
   entries: SnapshotEntryPayload[];
   deletedEntryIds?: string[];
 }
@@ -66,19 +64,14 @@ export async function updateSnapshotAndEntries(
     return { success: false, error: "수정 권한이 없습니다." };
   }
 
-  // 스냅샷 메타데이터 업데이트 (필요시)
-  if (payload.title || payload.status) {
-    const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (payload.title) updateData.title = payload.title;
-    
-    const { error: updateError } = await supabase
-      .from("snapshots")
-      .update(updateData)
-      .eq("id", snapshotId);
+  // 스냅샷 updated_at 업데이트
+  const { error: updateError } = await supabase
+    .from("snapshots")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", snapshotId);
 
-    if (updateError) {
-      return { success: false, error: "스냅샷 업데이트 실패: " + updateError.message };
-    }
+  if (updateError) {
+    return { success: false, error: "스냅샷 업데이트 실패: " + updateError.message };
   }
 
   // 삭제할 엔트리 처리
@@ -93,20 +86,26 @@ export async function updateSnapshotAndEntries(
     }
   }
 
-  // 엔트리 upsert
+  // 엔트리 upsert (실제 DB 스키마에 맞춤)
   if (payload.entries.length > 0) {
     const upsertData = payload.entries.map((entry) => ({
       id: entry.id || crypto.randomUUID(),
       snapshot_id: snapshotId,
+      workspace_id: DEFAULT_WORKSPACE_ID,
+      author_id: user.id,
       name: entry.name,
       domain: entry.domain,
       project: entry.project,
-      module: entry.module,
-      feature: entry.feature,
-      past_week_tasks: entry.past_week_tasks || [],
-      this_week_tasks: entry.this_week_tasks || [],
-      risk: entry.risk,
-      risk_level: entry.risk_level,
+      module: entry.module || "",
+      feature: entry.feature || "",
+      past_week: {
+        tasks: entry.past_week_tasks || [],
+      },
+      this_week: {
+        tasks: entry.this_week_tasks || [],
+      },
+      risks: entry.risk || [],
+      risk_level: entry.risk_level || 0,
       collaborators: entry.collaborators || [],
       updated_at: new Date().toISOString(),
     }));
@@ -125,7 +124,6 @@ export async function updateSnapshotAndEntries(
 }
 
 export interface CreateSnapshotPayload {
-  title?: string;
   entries: SnapshotEntryPayload[];
 }
 
@@ -161,27 +159,36 @@ export async function createSnapshotAndEntries(
       year: year,
       week: weekLabel,
       author_id: user.id,
-      title: payload.title || null,
     });
 
   if (snapshotError) {
     return { success: false, error: "스냅샷 생성 실패: " + snapshotError.message };
   }
 
-  // 엔트리 생성
+  // 엔트리 생성 (새 DB 스키마에 맞춤: risks, collaborators 별도 컬럼)
   if (payload.entries.length > 0) {
     const entriesData = payload.entries.map((entry) => ({
       id: crypto.randomUUID(),
       snapshot_id: snapshotId,
-      name: entry.name,
-      domain: entry.domain,
-      project: entry.project,
-      module: entry.module,
-      feature: entry.feature,
-      past_week_tasks: entry.past_week_tasks || [],
-      this_week_tasks: entry.this_week_tasks || [],
-      risk: entry.risk,
-      risk_level: entry.risk_level,
+      workspace_id: DEFAULT_WORKSPACE_ID,
+      author_id: user.id,
+      name: entry.name || "",
+      domain: entry.domain || "",
+      project: entry.project || "",
+      module: entry.module || "",
+      feature: entry.feature || "",
+      // past_week: tasks만 jsonb로 저장
+      past_week: {
+        tasks: entry.past_week_tasks || [],
+      },
+      // this_week: tasks를 jsonb로 저장
+      this_week: {
+        tasks: entry.this_week_tasks || [],
+      },
+      // risks: 별도 컬럼 (문자열 배열)
+      risks: entry.risk || [],
+      risk_level: entry.risk_level || 0,
+      // collaborators: 별도 컬럼 ({ name, relation } 객체 배열)
       collaborators: entry.collaborators || [],
     }));
 

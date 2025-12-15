@@ -8,9 +8,10 @@
  * - "업데이트하기" 버튼으로 저장
  */
 
-import { useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { formatWeekRange } from "@/lib/date/isoWeek";
+import { useState, useCallback, useRef, useMemo, useEffect, Suspense } from "react";
+import { createPortal } from "react-dom";
+import { useRouter, useSearchParams } from "next/navigation";
+import { formatWeekRange, getCurrentISOWeek, getWeekOptions, getWeekDateRange, formatShortDate } from "@/lib/date/isoWeek";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { SnapshotCardList, SnapshotCardListRef } from "@/components/weekly-scrum/manage/SnapshotCardList";
 import { SnapshotEditForm } from "@/components/weekly-scrum/manage/SnapshotEditForm";
@@ -19,7 +20,7 @@ import { ResizeHandle } from "@/components/weekly-scrum/manage/ResizeHandle";
 import { ToastProvider, useToast } from "@/components/weekly-scrum/manage/Toast";
 import type { TempSnapshot } from "@/components/weekly-scrum/manage/types";
 import { tempSnapshotToV2Json, tempSnapshotToPlainText } from "@/components/weekly-scrum/manage/types";
-import { updateSnapshotAndEntries } from "../../../../_actions";
+import { updateSnapshotAndEntries, createSnapshotAndEntries } from "../../../../_actions";
 import type { SnapshotEntryPayload } from "../../../../_actions";
 import type { Database, PastWeekTask, Collaborator } from "@/lib/supabase/types";
 
@@ -27,7 +28,6 @@ type SnapshotEntryRow = Database["public"]["Tables"]["snapshot_entries"]["Row"];
 
 interface SnapshotWithEntries {
   id: string;
-  title: string | null;
   created_at: string;
   updated_at: string;
   entries: SnapshotEntryRow[];
@@ -47,6 +47,7 @@ const MAX_LEFT_PANEL_WIDTH = 480;
 const DEFAULT_LEFT_PANEL_WIDTH = 280;
 
 function convertEntryToTempSnapshot(entry: SnapshotEntryRow, index: number): TempSnapshot {
+  // 새 DB 스키마: risks, collaborators 별도 컬럼
   return {
     tempId: entry.id,
     isOriginal: true,
@@ -59,13 +60,39 @@ function convertEntryToTempSnapshot(entry: SnapshotEntryRow, index: number): Tem
     module: entry.module || "",
     feature: entry.feature || "",
     pastWeek: {
-      tasks: (entry.past_week_tasks as PastWeekTask[]) || [],
-      risk: entry.risk,
+      tasks: (entry.past_week?.tasks as PastWeekTask[]) || [],
+      risk: (entry.risks as string[]) || null,
       riskLevel: entry.risk_level as 0 | 1 | 2 | 3 | null,
       collaborators: (entry.collaborators as Collaborator[]) || [],
     },
     thisWeek: {
-      tasks: entry.this_week_tasks || [],
+      tasks: entry.this_week?.tasks || [],
+    },
+  };
+}
+
+// 새 빈 스냅샷 생성
+function createEmptyTempSnapshot(displayName: string = ""): TempSnapshot {
+  const now = new Date();
+  return {
+    tempId: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    isOriginal: false,
+    isDirty: true,
+    createdAt: now,
+    updatedAt: now,
+    name: displayName,
+    domain: "",
+    project: "",
+    module: "",
+    feature: "",
+    pastWeek: {
+      tasks: [],
+      risk: null,
+      riskLevel: null,
+      collaborators: [],
+    },
+    thisWeek: {
+      tasks: [],
     },
   };
 }
@@ -74,20 +101,48 @@ function EditSnapshotsViewInner({
   year,
   week,
   snapshots,
+  userId,
+  workspaceId,
 }: EditSnapshotsViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const cardListRef = useRef<SnapshotCardListRef>(null);
 
-  // 현재 선택된 스냅샷
-  const [selectedSnapshotId, setSelectedSnapshotId] = useState(snapshots[0]?.id);
+  // URL에서 snapshotId와 entryIndex 읽기
+  const urlSnapshotId = searchParams.get("snapshotId");
+  const urlEntryIndex = searchParams.get("entryIndex");
+
+  // 스냅샷이 없으면 새 모드로 동작
+  const isNewMode = snapshots.length === 0;
+
+  // 현재 선택된 스냅샷 (URL 파라미터 우선)
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState(() => {
+    if (urlSnapshotId && snapshots.some((s) => s.id === urlSnapshotId)) {
+      return urlSnapshotId;
+    }
+    return snapshots[0]?.id || null;
+  });
   const selectedSnapshotData = snapshots.find((s) => s.id === selectedSnapshotId);
 
-  // 엔트리들을 TempSnapshot으로 변환
-  const [tempSnapshots, setTempSnapshots] = useState<TempSnapshot[]>(() => 
-    (selectedSnapshotData?.entries || []).map(convertEntryToTempSnapshot)
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(tempSnapshots[0]?.tempId || null);
+  // 엔트리들을 TempSnapshot으로 변환 (스냅샷이 없으면 빈 카드 하나 생성)
+  const [tempSnapshots, setTempSnapshots] = useState<TempSnapshot[]>(() => {
+    if (isNewMode) {
+      return [createEmptyTempSnapshot()];
+    }
+    return (selectedSnapshotData?.entries || []).map(convertEntryToTempSnapshot);
+  });
+  
+  // 선택된 카드 ID (URL의 entryIndex 기반으로 초기 선택)
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    if (urlEntryIndex !== null) {
+      const entryIdx = parseInt(urlEntryIndex, 10);
+      if (!isNaN(entryIdx) && entryIdx >= 0 && entryIdx < tempSnapshots.length) {
+        return tempSnapshots[entryIdx]?.tempId || null;
+      }
+    }
+    return tempSnapshots[0]?.tempId || null;
+  });
   const [deletedEntryIds, setDeletedEntryIds] = useState<string[]>([]);
 
   // 패널 상태
@@ -99,6 +154,95 @@ function EditSnapshotsViewInner({
 
   const weekRange = formatWeekRange(year, week);
   const selectedSnapshot = tempSnapshots.find((s) => s.tempId === selectedId) || null;
+  
+  // 주차별 스냅샷 갯수 맵
+  const [snapshotCountByWeek, setSnapshotCountByWeek] = useState<Map<string, number>>(new Map());
+  
+  // 주차 선택 드롭다운 상태
+  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
+  const weekButtonRef = useRef<HTMLButtonElement>(null);
+  const weekDropdownRef = useRef<HTMLDivElement>(null);
+  const selectedWeekRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  const currentWeekInfo = useMemo(() => getCurrentISOWeek(), []);
+  
+  // 주차 옵션 (현재 년도 기준)
+  const weekOptionsWithRange = useMemo(() => {
+    const weekOpts = getWeekOptions(year);
+    return weekOpts.map((w) => {
+      const { weekStart, weekEnd } = getWeekDateRange(year, w);
+      const isCurrentWeek = currentWeekInfo.year === year && currentWeekInfo.week === w;
+      return {
+        week: w,
+        label: `W${w.toString().padStart(2, "0")}`,
+        range: `${formatShortDate(weekStart)} ~ ${formatShortDate(weekEnd)}`,
+        isCurrentWeek,
+      };
+    });
+  }, [year, currentWeekInfo]);
+  
+  // 드롭다운 열 때 위치 계산
+  const openWeekDropdown = () => {
+    if (weekButtonRef.current) {
+      const rect = weekButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+      });
+    }
+    setIsWeekDropdownOpen(!isWeekDropdownOpen);
+  };
+  
+  // 클릭 외부 감지
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        weekDropdownRef.current && !weekDropdownRef.current.contains(event.target as Node) &&
+        weekButtonRef.current && !weekButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsWeekDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  
+  // 선택된 주차로 스크롤
+  useEffect(() => {
+    if (isWeekDropdownOpen && selectedWeekRef.current) {
+      selectedWeekRef.current.scrollIntoView({ block: "center", behavior: "auto" });
+    }
+  }, [isWeekDropdownOpen]);
+  
+  // 주차별 스냅샷 갯수 조회
+  useEffect(() => {
+    async function fetchSnapshotCounts() {
+      try {
+        const response = await fetch(
+          `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}&year=${year}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const counts = data.counts || {};
+          setSnapshotCountByWeek(new Map(Object.entries(counts).map(([k, v]) => [k, v as number])));
+        }
+      } catch (error) {
+        console.error("Failed to fetch snapshot counts:", error);
+      }
+    }
+    fetchSnapshotCounts();
+  }, [year, workspaceId, userId]);
+  
+  // 주차 변경 시 라우팅
+  const handleWeekChange = (newWeek: number) => {
+    setIsWeekDropdownOpen(false);
+    if (newWeek !== week) {
+      navigationProgress.start();
+      router.push(`/manage/snapshots/${year}/${newWeek}/edit`);
+    }
+  };
 
   // 스냅샷 변경 시 엔트리 갱신
   const handleSnapshotChange = (snapshotId: string) => {
@@ -129,6 +273,8 @@ function EditSnapshotsViewInner({
 
   // 카드 복제
   const handleDuplicateCard = useCallback((tempId: string) => {
+    const newTempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
     setTempSnapshots((prev) => {
       const target = prev.find((s) => s.tempId === tempId);
       if (!target) return prev;
@@ -136,7 +282,7 @@ function EditSnapshotsViewInner({
       const now = new Date();
       const duplicated: TempSnapshot = {
         ...target,
-        tempId: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        tempId: newTempId,
         isOriginal: false,
         isDirty: true,
         createdAt: now,
@@ -158,9 +304,11 @@ function EditSnapshotsViewInner({
       const targetIndex = prev.findIndex((s) => s.tempId === tempId);
       const newSnapshots = [...prev];
       newSnapshots.splice(targetIndex + 1, 0, duplicated);
-      setSelectedId(duplicated.tempId);
       return newSnapshots;
     });
+
+    // 상태 업데이트 후 복제된 카드 선택
+    setSelectedId(newTempId);
   }, []);
 
   // 카드 업데이트
@@ -261,9 +409,12 @@ function EditSnapshotsViewInner({
     }
   };
 
-  // 업데이트하기 (저장)
+  // 저장 (새 모드일 때는 생성, 편집 모드일 때는 업데이트)
   const handleSave = async () => {
-    if (!selectedSnapshotId) return;
+    if (tempSnapshots.length === 0) {
+      showToast("저장할 항목이 없습니다.", "error");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -285,16 +436,31 @@ function EditSnapshotsViewInner({
         })),
       }));
 
-      const result = await updateSnapshotAndEntries(selectedSnapshotId, {
-        entries,
-        deletedEntryIds,
-      });
+      if (isNewMode) {
+        // 새 모드: 스냅샷 생성
+        const result = await createSnapshotAndEntries(year, week, { entries });
 
-      if (result.success) {
-        showToast("업데이트 완료!", "success");
-        router.refresh();
+        if (result.success) {
+          showToast("신규 등록 완료!", "success");
+          router.refresh();
+        } else {
+          showToast(result.error || "저장 실패", "error");
+        }
       } else {
-        showToast(result.error || "저장 실패", "error");
+        // 편집 모드: 스냅샷 업데이트
+        if (!selectedSnapshotId) return;
+
+        const result = await updateSnapshotAndEntries(selectedSnapshotId, {
+          entries,
+          deletedEntryIds,
+        });
+
+        if (result.success) {
+          showToast("업데이트 완료!", "success");
+          router.refresh();
+        } else {
+          showToast(result.error || "저장 실패", "error");
+        }
       }
     } catch (error) {
       console.error("Save error:", error);
@@ -324,15 +490,77 @@ function EditSnapshotsViewInner({
 
           <div className="h-4 w-px bg-gray-200" />
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900">
-              {year}년 W{week.toString().padStart(2, "0")}
-            </span>
-            <span className="text-sm text-gray-500">({weekRange})</span>
+          {/* 주차 선택 드롭다운 */}
+          <div className="relative">
+            <button
+              ref={weekButtonRef}
+              type="button"
+              onClick={openWeekDropdown}
+              className="flex items-center gap-2 h-9 rounded-lg px-3 text-sm font-medium bg-gray-50 transition-colors hover:bg-gray-100"
+            >
+              <span className="font-semibold text-gray-900">{year}년</span>
+              <span className="font-semibold text-gray-900">W{week.toString().padStart(2, "0")}</span>
+              <span className="text-gray-500 text-xs">({weekRange})</span>
+              {currentWeekInfo.year === year && currentWeekInfo.week === week && (
+                <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">현재</span>
+              )}
+              <svg
+                className={`w-4 h-4 text-gray-400 transition-transform ${isWeekDropdownOpen ? "rotate-180" : ""}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {/* Portal로 렌더링 */}
+            {isWeekDropdownOpen && typeof document !== "undefined" && createPortal(
+              <div 
+                ref={weekDropdownRef}
+                className="fixed bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-80 overflow-y-auto min-w-[240px]"
+                style={{ top: dropdownPosition.top, left: dropdownPosition.left, zIndex: 9999 }}
+              >
+                {weekOptionsWithRange.map((w) => {
+                  const weekKey = `${year}-${w.week}`;
+                  const count = snapshotCountByWeek.get(weekKey) || 0;
+                  const hasSnapshots = count > 0;
+                  
+                  return (
+                    <button
+                      key={w.week}
+                      ref={w.week === week ? selectedWeekRef : null}
+                      type="button"
+                      onClick={() => handleWeekChange(w.week)}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                        w.week === week ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                      } ${w.isCurrentWeek ? "text-blue-600" : "text-gray-700"}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {/* 스냅샷 갯수 표시 */}
+                        {hasSnapshots ? (
+                          <span className="text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded min-w-[18px] text-center font-medium">
+                            {count}
+                          </span>
+                        ) : (
+                          <span className="w-[18px] h-[18px] flex items-center justify-center">
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                          </span>
+                        )}
+                        <span className="font-medium">{w.label}</span>
+                        {w.isCurrentWeek && (
+                          <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">현재</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-400">{w.range}</span>
+                    </button>
+                  );
+                })}
+              </div>,
+              document.body
+            )}
           </div>
 
           {/* 스냅샷 선택 드롭다운 */}
-          {snapshots.length > 1 && (
+          {snapshots.length > 1 && selectedSnapshotId && (
             <>
               <div className="h-4 w-px bg-gray-200" />
               <select
@@ -342,7 +570,7 @@ function EditSnapshotsViewInner({
               >
                 {snapshots.map((s, i) => (
                   <option key={s.id} value={s.id}>
-                    {s.title || `스냅샷 ${i + 1}`}
+                    스냅샷 {i + 1}
                   </option>
                 ))}
               </select>
@@ -394,7 +622,7 @@ function EditSnapshotsViewInner({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                업데이트하기
+                {isNewMode ? "신규 등록하기" : "업데이트하기"}
               </>
             )}
           </button>
@@ -487,7 +715,9 @@ function EmptyState({ onAddEmpty }: { onAddEmpty: () => void }) {
 export function EditSnapshotsView(props: EditSnapshotsViewProps) {
   return (
     <ToastProvider>
-      <EditSnapshotsViewInner {...props} />
+      <Suspense fallback={<div className="flex items-center justify-center h-full">로딩 중...</div>}>
+        <EditSnapshotsViewInner {...props} />
+      </Suspense>
     </ToastProvider>
   );
 }

@@ -498,7 +498,7 @@ const RELATION_INFO: Record<Relation, { icon: React.ReactNode; label: string; de
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
       </svg>
     ),
-    label: "사전",
+    label: "선행",
     description: "나에게 전달",
     color: "text-gray-300 hover:text-gray-400",
     activeColor: "text-blue-500",
@@ -509,7 +509,7 @@ const RELATION_INFO: Record<Relation, { icon: React.ReactNode; label: string; de
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
       </svg>
     ),
-    label: "사후",
+    label: "후행",
     description: "내가 전달",
     color: "text-gray-300 hover:text-gray-400",
     activeColor: "text-emerald-500",
@@ -534,8 +534,8 @@ function CollaboratorEditor({
   const [multiModes, setMultiModes] = useState<Record<number, boolean>>({});
 
   const addCollaborator = () => {
-    // relation과 relations 둘 다 설정 (하위 호환성)
-    onChange([...collaborators, { name: "", relation: "pair", relations: ["pair"] }]);
+    // relations만 사용 (relation은 deprecated)
+    onChange([...collaborators, { name: "", relations: ["pair"] }]);
   };
 
   const updateName = (index: number, name: string) => {
@@ -550,7 +550,9 @@ function CollaboratorEditor({
 
   const toggleRelation = (index: number, rel: Relation) => {
     const newCollaborators = [...collaborators];
-    const currentRelations = newCollaborators[index].relations || [newCollaborators[index].relation];
+    // relations만 사용 (relation이 있으면 마이그레이션)
+    const currentRelations = newCollaborators[index].relations || 
+      (newCollaborators[index].relation ? [newCollaborators[index].relation as Relation] : ["pair"]);
     const isMulti = multiModes[index];
     
     let newRelations: Relation[];
@@ -570,10 +572,9 @@ function CollaboratorEditor({
       newRelations = [rel];
     }
     
-    // relation과 relations 둘 다 업데이트 (하위 호환성)
+    // relations만 업데이트 (relation은 deprecated, 제거)
     newCollaborators[index] = {
-      ...newCollaborators[index],
-      relation: newRelations[0],
+      name: newCollaborators[index].name,
       relations: newRelations,
     };
     onChange(newCollaborators);
@@ -663,20 +664,26 @@ function CollaboratorEditor({
             {/* 관계 - 미니멀 아이콘 버튼 */}
             <div className="flex items-center gap-0.5 shrink-0 overflow-visible">
               {/* 멀티 선택 토글 */}
-              <button
-                type="button"
-                onClick={() => toggleMultiMode(index)}
-                tabIndex={-1}
-                title={multiModes[index] ? "단일 선택으로 전환" : "다중 선택으로 전환"}
-                className={`
-                  flex items-center justify-center transition-all p-1 rounded mr-1
-                  ${multiModes[index] ? "text-gray-700 bg-gray-100" : "text-gray-300 hover:text-gray-400"}
-                `}
-              >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
-              </button>
+              <div className="relative group/multi">
+                <button
+                  type="button"
+                  onClick={() => toggleMultiMode(index)}
+                  tabIndex={-1}
+                  className={`
+                    flex items-center justify-center transition-all p-1 rounded mr-1
+                    ${multiModes[index] ? "text-gray-700 bg-gray-100" : "text-gray-300 hover:text-gray-400"}
+                  `}
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                </button>
+                {/* 툴팁 */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/multi:opacity-100 transition-opacity pointer-events-none" style={{ zIndex: 9999 }}>
+                  {multiModes[index] ? "단일 선택으로 전환" : "다중 선택으로 전환"}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
+                </div>
+              </div>
               {RELATION_OPTIONS.map((rel) => {
                 const isSelected = relations.includes(rel);
                 const info = RELATION_INFO[rel];

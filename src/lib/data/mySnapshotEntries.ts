@@ -54,9 +54,12 @@ export interface UpsertEntryData {
 
 /**
  * 스냅샷 엔트리 일괄 upsert
+ * 새 DB 스키마: risks, collaborators 별도 컬럼
  */
 export async function upsertEntries(
   snapshotId: string,
+  workspaceId: string,
+  authorId: string,
   entries: UpsertEntryData[]
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
@@ -64,15 +67,21 @@ export async function upsertEntries(
   const upsertData: SnapshotEntryInsert[] = entries.map((entry) => ({
     id: entry.id,
     snapshot_id: snapshotId,
+    workspace_id: workspaceId,
+    author_id: authorId,
     name: entry.name,
     domain: entry.domain,
     project: entry.project,
-    module: entry.module,
-    feature: entry.feature,
-    past_week_tasks: entry.past_week_tasks || [],
-    this_week_tasks: entry.this_week_tasks || [],
-    risk: entry.risk,
-    risk_level: entry.risk_level,
+    module: entry.module || "",
+    feature: entry.feature || "",
+    past_week: {
+      tasks: entry.past_week_tasks || [],
+    },
+    this_week: {
+      tasks: entry.this_week_tasks || [],
+    },
+    risks: entry.risk || [],
+    risk_level: entry.risk_level || 0,
     collaborators: entry.collaborators || [],
   }));
 
@@ -132,7 +141,7 @@ export async function listEntriesByWeek({
     .from("snapshots")
     .select("id")
     .eq("workspace_id", workspaceId)
-    .eq("created_by", userId)
+    .eq("author_id", userId)
     .eq("week_start_date", weekStartDate);
 
   if (snapshotsError || !snapshots || snapshots.length === 0) {
