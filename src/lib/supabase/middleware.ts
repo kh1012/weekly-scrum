@@ -2,6 +2,24 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
+ * 테스트용 바이패스 키 (localhost에서만 작동)
+ * 사용법: ?bypass=scrum-dev-2024
+ */
+const DEV_BYPASS_KEY = "scrum-dev-2024";
+
+/**
+ * localhost 여부 확인
+ */
+function isLocalhost(request: NextRequest): boolean {
+  const host = request.headers.get("host") || "";
+  return (
+    host.startsWith("localhost") ||
+    host.startsWith("127.0.0.1") ||
+    host.startsWith("0.0.0.0")
+  );
+}
+
+/**
  * 미들웨어용 Supabase 클라이언트 생성
  * - 세션 갱신 처리
  * - 인증 상태 확인
@@ -11,6 +29,16 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // 테스트용 바이패스 체크 (localhost에서만 활성화)
+  const bypassKey = request.nextUrl.searchParams.get("bypass");
+  const isBypassEnabled =
+    isLocalhost(request) && bypassKey === DEV_BYPASS_KEY;
+
+  if (isBypassEnabled) {
+    console.log("[DEV] Auth bypass enabled for:", request.nextUrl.pathname);
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
