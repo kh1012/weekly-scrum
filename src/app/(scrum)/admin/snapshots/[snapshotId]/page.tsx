@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 
 interface PageProps {
   params: Promise<{ snapshotId: string }>;
@@ -8,16 +9,17 @@ interface PageProps {
 
 /**
  * 스냅샷 상세 페이지 (관리자 전용)
+ * 
+ * PGRST200 수정: created_by 관계 조인 제거
  */
 export default async function SnapshotDetailPage({ params }: PageProps) {
   const { snapshotId } = await params;
   const supabase = await createClient();
 
-  // 스냅샷 조회
+  // 스냅샷 조회 (관계 조인 없이)
   const { data: snapshot, error } = await supabase
     .from("snapshots")
-    .select(
-      `
+    .select(`
       id,
       year,
       week,
@@ -25,18 +27,24 @@ export default async function SnapshotDetailPage({ params }: PageProps) {
       week_end_date,
       created_by,
       created_at,
-      updated_at,
-      profiles:created_by (
-        display_name,
-        email
-      )
-    `
-    )
+      updated_at
+    `)
     .eq("id", snapshotId)
     .single();
 
   if (error || !snapshot) {
     notFound();
+  }
+
+  // 작성자 정보 별도 조회
+  let creator: { display_name: string; email?: string } | null = null;
+  if (snapshot.created_by) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, email")
+      .eq("user_id", snapshot.created_by)
+      .single();
+    creator = profile;
   }
 
   // 스냅샷 엔트리 조회
@@ -46,31 +54,41 @@ export default async function SnapshotDetailPage({ params }: PageProps) {
     .eq("snapshot_id", snapshotId)
     .order("created_at", { ascending: true });
 
-  const profileData = snapshot.profiles;
-  const creator = Array.isArray(profileData) ? profileData[0] : profileData;
-
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/admin/snapshots"
-          className="p-2 rounded-lg transition-colors hover:bg-gray-100"
-          style={{ color: "var(--notion-text-muted)" }}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </Link>
-        <span className="text-2xl">📋</span>
-        <div>
-          <h1 className="text-xl font-semibold" style={{ color: "var(--notion-text)" }}>
-            {snapshot.year}년 {snapshot.week} 스냅샷
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--notion-text-muted)" }}>
-            {snapshot.week_start_date} ~ {snapshot.week_end_date}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/snapshots"
+            className="p-2 rounded-lg transition-colors hover:bg-gray-100"
+            style={{ color: "var(--notion-text-muted)" }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <span className="text-2xl">📋</span>
+          <div>
+            <h1 className="text-xl font-semibold" style={{ color: "var(--notion-text)" }}>
+              {snapshot.year}년 {snapshot.week} 스냅샷
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "var(--notion-text-muted)" }}>
+              {snapshot.week_start_date} ~ {snapshot.week_end_date}
+            </p>
+          </div>
         </div>
+
+        {/* 편집 버튼 */}
+        <Link
+          href={`/admin/snapshots/${snapshotId}/edit`}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          편집하기
+        </Link>
       </div>
 
       {/* 메타 정보 */}
@@ -87,7 +105,7 @@ export default async function SnapshotDetailPage({ params }: PageProps) {
               작성자
             </div>
             <div style={{ color: "var(--notion-text)" }}>
-              {creator?.display_name || creator?.email || "알 수 없음"}
+              {creator?.display_name || creator?.email || snapshot.created_by?.slice(0, 8) || "알 수 없음"}
             </div>
           </div>
           <div>
@@ -253,4 +271,3 @@ export default async function SnapshotDetailPage({ params }: PageProps) {
     </div>
   );
 }
-

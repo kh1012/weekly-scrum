@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { WeekSelector } from "./WeekSelector";
 import { SnapshotList } from "./SnapshotList";
 import { WeekMetaPanel } from "./WeekMetaPanel";
+import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import {
   getCurrentISOWeek,
   getWeekStartDateString,
@@ -69,6 +70,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
   // 스냅샷 목록 조회
   const fetchSnapshots = useCallback(async () => {
     setIsLoading(true);
+    navigationProgress.start(); // 프로그레스바 시작
     try {
       const weekStartDate = getWeekStartDateString(selectedYear, selectedWeek);
       const response = await fetch(
@@ -84,6 +86,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
       console.error("Failed to fetch snapshots:", error);
     } finally {
       setIsLoading(false);
+      navigationProgress.done(); // 프로그레스바 완료
     }
   }, [selectedYear, selectedWeek, workspaceId, userId]);
 
@@ -93,18 +96,20 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
 
   // 주차별 편집하기
   const handleEditWeek = () => {
+    navigationProgress.start();
     router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/edit`);
   };
 
   // 새로 작성하기
   const handleNewSnapshot = () => {
+    navigationProgress.start();
     router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/new`);
   };
 
   const weekRange = formatWeekRange(selectedYear, selectedWeek);
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col">
+    <div className="h-[calc(100vh-7rem)] flex flex-col border border-gray-200 rounded-3xl overflow-hidden shadow-sm bg-white">
       {/* 헤더 영역 */}
       <div className="shrink-0 px-6 py-4 bg-white border-b border-gray-100">
         <div className="flex items-center justify-between">

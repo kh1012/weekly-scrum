@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       )
     `)
     .eq("workspace_id", workspaceId)
-    .eq("created_by", userId)
+    .eq("author_id", userId)
     .eq("week_start_date", weekStartDate)
     .order("updated_at", { ascending: false });
 

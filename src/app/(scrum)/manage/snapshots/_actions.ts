@@ -53,7 +53,7 @@ export async function updateSnapshotAndEntries(
   // 스냅샷 소유권 확인
   const { data: snapshot, error: snapshotError } = await supabase
     .from("snapshots")
-    .select("id, created_by")
+    .select("id, author_id")
     .eq("id", snapshotId)
     .eq("workspace_id", DEFAULT_WORKSPACE_ID)
     .single();
@@ -62,7 +62,7 @@ export async function updateSnapshotAndEntries(
     return { success: false, error: "스냅샷을 찾을 수 없습니다." };
   }
 
-  if (snapshot.created_by !== user.id) {
+  if (snapshot.author_id !== user.id) {
     return { success: false, error: "수정 권한이 없습니다." };
   }
 
@@ -160,7 +160,8 @@ export async function createSnapshotAndEntries(
       week_end_date: weekEndDate,
       year: year,
       week: weekLabel,
-      created_by: user.id,
+      author_id: user.id,
+      title: payload.title || null,
     });
 
   if (snapshotError) {

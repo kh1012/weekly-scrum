@@ -130,11 +130,8 @@ export function PlainTextPreview({ snapshot, onCopy, focusedSection }: PlainText
             ref={(el) => { sectionRefs.current["meta"] = el; }}
             className={`rounded-lg p-3 ${getHighlightClass("meta")}`}
           >
-            <div className="text-xs font-mono text-gray-500 mb-2">
+            <div className="text-xs font-mono text-gray-500">
               [{snapshot.domain} / {snapshot.project} / {snapshot.module} / {snapshot.feature}]
-            </div>
-            <div className="text-xs font-mono text-gray-700">
-              * Name: {snapshot.name || "(이름 없음)"}
             </div>
           </div>
 

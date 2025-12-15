@@ -73,33 +73,36 @@ export interface Database {
         Row: {
           id: string;
           workspace_id: string;
+          author_id: string | null;
           week_start_date: string;
-          week_end_date: string;
-          year: number;
-          week: string;
-          created_by: string | null;
+          week_end_date: string | null;
+          year: number | null;
+          week: string | null;
+          title: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           workspace_id: string;
+          author_id?: string | null;
           week_start_date: string;
-          week_end_date: string;
-          year: number;
-          week: string;
-          created_by?: string | null;
+          week_end_date?: string | null;
+          year?: number | null;
+          week?: string | null;
+          title?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           workspace_id?: string;
+          author_id?: string | null;
           week_start_date?: string;
-          week_end_date?: string;
-          year?: number;
-          week?: string;
-          created_by?: string | null;
+          week_end_date?: string | null;
+          year?: number | null;
+          week?: string | null;
+          title?: string | null;
           created_at?: string;
           updated_at?: string;
         };

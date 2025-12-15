@@ -1,0 +1,185 @@
+"use client";
+
+import { useState, useMemo, useCallback } from "react";
+import type { PlansGanttViewProps, FlatRow } from "./types";
+import { useGanttLayout, TREE_WIDTH } from "./useGanttLayout";
+import { buildTreeFromPlans, flattenTree, getAllNodeIds } from "./buildTree";
+import { TreePanel } from "./TreePanel";
+import { TimelineGrid } from "./TimelineGrid";
+
+/**
+ * Plans 간트 뷰 컴포넌트
+ * - mode='readonly': 조회만 가능 (/plans)
+ * - mode='admin': CRUD + 간트 상호작용 (/admin/plans)
+ */
+export function PlansGanttView({
+  mode,
+  rangeStart,
+  rangeEnd,
+  plans,
+  onCreateDraftAtCell,
+  onResizePlan,
+  onOpenPlan,
+}: PlansGanttViewProps) {
+  // Build tree from plans
+  const tree = useMemo(() => buildTreeFromPlans(plans), [plans]);
+
+  // Expanded state (기본: 모두 확장)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
+    return new Set(getAllNodeIds(tree));
+  });
+
+  // Flatten tree for rendering
+  const flatRows = useMemo(
+    () => flattenTree(tree, expandedIds),
+    [tree, expandedIds]
+  );
+
+  // Gantt layout
+  const layout = useGanttLayout(rangeStart, rangeEnd);
+
+  // Selected plan
+  const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
+
+  // Toggle node expand
+  const handleToggle = useCallback((nodeId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Select plan
+  const handleSelectPlan = useCallback(
+    (planId: string) => {
+      setSelectedPlanId(planId);
+      onOpenPlan?.(planId);
+    },
+    [onOpenPlan]
+  );
+
+  // Cell click (create draft plan)
+  const handleCellClick = useCallback(
+    async (row: FlatRow, date: Date) => {
+      if (!onCreateDraftAtCell || !row.context) return;
+      await onCreateDraftAtCell({
+        ...row.context,
+        date,
+      });
+    },
+    [onCreateDraftAtCell]
+  );
+
+  // Resize plan
+  const handleResizePlan = useCallback(
+    async (planId: string, startDate: string, endDate: string) => {
+      if (!onResizePlan) return;
+      await onResizePlan(planId, startDate, endDate);
+    },
+    [onResizePlan]
+  );
+
+  const isAdmin = mode === "admin";
+
+  return (
+    <div
+      className="flex flex-col rounded-xl overflow-hidden border"
+      style={{
+        height: "calc(100vh - 200px)",
+        minHeight: 400,
+        background: "var(--notion-bg)",
+        borderColor: "var(--notion-border)",
+      }}
+    >
+      {/* Summary Bar */}
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{
+          background: "var(--notion-bg-secondary)",
+          borderColor: "var(--notion-border)",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+            간트 차트
+          </span>
+          <span
+            className="text-xs px-2 py-0.5 rounded-full"
+            style={{
+              background: isAdmin ? "rgba(247, 109, 87, 0.1)" : "rgba(107, 114, 128, 0.1)",
+              color: isAdmin ? "#F76D57" : "#6b7280",
+            }}
+          >
+            {isAdmin ? "관리자" : "조회 전용"}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4 text-xs" style={{ color: "var(--notion-text-muted)" }}>
+          <span>
+            📅 {rangeStart.toLocaleDateString("ko-KR", { month: "long", day: "numeric" })} ~{" "}
+            {rangeEnd.toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
+          </span>
+          <span>📋 {plans.length}개 계획</span>
+          {isAdmin && (
+            <span className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
+              💡 셀 클릭으로 빠른 생성
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Tree Panel (Sticky Left) */}
+        <TreePanel
+          rows={flatRows}
+          expandedIds={expandedIds}
+          onToggle={handleToggle}
+        />
+
+        {/* Timeline Grid */}
+        <TimelineGrid
+          rows={flatRows}
+          days={layout.days}
+          months={layout.months}
+          totalWidth={layout.totalWidth}
+          mode={mode}
+          rangeStart={rangeStart}
+          calculateBarLayout={layout.calculateBarLayout}
+          selectedPlanId={selectedPlanId}
+          onSelectPlan={handleSelectPlan}
+          onCellClick={isAdmin ? handleCellClick : undefined}
+          onResizePlan={isAdmin ? handleResizePlan : undefined}
+        />
+      </div>
+
+      {/* Empty State */}
+      {plans.length === 0 && (
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          style={{ left: TREE_WIDTH }}
+        >
+          <div className="text-center">
+            <p className="text-lg" style={{ color: "var(--notion-text-muted)" }}>
+              📆
+            </p>
+            <p className="mt-2 text-sm" style={{ color: "var(--notion-text-muted)" }}>
+              표시할 계획이 없습니다
+            </p>
+            {isAdmin && (
+              <p className="mt-1 text-xs" style={{ color: "var(--notion-text-muted)" }}>
+                셀을 클릭하여 새 계획을 생성하세요
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

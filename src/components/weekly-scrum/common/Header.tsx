@@ -26,15 +26,21 @@ export function Header({ isSidebarOpen = true, onSidebarToggle, role }: HeaderPr
   // 개인 대시보드 페이지인지 확인
   const isMyDashboard = pathname === "/my" || pathname === "/my/";
   // 스냅샷 관리 페이지인지 확인
-  const isManagePage = pathname === "/manage" || pathname === "/manage/";
+  const isManagePage = pathname === "/manage" || pathname === "/manage/" || pathname.startsWith("/manage/snapshots");
   // 캘린더 페이지인지 확인 (주차 선택기만 숨김, 검색/필터는 표시)
   const isCalendarPage = pathname === "/calendar" || pathname === "/calendar/";
-  // GNB 컴포넌트 완전 숨김 페이지 (manage만)
-  const hideAllControls = isManagePage;
+  // Admin Dashboard 페이지인지 확인 (최소 모드: 뒤로가기 + 프로필만)
+  const isAdminDashboard = pathname === "/admin" || pathname === "/admin/";
+  // Admin 하위 페이지인지 확인 (All Snapshots, All Plans 등 - GNB 전체 기능 사용)
+  const isAdminSubPage = pathname.startsWith("/admin/") && !isAdminDashboard;
+  // 최소 GNB 모드 (사이드바 토글 + 프로필만 표시)
+  const isMinimalGnb = isMyDashboard || isManagePage || isAdminDashboard;
+  // GNB 컴포넌트 완전 숨김 페이지 (manage, admin dashboard, my dashboard)
+  const hideAllControls = isMinimalGnb;
   // 주차 선택기 숨김 페이지 (calendar는 자체 월 선택기 사용)
-  const hideWeekSelector = isManagePage || isCalendarPage;
+  const hideWeekSelector = isMinimalGnb || isCalendarPage;
   // 필터 숨김 페이지
-  const hideFilters = isMyDashboard || isManagePage;
+  const hideFilters = isMinimalGnb;
 
   // 외부 클릭 시 메뉴/필터 팝오버 닫기
   useEffect(() => {

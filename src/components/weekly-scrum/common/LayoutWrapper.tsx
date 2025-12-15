@@ -19,7 +19,16 @@ const FULL_WIDTH_PAGES = [
   "/work-map",
   "/snapshots",
   "/manage",
+  "/manage/snapshots",
   "/calendar",
+  "/my",
+  "/admin",
+];
+
+// 동적 경로 패턴 (하위 경로 모두 포함)
+const FULL_WIDTH_DYNAMIC_PATTERNS = [
+  "/manage/snapshots/",
+  "/admin/",
 ];
 
 // padding 없는 페이지 경로
@@ -102,9 +111,9 @@ export function MainContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   // 전체 너비를 사용하는 페이지 확인
-  const useFullWidth = FULL_WIDTH_PAGES.some(
-    (p) => pathname === p || pathname === p + "/"
-  );
+  const useFullWidth =
+    FULL_WIDTH_PAGES.some((p) => pathname === p || pathname === p + "/") ||
+    FULL_WIDTH_DYNAMIC_PATTERNS.some((pattern) => pathname.startsWith(pattern));
 
   // padding 없는 페이지 확인
   const useNoPadding = NO_PADDING_PAGES.some(

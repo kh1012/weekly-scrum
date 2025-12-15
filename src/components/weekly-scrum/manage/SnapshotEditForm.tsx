@@ -42,6 +42,8 @@ interface SnapshotEditFormProps {
   singleColumn?: boolean;
   /** 섹션 포커스 콜백 */
   onFocusSection?: (section: FormSection | null) => void;
+  /** Name 필드 숨김 (로그인 기반에서는 profile.display_name 사용) */
+  hideName?: boolean;
 }
 
 // 공통 입력 스타일 (일반 모드)
@@ -603,7 +605,7 @@ function CollaboratorEditor({
   };
 
   return (
-    <div className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden ${compact ? "rounded-lg" : "rounded-xl"}`}>
+    <div className={`divide-y divide-gray-100 border border-gray-200 ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {collaborators.map((collab, index) => {
         const relations = collab.relations || [];
         
@@ -732,7 +734,7 @@ function CollaboratorEditor({
   );
 }
 
-export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleColumn = false, onFocusSection }: SnapshotEditFormProps) {
+export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleColumn = false, onFocusSection, hideName = false }: SnapshotEditFormProps) {
   const moduleOptions = snapshot.project && MODULE_OPTIONS[snapshot.project]
     ? MODULE_OPTIONS[snapshot.project]
     : ALL_MODULE_OPTIONS;
@@ -791,12 +793,14 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
             <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>메타 정보</h3>
           </div>
           <div className={`grid ${gridCols} ${gridGap}`}>
-            <MetaField label="Name" value={snapshot.name} options={NAME_OPTIONS} onChange={(v) => handleMetaChange("name", v)} placeholder="작성자 이름" tabIndex={1} compact={compact} />
-            <MetaField label="Domain" value={snapshot.domain} options={DOMAIN_OPTIONS} onChange={(v) => handleMetaChange("domain", v)} tabIndex={2} compact={compact} />
-            <MetaField label="Project" value={snapshot.project} options={PROJECT_OPTIONS} onChange={(v) => handleMetaChange("project", v)} tabIndex={3} compact={compact} />
-            <MetaField label="Module" value={snapshot.module} options={moduleOptions} onChange={(v) => handleMetaChange("module", v)} tabIndex={4} compact={compact} />
+            {!hideName && (
+              <MetaField label="Name" value={snapshot.name} options={NAME_OPTIONS} onChange={(v) => handleMetaChange("name", v)} placeholder="작성자 이름" tabIndex={1} compact={compact} />
+            )}
+            <MetaField label="Domain" value={snapshot.domain} options={DOMAIN_OPTIONS} onChange={(v) => handleMetaChange("domain", v)} tabIndex={hideName ? 1 : 2} compact={compact} />
+            <MetaField label="Project" value={snapshot.project} options={PROJECT_OPTIONS} onChange={(v) => handleMetaChange("project", v)} tabIndex={hideName ? 2 : 3} compact={compact} />
+            <MetaField label="Module" value={snapshot.module} options={moduleOptions} onChange={(v) => handleMetaChange("module", v)} tabIndex={hideName ? 3 : 4} compact={compact} />
             <div className={singleColumn ? "" : "col-span-2"}>
-              <MetaField label="Feature" value={snapshot.feature} options={FEATURE_OPTIONS} onChange={(v) => handleMetaChange("feature", v)} placeholder="기능명 (예: Rich-note)" tabIndex={5} compact={compact} />
+              <MetaField label="Feature" value={snapshot.feature} options={FEATURE_OPTIONS} onChange={(v) => handleMetaChange("feature", v)} placeholder="기능명 (예: Rich-note)" tabIndex={hideName ? 4 : 5} compact={compact} />
             </div>
           </div>
         </section>

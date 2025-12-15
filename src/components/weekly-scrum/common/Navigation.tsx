@@ -72,9 +72,16 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
     label: "개인공간",
     items: [
       {
-        key: "manage",
-        label: "Manage",
-        href: "/manage",
+        key: "my-dashboard",
+        label: "Dashboard",
+        href: "/my",
+        emoji: "🏠",
+        description: "개인 대시보드",
+      },
+      {
+        key: "my-snapshots",
+        label: "스냅샷 관리",
+        href: "/manage/snapshots",
         emoji: "✏️",
         description: "내 스냅샷 관리",
       },

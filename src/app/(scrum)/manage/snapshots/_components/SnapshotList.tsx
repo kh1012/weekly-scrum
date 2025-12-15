@@ -19,11 +19,14 @@ export function SnapshotList({
   isLoading,
   viewMode,
 }: SnapshotListProps) {
-  if (isLoading) {
-    return <LoadingSkeleton viewMode={viewMode} />;
+  // 로딩 중일 때는 기존 데이터를 유지하면서 보여줌 (프로그레스바가 상단에서 동작)
+  // 데이터가 없고 로딩 중이 아닐 때만 EmptyState 표시
+  if (!isLoading && snapshots.length === 0) {
+    return <EmptyState />;
   }
 
-  if (snapshots.length === 0) {
+  // 로딩 중이고 기존 데이터가 없으면 빈 상태 유지 (프로그레스바가 동작)
+  if (isLoading && snapshots.length === 0) {
     return <EmptyState />;
   }
 

@@ -11,6 +11,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { formatWeekRange } from "@/lib/date/isoWeek";
+import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { SnapshotCardList, SnapshotCardListRef } from "@/components/weekly-scrum/manage/SnapshotCardList";
 import { SnapshotEditForm } from "@/components/weekly-scrum/manage/SnapshotEditForm";
 import { PlainTextPreview } from "@/components/weekly-scrum/manage/PlainTextPreview";
@@ -309,7 +310,10 @@ function EditSnapshotsViewInner({
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.push("/manage/snapshots")}
+            onClick={() => {
+              navigationProgress.start();
+              router.push("/manage/snapshots");
+            }}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -434,6 +438,7 @@ function EditSnapshotsViewInner({
               onFocusSection={setFocusedSection}
               compact
               singleColumn
+              hideName
             />
           ) : (
             <EmptyState onAddEmpty={handleAddEmpty} />
