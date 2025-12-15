@@ -2,7 +2,7 @@
 
 /**
  * 개인 공간 대시보드 - Trendy Airbnb 스타일
- * 
+ *
  * 주요 기능:
  * - 스냅샷 관리 카드
  * - 개인 업무 통계 요약
@@ -179,13 +179,19 @@ function GlassStatCard({
   return (
     <div className="group relative p-5 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-lg shadow-gray-200/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden">
       {/* 배경 그라데이션 원 */}
-      <div className={`absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-20 group-hover:opacity-30 group-hover:scale-125 transition-all duration-500`} />
-      
+      <div
+        className={`absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-20 group-hover:opacity-30 group-hover:scale-125 transition-all duration-500`}
+      />
+
       <div className="relative">
         <div className="flex items-baseline gap-2 mb-1">
           <span className="text-3xl font-black text-gray-900">{value}</span>
           {trend && (
-            <span className={`text-xs font-semibold ${trendUp ? "text-emerald-500" : "text-red-500"}`}>
+            <span
+              className={`text-xs font-semibold ${
+                trendUp ? "text-emerald-500" : "text-red-500"
+              }`}
+            >
               {trend}
             </span>
           )}
@@ -222,11 +228,19 @@ function HeroCard({
       className="group relative w-full p-8 rounded-[2rem] overflow-hidden text-left transition-all duration-500 hover:shadow-2xl hover:scale-[1.01]"
     >
       {/* 배경 그라데이션 */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientVia} ${gradientTo}`} />
-      
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientVia} ${gradientTo}`}
+      />
+
       {/* 노이즈 텍스처 */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" /%3E%3C/filter%3E%3Crect width="100%" height="100%" filter="url(%23noise)" /%3E%3C/svg%3E")' }} />
-      
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            'url("data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" /%3E%3C/filter%3E%3Crect width="100%" height="100%" filter="url(%23noise)" /%3E%3C/svg%3E")',
+        }}
+      />
+
       {/* 움직이는 그라데이션 원 */}
       <div className="absolute -bottom-20 -right-20 w-60 h-60 rounded-full bg-white/10 group-hover:scale-150 transition-transform duration-700" />
       <div className="absolute top-10 right-40 w-32 h-32 rounded-full bg-white/5 group-hover:translate-x-10 transition-transform duration-500" />
@@ -237,11 +251,11 @@ function HeroCard({
             <span>{icon}</span>
             <span>{subtitle}</span>
           </div>
-          
+
           <h2 className="text-3xl font-black text-white mb-3 group-hover:translate-x-2 transition-transform duration-300">
             {title}
           </h2>
-          
+
           <p className="text-white/70 text-sm max-w-md leading-relaxed">
             {description}
           </p>
@@ -249,8 +263,18 @@ function HeroCard({
 
         {/* 화살표 */}
         <div className="shrink-0 w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 group-hover:scale-110 transition-all duration-300">
-          <svg className="w-6 h-6 text-white group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-6 h-6 text-white group-hover:translate-x-1 transition-transform"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </div>
       </div>
@@ -290,12 +314,16 @@ function InteractiveCard({
     >
       {/* 호버 그라데이션 배경 */}
       {!disabled && (
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+        />
       )}
 
       <div className="relative flex items-start gap-4">
         {/* 아이콘 */}
-        <div className={`shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br ${gradientFrom} ${gradientTo} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+        <div
+          className={`shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br ${gradientFrom} ${gradientTo} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}
+        >
           {icon}
         </div>
 
@@ -303,9 +331,13 @@ function InteractiveCard({
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-lg font-bold text-gray-900">{title}</h3>
             {badge && (
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                disabled ? "bg-gray-100 text-gray-400" : "bg-emerald-100 text-emerald-600"
-              }`}>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                  disabled
+                    ? "bg-gray-100 text-gray-400"
+                    : "bg-emerald-100 text-emerald-600"
+                }`}
+              >
                 {badge}
               </span>
             )}
@@ -316,8 +348,18 @@ function InteractiveCard({
         {/* 화살표 */}
         {!disabled && (
           <div className="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-            <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-5 h-5 text-gray-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </div>
         )}

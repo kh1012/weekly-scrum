@@ -17,22 +17,34 @@ interface YearlyHeatmapProps {
   memberRangeSummary: MemberFocusRangeSummary;
 }
 
-// Airbnb 스타일 색상 팔레트 (팀 전체 - Teal)
+// Airbnb 스타일 색상 팔레트 (팀 전체 - Teal) - 10단계
 const TEAM_COLORS = [
   "#f7f7f7", // 0: 없음 (밝은 회색)
-  "#d1fae5", // 1 (emerald-100)
-  "#6ee7b7", // 2 (emerald-300)
-  "#10b981", // 3 (emerald-500)
-  "#047857", // 4 (emerald-700)
+  "#ecfdf5", // 1 (emerald-50)
+  "#d1fae5", // 2 (emerald-100)
+  "#a7f3d0", // 3 (emerald-200)
+  "#6ee7b7", // 4 (emerald-300)
+  "#34d399", // 5 (emerald-400)
+  "#10b981", // 6 (emerald-500)
+  "#059669", // 7 (emerald-600)
+  "#047857", // 8 (emerald-700)
+  "#065f46", // 9 (emerald-800)
+  "#064e3b", // 10 (emerald-900)
 ];
 
-// Airbnb 스타일 색상 팔레트 (멤버별 - Rose)
+// Airbnb 스타일 색상 팔레트 (멤버별 - Violet/Purple) - 10단계
 const MEMBER_COLORS = [
   "#f7f7f7", // 0: 없음
-  "#fce7f3", // 1 (pink-100)
-  "#f9a8d4", // 2 (pink-300)
-  "#ec4899", // 3 (pink-500)
-  "#be185d", // 4 (pink-700)
+  "#f5f3ff", // 1 (violet-50)
+  "#ede9fe", // 2 (violet-100)
+  "#ddd6fe", // 3 (violet-200)
+  "#c4b5fd", // 4 (violet-300)
+  "#a78bfa", // 5 (violet-400)
+  "#8b5cf6", // 6 (violet-500)
+  "#7c3aed", // 7 (violet-600)
+  "#6d28d9", // 8 (violet-700)
+  "#5b21b6", // 9 (violet-800)
+  "#4c1d95", // 10 (violet-900)
 ];
 
 // 월 레이블
@@ -127,22 +139,22 @@ function getISOWeekKey(weekStart: string): string {
 }
 
 /**
- * 레벨 계산 (0-4)
+ * 레벨 계산 (0-10) - 10단계 스케일
  */
 function getLevel(value: number, maxValue: number): number {
   if (value === 0 || maxValue === 0) return 0;
   const ratio = value / maxValue;
-  if (ratio <= 0.25) return 1;
-  if (ratio <= 0.5) return 2;
-  if (ratio <= 0.75) return 3;
-  return 4;
+  // 10단계: 10%, 20%, 30%, ..., 100%
+  const level = Math.ceil(ratio * 10);
+  return Math.min(level, 10);
 }
 
 /**
- * 완료된 작업 수 계산
+ * 스냅샷 엔트리 개수 계산 (하나의 RawSnapshot = 1개 엔트리)
+ * RawSnapshot은 snapshot_entry 단위로 생성되므로 각각 1개로 카운트
  */
-function getDoneTaskCount(snapshot: RawSnapshot): number {
-  return snapshot.pastWeekTasks.filter((t) => t.progress >= 100).length;
+function getEntryCount(): number {
+  return 1; // 각 RawSnapshot은 1개의 entry를 나타냄
 }
 
 /**
@@ -160,7 +172,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
   const monthIndices = useMemo(() => getMonthStartIndices(weeks), [weeks]);
   const currentWeekKey = useMemo(() => weeks[weeks.length - 1].key, [weeks]);
 
-  // 팀 전체 데이터 집계 (weekStart 기반 ISO 주차 매칭)
+  // 팀 전체 데이터 집계 (weekStart 기반 ISO 주차 매칭) - 스냅샷 엔트리 개수 기준
   const teamData = useMemo(() => {
     const weekData: Map<string, number> = new Map();
     
@@ -168,7 +180,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
       // weekStart를 기반으로 ISO 주차 키 계산
       const key = getISOWeekKey(snapshot.weekStart);
       const current = weekData.get(key) || 0;
-      weekData.set(key, current + getDoneTaskCount(snapshot));
+      weekData.set(key, current + getEntryCount()); // 스냅샷 엔트리 1개
     });
     
     let maxValue = 0;
@@ -177,14 +189,14 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
     return { weekData, maxValue };
   }, [rawSnapshots]);
 
-  // 멤버별 데이터 집계 (weekStart 기반 ISO 주차 매칭)
+  // 멤버별 데이터 집계 (weekStart 기반 ISO 주차 매칭) - 스냅샷 엔트리 개수 기준
   const memberData = useMemo(() => {
     const data: Map<string, { weekData: Map<string, number>; maxValue: number; total: number }> = new Map();
     
     rawSnapshots.forEach((snapshot) => {
       // weekStart를 기반으로 ISO 주차 키 계산
       const key = getISOWeekKey(snapshot.weekStart);
-      const doneCount = getDoneTaskCount(snapshot);
+      const entryCount = getEntryCount(); // 스냅샷 엔트리 1개
       
       if (!data.has(snapshot.memberName)) {
         data.set(snapshot.memberName, { weekData: new Map(), maxValue: 0, total: 0 });
@@ -192,9 +204,9 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
       
       const memberInfo = data.get(snapshot.memberName)!;
       const current = memberInfo.weekData.get(key) || 0;
-      const newValue = current + doneCount;
+      const newValue = current + entryCount;
       memberInfo.weekData.set(key, newValue);
-      memberInfo.total += doneCount;
+      memberInfo.total += entryCount;
       if (newValue > memberInfo.maxValue) memberInfo.maxValue = newValue;
     });
     
@@ -243,13 +255,13 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-900">최근 52주 기여도</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Past Week Task 완료 건수 기준으로 집계됩니다</p>
+          <p className="text-sm text-gray-500 mt-0.5">주차별 스냅샷 엔트리 개수 기준으로 집계됩니다</p>
         </div>
         <div className="flex items-center gap-5 text-sm">
           <div className="text-right">
             <span className="text-2xl font-bold text-gray-900">{stats.totalTasks}</span>
             <span className="text-gray-400 ml-1">건</span>
-            <p className="text-[10px] text-gray-400 mt-0.5">총 완료</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">총 엔트리</p>
           </div>
           <div className="w-px h-10 bg-gray-100" />
           <div className="text-right">
@@ -271,12 +283,16 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
             </div>
             <h3 className="text-sm font-bold text-gray-900">팀 전체</h3>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-            <span>Less</span>
-            {TEAM_COLORS.map((color, i) => (
-              <div key={i} className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
+          <div className="flex items-center gap-0.5 text-[10px] text-gray-400">
+            <span className="mr-1">Less</span>
+            {TEAM_COLORS.slice(0, 6).map((color, i) => (
+              <div key={i} className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
             ))}
-            <span>More</span>
+            <span className="mx-0.5">···</span>
+            {TEAM_COLORS.slice(-2).map((color, i) => (
+              <div key={`last-${i}`} className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
+            ))}
+            <span className="ml-1">More</span>
           </div>
         </div>
 
@@ -341,7 +357,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl z-50 whitespace-nowrap">
                             <div className="font-medium">{week.year}년 {week.week}주차</div>
                             <div className="text-gray-300 text-[10px]">{formatDate(week.startDate)} ~ {formatDate(week.endDate)}</div>
-                            <div className="text-emerald-300 font-semibold mt-0.5">{value}건 완료</div>
+                            <div className="text-emerald-300 font-semibold mt-0.5">{value}개 엔트리</div>
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
                           </div>
                         )}
@@ -359,7 +375,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center shadow">
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 8h16c0-5.33-2.67-8-8-8z" />
               </svg>
@@ -367,12 +383,16 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
             <h3 className="text-sm font-bold text-gray-900">멤버별</h3>
             <span className="text-xs text-gray-400 ml-1">· {members.length}명</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-            <span>Less</span>
-            {MEMBER_COLORS.map((color, i) => (
-              <div key={i} className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
+          <div className="flex items-center gap-0.5 text-[10px] text-gray-400">
+            <span className="mr-1">Less</span>
+            {MEMBER_COLORS.slice(0, 6).map((color, i) => (
+              <div key={i} className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
             ))}
-            <span>More</span>
+            <span className="mx-0.5">···</span>
+            {MEMBER_COLORS.slice(-2).map((color, i) => (
+              <div key={`last-${i}`} className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
+            ))}
+            <span className="ml-1">More</span>
           </div>
         </div>
 
@@ -415,7 +435,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
                               <div
                                 className={`
                                   aspect-square rounded-[2px] transition-all duration-150
-                                  ${isCurrentWeek ? "ring-1 ring-pink-400" : ""}
+                                  ${isCurrentWeek ? "ring-1 ring-violet-400" : ""}
                                   ${isHovered ? "scale-[2] z-10 shadow-md" : "hover:scale-125"}
                                 `}
                                 style={{ backgroundColor: MEMBER_COLORS[level] }}
@@ -424,7 +444,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
                               {isHovered && (
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-lg shadow-xl z-50 whitespace-nowrap">
                                   <div className="font-medium">{week.week}주차</div>
-                                  <div className="text-pink-300 font-semibold">{value}건</div>
+                                  <div className="text-violet-300 font-semibold">{value}개 엔트리</div>
                                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
                                 </div>
                               )}
@@ -447,18 +467,18 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
         <StatCard
           label="최고 주간"
           value={stats.maxWeekTasks}
-          unit="건"
+          unit="개"
           emoji="🏆"
           color="amber"
-          tooltip="52주 중 가장 많은 작업을 완료한 주"
+          tooltip="52주 중 가장 많은 엔트리가 있는 주"
         />
         <StatCard
           label="주간 평균"
           value={Math.round(stats.totalTasks / Math.max(stats.activeWeeks, 1))}
-          unit="건"
+          unit="개"
           emoji="📊"
           color="blue"
-          tooltip="활동 주간의 평균 완료 작업 수"
+          tooltip="활동 주간의 평균 엔트리 수"
         />
         <StatCard
           label="활동 비율"
@@ -471,10 +491,10 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
         <StatCard
           label="인당 평균"
           value={Math.round(stats.totalTasks / Math.max(stats.memberCount, 1))}
-          unit="건"
+          unit="개"
           emoji="👤"
           color="purple"
-          tooltip="참여 멤버 1인당 평균 완료 작업"
+          tooltip="참여 멤버 1인당 평균 엔트리 수"
         />
       </div>
     </div>

@@ -51,9 +51,9 @@ export function UserProfile() {
         return;
       }
 
-      // 작성한 스냅샷 개수 가져오기 (author_id로 매칭)
+      // 작성한 스냅샷 개수 가져오기 (snapshots 테이블에서 author_id로 매칭)
       const { count } = await supabase
-        .from("snapshot_entries")
+        .from("snapshots")
         .select("*", { count: "exact", head: true })
         .eq("author_id", user.id);
 
