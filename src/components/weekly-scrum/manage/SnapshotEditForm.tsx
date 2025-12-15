@@ -482,40 +482,40 @@ function RiskEditor({
   );
 }
 
-// Relation 아이콘 및 설명
+// Relation 아이콘 및 설명 - 모던 미니멀 스타일
 const RELATION_INFO: Record<Relation, { icon: React.ReactNode; label: string; description: string; color: string; activeColor: string }> = {
   pair: {
     icon: (
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
       </svg>
     ),
     label: "페어",
     description: "실시간 공동 협업 (pair partner)",
-    color: "bg-gray-100 text-gray-500 hover:bg-gray-200",
-    activeColor: "bg-purple-600 text-white",
+    color: "text-gray-300 hover:text-gray-400",
+    activeColor: "text-purple-500",
   },
   pre: {
     icon: (
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15M9 12l3 3m0 0l3-3m-3 3V2.25" />
       </svg>
     ),
     label: "사전",
     description: "앞단 협업자 - 내 작업에 필요한 선행 입력 제공",
-    color: "bg-gray-100 text-gray-500 hover:bg-gray-200",
-    activeColor: "bg-blue-600 text-white",
+    color: "text-gray-300 hover:text-gray-400",
+    activeColor: "text-blue-500",
   },
   post: {
     icon: (
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3v11.25" />
       </svg>
     ),
     label: "사후",
     description: "후단 협업자 - 내 결과물을 받아 다음 단계 수행",
-    color: "bg-gray-100 text-gray-500 hover:bg-gray-200",
-    activeColor: "bg-emerald-600 text-white",
+    color: "text-gray-300 hover:text-gray-400",
+    activeColor: "text-emerald-500",
   },
 };
 
@@ -653,8 +653,8 @@ function CollaboratorEditor({
               )}
             </div>
 
-            {/* 관계 - 아이콘 + 툴팁 + 체크박스 형태 */}
-            <div className="flex items-center gap-1 shrink-0">
+            {/* 관계 - 미니멀 아이콘 버튼 */}
+            <div className="flex items-center gap-0.5 shrink-0">
               {RELATION_OPTIONS.map((rel) => {
                 const isSelected = relations.includes(rel);
                 const info = RELATION_INFO[rel];
@@ -665,8 +665,7 @@ function CollaboratorEditor({
                       onClick={() => toggleRelation(index, rel)}
                       tabIndex={-1}
                       className={`
-                        flex items-center justify-center gap-1 rounded-lg transition-all
-                        ${compact ? "w-8 h-8" : "w-10 h-10"}
+                        flex items-center justify-center transition-all p-1 rounded
                         ${isSelected ? info.activeColor : info.color}
                       `}
                       aria-label={info.label}
@@ -674,10 +673,9 @@ function CollaboratorEditor({
                       {info.icon}
                     </button>
                     {/* 툴팁 */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50">
-                      <div className="font-semibold">{info.label}</div>
-                      <div className="text-gray-300 text-[10px]">{info.description}</div>
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50">
+                      {info.label}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
                     </div>
                   </div>
                 );
