@@ -390,7 +390,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
                 </div>
 
                 {/* 히트맵 카드 - 흰색 배경 */}
-                <div className="flex-1 bg-white rounded-lg border border-gray-100 p-2">
+                <div className="flex-1 bg-white rounded-lg border border-gray-100 p-2 flex items-center">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                   {[0, 1, 2, 3].map((quarter) => {
                     const startIdx = quarter * 13;
