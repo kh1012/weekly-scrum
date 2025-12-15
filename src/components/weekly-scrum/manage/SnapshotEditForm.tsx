@@ -801,9 +801,35 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
 
         {/* Past Week */}
         <section className={sectionSpace}>
-          <div className="flex items-center gap-2">
-            <div className={`w-1 ${barHeight} rounded-full bg-blue-500`} />
-            <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>Past Week</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`w-1 ${barHeight} rounded-full bg-blue-500`} />
+              <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>Past Week</h3>
+            </div>
+            
+            {/* This Week → Past Week 덮어쓰기 버튼 */}
+            {snapshot.thisWeek.tasks.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  // This Week tasks를 Past Week tasks 형태로 변환 (progress 0%)
+                  const newTasks = snapshot.thisWeek.tasks.map((title) => ({
+                    title,
+                    progress: 0,
+                  }));
+                  handlePastWeekChange("tasks", newTasks);
+                }}
+                className={`flex items-center gap-1.5 font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors ${
+                  compact ? "px-2 py-1 text-[10px] rounded-md" : "px-3 py-1.5 text-xs rounded-lg"
+                }`}
+                title="This Week 작업을 Past Week로 복사합니다"
+              >
+                <svg className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                This Week에서 가져오기
+              </button>
+            )}
           </div>
 
           <div className={innerSpace}>
