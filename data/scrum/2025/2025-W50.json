@@ -1,0 +1,799 @@
+{
+  "year": 2025,
+  "week": "W50",
+  "weekStart": "2025-12-08",
+  "weekEnd": "2025-12-14",
+  "schemaVersion": 3,
+  "items": [
+    {
+      "name": "변창언",
+      "domain": "Frontend",
+      "project": "M-Connector",
+      "module": "DB Manager",
+      "feature": "DB 테이블",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "1차 기획-DB 7종 개발, 검증",
+            "progress": 100
+          },
+          {
+            "title": "DB 7종 완료, 5종 검증",
+            "progress": 72
+          }
+        ],
+        "risk": [
+          "제품에 데이터 생성이 필요하나 사용 방법 미숙으로 지연 발생, 인앱 기술지원 GPT 필요"
+        ],
+        "riskLevel": 1,
+        "collaborators": [
+          {
+            "name": "한내경",
+            "relation": "pre"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "디자인 완료, 2차 기획-Section 검토"
+        ]
+      }
+    },
+    {
+      "name": "윤재웅",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "module": "Spreadsheet",
+      "feature": "Editor-Rich Note 상세기획",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "Rich Note 상세기획 완료 및 개발/디자인 전달",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "Top Bar 상세기획 완료 및 개발/디자인 전달"
+        ]
+      }
+    },
+    {
+      "name": "손영민",
+      "domain": "Frontend",
+      "project": "M-Desk",
+      "module": "공지",
+      "feature": "오류, 공지 처리",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "데스크 Notice, Popup 기능 추가 완료",
+            "progress": 100
+          },
+          {
+            "title": "데스크 고객 지원(로그인 실패 문제) 검토 및 1차 대응 완료",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "김용수",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "데스크 어카운트 혼합 적용 추가"
+        ]
+      }
+    },
+    {
+      "name": "손영민",
+      "domain": "Frontend",
+      "project": "MOTIIV",
+      "module": "Discovery",
+      "feature": "아티클 정리 및 기타 업무들",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "신입 온보딩 및 프론트 규칙 협의를 위한 문서 정리 완료",
+            "progress": 100
+          },
+          {
+            "title": "Article 관련 일부 개선 사항 진행 완료",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "다음 스프린트 정리 및 기획 회의 때 나왔던 일부 항목 개선"
+        ]
+      }
+    },
+    {
+      "name": "김정빈",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "module": "Tracking",
+      "feature": "비동기 메시지 큐 안정화",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "kafka 처리 실패 시 재시도 로직 및 실패 토픽 저장 개발",
+            "progress": 100
+          }
+        ],
+        "risk": [
+          "Streamlit 인도법인 대상 서버 구축, concrete fatigue json import 에러, Plugin 인도법인 Connection 에러"
+        ],
+        "riskLevel": 1,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "추가적 에러 핸들링 방안 고민"
+        ]
+      }
+    },
+    {
+      "name": "김정빈",
+      "domain": "Backend",
+      "project": "IdeaForge",
+      "module": "지원",
+      "feature": "백엔드 이슈 지원",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "Streaming 이슈 처리",
+            "progress": 100
+          },
+          {
+            "title": "DB 수정",
+            "progress": 100
+          },
+          {
+            "title": "허브스팟 파일 업로드",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "김지원",
+            "relation": "pair"
+          },
+          {
+            "name": "김상리",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "AX 개발팀 배포 일정 공유",
+          "M-Desk 구현 내용 정의"
+        ]
+      }
+    },
+    {
+      "name": "서상준",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "module": "Engagement System",
+      "feature": "Datadog 메일링 서비스",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "DevOps와 협업하여 서버 장애 시 Datadog 메일링 세팅 완료",
+            "progress": 100
+          }
+        ],
+        "risk": [
+          "12월 말까지 메트릭 기반 모니터링 작업이 완료되어야 함"
+        ],
+        "riskLevel": 1,
+        "collaborators": [
+          {
+            "name": "DevOps",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "메트릭 기반 모니터 결과 전송을 위한 추가 협의"
+        ]
+      }
+    },
+    {
+      "name": "서상준",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "module": "Spreadsheet",
+      "feature": "외부 API 트랜잭션 일관성 확보",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "실패한 외부 API 요청을 mongoDB에 저장하는 로직 구현",
+            "progress": 100
+          }
+        ],
+        "risk": [
+          "M-Drive(mws) 쪽에서 시스템 토큰 사용을 위한 추가 개발 필요"
+        ],
+        "riskLevel": 2,
+        "collaborators": [
+          {
+            "name": "김용수",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "시스템 토큰을 활용한 실패 요청 재시도 로직 개발"
+        ]
+      }
+    },
+    {
+      "name": "서상준",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "module": "Spreadsheet",
+      "feature": "signed url 업데이트 원자성 확보",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "excel json content body로 받아 직접 update 하는 API 추가",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": []
+      }
+    },
+    {
+      "name": "김태이",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "module": "Discovery",
+      "feature": "대용량 텍스트 저장 방법 확보 및 적용",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "아티클에 대용량 텍스트 저장 방식을 적용",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "김용수",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "스프레드시트에도 동일한 저장 방식 적용"
+        ]
+      }
+    },
+    {
+      "name": "김태이",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "module": "Discovery",
+      "feature": "기존 리치텍스트 마이그레이션 배치작업",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "기존 아티클 리치텍스트 마이그레이션 배치 작업 개발",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "기존 스프레드시트 리치텍스트 적용"
+        ]
+      }
+    },
+    {
+      "name": "김태이",
+      "domain": "Research",
+      "project": "P1-Connect",
+      "module": "프로토타입",
+      "feature": "모티브 마케팅 자동화 도구",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "모티브 마케팅 자동화 도구 프로토타입 시연 및 문서 작성 완료",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": []
+      }
+    },
+    {
+      "name": "김태이",
+      "domain": "Backend",
+      "project": "MOTIIV",
+      "module": "Discovery",
+      "feature": "컨텐츠 휴지통 개념 도입",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "컨텐츠 휴지통 개념 도입 개발 진행",
+            "progress": 0
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "백엔드 회의 이슈로 급하지 않아, 시간 날 때 진행"
+        ]
+      }
+    },
+    {
+      "name": "하성열",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "module": "Spreadsheet",
+      "feature": "AI Assist 기획",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "AI Assist 중 Description 생성 기능 컨셉 기획",
+            "progress": 50
+          }
+        ],
+        "risk": [
+          "Description 생성 기능을 단일 기능에서 AI Assist로 확장하면서 범위 변경 리스크 존재"
+        ],
+        "riskLevel": 1,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "AI Assist 중 Description 컨셉 공유 및 확정"
+        ]
+      }
+    },
+    {
+      "name": "한내경",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "module": "Tracking",
+      "feature": "마케팅",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "LinkedIn 3차 컨텐츠 작성 및 FEA NX 3차 E-mail 작성, 마케팅팀 전달",
+            "progress": 100
+          },
+          {
+            "title": "마케팅 캠페인 종료",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "김희성",
+            "relation": "pair"
+          },
+          {
+            "name": "양소희",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "1월 마케팅 재개 준비"
+        ]
+      }
+    },
+    {
+      "name": "한내경",
+      "domain": "Planning",
+      "project": "M-Connector",
+      "module": "DB Manager",
+      "feature": "DB 테이블",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "디자인 피드백 및 컨펌, 12월 출시 목표 DB 정리",
+            "progress": 76
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "변창언",
+            "relation": "post"
+          },
+          {
+            "name": "양소희",
+            "relation": "post"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "M-Connector 매뉴얼 및 예제 작성"
+        ]
+      }
+    },
+    {
+      "name": "조해용",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "module": "Workspace",
+      "feature": "My project 기획",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "Workspace 중 My project 전체 컨셉 기획",
+            "progress": 100
+          }
+        ],
+        "risk": [
+          "컨셉 확장으로 인한 범위 증가 가능성"
+        ],
+        "riskLevel": 1,
+        "collaborators": [
+          {
+            "name": "도기봉",
+            "relation": "pair"
+          },
+          {
+            "name": "윤재웅",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "워크스페이스 진입 흐름 기획 제안서 작성 (2가지, Behance, Figma 등)",
+          "폴더 구조 및 디테일 기획"
+        ]
+      }
+    },
+    {
+      "name": "김희성",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "module": "Navigation",
+      "feature": "IA 및 릴리즈 정리",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "릴리즈 운영 정책 및 프로세스 정리",
+            "progress": 100
+          },
+          {
+            "title": "성과 데이터 기반 인사이트 도출",
+            "progress": 50
+          },
+          {
+            "title": "주요 사용자 여정 기반 IA 구조 개편 및 디자인팀 공유",
+            "progress": 100
+          }
+        ],
+        "risk": [
+          "신입 OJT 과제 준비",
+          "마케팅 성과 공유 세션 준비",
+          "GEN NX Free Trial 작업"
+        ],
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "홈 개편 초안 작성",
+          "성과 데이터 기반 인사이트 도출 계속 진행"
+        ]
+      }
+    },
+    {
+      "name": "김상리",
+      "domain": "Frontend",
+      "project": "IdeaForge",
+      "module": "llm",
+      "feature": "llm 구조 변경 및 테스트",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "llm UI 구조 변경 완료",
+            "progress": 100
+          },
+          {
+            "title": "버그 이슈 처리 2건 완료",
+            "progress": 100
+          },
+          {
+            "title": "MAS 저장 시 산출물 제목 삽입 기능 추가",
+            "progress": 100
+          },
+          {
+            "title": "이미지형 CTA 좌표 정밀 지정 기능 추가",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "김정빈",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "변경된 llm 작업 건 배포 준비",
+          "v1.8.3 배포 일정 협의"
+        ]
+      }
+    },
+    {
+      "name": "김상리",
+      "domain": "Frontend",
+      "project": "마이다스 뉴스룸",
+      "module": "블로그",
+      "feature": "블로그 구조 설계 및 공통모듈 제작",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "블로그 구조 설계",
+            "progress": 30
+          },
+          {
+            "title": "공통 모듈 제작",
+            "progress": 50
+          },
+          {
+            "title": "세부 기능 기술 검토",
+            "progress": 30
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "김지원",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "블로그 페이지 제작",
+          "세부 기능 구현"
+        ]
+      }
+    },
+    {
+      "name": "김지원",
+      "domain": "Frontend",
+      "project": "IdeaForge",
+      "module": "1.8.3",
+      "feature": "개발 협의 및 진행",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "1.8.3 개발 건 협의 및 이슈 조정",
+            "progress": 100
+          },
+          {
+            "title": "버그 이슈 처리 6건 완료",
+            "progress": 100
+          },
+          {
+            "title": "이미지 해상도 개선 작업 완료",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "system에서 변경된 백엔드 건(이미지/저장 용량)에 대한 대응"
+        ]
+      }
+    },
+    {
+      "name": "김지원",
+      "domain": "Frontend",
+      "project": "마이다스 뉴스룸",
+      "module": "블로그",
+      "feature": "개발 및 기술 검토",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "서브 도메인 생성",
+            "progress": 100
+          },
+          {
+            "title": "블로그 개설",
+            "progress": 100
+          },
+          {
+            "title": "블로그 리스트 기술 검토",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "블로그 검색 기술 검토",
+          "디자인 수급 및 적용"
+        ]
+      }
+    },
+    {
+      "name": "도기봉",
+      "domain": "Planning",
+      "project": "M-Desk",
+      "module": "서비스장애 안내",
+      "feature": "메인 기획",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "서비스 장애 안내 기획",
+            "progress": 100
+          },
+          {
+            "title": "장애 안내 내용 가이드 작성",
+            "progress": 100
+          },
+          {
+            "title": "장애 안내 화면 디자인",
+            "progress": 90
+          }
+        ],
+        "risk": [
+          "MAS에 안내 등록 환경 개발 진행 상황에 따라 기획 대응 필요"
+        ],
+        "riskLevel": 0,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "장애 안내 화면 디자인 수정"
+        ]
+      }
+    },
+    {
+      "name": "도기봉",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "module": "Account",
+      "feature": "컨셉 기획",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "프로필 페이지와 워크스페이스 페이지 정의",
+            "progress": 100
+          },
+          {
+            "title": "프로필페이지 개요 정의",
+            "progress": 100
+          },
+          {
+            "title": "프로필 페이지 콘텐츠 구성",
+            "progress": 10
+          }
+        ],
+        "risk": [
+          "프로필페이지에 들어갈 콘텐츠 아이템 역할 정의를 위한 의사소통 필요"
+        ],
+        "riskLevel": 0,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "프로필페이지 상세 기획",
+          "프로필페이지 메뉴 구성 정의",
+          "프로필페이지에 들어갈 콘텐츠 정의"
+        ]
+      }
+    },
+    {
+      "name": "양소희",
+      "domain": "Design",
+      "project": "MOTIIV",
+      "module": "Spreadsheet",
+      "feature": "리스트 페이지 개선",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "스프레드시트 리스트 페이지 개선 및 인기 섹션 추가 PC/MO 디자인 완료",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": [
+          {
+            "name": "김희성",
+            "relation": "pair"
+          }
+        ]
+      },
+      "thisWeek": {
+        "tasks": [
+          "스프레드시트 에디터 페이지 애드온 패널-리치노트 디자인 진행"
+        ]
+      }
+    },
+    {
+      "name": "이하영",
+      "domain": "Research",
+      "project": "MOTIIV",
+      "module": "Discovery",
+      "feature": "기술부채 리서치 및 협의",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "SEO 리서치 및 결과 공유",
+            "progress": 100
+          },
+          {
+            "title": "Testing Tool 리서치 및 결과 공유",
+            "progress": 0
+          },
+          {
+            "title": "스타일 리서치 및 결과 공유",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "Testing tool 점진적 도입 및 스프레드시트 백로그 이슈(SEO, Author box) 진행"
+        ]
+      }
+    }
+  ]
+}

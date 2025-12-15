@@ -86,8 +86,11 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
   };
 
   const handleWeekChange = (week: string) => {
-    // v3 형식 키 생성
-    setSelectedWeekKey(`${selectedYear}-${week}`);
+    // weeks 배열에서 해당 주차의 올바른 키 찾기 (v2/v3 형식 호환)
+    const targetWeek = availableWeeks.find((w) => w.week === week);
+    if (targetWeek) {
+      setSelectedWeekKey(targetWeek.key);
+    }
   };
 
   // 모바일 레이아웃
