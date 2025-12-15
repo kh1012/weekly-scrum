@@ -66,6 +66,10 @@ export const SnapshotCardList = forwardRef<
   const [optionMenuId, setOptionMenuId] = useState<string | null>(null);
   const [optionMenuPosition, setOptionMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const optionButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  
+  // 일괄 선택 모드
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // 외부에서 카드 확장 제어
   useImperativeHandle(ref, () => ({
@@ -157,6 +161,50 @@ export const SnapshotCardList = forwardRef<
     }
   }, [optionMenuId]);
 
+  // 일괄 선택 토글
+  const toggleSelectMode = useCallback(() => {
+    setIsSelectMode((prev) => {
+      if (prev) {
+        setSelectedIds(new Set());
+      }
+      return !prev;
+    });
+  }, []);
+
+  // 개별 카드 선택/해제
+  const toggleCardSelection = useCallback((tempId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tempId)) {
+        next.delete(tempId);
+      } else {
+        next.add(tempId);
+      }
+      return next;
+    });
+  }, []);
+
+  // 전체 선택/해제
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === snapshots.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(snapshots.map((s) => s.tempId)));
+    }
+  }, [selectedIds.size, snapshots]);
+
+  // 선택된 카드 일괄 삭제
+  const handleBulkDelete = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    
+    const confirmed = window.confirm(`${selectedIds.size}개의 카드를 삭제하시겠습니까?`);
+    if (confirmed) {
+      selectedIds.forEach((id) => onDeleteCard(id));
+      setSelectedIds(new Set());
+      setIsSelectMode(false);
+    }
+  }, [selectedIds, onDeleteCard]);
+
   // 드롭다운 열릴 때 위치 계산
   const handleOpenDropdown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -175,12 +223,68 @@ export const SnapshotCardList = forwardRef<
       {/* 리스트 헤더 - h-12 통일 */}
       <div className="h-12 px-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-800">카드 목록</span>
-          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-            {snapshots.length}
-          </span>
+          {isSelectMode ? (
+            <>
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
+              >
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                  selectedIds.size === snapshots.length && snapshots.length > 0
+                    ? "bg-blue-500 border-blue-500"
+                    : "border-gray-300"
+                }`}>
+                  {selectedIds.size === snapshots.length && snapshots.length > 0 && (
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                전체
+              </button>
+              <span className="text-xs text-blue-600 font-medium">
+                {selectedIds.size}개 선택
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-sm font-semibold text-gray-800">카드 목록</span>
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                {snapshots.length}
+              </span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          {/* 선택 모드 토글 */}
+          {snapshots.length > 0 && (
+            <button
+              onClick={toggleSelectMode}
+              className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                isSelectMode
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {isSelectMode ? "취소" : "선택"}
+            </button>
+          )}
+          
+          {/* 일괄 삭제 버튼 (선택 모드에서만) */}
+          {isSelectMode && selectedIds.size > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-md transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              삭제
+            </button>
+          )}
           {/* 전체 복사 드롭다운 */}
           <button
             ref={copyButtonRef}
@@ -281,6 +385,7 @@ export const SnapshotCardList = forwardRef<
         {snapshots.map((snapshot) => {
           const isSelected = snapshot.tempId === selectedId;
           const isExpanded = expandedIds.has(snapshot.tempId);
+          const isChecked = selectedIds.has(snapshot.tempId);
 
           // 메타 태그 정보
           const metaTags = [
@@ -294,51 +399,73 @@ export const SnapshotCardList = forwardRef<
             <div
               key={snapshot.tempId}
               className={`
-                relative rounded-2xl border transition-all duration-200 cursor-pointer
+                relative rounded-2xl border transition-all duration-200 cursor-pointer flex
                 ${
                   isSelected
                     ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 shadow-sm"
+                    : isChecked
+                    ? "bg-blue-50/50 border-blue-200"
                     : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm"
                 }
               `}
-              onClick={() => onSelectCard(snapshot.tempId)}
-              onDoubleClick={() => handleDoubleClick(snapshot.tempId)}
-              onContextMenu={(e) => handleContextMenu(e, snapshot)}
+              onClick={() => isSelectMode ? toggleCardSelection(snapshot.tempId) : onSelectCard(snapshot.tempId)}
+              onDoubleClick={() => !isSelectMode && handleDoubleClick(snapshot.tempId)}
+              onContextMenu={(e) => !isSelectMode && handleContextMenu(e, snapshot)}
             >
-              {/* 카드 헤더 */}
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    {/* 이름 + 상태 */}
-                    <div className="flex items-center gap-2 mb-1.5">
-                      {/* 아바타 */}
-                      <div
-                        className={`
-                        w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-                        ${
-                          isSelected
-                            ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
-                            : "bg-gray-100 text-gray-600"
-                        }
-                      `}
-                      >
-                        {snapshot.name ? snapshot.name.charAt(0) : "?"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {snapshot.name || "(이름 없음)"}
-                          </span>
-                          {snapshot.isDirty && (
-                            <span
-                              className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"
-                              title="수정됨"
-                            />
-                          )}
+              {/* 선택 모드 체크박스 */}
+              {isSelectMode && (
+                <div className="flex items-center justify-center pl-3 shrink-0">
+                  <div
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                      isChecked
+                        ? "bg-blue-500 border-blue-500"
+                        : "border-gray-300 bg-white"
+                    }`}
+                  >
+                    {isChecked && (
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* 카드 내용 */}
+              <div className="flex-1 min-w-0">
+                {/* 카드 헤더 */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      {/* 이름 + 상태 */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {/* 아바타 */}
+                        <div
+                          className={`
+                          w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
+                          ${
+                            isSelected
+                              ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
+                              : "bg-gray-100 text-gray-600"
+                          }
+                        `}
+                        >
+                          {snapshot.name ? snapshot.name.charAt(0) : "?"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-900">
+                              {snapshot.name || "(이름 없음)"}
+                            </span>
+                            {snapshot.isDirty && (
+                              <span
+                                className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"
+                                title="수정됨"
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
                   <div className="flex items-center gap-1">
                     {/* 펼치기/접기 버튼 */}
@@ -545,6 +672,7 @@ export const SnapshotCardList = forwardRef<
                   </div>
                 </div>
               )}
+              </div>
             </div>
           );
         })}

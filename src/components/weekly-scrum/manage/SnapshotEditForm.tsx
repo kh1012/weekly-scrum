@@ -227,10 +227,37 @@ function TaskEditor({
             </button>
           </div>
           
-          {/* 하단: 진행률 슬라이더 */}
-          <div className={`flex items-center gap-3 ${compact ? "mt-2" : "mt-3"}`}>
-            {/* 슬라이더 */}
-            <div className="flex-1 relative">
+          {/* 하단: 진행률 슬라이더 - Airbnb 스타일 */}
+          <div className={`${compact ? "mt-3 pt-3" : "mt-4 pt-4"} border-t border-gray-100`}>
+            {/* 진행률 버튼 그룹 */}
+            <div className="flex items-center gap-2">
+              {[0, 25, 50, 75, 100].map((value) => {
+                const isSelected = task.progress === value;
+                const isCompleted = value === 100;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateTask(index, "progress", value)}
+                    tabIndex={baseTabIndex + index * 2 + 1}
+                    className={`
+                      flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all
+                      ${isSelected
+                        ? isCompleted
+                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
+                          : "bg-gray-900 text-white shadow-lg"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                      }
+                    `}
+                  >
+                    {value}%
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* 슬라이더 (세밀 조정용) */}
+            <div className="mt-3 px-1">
               <input
                 type="range"
                 min={0}
@@ -238,51 +265,32 @@ function TaskEditor({
                 step={25}
                 value={snapToStep(task.progress)}
                 onChange={(e) => updateTask(index, "progress", Number(e.target.value))}
-                tabIndex={baseTabIndex + index * 2 + 1}
-                className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer
+                className={`w-full h-3 rounded-full appearance-none cursor-pointer
                   [&::-webkit-slider-thumb]:appearance-none
-                  [&::-webkit-slider-thumb]:w-4
-                  [&::-webkit-slider-thumb]:h-4
+                  [&::-webkit-slider-thumb]:w-6
+                  [&::-webkit-slider-thumb]:h-6
                   [&::-webkit-slider-thumb]:rounded-full
-                  [&::-webkit-slider-thumb]:bg-gray-900
+                  [&::-webkit-slider-thumb]:bg-white
+                  [&::-webkit-slider-thumb]:border-2
+                  [&::-webkit-slider-thumb]:border-gray-900
+                  [&::-webkit-slider-thumb]:shadow-md
                   [&::-webkit-slider-thumb]:cursor-pointer
                   [&::-webkit-slider-thumb]:transition-transform
                   [&::-webkit-slider-thumb]:hover:scale-110
-                  [&::-moz-range-thumb]:w-4
-                  [&::-moz-range-thumb]:h-4
+                  [&::-webkit-slider-thumb]:active:scale-95
+                  [&::-moz-range-thumb]:w-6
+                  [&::-moz-range-thumb]:h-6
                   [&::-moz-range-thumb]:rounded-full
-                  [&::-moz-range-thumb]:bg-gray-900
-                  [&::-moz-range-thumb]:border-0
+                  [&::-moz-range-thumb]:bg-white
+                  [&::-moz-range-thumb]:border-2
+                  [&::-moz-range-thumb]:border-gray-900
+                  [&::-moz-range-thumb]:shadow-md
                   [&::-moz-range-thumb]:cursor-pointer
                 `}
                 style={{
-                  background: `linear-gradient(to right, #10b981 0%, #10b981 ${task.progress}%, #e5e7eb ${task.progress}%, #e5e7eb 100%)`,
+                  background: `linear-gradient(to right, ${task.progress === 100 ? '#10b981' : '#1f2937'} 0%, ${task.progress === 100 ? '#10b981' : '#1f2937'} ${task.progress}%, #e5e7eb ${task.progress}%, #e5e7eb 100%)`,
                 }}
               />
-              {/* 25% 눈금 마커 */}
-              <div className="absolute top-3 left-0 right-0 flex justify-between px-0.5">
-                {[0, 25, 50, 75, 100].map((mark) => (
-                  <span
-                    key={mark}
-                    className={`text-[10px] ${
-                      task.progress >= mark ? "text-emerald-600" : "text-gray-400"
-                    }`}
-                  >
-                    {mark}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            {/* 현재 값 표시 */}
-            <div className={`shrink-0 font-bold ${
-              task.progress === 100
-                ? "text-emerald-600"
-                : task.progress >= 50
-                ? "text-blue-600"
-                : "text-gray-600"
-            } ${compact ? "text-sm w-12 text-right" : "text-base w-14 text-right"}`}>
-              {task.progress}%
             </div>
           </div>
         </div>
@@ -377,7 +385,9 @@ function ThisWeekTaskEditor({
 }
 
 /**
- * Risk 편집 컴포넌트 - "리스크 없음" 토글 추가
+ * Risk 편집 컴포넌트 - 리스크 추가 버튼 기본 제공
+ * - 리스크 없으면: Risks: None, RiskLevel: None
+ * - 리스크 추가 시: RiskLevel 자동으로 0 (없음) 설정
  */
 function RiskEditor({
   risks,
@@ -392,23 +402,16 @@ function RiskEditor({
   baseTabIndex: number;
   compact?: boolean;
 }) {
-  // "리스크 없음" 상태 (risks가 null이고 빈 배열이 아닌 경우)
-  const isNoRisk = risks === null;
   const actualRisks = risks || [];
-
-  const handleToggleNoRisk = () => {
-    if (isNoRisk) {
-      // "리스크 없음" 해제 → 빈 배열로 시작
-      onChange([]);
-    } else {
-      // "리스크 없음" 설정 → null로 설정하고 riskLevel도 null로
-      onChange(null);
-      onRiskLevelChange?.(null);
-    }
-  };
+  const hasRisks = actualRisks.length > 0;
 
   const addRisk = () => {
-    onChange([...actualRisks, ""]);
+    const newRisks = [...actualRisks, ""];
+    onChange(newRisks);
+    // 리스크 추가 시 RiskLevel을 0 (없음)으로 설정
+    if (actualRisks.length === 0) {
+      onRiskLevelChange?.(0);
+    }
   };
 
   const updateRisk = (index: number, value: string) => {
@@ -419,38 +422,19 @@ function RiskEditor({
 
   const removeRisk = (index: number) => {
     const newRisks = actualRisks.filter((_, i) => i !== index);
-    onChange(newRisks.length > 0 ? newRisks : []);
+    if (newRisks.length === 0) {
+      // 모든 리스크 삭제 시 null로 설정
+      onChange(null);
+      onRiskLevelChange?.(null);
+    } else {
+      onChange(newRisks);
+    }
   };
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
-      {/* 리스크 없음 토글 */}
-      <button
-        type="button"
-        onClick={handleToggleNoRisk}
-        className={`
-          flex items-center gap-2 font-medium transition-all
-          ${compact ? "px-3 py-2 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"}
-          ${isNoRisk
-            ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }
-        `}
-      >
-        {isNoRisk ? (
-          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        ) : (
-          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )}
-        리스크 없음
-      </button>
-
-      {/* 리스크 목록 (비활성화 시 숨김) */}
-      {!isNoRisk && (
+      {/* 리스크 목록 */}
+      {hasRisks ? (
         <>
           {actualRisks.map((risk, index) => (
             <div key={index} className={`group flex items-center gap-2 bg-orange-50 hover:bg-orange-100 transition-colors ${compact ? "p-2 rounded-lg" : "p-3 rounded-xl"}`}>
@@ -477,36 +461,31 @@ function RiskEditor({
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={addRisk}
-            tabIndex={-1}
-            className={`flex items-center gap-2 font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 transition-colors ${
-              compact ? "px-2.5 py-1.5 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"
-            }`}
-          >
-            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            리스크 추가
-          </button>
-          
-          {/* 안내 문구 */}
-          <p className={`text-gray-400 ${compact ? "text-[10px]" : "text-xs"}`}>
-            💡 리스크가 없으면 &quot;리스크 없음&quot; 버튼을 클릭하세요
-          </p>
         </>
-      )}
-
-      {/* 리스크 없음 상태 안내 */}
-      {isNoRisk && (
-        <div className={`flex items-center gap-2 text-emerald-600 ${compact ? "text-xs" : "text-sm"}`}>
+      ) : (
+        // 리스크 없음 상태
+        <div className={`flex items-center gap-2 text-gray-400 ${compact ? "text-xs py-2" : "text-sm py-3"}`}>
           <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          현재 리스크가 없습니다
+          None
         </div>
       )}
+
+      {/* 리스크 추가 버튼 (항상 표시) */}
+      <button
+        type="button"
+        onClick={addRisk}
+        tabIndex={-1}
+        className={`flex items-center gap-2 font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 transition-colors ${
+          compact ? "px-2.5 py-1.5 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"
+        }`}
+      >
+        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        리스크 추가
+      </button>
     </div>
   );
 }
@@ -779,9 +758,6 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   const labelMargin = compact ? "mb-2" : "mb-3";
   const labelSize = compact ? "text-xs" : "text-sm";
   const barHeight = compact ? "h-5" : "h-6";
-  const buttonPadding = compact ? "px-3 py-1.5" : "px-4 py-2.5";
-  const buttonText = compact ? "text-xs" : "text-sm";
-  const buttonRadius = compact ? "rounded-lg" : "rounded-xl";
   
   // 1열/2열 그리드 레이아웃
   const gridCols = singleColumn ? "grid-cols-1" : "grid-cols-2";
@@ -863,50 +839,6 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
                 baseTabIndex={50} 
                 compact={compact} 
               />
-            </div>
-
-            <div onFocus={() => onFocusSection?.("pastWeek.riskLevel")}>
-              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risk Level</label>
-              <div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
-                {RISK_LEVEL_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handlePastWeekChange("riskLevel", option.value as 0 | 1 | 2 | 3)}
-                    tabIndex={-1}
-                    className={`
-                      ${buttonPadding} ${buttonText} font-medium ${buttonRadius} transition-all
-                      ${snapshot.pastWeek.riskLevel === option.value
-                        ? option.value === 0
-                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                          : option.value === 1
-                          ? "bg-yellow-500 text-white shadow-lg shadow-yellow-500/25"
-                          : option.value === 2
-                          ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
-                          : "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }
-                    `}
-                    title={option.description}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => handlePastWeekChange("riskLevel", null)}
-                  tabIndex={-1}
-                  className={`
-                    ${buttonPadding} ${buttonText} font-medium ${buttonRadius} transition-all
-                    ${snapshot.pastWeek.riskLevel === null
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }
-                  `}
-                >
-                  None
-                </button>
-              </div>
             </div>
 
             <div onFocus={() => onFocusSection?.("pastWeek.collaborators")}>
