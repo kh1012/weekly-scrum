@@ -253,11 +253,11 @@ export function WeekSelector({
                   <div className="flex items-center gap-2">
                     {/* 스냅샷 갯수를 주차 라벨 좌측에 항상 표시 (0이면 회색 점) */}
                     {hasSnapshots ? (
-                      <span className="text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded min-w-[18px] text-center font-medium">
+                      <span className="w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full flex items-center justify-center font-medium">
                         {count}
                       </span>
                     ) : (
-                      <span className="w-[18px] h-[18px] flex items-center justify-center">
+                      <span className="w-5 h-5 flex items-center justify-center">
                         <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
                       </span>
                     )}

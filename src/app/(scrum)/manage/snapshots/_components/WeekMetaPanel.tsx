@@ -110,23 +110,21 @@ export function WeekMetaPanel({
         </button>
       )}
 
-      {/* 확장된 패널 - Airbnb 스타일 팝업 */}
+      {/* 확장된 패널 - 중앙에서 위로 올라오는 애니메이션 */}
       {shouldRender && (
         <>
-          {/* 백드롭 */}
+          {/* 클릭 영역 (투명, 백드롭 없음) */}
           <div 
-            className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
-              isAnimating ? "opacity-100" : "opacity-0"
-            }`}
+            className="fixed inset-0 z-[60]"
             onClick={onToggle}
           />
           
-          {/* 패널 - 중앙 하단에서 scale 애니메이션 */}
+          {/* 패널 - 선택 위치 기준 중앙에서 위로 애니메이션 */}
           <div 
-            className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[70] w-[90%] max-w-xl transition-all duration-300 ease-out ${
+            className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-[70] w-[90%] max-w-xl transition-all duration-300 ease-out ${
               isAnimating 
                 ? "opacity-100 scale-100 translate-y-0" 
-                : "opacity-0 scale-90 translate-y-4"
+                : "opacity-0 scale-95 translate-y-8"
             }`}
             style={{
               transformOrigin: "center bottom",
