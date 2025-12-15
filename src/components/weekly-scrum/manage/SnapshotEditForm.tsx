@@ -227,71 +227,60 @@ function TaskEditor({
             </button>
           </div>
           
-          {/* 하단: 진행률 슬라이더 - Airbnb 스타일 */}
-          <div className={`${compact ? "mt-3 pt-3" : "mt-4 pt-4"} border-t border-gray-100`}>
-            {/* 진행률 버튼 그룹 */}
-            <div className="flex items-center gap-2">
+          {/* 하단: 프로그레스바 + 진행률 선택 - 한 줄 컴팩트 */}
+          <div className={`flex items-center gap-2 ${compact ? "mt-2" : "mt-3"}`}>
+            {/* 프로그레스바 */}
+            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-300 ${
+                  task.progress === 100 ? 'bg-emerald-500' : 'bg-gray-900'
+                }`}
+                style={{ width: `${task.progress}%` }}
+              />
+            </div>
+            
+            {/* 반응형: 넓으면 버튼, 좁으면 셀렉트 */}
+            {/* 버튼 그룹 (md 이상) */}
+            <div className="hidden md:flex items-center gap-0.5 shrink-0">
               {[0, 25, 50, 75, 100].map((value) => {
                 const isSelected = task.progress === value;
-                const isCompleted = value === 100;
                 return (
                   <button
                     key={value}
                     type="button"
                     onClick={() => updateTask(index, "progress", value)}
-                    tabIndex={baseTabIndex + index * 2 + 1}
+                    tabIndex={-1}
                     className={`
-                      flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all
+                      px-2 py-1 text-xs font-medium rounded transition-all
                       ${isSelected
-                        ? isCompleted
-                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                          : "bg-gray-900 text-white shadow-lg"
-                        : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                        ? task.progress === 100
+                          ? "bg-emerald-500 text-white"
+                          : "bg-gray-900 text-white"
+                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                       }
                     `}
                   >
-                    {value}%
+                    {value}
                   </button>
                 );
               })}
             </div>
             
-            {/* 슬라이더 (세밀 조정용) */}
-            <div className="mt-3 px-1">
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={25}
-                value={snapToStep(task.progress)}
-                onChange={(e) => updateTask(index, "progress", Number(e.target.value))}
-                className={`w-full h-3 rounded-full appearance-none cursor-pointer
-                  [&::-webkit-slider-thumb]:appearance-none
-                  [&::-webkit-slider-thumb]:w-6
-                  [&::-webkit-slider-thumb]:h-6
-                  [&::-webkit-slider-thumb]:rounded-full
-                  [&::-webkit-slider-thumb]:bg-white
-                  [&::-webkit-slider-thumb]:border-2
-                  [&::-webkit-slider-thumb]:border-gray-900
-                  [&::-webkit-slider-thumb]:shadow-md
-                  [&::-webkit-slider-thumb]:cursor-pointer
-                  [&::-webkit-slider-thumb]:transition-transform
-                  [&::-webkit-slider-thumb]:hover:scale-110
-                  [&::-webkit-slider-thumb]:active:scale-95
-                  [&::-moz-range-thumb]:w-6
-                  [&::-moz-range-thumb]:h-6
-                  [&::-moz-range-thumb]:rounded-full
-                  [&::-moz-range-thumb]:bg-white
-                  [&::-moz-range-thumb]:border-2
-                  [&::-moz-range-thumb]:border-gray-900
-                  [&::-moz-range-thumb]:shadow-md
-                  [&::-moz-range-thumb]:cursor-pointer
-                `}
-                style={{
-                  background: `linear-gradient(to right, ${task.progress === 100 ? '#10b981' : '#1f2937'} 0%, ${task.progress === 100 ? '#10b981' : '#1f2937'} ${task.progress}%, #e5e7eb ${task.progress}%, #e5e7eb 100%)`,
-                }}
-              />
-            </div>
+            {/* 셀렉트 (md 미만) */}
+            <select
+              value={snapToStep(task.progress)}
+              onChange={(e) => updateTask(index, "progress", Number(e.target.value))}
+              tabIndex={baseTabIndex + index * 2 + 1}
+              className={`md:hidden shrink-0 bg-gray-100 border-0 rounded-lg font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-900 ${
+                task.progress === 100
+                  ? "text-emerald-600"
+                  : "text-gray-700"
+              } ${compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"}`}
+            >
+              {[0, 25, 50, 75, 100].map((value) => (
+                <option key={value} value={value}>{value}%</option>
+              ))}
+            </select>
           </div>
         </div>
       ))}
