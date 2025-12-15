@@ -1,57 +1,130 @@
-[문제]
-사용자가 가입/로그인하면 Supabase Authentication의 auth.users에는 생성되지만,
-public.workspace_members에는 row가 자동으로 생성되지 않는다.
-그 결과 RLS 기반 권한(멤버 여부)이 성립하지 않아 앱 기능이 막힌다.
-
 [목표]
-로그인 성공 직후(세션 확보 직후) 1회 실행으로
+기존 “외부에서 스크럼 텍스트/데이터를 생성하면 자동 파싱하여(주차 개념 없이) 스냅샷에 채워넣는 보조 도구”에서,
+Supabase 기반 “개인화된 스냅샷 관리(Manage)”로 전환한다.
 
-1. public.profiles upsert
-2. public.workspace_members upsert(role='member')
-   를 자동으로 수행한다.
-   DEFAULT_WORKSPACE_ID(=00000000-0000-0000-0000-000000000001)에 가입 즉시 멤버로 등록되게 한다.
+단, 기존 작성 편의 기능(임시저장/카드편집/복제/삭제/미리보기/옵션/리스크/진행률/덮어쓰기 등)은 100% 유지한다.
+새로 달라지는 점은, 이제 사용자가 Manage(스냅샷 관리)에서 “연도 + ISO 주차”를 먼저 선택한 다음,
+해당 주차 컨텍스트에서 여러 개의 스냅샷(카드/항목)을 작성/편집/발행(CRUD)할 수 있어야 한다.
 
-[전제]
+[배경/기존 동작]
 
-- Next.js App Router 사용
-- @supabase/ssr 기반 server client 사용
-- .env.local에 DEFAULT_WORKSPACE_ID가 존재
-- public.workspace_members 테이블 컬럼: workspace_id, user_id, role
-- role 타입은 workspace_role(enum)로 보이며 member/admin/leader 중 하나를 사용
-- profiles 테이블은 user_id, display_name, email 보유
+- 기존에는 주차(ISO) 개념을 UI에서 선택하지 않아도 됐음
+- 외부에서 생성한 데이터(예: 2025-W49, 2025-W50)를 스크립트로 JSON으로 만들고,
+  이를 앱이 자동 파싱하여 입력값으로 채워 넣는 형태였음
+- 파일명/키: 2025-W49, 2025-W50
+- 주차 범위 예:
+  - 2025-W49 = 12-01 ~ 12-07
+  - 2025-W50 = 12-08 ~ 12-14
+- 이제는 개인화된 공간이므로, “주차 컨텍스트”가 앱 내부에서 먼저 확정되어야 함
 
-[필수 요구사항]
+[새 요구사항 1: Manage(스냅샷 관리)에서 ‘주차 컨텍스트’를 먼저 선택]
+(기존 내용 그대로 유지)
 
-1. 로그인 직후 실행 위치를 확정하라.
-   - 후보: /auth/callback route handler, 또는 /app layout(server) 진입 시
-   - 중복 실행되어도 안전해야 함 (upsert, on conflict)
-2. workspace_members upsert는 반드시 “현재 로그인한 user_id(auth.users.id)”로 수행한다.
-3. profiles row가 없으면 생성한다.
-   - display_name이 아직 없으면 onboarding으로 보내는 기존 플로우 유지
-4. 실패 시 원인을 콘솔/로그로 남긴다.
-   - RLS 거부(403)
-   - FK 실패(DEFAULT_WORKSPACE_ID 없음)
-   - 세션 없음(user null)
-5. 코드 변경 후, 가입/로그인 시 Table Editor에서 workspace_members row가 생성되는지 검증한다.
+[새 요구사항 2: 주차 데이터 모델링(ISO 기반)]
+(기존 내용 그대로 유지)
+
+[새 요구사항 3: 기존 작성 편의 기능 100% 유지 + “주차 컨텍스트”에 종속]
+(기존 내용 그대로 유지)
+
+[새 요구사항 4: 기존 “외부 데이터 파싱” 경험을 대체하는 ‘Import’ 옵션]
+(기존 내용 그대로 유지)
+
+────────────────────────────────────────
+[새 요구사항 5: SNB(사이드 네비게이션) 구조 전면 정리]
+────────────────────────────────────────
+
+목표:
+기존 “보조 도구/실험용” 성격의 메뉴들을 제거하고,
+현재 서비스의 역할에 맞게 **개인화된 업무 공간 중심의 SNB 구조**로 재편한다.
+
+1. SNB에서 아래 메뉴만 유지하고, 나머지는 전부 제거한다.
+
+- Work Map
+- Calendar
+- Snapshots
+- Manage
+- Release Notes
+
+2. SNB를 “섹션(카테고리)” 단위로 명확히 구분한다.
+
+- 섹션 구분은 시각적으로 명확해야 하며(헤더/구분선/타이포 등),
+  단순 정렬이 아니라 의미 있는 정보 구조여야 한다.
+
+3. 섹션 구조는 아래를 기본으로 한다.
+
+- 업무
+
+  - Work Map
+  - Calendar
+  - Snapshots
+
+- 개인공간
+
+  - Manage ← (중요) 반드시 이 섹션으로 분리
+
+- 기타
+  - Release Notes
+
+4. Manage 메뉴의 의미 재정의
+
+- Manage는 더 이상 “설정/실험/보조” 메뉴가 아니다.
+- “내 스냅샷을 관리하는 개인화된 공간”의 진입점이다.
+- Manage 하위에서 스냅샷 관리(연도/주차 선택, 작성, 편집, Import 등)가 이루어진다.
+- 기존 Snapshots 메뉴는 “조회/회고/히스토리 중심”으로 유지하거나,
+  필요 시 Manage와 역할을 구분한다.
+
+5. 구현 가이드
+
+- SNB 정의가 상수/배열/설정 파일로 관리되고 있다면,
+  해당 정의를 직접 수정하여 불필요한 메뉴를 제거한다.
+- 조건부 렌더링(if feature flag 등)으로 숨기는 것이 아니라,
+  실제 메뉴 정의에서 삭제한다.
+- 라우트 자체가 더 이상 필요 없는 경우,
+  dead route 및 관련 컴포넌트도 함께 정리한다.
+
+6. 접근 제어
+
+- 로그인하지 않은 사용자는 SNB 자체가 렌더링되지 않아야 한다.
+- 로그인 + profiles 온보딩 완료 이후에만 SNB 노출.
+
+────────────────────────────────────────
+
+[UI/라우팅 요구사항]
+(기존 내용 그대로 유지)
 
 [구현 가이드]
+(기존 내용 그대로 유지)
 
-- src/lib/auth/ensureMembership.ts 같은 유틸로 분리
-- 내부에서:
-  - const { data: { user } } = await supabase.auth.getUser()
-  - if (!user) return
-  - upsert workspace_members:
-    workspace_id = process.env.DEFAULT_WORKSPACE_ID
-    user_id = user.id
-    role = 'member'
-- upsert conflict key는 (workspace_id, user_id) 유니크 제약이 있어야 함.
-  - 없다면 마이그레이션으로 unique(workspace_id, user_id) 추가 제안/적용
+[작업 단계 - 순서 고정]
+
+1. 기존 스냅샷 작성 편의 기능 목록화(체크리스트 문서화)
+2. ISO week 유틸 구현 및 주차 컨텍스트 라우팅 추가
+3. snapshots 모델에 year/iso_week/week_start/end 매핑 적용
+4. Manage > Week Picker / Week Context 화면 추가
+5. 기존 편집기/임시저장 기능을 Week Context에 연결
+6. Import(JSON 붙여넣기) 기능 구현
+7. CRUD(서버 액션) 연결 및 RLS 권한 검증
+8. SNB 메뉴 정리
+   - 지정된 메뉴만 유지
+   - 섹션 구조 적용
+   - Manage를 “개인공간”으로 분리
 
 [출력 요구]
 
 - 변경/생성 파일 목록
-- 전체 코드(중간 생략 금지)
-- 테스트 시나리오:
-  1. 새 이메일로 로그인 → users 생성 → workspace_members row 자동 생성 확인
-  2. 재로그인 → row 중복 생성 없음
-  3. onboarding 전/후에도 멤버십 생성은 항상 보장
+- 각 파일 전체 코드(중간 생략 금지)
+- ISO week 계산 방식 설명 + 테스트 케이스
+- 기존 기능 체크리스트 문서(docs/snapshot-feature-checklist.md)
+- SNB 구조 변경 전/후 요약
+- 테스트 시나리오
+  - 2025 W49 선택 → 신규 draft 생성 → entries 편집 → 임시저장 → publish
+  - 2025 W50 선택 → Import JSON 붙여넣기 → 미리보기 → 생성
+  - 다른 유저로 로그인 시 타인 데이터 수정 불가
+
+[완료 조건]
+
+- 사용자가 Manage에서 연도+ISO 주차를 먼저 선택하고,
+  해당 주차 컨텍스트에서 여러 스냅샷을 작성/편집/발행/관리할 수 있다.
+- 기존 작성 편의 기능은 하나도 빠지지 않는다.
+- Supabase 기반으로 데이터가 영속 저장된다.
+- SNB는 지정된 메뉴만 남고, Manage는 “개인공간” 섹션으로 명확히 분리된다.

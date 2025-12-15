@@ -27,7 +27,7 @@ export async function ensureMembership(
     // 1. 이미 멤버인지 확인
     const { data: existingMember, error: selectError } = await supabase
       .from("workspace_members")
-      .select("id, role")
+      .select("user_id, role")
       .eq("workspace_id", defaultWorkspaceId)
       .eq("user_id", userId)
       .maybeSingle();
