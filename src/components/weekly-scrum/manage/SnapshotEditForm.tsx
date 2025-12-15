@@ -768,7 +768,7 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   );
 
   const handlePastWeekChange = useCallback(
-    (field: keyof TempSnapshot["pastWeek"], value: PastWeekTask[] | string[] | Collaborator[] | number | null) => {
+    (field: keyof TempSnapshot["pastWeek"], value: PastWeekTask[] | string[] | Collaborator[] | number | null | 0 | 1 | 2 | 3) => {
       onUpdate({
         pastWeek: { ...snapshot.pastWeek, [field]: value },
       });
