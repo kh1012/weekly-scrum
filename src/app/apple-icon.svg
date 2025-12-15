@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" fill="#1f2937"/>
+  
+  <!-- Inner ring (sprint/progress symbol) -->
+  <circle cx="90" cy="90" r="56" stroke="#10b981" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="280 72"/>
+  
+  <!-- W letter stylized -->
+  <path d="M56 62L70 118L90 79L110 118L124 62" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
+
