@@ -1,68 +1,57 @@
+[문제]
+사용자가 가입/로그인하면 Supabase Authentication의 auth.users에는 생성되지만,
+public.workspace_members에는 row가 자동으로 생성되지 않는다.
+그 결과 RLS 기반 권한(멤버 여부)이 성립하지 않아 앱 기능이 막힌다.
+
 [목표]
-Supabase Auth(Email OTP) 기반 로그인 후,
-사용자가 반드시 display name을 입력하도록 강제하는 온보딩 흐름을 구현한다.
-display name은 auth.users가 아니라 public.profiles 테이블에서 관리한다.
+로그인 성공 직후(세션 확보 직후) 1회 실행으로
 
-[현재 상태]
+1. public.profiles upsert
+2. public.workspace_members upsert(role='member')
+   를 자동으로 수행한다.
+   DEFAULT_WORKSPACE_ID(=00000000-0000-0000-0000-000000000001)에 가입 즉시 멤버로 등록되게 한다.
 
-- Supabase에 public.profiles 테이블 생성 완료
-  - columns: user_id(uuid, PK, auth.users FK), display_name, email, created_at, updated_at
-  - RLS:
-    - 본인 프로필만 select/insert/update 가능
-- App Router 사용 중
-- Supabase client 유틸 존재
-  - src/lib/supabase/server.ts
-  - src/lib/supabase/browser.ts
-- 로그인(/login), auth callback(/auth/callback), middleware로 /app 보호 구조 존재
+[전제]
 
-[구현 요구사항]
+- Next.js App Router 사용
+- @supabase/ssr 기반 server client 사용
+- .env.local에 DEFAULT_WORKSPACE_ID가 존재
+- public.workspace_members 테이블 컬럼: workspace_id, user_id, role
+- role 타입은 workspace_role(enum)로 보이며 member/admin/leader 중 하나를 사용
+- profiles 테이블은 user_id, display_name, email 보유
 
-1. 로그인 후 공통 진입 지점에서 profile 존재 여부 검사
-   - auth.getUser()로 로그인 여부 확인
-   - profiles 테이블에 row가 없으면
-     → /onboarding/profile 로 리다이렉트
-2. /onboarding/profile 페이지 구현
-   - display name 입력 필드 1개
-   - submit 시 profiles insert
-     - user_id = auth.users.id
-     - display_name = 입력값
-     - email = auth.users.email
-3. profile 생성 완료 후 /app 으로 이동
-4. 이미 profile이 있는 사용자는
-   - /onboarding/profile 접근 불가
-   - 바로 /app 사용 가능
-5. UX 최소 요구
-   - 빈 값 제출 불가
-   - 중복 submit 방지(loading 상태)
-   - 에러 발생 시 메시지 표시
+[필수 요구사항]
 
-[구현 위치 가이드]
+1. 로그인 직후 실행 위치를 확정하라.
+   - 후보: /auth/callback route handler, 또는 /app layout(server) 진입 시
+   - 중복 실행되어도 안전해야 함 (upsert, on conflict)
+2. workspace_members upsert는 반드시 “현재 로그인한 user_id(auth.users.id)”로 수행한다.
+3. profiles row가 없으면 생성한다.
+   - display_name이 아직 없으면 onboarding으로 보내는 기존 플로우 유지
+4. 실패 시 원인을 콘솔/로그로 남긴다.
+   - RLS 거부(403)
+   - FK 실패(DEFAULT_WORKSPACE_ID 없음)
+   - 세션 없음(user null)
+5. 코드 변경 후, 가입/로그인 시 Table Editor에서 workspace_members row가 생성되는지 검증한다.
 
-- profile 체크:
-  - src/app/app/layout.tsx (server component)
-- 온보딩 페이지:
-  - src/app/onboarding/profile/page.tsx (client component)
-- redirect는 next/navigation 사용
+[구현 가이드]
 
-[주의사항]
-
-- auth.users 테이블을 직접 수정하거나 display name을 저장하지 말 것
-- service_role key 사용 금지
-- RLS를 우회하는 로직 금지
-- profiles는 반드시 user_id = auth.uid() 조건으로만 insert/update
+- src/lib/auth/ensureMembership.ts 같은 유틸로 분리
+- 내부에서:
+  - const { data: { user } } = await supabase.auth.getUser()
+  - if (!user) return
+  - upsert workspace_members:
+    workspace_id = process.env.DEFAULT_WORKSPACE_ID
+    user_id = user.id
+    role = 'member'
+- upsert conflict key는 (workspace_id, user_id) 유니크 제약이 있어야 함.
+  - 없다면 마이그레이션으로 unique(workspace_id, user_id) 추가 제안/적용
 
 [출력 요구]
 
-1. 생성/수정 파일 목록
-2. 각 파일 전체 코드 (중간 생략 금지)
-3. 로그인 → 온보딩 → 앱 진입 흐름 설명
-4. 테스트 시나리오
-   - 신규 유저: 로그인 → 이름 입력 → /app
-   - 기존 유저: 로그인 → 바로 /app
-   - 비로그인: /app 접근 시 /login 리다이렉트
-
-[완료 조건]
-
-- display name을 입력하지 않으면 앱을 사용할 수 없다
-- profiles row가 생성된 이후에만 snapshots / plans 접근 가능
-- RLS 에러 없이 정상 동작
+- 변경/생성 파일 목록
+- 전체 코드(중간 생략 금지)
+- 테스트 시나리오:
+  1. 새 이메일로 로그인 → users 생성 → workspace_members row 자동 생성 확인
+  2. 재로그인 → row 중복 생성 없음
+  3. onboarding 전/후에도 멤버십 생성은 항상 보장
