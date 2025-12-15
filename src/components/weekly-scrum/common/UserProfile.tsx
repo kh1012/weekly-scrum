@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -13,13 +14,15 @@ interface UserInfo {
 /**
  * 사용자 프로필 컴포넌트
  * - GNB 우측에 표시되는 프로필 아이콘
- * - 클릭 시 팝오버로 사용자 정보 표시
+ * - 클릭 시 Portal 팝오버로 사용자 정보 표시
  */
 export function UserProfile() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [popoverPosition, setPopoverPosition] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // 사용자 정보 로드
@@ -74,16 +77,48 @@ export function UserProfile() {
     loadUserInfo();
   }, [loadUserInfo]);
 
+  // 팝오버 위치 계산
+  const updatePopoverPosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopoverPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, []);
+
+  // 열릴 때 위치 계산
+  useEffect(() => {
+    if (isOpen) {
+      updatePopoverPosition();
+      window.addEventListener("scroll", updatePopoverPosition);
+      window.addEventListener("resize", updatePopoverPosition);
+      return () => {
+        window.removeEventListener("scroll", updatePopoverPosition);
+        window.removeEventListener("resize", updatePopoverPosition);
+      };
+    }
+  }, [isOpen, updatePopoverPosition]);
+
   // 외부 클릭 시 닫기
   useEffect(() => {
+    if (!isOpen) return;
+    
     const handleClickOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        popoverRef.current && 
+        !popoverRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isOpen]);
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -119,9 +154,10 @@ export function UserProfile() {
   const initial = userInfo.displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="relative" ref={popoverRef}>
+    <>
       {/* 프로필 버튼 */}
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 hover:scale-105"
         style={{
@@ -140,11 +176,15 @@ export function UserProfile() {
         {initial}
       </button>
 
-      {/* 팝오버 */}
-      {isOpen && (
+      {/* 팝오버 - Portal로 body에 직접 렌더링 */}
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div
-          className="absolute top-full right-0 mt-2 w-72 rounded-2xl overflow-hidden z-50 animate-context-menu"
+          ref={popoverRef}
+          className="fixed w-72 rounded-2xl overflow-hidden animate-context-menu"
           style={{
+            top: popoverPosition.top,
+            right: popoverPosition.right,
+            zIndex: 99999,
             background: "rgba(255, 255, 255, 0.98)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
@@ -250,9 +290,9 @@ export function UserProfile() {
               <span>로그아웃</span>
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
-

@@ -27,13 +27,10 @@ const FULL_WIDTH_PAGES = [
 ];
 
 // 동적 경로 패턴 (하위 경로 모두 포함)
-const FULL_WIDTH_DYNAMIC_PATTERNS = [
-  "/manage/snapshots/",
-  "/admin/",
-];
+const FULL_WIDTH_DYNAMIC_PATTERNS = ["/manage/snapshots/", "/admin/"];
 
 // padding 없는 페이지 경로
-const NO_PADDING_PAGES = ["/calendar", "/my", "/manage/snapshots"];
+const NO_PADDING_PAGES = ["/calendar", "/my"];
 
 // localStorage 키
 const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";

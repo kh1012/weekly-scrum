@@ -2,6 +2,59 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.5.0",
+    date: "2025-12-15",
+    title: "개인 대시보드 개선 & 스냅샷 관리 UX 최적화",
+    summary:
+      "개인 대시보드에 지난 주 대비 추세 분석 기능을 추가하고, 스냅샷 관리 페이지의 UI/UX를 전반적으로 개선했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "대시보드 추세 분석 - 지난 주 대비 스냅샷/엔트리/진척률/프로젝트/모듈/기능/협업자 변화량 표시",
+      },
+      {
+        type: "feat",
+        description: "대시보드 통계 확장 - 스냅샷 엔트리, 진행 중 모듈, 진행 중 기능 카드 추가",
+      },
+      {
+        type: "feat",
+        description: "WeekMetaPanel 인라인 확장 방식으로 변경 (backdrop 제거)",
+      },
+      {
+        type: "feat",
+        description: "YearlyHeatmap 10단계 색상 스케일 적용 (스냅샷 엔트리 기준)",
+      },
+      {
+        type: "improve",
+        description: "SNB 아이콘을 Font Awesome SVG 아이콘으로 교체",
+      },
+      {
+        type: "improve",
+        description: "대시보드/스냅샷 관리 페이지 Airbnb 스타일 적용",
+      },
+      {
+        type: "improve",
+        description: "WeekSelector z-index 조정으로 드롭다운 겹침 문제 해결",
+      },
+      {
+        type: "style",
+        description: "대시보드 하단 안내 문구 개선 - 스냅샷 기록 권장 메시지",
+      },
+      {
+        type: "style",
+        description: "대시보드 7열 반응형 통계 그리드 레이아웃",
+      },
+      {
+        type: "fix",
+        description: "스냅샷 수 불일치 문제 해결 (snapshots 테이블 기준으로 통일)",
+      },
+      {
+        type: "fix",
+        description: "전체 펼치기 버튼 높이를 뷰 모드 토글과 일치하도록 조정",
+      },
+    ],
+  },
+  {
     version: "2.4.1",
     date: "2025-12-15",
     title: "Manage 편집 UX 개선 & 히트맵 반응형 레이아웃",

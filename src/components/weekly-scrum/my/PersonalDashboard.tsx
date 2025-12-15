@@ -23,9 +23,27 @@ interface PersonalDashboardProps {
     activeFeatures: number;
     collaborators: number;
   };
+  trends?: {
+    snapshotsTrend: number;
+    entriesTrend: number;
+    progressTrend: number;
+    projectsTrend: number;
+    modulesTrend: number;
+    featuresTrend: number;
+    collaboratorsTrend: number;
+  };
 }
 
-export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
+/**
+ * 추세를 문자열로 포맷팅
+ */
+function formatTrend(value: number, suffix: string = ""): string | undefined {
+  if (value === 0) return undefined;
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value}${suffix}`;
+}
+
+export function PersonalDashboard({ userName, stats, trends }: PersonalDashboardProps) {
   const router = useRouter();
 
   const handleNavigate = (href: string) => {
@@ -34,7 +52,8 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30 px-6 py-8">
+    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      <div className="max-w-[1440px] mx-auto px-6 py-8">
       {/* 헤더 - 대담한 타이포그래피 */}
       <div className="mb-10">
         <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-3">
@@ -61,42 +80,56 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
           <GlassStatCard
             label="전체 스냅샷"
             value={stats.totalSnapshots}
+            trend={formatTrend(trends?.snapshotsTrend || 0)}
+            trendUp={(trends?.snapshotsTrend || 0) > 0}
             gradientFrom="from-blue-500"
             gradientTo="to-cyan-400"
           />
           <GlassStatCard
             label="스냅샷 엔트리"
             value={stats.totalEntries}
+            trend={formatTrend(trends?.entriesTrend || 0)}
+            trendUp={(trends?.entriesTrend || 0) > 0}
             gradientFrom="from-indigo-500"
             gradientTo="to-purple-400"
           />
           <GlassStatCard
             label="평균 진척률"
             value={`${stats.thisWeekProgress}%`}
+            trend={formatTrend(trends?.progressTrend || 0, "%")}
+            trendUp={(trends?.progressTrend || 0) > 0}
             gradientFrom="from-emerald-500"
             gradientTo="to-teal-400"
           />
           <GlassStatCard
             label="진행 중 프로젝트"
             value={stats.activeProjects}
+            trend={formatTrend(trends?.projectsTrend || 0)}
+            trendUp={(trends?.projectsTrend || 0) > 0}
             gradientFrom="from-violet-500"
             gradientTo="to-purple-400"
           />
           <GlassStatCard
             label="진행 중 모듈"
             value={stats.activeModules}
+            trend={formatTrend(trends?.modulesTrend || 0)}
+            trendUp={(trends?.modulesTrend || 0) > 0}
             gradientFrom="from-pink-500"
             gradientTo="to-rose-400"
           />
           <GlassStatCard
             label="진행 중 기능"
             value={stats.activeFeatures}
+            trend={formatTrend(trends?.featuresTrend || 0)}
+            trendUp={(trends?.featuresTrend || 0) > 0}
             gradientFrom="from-amber-500"
             gradientTo="to-orange-400"
           />
           <GlassStatCard
             label="협업자"
             value={stats.collaborators}
+            trend={formatTrend(trends?.collaboratorsTrend || 0)}
+            trendUp={(trends?.collaboratorsTrend || 0) > 0}
             gradientFrom="from-cyan-500"
             gradientTo="to-blue-400"
           />
@@ -162,6 +195,7 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
             매주 업무를 정리하고 진척 상황을 추적하면 성장이 보입니다
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

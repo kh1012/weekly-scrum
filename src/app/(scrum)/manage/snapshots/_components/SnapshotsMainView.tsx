@@ -549,11 +549,11 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
               </button>
             </div>
             
-            {/* 전체 펼치기/접기 버튼 */}
+            {/* 전체 펼치기/접기 버튼 - 토글 버튼과 높이 맞춤 */}
             {filteredSnapshots.length > 0 && (
               <button
                 onClick={() => setAllExpanded(!allExpanded)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
                   allExpanded 
                     ? "bg-blue-100 text-blue-700 hover:bg-blue-200" 
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
