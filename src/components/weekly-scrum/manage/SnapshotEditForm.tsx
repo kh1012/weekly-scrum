@@ -152,7 +152,7 @@ function MetaField({
 }
 
 /**
- * Task 편집 컴포넌트 (Past Week)
+ * Task 편집 컴포넌트 (Past Week) - 25% 단위 슬라이더 포함
  */
 function TaskEditor({
   tasks,
@@ -183,44 +183,95 @@ function TaskEditor({
     onChange(tasks.filter((_, i) => i !== index));
   };
 
+  // 슬라이더 값을 25% 단위로 스냅
+  const snapToStep = (value: number) => Math.round(value / 25) * 25;
+
   return (
     <div className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {tasks.map((task, index) => (
-        <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
-          <input
-            type="text"
-            value={task.title}
-            onChange={(e) => updateTask(index, "title", e.target.value)}
-            placeholder="작업 내용..."
-            tabIndex={baseTabIndex + index * 2}
-            className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
-              compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
-            }`}
-          />
-          <div className="flex items-center gap-1.5 shrink-0">
+        <div key={index} className={`group bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
+          {/* 상단: 제목 + 삭제 */}
+          <div className="flex items-center gap-2">
             <input
-              type="number"
-              value={task.progress}
-              onChange={(e) => updateTask(index, "progress", e.target.value)}
-              min={0}
-              max={100}
-              tabIndex={baseTabIndex + index * 2 + 1}
-              className={`bg-transparent border border-gray-200 text-center focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
-                compact ? "w-12 px-1.5 py-1.5 rounded text-xs" : "w-16 px-2 py-2 rounded-lg text-sm"
+              type="text"
+              value={task.title}
+              onChange={(e) => updateTask(index, "title", e.target.value)}
+              placeholder="작업 내용..."
+              tabIndex={baseTabIndex + index * 2}
+              className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
+                compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
               }`}
             />
-            <span className={compact ? "text-xs text-gray-500" : "text-sm text-gray-500"}>%</span>
+            <button
+              type="button"
+              onClick={() => removeTask(index)}
+              tabIndex={-1}
+              className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all shrink-0 ${compact ? "p-1" : "p-2"}`}
+            >
+              <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => removeTask(index)}
-            tabIndex={-1}
-            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${compact ? "p-1" : "p-2"}`}
-          >
-            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          
+          {/* 하단: 진행률 슬라이더 */}
+          <div className={`flex items-center gap-3 ${compact ? "mt-2" : "mt-3"}`}>
+            {/* 슬라이더 */}
+            <div className="flex-1 relative">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={25}
+                value={snapToStep(task.progress)}
+                onChange={(e) => updateTask(index, "progress", Number(e.target.value))}
+                tabIndex={baseTabIndex + index * 2 + 1}
+                className={`w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-4
+                  [&::-webkit-slider-thumb]:h-4
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-gray-900
+                  [&::-webkit-slider-thumb]:cursor-pointer
+                  [&::-webkit-slider-thumb]:transition-transform
+                  [&::-webkit-slider-thumb]:hover:scale-110
+                  [&::-moz-range-thumb]:w-4
+                  [&::-moz-range-thumb]:h-4
+                  [&::-moz-range-thumb]:rounded-full
+                  [&::-moz-range-thumb]:bg-gray-900
+                  [&::-moz-range-thumb]:border-0
+                  [&::-moz-range-thumb]:cursor-pointer
+                `}
+                style={{
+                  background: `linear-gradient(to right, #10b981 0%, #10b981 ${task.progress}%, #e5e7eb ${task.progress}%, #e5e7eb 100%)`,
+                }}
+              />
+              {/* 25% 눈금 마커 */}
+              <div className="absolute top-3 left-0 right-0 flex justify-between px-0.5">
+                {[0, 25, 50, 75, 100].map((mark) => (
+                  <span
+                    key={mark}
+                    className={`text-[10px] ${
+                      task.progress >= mark ? "text-emerald-600" : "text-gray-400"
+                    }`}
+                  >
+                    {mark}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            {/* 현재 값 표시 */}
+            <div className={`shrink-0 font-bold ${
+              task.progress === 100
+                ? "text-emerald-600"
+                : task.progress >= 50
+                ? "text-blue-600"
+                : "text-gray-600"
+            } ${compact ? "text-sm w-12 text-right" : "text-base w-14 text-right"}`}>
+              {task.progress}%
+            </div>
+          </div>
         </div>
       ))}
       <button
