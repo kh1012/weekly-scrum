@@ -403,6 +403,7 @@ function RiskEditor({
   risks,
   riskLevel,
   onChange,
+  onAddRisk,
   onRiskLevelChange,
   baseTabIndex,
   compact,
@@ -410,21 +411,13 @@ function RiskEditor({
   risks: string[] | null;
   riskLevel: 0 | 1 | 2 | 3 | null;
   onChange: (risks: string[] | null) => void;
+  onAddRisk: () => void;
   onRiskLevelChange?: (level: 0 | 1 | 2 | 3 | null) => void;
   baseTabIndex: number;
   compact?: boolean;
 }) {
   const actualRisks = risks || [];
   const hasRisks = actualRisks.length > 0;
-
-  const addRisk = () => {
-    const newRisks = [...actualRisks, ""];
-    onChange(newRisks);
-    // 리스크 추가 시 RiskLevel을 0 (없음)으로 설정
-    if (actualRisks.length === 0) {
-      onRiskLevelChange?.(0);
-    }
-  };
 
   const updateRisk = (index: number, value: string) => {
     const newRisks = [...actualRisks];
@@ -508,7 +501,7 @@ function RiskEditor({
       {/* 리스크 추가 버튼 (항상 표시) */}
       <button
         type="button"
-        onClick={addRisk}
+        onClick={onAddRisk}
         tabIndex={-1}
         className={`flex items-center gap-2 font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-100 transition-colors ${
           compact ? "px-2.5 py-1.5 text-xs rounded-lg" : "px-4 py-2.5 text-sm rounded-xl"
@@ -517,7 +510,7 @@ function RiskEditor({
         <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
-        + 리스크 추가
+        리스크 추가
       </button>
     </div>
   );
@@ -868,7 +861,18 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
               <RiskEditor 
                 risks={snapshot.pastWeek.risk}
                 riskLevel={snapshot.pastWeek.riskLevel}
-                onChange={(risks) => handlePastWeekChange("risk", risks)} 
+                onChange={(risks) => handlePastWeekChange("risk", risks)}
+                onAddRisk={() => {
+                  // risk와 riskLevel을 한 번에 업데이트
+                  const newRisks = [...(snapshot.pastWeek.risk || []), ""];
+                  onUpdate({
+                    pastWeek: {
+                      ...snapshot.pastWeek,
+                      risk: newRisks,
+                      riskLevel: snapshot.pastWeek.risk === null ? 0 : snapshot.pastWeek.riskLevel,
+                    },
+                  });
+                }}
                 onRiskLevelChange={(level) => handlePastWeekChange("riskLevel", level)}
                 baseTabIndex={50} 
                 compact={compact} 
