@@ -6,6 +6,7 @@ import { SideNavigation } from "./Navigation";
 import { WeekSelector } from "./WeekSelector";
 import { SearchInput } from "./SearchInput";
 import { ExpandableFilters } from "./ExpandableFilters";
+import { UserProfile } from "./UserProfile";
 
 interface HeaderProps {
   isSidebarOpen?: boolean;
@@ -130,7 +131,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
           {!hideWeekSelector && <WeekSelector />}
         </div>
 
-        {/* 우측: 검색 + 필터 */}
+        {/* 우측: 검색 + 필터 + 프로필 */}
         <div className="flex items-center gap-4">
           {!hideAllControls && <SearchInput />}
           {!hideFilters && (
@@ -212,6 +213,13 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
               </div>
             </>
           )}
+
+          {/* 프로필 */}
+          <div
+            className="w-px h-6 rounded-full"
+            style={{ background: "var(--notion-border)" }}
+          />
+          <UserProfile />
         </div>
       </div>
 
@@ -255,8 +263,11 @@ export function Header({ isSidebarOpen = true, onSidebarToggle }: HeaderProps) {
             <Logo />
           </div>
 
-          {/* 모바일 검색 */}
-          {!hideAllControls && <SearchInput isMobile />}
+          {/* 모바일 검색 + 프로필 */}
+          <div className="flex items-center gap-2">
+            {!hideAllControls && <SearchInput isMobile />}
+            <UserProfile />
+          </div>
 
           {/* Popover 메뉴 */}
           {isMenuOpen && (
