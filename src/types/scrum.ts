@@ -22,9 +22,9 @@ export type Relation = "pair" | "pre" | "post";
  */
 export interface Collaborator {
   name: string;
-  /** 기본 협업 관계 (하위 호환성) */
-  relation: Relation;
-  /** v2: 복수 관계 선택 (선택) */
+  /** @deprecated - relations 배열을 사용하세요 */
+  relation?: Relation;
+  /** 복수 관계 선택 */
   relations?: Relation[];
 }
 
@@ -167,6 +167,7 @@ export interface FilterOptionState {
  * 주차 옵션 타입 (v3 - ISO 주차 기준)
  */
 export interface WeekOption {
+  id?: string;            // snapshot_weeks.id (UUID) - 전체 뷰 모드에서 사용
   year: number;           // ISO 연도
   week: string;           // ISO 주차 (W01 ~ W53)
   weekStart: string;      // 주 시작일 (YYYY-MM-DD)

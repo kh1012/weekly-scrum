@@ -74,11 +74,11 @@ export interface Database {
           id: string;
           workspace_id: string;
           author_id: string | null;
+          author_display_name: string | null;
           week_start_date: string;
           week_end_date: string | null;
           year: number | null;
           week: string | null;
-          title: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -86,11 +86,11 @@ export interface Database {
           id?: string;
           workspace_id: string;
           author_id?: string | null;
+          author_display_name?: string | null;
           week_start_date: string;
           week_end_date?: string | null;
           year?: number | null;
           week?: string | null;
-          title?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -98,11 +98,11 @@ export interface Database {
           id?: string;
           workspace_id?: string;
           author_id?: string | null;
+          author_display_name?: string | null;
           week_start_date?: string;
           week_end_date?: string | null;
           year?: number | null;
           week?: string | null;
-          title?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -111,15 +111,18 @@ export interface Database {
         Row: {
           id: string;
           snapshot_id: string;
+          workspace_id: string;
+          author_id: string;
           name: string;
           domain: string;
           project: string;
-          module: string | null;
-          feature: string | null;
-          past_week_tasks: PastWeekTask[];
-          this_week_tasks: string[];
-          risk: string[] | null;
-          risk_level: number | null;
+          module: string;
+          feature: string;
+          past_week: PastWeekData;
+          this_week: ThisWeekData;
+          risk: RiskData;
+          risks: string[];
+          risk_level: number;
           collaborators: Collaborator[];
           created_at: string;
           updated_at: string;
@@ -127,15 +130,18 @@ export interface Database {
         Insert: {
           id?: string;
           snapshot_id: string;
+          workspace_id: string;
+          author_id: string;
           name: string;
           domain: string;
           project: string;
-          module?: string | null;
-          feature?: string | null;
-          past_week_tasks?: PastWeekTask[];
-          this_week_tasks?: string[];
-          risk?: string[] | null;
-          risk_level?: number | null;
+          module: string;
+          feature: string;
+          past_week?: PastWeekData;
+          this_week?: ThisWeekData;
+          risk?: RiskData;
+          risks?: string[];
+          risk_level?: number;
           collaborators?: Collaborator[];
           created_at?: string;
           updated_at?: string;
@@ -143,15 +149,18 @@ export interface Database {
         Update: {
           id?: string;
           snapshot_id?: string;
+          workspace_id?: string;
+          author_id?: string;
           name?: string;
           domain?: string;
           project?: string;
-          module?: string | null;
-          feature?: string | null;
-          past_week_tasks?: PastWeekTask[];
-          this_week_tasks?: string[];
-          risk?: string[] | null;
-          risk_level?: number | null;
+          module?: string;
+          feature?: string;
+          past_week?: PastWeekData;
+          this_week?: ThisWeekData;
+          risk?: RiskData;
+          risks?: string[];
+          risk_level?: number;
           collaborators?: Collaborator[];
           created_at?: string;
           updated_at?: string;
@@ -218,6 +227,38 @@ export interface Database {
           created_at?: string;
         };
       };
+      snapshot_weeks: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          year: number;
+          week: string;
+          week_start_date: string;
+          week_end_date: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          year: number;
+          week: string;
+          week_start_date: string;
+          week_end_date: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          year?: number;
+          week?: string;
+          week_start_date?: string;
+          week_end_date?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -235,5 +276,19 @@ export interface Collaborator {
   name: string;
   relation: "pair" | "pre" | "post";
   relations?: ("pair" | "pre" | "post")[];
+}
+
+// snapshot_entries의 jsonb 컬럼 타입
+export interface PastWeekData {
+  tasks?: PastWeekTask[];
+  collaborators?: Collaborator[];
+}
+
+export interface ThisWeekData {
+  tasks?: string[];
+}
+
+export interface RiskData {
+  items?: string[];
 }
 
