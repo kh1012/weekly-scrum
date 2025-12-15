@@ -23,6 +23,7 @@ interface ManageEditorScreenProps {
   isSidebarOpen: boolean;
   onSelectCard: (tempId: string) => void;
   onDeleteCard: (tempId: string) => void;
+  onDuplicateCard: (tempId: string) => void;
   onUpdateCard: (tempId: string, updates: Partial<TempSnapshot>) => void;
   onAddEmpty: () => void;
   onBackToEntry: () => void;
@@ -44,6 +45,7 @@ export function ManageEditorScreen({
   isSidebarOpen,
   onSelectCard,
   onDeleteCard,
+  onDuplicateCard,
   onUpdateCard,
   onAddEmpty,
   onBackToEntry,
@@ -229,6 +231,7 @@ export function ManageEditorScreen({
             selectedId={selectedSnapshot?.tempId || null}
             onSelectCard={onSelectCard}
             onDeleteCard={onDeleteCard}
+            onDuplicateCard={onDuplicateCard}
             onCopyJson={handleCopyCardJson}
             onCopyPlainText={handleCopyCardPlainText}
             onAddEmpty={onAddEmpty}

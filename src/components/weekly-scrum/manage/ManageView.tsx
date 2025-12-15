@@ -138,6 +138,48 @@ export function ManageView() {
     });
   }, []);
 
+  // 카드 복제
+  const handleDuplicateCard = useCallback((tempId: string) => {
+    setState((prev) => {
+      const target = prev.snapshots.find((s) => s.tempId === tempId);
+      if (!target) return prev;
+
+      const now = new Date();
+      const duplicated: TempSnapshot = {
+        ...target,
+        tempId: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        isOriginal: false,
+        isDirty: true,
+        createdAt: now,
+        updatedAt: now,
+        // 깊은 복사
+        pastWeek: {
+          ...target.pastWeek,
+          tasks: target.pastWeek.tasks.map((t) => ({ ...t })),
+          risk: target.pastWeek.risk ? [...target.pastWeek.risk] : null,
+          collaborators: target.pastWeek.collaborators.map((c) => ({
+            ...c,
+            relations: c.relations ? [...c.relations] : undefined,
+          })),
+        },
+        thisWeek: {
+          tasks: [...target.thisWeek.tasks],
+        },
+      };
+
+      // 복제된 카드를 원본 바로 아래에 삽입
+      const targetIndex = prev.snapshots.findIndex((s) => s.tempId === tempId);
+      const newSnapshots = [...prev.snapshots];
+      newSnapshots.splice(targetIndex + 1, 0, duplicated);
+
+      return {
+        ...prev,
+        snapshots: newSnapshots,
+        selectedId: duplicated.tempId,
+      };
+    });
+  }, []);
+
   // 카드 업데이트
   const handleUpdateCard = useCallback((tempId: string, updates: Partial<TempSnapshot>) => {
     setState((prev) => ({
@@ -191,6 +233,7 @@ export function ManageView() {
         isSidebarOpen={isSidebarOpen}
         onSelectCard={handleSelectCard}
         onDeleteCard={handleDeleteCard}
+        onDuplicateCard={handleDuplicateCard}
         onUpdateCard={handleUpdateCard}
         onAddEmpty={handleAddEmpty}
         onBackToEntry={handleBackToEntry}

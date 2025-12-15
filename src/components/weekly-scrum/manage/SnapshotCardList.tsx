@@ -29,6 +29,7 @@ interface SnapshotCardListProps {
   selectedId: string | null;
   onSelectCard: (tempId: string) => void;
   onDeleteCard: (tempId: string) => void;
+  onDuplicateCard: (tempId: string) => void;
   onCopyJson: (snapshot: TempSnapshot) => void;
   onCopyPlainText: (snapshot: TempSnapshot) => void;
   onAddEmpty: () => void;
@@ -51,6 +52,7 @@ export const SnapshotCardList = forwardRef<
     selectedId,
     onSelectCard,
     onDeleteCard,
+    onDuplicateCard,
     onCopyJson,
     onCopyPlainText,
     onAddEmpty,
@@ -61,6 +63,9 @@ export const SnapshotCardList = forwardRef<
 ) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [optionMenuId, setOptionMenuId] = useState<string | null>(null);
+  const [optionMenuPosition, setOptionMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const optionButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // 외부에서 카드 확장 제어
   useImperativeHandle(ref, () => ({
@@ -111,6 +116,25 @@ export const SnapshotCardList = forwardRef<
     setContextMenu(null);
   }, []);
 
+  // 옵션 메뉴 열기
+  const handleOpenOptionMenu = useCallback((e: React.MouseEvent, tempId: string) => {
+    e.stopPropagation();
+    const button = optionButtonRefs.current[tempId];
+    if (button) {
+      const rect = button.getBoundingClientRect();
+      setOptionMenuPosition({
+        top: rect.bottom + 4,
+        left: rect.right - 160, // 메뉴 너비 160px
+      });
+    }
+    setOptionMenuId((prev) => (prev === tempId ? null : tempId));
+  }, []);
+
+  // 옵션 메뉴 닫기
+  const closeOptionMenu = useCallback(() => {
+    setOptionMenuId(null);
+  }, []);
+
   const [isCopyDropdownOpen, setIsCopyDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const copyButtonRef = useRef<HTMLButtonElement>(null);
@@ -123,6 +147,15 @@ export const SnapshotCardList = forwardRef<
       return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [isCopyDropdownOpen]);
+
+  // 옵션 메뉴 외부 클릭 닫기
+  useEffect(() => {
+    const handleClickOutside = () => setOptionMenuId(null);
+    if (optionMenuId) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [optionMenuId]);
 
   // 드롭다운 열릴 때 위치 계산
   const handleOpenDropdown = useCallback((e: React.MouseEvent) => {
@@ -307,37 +340,68 @@ export const SnapshotCardList = forwardRef<
                     </div>
                   </div>
 
-                  {/* 펼치기/접기 버튼 */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleExpand(snapshot.tempId);
-                    }}
-                    className={`
-                      p-1.5 rounded-lg transition-all duration-200
-                      ${
-                        isExpanded
-                          ? "bg-blue-100 text-blue-600"
-                          : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                      }
-                    `}
-                  >
-                    <svg
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
+                  <div className="flex items-center gap-1">
+                    {/* 펼치기/접기 버튼 */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpand(snapshot.tempId);
+                      }}
+                      className={`
+                        p-1.5 rounded-lg transition-all duration-200
+                        ${
+                          isExpanded
+                            ? "bg-blue-100 text-blue-600"
+                            : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        }
+                      `}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* 옵션 메뉴 버튼 */}
+                    <button
+                      ref={(el) => { optionButtonRefs.current[snapshot.tempId] = el; }}
+                      onClick={(e) => handleOpenOptionMenu(e, snapshot.tempId)}
+                      aria-label="옵션"
+                      className={`
+                        p-1.5 rounded-lg transition-all duration-200
+                        ${
+                          optionMenuId === snapshot.tempId
+                            ? "bg-gray-200 text-gray-700"
+                            : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        }
+                      `}
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* 메타 태그 (여러 줄로 나열) */}
@@ -526,6 +590,28 @@ export const SnapshotCardList = forwardRef<
           >
             <button
               onClick={() => {
+                onDuplicateCard(contextMenu.snapshot.tempId);
+                closeContextMenu();
+              }}
+              className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+            >
+              <svg
+                className="w-4 h-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                />
+              </svg>
+              복제
+            </button>
+            <button
+              onClick={() => {
                 onCopyJson(contextMenu.snapshot);
                 closeContextMenu();
               }}
@@ -594,6 +680,118 @@ export const SnapshotCardList = forwardRef<
           </div>
         </>
       )}
+
+      {/* 옵션 메뉴 (... 버튼) */}
+      {optionMenuId &&
+        createPortal(
+          <div
+            className="fixed z-[9999] min-w-[160px] py-1.5 bg-white rounded-xl shadow-xl border border-gray-100 animate-scale-in"
+            style={{
+              top: optionMenuPosition.top,
+              left: Math.max(8, optionMenuPosition.left),
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const snapshot = snapshots.find((s) => s.tempId === optionMenuId);
+              if (!snapshot) return null;
+              return (
+                <>
+                  <button
+                    onClick={() => {
+                      onDuplicateCard(snapshot.tempId);
+                      closeOptionMenu();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                      />
+                    </svg>
+                    복제
+                  </button>
+                  <button
+                    onClick={() => {
+                      onCopyJson(snapshot);
+                      closeOptionMenu();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    JSON 복사
+                  </button>
+                  <button
+                    onClick={() => {
+                      onCopyPlainText(snapshot);
+                      closeOptionMenu();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Plain Text 복사
+                  </button>
+                  <div className="h-px bg-gray-100 my-1" />
+                  <button
+                    onClick={() => {
+                      onDeleteCard(snapshot.tempId);
+                      closeOptionMenu();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-3"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    삭제
+                  </button>
+                </>
+              );
+            })()}
+          </div>,
+          document.body
+        )}
     </div>
   );
 });
