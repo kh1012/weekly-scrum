@@ -60,6 +60,9 @@ export function ManageEditorScreen({
   // 편집 패널 너비 비율 (3열 모드에서 편집:미리보기 비율)
   const [editPanelRatio, setEditPanelRatio] = useState(0.5); // 0.3 ~ 0.7
   
+  // 포커스된 섹션 (미리보기 연동)
+  const [focusedSection, setFocusedSection] = useState<string | null>(null);
+  
   // 화면 너비 상태
   const [canShowThreeColumns, setCanShowThreeColumns] = useState(false);
   const [useWideFormLayout, setUseWideFormLayout] = useState(false);
@@ -257,6 +260,7 @@ export function ManageEditorScreen({
                   onUpdate={(updates) =>
                     onUpdateCard(selectedSnapshot.tempId, updates)
                   }
+                  onFocusSection={setFocusedSection}
                   compact
                   singleColumn
                 />
@@ -271,6 +275,7 @@ export function ManageEditorScreen({
               <PlainTextPreview
                 snapshot={selectedSnapshot}
                 onCopy={handleCopyCurrentPlainText}
+                focusedSection={focusedSection as import("./PlainTextPreview").PreviewSection | null}
               />
             </div>
           </>

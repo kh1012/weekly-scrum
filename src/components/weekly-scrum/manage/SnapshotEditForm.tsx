@@ -22,6 +22,17 @@ import {
   CUSTOM_INPUT_VALUE,
 } from "@/lib/snapshotMetaOptions";
 
+// 섹션 타입 (PlainTextPreview와 동일)
+export type FormSection = 
+  | "meta" 
+  | "pastWeek" 
+  | "pastWeek.tasks" 
+  | "pastWeek.risks" 
+  | "pastWeek.riskLevel" 
+  | "pastWeek.collaborators" 
+  | "thisWeek" 
+  | "thisWeek.tasks";
+
 interface SnapshotEditFormProps {
   snapshot: TempSnapshot;
   onUpdate: (updates: Partial<TempSnapshot>) => void;
@@ -29,6 +40,8 @@ interface SnapshotEditFormProps {
   compact?: boolean;
   /** 1열 레이아웃 모드: 좁은 화면에서 메타 필드를 1열로 배치 */
   singleColumn?: boolean;
+  /** 섹션 포커스 콜백 */
+  onFocusSection?: (section: FormSection | null) => void;
 }
 
 // 공통 입력 스타일 (일반 모드)
@@ -730,7 +743,7 @@ function CollaboratorEditor({
   );
 }
 
-export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleColumn = false }: SnapshotEditFormProps) {
+export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleColumn = false, onFocusSection }: SnapshotEditFormProps) {
   const moduleOptions = snapshot.project && MODULE_OPTIONS[snapshot.project]
     ? MODULE_OPTIONS[snapshot.project]
     : ALL_MODULE_OPTIONS;
@@ -783,7 +796,10 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
       {/* 콘텐츠 영역 - 스크롤 가능 */}
       <div className={`flex-1 overflow-y-auto ${contentPadding} ${compact ? "max-w-2xl" : "max-w-3xl"}`}>
         {/* 메타 영역 */}
-        <section className={sectionSpace}>
+        <section 
+          className={sectionSpace}
+          onFocus={() => onFocusSection?.("meta")}
+        >
           <div className="flex items-center gap-2">
             <div className={`w-1 ${barHeight} rounded-full bg-gray-900`} />
             <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>메타 정보</h3>
@@ -833,12 +849,12 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
           </div>
 
           <div className={innerSpace}>
-            <div>
+            <div onFocus={() => onFocusSection?.("pastWeek.tasks")}>
               <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Tasks</label>
               <TaskEditor tasks={snapshot.pastWeek.tasks} onChange={(tasks) => handlePastWeekChange("tasks", tasks)} baseTabIndex={10} compact={compact} />
             </div>
 
-            <div>
+            <div onFocus={() => onFocusSection?.("pastWeek.risks")}>
               <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risks</label>
               <RiskEditor 
                 risks={snapshot.pastWeek.risk} 
@@ -849,7 +865,7 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
               />
             </div>
 
-            <div>
+            <div onFocus={() => onFocusSection?.("pastWeek.riskLevel")}>
               <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risk Level</label>
               <div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
                 {RISK_LEVEL_OPTIONS.map((option) => (
@@ -893,7 +909,7 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
               </div>
             </div>
 
-            <div>
+            <div onFocus={() => onFocusSection?.("pastWeek.collaborators")}>
               <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Collaborators</label>
               <CollaboratorEditor collaborators={snapshot.pastWeek.collaborators} onChange={(collabs) => handlePastWeekChange("collaborators", collabs)} baseTabIndex={70} compact={compact} />
             </div>
@@ -901,13 +917,16 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
         </section>
 
         {/* This Week */}
-        <section className={sectionSpace}>
+        <section 
+          className={sectionSpace}
+          onFocus={() => onFocusSection?.("thisWeek")}
+        >
           <div className="flex items-center gap-2">
             <div className={`w-1 ${barHeight} rounded-full bg-emerald-500`} />
             <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>This Week</h3>
           </div>
 
-          <div>
+          <div onFocus={() => onFocusSection?.("thisWeek.tasks")}>
             <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Tasks</label>
             <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} compact={compact} />
           </div>
