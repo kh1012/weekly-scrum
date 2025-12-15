@@ -39,22 +39,34 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 보호된 경로 체크
-  const isProtectedRoute = request.nextUrl.pathname.startsWith("/app");
-  const isAuthRoute =
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname.startsWith("/auth");
+  const pathname = request.nextUrl.pathname;
 
-  if (isProtectedRoute && !user) {
-    // 비로그인 사용자가 보호된 경로 접근 시 로그인으로 리다이렉트
+  // 공개 경로 (로그인 불필요)
+  const publicRoutes = ["/login", "/auth/callback"];
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
+
+  // 정적 파일은 제외
+  const isStaticFile =
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.includes(".");
+
+  if (isStaticFile) {
+    return supabaseResponse;
+  }
+
+  // 비로그인 사용자가 보호된 경로 접근 시 로그인으로 리다이렉트
+  if (!isPublicRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("redirectTo", request.nextUrl.pathname);
+    url.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (isAuthRoute && user) {
-    // 로그인된 사용자가 인증 페이지 접근 시 메인으로 리다이렉트
+  // 로그인된 사용자가 로그인 페이지 접근 시 메인으로 리다이렉트
+  if (pathname === "/login" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
