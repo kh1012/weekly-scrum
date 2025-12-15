@@ -265,7 +265,9 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow">
-              <span className="text-white text-xs">👥</span>
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
             </div>
             <h3 className="text-sm font-bold text-gray-900">팀 전체</h3>
           </div>
@@ -358,7 +360,9 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow">
-              <span className="text-white text-xs">👤</span>
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-8 2.67-8 8h16c0-5.33-2.67-8-8-8z" />
+              </svg>
             </div>
             <h3 className="text-sm font-bold text-gray-900">멤버별</h3>
             <span className="text-xs text-gray-400 ml-1">· {members.length}명</span>
@@ -378,18 +382,18 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
             const info = memberData.get(memberName)!;
             
             return (
-              <div key={memberName} className="space-y-2">
-                {/* 멤버 정보 */}
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-500 shadow-inner">
+              <div key={memberName} className="flex items-start gap-3">
+                {/* 멤버 카드 */}
+                <div className="w-16 shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2 text-center border border-gray-100">
+                  <div className="w-6 h-6 mx-auto rounded-full bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm mb-1">
                     {memberName.charAt(0)}
                   </div>
-                  <p className="text-[11px] font-medium text-gray-700">{memberName}</p>
-                  <span className="text-[9px] text-gray-400">{info.total}건</span>
+                  <p className="text-[10px] font-medium text-gray-700 truncate">{memberName}</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">{info.total}건</p>
                 </div>
 
                 {/* 반응형 히트맵 - 분기별 그리드 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pl-7">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                   {[0, 1, 2, 3].map((quarter) => {
                     const startIdx = quarter * 13;
                     const endIdx = startIdx + 13;
