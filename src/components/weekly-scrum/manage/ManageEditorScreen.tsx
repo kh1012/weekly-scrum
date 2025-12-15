@@ -280,25 +280,27 @@ export function ManageEditorScreen({
             </div>
           </>
         ) : (
-          // 2열 모드: 편집 + 미리보기 꺼짐 플레이스홀더
+          // 2열 모드: 편집 + 미리보기 꺼짐 플레이스홀더 (리사이즈 가능)
           <>
-            <div className="flex-1 overflow-hidden min-w-0 max-w-2xl">
-              <div className="h-full bg-white overflow-y-auto">
-                {selectedSnapshot ? (
-                  <SnapshotEditForm
-                    key={selectedSnapshot.tempId}
-                    snapshot={selectedSnapshot}
-                    onUpdate={(updates) =>
-                      onUpdateCard(selectedSnapshot.tempId, updates)
-                    }
-                    compact
-                    singleColumn
-                  />
-                ) : (
-                  <EmptyState />
-                )}
-              </div>
+            <div 
+              className="bg-white overflow-y-auto min-w-0 shrink-0"
+              style={{ width: `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})` }}
+            >
+              {selectedSnapshot ? (
+                <SnapshotEditForm
+                  key={selectedSnapshot.tempId}
+                  snapshot={selectedSnapshot}
+                  onUpdate={(updates) =>
+                    onUpdateCard(selectedSnapshot.tempId, updates)
+                  }
+                  compact
+                  singleColumn
+                />
+              ) : (
+                <EmptyState />
+              )}
             </div>
+            <ResizeHandle onResize={handleEditPreviewResize} />
             {/* 미리보기 꺼짐 플레이스홀더 */}
             <div className="flex-1 min-w-0 bg-gradient-to-br from-gray-50 to-gray-100/50 flex items-center justify-center">
               <div className="text-center p-8">
