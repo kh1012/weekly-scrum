@@ -140,7 +140,7 @@ function LoginForm() {
 
         {/* Bottom text */}
         <p className="mt-6 text-center text-xs text-gray-400">
-          © 2024 Weekly Scrum
+          © 2026 Weekly Scrum
         </p>
       </div>
     </div>

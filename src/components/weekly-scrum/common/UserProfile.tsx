@@ -51,11 +51,11 @@ export function UserProfile() {
         return;
       }
 
-      // 작성한 스냅샷 개수 가져오기 (display_name으로 매칭)
+      // 작성한 스냅샷 개수 가져오기 (author_id로 매칭)
       const { count } = await supabase
         .from("snapshot_entries")
         .select("*", { count: "exact", head: true })
-        .eq("name", profile.display_name);
+        .eq("author_id", user.id);
 
       setUserInfo({
         email: profile.email || user.email || "",

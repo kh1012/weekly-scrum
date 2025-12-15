@@ -14,4 +14,5 @@ export { LayoutWrapper, MainContent, getLastVisitedPage } from "./LayoutWrapper"
 export { UserProfile } from "./UserProfile";
 export { LoadingSpinner, PageLoadingSpinner, SkeletonCard } from "./LoadingSpinner";
 export { Logo } from "./Logo";
+export { NavigationProgress, navigationProgress } from "./NavigationProgress";
 

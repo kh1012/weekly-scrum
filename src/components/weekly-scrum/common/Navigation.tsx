@@ -7,6 +7,7 @@ import { useVisitorCount } from "@/hooks/useVisitorCount";
 import { RELEASES } from "../releases/releaseData";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import { Logo } from "./Logo";
+import { navigationProgress } from "./NavigationProgress";
 
 // localStorage 키
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
@@ -342,7 +343,10 @@ export function SideNavigation({
                       <Link
                         key={item.key}
                         href={item.href}
-                        onClick={onItemClick}
+                        onClick={() => {
+                          if (!active) navigationProgress.start();
+                          onItemClick?.();
+                        }}
                         className="group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
                         style={{
                           background: active ? accentBg : "transparent",
@@ -480,7 +484,10 @@ export function MobileNavigation({
           <Link
             key={item.key}
             href={item.href}
-            onClick={onItemClick}
+            onClick={() => {
+              if (!active) navigationProgress.start();
+              onItemClick?.();
+            }}
             className="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl transition-all duration-200 animate-scale-in"
             style={{
               background: active ? "rgba(59, 130, 246, 0.1)" : "transparent",

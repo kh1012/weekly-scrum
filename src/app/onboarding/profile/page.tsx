@@ -150,12 +150,14 @@ export default function OnboardingProfilePage() {
             <div className="w-8 h-1 rounded-full bg-rose-500" />
             <div className="w-8 h-1 rounded-full bg-gray-200" />
           </div>
-          <p className="mt-2 text-center text-xs text-gray-400">1단계 / 2단계</p>
+          <p className="mt-2 text-center text-xs text-gray-400">
+            1단계 / 2단계
+          </p>
         </div>
 
         {/* Bottom text */}
         <p className="mt-6 text-center text-xs text-gray-400">
-          © 2024 Weekly Scrum
+          © 2026 Weekly Scrum
         </p>
       </div>
     </div>

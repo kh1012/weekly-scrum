@@ -16,7 +16,9 @@
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.87.1",
+    "@types/nprogress": "^0.2.3",
     "next": "^15.0.3",
+    "nprogress": "^0.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-is": "^19.2.0",

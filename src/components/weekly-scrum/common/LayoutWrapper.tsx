@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, Suspense } from "react";
 import { Header, Sidebar } from "./Header";
+import { NavigationProgress } from "./NavigationProgress";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 
 interface LayoutWrapperProps {
@@ -71,6 +72,11 @@ export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--notion-bg)" }}>
+      {/* 네비게이션 프로그레스 바 */}
+      <Suspense fallback={null}>
+        <NavigationProgress />
+      </Suspense>
+
       {/* PC 사이드바 */}
       <Sidebar isOpen={isSidebarOpen} role={role} />
 
