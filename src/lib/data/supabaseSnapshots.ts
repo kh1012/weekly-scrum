@@ -70,21 +70,17 @@ function convertEntryToScrumItem(entry: any): ScrumItem {
 /**
  * Supabase에서 모든 스냅샷 데이터 조회 (snapshot_weeks 기반)
  * 같은 주차의 모든 개인 스냅샷 entries를 합쳐서 반환
+ * 
+ * 폴백 전략:
+ * 1. snapshot_weeks 테이블이 있으면 주차 목록으로 사용
+ * 2. snapshot_weeks가 비어있으면 snapshots에서 직접 주차 추출 (레거시 호환)
  */
 export async function getAllSnapshotsFromSupabase(
   workspaceId: string
 ): Promise<Record<string, WeeklyScrumData>> {
   const supabase = await createClient();
 
-  // 1. snapshot_weeks에서 주차 목록 조회 (중복 없음)
-  const weeks = await listSnapshotWeeks(workspaceId);
-  
-  if (weeks.length === 0) {
-    console.log("[getAllSnapshotsFromSupabase] No weeks found");
-    return {};
-  }
-
-  // 2. 모든 스냅샷과 entries를 한 번에 조회
+  // 1. 모든 스냅샷과 entries를 한 번에 조회
   const { data: snapshots, error } = await supabase
     .from("snapshots")
     .select("*, entries:snapshot_entries(*)")
@@ -96,34 +92,101 @@ export async function getAllSnapshotsFromSupabase(
     return {};
   }
 
+  if (!snapshots || snapshots.length === 0) {
+    console.log("[getAllSnapshotsFromSupabase] No snapshots found");
+    return {};
+  }
+
+  // 2. snapshot_weeks에서 주차 목록 조회 (중복 없음)
+  const weeks = await listSnapshotWeeks(workspaceId);
+  
+  console.log(`[getAllSnapshotsFromSupabase] Found ${weeks.length} weeks in snapshot_weeks, ${snapshots.length} snapshots`);
+
   // 3. 주차별로 스냅샷 entries 그룹화
   const allData: Record<string, WeeklyScrumData> = {};
 
-  for (const week of weeks) {
-    const key = `${week.year}-${week.week}`;
-    const [, month] = week.week_start_date.split("-").map(Number);
+  if (weeks.length > 0) {
+    // snapshot_weeks 테이블 기준으로 그룹화
+    for (const week of weeks) {
+      const key = `${week.year}-${week.week}`;
+      const [, month] = week.week_start_date.split("-").map(Number);
 
-    // 해당 주차의 모든 스냅샷에서 entries 수집
-    const weekSnapshots = (snapshots || []).filter(
-      (s) => s.year === week.year && s.week === week.week
-    );
+      // 해당 주차의 모든 스냅샷에서 entries 수집
+      // week_id로 조인 (우선), 없으면 year/week 또는 week_start_date로 폴백
+      const weekSnapshots = snapshots.filter((s) => {
+        // week_id로 매칭 (FK 연결된 경우)
+        if (s.week_id && s.week_id === week.id) {
+          return true;
+        }
+        // year/week으로 매칭 (레거시 데이터)
+        if (s.year === week.year && s.week === week.week) {
+          return true;
+        }
+        // week_start_date로 매칭 (최후의 폴백)
+        if (s.week_start_date === week.week_start_date) {
+          return true;
+        }
+        return false;
+      });
+      
+      // 모든 entries 합치기
+      const allItems: ScrumItem[] = [];
+      for (const snapshot of weekSnapshots) {
+        const items = (snapshot.entries || []).map(convertEntryToScrumItem);
+        allItems.push(...items);
+      }
+
+      allData[key] = {
+        year: week.year,
+        month: month,
+        week: week.week,
+        range: `${week.week_start_date} ~ ${week.week_end_date}`,
+        items: allItems,
+      };
+    }
+  } else {
+    // snapshot_weeks가 비어있으면 snapshots에서 직접 주차 추출 (레거시 호환)
+    console.log("[getAllSnapshotsFromSupabase] Fallback: extracting weeks from snapshots directly");
     
-    // 모든 entries 합치기
-    const allItems: ScrumItem[] = [];
-    for (const snapshot of weekSnapshots) {
-      const items = (snapshot.entries || []).map(convertEntryToScrumItem);
-      allItems.push(...items);
+    // 주차별로 그룹화 (중복 제거)
+    const weekMap = new Map<string, { year: number; week: string; weekStart: string; weekEnd: string; snapshots: typeof snapshots }>();
+    
+    for (const snapshot of snapshots) {
+      if (!snapshot.year || !snapshot.week) continue;
+      
+      const key = `${snapshot.year}-${snapshot.week}`;
+      if (!weekMap.has(key)) {
+        weekMap.set(key, {
+          year: snapshot.year,
+          week: snapshot.week,
+          weekStart: snapshot.week_start_date,
+          weekEnd: snapshot.week_end_date || snapshot.week_start_date,
+          snapshots: [],
+        });
+      }
+      weekMap.get(key)!.snapshots.push(snapshot);
     }
 
-    allData[key] = {
-      year: week.year,
-      month: month,
-      week: week.week,
-      range: `${week.week_start_date} ~ ${week.week_end_date}`,
-      items: allItems,
-    };
+    for (const [key, weekData] of weekMap) {
+      const [, month] = weekData.weekStart.split("-").map(Number);
+      
+      const allItems: ScrumItem[] = [];
+      for (const snapshot of weekData.snapshots) {
+        const items = (snapshot.entries || []).map(convertEntryToScrumItem);
+        allItems.push(...items);
+      }
+
+      allData[key] = {
+        year: weekData.year,
+        month: month,
+        week: weekData.week,
+        range: `${weekData.weekStart} ~ ${weekData.weekEnd}`,
+        items: allItems,
+      };
+    }
   }
 
+  console.log(`[getAllSnapshotsFromSupabase] Returning ${Object.keys(allData).length} weeks with data`);
   return allData;
 }
 
@@ -153,24 +216,65 @@ export async function listSnapshotWeeks(
 
 /**
  * Supabase에서 사용 가능한 주차 목록 조회 (snapshot_weeks 기반 - 중복 없음)
+ * 폴백: snapshot_weeks가 비어있으면 snapshots에서 직접 추출
+ * 
  * @param workspaceId - 워크스페이스 ID
  * @returns WeekOption 배열
  */
 export async function getAvailableWeeksFromSupabase(
   workspaceId: string
 ): Promise<WeekOption[]> {
+  // 1. snapshot_weeks에서 주차 목록 조회
   const weeks = await listSnapshotWeeks(workspaceId);
 
-  return weeks.map((row) => ({
-    id: row.id,
-    year: row.year,
-    week: row.week,
-    weekStart: row.week_start_date,
-    weekEnd: row.week_end_date,
-    key: `${row.year}-${row.week}`,
-    label: `${row.year}년 ${row.week}`,
-    filePath: "", // Supabase에서는 파일 경로 없음
-  }));
+  if (weeks.length > 0) {
+    return weeks.map((row) => ({
+      id: row.id,
+      year: row.year,
+      week: row.week,
+      weekStart: row.week_start_date,
+      weekEnd: row.week_end_date,
+      key: `${row.year}-${row.week}`,
+      label: `${row.year}년 ${row.week}`,
+      filePath: "", // Supabase에서는 파일 경로 없음
+    }));
+  }
+
+  // 2. 폴백: snapshots에서 직접 주차 추출 (중복 제거)
+  console.log("[getAvailableWeeksFromSupabase] Fallback: extracting weeks from snapshots");
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from("snapshots")
+    .select("year, week, week_start_date, week_end_date")
+    .eq("workspace_id", workspaceId)
+    .order("week_start_date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching weeks from Supabase:", error);
+    return [];
+  }
+
+  // 중복 제거
+  const weekMap = new Map<string, WeekOption>();
+  for (const row of data || []) {
+    if (!row.year || !row.week) continue;
+    
+    const key = `${row.year}-${row.week}`;
+    if (!weekMap.has(key)) {
+      weekMap.set(key, {
+        year: row.year,
+        week: row.week,
+        weekStart: row.week_start_date,
+        weekEnd: row.week_end_date || row.week_start_date,
+        key,
+        label: `${row.year}년 ${row.week}`,
+        filePath: "",
+      });
+    }
+  }
+
+  return Array.from(weekMap.values());
 }
 
 /**
