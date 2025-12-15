@@ -243,7 +243,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-900">최근 52주 기여도</h2>
-          <p className="text-sm text-gray-500 mt-0.5">팀과 멤버별 주간 활동을 한눈에 확인하세요</p>
+          <p className="text-sm text-gray-500 mt-0.5">Past Week Task 완료 건수 기준으로 집계됩니다</p>
         </div>
         <div className="flex items-center gap-5 text-sm">
           <div className="text-right">
