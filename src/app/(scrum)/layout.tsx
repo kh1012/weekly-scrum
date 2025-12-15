@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import {
   getAllScrumData,
   getAvailableWeeks,
@@ -20,22 +21,29 @@ export default async function ScrumLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // 개발용 바이패스 체크
+  const cookieStore = await cookies();
+  const isDevBypass = cookieStore.get("dev-bypass")?.value === "true";
+
   // 프로필 완성 여부 확인 (서버 컴포넌트에서 추가 보호)
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // 바이패스 모드에서는 체크 스킵
+  if (!isDevBypass) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .single();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .single();
 
-    // 프로필이 없으면 온보딩으로 리다이렉트
-    if (!profile) {
-      redirect("/onboarding/profile");
+      // 프로필이 없으면 온보딩으로 리다이렉트
+      if (!profile) {
+        redirect("/onboarding/profile");
+      }
     }
   }
 

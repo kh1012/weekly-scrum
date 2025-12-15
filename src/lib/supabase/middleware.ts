@@ -3,9 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * 테스트용 바이패스 키 (localhost에서만 작동)
- * 사용법: ?bypass=scrum-dev-2024
+ * 사용법: ?bypass=supabase
  */
-const DEV_BYPASS_KEY = "scrum-dev-2024";
+const DEV_BYPASS_KEY = "supabase";
 
 /**
  * localhost 여부 확인
@@ -32,12 +32,21 @@ export async function updateSession(request: NextRequest) {
 
   // 테스트용 바이패스 체크 (localhost에서만 활성화)
   const bypassKey = request.nextUrl.searchParams.get("bypass");
-  const isBypassEnabled =
-    isLocalhost(request) && bypassKey === DEV_BYPASS_KEY;
+  const isBypassEnabled = isLocalhost(request) && bypassKey === DEV_BYPASS_KEY;
 
   if (isBypassEnabled) {
     console.log("[DEV] Auth bypass enabled for:", request.nextUrl.pathname);
+    // bypass 상태를 쿠키로 전달 (layout에서도 체크할 수 있도록)
+    supabaseResponse.cookies.set("dev-bypass", "true", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 60 * 60, // 1시간
+    });
     return supabaseResponse;
+  } else {
+    // bypass가 아니면 쿠키 삭제
+    supabaseResponse.cookies.delete("dev-bypass");
   }
 
   const supabase = createServerClient(
@@ -137,4 +146,3 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse;
 }
-
