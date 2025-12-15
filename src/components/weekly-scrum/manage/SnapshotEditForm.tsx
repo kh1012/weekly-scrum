@@ -779,8 +779,8 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
         <span className="text-sm font-semibold text-gray-800">스냅샷 편집</span>
       </div>
 
-      {/* 콘텐츠 영역 - 스크롤 가능 */}
-      <div className={`flex-1 overflow-y-auto ${contentPadding} ${compact ? "max-w-2xl" : "max-w-3xl"}`}>
+      {/* 콘텐츠 영역 - 스크롤 가능, 전체 너비 */}
+      <div className={`flex-1 overflow-y-auto ${contentPadding}`}>
         {/* 메타 영역 */}
         <section 
           className={sectionSpace}
