@@ -229,10 +229,31 @@ function TaskEditor({
           
           {/* 하단: 프로그레스바 + 진행률 선택 - 한 줄 컴팩트 */}
           <div className={`flex items-center gap-2 ${compact ? "mt-2" : "mt-3"}`}>
-            {/* 프로그레스바 */}
-            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            {/* 프로그레스바 (클릭/드래그 가능) */}
+            <div 
+              className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden cursor-pointer relative"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const percent = Math.round(((e.clientX - rect.left) / rect.width) * 100 / 25) * 25;
+                updateTask(index, "progress", Math.max(0, Math.min(100, percent)));
+              }}
+              onMouseDown={(e) => {
+                const bar = e.currentTarget;
+                const handleDrag = (moveEvent: MouseEvent) => {
+                  const rect = bar.getBoundingClientRect();
+                  const percent = Math.round(((moveEvent.clientX - rect.left) / rect.width) * 100 / 25) * 25;
+                  updateTask(index, "progress", Math.max(0, Math.min(100, percent)));
+                };
+                const handleUp = () => {
+                  document.removeEventListener("mousemove", handleDrag);
+                  document.removeEventListener("mouseup", handleUp);
+                };
+                document.addEventListener("mousemove", handleDrag);
+                document.addEventListener("mouseup", handleUp);
+              }}
+            >
               <div 
-                className={`h-full rounded-full transition-all duration-300 ${
+                className={`h-full rounded-full transition-all duration-150 ${
                   task.progress === 100 ? 'bg-emerald-500' : 'bg-gray-900'
                 }`}
                 style={{ width: `${task.progress}%` }}
@@ -376,16 +397,18 @@ function ThisWeekTaskEditor({
 /**
  * Risk 편집 컴포넌트 - 리스크 추가 버튼 기본 제공
  * - 리스크 없으면: Risks: None, RiskLevel: None
- * - 리스크 추가 시: RiskLevel 자동으로 0 (없음) 설정
+ * - 리스크 추가 시: RiskLevel 선택 가능 (기본값 0)
  */
 function RiskEditor({
   risks,
+  riskLevel,
   onChange,
   onRiskLevelChange,
   baseTabIndex,
   compact,
 }: {
   risks: string[] | null;
+  riskLevel: 0 | 1 | 2 | 3 | null;
   onChange: (risks: string[] | null) => void;
   onRiskLevelChange?: (level: 0 | 1 | 2 | 3 | null) => void;
   baseTabIndex: number;
@@ -420,6 +443,13 @@ function RiskEditor({
     }
   };
 
+  const RISK_LEVELS = [
+    { value: 0, label: "없음", color: "bg-emerald-500" },
+    { value: 1, label: "경미", color: "bg-yellow-500" },
+    { value: 2, label: "중간", color: "bg-orange-500" },
+    { value: 3, label: "심각", color: "bg-rose-500" },
+  ];
+
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       {/* 리스크 목록 */}
@@ -450,16 +480,30 @@ function RiskEditor({
               </button>
             </div>
           ))}
+          
+          {/* RiskLevel 선택 (리스크가 있을 때만) */}
+          <div className="flex items-center gap-1.5 pt-1">
+            <span className={`text-gray-500 ${compact ? "text-xs" : "text-sm"}`}>Level:</span>
+            {RISK_LEVELS.map((level) => (
+              <button
+                key={level.value}
+                type="button"
+                onClick={() => onRiskLevelChange?.(level.value as 0 | 1 | 2 | 3)}
+                className={`
+                  ${compact ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-sm"} 
+                  rounded font-medium transition-all
+                  ${riskLevel === level.value
+                    ? `${level.color} text-white`
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  }
+                `}
+              >
+                {level.label}
+              </button>
+            ))}
+          </div>
         </>
-      ) : (
-        // 리스크 없음 상태
-        <div className={`flex items-center gap-2 text-gray-400 ${compact ? "text-xs py-2" : "text-sm py-3"}`}>
-          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          None
-        </div>
-      )}
+      ) : null}
 
       {/* 리스크 추가 버튼 (항상 표시) */}
       <button
@@ -473,7 +517,7 @@ function RiskEditor({
         <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
-        리스크 추가
+        + 리스크 추가
       </button>
     </div>
   );
@@ -822,7 +866,8 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
             <div onFocus={() => onFocusSection?.("pastWeek.risks")}>
               <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Risks</label>
               <RiskEditor 
-                risks={snapshot.pastWeek.risk} 
+                risks={snapshot.pastWeek.risk}
+                riskLevel={snapshot.pastWeek.riskLevel}
                 onChange={(risks) => handlePastWeekChange("risk", risks)} 
                 onRiskLevelChange={(level) => handlePastWeekChange("riskLevel", level)}
                 baseTabIndex={50} 

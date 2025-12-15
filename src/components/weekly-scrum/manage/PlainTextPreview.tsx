@@ -82,7 +82,7 @@ export function PlainTextPreview({ snapshot, onCopy, focusedSection }: PlainText
   // 하이라이트 스타일
   const getHighlightClass = (section: PreviewSection) => {
     if (focusedSection === section) {
-      return "bg-blue-50 border-l-2 border-blue-500 -ml-2 pl-2 transition-all duration-300";
+      return "bg-blue-50 rounded-lg px-2 py-1 -mx-2 transition-all duration-300";
     }
     return "transition-all duration-300";
   };
