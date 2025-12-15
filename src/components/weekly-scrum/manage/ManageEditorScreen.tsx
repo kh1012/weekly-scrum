@@ -280,24 +280,50 @@ export function ManageEditorScreen({
             </div>
           </>
         ) : (
-          // 2열 모드: 편집만 표시
-          <div className="flex-1 overflow-hidden min-w-0">
-            <div className="h-full bg-white overflow-y-auto">
-              {selectedSnapshot ? (
-                <SnapshotEditForm
-                  key={selectedSnapshot.tempId}
-                  snapshot={selectedSnapshot}
-                  onUpdate={(updates) =>
-                    onUpdateCard(selectedSnapshot.tempId, updates)
-                  }
-                  compact
-                  singleColumn
-                />
-              ) : (
-                <EmptyState />
-              )}
+          // 2열 모드: 편집 + 미리보기 꺼짐 플레이스홀더
+          <>
+            <div className="flex-1 overflow-hidden min-w-0 max-w-2xl">
+              <div className="h-full bg-white overflow-y-auto">
+                {selectedSnapshot ? (
+                  <SnapshotEditForm
+                    key={selectedSnapshot.tempId}
+                    snapshot={selectedSnapshot}
+                    onUpdate={(updates) =>
+                      onUpdateCard(selectedSnapshot.tempId, updates)
+                    }
+                    compact
+                    singleColumn
+                  />
+                ) : (
+                  <EmptyState />
+                )}
+              </div>
             </div>
-          </div>
+            {/* 미리보기 꺼짐 플레이스홀더 */}
+            <div className="flex-1 min-w-0 bg-gradient-to-br from-gray-50 to-gray-100/50 flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-white/80 shadow-sm flex items-center justify-center">
+                  <svg
+                    className="w-10 h-10 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium text-gray-400 mb-1">미리보기 꺼짐</p>
+                <p className="text-xs text-gray-300">
+                  우측 상단 토글을 켜면<br/>실시간 미리보기를 확인할 수 있습니다
+                </p>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
