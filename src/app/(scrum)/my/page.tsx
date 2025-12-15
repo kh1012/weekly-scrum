@@ -11,8 +11,11 @@ export default async function MyPage() {
   let userName: string | undefined;
   let stats = {
     totalSnapshots: 0,
+    totalEntries: 0,
     thisWeekProgress: 0,
     activeProjects: 0,
+    activeModules: 0,
+    activeFeatures: 0,
     collaborators: 0,
   };
 
@@ -53,14 +56,19 @@ export default async function MyPage() {
       .eq("year", now.getFullYear())
       .eq("week", weekLabel);
 
-    // 프로젝트와 협업자 수는 전체 스냅샷에서 계산
+    // 프로젝트, 모듈, 기능, 협업자 수는 전체 스냅샷에서 계산
     const snapshotIds = snapshots?.map(s => s.id) || [];
     const { data: allEntries } = snapshotIds.length > 0 ? await supabase
       .from("snapshot_entries")
-      .select("project, collaborators, past_week")
+      .select("project, module, feature, collaborators, past_week")
       .in("snapshot_id", snapshotIds) : { data: [] };
 
+    // 전체 엔트리 수
+    stats.totalEntries = allEntries?.length || 0;
+
     const projects = new Set<string>();
+    const modules = new Set<string>();
+    const features = new Set<string>();
     const collaboratorNames = new Set<string>();
     let totalProgress = 0;
     let taskCount = 0;
@@ -68,6 +76,8 @@ export default async function MyPage() {
     if (allEntries) {
       for (const entry of allEntries) {
         if (entry.project) projects.add(entry.project);
+        if (entry.module) modules.add(entry.module);
+        if (entry.feature) features.add(entry.feature);
         
         // collaborators에서 이름 추출
         const collabs = entry.collaborators as { name: string }[] || [];
@@ -105,6 +115,8 @@ export default async function MyPage() {
     }
 
     stats.activeProjects = projects.size;
+    stats.activeModules = modules.size;
+    stats.activeFeatures = features.size;
     stats.collaborators = collaboratorNames.size;
   }
 

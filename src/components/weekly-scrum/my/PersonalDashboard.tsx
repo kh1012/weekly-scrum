@@ -16,8 +16,11 @@ interface PersonalDashboardProps {
   userName?: string;
   stats?: {
     totalSnapshots: number;
+    totalEntries: number;
     thisWeekProgress: number;
     activeProjects: number;
+    activeModules: number;
+    activeFeatures: number;
     collaborators: number;
   };
 }
@@ -31,15 +34,9 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-10rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      {/* 헤더 - 더 대담한 타이포그래피 */}
+    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30 px-6 py-8">
+      {/* 헤더 - 대담한 타이포그래피 */}
       <div className="mb-10">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-medium text-emerald-600 uppercase tracking-wider">
-            Active
-          </span>
-        </div>
         <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-3">
           {userName ? (
             <>
@@ -60,20 +57,22 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
 
       {/* 통계 카드 - 글래스모피즘 스타일 */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-10">
           <GlassStatCard
             label="전체 스냅샷"
             value={stats.totalSnapshots}
-            trend="+3"
-            trendUp
             gradientFrom="from-blue-500"
             gradientTo="to-cyan-400"
           />
           <GlassStatCard
-            label="이번 주 진척률"
+            label="스냅샷 엔트리"
+            value={stats.totalEntries}
+            gradientFrom="from-indigo-500"
+            gradientTo="to-purple-400"
+          />
+          <GlassStatCard
+            label="평균 진척률"
             value={`${stats.thisWeekProgress}%`}
-            trend="+12%"
-            trendUp
             gradientFrom="from-emerald-500"
             gradientTo="to-teal-400"
           />
@@ -84,12 +83,22 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
             gradientTo="to-purple-400"
           />
           <GlassStatCard
-            label="협업자"
-            value={stats.collaborators}
-            trend="+2"
-            trendUp
+            label="진행 중 모듈"
+            value={stats.activeModules}
+            gradientFrom="from-pink-500"
+            gradientTo="to-rose-400"
+          />
+          <GlassStatCard
+            label="진행 중 기능"
+            value={stats.activeFeatures}
             gradientFrom="from-amber-500"
             gradientTo="to-orange-400"
+          />
+          <GlassStatCard
+            label="협업자"
+            value={stats.collaborators}
+            gradientFrom="from-cyan-500"
+            gradientTo="to-blue-400"
           />
         </div>
       )}
@@ -144,16 +153,14 @@ export function PersonalDashboard({ userName, stats }: PersonalDashboardProps) {
       </div>
 
       {/* 하단 안내 - 미니멀 스타일 */}
-      <div className="mt-16 py-6 border-t border-gray-100">
-        <div className="flex items-center justify-center gap-6 text-xs text-gray-400">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>실시간 동기화</span>
-          </div>
-          <span className="text-gray-200">·</span>
-          <span>Supabase 안전 저장</span>
-          <span className="text-gray-200">·</span>
-          <span>자동 백업</span>
+      <div className="mt-16 py-8 border-t border-gray-100">
+        <div className="text-center">
+          <p className="text-gray-600 font-medium mb-2">
+            ✨ 스냅샷을 관리하면서 한 주를 기록해보세요
+          </p>
+          <p className="text-xs text-gray-400">
+            매주 업무를 정리하고 진척 상황을 추적하면 성장이 보입니다
+          </p>
         </div>
       </div>
     </div>
@@ -177,18 +184,18 @@ function GlassStatCard({
   gradientTo: string;
 }) {
   return (
-    <div className="group relative p-5 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-lg shadow-gray-200/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden">
+    <div className="group relative p-4 rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-lg shadow-gray-200/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden">
       {/* 배경 그라데이션 원 */}
       <div
-        className={`absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-20 group-hover:opacity-30 group-hover:scale-125 transition-all duration-500`}
+        className={`absolute -top-4 -right-4 w-16 h-16 rounded-full bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-20 group-hover:opacity-30 group-hover:scale-125 transition-all duration-500`}
       />
 
       <div className="relative">
-        <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-3xl font-black text-gray-900">{value}</span>
+        <div className="flex items-baseline gap-1.5 mb-0.5">
+          <span className="text-2xl font-black text-gray-900">{value}</span>
           {trend && (
             <span
-              className={`text-xs font-semibold ${
+              className={`text-[10px] font-semibold ${
                 trendUp ? "text-emerald-500" : "text-red-500"
               }`}
             >
@@ -196,7 +203,7 @@ function GlassStatCard({
             </span>
           )}
         </div>
-        <span className="text-sm text-gray-500 font-medium">{label}</span>
+        <span className="text-xs text-gray-500 font-medium">{label}</span>
       </div>
     </div>
   );

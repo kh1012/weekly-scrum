@@ -505,8 +505,8 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
 
       {/* 메인 콘텐츠 영역 */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* 서브 메뉴 영역 - 글래스 효과 */}
-        <div className="shrink-0 flex items-center justify-between px-6 py-3 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm border-b border-gray-100">
+        {/* 서브 메뉴 영역 - 글래스 효과 + z-index 설정 */}
+        <div className="shrink-0 relative z-40 flex items-center justify-between px-6 py-3 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm border-b border-gray-100">
           {/* 좌측: WeekSelector */}
           <WeekSelector
             year={selectedYear}

@@ -33,7 +33,7 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = [
 ];
 
 // padding 없는 페이지 경로
-const NO_PADDING_PAGES = ["/calendar"];
+const NO_PADDING_PAGES = ["/calendar", "/my", "/manage/snapshots"];
 
 // localStorage 키
 const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
