@@ -122,75 +122,73 @@ export async function listPlansForMonth({
 }): Promise<PlanWithAssignees[]> {
   const supabase = await createClient();
 
-  // 기본 쿼리 구성
-  let query = supabase
-    .from("plans")
-    .select(`
-      *,
-      plan_assignees (
-        plan_id,
-        workspace_id,
-        user_id,
-        role,
-        profiles:user_id (
-          display_name,
-          email
+  try {
+    // 기본 쿼리 구성 (FK 조인 없이 안전하게)
+    let query = supabase
+      .from("plans")
+      .select(`
+        *,
+        plan_assignees (
+          plan_id,
+          workspace_id,
+          user_id,
+          role
         )
-      ),
-      creator:profiles!plans_created_by_fkey (
-        display_name,
-        email
-      )
-    `)
-    .eq("workspace_id", workspaceId)
-    .order("start_date", { ascending: true, nullsFirst: false });
+      `)
+      .eq("workspace_id", workspaceId)
+      .order("start_date", { ascending: true, nullsFirst: false });
 
-  // 월 범위 필터 (overlap 조건)
-  // 일정이 해당 월에 걸쳐있는 경우
-  query = query
-    .or(`start_date.is.null,start_date.lte.${monthEnd}`)
-    .or(`end_date.is.null,end_date.gte.${monthStart}`);
+    // 월 범위 필터 (overlap 조건)
+    // 일정이 해당 월에 걸쳐있는 경우
+    query = query
+      .or(`start_date.is.null,start_date.lte.${monthEnd}`)
+      .or(`end_date.is.null,end_date.gte.${monthStart}`);
 
-  // 추가 필터 적용
-  if (filters?.type) {
-    query = query.eq("type", filters.type);
-  }
-  if (filters?.domain) {
-    query = query.eq("domain", filters.domain);
-  }
-  if (filters?.project) {
-    query = query.eq("project", filters.project);
-  }
-  if (filters?.module) {
-    query = query.eq("module", filters.module);
-  }
-  if (filters?.feature) {
-    query = query.eq("feature", filters.feature);
-  }
-  if (filters?.status) {
-    query = query.eq("status", filters.status);
-  }
-  if (filters?.stage) {
-    query = query.eq("stage", filters.stage);
-  }
+    // 추가 필터 적용
+    if (filters?.type) {
+      query = query.eq("type", filters.type);
+    }
+    if (filters?.domain) {
+      query = query.eq("domain", filters.domain);
+    }
+    if (filters?.project) {
+      query = query.eq("project", filters.project);
+    }
+    if (filters?.module) {
+      query = query.eq("module", filters.module);
+    }
+    if (filters?.feature) {
+      query = query.eq("feature", filters.feature);
+    }
+    if (filters?.status) {
+      query = query.eq("status", filters.status);
+    }
+    if (filters?.stage) {
+      query = query.eq("stage", filters.stage);
+    }
 
-  const { data, error } = await query;
+    const { data, error } = await query;
 
-  if (error) {
-    console.error("[listPlansForMonth] Failed:", error);
-    throw error;
+    if (error) {
+      console.error("[listPlansForMonth] Failed:", error);
+      // 테이블이 없거나 스키마 문제일 경우 빈 배열 반환
+      return [];
+    }
+
+    // assignee 필터는 클라이언트 측에서 처리 (복잡한 JOIN 대신)
+    let plans = (data || []) as PlanWithAssignees[];
+
+    if (filters?.assigneeUserId) {
+      plans = plans.filter((plan) =>
+        plan.assignees?.some((a) => a.user_id === filters.assigneeUserId)
+      );
+    }
+
+    return plans;
+  } catch (err) {
+    console.error("[listPlansForMonth] Unexpected error:", err);
+    return [];
   }
-
-  // assignee 필터는 클라이언트 측에서 처리 (복잡한 JOIN 대신)
-  let plans = (data || []) as PlanWithAssignees[];
-
-  if (filters?.assigneeUserId) {
-    plans = plans.filter((plan) =>
-      plan.assignees?.some((a) => a.user_id === filters.assigneeUserId)
-    );
-  }
-
-  return plans;
 }
 
 /**
@@ -205,45 +203,43 @@ export async function listPlansWithoutDates({
 }): Promise<PlanWithAssignees[]> {
   const supabase = await createClient();
 
-  let query = supabase
-    .from("plans")
-    .select(`
-      *,
-      plan_assignees (
-        plan_id,
-        workspace_id,
-        user_id,
-        role,
-        profiles:user_id (
-          display_name,
-          email
+  try {
+    let query = supabase
+      .from("plans")
+      .select(`
+        *,
+        plan_assignees (
+          plan_id,
+          workspace_id,
+          user_id,
+          role
         )
-      ),
-      creator:profiles!plans_created_by_fkey (
-        display_name,
-        email
-      )
-    `)
-    .eq("workspace_id", workspaceId)
-    .or("start_date.is.null,end_date.is.null")
-    .order("created_at", { ascending: false });
+      `)
+      .eq("workspace_id", workspaceId)
+      .or("start_date.is.null,end_date.is.null")
+      .order("created_at", { ascending: false });
 
-  // 필터 적용
-  if (filters?.type) {
-    query = query.eq("type", filters.type);
+    // 필터 적용
+    if (filters?.type) {
+      query = query.eq("type", filters.type);
+    }
+    if (filters?.status) {
+      query = query.eq("status", filters.status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[listPlansWithoutDates] Failed:", error);
+      // 테이블이 없거나 스키마 문제일 경우 빈 배열 반환
+      return [];
+    }
+
+    return (data || []) as PlanWithAssignees[];
+  } catch (err) {
+    console.error("[listPlansWithoutDates] Unexpected error:", err);
+    return [];
   }
-  if (filters?.status) {
-    query = query.eq("status", filters.status);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("[listPlansWithoutDates] Failed:", error);
-    throw error;
-  }
-
-  return (data || []) as PlanWithAssignees[];
 }
 
 /**
@@ -258,38 +254,35 @@ export async function getPlan({
 }): Promise<PlanWithAssignees | null> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("plans")
-    .select(`
-      *,
-      plan_assignees (
-        plan_id,
-        workspace_id,
-        user_id,
-        role,
-        profiles:user_id (
-          display_name,
-          email
+  try {
+    const { data, error } = await supabase
+      .from("plans")
+      .select(`
+        *,
+        plan_assignees (
+          plan_id,
+          workspace_id,
+          user_id,
+          role
         )
-      ),
-      creator:profiles!plans_created_by_fkey (
-        display_name,
-        email
-      )
-    `)
-    .eq("workspace_id", workspaceId)
-    .eq("id", planId)
-    .single();
+      `)
+      .eq("workspace_id", workspaceId)
+      .eq("id", planId)
+      .single();
 
-  if (error) {
-    if (error.code === "PGRST116") {
-      return null; // not found
+    if (error) {
+      if (error.code === "PGRST116") {
+        return null; // not found
+      }
+      console.error("[getPlan] Failed:", error);
+      return null;
     }
-    console.error("[getPlan] Failed:", error);
-    throw error;
-  }
 
-  return data as PlanWithAssignees;
+    return data as PlanWithAssignees;
+  } catch (err) {
+    console.error("[getPlan] Unexpected error:", err);
+    return null;
+  }
 }
 
 /**
@@ -450,35 +443,53 @@ export async function getFilterOptions({
 }> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("plans")
-    .select("domain, project, module, feature, stage")
-    .eq("workspace_id", workspaceId);
+  try {
+    const { data, error } = await supabase
+      .from("plans")
+      .select("domain, project, module, feature, stage")
+      .eq("workspace_id", workspaceId);
 
-  if (error) {
-    console.error("[getFilterOptions] Failed:", error);
-    throw error;
+    if (error) {
+      console.error("[getFilterOptions] Failed:", error);
+      // 테이블이 없으면 빈 옵션 반환
+      return {
+        domains: [],
+        projects: [],
+        modules: [],
+        features: [],
+        stages: [],
+      };
+    }
+
+    const domains = new Set<string>();
+    const projects = new Set<string>();
+    const modules = new Set<string>();
+    const features = new Set<string>();
+    const stages = new Set<string>();
+
+    for (const row of data || []) {
+      if (row.domain) domains.add(row.domain);
+      if (row.project) projects.add(row.project);
+      if (row.module) modules.add(row.module);
+      if (row.feature) features.add(row.feature);
+      if (row.stage) stages.add(row.stage);
+    }
+
+    return {
+      domains: Array.from(domains).sort(),
+      projects: Array.from(projects).sort(),
+      modules: Array.from(modules).sort(),
+      features: Array.from(features).sort(),
+      stages: Array.from(stages).sort(),
+    };
+  } catch (err) {
+    console.error("[getFilterOptions] Unexpected error:", err);
+    return {
+      domains: [],
+      projects: [],
+      modules: [],
+      features: [],
+      stages: [],
+    };
   }
-
-  const domains = new Set<string>();
-  const projects = new Set<string>();
-  const modules = new Set<string>();
-  const features = new Set<string>();
-  const stages = new Set<string>();
-
-  for (const row of data || []) {
-    if (row.domain) domains.add(row.domain);
-    if (row.project) projects.add(row.project);
-    if (row.module) modules.add(row.module);
-    if (row.feature) features.add(row.feature);
-    if (row.stage) stages.add(row.stage);
-  }
-
-  return {
-    domains: Array.from(domains).sort(),
-    projects: Array.from(projects).sort(),
-    modules: Array.from(modules).sort(),
-    features: Array.from(features).sort(),
-    stages: Array.from(stages).sort(),
-  };
 }

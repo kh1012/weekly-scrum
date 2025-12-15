@@ -1,220 +1,229 @@
-[프로젝트 작업 지시: Admin > Plans (일정표) UI + CRUD + 필터/그룹 + 권한]
-아래 Supabase 스키마(실제 테이블 정의)를 기준으로,
-관리자(admin/leader)만 접근 가능한 “일정표(Plans)” 기능을 Next.js(App Router)에서 구현한다.
+[미션]
+관리자 카테고리의 “All Snapshots / All Plans / Dashboard” UI를 완성한다.
+특히 All Snapshots에서 발생 중인 PGRST200 에러를 1순위로 해결하고,
+관리자 관점에서 “전체 스냅샷을 검색/필터/주차·범위(GNB) 연동”하여 목록/편집/삭제까지 가능하게 만든다.
 
 ────────────────────────────────────────
-[DB 스키마 (기준, 변경 금지)]
+[현재 문제(1순위 버그)]
+All Snapshots 진입 시 아래 에러로 데이터 로드 실패:
+[AdminSnapshots] Failed to fetch snapshots: {
+code: 'PGRST200',
+details: "Searched for a foreign key relationship between 'snapshots' and 'created_by' in the schema 'public', but no matches were found.",
+message: "Could not find a relationship between 'snapshots' and 'created_by' in the schema cache"
+}
 
-1. public.plans
+[원인 가정(필수로 확인 후 수정)]
 
-- id uuid PK
-- workspace_id uuid (FK workspaces)
-- type public.plan_type default 'feature' // feature 또는 이벤트성(릴리즈/배포 등) 타입 존재
-- domain text null
-- project text null
-- module text null
-- feature text null
-- title text not null
-- stage text not null
-- status text not null default '진행중'
-- start_date date null
-- end_date date null
-- created_by uuid not null (FK auth.users)
-- updated_by uuid not null (FK auth.users)
-- created_at timestamptz default now()
-- updated_at timestamptz default now()
-- CHECK: type='feature'이면 domain/project/module/feature 전부 NOT NULL 이어야 함
-- indexes:
-  - idx_plans_workspace_dates (workspace_id, start_date, end_date)
-  - idx_plans_define (workspace_id, domain, project, module)
-- trigger: trg_plans_updated_at
+- Supabase select에서 created_by에 대해 관계 조인(select 확장)을 시도하고 있는데,
+  public.snapshots에 created_by 컬럼 FK 관계가 없거나, 컬럼명이 created_by가 아니라 author_id일 가능성이 높다.
+- PostgREST는 FK 관계가 없으면 join 문법(created_by(...))을 지원하지 않아 PGRST200이 발생한다.
 
-2. public.plan_assignees
+[수정 요구(즉시)]
 
-- plan_id uuid (FK plans on delete cascade)
-- workspace_id uuid (FK workspaces)
-- user_id uuid (FK auth.users)
-- role public.assignee_role not null
-- PK(plan_id, user_id, role)
-
-중요:
-
-- plans.created_by/updated_by는 auth.users FK이므로,
-  앱에서 insert/update 시 반드시 user.id를 넣어야 한다.
-- feature type plan은 domain/project/module/feature가 모두 필수이며,
-  이벤트성 plan(type != 'feature')은 title만 있어도 된다(others nullable).
+1. All Snapshots 쿼리에서 ‘created_by 관계 조인’을 제거하여 목록 로딩이 무조건 되도록 수정한다.
+2. 작성자 표시가 필요하다면 auth.users join이 아니라 profiles를 통해 해결한다.
+   - snapshots.author_id(또는 created_by) ↔ profiles.user_id 관계를 사용
+   - FK가 없다면 일단 작성자 표시는 2차로 미룬다(목록 로딩 우선)
+3. PGRST200이 재발하지 않도록 쿼리/타입을 정리한다.
 
 ────────────────────────────────────────
-[목표]
+[관리자 권한/접근]
 
-1. 관리자(admin/leader)만 접근 가능한 “Admin > Plans” 메뉴/페이지 구현
-2. 월 범위 기반 뷰(초기 MVP는 ‘리스트 + 월 필터’로 시작) + 필터/그룹
-3. Plans CRUD
-4. plan_assignees 관리(담당자 다중 지정)
-5. 권한/보안: UI 숨김 + route guard + RLS 준수
+- /app/admin/\*\* 는 workspace_members.role in ('admin','leader')만 접근 가능
+- server guard(getWorkspaceRole) 필수
+- member 접근 시 /app로 redirect 또는 403
 
 ────────────────────────────────────────
-[권한/접근 제어]
+[요구사항 A: Admin Dashboard의 GNB 제한]
 
-- workspace_members.role in ('admin','leader')만:
-  - /app/admin/plans 접근 가능
-  - plans create/update/delete 가능
-- member는:
-  - A안(기본): plans 조회만 가능(단, admin 영역 접근은 차단)
-  - 즉, 실제로는 admin/leader만 쓴다고 가정하고 구현하되, RLS가 select를 허용하면 조회 컴포넌트는 재사용 가능하도록 설계
-
-필수 구현:
-
-- 서버에서 role 체크(getWorkspaceRole)로 /app/admin/\*\* 가드
-- role이 admin/leader가 아니면 /app로 redirect 또는 403 페이지
+- 관리자 카테고리의 “Dashboard”에서는 GNB가 아래만 남아야 한다:
+  - 뒤로가기(Back)
+  - 프로필 정보(사용자)
+- 그 외 GNB 요소(주차 선택, 범위 선택, 검색, 필터 등)는 모두 숨김
+- 구현 방식:
+  - GNB 컴포넌트가 feature flags / page context prop을 받게 하여,
+    admin dashboard에서는 최소 모드(minimal)로 렌더링되도록 한다.
 
 ────────────────────────────────────────
-[라우트/화면 구성]
+[요구사항 B: All Snapshots / All Plans는 GNB 연동(전체 기능 ON)]
+All Snapshots(/app/admin/snapshots)와 All Plans(/app/admin/plans)는
+GNB의 기능이 모두 연동되어 데이터가 바뀌어야 한다.
 
-1. /app/admin/plans
+GNB 연동 요소(반드시 동작):
 
-- 상단: 월 범위 선택(YYYY-MM) + 보기 모드 토글(리스트/간트는 간트는 2단계)
-- 필터 패널:
-  - domain / project / module / feature
-  - status(진행중/완료/보류 등)
-  - stage
-  - assignee(담당자 user)
-  - type(feature vs other)
-- 그룹 토글(Group by):
-  - 프로젝트별 / 모듈별 / 개인별 / 기능별
-- 리스트 뷰(현 시점 포함):
-  - “현재 진행중(기본)” 섹션 + “이번 달” 섹션 + “다가오는” 섹션(가능하면)
-  - 최소 MVP는 “선택 월에 걸치는 plan” 목록만 보여도 됨
-- “+ 계획 등록” 버튼(생성)
+1. 주차 선택(ISO year/week) + 기간(range) 표시
+2. 범위 선택(기간 범위; 예: last 4 weeks / custom range 등 현재 프로젝트 GNB가 제공하는 범위)
+3. 검색(search query)
+4. 필터(filters)
 
-2. /app/admin/plans/new (또는 모달/사이드패널)
+동작 원칙:
 
-- plan 생성 폼
-- 필수 입력:
-  - type
+- GNB의 상태는 URL search params로 동기화한다.
+  - 예: ?year=2025&week=50&range=month&query=...&status=...&project=...
+- 페이지는 search params를 기반으로 server-side fetch를 수행한다(RSC 권장).
+- 최상단에 현재 상태(검색/필터/주차/범위)를 “한눈에” 식별할 수 있는 Summary Bar를 반드시 표시한다.
+
+────────────────────────────────────────
+[요구사항 C: All Snapshots 기능 상세]
+라우트: /app/admin/snapshots
+
+1. 리스트 형태로 전체 스냅샷 조회
+
+- 기본 뷰는 리스트(테이블 또는 리스트 카드)
+- 컬럼/항목 최소:
+  - week_start_date(또는 year/week 계산값)
   - title
-  - stage
-  - status
-  - start_date, end_date(간트/월 뷰에 필요, 이벤트성은 null 허용)
-  - feature type이면 domain/project/module/feature 필수(체크 제약 준수)
-- assignees(복수 선택) + role 지정
-- 저장 시:
-  - plans insert + plan_assignees insert
-  - created_by/updated_by = current user id
+  - author(가능하면 display_name; 안되면 author_id)
+  - status(draft/published)
+  - updated_at
+  - entries count(가능하면)
+- 정렬: 최신 주차/최근 업데이트 우선
 
-3. /app/admin/plans/[id]/edit (또는 상세 패널)
+2. 검색/필터/주차/범위(GNB) 연동
 
-- plan 수정 폼
-- 저장 시:
-  - plans update(updated_by=current user id)
-  - plan_assignees는 diff 방식으로 upsert/delete
+- 검색: title/content(가능하면), 최소는 title
+- 필터: status, author, project/module/feature(가능한 범위)
+- 주차: 선택 주차(year/week)에 해당하는 스냅샷만
+- 범위: 선택 범위(start~end)에 해당하는 스냅샷만
 
-4. /app/admin/plans/[id]
+3. 최상단 Summary Bar(필수)
 
-- 상세 보기(옵션)
-- 빠른 상태 변경(status/stage) 가능하면 제공
+- 현재 적용 중인 조건을 텍스트로 명확히 표시:
+  - “주차: 2025-W50 (12.08~12.14)”
+  - “범위: 2025.12.01 ~ 2025.12.31”
+  - “검색: 'formula tracer'”
+  - “필터: status=published, project=MOTIIV …”
+- “필터 초기화” 버튼 제공(옵션)
 
-────────────────────────────────────────
-[데이터 조회 로직(월 범위)]
-월(YYYY-MM)을 선택하면 그 월에 “겹치는(plan overlap)” 계획을 가져온다.
+4. 선택 삭제(Bulk Delete)
 
-- 예: 12월 뷰면 12/01~12/31 범위와 겹치는 plan:
-  - start_date <= monthEnd AND (end_date is null OR end_date >= monthStart)
-- start_date/end_date가 null인 경우:
-  - 리스트 하단 “일정 미지정” 섹션으로 분리 표시
+- 리스트에 체크박스 제공(다중 선택)
+- “선택 삭제” 버튼
+- 삭제 전 confirm
+- 삭제 실행은 server action으로만
+- RLS 정책상 불가하면:
+  - 버튼 비활성/숨김 + “권한 정책상 삭제 불가” 안내
 
-주의:
+5. 개별 선택 후 수정(Edit)
 
-- idx_plans_workspace_dates 인덱스를 활용하도록 where절을 구성
+- 리스트 항목 클릭 → 상세/편집 화면으로 이동
+- /app/admin/snapshots/[snapshotId]/edit
+- 편집 화면은 “개인공간(Manage) 편집폼”을 그대로 재사용한다:
+  - 좌측 카드 목록
+  - 가운데 편집 폼
+  - 우측 미리보기
+- 단, 저장 버튼 텍스트는 admin 편집에서는 “업데이트하기”(고정)
+- 저장 시 snapshots + snapshot_entries를 업데이트한다.
+- 주의: 기존 개인공간 편집폼이 “내 데이터(author_id=auth.uid())” 전제로 묶여있을 수 있다.
+  - admin 편집에서는 snapshotId 기반으로 데이터를 로딩하도록 추상화하여 재사용 가능하게 만든다.
+  - 예: 편집폼 컴포넌트가 “mode = self/admin”을 받고,
+    데이터 로딩/저장 함수가 snapshotId를 기준으로 동작하도록 분리한다.
 
-────────────────────────────────────────
-[서버 액션/데이터 레이어]
-반드시 Server Actions 또는 Route Handler로만 쓰기 수행(클라이언트 direct write 금지).
+6. All Snapshots에서 먼저 해결해야 할 것(에러)
 
-1. src/lib/data/plans.ts
-
-- listPlansForMonth({ workspaceId, monthStart, monthEnd, filters })
-- getPlan({ workspaceId, planId })
-- createPlan({ workspaceId, payload, createdBy })
-- updatePlan({ workspaceId, planId, payload, updatedBy })
-- deletePlan({ workspaceId, planId })
-
-2. src/lib/data/planAssignees.ts
-
-- listAssignees({ workspaceId, planId })
-- replaceAssignees({ workspaceId, planId, assignees[], actorUserId })
-  - 기존 레코드 삭제 후 insert OR diff upsert(선호: diff)
-  - PK(plan_id, user_id, role) 준수
-
-3. src/app/(app)/admin/plans/\_actions.ts
-
-- createPlanAction(formData)
-- updatePlanAction(formData)
-- deletePlanAction(planId)
-- 모두 내부에서:
-  - auth.getUser()로 actor 확인
-  - getWorkspaceRole로 admin/leader 검증
-  - workspaceId 강제(DEFAULT_WORKSPACE_ID)
-  - created_by/updated_by 세팅
+- PGRST200 해결 우선:
+  - created_by join 제거
+  - (2차) profiles로 author 표시 추가
 
 ────────────────────────────────────────
-[멤버/담당자 선택을 위한 유저 목록]
-auth.users를 직접 list 하는 대신,
-workspace_members JOIN profiles 로 “워크스페이스 멤버 목록”을 가져와
-assignee 선택 옵션으로 사용한다.
+[요구사항 D: All Plans 기능 상세]
+라우트: /app/admin/plans
 
-- src/lib/data/members.ts
-  - listWorkspaceMembers({ workspaceId }) -> [{ user_id, display_name, email, role }]
-
-────────────────────────────────────────
-[폼 검증(필수)]
-
-- type === 'feature'이면 domain/project/module/feature 필수
-- status/stage는 빈 값 불가
-- start_date/end_date는:
-  - 둘 다 입력 권장
-  - end_date < start_date면 에러
-- created_by/updated_by는 서버에서 강제 세팅(클라이언트 입력 무시)
+- 기존 합의대로:
+  - GNB 연동(주차/범위/검색/필터)
+  - 월 범위 조회(YYYY-MM) + 필터/그룹 + CRUD
+- All Plans 역시 최상단 Summary Bar로 현재 조건 표시(주차/범위/검색/필터/월)
+- Dashboard와 달리 GNB 기능 전체 노출
 
 ────────────────────────────────────────
-[UI 구현 디테일(MVP 우선순위)]
-MVP 1차(이번 PR에서 반드시 끝낼 것)
+[구현 가이드(중복 최소화)]
 
-- /app/admin/plans 진입 가능(가드 포함)
-- 월 선택 + 월 overlap 기준 목록 조회
-- 필터(최소: project/module/status/type)
-- 생성/수정/삭제 CRUD
-- assignees 지정/수정 가능
-- “일정 미지정” 섹션 표시
+1. GNB 상태는 공통 훅/유틸로 통일
 
-MVP 2차(후속)
+- src/lib/ui/gnbParams.ts
+  - parseGnbParams(searchParams)
+  - buildGnbQuery(params)
+- 관리자 페이지는 이 값을 그대로 사용
 
-- 간트 뷰(막대형)
-- 드래그 리사이즈
-- Custom Flag(태그) 기능
+2. Summary Bar 공통 컴포넌트화
+
+- src/components/SummaryBar.tsx
+- 입력: { year, week, rangeStart, rangeEnd, query, filters } → 사람이 읽기 좋은 문자열로 표시
+
+3. 편집폼 재사용 구조화
+
+- 기존 개인공간 편집 UI를 “스냅샷 편집기” 컴포넌트로 분리:
+  - src/features/snapshots/SnapshotEditor.tsx
+  - props:
+    - mode: 'self' | 'admin'
+    - snapshotId
+    - initialWeekContext(optional)
+    - onSaveLabel: '업데이트하기' | '신규 등록하기'
+- self/admin에 따라:
+  - 데이터 로딩 쿼리만 달라짐(권한이 다름)
+  - UI 구성(3열)은 동일
+
+4. 데이터 fetch 레이어
+
+- src/lib/data/adminSnapshots.ts
+  - listSnapshots({ workspaceId, gnbParams }) // 주차/범위/검색/필터 적용
+  - getSnapshotDetail({ snapshotId, workspaceId })
+  - updateSnapshot({ snapshotId, payload })
+  - deleteSnapshotsBulk({ snapshotIds })
+- join을 쓰려면 FK가 있어야 하므로:
+  - (1차) join 없이 list
+  - (2차) profiles join로 display_name 붙이기
+
+────────────────────────────────────────
+[단계별 작업 순서(필수, 순서 고정)]
+Step 1) PGRST200 버그 수정
+
+- All Snapshots 쿼리에서 created_by join 제거 → 목록 로드 성공 확인
+
+Step 2) Admin Dashboard GNB 최소 모드 적용
+
+- 뒤로가기/프로필만 남기도록 렌더 조건 추가
+
+Step 3) All Snapshots: GNB search params 연동 + Summary Bar 표시
+
+- 주차/범위/검색/필터 값이 URL로 반영되고, 화면에 “현재 조건”이 표시되어야 함
+
+Step 4) All Snapshots: 리스트 UI + 선택 삭제 구현
+
+- 체크박스 + bulk delete server action
+- 성공 후 목록 리프레시
+
+Step 5) All Snapshots: 편집 라우트 추가 + 편집폼 재사용
+
+- /app/admin/snapshots/[id]/edit
+- SnapshotEditor 재사용(3열)
+- 저장 버튼 “업데이트하기”
+
+Step 6) All Plans: 동일한 GNB 연동 + Summary Bar 확인
+
+- 기존 plans CRUD는 유지하되, GNB 연동 누락된 부분 보완
 
 ────────────────────────────────────────
 [출력 요구]
 
 1. 변경/생성 파일 목록
 2. 각 파일 전체 코드(중간 생략 금지)
-3. 월 overlap 쿼리 로직 설명 + null date 처리 방식
-4. form validation 규칙 정리
-5. 테스트 시나리오
+3. PGRST200 원인/수정 전후 쿼리 비교(간단)
+4. GNB 연동 방식(어떤 params를 쓰는지) 문서화
+5. Summary Bar 표시 예시(주차/범위/검색/필터)
+6. 테스트 시나리오
 
-- leader/admin 계정으로 /app/admin/plans 접근 가능
-- 월 선택 후 목록 조회 확인
-- feature type plan 생성 시 domain/project/module/feature 없으면 저장 실패(프론트 validation + DB check)
-- assignees 2명 이상 지정 가능
-- 수정 시 updated_by 변경 확인
-- 삭제 시 plan_assignees cascade 삭제 확인
-- member 계정은 /app/admin 접근 차단
+- admin/leader로 All Snapshots 접근 → 목록 로드(PGRST200 없음)
+- 주차/범위/검색/필터 변경 → URL + Summary Bar 동기화
+- 다중 선택 삭제 → 목록 반영
+- 항목 편집 진입 → 개인공간 편집폼과 동일 UI → 업데이트 저장 성공
+- Dashboard에서는 GNB 최소 모드만 노출
+- member는 /app/admin 접근 차단
 
 ────────────────────────────────────────
 [완료 조건]
 
-- 현재 스키마(plans, plan_assignees)를 그대로 사용하여 Admin > Plans가 동작한다.
-- admin/leader만 plans CRUD가 가능하다(서버 가드 + RLS 준수).
-- 월 범위(YYYY-MM) 기반으로 계획을 조회하고, 필터/그룹(최소 일부)이 가능하다.
-- 생성/수정/삭제 시 created_by/updated_by가 올바르게 채워진다.
-- feature type check constraint를 위반하지 않는다.
+- All Snapshots에서 PGRST200이 해결되어 데이터가 로드된다.
+- All Snapshots는 리스트 + GNB(주차/범위/검색/필터) 연동 + Summary Bar + 선택 삭제 + 편집(개인공간 폼 재사용)이 동작한다.
+- Admin Dashboard는 GNB 최소 모드(뒤로가기/프로필만)로 렌더된다.
+- All Plans는 GNB 기능 전체 연동이 유지/보완된다.

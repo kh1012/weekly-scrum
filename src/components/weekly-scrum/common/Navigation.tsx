@@ -298,7 +298,8 @@ export function SideNavigation({
                     <span
                       className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
                       style={{
-                        background: "linear-gradient(135deg, rgba(247, 109, 87, 0.15), rgba(249, 235, 178, 0.3))",
+                        background:
+                          "linear-gradient(135deg, rgba(247, 109, 87, 0.15), rgba(249, 235, 178, 0.3))",
                         color: "#F76D57",
                         border: "1px solid rgba(247, 109, 87, 0.2)",
                       }}
@@ -341,9 +342,7 @@ export function SideNavigation({
                 <div className="space-y-1">
                   {category.items.map((item) => {
                     const active = isActive(item.href);
-                    const accentColor = isAdminSection
-                      ? "#F76D57"
-                      : "#3b82f6";
+                    const accentColor = isAdminSection ? "#F76D57" : "#3b82f6";
                     const accentBg = isAdminSection
                       ? "rgba(247, 109, 87, 0.1)"
                       : "rgba(59, 130, 246, 0.1)";
