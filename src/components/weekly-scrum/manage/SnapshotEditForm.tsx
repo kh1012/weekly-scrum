@@ -477,38 +477,38 @@ function RiskEditor({
   );
 }
 
-// Relation 아이콘 및 설명 - 모던 미니멀 스타일
+// Relation 아이콘 및 설명 - 직관적인 화살표 스타일
 const RELATION_INFO: Record<Relation, { icon: React.ReactNode; label: string; description: string; color: string; activeColor: string }> = {
   pair: {
     icon: (
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
       </svg>
     ),
     label: "페어",
-    description: "실시간 공동 협업 (pair partner)",
+    description: "함께 작업",
     color: "text-gray-300 hover:text-gray-400",
     activeColor: "text-purple-500",
   },
   pre: {
     icon: (
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15M9 12l3 3m0 0l3-3m-3 3V2.25" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
       </svg>
     ),
     label: "사전",
-    description: "앞단 협업자 - 내 작업에 필요한 선행 입력 제공",
+    description: "나에게 전달",
     color: "text-gray-300 hover:text-gray-400",
     activeColor: "text-blue-500",
   },
   post: {
     icon: (
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3v11.25" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
       </svg>
     ),
     label: "사후",
-    description: "후단 협업자 - 내 결과물을 받아 다음 단계 수행",
+    description: "내가 전달",
     color: "text-gray-300 hover:text-gray-400",
     activeColor: "text-emerald-500",
   },
@@ -529,6 +529,7 @@ function CollaboratorEditor({
   compact?: boolean;
 }) {
   const [customModes, setCustomModes] = useState<Record<number, boolean>>({});
+  const [multiModes, setMultiModes] = useState<Record<number, boolean>>({});
 
   const addCollaborator = () => {
     // relation과 relations 둘 다 설정 (하위 호환성)
@@ -541,27 +542,36 @@ function CollaboratorEditor({
     onChange(newCollaborators);
   };
 
+  const toggleMultiMode = (index: number) => {
+    setMultiModes((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
+
   const toggleRelation = (index: number, rel: Relation) => {
     const newCollaborators = [...collaborators];
     const currentRelations = newCollaborators[index].relations || [newCollaborators[index].relation];
+    const isMulti = multiModes[index];
     
     let newRelations: Relation[];
-    if (currentRelations.includes(rel)) {
-      // 이미 선택되어 있으면 제거 (최소 1개는 유지)
-      if (currentRelations.length > 1) {
-        newRelations = currentRelations.filter((r) => r !== rel);
+    if (isMulti) {
+      // 멀티 모드: 토글 방식
+      if (currentRelations.includes(rel)) {
+        if (currentRelations.length > 1) {
+          newRelations = currentRelations.filter((r) => r !== rel);
+        } else {
+          newRelations = currentRelations;
+        }
       } else {
-        newRelations = currentRelations;
+        newRelations = [...currentRelations, rel];
       }
     } else {
-      // 선택되어 있지 않으면 추가
-      newRelations = [...currentRelations, rel];
+      // 단일 모드: 하나만 선택
+      newRelations = [rel];
     }
     
     // relation과 relations 둘 다 업데이트 (하위 호환성)
     newCollaborators[index] = {
       ...newCollaborators[index],
-      relation: newRelations[0], // 첫 번째 값을 기본 relation으로
+      relation: newRelations[0],
       relations: newRelations,
     };
     onChange(newCollaborators);
@@ -649,7 +659,22 @@ function CollaboratorEditor({
             </div>
 
             {/* 관계 - 미니멀 아이콘 버튼 */}
-            <div className="flex items-center gap-0.5 shrink-0">
+            <div className="flex items-center gap-0.5 shrink-0 overflow-visible">
+              {/* 멀티 선택 토글 */}
+              <button
+                type="button"
+                onClick={() => toggleMultiMode(index)}
+                tabIndex={-1}
+                title={multiModes[index] ? "단일 선택으로 전환" : "다중 선택으로 전환"}
+                className={`
+                  flex items-center justify-center transition-all p-1 rounded mr-1
+                  ${multiModes[index] ? "text-gray-700 bg-gray-100" : "text-gray-300 hover:text-gray-400"}
+                `}
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+              </button>
               {RELATION_OPTIONS.map((rel) => {
                 const isSelected = relations.includes(rel);
                 const info = RELATION_INFO[rel];
@@ -667,9 +692,9 @@ function CollaboratorEditor({
                     >
                       {info.icon}
                     </button>
-                    {/* 툴팁 */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50">
-                      {info.label}
+                    {/* 툴팁 - fixed 포지션으로 overflow 해결 */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none" style={{ zIndex: 9999 }}>
+                      {info.label}: {info.description}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
                     </div>
                   </div>
