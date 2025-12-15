@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 
 /**
- * Weekly Scrum 로고 - 라인 스타일
+ * Weekly Scrum 로고 - Airbnb 스타일 기하학적 곡선
  */
 function WeeklyScrumLogo({ className = "w-12 h-12" }: { className?: string }) {
   return (
@@ -15,43 +15,14 @@ function WeeklyScrumLogo({ className = "w-12 h-12" }: { className?: string }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Calendar/Sprint icon */}
-      <rect
-        x="8"
-        y="12"
-        width="32"
-        height="28"
-        rx="3"
-        stroke="#FF385C"
-        strokeWidth="2"
-        fill="none"
-      />
-      <line x1="8" y1="20" x2="40" y2="20" stroke="#FF385C" strokeWidth="2" />
-      <line
-        x1="16"
-        y1="6"
-        x2="16"
-        y2="14"
-        stroke="#FF385C"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <line
-        x1="32"
-        y1="6"
-        x2="32"
-        y2="14"
-        stroke="#FF385C"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      {/* Checkmark */}
+      {/* Geometric "W" curve - single elegant stroke */}
       <path
-        d="M15 30L21 36L33 24"
+        d="M8 14 Q13 14, 16 24 Q19 34, 24 34 Q29 34, 32 24 Q35 14, 40 14"
         stroke="#FF385C"
-        strokeWidth="2"
+        strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
+        fill="none"
       />
     </svg>
   );

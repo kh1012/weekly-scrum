@@ -192,13 +192,15 @@ export function SideNavigation({ onItemClick }: SideNavigationProps) {
           <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
             {/* Background */}
             <rect width="32" height="32" rx="8" fill="#FF385C" />
-            {/* Calendar icon - line style */}
-            <rect x="7" y="9" width="18" height="16" rx="2" stroke="white" strokeWidth="1.5" fill="none" />
-            <line x1="7" y1="14" x2="25" y2="14" stroke="white" strokeWidth="1.5" />
-            <line x1="12" y1="6" x2="12" y2="11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="20" y1="6" x2="20" y2="11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            {/* Checkmark */}
-            <path d="M11 19L14 22L21 15" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Geometric "W" curve - Airbnb style */}
+            <path 
+              d="M6 10 Q9 10, 10.5 16 Q12 22, 16 22 Q20 22, 21.5 16 Q23 10, 26 10"
+              stroke="white" 
+              strokeWidth="2.5" 
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
           </svg>
         </div>
         <span
