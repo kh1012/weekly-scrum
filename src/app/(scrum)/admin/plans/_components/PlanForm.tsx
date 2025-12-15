@@ -38,12 +38,12 @@ const STATUS_OPTIONS: { value: PlanStatus; label: string }[] = [
 ];
 
 const STAGE_OPTIONS = [
-  "기획",
-  "설계",
-  "개발",
-  "테스트",
-  "배포",
-  "운영",
+  "컨셉 기획",
+  "상세 기획",
+  "디자인",
+  "BE 개발",
+  "FE 개발",
+  "QA",
 ];
 
 const ROLE_OPTIONS: { value: AssigneeRole; label: string }[] = [

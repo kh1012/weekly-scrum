@@ -31,7 +31,10 @@ export async function listWorkspaceMembers({
       .order("role", { ascending: true });
 
     if (membersError) {
-      console.error("[listWorkspaceMembers] Failed to fetch members:", membersError);
+      console.error(
+        "[listWorkspaceMembers] Failed to fetch members:",
+        membersError
+      );
       return [];
     }
 
@@ -47,12 +50,18 @@ export async function listWorkspaceMembers({
       .in("user_id", userIds);
 
     if (profilesError) {
-      console.error("[listWorkspaceMembers] Failed to fetch profiles:", profilesError);
+      console.error(
+        "[listWorkspaceMembers] Failed to fetch profiles:",
+        profilesError
+      );
       // profiles 없어도 멤버 목록은 반환
     }
 
     // 3. 조합
-    const profileMap = new Map<string, { display_name: string | null; email: string | null }>();
+    const profileMap = new Map<
+      string,
+      { display_name: string | null; email: string | null }
+    >();
     for (const p of profiles || []) {
       profileMap.set(p.user_id, {
         display_name: p.display_name,
