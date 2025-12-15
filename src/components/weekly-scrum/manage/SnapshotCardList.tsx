@@ -220,71 +220,80 @@ export const SnapshotCardList = forwardRef<
 
   return (
     <div className="flex-1 flex flex-col min-h-0" onClick={closeContextMenu}>
-      {/* 리스트 헤더 - h-12 통일 */}
-      <div className="h-12 px-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          {isSelectMode ? (
-            <>
-              <button
-                onClick={toggleSelectAll}
-                className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
-              >
-                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                  selectedIds.size === snapshots.length && snapshots.length > 0
-                    ? "bg-blue-500 border-blue-500"
-                    : "border-gray-300"
-                }`}>
-                  {selectedIds.size === snapshots.length && snapshots.length > 0 && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-                전체
-              </button>
-              <span className="text-xs text-blue-600 font-medium">
-                {selectedIds.size}개 선택
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-sm font-semibold text-gray-800">카드 목록</span>
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                {snapshots.length}
-              </span>
-            </>
-          )}
+      {/* 리스트 헤더 - 2줄 구조 */}
+      <div className="px-4 py-3 border-b border-gray-100 bg-white/80 backdrop-blur-sm shrink-0 space-y-2">
+        {/* 1줄: 타이틀 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-800">카드 목록</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              {snapshots.length}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* 선택 모드 토글 */}
-          {snapshots.length > 0 && (
-            <button
-              onClick={toggleSelectMode}
-              className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-all ${
-                isSelectMode
-                  ? "bg-blue-100 text-blue-600"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {isSelectMode ? "취소" : "선택"}
-            </button>
-          )}
+        
+        {/* 2줄: 액션 버튼들 */}
+        <div className="flex items-center justify-between">
+          {/* 좌측: 선택 모드 관련 */}
+          <div className="flex items-center gap-2">
+            {isSelectMode ? (
+              <>
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
+                >
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                    selectedIds.size === snapshots.length && snapshots.length > 0
+                      ? "bg-blue-500 border-blue-500"
+                      : "border-gray-300"
+                  }`}>
+                    {selectedIds.size === snapshots.length && snapshots.length > 0 && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  전체
+                </button>
+                <span className="text-xs text-blue-600 font-medium">
+                  {selectedIds.size}개 선택
+                </span>
+                {/* 일괄 삭제 버튼 */}
+                {selectedIds.size > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-md transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    삭제
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="text-xs text-gray-400">선택하여 일괄 관리</div>
+            )}
+          </div>
           
-          {/* 일괄 삭제 버튼 (선택 모드에서만) */}
-          {isSelectMode && selectedIds.size > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-md transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              삭제
-            </button>
-          )}
+          {/* 우측: 선택/복사/추가 버튼 */}
+          <div className="flex items-center gap-1">
+            {/* 선택 모드 토글 */}
+            {snapshots.length > 0 && (
+              <button
+                onClick={toggleSelectMode}
+                className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                  isSelectMode
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {isSelectMode ? "취소" : "선택"}
+              </button>
+            )}
           {/* 전체 복사 드롭다운 */}
           <button
             ref={copyButtonRef}
@@ -377,6 +386,7 @@ export const SnapshotCardList = forwardRef<
             </svg>
             추가
           </button>
+          </div>
         </div>
       </div>
 
