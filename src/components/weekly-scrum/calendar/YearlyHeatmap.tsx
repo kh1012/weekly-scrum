@@ -382,18 +382,16 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
             const info = memberData.get(memberName)!;
             
             return (
-              <div key={memberName} className="flex items-start gap-3">
+              <div key={memberName} className="flex items-stretch gap-2">
                 {/* 멤버 카드 */}
-                <div className="w-16 shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2 text-center border border-gray-100">
-                  <div className="w-6 h-6 mx-auto rounded-full bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm mb-1">
-                    {memberName.charAt(0)}
-                  </div>
+                <div className="w-16 shrink-0 bg-gray-50 rounded-lg p-2 text-center border border-gray-100 flex flex-col justify-center">
                   <p className="text-[10px] font-medium text-gray-700 truncate">{memberName}</p>
                   <p className="text-[9px] text-gray-400 mt-0.5">{info.total}건</p>
                 </div>
 
-                {/* 반응형 히트맵 - 분기별 그리드 */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                {/* 히트맵 카드 - 흰색 배경 */}
+                <div className="flex-1 bg-white rounded-lg border border-gray-100 p-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                   {[0, 1, 2, 3].map((quarter) => {
                     const startIdx = quarter * 13;
                     const endIdx = startIdx + 13;
@@ -436,6 +434,7 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               </div>
             );
