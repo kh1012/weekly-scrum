@@ -80,9 +80,9 @@ export default async function AdminPlansPage() {
         {/* 새 계획 생성 버튼 */}
         <Link
           href="/admin/plans/new"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-[#F76D57]/20"
           style={{
-            background: "rgb(239, 68, 68)",
+            background: "linear-gradient(135deg, #F76D57, #f9a88b)",
             color: "white",
           }}
         >
@@ -98,9 +98,9 @@ export default async function AdminPlansPage() {
         <div
           className="p-4 rounded-xl text-sm"
           style={{
-            background: "rgba(239, 68, 68, 0.05)",
-            border: "1px solid rgba(239, 68, 68, 0.15)",
-            color: "rgb(185, 28, 28)",
+            background: "linear-gradient(135deg, rgba(247, 109, 87, 0.08), rgba(249, 235, 178, 0.05))",
+            border: "1px solid rgba(247, 109, 87, 0.2)",
+            color: "#c94a3a",
           }}
         >
           <p className="font-medium">데이터 조회 실패</p>
@@ -214,9 +214,9 @@ export default async function AdminPlansPage() {
             <p className="mt-2">계획이 없습니다</p>
             <Link
               href="/admin/plans/new"
-              className="inline-block mt-4 px-4 py-2 rounded-lg text-sm font-medium"
+              className="inline-block mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-[#F76D57]/20"
               style={{
-                background: "rgb(239, 68, 68)",
+                background: "linear-gradient(135deg, #F76D57, #f9a88b)",
                 color: "white",
               }}
             >

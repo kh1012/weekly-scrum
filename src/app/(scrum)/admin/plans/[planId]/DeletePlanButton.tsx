@@ -32,9 +32,9 @@ export function DeletePlanButton({ planId }: DeletePlanButtonProps) {
         <button
           onClick={handleDelete}
           disabled={isLoading}
-          className="px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+          className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 hover:shadow-lg hover:shadow-[#F76D57]/20"
           style={{
-            background: "rgb(239, 68, 68)",
+            background: "linear-gradient(135deg, #F76D57, #f9a88b)",
             color: "white",
           }}
         >
@@ -58,9 +58,9 @@ export function DeletePlanButton({ planId }: DeletePlanButtonProps) {
   return (
     <button
       onClick={() => setIsConfirming(true)}
-      className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-red-50"
+      className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-[#F76D57]/10"
       style={{
-        color: "rgb(239, 68, 68)",
+        color: "#F76D57",
       }}
     >
       삭제

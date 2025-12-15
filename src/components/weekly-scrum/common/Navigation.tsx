@@ -262,7 +262,7 @@ export function SideNavigation({
                     viewBox="0 0 24 24"
                     style={{
                       color: isAdminSection
-                        ? "rgba(239, 68, 68, 0.6)"
+                        ? "rgba(247, 109, 87, 0.7)"
                         : "var(--notion-text-muted)",
                       transform: isCollapsed
                         ? "rotate(-90deg)"
@@ -280,7 +280,7 @@ export function SideNavigation({
                     className="text-[11px] font-semibold uppercase tracking-wider"
                     style={{
                       color: isAdminSection
-                        ? "rgba(239, 68, 68, 0.8)"
+                        ? "#F76D57"
                         : "var(--notion-text-muted)",
                     }}
                   >
@@ -290,8 +290,9 @@ export function SideNavigation({
                     <span
                       className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
                       style={{
-                        background: "rgba(239, 68, 68, 0.1)",
-                        color: "rgb(239, 68, 68)",
+                        background: "linear-gradient(135deg, rgba(247, 109, 87, 0.15), rgba(249, 235, 178, 0.3))",
+                        color: "#F76D57",
+                        border: "1px solid rgba(247, 109, 87, 0.2)",
                       }}
                     >
                       Admin
@@ -304,12 +305,12 @@ export function SideNavigation({
                     style={{
                       background: hasActiveItem
                         ? isAdminSection
-                          ? "rgba(239, 68, 68, 0.15)"
+                          ? "rgba(247, 109, 87, 0.15)"
                           : "rgba(59, 130, 246, 0.15)"
                         : "var(--notion-bg-secondary)",
                       color: hasActiveItem
                         ? isAdminSection
-                          ? "rgb(239, 68, 68)"
+                          ? "#F76D57"
                           : "#3b82f6"
                         : "var(--notion-text-muted)",
                     }}
@@ -333,10 +334,10 @@ export function SideNavigation({
                   {category.items.map((item) => {
                     const active = isActive(item.href);
                     const accentColor = isAdminSection
-                      ? "rgb(239, 68, 68)"
+                      ? "#F76D57"
                       : "#3b82f6";
                     const accentBg = isAdminSection
-                      ? "rgba(239, 68, 68, 0.1)"
+                      ? "rgba(247, 109, 87, 0.1)"
                       : "rgba(59, 130, 246, 0.1)";
 
                     return (
@@ -376,7 +377,7 @@ export function SideNavigation({
                           style={{
                             background: active
                               ? isAdminSection
-                                ? "rgba(239, 68, 68, 0.15)"
+                                ? "linear-gradient(135deg, rgba(247, 109, 87, 0.2), rgba(249, 235, 178, 0.15))"
                                 : "rgba(59, 130, 246, 0.15)"
                               : "transparent",
                           }}

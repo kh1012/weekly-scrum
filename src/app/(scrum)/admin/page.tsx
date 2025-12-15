@@ -39,13 +39,13 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-4">
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-              style={{ background: "rgba(239, 68, 68, 0.1)" }}
+              style={{ background: "linear-gradient(135deg, rgba(247, 109, 87, 0.15), rgba(249, 235, 178, 0.1))" }}
             >
               📋
             </div>
             <div className="flex-1">
               <h2
-                className="font-semibold group-hover:text-red-500 transition-colors"
+                className="font-semibold transition-colors group-hover:text-[#F76D57]"
                 style={{ color: "var(--notion-text)" }}
               >
                 All Snapshots
@@ -86,13 +86,13 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-4">
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-              style={{ background: "rgba(239, 68, 68, 0.1)" }}
+              style={{ background: "linear-gradient(135deg, rgba(247, 109, 87, 0.15), rgba(249, 235, 178, 0.1))" }}
             >
               📆
             </div>
             <div className="flex-1">
               <h2
-                className="font-semibold group-hover:text-red-500 transition-colors"
+                className="font-semibold transition-colors group-hover:text-[#F76D57]"
                 style={{ color: "var(--notion-text)" }}
               >
                 Plans
@@ -126,17 +126,17 @@ export default function AdminDashboardPage() {
       <div
         className="p-4 rounded-xl text-sm"
         style={{
-          background: "rgba(239, 68, 68, 0.05)",
-          border: "1px solid rgba(239, 68, 68, 0.15)",
-          color: "rgb(185, 28, 28)",
+          background: "linear-gradient(135deg, rgba(247, 109, 87, 0.08), rgba(249, 235, 178, 0.05))",
+          border: "1px solid rgba(247, 109, 87, 0.2)",
+          color: "#c94a3a",
         }}
       >
         <div className="flex items-start gap-3">
-          <span className="text-lg">⚠️</span>
+          <span className="text-lg">🔒</span>
           <div>
             <p className="font-medium">관리자 전용 영역</p>
             <p className="mt-1 opacity-80">
-              이 영역은 admin 또는 owner 권한을 가진 사용자만 접근할 수 있습니다.
+              이 영역은 admin 또는 leader 권한을 가진 사용자만 접근할 수 있습니다.
               전체 워크스페이스 데이터를 조회하고 관리할 수 있습니다.
             </p>
           </div>

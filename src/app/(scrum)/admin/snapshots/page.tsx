@@ -67,9 +67,9 @@ export default async function AdminSnapshotsPage() {
         <div
           className="p-4 rounded-xl text-sm"
           style={{
-            background: "rgba(239, 68, 68, 0.05)",
-            border: "1px solid rgba(239, 68, 68, 0.15)",
-            color: "rgb(185, 28, 28)",
+            background: "linear-gradient(135deg, rgba(247, 109, 87, 0.08), rgba(249, 235, 178, 0.05))",
+            border: "1px solid rgba(247, 109, 87, 0.2)",
+            color: "#c94a3a",
           }}
         >
           <p className="font-medium">데이터 조회 실패</p>

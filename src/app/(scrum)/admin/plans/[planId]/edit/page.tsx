@@ -148,7 +148,7 @@ export default function EditPlanPage() {
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
               style={{
                 background: "var(--notion-bg)",
                 borderColor: "var(--notion-border)",
@@ -171,7 +171,7 @@ export default function EditPlanPage() {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40 resize-none"
               style={{
                 background: "var(--notion-bg)",
                 borderColor: "var(--notion-border)",
@@ -196,7 +196,7 @@ export default function EditPlanPage() {
                 required
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
                 style={{
                   background: "var(--notion-bg)",
                   borderColor: "var(--notion-border)",
@@ -218,7 +218,7 @@ export default function EditPlanPage() {
                 required
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
                 style={{
                   background: "var(--notion-bg)",
                   borderColor: "var(--notion-border)",
@@ -247,7 +247,7 @@ export default function EditPlanPage() {
                     status: e.target.value as "planned" | "in_progress" | "completed" | "cancelled",
                   })
                 }
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
                 style={{
                   background: "var(--notion-bg)",
                   borderColor: "var(--notion-border)",
@@ -278,7 +278,7 @@ export default function EditPlanPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
                 }
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
                 style={{
                   background: "var(--notion-bg)",
                   borderColor: "var(--notion-border)",
@@ -294,9 +294,9 @@ export default function EditPlanPage() {
           <div
             className="p-4 rounded-xl text-sm"
             style={{
-              background: "rgba(239, 68, 68, 0.05)",
-              border: "1px solid rgba(239, 68, 68, 0.15)",
-              color: "rgb(185, 28, 28)",
+              background: "linear-gradient(135deg, rgba(247, 109, 87, 0.08), rgba(249, 235, 178, 0.05))",
+              border: "1px solid rgba(247, 109, 87, 0.2)",
+              color: "#c94a3a",
             }}
           >
             {error}
@@ -308,9 +308,9 @@ export default function EditPlanPage() {
           <button
             type="submit"
             disabled={isSaving}
-            className="flex-1 py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 hover:shadow-lg hover:shadow-[#F76D57]/20"
             style={{
-              background: "rgb(239, 68, 68)",
+              background: "linear-gradient(135deg, #F76D57, #f9a88b)",
               color: "white",
             }}
           >
