@@ -278,58 +278,75 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
           </div>
         </div>
 
-        {/* 월 레이블 */}
-        <div className="relative mb-1" style={{ marginLeft: "0px" }}>
-          <div className="flex">
-            {monthIndices.map(({ month, index }, i) => {
-              const nextIndex = monthIndices[i + 1]?.index ?? 52;
-              const widthPercent = ((nextIndex - index) / 52) * 100;
-              return (
-                <div
-                  key={`month-${month}-${index}`}
-                  className="text-[10px] font-medium text-gray-400"
-                  style={{ width: `${widthPercent}%` }}
-                >
-                  {MONTH_LABELS[month]}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 52주 히트맵 그리드 */}
-        <div className="flex gap-[2px]">
-          {weeks.map((week) => {
-            const value = teamData.weekData.get(week.key) || 0;
-            const level = getLevel(value, teamData.maxValue);
-            const isCurrentWeek = week.key === currentWeekKey;
-            const isHovered = hoveredWeek === `team-${week.key}`;
-
+        {/* 반응형 히트맵 그리드 - lg: 1행, md: 2행, sm이하: 4행 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((quarter) => {
+            const startIdx = quarter * 13;
+            const endIdx = startIdx + 13;
+            const quarterWeeks = weeks.slice(startIdx, endIdx);
+            
+            // 이 분기에 해당하는 월 레이블
+            const quarterMonths = monthIndices.filter(({ index }) => index >= startIdx && index < endIdx);
+            
             return (
-              <div
-                key={week.key}
-                className="relative group"
-                style={{ width: `${100 / 52}%` }}
-                onMouseEnter={() => setHoveredWeek(`team-${week.key}`)}
-                onMouseLeave={() => setHoveredWeek(null)}
-              >
-                <div
-                  className={`
-                    aspect-square rounded-sm transition-all duration-150
-                    ${isCurrentWeek ? "ring-2 ring-emerald-500 ring-offset-1" : ""}
-                    ${isHovered ? "scale-150 z-10 shadow-lg" : "hover:scale-125"}
-                  `}
-                  style={{ backgroundColor: TEAM_COLORS[level] }}
-                />
-                {/* 툴팁 */}
-                {isHovered && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl z-50 whitespace-nowrap">
-                    <div className="font-medium">{week.year}년 {week.week}주차</div>
-                    <div className="text-gray-300 text-[10px]">{formatDate(week.startDate)} ~ {formatDate(week.endDate)}</div>
-                    <div className="text-emerald-300 font-semibold mt-0.5">{value}건 완료</div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                  </div>
-                )}
+              <div key={quarter} className="space-y-1">
+                {/* 분기별 월 레이블 */}
+                <div className="flex h-4">
+                  {quarterMonths.length > 0 ? (
+                    quarterMonths.map(({ month, index }, i) => {
+                      const nextMonthIdx = quarterMonths[i + 1]?.index ?? endIdx;
+                      const widthPercent = ((nextMonthIdx - index) / 13) * 100;
+                      return (
+                        <div
+                          key={`q${quarter}-month-${month}-${index}`}
+                          className="text-[10px] font-medium text-gray-400 truncate"
+                          style={{ width: `${widthPercent}%` }}
+                        >
+                          {MONTH_LABELS[month]}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-[10px] font-medium text-gray-300">~</div>
+                  )}
+                </div>
+                
+                {/* 13주 히트맵 */}
+                <div className="flex gap-[2px]">
+                  {quarterWeeks.map((week) => {
+                    const value = teamData.weekData.get(week.key) || 0;
+                    const level = getLevel(value, teamData.maxValue);
+                    const isCurrentWeek = week.key === currentWeekKey;
+                    const isHovered = hoveredWeek === `team-${week.key}`;
+
+                    return (
+                      <div
+                        key={week.key}
+                        className="relative group flex-1"
+                        onMouseEnter={() => setHoveredWeek(`team-${week.key}`)}
+                        onMouseLeave={() => setHoveredWeek(null)}
+                      >
+                        <div
+                          className={`
+                            aspect-square rounded-sm transition-all duration-150
+                            ${isCurrentWeek ? "ring-2 ring-emerald-500 ring-offset-1" : ""}
+                            ${isHovered ? "scale-150 z-10 shadow-lg" : "hover:scale-125"}
+                          `}
+                          style={{ backgroundColor: TEAM_COLORS[level] }}
+                        />
+                        {/* 툴팁 */}
+                        {isHovered && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl z-50 whitespace-nowrap">
+                            <div className="font-medium">{week.year}년 {week.week}주차</div>
+                            <div className="text-gray-300 text-[10px]">{formatDate(week.startDate)} ~ {formatDate(week.endDate)}</div>
+                            <div className="text-emerald-300 font-semibold mt-0.5">{value}건 완료</div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
@@ -355,75 +372,63 @@ export function YearlyHeatmap({ rawSnapshots, memberRangeSummary }: YearlyHeatma
           </div>
         </div>
 
-        {/* 월 레이블 (멤버 영역 상단에 1회만) */}
-        <div className="relative mb-2 pl-28">
-          <div className="flex">
-            {monthIndices.map(({ month, index }, i) => {
-              const nextIndex = monthIndices[i + 1]?.index ?? 52;
-              const widthPercent = ((nextIndex - index) / 52) * 100;
-              return (
-                <div
-                  key={`member-month-${month}-${index}`}
-                  className="text-[9px] font-medium text-gray-300"
-                  style={{ width: `${widthPercent}%` }}
-                >
-                  {MONTH_LABELS[month]}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* 멤버 리스트 */}
-        <div className="space-y-1">
+        <div className="space-y-3">
           {members.map((memberName) => {
             const info = memberData.get(memberName)!;
             
             return (
-              <div key={memberName} className="flex items-center gap-3 py-1">
+              <div key={memberName} className="space-y-2">
                 {/* 멤버 정보 */}
-                <div className="w-24 shrink-0 flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-500 shadow-inner">
                     {memberName.charAt(0)}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-medium text-gray-700 truncate">{memberName}</p>
-                    <p className="text-[9px] text-gray-400">{info.total}건</p>
-                  </div>
+                  <p className="text-[11px] font-medium text-gray-700">{memberName}</p>
+                  <span className="text-[9px] text-gray-400">{info.total}건</span>
                 </div>
 
-                {/* 52주 히트맵 */}
-                <div className="flex-1 flex gap-px">
-                  {weeks.map((week) => {
-                    const value = info.weekData.get(week.key) || 0;
-                    const level = getLevel(value, info.maxValue);
-                    const isCurrentWeek = week.key === currentWeekKey;
-                    const isHovered = hoveredWeek === `${memberName}-${week.key}`;
-
+                {/* 반응형 히트맵 - 분기별 그리드 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pl-7">
+                  {[0, 1, 2, 3].map((quarter) => {
+                    const startIdx = quarter * 13;
+                    const endIdx = startIdx + 13;
+                    const quarterWeeks = weeks.slice(startIdx, endIdx);
+                    
                     return (
-                      <div
-                        key={week.key}
-                        className="relative group/cell"
-                        style={{ width: `${100 / 52}%` }}
-                        onMouseEnter={() => setHoveredWeek(`${memberName}-${week.key}`)}
-                        onMouseLeave={() => setHoveredWeek(null)}
-                      >
-                        <div
-                          className={`
-                            aspect-square rounded-[2px] transition-all duration-150
-                            ${isCurrentWeek ? "ring-1 ring-pink-400" : ""}
-                            ${isHovered ? "scale-[2] z-10 shadow-md" : "group-hover/row:scale-110"}
-                          `}
-                          style={{ backgroundColor: MEMBER_COLORS[level] }}
-                        />
-                        {/* 툴팁 */}
-                        {isHovered && (
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-lg shadow-xl z-50 whitespace-nowrap">
-                            <div className="font-medium">{week.week}주차</div>
-                            <div className="text-pink-300 font-semibold">{value}건</div>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                          </div>
-                        )}
+                      <div key={quarter} className="flex gap-px">
+                        {quarterWeeks.map((week) => {
+                          const value = info.weekData.get(week.key) || 0;
+                          const level = getLevel(value, info.maxValue);
+                          const isCurrentWeek = week.key === currentWeekKey;
+                          const isHovered = hoveredWeek === `${memberName}-${week.key}`;
+
+                          return (
+                            <div
+                              key={week.key}
+                              className="relative group/cell flex-1"
+                              onMouseEnter={() => setHoveredWeek(`${memberName}-${week.key}`)}
+                              onMouseLeave={() => setHoveredWeek(null)}
+                            >
+                              <div
+                                className={`
+                                  aspect-square rounded-[2px] transition-all duration-150
+                                  ${isCurrentWeek ? "ring-1 ring-pink-400" : ""}
+                                  ${isHovered ? "scale-[2] z-10 shadow-md" : "hover:scale-125"}
+                                `}
+                                style={{ backgroundColor: MEMBER_COLORS[level] }}
+                              />
+                              {/* 툴팁 */}
+                              {isHovered && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-lg shadow-xl z-50 whitespace-nowrap">
+                                  <div className="font-medium">{week.week}주차</div>
+                                  <div className="text-pink-300 font-semibold">{value}건</div>
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}
