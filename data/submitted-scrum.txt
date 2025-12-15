@@ -1,4 +1,4 @@
-4[Planning / MOTIIV / Spreadsheet / 디테일 페이지 개선]
+[Planning / MOTIIV / Spreadsheet / 디테일 페이지 개선]
 * Name: 김희성
 * Past Week
     * Tasks
@@ -14,7 +14,7 @@
         * 홈 > 스프레드시트 중심 개편 기획 완료
         * 스프레드시트 > 디테일 페이지 기획 완료
 
-[Planning/ MOTIIV / M-Connector / DB 테이블 정리]
+[Planning/ M-Connector / DB Manager / DB 테이블 정리]
 * Name: 한내경
 * Define
     * Domain: Planning
@@ -89,7 +89,7 @@
     * Tasks
         * 아이디어 포지 + rpm-system 권한 문제 해결
 
-[Backend/ MOTIIV / MDesk / 패치]
+[Backend/ M-Desk / MOTIIV / 패치]
 * Name: 김정빈
 * Define
     * Domain: Backend
@@ -209,7 +209,7 @@
     * Tasks
         * 워크스페이스 > 릴리즈 범위 세부 기획 완료 (100%)
 
-[Frontend / M-Connector V2 / UXUI / Design 반영]
+[Frontend / M-Connector/ UXUI / Design 반영]
 * Name: 변창언
 * Define
     * Domain: Frontend
@@ -228,7 +228,7 @@
 * This Week
     * Tasks
         * QA 반영
-[Frontend / M-Connector V2 / Worker / Result Table]
+[Frontend / M-Connector / Worker / Result Table]
 * Name: 변창언
 * Define
     * Domain: Frontend

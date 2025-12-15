@@ -6,6 +6,42 @@
   "schemaVersion": 3,
   "items": [
     {
+      "name": "김희성",
+      "domain": "Planning",
+      "project": "MOTIIV",
+      "module": "Spreadsheet",
+      "feature": "디테일 페이지 개선",
+      "pastWeek": {
+        "tasks": [
+          {
+            "title": "스프레드시트 > 디테일 페이지 요구사항 수집",
+            "progress": 100
+          },
+          {
+            "title": "스프레드시트 > 디테일 페이지 기획 초안 작성",
+            "progress": 90
+          },
+          {
+            "title": "홈 > 스프레드시트 중심 개편 기획 초안 작성",
+            "progress": 70
+          },
+          {
+            "title": "성과 데이터 기반 인사이트 도출",
+            "progress": 100
+          }
+        ],
+        "risk": null,
+        "riskLevel": null,
+        "collaborators": []
+      },
+      "thisWeek": {
+        "tasks": [
+          "홈 > 스프레드시트 중심 개편 기획 완료",
+          "스프레드시트 > 디테일 페이지 기획 완료"
+        ]
+      }
+    },
+    {
       "name": "한내경",
       "domain": "Planning",
       "project": "MOTIIV",
