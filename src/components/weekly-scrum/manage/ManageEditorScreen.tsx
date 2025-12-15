@@ -192,29 +192,28 @@ export function ManageEditorScreen({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* 2열 | 3열 토글 버튼 */}
-          <div className="flex bg-gray-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setForceThreeColumn(false)}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                !isThreeColumnMode
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              2열
-            </button>
-            <button
-              onClick={() => setForceThreeColumn(true)}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                isThreeColumnMode
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              3열
-            </button>
-          </div>
+          {/* 미리보기 표시 체크박스 */}
+          <label className="flex items-center gap-2 cursor-pointer select-none group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={isThreeColumnMode}
+                onChange={(e) => setForceThreeColumn(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className={`
+                w-9 h-5 rounded-full transition-colors
+                ${isThreeColumnMode ? "bg-gray-900" : "bg-gray-200 group-hover:bg-gray-300"}
+              `} />
+              <div className={`
+                absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform
+                ${isThreeColumnMode ? "translate-x-4" : "translate-x-0"}
+              `} />
+            </div>
+            <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">
+              미리보기
+            </span>
+          </label>
         </div>
       </div>
 
