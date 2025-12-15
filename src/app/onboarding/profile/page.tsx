@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 
 /**
- * 고양이 마스코트 아이콘 컴포넌트
+ * 사자 마스코트 아이콘 컴포넌트 (행복한 표정)
  */
-function ScrumCatIcon({ className = "w-16 h-16" }: { className?: string }) {
+function ScrumLionIcon({ className = "w-16 h-16" }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -16,52 +16,62 @@ function ScrumCatIcon({ className = "w-16 h-16" }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       {/* Background */}
-      <rect width="64" height="64" rx="16" fill="url(#catGradientOnboard)" />
+      <rect width="64" height="64" rx="16" fill="url(#lionGradientOnboard)" />
 
-      {/* Cat Face */}
-      <ellipse cx="32" cy="34" rx="18" ry="16" fill="white" />
+      {/* Mane - Outer */}
+      <circle cx="32" cy="32" r="24" fill="#F59E0B" />
 
-      {/* Left Ear */}
-      <path d="M14 24L18 12L26 22Z" fill="white" />
-      <path d="M16 21L19 14L23 20Z" fill="#FF6B9D" />
+      {/* Mane spikes */}
+      <path d="M32 8C34 12 36 14 32 18C28 14 30 12 32 8Z" fill="#D97706" />
+      <path d="M44 12C42 16 42 18 38 18C40 14 42 14 44 12Z" fill="#D97706" />
+      <path d="M20 12C22 16 22 18 26 18C24 14 22 14 20 12Z" fill="#D97706" />
+      <path d="M52 20C48 20 46 22 46 26C48 24 50 22 52 20Z" fill="#D97706" />
+      <path d="M12 20C16 20 18 22 18 26C16 24 14 22 12 20Z" fill="#D97706" />
+      <path d="M56 32C52 32 50 32 48 36C52 34 54 34 56 32Z" fill="#D97706" />
+      <path d="M8 32C12 32 14 32 16 36C12 34 10 34 8 32Z" fill="#D97706" />
 
-      {/* Right Ear */}
-      <path d="M50 24L46 12L38 22Z" fill="white" />
-      <path d="M48 21L45 14L41 20Z" fill="#FF6B9D" />
+      {/* Face */}
+      <ellipse cx="32" cy="34" rx="18" ry="16" fill="#FCD34D" />
+
+      {/* Ears */}
+      <ellipse cx="18" cy="20" rx="5" ry="4" fill="#FCD34D" />
+      <ellipse cx="18" cy="20" rx="3" ry="2" fill="#FBBF24" />
+      <ellipse cx="46" cy="20" rx="5" ry="4" fill="#FCD34D" />
+      <ellipse cx="46" cy="20" rx="3" ry="2" fill="#FBBF24" />
 
       {/* Eyes - Happy/Closed */}
-      <path d="M20 30C22 28 26 28 28 30" stroke="#1a1a2e" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-      <path d="M36 30C38 28 42 28 44 30" stroke="#1a1a2e" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M21 30C23 28 27 28 29 30" stroke="#1a1a2e" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M35 30C37 28 41 28 43 30" stroke="#1a1a2e" strokeWidth="3" strokeLinecap="round" fill="none" />
 
       {/* Nose */}
-      <ellipse cx="32" cy="38" rx="2.5" ry="2" fill="#FF6B9D" />
+      <path d="M32 35L28 40L36 40Z" fill="#92400E" />
 
-      {/* Mouth - Happy */}
+      {/* Mouth - Big smile */}
       <path
-        d="M26 42C28 45 36 45 38 42"
-        stroke="#1a1a2e"
-        strokeWidth="1.5"
+        d="M24 43C28 48 36 48 40 43"
+        stroke="#92400E"
+        strokeWidth="2"
         strokeLinecap="round"
         fill="none"
       />
 
-      {/* Whiskers */}
-      <line x1="12" y1="34" x2="20" y2="36" stroke="#1a1a2e" strokeWidth="1" strokeLinecap="round" />
-      <line x1="12" y1="38" x2="20" y2="38" stroke="#1a1a2e" strokeWidth="1" strokeLinecap="round" />
-      <line x1="44" y1="36" x2="52" y2="34" stroke="#1a1a2e" strokeWidth="1" strokeLinecap="round" />
-      <line x1="44" y1="38" x2="52" y2="38" stroke="#1a1a2e" strokeWidth="1" strokeLinecap="round" />
+      {/* Whisker dots */}
+      <circle cx="22" cy="38" r="1" fill="#92400E" />
+      <circle cx="19" cy="37" r="1" fill="#92400E" />
+      <circle cx="42" cy="38" r="1" fill="#92400E" />
+      <circle cx="45" cy="37" r="1" fill="#92400E" />
 
       <defs>
         <linearGradient
-          id="catGradientOnboard"
+          id="lionGradientOnboard"
           x1="0"
           y1="0"
           x2="64"
           y2="64"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#a855f7" />
+          <stop offset="0%" stopColor="#059669" />
+          <stop offset="100%" stopColor="#047857" />
         </linearGradient>
       </defs>
     </svg>
@@ -69,42 +79,89 @@ function ScrumCatIcon({ className = "w-16 h-16" }: { className?: string }) {
 }
 
 /**
- * 배경 장식 요소
+ * 정글 배경 장식 요소
  */
-function BackgroundDecoration() {
+function JungleBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Gradient Orbs */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 blur-3xl animate-pulse" />
-      <div className="absolute top-1/4 -left-32 w-80 h-80 rounded-full bg-gradient-to-br from-violet-400/25 to-indigo-400/25 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-      <div className="absolute -bottom-32 right-1/4 w-72 h-72 rounded-full bg-gradient-to-br from-fuchsia-400/20 to-pink-400/20 blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
+      {/* Base gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900" />
 
-      {/* Grid Pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(0,0,0,1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,1) 1px, transparent 1px)
-          `,
-          backgroundSize: "60px 60px",
-        }}
-      />
+      {/* Misty overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-emerald-900/30 to-emerald-950/50" />
 
-      {/* Floating Shapes */}
-      <div className="absolute top-20 left-[15%] w-4 h-4 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 opacity-60 animate-float" />
-      <div className="absolute top-40 right-[20%] w-3 h-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 opacity-50 animate-float" style={{ animationDelay: "0.5s" }} />
-      <div className="absolute bottom-32 left-[25%] w-5 h-5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 opacity-40 animate-float" style={{ animationDelay: "1s" }} />
-      <div className="absolute top-1/2 right-[10%] w-6 h-6 rounded-lg rotate-45 bg-gradient-to-r from-indigo-500 to-blue-500 opacity-30 animate-float" style={{ animationDelay: "1.5s" }} />
+      {/* Animated light rays */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-0 left-1/4 w-32 h-full bg-gradient-to-b from-yellow-300/40 via-yellow-200/10 to-transparent transform -skew-x-12 animate-ray" />
+        <div className="absolute top-0 left-1/2 w-24 h-full bg-gradient-to-b from-yellow-200/30 via-yellow-100/5 to-transparent transform skew-x-6 animate-ray" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-0 right-1/4 w-20 h-full bg-gradient-to-b from-amber-200/25 via-amber-100/5 to-transparent transform -skew-x-6 animate-ray" style={{ animationDelay: "4s" }} />
+      </div>
 
-      {/* Decorative Lines */}
-      <svg className="absolute top-0 left-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="diagonal-lines-onboard" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="40" stroke="currentColor" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#diagonal-lines-onboard)" />
+      {/* Tropical leaves - Top */}
+      <svg className="absolute -top-20 -left-20 w-80 h-80 text-emerald-700 animate-sway" viewBox="0 0 200 200" fill="currentColor">
+        <path d="M100 10C100 10 60 50 50 100C40 150 80 180 100 190C120 180 160 150 150 100C140 50 100 10 100 10Z" opacity="0.6" />
+        <path d="M100 20C100 20 70 55 62 100C54 145 85 170 100 178C115 170 146 145 138 100C130 55 100 20 100 20Z" fill="currentColor" opacity="0.8" />
+        <path d="M100 10L100 190" stroke="rgba(0,0,0,0.2)" strokeWidth="3" />
+      </svg>
+
+      <svg className="absolute -top-10 -right-32 w-96 h-96 text-emerald-600 animate-sway-reverse" viewBox="0 0 200 200" fill="currentColor">
+        <path d="M100 10C100 10 60 50 50 100C40 150 80 180 100 190C120 180 160 150 150 100C140 50 100 10 100 10Z" opacity="0.5" />
+      </svg>
+
+      {/* Palm fronds */}
+      <svg className="absolute top-10 left-10 w-64 h-64 text-green-600 animate-sway" style={{ animationDelay: "0.5s" }} viewBox="0 0 100 100" fill="currentColor">
+        <path d="M50 90C50 90 20 60 15 40C10 20 30 10 50 5C70 10 90 20 85 40C80 60 50 90 50 90Z" opacity="0.7" />
+      </svg>
+
+      <svg className="absolute top-20 right-20 w-48 h-48 text-teal-600 animate-sway-reverse" style={{ animationDelay: "1s" }} viewBox="0 0 100 100" fill="currentColor">
+        <path d="M50 90C50 90 20 60 15 40C10 20 30 10 50 5C70 10 90 20 85 40C80 60 50 90 50 90Z" opacity="0.6" />
+      </svg>
+
+      {/* Bottom leaves */}
+      <svg className="absolute -bottom-20 -left-10 w-72 h-72 text-emerald-800 animate-sway" style={{ animationDelay: "1.5s" }} viewBox="0 0 200 200" fill="currentColor">
+        <path d="M100 190C100 190 140 150 150 100C160 50 120 20 100 10C80 20 40 50 50 100C60 150 100 190 100 190Z" opacity="0.8" />
+      </svg>
+
+      <svg className="absolute -bottom-32 -right-20 w-96 h-96 text-green-700 animate-sway-reverse" style={{ animationDelay: "2s" }} viewBox="0 0 200 200" fill="currentColor">
+        <path d="M100 190C100 190 140 150 150 100C160 50 120 20 100 10C80 20 40 50 50 100C60 150 100 190 100 190Z" opacity="0.7" />
+      </svg>
+
+      {/* Hanging vines */}
+      <svg className="absolute top-0 left-1/3 w-8 h-64 animate-swing" viewBox="0 0 20 150" fill="none">
+        <path d="M10 0C10 0 5 30 10 50C15 70 5 90 10 110C15 130 10 150 10 150" stroke="#166534" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="10" cy="50" r="4" fill="#22c55e" />
+        <circle cx="10" cy="90" r="3" fill="#22c55e" />
+        <circle cx="10" cy="130" r="5" fill="#22c55e" />
+      </svg>
+
+      <svg className="absolute top-0 right-1/4 w-6 h-48 animate-swing" style={{ animationDelay: "1s" }} viewBox="0 0 20 120" fill="none">
+        <path d="M10 0C10 0 15 25 10 45C5 65 15 85 10 105C5 115 10 120 10 120" stroke="#15803d" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="10" cy="45" r="3" fill="#16a34a" />
+        <circle cx="10" cy="85" r="4" fill="#16a34a" />
+      </svg>
+
+      {/* Fireflies / Particles */}
+      <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-yellow-300 animate-firefly opacity-60" />
+      <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 rounded-full bg-yellow-200 animate-firefly" style={{ animationDelay: "1s" }} />
+      <div className="absolute bottom-1/3 left-1/3 w-2 h-2 rounded-full bg-amber-300 animate-firefly" style={{ animationDelay: "2s" }} />
+      <div className="absolute top-1/2 right-1/4 w-1 h-1 rounded-full bg-yellow-100 animate-firefly" style={{ animationDelay: "3s" }} />
+      <div className="absolute bottom-1/4 right-1/2 w-1.5 h-1.5 rounded-full bg-yellow-300 animate-firefly" style={{ animationDelay: "0.5s" }} />
+      <div className="absolute top-2/3 left-1/5 w-2 h-2 rounded-full bg-amber-200 animate-firefly" style={{ animationDelay: "2.5s" }} />
+
+      {/* Monstera leaves */}
+      <svg className="absolute bottom-10 left-20 w-32 h-32 text-emerald-700 animate-sway" style={{ animationDelay: "0.8s" }} viewBox="0 0 100 100" fill="currentColor">
+        <path d="M50 95C50 95 20 70 15 45C10 20 40 5 50 5C60 5 90 20 85 45C80 70 50 95 50 95Z" opacity="0.8" />
+        <ellipse cx="35" cy="40" rx="8" ry="12" fill="#065f46" opacity="0.5" />
+        <ellipse cx="65" cy="40" rx="8" ry="12" fill="#065f46" opacity="0.5" />
+      </svg>
+
+      {/* Fern */}
+      <svg className="absolute bottom-20 right-10 w-40 h-40 text-green-600 animate-sway-reverse" style={{ animationDelay: "1.2s" }} viewBox="0 0 100 100" fill="currentColor">
+        <path d="M50 90L50 30" stroke="currentColor" strokeWidth="2" />
+        <circle cx="30" cy="25" r="4" opacity="0.7" />
+        <circle cx="70" cy="25" r="4" opacity="0.7" />
+        <circle cx="25" cy="38" r="3" opacity="0.7" />
+        <circle cx="75" cy="38" r="3" opacity="0.7" />
       </svg>
     </div>
   );
@@ -180,35 +237,35 @@ export default function OnboardingProfilePage() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-      <BackgroundDecoration />
+    <div className="min-h-screen relative flex items-center justify-center">
+      <JungleBackground />
 
       {/* Main Content */}
       <div className="relative z-10 w-full max-w-md px-6 py-12">
         {/* Card */}
         <div
-          className="relative backdrop-blur-xl rounded-3xl p-8 md:p-10 border border-white/60"
+          className="relative backdrop-blur-xl rounded-3xl p-8 md:p-10 border border-white/20"
           style={{
-            background: "rgba(255, 255, 255, 0.8)",
+            background: "rgba(255, 255, 255, 0.95)",
             boxShadow: `
-              0 0 0 1px rgba(255,255,255,0.5),
-              0 25px 50px -12px rgba(0, 0, 0, 0.08),
-              0 12px 24px -8px rgba(16, 185, 129, 0.08)
+              0 0 0 1px rgba(255,255,255,0.3),
+              0 25px 50px -12px rgba(0, 0, 0, 0.4),
+              0 12px 24px -8px rgba(5, 150, 105, 0.2)
             `,
           }}
         >
           {/* Logo & Title */}
           <div className="text-center mb-10">
             <div className="relative inline-block">
-              <ScrumCatIcon className="w-20 h-20 mx-auto drop-shadow-xl" />
+              <ScrumLionIcon className="w-24 h-24 mx-auto drop-shadow-2xl" />
               {/* Glow effect */}
-              <div className="absolute inset-0 w-20 h-20 mx-auto rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-xl -z-10" />
+              <div className="absolute inset-0 w-24 h-24 mx-auto rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 opacity-30 blur-xl -z-10 animate-pulse" />
             </div>
-            <h1 className="mt-6 text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent tracking-tight">
-              환영합니다! 👋
+            <h1 className="mt-6 text-3xl font-bold bg-gradient-to-r from-emerald-800 via-green-700 to-emerald-800 bg-clip-text text-transparent tracking-tight">
+              환영합니다! 🎉
             </h1>
-            <p className="mt-2 text-gray-500 text-sm font-medium">
-              팀원들에게 표시될 이름을 알려주세요
+            <p className="mt-2 text-gray-600 text-sm font-medium">
+              🌿 정글의 왕처럼 프로젝트를 이끌어보세요
             </p>
           </div>
 
@@ -224,14 +281,14 @@ export default function OnboardingProfilePage() {
               <div
                 className={`relative rounded-2xl transition-all duration-300 ${
                   isFocused
-                    ? "ring-2 ring-emerald-500/50 ring-offset-2 ring-offset-white"
+                    ? "ring-2 ring-amber-500/50 ring-offset-2 ring-offset-white"
                     : ""
                 }`}
               >
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
                     className={`w-5 h-5 transition-colors duration-200 ${
-                      isFocused ? "text-emerald-500" : "text-gray-400"
+                      isFocused ? "text-amber-600" : "text-gray-400"
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -256,7 +313,7 @@ export default function OnboardingProfilePage() {
                   required
                   maxLength={50}
                   autoFocus
-                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-100 bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-200 focus:bg-white transition-all duration-200 text-base"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-100 bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-amber-200 focus:bg-white transition-all duration-200 text-base"
                 />
               </div>
               <p className="mt-2 text-xs text-gray-400 pl-1">
@@ -267,9 +324,9 @@ export default function OnboardingProfilePage() {
             <button
               type="submit"
               disabled={isLoading || !displayName.trim()}
-              className="group relative w-full py-4 px-6 rounded-2xl text-white font-semibold text-base overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/25 active:scale-[0.98]"
+              className="group relative w-full py-4 px-6 rounded-2xl text-white font-semibold text-base overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:scale-[1.02] hover:shadow-xl hover:shadow-amber-500/30 active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)",
+                background: "linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)",
               }}
             >
               {/* Shine effect */}
@@ -298,7 +355,7 @@ export default function OnboardingProfilePage() {
                   </>
                 ) : (
                   <>
-                    <span>시작하기</span>
+                    <span>🦁 정글로 출발!</span>
                     <svg
                       className="w-5 h-5 transition-transform group-hover:translate-x-1"
                       fill="none"
@@ -330,7 +387,7 @@ export default function OnboardingProfilePage() {
 
           {/* Progress indicator */}
           <div className="mt-8 flex items-center justify-center gap-2">
-            <div className="w-8 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+            <div className="w-8 h-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500" />
             <div className="w-8 h-1.5 rounded-full bg-gray-200" />
           </div>
 
@@ -340,25 +397,89 @@ export default function OnboardingProfilePage() {
         </div>
 
         {/* Bottom decoration */}
-        <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400">
-          <ScrumCatIcon className="w-4 h-4" />
-          <span>Weekly Scrum과 함께 시작해요</span>
+        <div className="mt-8 flex items-center justify-center gap-2 text-xs text-white/80">
+          <ScrumLionIcon className="w-5 h-5" />
+          <span>Weekly Scrum과 함께 정글을 탐험해요</span>
         </div>
       </div>
 
       {/* CSS for animations */}
       <style jsx global>{`
-        @keyframes float {
+        @keyframes sway {
           0%, 100% {
-            transform: translateY(0px) rotate(0deg);
+            transform: rotate(-3deg) translateX(0);
           }
           50% {
-            transform: translateY(-20px) rotate(5deg);
+            transform: rotate(3deg) translateX(5px);
           }
         }
         
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
+        @keyframes sway-reverse {
+          0%, 100% {
+            transform: rotate(3deg) translateX(0);
+          }
+          50% {
+            transform: rotate(-3deg) translateX(-5px);
+          }
+        }
+        
+        @keyframes swing {
+          0%, 100% {
+            transform: rotate(-5deg);
+            transform-origin: top center;
+          }
+          50% {
+            transform: rotate(5deg);
+            transform-origin: top center;
+          }
+        }
+        
+        @keyframes firefly {
+          0%, 100% {
+            opacity: 0.2;
+            transform: translateY(0) translateX(0);
+          }
+          25% {
+            opacity: 0.8;
+            transform: translateY(-10px) translateX(5px);
+          }
+          50% {
+            opacity: 0.4;
+            transform: translateY(-5px) translateX(-5px);
+          }
+          75% {
+            opacity: 0.9;
+            transform: translateY(-15px) translateX(3px);
+          }
+        }
+        
+        @keyframes ray {
+          0%, 100% {
+            opacity: 0.1;
+          }
+          50% {
+            opacity: 0.3;
+          }
+        }
+        
+        .animate-sway {
+          animation: sway 8s ease-in-out infinite;
+        }
+        
+        .animate-sway-reverse {
+          animation: sway-reverse 7s ease-in-out infinite;
+        }
+        
+        .animate-swing {
+          animation: swing 4s ease-in-out infinite;
+        }
+        
+        .animate-firefly {
+          animation: firefly 5s ease-in-out infinite;
+        }
+        
+        .animate-ray {
+          animation: ray 6s ease-in-out infinite;
         }
         
         @keyframes fade-in {
