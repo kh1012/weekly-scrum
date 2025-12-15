@@ -6,6 +6,29 @@
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          user_id: string;
+          display_name: string;
+          email: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          display_name: string;
+          email: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          display_name?: string;
+          email?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       workspaces: {
         Row: {
           id: string;

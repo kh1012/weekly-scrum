@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import {
   getAllScrumData,
   getAvailableWeeks,
@@ -5,6 +6,7 @@ import {
   getLatestWeekKey,
 } from "@/lib/scrumData";
 import { getDataSource } from "@/lib/data/supabaseSnapshots";
+import { createClient } from "@/lib/supabase/server";
 import { ScrumProvider } from "@/context/ScrumContext";
 import { LayoutWrapper, MainContent } from "@/components/weekly-scrum/common";
 import type { WeekOption, WeeklyScrumData } from "@/types/scrum";
@@ -18,6 +20,25 @@ export default async function ScrumLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // 프로필 완성 여부 확인 (서버 컴포넌트에서 추가 보호)
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .single();
+
+    // 프로필이 없으면 온보딩으로 리다이렉트
+    if (!profile) {
+      redirect("/onboarding/profile");
+    }
+  }
+
   let allData: Record<string, WeeklyScrumData>;
   let weeks: WeekOption[];
   let dataSource: "supabase" | "static" = "static";

@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * 미들웨어용 Supabase 클라이언트 생성
  * - 세션 갱신 처리
  * - 인증 상태 확인
+ * - 프로필 완성 여부 확인
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -47,6 +48,9 @@ export async function updateSession(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
 
+  // 온보딩 경로 (로그인 필요, 프로필 불필요)
+  const isOnboardingRoute = pathname.startsWith("/onboarding");
+
   // 정적 파일은 제외
   const isStaticFile =
     pathname.startsWith("/_next") ||
@@ -70,6 +74,37 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
+  }
+
+  // 로그인된 사용자의 프로필 완성 여부 확인
+  if (user && !isPublicRoute && !isOnboardingRoute) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .single();
+
+    // 프로필이 없으면 온보딩으로 리다이렉트
+    if (!profile) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding/profile";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // 이미 프로필이 있는 사용자가 온보딩 접근 시 메인으로 리다이렉트
+  if (user && isOnboardingRoute) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profile) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

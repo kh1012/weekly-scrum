@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
  * Supabase Auth 콜백 라우트
  * - Email OTP 인증 완료 처리
  * - 첫 로그인 시 workspace_members 자동 생성
+ * - 프로필 미완성 시 온보딩으로 리다이렉트
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -52,6 +53,18 @@ export async function GET(request: Request) {
             console.log(`Created workspace member for user ${user.id}`);
           }
         }
+      }
+
+      // 프로필 존재 여부 확인
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .single();
+
+      // 프로필이 없으면 온보딩으로 리다이렉트
+      if (!profile) {
+        return NextResponse.redirect(`${origin}/onboarding/profile`);
       }
     }
 
