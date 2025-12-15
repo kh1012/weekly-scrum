@@ -29,10 +29,10 @@ interface NavCategory {
 }
 
 /**
- * SNB 메뉴 구조 (update.md 요구사항 반영)
- * - 업무: Work Map, Calendar, Snapshots
+ * SNB 메뉴 구조 (update2.md 요구사항 반영)
+ * - 업무: Work Map, Calendar, Snapshots, Plans (전원 조회 전용)
  * - 개인공간: Manage
- * - 관리자: Admin Dashboard, All Snapshots, Plans (조건부)
+ * - 관리자: Admin Dashboard, All Snapshots, All Plans (CRUD)
  * - 기타: Release Notes
  */
 const BASE_NAV_CATEGORIES: NavCategory[] = [
@@ -57,6 +57,13 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         label: "Snapshots",
         href: "/snapshots",
         emoji: "📸",
+      },
+      {
+        key: "plans",
+        label: "Plans",
+        href: "/plans",
+        emoji: "📆",
+        description: "일정 계획 조회",
       },
     ],
   },
@@ -92,9 +99,10 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
       },
       {
         key: "admin-plans",
-        label: "Plans",
+        label: "All Plans",
         href: "/admin/plans",
         emoji: "📆",
+        description: "일정 계획 관리",
       },
     ],
   },
@@ -472,7 +480,7 @@ export function MobileNavigation({
   const mobileItems = navCategories
     .flatMap((cat) => cat.items)
     .filter((item) =>
-      ["work-map", "calendar", "snapshots", "manage", "releases"].includes(
+      ["work-map", "calendar", "snapshots", "plans", "manage"].includes(
         item.key
       )
     );

@@ -1,0 +1,201 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { MonthSelector } from "./MonthSelector";
+import { PlanFilters } from "./PlanFilters";
+import { PlansList } from "./PlansList";
+import { updatePlanStatusAction } from "@/lib/actions/plans";
+import type { PlansBoardProps, FilterState, GroupByOption } from "./types";
+import type { PlanStatus } from "@/lib/data/plans";
+
+/**
+ * 메인 Plans 보드 컴포넌트
+ * - mode='readonly': 조회만 가능 (/plans)
+ * - mode='admin': CRUD 가능 (/admin/plans)
+ */
+export function PlansBoard({
+  mode,
+  initialPlans,
+  undatedPlans = [],
+  filterOptions,
+  members,
+  initialMonth,
+}: PlansBoardProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const [selectedMonth, setSelectedMonth] = useState(initialMonth);
+  const [filters, setFilters] = useState<FilterState>({});
+  const [groupBy, setGroupBy] = useState<GroupByOption>("none");
+
+  // 월 변경 시 서버에서 새 데이터 fetch (URL 파라미터 변경)
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+    startTransition(() => {
+      const basePath = mode === "admin" ? "/admin/plans" : "/plans";
+      router.push(`${basePath}?month=${month}`);
+    });
+  };
+
+  // 상태 빠른 변경 (admin 모드)
+  const handleStatusChange = async (planId: string, status: PlanStatus) => {
+    const result = await updatePlanStatusAction(planId, status);
+    if (!result.success) {
+      alert(result.error || "상태 변경에 실패했습니다.");
+    }
+  };
+
+  const isAdmin = mode === "admin";
+  const totalCount = initialPlans.length + undatedPlans.length;
+  const filteredCount = initialPlans.filter((p) => {
+    // 간단한 필터 카운트
+    if (filters.status && p.status !== filters.status) return false;
+    if (filters.type && p.type !== filters.type) return false;
+    return true;
+  }).length;
+
+  return (
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">📆</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1
+                className="text-xl font-semibold"
+                style={{ color: "var(--notion-text)" }}
+              >
+                {isAdmin ? "All Plans" : "Plans"}
+              </h1>
+              {!isAdmin && (
+                <span
+                  className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                  style={{
+                    background: "rgba(107, 114, 128, 0.1)",
+                    color: "#6b7280",
+                  }}
+                >
+                  조회 전용
+                </span>
+              )}
+              {isAdmin && (
+                <span
+                  className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(247, 109, 87, 0.15), rgba(249, 235, 178, 0.3))",
+                    color: "#F76D57",
+                    border: "1px solid rgba(247, 109, 87, 0.2)",
+                  }}
+                >
+                  관리자 전용
+                </span>
+              )}
+            </div>
+            <p
+              className="text-sm mt-0.5"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
+              {isPending ? "로딩 중..." : `${filteredCount}개 / 전체 ${totalCount}개`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* 월 선택 */}
+          <MonthSelector
+            selectedMonth={selectedMonth}
+            onChange={handleMonthChange}
+          />
+
+          {/* 새 계획 버튼 (admin 모드만) */}
+          {isAdmin && (
+            <Link
+              href="/admin/plans/new"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-[#F76D57]/20"
+              style={{
+                background: "linear-gradient(135deg, #F76D57, #f9a88b)",
+                color: "white",
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              계획 등록
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* 필터 */}
+      <PlanFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        groupBy={groupBy}
+        onGroupByChange={setGroupBy}
+        filterOptions={filterOptions}
+        members={members}
+      />
+
+      {/* Plans 목록 */}
+      <div className="space-y-8">
+        {/* 현재 월 계획 */}
+        <section>
+          <h2
+            className="text-sm font-semibold mb-4 flex items-center gap-2"
+            style={{ color: "var(--notion-text-muted)" }}
+          >
+            📅 {selectedMonth} 계획
+            <span
+              className="text-xs px-2 py-0.5 rounded-full"
+              style={{
+                background: "rgba(59, 130, 246, 0.1)",
+                color: "#3b82f6",
+              }}
+            >
+              {initialPlans.length}
+            </span>
+          </h2>
+          <PlansList
+            plans={initialPlans}
+            mode={mode}
+            groupBy={groupBy}
+            filters={filters}
+            onStatusChange={isAdmin ? handleStatusChange : undefined}
+          />
+        </section>
+
+        {/* 일정 미지정 */}
+        {undatedPlans.length > 0 && (
+          <section>
+            <h2
+              className="text-sm font-semibold mb-4 flex items-center gap-2"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
+              ⏳ 일정 미지정
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{
+                  background: "rgba(245, 158, 11, 0.1)",
+                  color: "#f59e0b",
+                }}
+              >
+                {undatedPlans.length}
+              </span>
+            </h2>
+            <PlansList
+              plans={undatedPlans}
+              mode={mode}
+              groupBy={groupBy}
+              filters={filters}
+              onStatusChange={isAdmin ? handleStatusChange : undefined}
+            />
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+

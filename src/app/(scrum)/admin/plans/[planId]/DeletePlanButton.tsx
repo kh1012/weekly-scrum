@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { deletePlan } from "@/lib/actions/plans";
+import { deletePlanAction } from "@/lib/actions/plans";
 
 interface DeletePlanButtonProps {
   planId: string;
@@ -15,7 +15,7 @@ export function DeletePlanButton({ planId }: DeletePlanButtonProps) {
 
   const handleDelete = async () => {
     setIsLoading(true);
-    const result = await deletePlan(planId);
+    const result = await deletePlanAction(planId);
     setIsLoading(false);
 
     if (result.success) {
@@ -67,4 +67,3 @@ export function DeletePlanButton({ planId }: DeletePlanButtonProps) {
     </button>
   );
 }
-

@@ -23,10 +23,11 @@ function getMonthBounds(monthStr: string): { monthStart: string; monthEnd: strin
 }
 
 /**
- * Admin Plans 목록 페이지 (CRUD 가능)
- * - admin/leader만 접근 가능 (layout.tsx에서 가드)
+ * Plans 목록 페이지 (Read-only)
+ * - 모든 로그인 사용자 접근 가능
+ * - 조회만 가능, CRUD 기능 없음
  */
-export default async function AdminPlansPage({ searchParams }: PageProps) {
+export default async function PlansPage({ searchParams }: PageProps) {
   const params = await searchParams;
   
   // 현재 월 기본값
@@ -56,7 +57,7 @@ export default async function AdminPlansPage({ searchParams }: PageProps) {
 
   return (
     <PlansBoard
-      mode="admin"
+      mode="readonly"
       initialPlans={plans}
       undatedPlans={undatedPlans}
       filterOptions={filterOptions}
@@ -65,3 +66,4 @@ export default async function AdminPlansPage({ searchParams }: PageProps) {
     />
   );
 }
+

@@ -3,16 +3,17 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { updatePlan } from "@/lib/actions/plans";
+import { updatePlanAction } from "@/lib/actions/plans";
+import { PlanForm } from "../../_components/PlanForm";
 import { createClient } from "@/lib/supabase/browser";
+import type { PlanWithAssignees } from "@/lib/data/plans";
+import type { CreatePlanActionInput } from "@/lib/actions/plans";
 
-// 상태 옵션
-const STATUS_OPTIONS = [
-  { value: "planned", label: "계획됨" },
-  { value: "in_progress", label: "진행 중" },
-  { value: "completed", label: "완료" },
-  { value: "cancelled", label: "취소" },
-];
+interface PlanFormData extends CreatePlanActionInput {
+  id?: string;
+}
+
+const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "";
 
 /**
  * Plan 수정 페이지
@@ -22,62 +23,50 @@ export default function EditPlanPage() {
   const params = useParams();
   const planId = params.planId as string;
 
+  const [plan, setPlan] = useState<PlanWithAssignees | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-    status: "planned" as "planned" | "in_progress" | "completed" | "cancelled",
-    priority: 1,
-  });
-
   // 기존 데이터 로드
   useEffect(() => {
     async function loadPlan() {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("plans")
-        .select("*")
-        .eq("id", planId)
-        .single();
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("plans")
+          .select(`
+            *,
+            plan_assignees (
+              user_id,
+              role
+            )
+          `)
+          .eq("workspace_id", DEFAULT_WORKSPACE_ID)
+          .eq("id", planId)
+          .single();
 
-      if (error || !data) {
+        if (error) throw error;
+
+        setPlan(data as PlanWithAssignees);
+      } catch (err) {
+        console.error("Failed to load plan:", err);
         setError("계획을 불러올 수 없습니다.");
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      setFormData({
-        title: data.title,
-        description: data.description || "",
-        start_date: data.start_date,
-        end_date: data.end_date,
-        status: data.status,
-        priority: data.priority,
-      });
-      setIsLoading(false);
     }
 
     loadPlan();
   }, [planId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: PlanFormData) => {
     setIsSaving(true);
     setError(null);
 
-    const result = await updatePlan({
+    const result = await updatePlanAction({
+      ...data,
       id: planId,
-      title: formData.title,
-      description: formData.description || undefined,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      status: formData.status,
-      priority: formData.priority,
     });
 
     setIsSaving(false);
@@ -85,7 +74,7 @@ export default function EditPlanPage() {
     if (result.success) {
       router.push(`/admin/plans/${planId}`);
     } else {
-      setError(result.error || "저장에 실패했습니다.");
+      setError(result.error || "수정에 실패했습니다.");
     }
   };
 
@@ -105,8 +94,26 @@ export default function EditPlanPage() {
     );
   }
 
+  if (!plan) {
+    return (
+      <div className="text-center py-12">
+        <p style={{ color: "var(--notion-text-muted)" }}>{error || "계획을 찾을 수 없습니다."}</p>
+        <Link
+          href="/admin/plans"
+          className="inline-block mt-4 px-4 py-2 rounded-lg text-sm"
+          style={{
+            background: "var(--notion-bg-secondary)",
+            color: "var(--notion-text)",
+          }}
+        >
+          목록으로 돌아가기
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* 헤더 */}
       <div className="flex items-center gap-3">
         <Link
@@ -125,210 +132,30 @@ export default function EditPlanPage() {
       </div>
 
       {/* 폼 */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div
-          className="p-6 rounded-2xl space-y-4"
-          style={{
-            background: "var(--notion-bg-elevated)",
-            border: "1px solid var(--notion-border)",
-          }}
-        >
-          {/* 제목 */}
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium mb-1"
-              style={{ color: "var(--notion-text)" }}
-            >
-              제목 *
-            </label>
-            <input
-              id="title"
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-              style={{
-                background: "var(--notion-bg)",
-                borderColor: "var(--notion-border)",
-                color: "var(--notion-text)",
-              }}
-            />
-          </div>
-
-          {/* 설명 */}
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium mb-1"
-              style={{ color: "var(--notion-text)" }}
-            >
-              설명
-            </label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40 resize-none"
-              style={{
-                background: "var(--notion-bg)",
-                borderColor: "var(--notion-border)",
-                color: "var(--notion-text)",
-              }}
-            />
-          </div>
-
-          {/* 날짜 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="start_date"
-                className="block text-sm font-medium mb-1"
-                style={{ color: "var(--notion-text)" }}
-              >
-                시작일 *
-              </label>
-              <input
-                id="start_date"
-                type="date"
-                required
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="end_date"
-                className="block text-sm font-medium mb-1"
-                style={{ color: "var(--notion-text)" }}
-              >
-                종료일 *
-              </label>
-              <input
-                id="end_date"
-                type="date"
-                required
-                value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 상태 & 우선순위 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="status"
-                className="block text-sm font-medium mb-1"
-                style={{ color: "var(--notion-text)" }}
-              >
-                상태
-              </label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    status: e.target.value as "planned" | "in_progress" | "completed" | "cancelled",
-                  })
-                }
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="priority"
-                className="block text-sm font-medium mb-1"
-                style={{ color: "var(--notion-text)" }}
-              >
-                우선순위
-              </label>
-              <input
-                id="priority"
-                type="number"
-                min={1}
-                max={10}
-                value={formData.priority}
-                onChange={(e) =>
-                  setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
-                }
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 에러 메시지 */}
-        {error && (
-          <div
-            className="p-4 rounded-xl text-sm"
-            style={{
-              background: "linear-gradient(135deg, rgba(247, 109, 87, 0.08), rgba(249, 235, 178, 0.05))",
-              border: "1px solid rgba(247, 109, 87, 0.2)",
-              color: "#c94a3a",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {/* 버튼 */}
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="flex-1 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 hover:shadow-lg hover:shadow-[#F76D57]/20"
-            style={{
-              background: "linear-gradient(135deg, #F76D57, #f9a88b)",
-              color: "white",
-            }}
-          >
-            {isSaving ? "저장 중..." : "저장하기"}
-          </button>
-          <Link
-            href={`/admin/plans/${planId}`}
-            className="px-6 py-3 rounded-xl font-medium transition-colors"
-            style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-muted)",
-            }}
-          >
-            취소
-          </Link>
-        </div>
-      </form>
+      <PlanForm
+        initialData={{
+          id: plan.id,
+          type: plan.type,
+          title: plan.title,
+          stage: plan.stage,
+          status: plan.status,
+          domain: plan.domain || undefined,
+          project: plan.project || undefined,
+          module: plan.module || undefined,
+          feature: plan.feature || undefined,
+          start_date: plan.start_date || undefined,
+          end_date: plan.end_date || undefined,
+          assignees: plan.assignees?.map((a) => ({
+            user_id: a.user_id,
+            role: a.role,
+          })),
+        }}
+        onSubmit={handleSubmit}
+        isLoading={isSaving}
+        error={error}
+        submitLabel="저장하기"
+        cancelHref={`/admin/plans/${planId}`}
+      />
     </div>
   );
 }
-
