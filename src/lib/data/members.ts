@@ -12,7 +12,7 @@ export interface WorkspaceMember {
 
 /**
  * 워크스페이스 멤버 목록 조회
- * - workspace_members JOIN profiles
+ * - workspace_members 조회 후 profiles 별도 조회
  * - 담당자 선택 옵션용
  */
 export async function listWorkspaceMembers({
@@ -22,41 +22,57 @@ export async function listWorkspaceMembers({
 }): Promise<WorkspaceMember[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("workspace_members")
-    .select(`
-      user_id,
-      role,
-      profiles:user_id (
-        display_name,
-        email
-      )
-    `)
-    .eq("workspace_id", workspaceId)
-    .order("role", { ascending: true });
+  try {
+    // 1. workspace_members 조회
+    const { data: members, error: membersError } = await supabase
+      .from("workspace_members")
+      .select("user_id, role")
+      .eq("workspace_id", workspaceId)
+      .order("role", { ascending: true });
 
-  if (error) {
-    console.error("[listWorkspaceMembers] Failed:", error);
-    throw error;
+    if (membersError) {
+      console.error("[listWorkspaceMembers] Failed to fetch members:", membersError);
+      return [];
+    }
+
+    if (!members || members.length === 0) {
+      return [];
+    }
+
+    // 2. profiles 별도 조회
+    const userIds = members.map((m) => m.user_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, email")
+      .in("user_id", userIds);
+
+    if (profilesError) {
+      console.error("[listWorkspaceMembers] Failed to fetch profiles:", profilesError);
+      // profiles 없어도 멤버 목록은 반환
+    }
+
+    // 3. 조합
+    const profileMap = new Map<string, { display_name: string | null; email: string | null }>();
+    for (const p of profiles || []) {
+      profileMap.set(p.user_id, {
+        display_name: p.display_name,
+        email: p.email,
+      });
+    }
+
+    return members.map((member) => {
+      const profile = profileMap.get(member.user_id);
+      return {
+        user_id: member.user_id,
+        display_name: profile?.display_name || null,
+        email: profile?.email || null,
+        role: member.role as "admin" | "leader" | "member",
+      };
+    });
+  } catch (err) {
+    console.error("[listWorkspaceMembers] Unexpected error:", err);
+    return [];
   }
-
-  interface MemberRow {
-    user_id: string;
-    role: string;
-    profiles: { display_name: string | null; email: string | null } | { display_name: string | null; email: string | null }[] | null;
-  }
-
-  return ((data || []) as MemberRow[]).map((member) => {
-    // profiles는 단일 객체 또는 배열일 수 있음
-    const profileData = member.profiles;
-    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-    return {
-      user_id: member.user_id,
-      display_name: profile?.display_name || null,
-      email: profile?.email || null,
-      role: member.role as "admin" | "leader" | "member",
-    };
-  });
 }
 
 /**
@@ -69,48 +85,12 @@ export async function searchWorkspaceMembers({
   workspaceId: string;
   query: string;
 }): Promise<WorkspaceMember[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("workspace_members")
-    .select(`
-      user_id,
-      role,
-      profiles:user_id (
-        display_name,
-        email
-      )
-    `)
-    .eq("workspace_id", workspaceId);
-
-  if (error) {
-    console.error("[searchWorkspaceMembers] Failed:", error);
-    throw error;
-  }
-
+  const members = await listWorkspaceMembers({ workspaceId });
   const lowerQuery = query.toLowerCase();
 
-  interface MemberRow {
-    user_id: string;
-    role: string;
-    profiles: { display_name: string | null; email: string | null } | { display_name: string | null; email: string | null }[] | null;
-  }
-
-  return ((data || []) as MemberRow[])
-    .map((member) => {
-      const profileData = member.profiles;
-      const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-      return {
-        user_id: member.user_id,
-        display_name: profile?.display_name || null,
-        email: profile?.email || null,
-        role: member.role as "admin" | "leader" | "member",
-      };
-    })
-    .filter((member) => {
-      const name = member.display_name?.toLowerCase() || "";
-      const email = member.email?.toLowerCase() || "";
-      return name.includes(lowerQuery) || email.includes(lowerQuery);
-    });
+  return members.filter((member) => {
+    const name = member.display_name?.toLowerCase() || "";
+    const email = member.email?.toLowerCase() || "";
+    return name.includes(lowerQuery) || email.includes(lowerQuery);
+  });
 }
-

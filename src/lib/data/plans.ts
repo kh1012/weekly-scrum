@@ -126,7 +126,8 @@ export async function listPlansForMonth({
     // 기본 쿼리 구성 (FK 조인 없이 안전하게)
     let query = supabase
       .from("plans")
-      .select(`
+      .select(
+        `
         *,
         plan_assignees (
           plan_id,
@@ -134,7 +135,8 @@ export async function listPlansForMonth({
           user_id,
           role
         )
-      `)
+      `
+      )
       .eq("workspace_id", workspaceId)
       .order("start_date", { ascending: true, nullsFirst: false });
 
@@ -206,7 +208,8 @@ export async function listPlansWithoutDates({
   try {
     let query = supabase
       .from("plans")
-      .select(`
+      .select(
+        `
         *,
         plan_assignees (
           plan_id,
@@ -214,7 +217,8 @@ export async function listPlansWithoutDates({
           user_id,
           role
         )
-      `)
+      `
+      )
       .eq("workspace_id", workspaceId)
       .or("start_date.is.null,end_date.is.null")
       .order("created_at", { ascending: false });
@@ -257,7 +261,8 @@ export async function getPlan({
   try {
     const { data, error } = await supabase
       .from("plans")
-      .select(`
+      .select(
+        `
         *,
         plan_assignees (
           plan_id,
@@ -265,7 +270,8 @@ export async function getPlan({
           user_id,
           role
         )
-      `)
+      `
+      )
       .eq("workspace_id", workspaceId)
       .eq("id", planId)
       .single();
@@ -301,8 +307,15 @@ export async function createPlan({
 
   // feature type 검증
   if (payload.type === "feature") {
-    if (!payload.domain || !payload.project || !payload.module || !payload.feature) {
-      throw new Error("feature type 계획은 domain/project/module/feature가 모두 필수입니다.");
+    if (
+      !payload.domain ||
+      !payload.project ||
+      !payload.module ||
+      !payload.feature
+    ) {
+      throw new Error(
+        "feature type 계획은 domain/project/module/feature가 모두 필수입니다."
+      );
     }
   }
 
@@ -359,8 +372,15 @@ export async function updatePlan({
 
   // feature type 검증 (type이 변경되는 경우)
   if (payload.type === "feature") {
-    if (!payload.domain || !payload.project || !payload.module || !payload.feature) {
-      throw new Error("feature type 계획은 domain/project/module/feature가 모두 필수입니다.");
+    if (
+      !payload.domain ||
+      !payload.project ||
+      !payload.module ||
+      !payload.feature
+    ) {
+      throw new Error(
+        "feature type 계획은 domain/project/module/feature가 모두 필수입니다."
+      );
     }
   }
 
@@ -384,7 +404,8 @@ export async function updatePlan({
   if (payload.project !== undefined) updateData.project = payload.project;
   if (payload.module !== undefined) updateData.module = payload.module;
   if (payload.feature !== undefined) updateData.feature = payload.feature;
-  if (payload.start_date !== undefined) updateData.start_date = payload.start_date;
+  if (payload.start_date !== undefined)
+    updateData.start_date = payload.start_date;
   if (payload.end_date !== undefined) updateData.end_date = payload.end_date;
 
   const { data, error } = await supabase
