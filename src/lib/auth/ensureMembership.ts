@@ -76,4 +76,3 @@ export async function hasProfile(
 
   return !!data;
 }
-
