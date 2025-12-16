@@ -117,7 +117,7 @@ export function MainContent({ children }: { children: ReactNode }) {
     FULL_WIDTH_DYNAMIC_PATTERNS.some((pattern) => pathname.startsWith(pattern));
 
   // padding 없는 페이지 확인
-  const useNoPadding = 
+  const useNoPadding =
     NO_PADDING_PAGES.some((p) => pathname === p || pathname === p + "/") ||
     NO_PADDING_DYNAMIC_PATTERNS.some((pattern) => pathname.startsWith(pattern));
 

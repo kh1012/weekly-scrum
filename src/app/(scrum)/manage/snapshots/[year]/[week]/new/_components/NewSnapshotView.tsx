@@ -691,18 +691,18 @@ function NewSnapshotViewInner({
           </button>
         </div>
 
-        {/* 메인 콘텐츠 */}
-        <div className="flex-1 flex items-start justify-center overflow-y-auto p-6">
-          <div className="max-w-lg w-full">
-            {isLoadingMyData ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-12 h-12 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
-                </div>
+        {/* 메인 콘텐츠 - 2열 레이아웃 */}
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {isLoadingMyData ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
               </div>
-            ) : myWeeklyData.length === 0 ? (
-              <div className="text-center py-20">
+            </div>
+          ) : myWeeklyData.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gray-100 flex items-center justify-center">
                   <svg
                     className="w-10 h-10 text-gray-300"
@@ -727,80 +727,134 @@ function NewSnapshotViewInner({
                   돌아가기
                 </button>
               </div>
-            ) : (
-              <div className="space-y-3">
+            </div>
+          ) : (
+            <>
+              {/* 좌측: 주차 선택 목록 */}
+              <div className="w-80 border-r border-gray-100 bg-gray-50/50 flex flex-col shrink-0">
                 {/* 헤더 */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">주차 선택</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      불러올 주차를 선택하세요 ({selectedWeeks.size}/{myWeeklyData.length})
-                    </p>
+                <div className="px-5 py-4 border-b border-gray-100 bg-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-semibold text-gray-900">주차 선택</h2>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {selectedWeeks.size}/{myWeeklyData.length}개 선택됨
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (selectedWeeks.size === myWeeklyData.length) {
+                          setSelectedWeeks(new Set());
+                        } else {
+                          setSelectedWeeks(new Set(myWeeklyData.map((w) => w.key)));
+                        }
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      {selectedWeeks.size === myWeeklyData.length ? "전체 해제" : "전체 선택"}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      if (selectedWeeks.size === myWeeklyData.length) {
-                        setSelectedWeeks(new Set());
-                      } else {
-                        setSelectedWeeks(new Set(myWeeklyData.map((w) => w.key)));
-                      }
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    {selectedWeeks.size === myWeeklyData.length ? "전체 해제" : "전체 선택"}
-                  </button>
                 </div>
 
                 {/* 주차 목록 */}
-                {myWeeklyData.map((weekData) => {
-                  const isSelected = selectedWeeks.has(weekData.key);
-                  return (
-                    <label
-                      key={weekData.key}
-                      className={`group flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
-                        isSelected
-                          ? "border-blue-400 bg-blue-50/50 shadow-sm"
-                          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                      }`}
-                    >
-                      <div
-                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {myWeeklyData.map((weekData) => {
+                    const isSelected = selectedWeeks.has(weekData.key);
+                    return (
+                      <label
+                        key={weekData.key}
+                        className={`group flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
                           isSelected
-                            ? "bg-blue-500 border-blue-500"
-                            : "border-gray-300 group-hover:border-gray-400"
+                            ? "border-blue-400 bg-blue-50 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                         }`}
                       >
-                        {isSelected && (
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleWeek(weekData.key)}
-                        className="sr-only"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <span className="text-base font-semibold text-gray-900">
-                            {weekData.year}년 {weekData.week}
-                          </span>
-                          <span className="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                            {weekData.entriesCount}개 엔트리
+                        <div
+                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                            isSelected
+                              ? "bg-blue-500 border-blue-500"
+                              : "border-gray-300 group-hover:border-gray-400"
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleWeek(weekData.key)}
+                          className="sr-only"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              {weekData.year}년 {weekData.week}
+                            </span>
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 rounded">
+                              {weekData.entriesCount}개
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-400">
+                            {weekData.weekStartDate} ~ {weekData.weekEndDate}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-500 mt-1">
-                          {weekData.weekStartDate} ~ {weekData.weekEndDate}
-                        </span>
-                      </div>
-                    </label>
-                  );
-                })}
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-          </div>
+
+              {/* 우측: 선택된 주차의 엔트리 카드 목록 */}
+              <div className="flex-1 overflow-y-auto bg-gray-50/30">
+                {selectedWeeks.size === 0 ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-500">주차를 선택하면</p>
+                      <p className="text-xs text-gray-400 mt-1">엔트리 목록이 표시됩니다</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4">
+                    {/* 선택된 엔트리 수 표시 */}
+                    <div className="mb-4 flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700">
+                        선택된 엔트리
+                      </span>
+                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                        {Array.from(selectedWeeks).reduce((acc, weekKey) => {
+                          const week = myWeeklyData.find(w => w.key === weekKey);
+                          return acc + (week?.entriesCount || 0);
+                        }, 0)}개
+                      </span>
+                    </div>
+
+                    {/* 엔트리 카드 그리드 */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {Array.from(selectedWeeks).flatMap((weekKey) => {
+                        const weekData = myWeeklyData.find(w => w.key === weekKey);
+                        if (!weekData) return [];
+                        return weekData.entries.map((entry, idx) => (
+                          <LoadingEntryCard
+                            key={`${weekKey}-${idx}`}
+                            entry={entry}
+                            weekLabel={`${weekData.year}년 ${weekData.week}`}
+                          />
+                        ));
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -1005,6 +1059,125 @@ function EmptyState({ onAddEmpty }: { onAddEmpty: () => void }) {
         >
           새 엔트리 추가
         </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 데이터 불러오기 화면용 엔트리 카드 (읽기 전용)
+ */
+function LoadingEntryCard({
+  entry,
+  weekLabel,
+}: {
+  entry: {
+    id: string;
+    name: string;
+    domain: string;
+    project: string;
+    module: string | null;
+    feature: string | null;
+    past_week_tasks: PastWeekTask[];
+    this_week_tasks: string[];
+    risk: string[] | null;
+    risk_level: number | null;
+    collaborators: Collaborator[];
+  };
+  weekLabel: string;
+}) {
+  // 진행률 계산
+  const avgProgress =
+    entry.past_week_tasks.length > 0
+      ? Math.round(
+          entry.past_week_tasks.reduce((sum, t) => sum + t.progress, 0) /
+            entry.past_week_tasks.length
+        )
+      : null;
+
+  // 리스크 레벨 색상
+  const getRiskLevelStyle = (level: number | null) => {
+    if (!level || level === 0) return null;
+    if (level >= 3)
+      return { bg: "bg-red-100", text: "text-red-600", label: "높음" };
+    if (level >= 2)
+      return { bg: "bg-orange-100", text: "text-orange-600", label: "중간" };
+    if (level >= 1)
+      return { bg: "bg-yellow-100", text: "text-yellow-600", label: "낮음" };
+    return null;
+  };
+
+  const riskStyle = getRiskLevelStyle(entry.risk_level);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-3 hover:shadow-sm transition-shadow">
+      {/* 주차 라벨 */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-medium text-gray-400">{weekLabel}</span>
+        {riskStyle && (
+          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${riskStyle.bg} ${riskStyle.text}`}>
+            Lv.{entry.risk_level}
+          </span>
+        )}
+      </div>
+
+      {/* 메타 정보 */}
+      <div className="space-y-1.5">
+        {entry.domain && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">Domain</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+              {entry.domain}
+            </span>
+          </div>
+        )}
+        {entry.project && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">Project</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+              {entry.project}
+            </span>
+          </div>
+        )}
+        {entry.module && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">Module</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+              {entry.module}
+            </span>
+          </div>
+        )}
+        {entry.feature && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">Feature</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+              {entry.feature}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 진행률 및 태스크 수 */}
+      <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {avgProgress !== null && (
+            <>
+              <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${avgProgress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                  style={{ width: `${avgProgress}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-medium text-gray-500">{avgProgress}%</span>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-gray-400">
+          <span>{entry.past_week_tasks.length}개 작업</span>
+          {entry.collaborators.length > 0 && (
+            <span>· {entry.collaborators.length}명 협업</span>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -320,8 +320,21 @@ function TaskEditor({
   baseTabIndex: number;
   compact?: boolean;
 }) {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusIndex, setFocusIndex] = useState<number | null>(null);
+
+  // 새 항목 추가 후 포커스 이동
+  useEffect(() => {
+    if (focusIndex !== null && inputRefs.current[focusIndex]) {
+      inputRefs.current[focusIndex]?.focus();
+      setFocusIndex(null);
+    }
+  }, [focusIndex, tasks.length]);
+
   const addTask = () => {
+    const newIndex = tasks.length;
     onChange([...tasks, { title: "", progress: 0 }]);
+    setFocusIndex(newIndex);
   };
 
   // 단축키 핸들러: Ctrl+Alt+↓ 또는 Cmd+Option+↓
@@ -357,6 +370,7 @@ function TaskEditor({
           {/* 상단: 제목 + 삭제 */}
           <div className="flex items-center gap-2">
             <input
+              ref={(el) => { inputRefs.current[index] = el; }}
               type="text"
               value={task.title}
               onChange={(e) => updateTask(index, "title", e.target.value)}
@@ -498,8 +512,21 @@ function ThisWeekTaskEditor({
   baseTabIndex: number;
   compact?: boolean;
 }) {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusIndex, setFocusIndex] = useState<number | null>(null);
+
+  // 새 항목 추가 후 포커스 이동
+  useEffect(() => {
+    if (focusIndex !== null && inputRefs.current[focusIndex]) {
+      inputRefs.current[focusIndex]?.focus();
+      setFocusIndex(null);
+    }
+  }, [focusIndex, tasks.length]);
+
   const addTask = () => {
+    const newIndex = tasks.length;
     onChange([...tasks, ""]);
+    setFocusIndex(newIndex);
   };
 
   const updateTask = (index: number, value: string) => {
@@ -527,6 +554,7 @@ function ThisWeekTaskEditor({
         <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
           <div className={`rounded-full bg-emerald-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
           <input
+            ref={(el) => { inputRefs.current[index] = el; }}
             type="text"
             value={task}
             onChange={(e) => updateTask(index, e.target.value)}
@@ -596,6 +624,17 @@ function RiskEditor({
   compact?: boolean;
 }) {
   const actualRisks = risks || [];
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const prevLengthRef = useRef(actualRisks.length);
+
+  // 새 항목 추가 후 포커스 이동 (배열 길이 변화 감지)
+  useEffect(() => {
+    if (actualRisks.length > prevLengthRef.current) {
+      const newIndex = actualRisks.length - 1;
+      inputRefs.current[newIndex]?.focus();
+    }
+    prevLengthRef.current = actualRisks.length;
+  }, [actualRisks.length]);
 
   // 단축키 핸들러: Ctrl+Alt+↓ 또는 Cmd+Option+↓
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -628,6 +667,7 @@ function RiskEditor({
         <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
           <div className={`rounded-full bg-orange-400 shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
           <input
+            ref={(el) => { inputRefs.current[index] = el; }}
             type="text"
             value={risk}
             onChange={(e) => updateRisk(index, e.target.value)}
