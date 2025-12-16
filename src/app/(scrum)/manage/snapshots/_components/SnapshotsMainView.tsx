@@ -245,9 +245,11 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
     }
   }, [selectedYear, selectedWeek, workspaceId, userId]);
 
+  // localStorage 상태 복원이 완료된 후에만 fetch
   useEffect(() => {
+    if (!isStateInitialized) return;
     fetchSnapshots();
-  }, [fetchSnapshots]);
+  }, [fetchSnapshots, isStateInitialized]);
 
   // 주차별 스냅샷 갯수 조회
   const fetchSnapshotCounts = useCallback(async () => {
@@ -266,9 +268,11 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
     }
   }, [selectedYear, workspaceId, userId]);
 
+  // localStorage 상태 복원이 완료된 후에만 fetch
   useEffect(() => {
+    if (!isStateInitialized) return;
     fetchSnapshotCounts();
-  }, [fetchSnapshotCounts]);
+  }, [fetchSnapshotCounts, isStateInitialized]);
 
   // 편집하기
   const handleEditWeek = () => {
