@@ -2,6 +2,75 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.6.0",
+    date: "2025-12-16",
+    title: "스냅샷 관리 UX 대폭 개선 & CollaboratorEditor 업그레이드",
+    summary:
+      "스냅샷 관리 페이지의 레이아웃과 높이 계산을 최적화하고, 협업자 편집기에 커스텀 드롭다운과 다중 추가 기능을 도입했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "CollaboratorEditor 커스텀 드롭다운 UI - 이미 추가된 협업자 자동 제외",
+      },
+      {
+        type: "feat",
+        description: "CollaboratorEditor 여러 명 동시 추가 기능 - 체크박스로 다중 선택 후 일괄 추가",
+      },
+      {
+        type: "feat",
+        description: "TaskEditor/RiskEditor 단축키(⌥+⌘+↓) 추가 시 새 필드로 자동 포커스",
+      },
+      {
+        type: "feat",
+        description: "RiskEditor에도 ⌥+⌘+↓ 단축키로 새 리스크 추가",
+      },
+      {
+        type: "feat",
+        description: "NewSnapshotModal - 현재 주차 데이터 존재 시 안내 화면 표시",
+      },
+      {
+        type: "feat",
+        description: "PlainTextPreview에 작성자 이름(name) 표시 추가",
+      },
+      {
+        type: "improve",
+        description: "스냅샷 관리/편집/신규 페이지 높이 계산 최적화 (Header 높이에 맞춤)",
+      },
+      {
+        type: "improve",
+        description: "SnapshotsMainView localStorage 상태 복원 타이밍 수정 - 주차/데이터 불일치 해결",
+      },
+      {
+        type: "improve",
+        description: "NewSnapshotModal에서 스냅샷 관리 이동 시 현재 주차 자동 선택",
+      },
+      {
+        type: "improve",
+        description: "PlainTextPreview 콘텐츠 영역 그라데이션 배경 적용",
+      },
+      {
+        type: "improve",
+        description: "대시보드 로딩 스피너를 LogoLoadingSpinner로 변경",
+      },
+      {
+        type: "fix",
+        description: "로그인 페이지에 PKCE 인증 오류 메시지 표시 추가",
+      },
+      {
+        type: "fix",
+        description: "LoadingEntryCard undefined 배열 접근 오류 수정",
+      },
+      {
+        type: "fix",
+        description: "SnapshotEditForm 헤더 높이 PlainTextPreview와 통일 (h-12)",
+      },
+      {
+        type: "style",
+        description: "MainContent/EditSnapshotsView 불필요한 border/shadow 제거",
+      },
+    ],
+  },
+  {
     version: "2.5.0",
     date: "2025-12-15",
     title: "개인 대시보드 개선 & 스냅샷 관리 UX 최적화",
