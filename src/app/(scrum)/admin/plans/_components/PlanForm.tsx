@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/browser";
 import type { CreatePlanActionInput } from "@/lib/actions/plans";
-import type { PlanType, PlanStatus, AssigneeRole } from "@/lib/data/plans";
+import type { PlanType, AssigneeRole } from "@/lib/data/plans";
 import type { WorkspaceMember } from "@/lib/data/members";
 
 const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
@@ -31,12 +31,7 @@ const TYPE_OPTIONS: { value: PlanType; label: string }[] = [
   { value: "release", label: "릴리즈 (Release)" },
 ];
 
-const STATUS_OPTIONS: { value: PlanStatus; label: string }[] = [
-  { value: "진행중", label: "진행중" },
-  { value: "완료", label: "완료" },
-  { value: "보류", label: "보류" },
-  { value: "취소", label: "취소" },
-];
+// STATUS_OPTIONS 제거됨 - 상태 필드 사용 안함
 
 const STAGE_OPTIONS = [
   "컨셉 기획",
@@ -78,7 +73,6 @@ export function PlanForm({
     type: initialData?.type || ("feature" as PlanType),
     title: initialData?.title || "",
     stage: initialData?.stage || "컨셉 기획",
-    status: initialData?.status || ("진행중" as PlanStatus),
     project: initialData?.project || "",
     module: initialData?.module || "",
     feature: initialData?.feature || "",
@@ -191,7 +185,6 @@ export function PlanForm({
       title: formData.title,
       // stage는 feature 타입에서만 사용
       stage: isFeatureType ? formData.stage : "",
-      status: formData.status,
       // 위계정보는 feature 타입에서만 사용
       project: isFeatureType ? formData.project || undefined : undefined,
       module: isFeatureType ? formData.module || undefined : undefined,
@@ -235,50 +228,27 @@ export function PlanForm({
           기본 정보
         </h2>
 
-        {/* 타입 & 상태 */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-              타입 *
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value as PlanType })}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-              style={{
-                background: "var(--notion-bg)",
-                borderColor: "var(--notion-border)",
-                color: "var(--notion-text)",
-              }}
-            >
-              {TYPE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-              상태 *
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as PlanStatus })}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-              style={{
-                background: "var(--notion-bg)",
-                borderColor: "var(--notion-border)",
-                color: "var(--notion-text)",
-              }}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* 타입 */}
+        <div>
+          <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
+            타입 *
+          </label>
+          <select
+            value={formData.type}
+            onChange={(e) => setFormData({ ...formData, type: e.target.value as PlanType })}
+            className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+            style={{
+              background: "var(--notion-bg)",
+              borderColor: "var(--notion-border)",
+              color: "var(--notion-text)",
+            }}
+          >
+            {TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 제목 */}
@@ -353,7 +323,7 @@ export function PlanForm({
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                릴리즈 *
+                프로젝트 *
               </label>
               <input
                 type="text"
@@ -365,12 +335,12 @@ export function PlanForm({
                   borderColor: "var(--notion-border)",
                   color: "var(--notion-text)",
                 }}
-                placeholder="예: 26.1"
+                placeholder="예: MeshFree"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                스프린트 *
+                모듈 *
               </label>
               <input
                 type="text"
@@ -382,12 +352,12 @@ export function PlanForm({
                   borderColor: "var(--notion-border)",
                   color: "var(--notion-text)",
                 }}
-                placeholder="예: 2025-W01"
+                placeholder="예: 해석기"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                기능 *
+                기능명 *
               </label>
               <input
                 type="text"
