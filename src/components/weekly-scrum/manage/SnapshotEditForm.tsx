@@ -596,7 +596,15 @@ function RiskEditor({
   compact?: boolean;
 }) {
   const actualRisks = risks || [];
-  const hasRisks = actualRisks.length > 0;
+
+  // 단축키 핸들러: Ctrl+Alt+↓ 또는 Cmd+Option+↓
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey && e.altKey && e.key === "ArrowDown") ||
+        (e.metaKey && e.altKey && e.key === "ArrowDown")) {
+      e.preventDefault();
+      onAddRisk();
+    }
+  };
 
   const updateRisk = (index: number, value: string) => {
     const newRisks = [...actualRisks];
@@ -623,6 +631,7 @@ function RiskEditor({
             type="text"
             value={risk}
             onChange={(e) => updateRisk(index, e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="리스크 내용..."
             tabIndex={baseTabIndex + index}
             className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
@@ -642,19 +651,29 @@ function RiskEditor({
         </div>
       ))}
       {/* 리스크 추가 버튼 */}
-      <button
-        type="button"
-        onClick={onAddRisk}
-        tabIndex={-1}
-        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
-          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
-        }`}
-      >
-        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        리스크 추가
-      </button>
+      <div className="border-t border-gray-100">
+        <button
+          type="button"
+          onClick={onAddRisk}
+          tabIndex={-1}
+          className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+            compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
+          }`}
+        >
+          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          리스크 추가
+        </button>
+        <div className="px-3 py-1.5 text-[10px] text-gray-400 text-center border-t border-gray-50">
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌥</kbd>
+          <span className="mx-0.5">+</span>
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌘</kbd>
+          <span className="mx-0.5">+</span>
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">↓</kbd>
+          <span className="ml-1">새 항목 추가</span>
+        </div>
+      </div>
     </div>
   );
 }

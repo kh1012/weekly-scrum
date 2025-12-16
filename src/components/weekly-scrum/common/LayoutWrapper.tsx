@@ -32,6 +32,9 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = ["/manage/snapshots/", "/admin/"];
 // padding 없는 페이지 경로
 const NO_PADDING_PAGES = ["/calendar", "/my"];
 
+// padding 없는 동적 경로 패턴
+const NO_PADDING_DYNAMIC_PATTERNS = ["/manage/snapshots/"];
+
 // localStorage 키
 const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
 
@@ -114,9 +117,9 @@ export function MainContent({ children }: { children: ReactNode }) {
     FULL_WIDTH_DYNAMIC_PATTERNS.some((pattern) => pathname.startsWith(pattern));
 
   // padding 없는 페이지 확인
-  const useNoPadding = NO_PADDING_PAGES.some(
-    (p) => pathname === p || pathname === p + "/"
-  );
+  const useNoPadding = 
+    NO_PADDING_PAGES.some((p) => pathname === p || pathname === p + "/") ||
+    NO_PADDING_DYNAMIC_PATTERNS.some((pattern) => pathname.startsWith(pattern));
 
   return (
     <main
@@ -124,7 +127,14 @@ export function MainContent({ children }: { children: ReactNode }) {
         useFullWidth ? "max-w-full" : "max-w-6xl"
       }`}
     >
-      {children}
+      {/* 콘텐츠 래퍼: border와 radius 적용 (padding 없는 페이지 제외) */}
+      {useNoPadding ? (
+        children
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          {children}
+        </div>
+      )}
     </main>
   );
 }
