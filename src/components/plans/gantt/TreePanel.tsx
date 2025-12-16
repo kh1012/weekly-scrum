@@ -104,39 +104,58 @@ export const TreePanel = memo(function TreePanel({
         borderColor: "var(--notion-border)",
       }}
     >
-      {/* Header with Search - 52px height to match TimelineHeader */}
+      {/* Header with Search - TimelineHeader와 동일한 구조 (26px + 26px) */}
       <div
-        className="flex-shrink-0 border-b h-[52px] flex items-center px-3"
+        className="flex-shrink-0 border-b"
         style={{
-          background: "var(--notion-bg-secondary)",
           borderColor: "var(--notion-border)",
         }}
       >
+        {/* 상단 행: 타이틀 (26px, TimelineHeader의 Month Row와 동일) */}
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg flex-1"
+          className="h-[26px] flex items-center px-3 border-b"
           style={{
-            background: "var(--notion-bg)",
-            border: "1px solid var(--notion-border)",
+            background: "var(--notion-bg-secondary)",
+            borderColor: "var(--notion-border)",
           }}
         >
-          <SearchIcon size={14} style={{ color: "var(--notion-text-muted)" }} />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="프로젝트 / 모듈 / 기능 검색..."
-            className="flex-1 text-xs bg-transparent border-none outline-none"
-            style={{ color: "var(--notion-text)" }}
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="text-xs hover:opacity-70"
-              style={{ color: "var(--notion-text-muted)" }}
-            >
-              ✕
-            </button>
-          )}
+          <FolderIcon size={12} style={{ color: "#8b5cf6" }} />
+          <span className="ml-1.5 text-xs font-medium" style={{ color: "var(--notion-text)" }}>
+            프로젝트 / 모듈 / 기능
+          </span>
+        </div>
+        
+        {/* 하단 행: 검색 (26px, TimelineHeader의 Day Row와 동일) */}
+        <div
+          className="h-[26px] flex items-center px-2"
+          style={{ background: "var(--notion-bg)" }}
+        >
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 rounded flex-1"
+            style={{
+              background: "var(--notion-bg-secondary)",
+              border: "1px solid var(--notion-border)",
+            }}
+          >
+            <SearchIcon size={12} style={{ color: "var(--notion-text-muted)" }} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="검색..."
+              className="flex-1 text-[10px] bg-transparent border-none outline-none"
+              style={{ color: "var(--notion-text)" }}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="text-[10px] hover:opacity-70"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

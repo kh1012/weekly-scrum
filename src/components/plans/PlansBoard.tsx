@@ -525,16 +525,9 @@ export function PlansBoard({
     onEscape: handleEscape,
   });
 
-  // 커맨드 팔레트 명령어 목록
+  // 커맨드 팔레트 명령어 목록 (임시 계획 생성은 CommandPalette 내부에서 처리)
   const commands: CommandItem[] = useMemo(
     () => [
-      {
-        id: "new-plan",
-        label: "새 계획 생성",
-        description: "새 계획 등록 페이지로 이동",
-        icon: CommandIcons.Plus,
-        action: () => router.push("/admin/plans/new"),
-      },
       {
         id: "delete",
         label: "선택된 계획 삭제",
