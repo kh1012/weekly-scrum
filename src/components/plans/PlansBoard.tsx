@@ -31,6 +31,7 @@ import {
   SaveIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  RefreshIcon,
 } from "@/components/common/Icons";
 import {
   updatePlanStatusAction,
@@ -538,6 +539,22 @@ export function PlansBoard({
     []
   );
 
+  // 드래프트에 기간 + 추가 정보 설정 (팝오버에서 완료 시)
+  const handleUpdateDraftWithDates = useCallback(
+    (
+      tempId: string,
+      updates: Partial<DraftPlanItem> & { start_date: string; end_date: string }
+    ) => {
+      setDraftData((prev) => ({
+        ...prev,
+        creates: prev.creates.map((d) =>
+          d.tempId === tempId ? { ...d, ...updates } : d
+        ),
+      }));
+    },
+    []
+  );
+
   // ===== 저장하기 (모든 임시 변경 사항을 서버에 반영) =====
   const handleSaveAll = useCallback(async () => {
     if (totalChanges === 0) return;
@@ -632,6 +649,32 @@ export function PlansBoard({
       setIsSaving(false);
     }
   }, [draftData, totalChanges, router, STORAGE_KEY]);
+
+  // ===== 변경점 초기화 =====
+  const handleResetDrafts = useCallback(() => {
+    if (
+      !confirm(
+        "모든 임시 변경 사항이 삭제됩니다. 계속하시겠습니까?"
+      )
+    ) {
+      return;
+    }
+
+    setDraftData({ creates: [], updates: [], deletes: [], duplicates: [] });
+    localStorage.removeItem(STORAGE_KEY);
+    setHasUnsavedChanges(false);
+
+    // 토스트 표시
+    setPendingDelete({
+      planId: "",
+      planTitle: "변경 사항이 초기화되었습니다",
+    });
+    setShowUndoSnackbar(true);
+    setTimeout(() => {
+      setShowUndoSnackbar(false);
+      setPendingDelete(null);
+    }, 3000);
+  }, [STORAGE_KEY]);
 
   // ===== STEP C: Fast Delete (임시 저장) =====
   const handleDelete = useCallback(
@@ -936,22 +979,37 @@ export function PlansBoard({
                 compact
               />
 
-              {/* 저장 버튼 */}
+              {/* 저장/초기화 버튼 */}
               {isAdmin && hasUnsavedChanges && (
-                <button
-                  onClick={handleSaveAll}
-                  disabled={isSaving}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                  style={{
-                    background: isSaving
-                      ? "var(--notion-bg-secondary)"
-                      : "linear-gradient(135deg, #10b981, #34d399)",
-                    color: isSaving ? "var(--notion-text-muted)" : "white",
-                  }}
-                >
-                  <SaveIcon size={12} />
-                  {isSaving ? "저장..." : `저장 (${totalChanges})`}
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleResetDrafts}
+                    disabled={isSaving}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-black/5"
+                    style={{
+                      background: "var(--notion-bg-secondary)",
+                      color: "var(--notion-text-muted)",
+                      border: "1px solid var(--notion-border)",
+                    }}
+                    title="변경점 초기화"
+                  >
+                    <RefreshIcon size={12} />
+                  </button>
+                  <button
+                    onClick={handleSaveAll}
+                    disabled={isSaving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    style={{
+                      background: isSaving
+                        ? "var(--notion-bg-secondary)"
+                        : "linear-gradient(135deg, #10b981, #34d399)",
+                      color: isSaving ? "var(--notion-text-muted)" : "white",
+                    }}
+                  >
+                    <SaveIcon size={12} />
+                    {isSaving ? "저장..." : `저장 (${totalChanges})`}
+                  </button>
+                </div>
               )}
 
               {/* 새 계획 버튼 */}
@@ -1020,22 +1078,38 @@ export function PlansBoard({
               </div>
 
               <div className="flex items-center gap-3">
-                {/* 저장 버튼 (임시 데이터 있을 때만) */}
+                {/* 저장/초기화 버튼 (임시 데이터 있을 때만) */}
                 {isAdmin && hasUnsavedChanges && (
-                  <button
-                    onClick={handleSaveAll}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:shadow-lg"
-                    style={{
-                      background: isSaving
-                        ? "var(--notion-bg-secondary)"
-                        : "linear-gradient(135deg, #10b981, #34d399)",
-                      color: isSaving ? "var(--notion-text-muted)" : "white",
-                    }}
-                  >
-                    <SaveIcon size={16} />
-                    {isSaving ? "저장 중..." : `저장하기 (${totalChanges})`}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleResetDrafts}
+                      disabled={isSaving}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:bg-black/5"
+                      style={{
+                        background: "var(--notion-bg-secondary)",
+                        color: "var(--notion-text-muted)",
+                        border: "1px solid var(--notion-border)",
+                      }}
+                      title="변경점 초기화"
+                    >
+                      <RefreshIcon size={14} />
+                      초기화
+                    </button>
+                    <button
+                      onClick={handleSaveAll}
+                      disabled={isSaving}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:shadow-lg"
+                      style={{
+                        background: isSaving
+                          ? "var(--notion-bg-secondary)"
+                          : "linear-gradient(135deg, #10b981, #34d399)",
+                        color: isSaving ? "var(--notion-text-muted)" : "white",
+                      }}
+                    >
+                      <SaveIcon size={16} />
+                      {isSaving ? "저장 중..." : `저장하기 (${totalChanges})`}
+                    </button>
+                  </div>
                 )}
 
                 {/* 최소화 버튼 */}
@@ -1091,6 +1165,10 @@ export function PlansBoard({
           onCreateFromDraft={isAdmin ? handleCreateFromDraft : undefined}
           onRemoveDraftPlan={isAdmin ? handleRemoveDraftPlan : undefined}
           onUpdateDraftPlan={isAdmin ? handleUpdateDraftPlan : undefined}
+          onUpdateDraftWithDates={
+            isAdmin ? handleUpdateDraftWithDates : undefined
+          }
+          filterOptions={filterOptions}
         />
       </div>
 

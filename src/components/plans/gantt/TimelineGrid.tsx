@@ -39,7 +39,22 @@ interface TimelineGridProps {
   /** 임시 계획 목록 */
   draftPlans?: DraftPlan[];
   /** 임시 계획 날짜 설정 핸들러 (임시 저장) */
-  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => void;
+  onCreateFromDraft?: (
+    draft: DraftPlan,
+    startDate: string,
+    endDate: string
+  ) => void;
+  /** 임시 계획 기간 + 추가 정보 설정 핸들러 (팝오버에서 완료 시) */
+  onUpdateDraftWithDates?: (
+    tempId: string,
+    updates: Partial<DraftPlan> & { start_date: string; end_date: string }
+  ) => void;
+  /** 필터 옵션 (프로젝트/모듈/기능 목록) */
+  filterOptions?: {
+    projects?: string[];
+    modules?: string[];
+    features?: string[];
+  };
 }
 
 /**
@@ -78,6 +93,8 @@ export const TimelineGrid = memo(function TimelineGrid({
   onQuickCreate,
   draftPlans = [],
   onCreateFromDraft,
+  onUpdateDraftWithDates,
+  filterOptions,
 }: TimelineGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredCell, setHoveredCell] = useState<{
@@ -375,6 +392,8 @@ export const TimelineGrid = memo(function TimelineGrid({
             totalWidth={totalWidth}
             calculateBarLayout={calculateBarLayout}
             onCreateFromDraft={onCreateFromDraft}
+            onUpdateDraftWithDates={onUpdateDraftWithDates}
+            filterOptions={filterOptions}
           />
         ))}
       </div>

@@ -146,5 +146,16 @@ export interface PlansGanttViewProps {
   onRemoveDraftPlan?: (tempId: string) => void;
   /** 임시 계획 수정 핸들러 */
   onUpdateDraftPlan?: (tempId: string, updates: Partial<DraftPlan>) => void;
+  /** 임시 계획 기간 + 추가 정보 설정 핸들러 (팝오버에서 완료 시) */
+  onUpdateDraftWithDates?: (
+    tempId: string,
+    updates: Partial<DraftPlan> & { start_date: string; end_date: string }
+  ) => void;
+  /** 필터 옵션 (프로젝트/모듈/기능 목록) */
+  filterOptions?: {
+    projects?: string[];
+    modules?: string[];
+    features?: string[];
+  };
 }
 

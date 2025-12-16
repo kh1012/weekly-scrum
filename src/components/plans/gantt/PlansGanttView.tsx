@@ -32,6 +32,8 @@ export function PlansGanttView({
   onCreateFromDraft,
   onRemoveDraftPlan,
   onUpdateDraftPlan,
+  onUpdateDraftWithDates,
+  filterOptions,
 }: PlansGanttViewProps) {
   // Build tree from plans
   const tree = useMemo(() => buildTreeFromPlans(plans), [plans]);
@@ -242,6 +244,10 @@ export function PlansGanttView({
           }
           draftPlans={isAdmin ? draftPlans : undefined}
           onCreateFromDraft={isAdmin ? onCreateFromDraft : undefined}
+          onUpdateDraftWithDates={
+            isAdmin ? onUpdateDraftWithDates : undefined
+          }
+          filterOptions={filterOptions}
         />
 
         {/* Empty State - Timeline 영역 내부에 표시 */}
