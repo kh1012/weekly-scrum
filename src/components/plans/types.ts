@@ -29,6 +29,7 @@ export interface PlansBoardProps {
   };
   members: WorkspaceMember[];
   initialMonth: string; // YYYY-MM
+  initialFilters?: PlanFilters; // URL params에서 파싱된 초기 필터
 }
 
 /**

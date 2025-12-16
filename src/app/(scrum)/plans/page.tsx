@@ -1,11 +1,22 @@
 import { PlansBoard } from "@/components/plans";
 import { listPlansForMonth, listPlansWithoutDates, getFilterOptions } from "@/lib/data/plans";
+import type { PlanFilters, PlanType, PlanStatus } from "@/lib/data/plans";
 import { listWorkspaceMembers } from "@/lib/data/members";
 
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 
 interface PageProps {
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{
+    month?: string;
+    type?: string;
+    status?: string;
+    stage?: string;
+    domain?: string;
+    project?: string;
+    module?: string;
+    feature?: string;
+    assignee?: string;
+  }>;
 }
 
 /**
@@ -23,9 +34,28 @@ function getMonthBounds(monthStr: string): { monthStart: string; monthEnd: strin
 }
 
 /**
+ * URL params에서 필터 객체 생성
+ */
+function parseFiltersFromParams(params: Awaited<PageProps["searchParams"]>): PlanFilters {
+  const filters: PlanFilters = {};
+  
+  if (params.type) filters.type = params.type as PlanType;
+  if (params.status) filters.status = params.status as PlanStatus;
+  if (params.stage) filters.stage = params.stage;
+  if (params.domain) filters.domain = params.domain;
+  if (params.project) filters.project = params.project;
+  if (params.module) filters.module = params.module;
+  if (params.feature) filters.feature = params.feature;
+  if (params.assignee) filters.assigneeUserId = params.assignee;
+  
+  return filters;
+}
+
+/**
  * Plans 목록 페이지 (Read-only)
  * - 모든 로그인 사용자 접근 가능
  * - 조회만 가능, CRUD 기능 없음
+ * - URL params로 필터 상태 관리
  */
 export default async function PlansPage({ searchParams }: PageProps) {
   const params = await searchParams;
@@ -36,16 +66,21 @@ export default async function PlansPage({ searchParams }: PageProps) {
   const selectedMonth = params.month || defaultMonth;
   
   const { monthStart, monthEnd } = getMonthBounds(selectedMonth);
+  
+  // URL params에서 필터 파싱
+  const filters = parseFiltersFromParams(params);
 
-  // 데이터 병렬 조회
+  // 데이터 병렬 조회 (서버 사이드 필터링)
   const [plans, undatedPlans, filterOptions, members] = await Promise.all([
     listPlansForMonth({
       workspaceId: DEFAULT_WORKSPACE_ID,
       monthStart,
       monthEnd,
+      filters,
     }),
     listPlansWithoutDates({
       workspaceId: DEFAULT_WORKSPACE_ID,
+      filters,
     }),
     getFilterOptions({
       workspaceId: DEFAULT_WORKSPACE_ID,
@@ -63,6 +98,7 @@ export default async function PlansPage({ searchParams }: PageProps) {
       filterOptions={filterOptions}
       members={members}
       initialMonth={selectedMonth}
+      initialFilters={filters}
     />
   );
 }

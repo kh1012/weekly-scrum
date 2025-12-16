@@ -22,6 +22,7 @@ type MonthRangeOption = 3 | 4 | 5 | 6;
  * 메인 Plans 보드 컴포넌트
  * - mode='readonly': 조회만 가능 (/plans)
  * - mode='admin': CRUD 가능 (/admin/plans)
+ * - URL params로 필터 상태 관리 (서버 사이드 필터링)
  */
 export function PlansBoard({
   mode,
@@ -30,24 +31,57 @@ export function PlansBoard({
   filterOptions,
   members,
   initialMonth,
+  initialFilters = {},
 }: PlansBoardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const [selectedMonth, setSelectedMonth] = useState(initialMonth);
-  const [filters, setFilters] = useState<FilterState>({});
+  const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [groupBy, setGroupBy] = useState<GroupByOption>("none");
   const [viewMode, setViewMode] = useState<ViewMode>("gantt"); // 기본: 간트 뷰
   const [monthRange, setMonthRange] = useState<MonthRangeOption>(3); // 기본: 3개월
+
+  // URL 파라미터 빌드 함수
+  const buildUrlWithParams = useCallback(
+    (newMonth: string, newFilters: FilterState) => {
+      const basePath = mode === "admin" ? "/admin/plans" : "/plans";
+      const params = new URLSearchParams();
+      
+      params.set("month", newMonth);
+      
+      if (newFilters.type) params.set("type", newFilters.type);
+      if (newFilters.status) params.set("status", newFilters.status);
+      if (newFilters.stage) params.set("stage", newFilters.stage);
+      if (newFilters.domain) params.set("domain", newFilters.domain);
+      if (newFilters.project) params.set("project", newFilters.project);
+      if (newFilters.module) params.set("module", newFilters.module);
+      if (newFilters.feature) params.set("feature", newFilters.feature);
+      if (newFilters.assigneeUserId) params.set("assignee", newFilters.assigneeUserId);
+      
+      return `${basePath}?${params.toString()}`;
+    },
+    [mode]
+  );
 
   // 월 변경 시 서버에서 새 데이터 fetch (URL 파라미터 변경)
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
     startTransition(() => {
-      const basePath = mode === "admin" ? "/admin/plans" : "/plans";
-      router.push(`${basePath}?month=${month}`);
+      router.push(buildUrlWithParams(month, filters));
     });
   };
+
+  // 필터 변경 시 URL 업데이트 (서버 사이드 필터링)
+  const handleFiltersChange = useCallback(
+    (newFilters: FilterState) => {
+      setFilters(newFilters);
+      startTransition(() => {
+        router.push(buildUrlWithParams(selectedMonth, newFilters));
+      });
+    },
+    [selectedMonth, buildUrlWithParams, router]
+  );
 
   // 상태 빠른 변경 (admin 모드)
   const handleStatusChange = async (planId: string, status: PlanStatus) => {
@@ -356,7 +390,7 @@ export function PlansBoard({
           {/* 필터 */}
           <PlanFilters
             filters={filters}
-            onFiltersChange={setFilters}
+            onFiltersChange={handleFiltersChange}
             groupBy={groupBy}
             onGroupByChange={setGroupBy}
             filterOptions={filterOptions}
