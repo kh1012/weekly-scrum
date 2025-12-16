@@ -105,10 +105,66 @@ export interface PlanFilters {
 }
 
 /**
+ * v_plans_with_assignees 뷰 Row 타입
+ * - 뷰는 plans + plan_assignees + profiles를 JOIN한 결과
+ * - assignees는 JSON array로 포함됨
+ */
+interface ViewPlanRow {
+  id: string;
+  workspace_id: string;
+  type: PlanType;
+  domain: string | null;
+  project: string | null;
+  module: string | null;
+  feature: string | null;
+  title: string;
+  stage: string;
+  status: PlanStatus;
+  start_date: string | null;
+  end_date: string | null;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  // 뷰에서 제공하는 추가 필드
+  assignees: PlanAssignee[] | null;
+  creator?: {
+    display_name: string | null;
+    email: string | null;
+  } | null;
+}
+
+/**
+ * 뷰 Row를 PlanWithAssignees로 변환
+ */
+function transformViewRowToPlan(row: ViewPlanRow): PlanWithAssignees {
+  return {
+    id: row.id,
+    workspace_id: row.workspace_id,
+    type: row.type,
+    domain: row.domain,
+    project: row.project,
+    module: row.module,
+    feature: row.feature,
+    title: row.title,
+    stage: row.stage,
+    status: row.status,
+    start_date: row.start_date,
+    end_date: row.end_date,
+    created_by: row.created_by,
+    updated_by: row.updated_by,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    assignees: row.assignees || [],
+    creator: row.creator || undefined,
+  };
+}
+
+/**
  * 월 범위 기반 Plans 조회
+ * - v_plans_with_assignees 뷰 사용 (READ는 항상 뷰 사용)
  * - 해당 월과 겹치는(overlap) 계획을 조회
  * - start_date <= monthEnd AND (end_date is null OR end_date >= monthStart)
- * - idx_plans_workspace_dates 인덱스 활용
  */
 export async function listPlansForMonth({
   workspaceId,
@@ -124,20 +180,10 @@ export async function listPlansForMonth({
   const supabase = await createClient();
 
   try {
-    // 기본 쿼리 구성 (FK 조인 없이 안전하게)
+    // v_plans_with_assignees 뷰 사용 (READ는 항상 뷰)
     let query = supabase
-      .from("plans")
-      .select(
-        `
-        *,
-        plan_assignees (
-          plan_id,
-          workspace_id,
-          user_id,
-          role
-        )
-      `
-      )
+      .from("v_plans_with_assignees")
+      .select("*")
       .eq("workspace_id", workspaceId)
       .order("start_date", { ascending: true, nullsFirst: false });
 
@@ -174,15 +220,16 @@ export async function listPlansForMonth({
 
     if (error) {
       console.error("[listPlansForMonth] Failed:", error);
-      // 테이블이 없거나 스키마 문제일 경우 빈 배열 반환
+      // 뷰가 없거나 스키마 문제일 경우 빈 배열 반환
       return [];
     }
 
-    // assignee 필터는 클라이언트 측에서 처리 (복잡한 JOIN 대신)
-    let plans = (data || []) as PlanWithAssignees[];
+    // 뷰에서 가져온 데이터 변환 (assignees는 JSON array로 포함됨)
+    const plans = (data || []).map(transformViewRowToPlan);
 
+    // assignee 필터는 클라이언트 측에서 처리
     if (filters?.assigneeUserId) {
-      plans = plans.filter((plan) =>
+      return plans.filter((plan) =>
         plan.assignees?.some((a) => a.user_id === filters.assigneeUserId)
       );
     }
@@ -196,6 +243,7 @@ export async function listPlansForMonth({
 
 /**
  * 일정 미지정 Plans 조회 (start_date 또는 end_date가 null)
+ * - v_plans_with_assignees 뷰 사용 (READ는 항상 뷰 사용)
  */
 export async function listPlansWithoutDates({
   workspaceId,
@@ -207,19 +255,10 @@ export async function listPlansWithoutDates({
   const supabase = await createClient();
 
   try {
+    // v_plans_with_assignees 뷰 사용 (READ는 항상 뷰)
     let query = supabase
-      .from("plans")
-      .select(
-        `
-        *,
-        plan_assignees (
-          plan_id,
-          workspace_id,
-          user_id,
-          role
-        )
-      `
-      )
+      .from("v_plans_with_assignees")
+      .select("*")
       .eq("workspace_id", workspaceId)
       .or("start_date.is.null,end_date.is.null")
       .order("created_at", { ascending: false });
@@ -236,11 +275,11 @@ export async function listPlansWithoutDates({
 
     if (error) {
       console.error("[listPlansWithoutDates] Failed:", error);
-      // 테이블이 없거나 스키마 문제일 경우 빈 배열 반환
+      // 뷰가 없거나 스키마 문제일 경우 빈 배열 반환
       return [];
     }
 
-    return (data || []) as PlanWithAssignees[];
+    return (data || []).map(transformViewRowToPlan);
   } catch (err) {
     console.error("[listPlansWithoutDates] Unexpected error:", err);
     return [];
@@ -249,6 +288,7 @@ export async function listPlansWithoutDates({
 
 /**
  * 단일 Plan 조회
+ * - v_plans_with_assignees 뷰 사용 (READ는 항상 뷰 사용)
  */
 export async function getPlan({
   workspaceId,
@@ -260,19 +300,10 @@ export async function getPlan({
   const supabase = await createClient();
 
   try {
+    // v_plans_with_assignees 뷰 사용 (READ는 항상 뷰)
     const { data, error } = await supabase
-      .from("plans")
-      .select(
-        `
-        *,
-        plan_assignees (
-          plan_id,
-          workspace_id,
-          user_id,
-          role
-        )
-      `
-      )
+      .from("v_plans_with_assignees")
+      .select("*")
       .eq("workspace_id", workspaceId)
       .eq("id", planId)
       .single();
@@ -285,7 +316,7 @@ export async function getPlan({
       return null;
     }
 
-    return data as PlanWithAssignees;
+    return transformViewRowToPlan(data);
   } catch (err) {
     console.error("[getPlan] Unexpected error:", err);
     return null;
@@ -451,6 +482,7 @@ export async function deletePlan({
 
 /**
  * 필터 옵션 조회 (domain, project, module 등의 고유값)
+ * - v_plans_with_assignees 뷰 사용 (READ는 항상 뷰 사용)
  */
 export async function getFilterOptions({
   workspaceId,
@@ -466,14 +498,15 @@ export async function getFilterOptions({
   const supabase = await createClient();
 
   try {
+    // v_plans_with_assignees 뷰 사용 (READ는 항상 뷰)
     const { data, error } = await supabase
-      .from("plans")
+      .from("v_plans_with_assignees")
       .select("domain, project, module, feature, stage")
       .eq("workspace_id", workspaceId);
 
     if (error) {
       console.error("[getFilterOptions] Failed:", error);
-      // 테이블이 없으면 빈 옵션 반환
+      // 뷰가 없으면 빈 옵션 반환
       return {
         domains: [],
         projects: [],
