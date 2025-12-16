@@ -1,9 +1,20 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useMemo } from "react";
 import type { FlatRow, DraftPlan } from "./types";
 import type { PlanType } from "@/lib/data/plans";
 import { ROW_HEIGHT, TREE_WIDTH } from "./useGanttLayout";
+import {
+  SearchIcon,
+  FolderIcon,
+  CubeIcon,
+  CodeIcon,
+  RocketIcon,
+  RefreshIcon,
+  CalendarIcon,
+  PlusIcon,
+  StarIcon,
+} from "@/components/common/Icons";
 
 interface TreePanelProps {
   rows: FlatRow[];
@@ -17,10 +28,10 @@ interface TreePanelProps {
   isAdmin?: boolean;
 }
 
-const TYPE_OPTIONS: { value: PlanType; label: string; icon: string }[] = [
-  { value: "feature", label: "기능", icon: "📋" },
-  { value: "sprint", label: "스프린트", icon: "🔄" },
-  { value: "release", label: "릴리즈", icon: "🚀" },
+const TYPE_OPTIONS: { value: PlanType; label: string; Icon: typeof CodeIcon }[] = [
+  { value: "feature", label: "기능", Icon: CodeIcon },
+  { value: "sprint", label: "스프린트", Icon: RefreshIcon },
+  { value: "release", label: "릴리즈", Icon: RocketIcon },
 ];
 
 /**
@@ -36,6 +47,19 @@ export const TreePanel = memo(function TreePanel({
 }: TreePanelProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [isHoveringEmpty, setIsHoveringEmpty] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // 검색 필터링
+  const filteredRows = useMemo(() => {
+    if (!searchTerm.trim()) return rows;
+    const term = searchTerm.toLowerCase();
+    return rows.filter((row) =>
+      row.node.label.toLowerCase().includes(term) ||
+      row.node.project?.toLowerCase().includes(term) ||
+      row.node.module?.toLowerCase().includes(term) ||
+      row.node.feature?.toLowerCase().includes(term)
+    );
+  }, [rows, searchTerm]);
 
   const handleAddPlan = (type: PlanType) => {
     if (onAddDraftPlan) {
@@ -64,21 +88,55 @@ export const TreePanel = memo(function TreePanel({
         borderColor: "var(--notion-border)",
       }}
     >
-      {/* Header */}
+      {/* Header with Search */}
       <div
-        className="h-[52px] flex items-center px-4 border-b font-medium text-sm"
+        className="flex-shrink-0 border-b"
         style={{
           background: "var(--notion-bg-secondary)",
           borderColor: "var(--notion-border)",
-          color: "var(--notion-text)",
         }}
       >
-        프로젝트 / 모듈 / 기능명
+        <div className="h-[52px] flex items-center px-4 font-medium text-sm">
+          <FolderIcon size={14} style={{ color: "#8b5cf6" }} />
+          <span className="ml-2" style={{ color: "var(--notion-text)" }}>
+            프로젝트 / 모듈 / 기능
+          </span>
+        </div>
+        
+        {/* 검색 */}
+        <div className="px-3 pb-3">
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg"
+            style={{
+              background: "var(--notion-bg)",
+              border: "1px solid var(--notion-border)",
+            }}
+          >
+            <SearchIcon size={14} style={{ color: "var(--notion-text-muted)" }} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="검색..."
+              className="flex-1 text-xs bg-transparent border-none outline-none"
+              style={{ color: "var(--notion-text)" }}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="text-xs hover:opacity-70"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Tree Rows */}
       <div className="flex-1 overflow-y-auto">
-        {rows.map((row) => (
+        {filteredRows.map((row) => (
           <TreeRow
             key={row.id}
             row={row}
@@ -92,8 +150,19 @@ export const TreePanel = memo(function TreePanel({
           <DraftPlanRow key={draft.tempId} draft={draft} />
         ))}
 
+        {/* 검색 결과 없음 */}
+        {searchTerm && filteredRows.length === 0 && (
+          <div
+            className="flex flex-col items-center justify-center py-8 text-sm"
+            style={{ color: "var(--notion-text-muted)" }}
+          >
+            <SearchIcon size={24} className="mb-2 opacity-30" />
+            <span>검색 결과 없음</span>
+          </div>
+        )}
+
         {/* 빈 영역 - 추가하기 */}
-        {isAdmin && onAddDraftPlan && (
+        {isAdmin && onAddDraftPlan && !searchTerm && (
           <div
             className="relative group"
             onMouseEnter={() => setIsHoveringEmpty(true)}
@@ -118,9 +187,7 @@ export const TreePanel = memo(function TreePanel({
                   border: "1px dashed var(--notion-border)",
                 }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <PlusIcon size={16} />
                 추가하기
               </button>
             </div>
@@ -135,17 +202,20 @@ export const TreePanel = memo(function TreePanel({
                   minWidth: 160,
                 }}
               >
-                {TYPE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => handleAddPlan(opt.value)}
-                    className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 transition-colors hover:bg-black/5"
-                    style={{ color: "var(--notion-text)" }}
-                  >
-                    <span>{opt.icon}</span>
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
+                {TYPE_OPTIONS.map((opt) => {
+                  const { Icon } = opt;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleAddPlan(opt.value)}
+                      className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 transition-colors hover:bg-black/5"
+                      style={{ color: "var(--notion-text)" }}
+                    >
+                      <Icon size={14} />
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -160,9 +230,9 @@ export const TreePanel = memo(function TreePanel({
  */
 const DraftPlanRow = memo(function DraftPlanRow({ draft }: { draft: DraftPlan }) {
   const getIcon = () => {
-    if (draft.type === "release") return "🚀";
-    if (draft.type === "sprint") return "🔄";
-    return "📋";
+    if (draft.type === "release") return RocketIcon;
+    if (draft.type === "sprint") return RefreshIcon;
+    return CodeIcon;
   };
 
   const getTypeLabel = () => {
@@ -170,6 +240,8 @@ const DraftPlanRow = memo(function DraftPlanRow({ draft }: { draft: DraftPlan })
     if (draft.type === "sprint") return "스프린트";
     return "기능";
   };
+
+  const Icon = getIcon();
 
   return (
     <div
@@ -183,14 +255,14 @@ const DraftPlanRow = memo(function DraftPlanRow({ draft }: { draft: DraftPlan })
     >
       {/* 임시 표시 아이콘 */}
       <span
-        className="w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
+        className="w-5 h-5 flex items-center justify-center rounded-full"
         style={{ background: "rgba(247, 109, 87, 0.2)", color: "#F76D57" }}
       >
-        ✱
+        <StarIcon size={10} filled />
       </span>
 
       {/* Icon */}
-      <span className="text-sm">{getIcon()}</span>
+      <Icon size={14} style={{ color: "#F76D57" }} />
 
       {/* Label */}
       <span
@@ -229,10 +301,10 @@ const TreeRow = memo(function TreeRow({
   const hasChildren = node.children && node.children.length > 0;
 
   const getIcon = () => {
-    if (node.type === "events") return "📅";
-    if (node.type === "project") return "📁";
-    if (node.type === "module") return "📦";
-    return "📋";
+    if (node.type === "events") return CalendarIcon;
+    if (node.type === "project") return FolderIcon;
+    if (node.type === "module") return CubeIcon;
+    return CodeIcon;
   };
 
   const getTypeColor = () => {
@@ -248,9 +320,11 @@ const TreeRow = memo(function TreeRow({
     }
   };
 
+  const Icon = getIcon();
+
   return (
     <div
-      className="flex items-center gap-2 px-2 border-b transition-colors hover:bg-gray-50"
+      className="flex items-center gap-2 px-2 border-b transition-colors hover:bg-black/[0.02]"
       style={{
         height: ROW_HEIGHT,
         paddingLeft: 8 + indent * 16,
@@ -261,7 +335,7 @@ const TreeRow = memo(function TreeRow({
       {hasChildren ? (
         <button
           onClick={() => onToggle(node.id)}
-          className="w-5 h-5 flex items-center justify-center rounded transition-colors hover:bg-gray-200"
+          className="w-5 h-5 flex items-center justify-center rounded transition-colors hover:bg-black/5"
           style={{ color: "var(--notion-text-muted)" }}
         >
           <svg
@@ -284,7 +358,7 @@ const TreeRow = memo(function TreeRow({
       )}
 
       {/* Icon */}
-      <span className="text-sm">{getIcon()}</span>
+      <Icon size={14} style={{ color: getTypeColor() }} />
 
       {/* Label */}
       <span
