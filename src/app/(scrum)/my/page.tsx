@@ -43,6 +43,9 @@ export default async function MyPage() {
     collaboratorsTrend: 0,
   };
 
+  // 이번 주 스냅샷 존재 여부
+  let hasCurrentWeekData = false;
+
   if (user) {
     // 프로필에서 이름 조회
     const { data: profile } = await supabase
@@ -79,6 +82,9 @@ export default async function MyPage() {
     
     // 스냅샷 추세 (이번 주 - 지난 주)
     trends.snapshotsTrend = thisWeekSnapshots.length - lastWeekSnapshots.length;
+    
+    // 이번 주 스냅샷 존재 여부 업데이트
+    hasCurrentWeekData = thisWeekSnapshots.length > 0;
 
     // 프로젝트, 모듈, 기능, 협업자 수는 전체 스냅샷에서 계산
     const snapshotIds = snapshots?.map(s => s.id) || [];
@@ -195,6 +201,7 @@ export default async function MyPage() {
       userName={userName}
       stats={stats}
       trends={trends}
+      hasCurrentWeekData={hasCurrentWeekData}
     />
   );
 }

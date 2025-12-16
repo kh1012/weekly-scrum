@@ -127,14 +127,7 @@ export function MainContent({ children }: { children: ReactNode }) {
         useFullWidth ? "max-w-full" : "max-w-6xl"
       }`}
     >
-      {/* 콘텐츠 래퍼: border와 radius 적용 (padding 없는 페이지 제외) */}
-      {useNoPadding ? (
-        children
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          {children}
-        </div>
-      )}
+      {children}
     </main>
   );
 }
