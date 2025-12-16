@@ -1022,7 +1022,7 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   return (
     <div className="flex flex-col bg-gradient-to-b from-slate-50/80 to-white min-h-0">
       {/* 헤더 - PlainTextPreview와 높이 동일 (h-12) */}
-      <div className="h-12 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm shrink-0 shadow-sm">
+      <div className="h-12 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm shrink-0">
         <div className="h-full px-4 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
           <span className="text-sm font-semibold text-gray-800">스냅샷 편집</span>

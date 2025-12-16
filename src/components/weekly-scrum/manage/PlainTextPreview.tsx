@@ -124,15 +124,21 @@ export function PlainTextPreview({ snapshot, onCopy, focusedSection }: PlainText
         </div>
       </div>
 
-      {/* 콘텐츠 - 독립 스크롤 + 그라데이션 */}
+      {/* 콘텐츠 - 독립 스크롤 + 위에서 아래로 회색→흰색 그라데이션 */}
       <div className="flex-1 relative overflow-hidden">
-        <div ref={containerRef} className="h-full overflow-y-auto p-4">
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm space-y-4">
+        <div ref={containerRef} className="h-full overflow-y-auto p-4 bg-gradient-to-b from-gray-100/50 to-white">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-4">
           {/* 메타 정보 섹션 */}
           <div
             ref={(el) => { sectionRefs.current["meta"] = el; }}
             className={`rounded-lg p-3 ${getHighlightClass("meta")}`}
           >
+            {/* Name 표시 */}
+            {snapshot.name && (
+              <div className="text-xs font-mono font-semibold text-gray-900 mb-1">
+                {snapshot.name}
+              </div>
+            )}
             <div className="text-xs font-mono text-gray-500">
               [{snapshot.domain} / {snapshot.project} / {snapshot.module} / {snapshot.feature}]
             </div>
