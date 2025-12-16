@@ -1,9 +1,34 @@
-import type { PlanWithAssignees } from "@/lib/data/plans";
+import type { PlanWithAssignees, PlanType } from "@/lib/data/plans";
 
 /**
  * Gantt View Mode
  */
 export type GanttMode = "readonly" | "admin";
+
+/**
+ * 임시 계획 (클라이언트에서만 관리)
+ * 간트 영역에서 + 버튼으로 실제 생성 전까지 임시로 표시
+ */
+export interface DraftPlan {
+  /** 임시 ID (uuid) */
+  tempId: string;
+  /** 계획 타입 */
+  type: PlanType;
+  /** 제목 (기본값: "새 [타입]") */
+  title: string;
+  /** 프로젝트 (feature 타입만) */
+  project?: string;
+  /** 모듈 (feature 타입만) */
+  module?: string;
+  /** 기능명 (feature 타입만) */
+  feature?: string;
+  /** 단계 (feature 타입만) */
+  stage?: string;
+  /** 시작일 */
+  start_date?: string;
+  /** 종료일 */
+  end_date?: string;
+}
 
 /**
  * Tree Node 타입
@@ -109,5 +134,13 @@ export interface PlansGanttViewProps {
   selectedPlanId?: string;
   /** Plan 선택 핸들러 (외부로 전달) */
   onSelectPlan?: (planId: string) => void;
+  /** 임시 계획 목록 */
+  draftPlans?: DraftPlan[];
+  /** 임시 계획 추가 핸들러 */
+  onAddDraftPlan?: (type: PlanType, defaultValues?: Partial<DraftPlan>) => void;
+  /** 임시 계획 -> 실제 생성 핸들러 */
+  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => Promise<void>;
+  /** 임시 계획 삭제 핸들러 */
+  onRemoveDraftPlan?: (tempId: string) => void;
 }
 

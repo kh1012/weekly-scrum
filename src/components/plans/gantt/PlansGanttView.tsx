@@ -26,6 +26,10 @@ export function PlansGanttView({
   onOpenPlan,
   selectedPlanId: externalSelectedPlanId,
   onSelectPlan: externalOnSelectPlan,
+  draftPlans = [],
+  onAddDraftPlan,
+  onCreateFromDraft,
+  onRemoveDraftPlan,
 }: PlansGanttViewProps) {
   // Build tree from plans
   const tree = useMemo(() => buildTreeFromPlans(plans), [plans]);
@@ -206,6 +210,9 @@ export function PlansGanttView({
           rows={flatRows}
           expandedIds={expandedIds}
           onToggle={handleToggle}
+          draftPlans={draftPlans}
+          onAddDraftPlan={onAddDraftPlan}
+          isAdmin={mode === "admin"}
         />
 
         {/* Timeline Grid */}

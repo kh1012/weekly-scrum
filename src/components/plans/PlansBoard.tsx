@@ -13,6 +13,7 @@ import {
   CommandIcons,
   useKeyboardShortcuts,
   getModifierKey,
+  CreatePlanPopover,
   type CommandItem,
 } from "@/components/admin-plans";
 import {
@@ -64,6 +65,19 @@ export function PlansBoard({
 
   // 선택된 Plan (간트 뷰에서)
   const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
+
+  // 임시 계획 (클라이언트에서만 관리)
+  const [draftPlans, setDraftPlans] = useState<Array<{
+    tempId: string;
+    type: "feature" | "sprint" | "release";
+    title: string;
+    project?: string;
+    module?: string;
+    feature?: string;
+    stage?: string;
+    start_date?: string;
+    end_date?: string;
+  }>>([]);
 
   // Undo 스낵바 상태
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
@@ -251,6 +265,54 @@ export function PlansBoard({
   const handleSelectPlan = useCallback((planId: string) => {
     setSelectedPlanId(planId);
   }, []);
+
+  // ===== 임시 계획 (Draft Plan) 관리 =====
+  const handleAddDraftPlan = useCallback(
+    (type: "feature" | "sprint" | "release", defaultValues?: Partial<typeof draftPlans[0]>) => {
+      const tempId = crypto.randomUUID();
+      const newDraft = {
+        tempId,
+        type,
+        title: defaultValues?.title || (type === "feature" ? "새 기능" : type === "sprint" ? "새 스프린트" : "새 릴리즈"),
+        project: defaultValues?.project || "",
+        module: defaultValues?.module || "",
+        feature: defaultValues?.feature || "",
+        stage: defaultValues?.stage || "컨셉 기획",
+      };
+      setDraftPlans((prev) => [...prev, newDraft]);
+    },
+    []
+  );
+
+  const handleRemoveDraftPlan = useCallback((tempId: string) => {
+    setDraftPlans((prev) => prev.filter((d) => d.tempId !== tempId));
+  }, []);
+
+  const handleCreateFromDraft = useCallback(
+    async (draft: typeof draftPlans[0], startDate: string, endDate: string) => {
+      const isFeature = draft.type === "feature";
+      
+      await quickCreatePlanAction({
+        type: draft.type,
+        title: draft.title,
+        stage: isFeature ? draft.stage : "",
+        project: isFeature ? draft.project : undefined,
+        module: isFeature ? draft.module : undefined,
+        feature: isFeature ? draft.feature : undefined,
+        start_date: startDate,
+        end_date: endDate,
+      });
+
+      // 임시 계획 제거
+      handleRemoveDraftPlan(draft.tempId);
+
+      // 새로고침
+      startTransition(() => {
+        router.refresh();
+      });
+    },
+    [router, handleRemoveDraftPlan]
+  );
 
   // ===== STEP C: Fast Delete + Undo =====
   const handleDelete = useCallback(
@@ -687,32 +749,8 @@ export function PlansBoard({
             </div>
           )}
 
-          {/* 새 계획 버튼 (admin 모드만) */}
-          {isAdmin && (
-            <Link
-              href="/admin/plans/new"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-[#F76D57]/20"
-              style={{
-                background: "linear-gradient(135deg, #F76D57, #f9a88b)",
-                color: "white",
-              }}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              계획 등록
-            </Link>
-          )}
+          {/* 새 계획 버튼 (admin 모드만) - 팝오버 */}
+          {isAdmin && <CreatePlanPopover />}
         </div>
       </div>
 
@@ -733,6 +771,10 @@ export function PlansBoard({
             onOpenPlan={isAdmin ? handleOpenPlan : undefined}
             selectedPlanId={selectedPlanId}
             onSelectPlan={handleSelectPlan}
+            draftPlans={isAdmin ? draftPlans : undefined}
+            onAddDraftPlan={isAdmin ? handleAddDraftPlan : undefined}
+            onCreateFromDraft={isAdmin ? handleCreateFromDraft : undefined}
+            onRemoveDraftPlan={isAdmin ? handleRemoveDraftPlan : undefined}
           />
 
           {/* 일정 미지정 */}

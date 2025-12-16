@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/browser";
 import type { CreatePlanActionInput } from "@/lib/actions/plans";
 import type { PlanType, AssigneeRole } from "@/lib/data/plans";
 import type { WorkspaceMember } from "@/lib/data/members";
+import { SearchableSelect } from "@/components/common";
 
 const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
 
@@ -23,6 +24,13 @@ interface PlanFormProps {
   error: string | null;
   submitLabel: string;
   cancelHref: string;
+  /** 필터 옵션 (프로젝트/모듈/기능명 선택 목록) */
+  filterOptions?: {
+    projects: string[];
+    modules: string[];
+    features: string[];
+    stages: string[];
+  };
 }
 
 const TYPE_OPTIONS: { value: PlanType; label: string }[] = [
@@ -65,9 +73,16 @@ export function PlanForm({
   error,
   submitLabel,
   cancelHref,
+  filterOptions,
 }: PlanFormProps) {
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [isMembersLoading, setIsMembersLoading] = useState(true);
+  const [loadedOptions, setLoadedOptions] = useState<{
+    projects: string[];
+    modules: string[];
+    features: string[];
+    stages: string[];
+  }>({ projects: [], modules: [], features: [], stages: [] });
 
   const [formData, setFormData] = useState({
     type: initialData?.type || ("feature" as PlanType),
@@ -84,9 +99,9 @@ export function PlanForm({
     initialData?.assignees || []
   );
 
-  // 멤버 목록 로드 (별도 쿼리 방식 - FK 관계 없이 안전하게 조회)
+  // 멤버 목록 및 필터 옵션 로드
   useEffect(() => {
-    async function loadMembers() {
+    async function loadData() {
       try {
         if (!DEFAULT_WORKSPACE_ID) {
           console.error("DEFAULT_WORKSPACE_ID is not set");
@@ -104,60 +119,88 @@ export function PlanForm({
         if (membersError) throw membersError;
         if (!membersData || membersData.length === 0) {
           setMembers([]);
-          return;
-        }
+        } else {
+          // 타입 정의
+          interface MemberRow {
+            user_id: string;
+            role: string;
+          }
+          interface ProfileRow {
+            user_id: string;
+            display_name: string | null;
+            email: string | null;
+          }
 
-        // 타입 정의
-        interface MemberRow {
-          user_id: string;
-          role: string;
-        }
-        interface ProfileRow {
-          user_id: string;
-          display_name: string | null;
-          email: string | null;
-        }
+          // 2. profiles 별도 조회
+          const userIds = (membersData as MemberRow[]).map((m) => m.user_id);
+          const { data: profilesData, error: profilesError } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, email")
+            .in("user_id", userIds);
 
-        // 2. profiles 별도 조회
-        const userIds = (membersData as MemberRow[]).map((m) => m.user_id);
-        const { data: profilesData, error: profilesError } = await supabase
-          .from("profiles")
-          .select("user_id, display_name, email")
-          .in("user_id", userIds);
+          if (profilesError) {
+            console.error("Failed to fetch profiles:", profilesError);
+          }
 
-        if (profilesError) {
-          console.error("Failed to fetch profiles:", profilesError);
-        }
+          // 3. 조합
+          const profileMap = new Map<string, { display_name: string | null; email: string | null }>();
+          for (const p of (profilesData || []) as ProfileRow[]) {
+            profileMap.set(p.user_id, {
+              display_name: p.display_name,
+              email: p.email,
+            });
+          }
 
-        // 3. 조합
-        const profileMap = new Map<string, { display_name: string | null; email: string | null }>();
-        for (const p of (profilesData || []) as ProfileRow[]) {
-          profileMap.set(p.user_id, {
-            display_name: p.display_name,
-            email: p.email,
+          const memberList = (membersData as MemberRow[]).map((m) => {
+            const profile = profileMap.get(m.user_id);
+            return {
+              user_id: m.user_id,
+              display_name: profile?.display_name || null,
+              email: profile?.email || null,
+              role: m.role as "admin" | "leader" | "member",
+            };
           });
+
+          setMembers(memberList);
         }
 
-        const memberList = (membersData as MemberRow[]).map((m) => {
-          const profile = profileMap.get(m.user_id);
-          return {
-            user_id: m.user_id,
-            display_name: profile?.display_name || null,
-            email: profile?.email || null,
-            role: m.role as "admin" | "leader" | "member",
-          };
-        });
+        // 4. filterOptions가 props로 전달되지 않은 경우 plans에서 고유값 추출
+        if (!filterOptions) {
+          const { data: plansData } = await supabase
+            .from("v_plans_with_assignees")
+            .select("project, module, feature, stage")
+            .eq("workspace_id", DEFAULT_WORKSPACE_ID);
 
-        setMembers(memberList);
+          if (plansData && plansData.length > 0) {
+            const projects = new Set<string>();
+            const modules = new Set<string>();
+            const features = new Set<string>();
+            const stages = new Set<string>();
+
+            for (const row of plansData) {
+              if (row.project) projects.add(row.project);
+              if (row.module) modules.add(row.module);
+              if (row.feature) features.add(row.feature);
+              if (row.stage) stages.add(row.stage);
+            }
+
+            setLoadedOptions({
+              projects: Array.from(projects).sort(),
+              modules: Array.from(modules).sort(),
+              features: Array.from(features).sort(),
+              stages: Array.from(stages).sort(),
+            });
+          }
+        }
       } catch (err) {
-        console.error("Failed to load members:", err);
+        console.error("Failed to load data:", err);
       } finally {
         setIsMembersLoading(false);
       }
     }
 
-    loadMembers();
-  }, []);
+    loadData();
+  }, [filterOptions]);
 
   const isFeatureType = formData.type === "feature";
 
@@ -321,57 +364,33 @@ export function PlanForm({
           </h2>
 
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                프로젝트 *
-              </label>
-              <input
-                type="text"
-                value={formData.project}
-                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-                placeholder="예: MeshFree"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                모듈 *
-              </label>
-              <input
-                type="text"
-                value={formData.module}
-                onChange={(e) => setFormData({ ...formData, module: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-                placeholder="예: 해석기"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                기능명 *
-              </label>
-              <input
-                type="text"
-                value={formData.feature}
-                onChange={(e) => setFormData({ ...formData, feature: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-                placeholder="예: 메쉬 생성"
-              />
-            </div>
+            <SearchableSelect
+              label="프로젝트"
+              value={formData.project}
+              options={filterOptions?.projects || loadedOptions.projects}
+              onChange={(v) => setFormData({ ...formData, project: v })}
+              placeholder="선택 또는 입력..."
+              required
+              notionStyle
+            />
+            <SearchableSelect
+              label="모듈"
+              value={formData.module}
+              options={filterOptions?.modules || loadedOptions.modules}
+              onChange={(v) => setFormData({ ...formData, module: v })}
+              placeholder="선택 또는 입력..."
+              required
+              notionStyle
+            />
+            <SearchableSelect
+              label="기능명"
+              value={formData.feature}
+              options={filterOptions?.features || loadedOptions.features}
+              onChange={(v) => setFormData({ ...formData, feature: v })}
+              placeholder="선택 또는 입력..."
+              required
+              notionStyle
+            />
           </div>
         </div>
       )}

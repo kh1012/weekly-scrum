@@ -2,3 +2,4 @@ export { QuickCreatePopover, type QuickCreatePopoverProps } from "./QuickCreateP
 export { UndoSnackbar, type UndoSnackbarProps } from "./UndoSnackbar";
 export { CommandPalette, CommandIcons, type CommandPaletteProps, type CommandItem } from "./CommandPalette";
 export { useKeyboardShortcuts, getModifierKey } from "./useKeyboardShortcuts";
+export { CreatePlanPopover } from "./CreatePlanPopover";
