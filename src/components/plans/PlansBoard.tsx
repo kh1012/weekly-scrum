@@ -772,6 +772,15 @@ export function PlansBoard({
         onClose={() => setShowCommandPalette(false)}
         commands={commands}
         hasSelection={!!selectedPlanId}
+        onCreateDraftPlan={isAdmin ? (input) => {
+          handleAddDraftPlan(input.type, {
+            title: input.title,
+            project: input.project,
+            module: input.module,
+            feature: input.feature,
+          });
+        } : undefined}
+        filterOptions={filterOptions}
       />
     </div>
   );
