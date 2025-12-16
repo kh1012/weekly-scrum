@@ -1,11 +1,12 @@
 "use client";
 
 import { memo, useRef, useState, useCallback } from "react";
-import type { FlatRow, GanttMode, DragType, DragState } from "./types";
+import type { FlatRow, GanttMode, DragType, DragState, DraftPlan } from "./types";
 import type { BarLayout, MonthGroup } from "./useGanttLayout";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineRow } from "./TimelineRow";
-import { DAY_WIDTH, formatDateRange } from "./useGanttLayout";
+import { DraftTimelineRow } from "./DraftTimelineRow";
+import { DAY_WIDTH, ROW_HEIGHT, formatDateRange } from "./useGanttLayout";
 import { QuickCreatePopover } from "@/components/admin-plans";
 
 interface TimelineGridProps {
@@ -35,6 +36,10 @@ interface TimelineGridProps {
     date: Date;
     title: string;
   }) => Promise<void>;
+  /** 임시 계획 목록 */
+  draftPlans?: DraftPlan[];
+  /** 임시 계획 -> 실제 생성 핸들러 */
+  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => Promise<void>;
 }
 
 /**
@@ -71,6 +76,8 @@ export const TimelineGrid = memo(function TimelineGrid({
   onMovePlan,
   onTitleUpdate,
   onQuickCreate,
+  draftPlans = [],
+  onCreateFromDraft,
 }: TimelineGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredCell, setHoveredCell] = useState<{
@@ -356,6 +363,18 @@ export const TimelineGrid = memo(function TimelineGrid({
             hoveredCell={hoveredCell}
             onCellHover={handleCellHover}
             dragState={dragState}
+          />
+        ))}
+
+        {/* Draft Plan Rows (임시 계획) */}
+        {draftPlans.map((draft) => (
+          <DraftTimelineRow
+            key={draft.tempId}
+            draft={draft}
+            days={days}
+            totalWidth={totalWidth}
+            calculateBarLayout={calculateBarLayout}
+            onCreateFromDraft={onCreateFromDraft}
           />
         ))}
       </div>

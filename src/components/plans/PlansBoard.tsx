@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useTransition, useCallback, useMemo, useEffect } from "react";
+import {
+  useState,
+  useTransition,
+  useCallback,
+  useMemo,
+  useEffect,
+} from "react";
 import { useRouter } from "next/navigation";
 import { DateRangePicker } from "./DateRangePicker";
-import { GanttFilters, defaultGanttFilters, type GanttFilterState } from "./GanttFilters";
+import {
+  GanttFilters,
+  defaultGanttFilters,
+  type GanttFilterState,
+} from "./GanttFilters";
 import { PlansGanttView } from "./gantt";
 import {
   UndoSnackbar,
@@ -62,18 +72,25 @@ export function PlansBoard({
 
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [groupBy, setGroupBy] = useState<GroupByOption>("none");
-  const [ganttFilters, setGanttFilters] = useState<GanttFilterState>(defaultGanttFilters);
+  const [ganttFilters, setGanttFilters] =
+    useState<GanttFilterState>(defaultGanttFilters);
 
   // 기간 설정 (기본: 현재 월 기준 3개월)
   const [startMonth, setStartMonth] = useState(() => {
     const [y, m] = initialMonth.split("-").map(Number);
     const start = new Date(y, m - 2, 1); // 1개월 전부터
-    return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+    return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
   });
   const [endMonth, setEndMonth] = useState(() => {
     const [y, m] = initialMonth.split("-").map(Number);
     const end = new Date(y, m, 1); // 1개월 후까지
-    return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}`;
+    return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
   });
 
   // 로컬 스토리지 키
@@ -321,12 +338,21 @@ export function PlansBoard({
 
   // ===== 임시 계획 (Draft Plan) 관리 =====
   const handleAddDraftPlan = useCallback(
-    (type: "feature" | "sprint" | "release", defaultValues?: Partial<typeof draftPlans[0]>) => {
+    (
+      type: "feature" | "sprint" | "release",
+      defaultValues?: Partial<(typeof draftPlans)[0]>
+    ) => {
       const tempId = crypto.randomUUID();
       const newDraft = {
         tempId,
         type,
-        title: defaultValues?.title || (type === "feature" ? "새 기능" : type === "sprint" ? "새 스프린트" : "새 릴리즈"),
+        title:
+          defaultValues?.title ||
+          (type === "feature"
+            ? "새 기능"
+            : type === "sprint"
+            ? "새 스프린트"
+            : "새 릴리즈"),
         project: defaultValues?.project || "",
         module: defaultValues?.module || "",
         feature: defaultValues?.feature || "",
@@ -344,14 +370,14 @@ export function PlansBoard({
   const handleCreateFromDraft = useCallback(
     async (draft: DraftPlanItem, startDate: string, endDate: string) => {
       const isFeature = draft.type === "feature";
-      
+
       await createPlanAction({
         type: draft.type,
         title: draft.title,
-        stage: isFeature ? (draft.stage || "") : "",
-        project: isFeature ? (draft.project || "") : undefined,
-        module: isFeature ? (draft.module || "") : undefined,
-        feature: isFeature ? (draft.feature || "") : undefined,
+        stage: isFeature ? draft.stage || "" : "",
+        project: isFeature ? draft.project || "" : undefined,
+        module: isFeature ? draft.module || "" : undefined,
+        feature: isFeature ? draft.feature || "" : undefined,
         start_date: startDate,
         end_date: endDate,
       });
@@ -370,20 +396,20 @@ export function PlansBoard({
   // ===== 저장하기 (모든 임시 계획을 실제 생성) =====
   const handleSaveAll = useCallback(async () => {
     if (draftPlans.length === 0) return;
-    
+
     setIsSaving(true);
-    
+
     try {
       for (const draft of draftPlans) {
         const isFeature = draft.type === "feature";
-        
+
         await createPlanAction({
           type: draft.type,
           title: draft.title,
-          stage: isFeature ? (draft.stage || "") : "",
-          project: isFeature ? (draft.project || "") : undefined,
-          module: isFeature ? (draft.module || "") : undefined,
-          feature: isFeature ? (draft.feature || "") : undefined,
+          stage: isFeature ? draft.stage || "" : "",
+          project: isFeature ? draft.project || "" : undefined,
+          module: isFeature ? draft.module || "" : undefined,
+          feature: isFeature ? draft.feature || "" : undefined,
           start_date: draft.start_date,
           end_date: draft.end_date,
         });
@@ -400,7 +426,10 @@ export function PlansBoard({
       });
 
       // 토스트 표시 (UndoSnackbar 재활용)
-      setPendingDelete({ planId: "", planTitle: `${draftPlans.length}개 계획이 저장되었습니다` });
+      setPendingDelete({
+        planId: "",
+        planTitle: `${draftPlans.length}개 계획이 저장되었습니다`,
+      });
       setShowUndoSnackbar(true);
       setTimeout(() => setShowUndoSnackbar(false), 3000);
     } catch (error) {
@@ -616,10 +645,13 @@ export function PlansBoard({
   }, [endMonth]);
 
   // 기간 변경 핸들러
-  const handleDateRangeChange = useCallback((newStart: string, newEnd: string) => {
-    setStartMonth(newStart);
-    setEndMonth(newEnd);
-  }, []);
+  const handleDateRangeChange = useCallback(
+    (newStart: string, newEnd: string) => {
+      setStartMonth(newStart);
+      setEndMonth(newEnd);
+    },
+    []
+  );
 
   // 삭제 대기 중인 Plan 필터링
   const visiblePlans = useMemo(() => {
@@ -640,7 +672,7 @@ export function PlansBoard({
   }).length;
 
   return (
-    <div className="h-[calc(100vh-3.5rem-1px)] flex flex-col">
+    <div className="h-auto flex flex-col">
       {/* 헤더 영역 */}
       <div
         className="flex-shrink-0 px-5 py-4 border-b"
@@ -772,14 +804,18 @@ export function PlansBoard({
         onClose={() => setShowCommandPalette(false)}
         commands={commands}
         hasSelection={!!selectedPlanId}
-        onCreateDraftPlan={isAdmin ? (input) => {
-          handleAddDraftPlan(input.type, {
-            title: input.title,
-            project: input.project,
-            module: input.module,
-            feature: input.feature,
-          });
-        } : undefined}
+        onCreateDraftPlan={
+          isAdmin
+            ? (input) => {
+                handleAddDraftPlan(input.type, {
+                  title: input.title,
+                  project: input.project,
+                  module: input.module,
+                  feature: input.feature,
+                });
+              }
+            : undefined
+        }
         filterOptions={filterOptions}
       />
     </div>

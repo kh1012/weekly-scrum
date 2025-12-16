@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import type { PlansGanttViewProps, FlatRow } from "./types";
+import type { PlansGanttViewProps, FlatRow, DraftPlan } from "./types";
 import { useGanttLayout, TREE_WIDTH } from "./useGanttLayout";
 import { buildTreeFromPlans, flattenTree, getAllNodeIds } from "./buildTree";
 import { TreePanel } from "./TreePanel";
@@ -214,7 +214,7 @@ export function PlansGanttView({
           expandedIds={expandedIds}
           onToggle={handleToggle}
           draftPlans={draftPlans}
-          onAddDraftPlan={onAddDraftPlan}
+          onRemoveDraftPlan={onRemoveDraftPlan}
           isAdmin={mode === "admin"}
         />
 
@@ -238,6 +238,8 @@ export function PlansGanttView({
           onQuickCreate={
             isAdmin && onQuickCreate ? handleQuickCreate : undefined
           }
+          draftPlans={isAdmin ? draftPlans : undefined}
+          onCreateFromDraft={isAdmin ? onCreateFromDraft : undefined}
         />
       </div>
 

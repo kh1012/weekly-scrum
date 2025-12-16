@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useCallback } from "react";
 import type { FlatRow, DraftPlan } from "./types";
 import type { PlanType } from "@/lib/data/plans";
 import { ROW_HEIGHT, TREE_WIDTH } from "./useGanttLayout";
@@ -12,8 +12,8 @@ import {
   RocketIcon,
   RefreshIcon,
   CalendarIcon,
-  PlusIcon,
   StarIcon,
+  TrashIcon,
 } from "@/components/common/Icons";
 
 interface TreePanelProps {
@@ -22,17 +22,13 @@ interface TreePanelProps {
   onToggle: (nodeId: string) => void;
   /** 임시 계획 목록 */
   draftPlans?: DraftPlan[];
-  /** 임시 계획 추가 핸들러 */
-  onAddDraftPlan?: (type: PlanType, defaultValues?: Partial<DraftPlan>) => void;
+  /** 임시 계획 삭제 핸들러 */
+  onRemoveDraftPlan?: (tempId: string) => void;
+  /** 임시 계획 순서 변경 핸들러 */
+  onReorderDraftPlans?: (reorderedPlans: DraftPlan[]) => void;
   /** Admin 모드 여부 */
   isAdmin?: boolean;
 }
-
-const TYPE_OPTIONS: { value: PlanType; label: string; Icon: typeof CodeIcon }[] = [
-  { value: "feature", label: "기능", Icon: CodeIcon },
-  { value: "sprint", label: "스프린트", Icon: RefreshIcon },
-  { value: "release", label: "릴리즈", Icon: RocketIcon },
-];
 
 /**
  * 좌측 트리 패널 컴포넌트
@@ -42,12 +38,13 @@ export const TreePanel = memo(function TreePanel({
   expandedIds,
   onToggle,
   draftPlans = [],
-  onAddDraftPlan,
+  onRemoveDraftPlan,
+  onReorderDraftPlans,
   isAdmin = false,
 }: TreePanelProps) {
-  const [showAddMenu, setShowAddMenu] = useState(false);
-  const [isHoveringEmpty, setIsHoveringEmpty] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [draggedDraftId, setDraggedDraftId] = useState<string | null>(null);
+  const [dragOverDraftId, setDragOverDraftId] = useState<string | null>(null);
 
   // 검색 필터링
   const filteredRows = useMemo(() => {
@@ -61,23 +58,32 @@ export const TreePanel = memo(function TreePanel({
     );
   }, [rows, searchTerm]);
 
-  const handleAddPlan = (type: PlanType) => {
-    if (onAddDraftPlan) {
-      const defaultValues: Partial<DraftPlan> = {
-        title: type === "feature" ? "새 기능" : type === "sprint" ? "새 스프린트" : "새 릴리즈",
-      };
+  // 드래그 앤 드롭 핸들러
+  const handleDragStart = useCallback((e: React.DragEvent, tempId: string) => {
+    setDraggedDraftId(tempId);
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, tempId: string) => {
+    e.preventDefault();
+    setDragOverDraftId(tempId);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    if (draggedDraftId && dragOverDraftId && draggedDraftId !== dragOverDraftId && onReorderDraftPlans) {
+      const fromIndex = draftPlans.findIndex(p => p.tempId === draggedDraftId);
+      const toIndex = draftPlans.findIndex(p => p.tempId === dragOverDraftId);
       
-      if (type === "feature") {
-        defaultValues.project = "";
-        defaultValues.module = "";
-        defaultValues.feature = "";
-        defaultValues.stage = "컨셉 기획";
+      if (fromIndex !== -1 && toIndex !== -1) {
+        const reordered = [...draftPlans];
+        const [removed] = reordered.splice(fromIndex, 1);
+        reordered.splice(toIndex, 0, removed);
+        onReorderDraftPlans(reordered);
       }
-      
-      onAddDraftPlan(type, defaultValues);
     }
-    setShowAddMenu(false);
-  };
+    setDraggedDraftId(null);
+    setDragOverDraftId(null);
+  }, [draggedDraftId, dragOverDraftId, draftPlans, onReorderDraftPlans]);
 
   return (
     <div
@@ -147,7 +153,16 @@ export const TreePanel = memo(function TreePanel({
 
         {/* Draft Plans (임시 계획) */}
         {draftPlans.map((draft) => (
-          <DraftPlanRow key={draft.tempId} draft={draft} />
+          <DraftPlanRow
+            key={draft.tempId}
+            draft={draft}
+            isDragging={draggedDraftId === draft.tempId}
+            isDragOver={dragOverDraftId === draft.tempId}
+            onDragStart={(e) => handleDragStart(e, draft.tempId)}
+            onDragOver={(e) => handleDragOver(e, draft.tempId)}
+            onDragEnd={handleDragEnd}
+            onRemove={onRemoveDraftPlan ? () => onRemoveDraftPlan(draft.tempId) : undefined}
+          />
         ))}
 
         {/* 검색 결과 없음 */}
@@ -161,63 +176,13 @@ export const TreePanel = memo(function TreePanel({
           </div>
         )}
 
-        {/* 빈 영역 - 추가하기 */}
-        {isAdmin && onAddDraftPlan && !searchTerm && (
+        {/* 임시 계획 힌트 */}
+        {isAdmin && draftPlans.length === 0 && !searchTerm && filteredRows.length === 0 && (
           <div
-            className="relative group"
-            onMouseEnter={() => setIsHoveringEmpty(true)}
-            onMouseLeave={() => {
-              setIsHoveringEmpty(false);
-              setShowAddMenu(false);
-            }}
-            style={{ minHeight: rows.length === 0 ? 200 : 60 }}
+            className="flex flex-col items-center justify-center py-8 text-sm"
+            style={{ color: "var(--notion-text-muted)" }}
           >
-            {/* 추가하기 버튼 */}
-            <div
-              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-                isHoveringEmpty ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <button
-                onClick={() => setShowAddMenu(!showAddMenu)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
-                style={{
-                  background: "var(--notion-bg-secondary)",
-                  color: "var(--notion-text-muted)",
-                  border: "1px dashed var(--notion-border)",
-                }}
-              >
-                <PlusIcon size={16} />
-                추가하기
-              </button>
-            </div>
-
-            {/* 타입 선택 메뉴 */}
-            {showAddMenu && (
-              <div
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-4 z-50 rounded-xl shadow-xl border overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  minWidth: 160,
-                }}
-              >
-                {TYPE_OPTIONS.map((opt) => {
-                  const { Icon } = opt;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => handleAddPlan(opt.value)}
-                      className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 transition-colors hover:bg-black/5"
-                      style={{ color: "var(--notion-text)" }}
-                    >
-                      <Icon size={14} />
-                      <span>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <span>⌘+K로 임시 계획을 생성하세요</span>
           </div>
         )}
       </div>
@@ -225,10 +190,30 @@ export const TreePanel = memo(function TreePanel({
   );
 });
 
+interface DraftPlanRowProps {
+  draft: DraftPlan;
+  isDragging?: boolean;
+  isDragOver?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
+  onRemove?: () => void;
+}
+
 /**
  * Draft Plan Row (임시 계획)
  */
-const DraftPlanRow = memo(function DraftPlanRow({ draft }: { draft: DraftPlan }) {
+const DraftPlanRow = memo(function DraftPlanRow({
+  draft,
+  isDragging,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  onRemove,
+}: DraftPlanRowProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   const getIcon = () => {
     if (draft.type === "release") return RocketIcon;
     if (draft.type === "sprint") return RefreshIcon;
@@ -245,24 +230,46 @@ const DraftPlanRow = memo(function DraftPlanRow({ draft }: { draft: DraftPlan })
 
   return (
     <div
-      className="flex items-center gap-2 px-2 border-b transition-colors"
+      draggable={!!onDragStart}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="flex items-center gap-2 px-2 border-b transition-all cursor-grab active:cursor-grabbing group"
       style={{
         height: ROW_HEIGHT,
         paddingLeft: 8,
-        borderColor: "var(--notion-border)",
-        background: "rgba(247, 109, 87, 0.05)",
+        borderColor: isDragOver ? "#F76D57" : "var(--notion-border)",
+        background: isDragging
+          ? "rgba(247, 109, 87, 0.15)"
+          : isDragOver
+          ? "rgba(247, 109, 87, 0.1)"
+          : "rgba(247, 109, 87, 0.05)",
+        opacity: isDragging ? 0.5 : 1,
+        borderTopWidth: isDragOver ? 2 : 0,
       }}
     >
+      {/* 드래그 핸들 */}
+      <span
+        className="w-4 h-4 flex items-center justify-center opacity-40 group-hover:opacity-100"
+        style={{ color: "#F76D57" }}
+      >
+        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 6a2 2 0 11-4 0 2 2 0 014 0zM8 12a2 2 0 11-4 0 2 2 0 014 0zM8 18a2 2 0 11-4 0 2 2 0 014 0zM20 6a2 2 0 11-4 0 2 2 0 014 0zM20 12a2 2 0 11-4 0 2 2 0 014 0zM20 18a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </span>
+
       {/* 임시 표시 아이콘 */}
       <span
-        className="w-5 h-5 flex items-center justify-center rounded-full"
+        className="w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0"
         style={{ background: "rgba(247, 109, 87, 0.2)", color: "#F76D57" }}
       >
         <StarIcon size={10} filled />
       </span>
 
       {/* Icon */}
-      <Icon size={14} style={{ color: "#F76D57" }} />
+      <Icon size={14} style={{ color: "#F76D57" }} className="flex-shrink-0" />
 
       {/* Label */}
       <span
@@ -274,7 +281,7 @@ const DraftPlanRow = memo(function DraftPlanRow({ draft }: { draft: DraftPlan })
 
       {/* Type Badge */}
       <span
-        className="text-[10px] px-1.5 py-0.5 rounded-full"
+        className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0"
         style={{
           background: "rgba(247, 109, 87, 0.1)",
           color: "#F76D57",
@@ -282,6 +289,23 @@ const DraftPlanRow = memo(function DraftPlanRow({ draft }: { draft: DraftPlan })
       >
         {getTypeLabel()}
       </span>
+
+      {/* 삭제 버튼 */}
+      {onRemove && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className={`w-5 h-5 flex items-center justify-center rounded transition-opacity ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ color: "#F76D57" }}
+          title="삭제"
+        >
+          <TrashIcon size={12} />
+        </button>
+      )}
     </div>
   );
 });
