@@ -105,62 +105,29 @@ export function NewSnapshotModal({
               {year}년 W{week.toString().padStart(2, "0")} ({weekRange})
             </p>
             <p className="text-sm text-gray-600 leading-relaxed mb-8">
-              다음 주 데이터를 미리 작성하려는 게 아니라면,
-              <br />
               <span className="font-medium text-gray-900">스냅샷 관리</span>에서 기존 스냅샷을 확인하고 수정하세요.
             </p>
 
             {/* 버튼 영역 */}
-            <div className="space-y-3">
-              <button
-                onClick={handleGoToManagement}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-200"
+            <button
+              onClick={handleGoToManagement}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-200"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                스냅샷 관리로 이동하기
-              </button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="px-3 bg-white text-xs text-gray-400">또는</span>
-                </div>
-              </div>
-
-              <button
-                onClick={onLoadExistingData}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 hover:border-gray-300 transition-all duration-200"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                그래도 새 스냅샷 작성하기
-              </button>
-            </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              스냅샷 관리로 이동하기
+            </button>
           </div>
         </div>
       </div>

@@ -1086,12 +1086,13 @@ function LoadingEntryCard({
   };
   weekLabel: string;
 }) {
-  // 진행률 계산
+  // 진행률 계산 (past_week_tasks가 undefined일 수 있음)
+  const tasks = entry.past_week_tasks || [];
   const avgProgress =
-    entry.past_week_tasks.length > 0
+    tasks.length > 0
       ? Math.round(
-          entry.past_week_tasks.reduce((sum, t) => sum + t.progress, 0) /
-            entry.past_week_tasks.length
+          tasks.reduce((sum, t) => sum + t.progress, 0) /
+            tasks.length
         )
       : null;
 
