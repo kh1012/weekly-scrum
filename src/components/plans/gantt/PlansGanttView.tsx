@@ -31,6 +31,7 @@ export function PlansGanttView({
   onAddDraftPlan,
   onCreateFromDraft,
   onRemoveDraftPlan,
+  onUpdateDraftPlan,
 }: PlansGanttViewProps) {
   // Build tree from plans
   const tree = useMemo(() => buildTreeFromPlans(plans), [plans]);
@@ -215,6 +216,7 @@ export function PlansGanttView({
           onToggle={handleToggle}
           draftPlans={draftPlans}
           onRemoveDraftPlan={onRemoveDraftPlan}
+          onUpdateDraftPlan={onUpdateDraftPlan}
           isAdmin={mode === "admin"}
         />
 

@@ -142,5 +142,7 @@ export interface PlansGanttViewProps {
   onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => Promise<void>;
   /** 임시 계획 삭제 핸들러 */
   onRemoveDraftPlan?: (tempId: string) => void;
+  /** 임시 계획 수정 핸들러 */
+  onUpdateDraftPlan?: (tempId: string, updates: Partial<DraftPlan>) => void;
 }
 

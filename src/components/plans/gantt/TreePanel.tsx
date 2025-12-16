@@ -24,6 +24,8 @@ interface TreePanelProps {
   draftPlans?: DraftPlan[];
   /** 임시 계획 삭제 핸들러 */
   onRemoveDraftPlan?: (tempId: string) => void;
+  /** 임시 계획 수정 핸들러 */
+  onUpdateDraftPlan?: (tempId: string, updates: Partial<DraftPlan>) => void;
   /** 임시 계획 순서 변경 핸들러 */
   onReorderDraftPlans?: (reorderedPlans: DraftPlan[]) => void;
   /** Admin 모드 여부 */
@@ -39,6 +41,7 @@ export const TreePanel = memo(function TreePanel({
   onToggle,
   draftPlans = [],
   onRemoveDraftPlan,
+  onUpdateDraftPlan,
   onReorderDraftPlans,
   isAdmin = false,
 }: TreePanelProps) {
@@ -162,6 +165,7 @@ export const TreePanel = memo(function TreePanel({
             onDragOver={(e) => handleDragOver(e, draft.tempId)}
             onDragEnd={handleDragEnd}
             onRemove={onRemoveDraftPlan ? () => onRemoveDraftPlan(draft.tempId) : undefined}
+            onUpdate={onUpdateDraftPlan ? (updates) => onUpdateDraftPlan(draft.tempId, updates) : undefined}
           />
         ))}
 
@@ -198,6 +202,7 @@ interface DraftPlanRowProps {
   onDragOver?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
   onRemove?: () => void;
+  onUpdate?: (updates: Partial<DraftPlan>) => void;
 }
 
 /**
@@ -211,8 +216,16 @@ const DraftPlanRow = memo(function DraftPlanRow({
   onDragOver,
   onDragEnd,
   onRemove,
+  onUpdate,
 }: DraftPlanRowProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValues, setEditValues] = useState({
+    title: draft.title,
+    project: draft.project || "",
+    module: draft.module || "",
+    feature: draft.feature || "",
+  });
 
   const getIcon = () => {
     if (draft.type === "release") return RocketIcon;
@@ -226,7 +239,165 @@ const DraftPlanRow = memo(function DraftPlanRow({
     return "기능";
   };
 
+  // 기능 타입일 경우 프로젝트/모듈/기능으로 표시
+  const getDisplayLabel = () => {
+    if (draft.type === "feature") {
+      const parts = [draft.project, draft.module, draft.feature].filter(Boolean);
+      return parts.length > 0 ? parts.join(" / ") : "기능 선택 필요";
+    }
+    return draft.title;
+  };
+
+  const handleSave = () => {
+    if (onUpdate) {
+      if (draft.type === "feature") {
+        onUpdate({
+          project: editValues.project,
+          module: editValues.module,
+          feature: editValues.feature,
+        });
+      } else {
+        onUpdate({ title: editValues.title });
+      }
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === "Escape") {
+      setEditValues({
+        title: draft.title,
+        project: draft.project || "",
+        module: draft.module || "",
+        feature: draft.feature || "",
+      });
+      setIsEditing(false);
+    }
+  };
+
   const Icon = getIcon();
+
+  if (isEditing) {
+    return (
+      <div
+        className="flex flex-col gap-1 px-2 py-2 border-b"
+        style={{
+          borderColor: "#F76D57",
+          background: "rgba(247, 109, 87, 0.08)",
+        }}
+      >
+        {/* 편집 헤더 */}
+        <div className="flex items-center gap-2 mb-1">
+          <Icon size={14} style={{ color: "#F76D57" }} />
+          <span className="text-xs font-medium" style={{ color: "#F76D57" }}>
+            {getTypeLabel()} 편집
+          </span>
+        </div>
+
+        {draft.type === "feature" ? (
+          // 기능 타입: 프로젝트/모듈/기능 편집
+          <div className="flex flex-col gap-1.5">
+            <input
+              type="text"
+              value={editValues.project}
+              onChange={(e) =>
+                setEditValues((prev) => ({ ...prev, project: e.target.value }))
+              }
+              onKeyDown={handleKeyDown}
+              placeholder="프로젝트"
+              className="w-full px-2 py-1 text-xs rounded border outline-none focus:ring-1 focus:ring-[#F76D57]/40"
+              style={{
+                background: "var(--notion-bg)",
+                borderColor: "var(--notion-border)",
+                color: "var(--notion-text)",
+              }}
+              autoFocus
+            />
+            <input
+              type="text"
+              value={editValues.module}
+              onChange={(e) =>
+                setEditValues((prev) => ({ ...prev, module: e.target.value }))
+              }
+              onKeyDown={handleKeyDown}
+              placeholder="모듈"
+              className="w-full px-2 py-1 text-xs rounded border outline-none focus:ring-1 focus:ring-[#F76D57]/40"
+              style={{
+                background: "var(--notion-bg)",
+                borderColor: "var(--notion-border)",
+                color: "var(--notion-text)",
+              }}
+            />
+            <input
+              type="text"
+              value={editValues.feature}
+              onChange={(e) =>
+                setEditValues((prev) => ({ ...prev, feature: e.target.value }))
+              }
+              onKeyDown={handleKeyDown}
+              placeholder="기능명"
+              className="w-full px-2 py-1 text-xs rounded border outline-none focus:ring-1 focus:ring-[#F76D57]/40"
+              style={{
+                background: "var(--notion-bg)",
+                borderColor: "var(--notion-border)",
+                color: "var(--notion-text)",
+              }}
+            />
+          </div>
+        ) : (
+          // 릴리즈/스프린트: 제목 편집
+          <input
+            type="text"
+            value={editValues.title}
+            onChange={(e) =>
+              setEditValues((prev) => ({ ...prev, title: e.target.value }))
+            }
+            onKeyDown={handleKeyDown}
+            placeholder="제목"
+            className="w-full px-2 py-1.5 text-sm rounded border outline-none focus:ring-1 focus:ring-[#F76D57]/40"
+            style={{
+              background: "var(--notion-bg)",
+              borderColor: "var(--notion-border)",
+              color: "var(--notion-text)",
+            }}
+            autoFocus
+          />
+        )}
+
+        {/* 저장/취소 버튼 */}
+        <div className="flex justify-end gap-1 mt-1">
+          <button
+            onClick={() => {
+              setEditValues({
+                title: draft.title,
+                project: draft.project || "",
+                module: draft.module || "",
+                feature: draft.feature || "",
+              });
+              setIsEditing(false);
+            }}
+            className="px-2 py-1 text-xs rounded transition-colors hover:bg-black/5"
+            style={{ color: "var(--notion-text-muted)" }}
+          >
+            취소
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-2 py-1 text-xs rounded transition-colors"
+            style={{
+              background: "#F76D57",
+              color: "white",
+            }}
+          >
+            저장
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -236,6 +407,7 @@ const DraftPlanRow = memo(function DraftPlanRow({
       onDragEnd={onDragEnd}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onDoubleClick={() => setIsEditing(true)}
       className="flex items-center gap-2 px-2 border-b transition-all cursor-grab active:cursor-grabbing group"
       style={{
         height: ROW_HEIGHT,
@@ -273,10 +445,16 @@ const DraftPlanRow = memo(function DraftPlanRow({
 
       {/* Label */}
       <span
-        className="flex-1 truncate text-sm"
-        style={{ color: "#F76D57", fontWeight: 500 }}
+        className="flex-1 truncate text-sm cursor-pointer hover:underline"
+        style={{
+          color: draft.type === "feature" && !draft.project ? "var(--notion-text-muted)" : "#F76D57",
+          fontWeight: 500,
+          fontStyle: draft.type === "feature" && !draft.project ? "italic" : "normal",
+        }}
+        onClick={() => setIsEditing(true)}
+        title="더블클릭하여 편집"
       >
-        {draft.title}
+        {getDisplayLabel()}
       </span>
 
       {/* Type Badge */}
@@ -289,6 +467,25 @@ const DraftPlanRow = memo(function DraftPlanRow({
       >
         {getTypeLabel()}
       </span>
+
+      {/* 수정 버튼 */}
+      {onUpdate && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsEditing(true);
+          }}
+          className={`w-5 h-5 flex items-center justify-center rounded transition-opacity ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ color: "#F76D57" }}
+          title="수정"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
+      )}
 
       {/* 삭제 버튼 */}
       {onRemove && (

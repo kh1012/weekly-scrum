@@ -44,7 +44,7 @@ export interface CommandPaletteProps {
 
 type InputMode = 
   | { type: "none" }
-  | { type: "feature"; step: "title" | "hierarchy" }
+  | { type: "feature"; step: "hierarchy" }  // 기능은 title 없이 바로 hierarchy
   | { type: "sprint" | "release"; step: "title" };
 
 /**
@@ -93,8 +93,8 @@ export function CommandPalette({
         description: "프로젝트, 모듈, 기능을 선택하여 생성",
         icon: CommandIcons.Feature,
         action: () => {
-          setInputMode({ type: "feature", step: "title" });
-          setDraftTitle("새 기능");
+          setInputMode({ type: "feature", step: "hierarchy" });
+          setDraftTitle("");  // 기능 타입은 title 사용 안함
           setDraftProject("");
           setDraftModule("");
           setDraftFeature("");
@@ -224,11 +224,7 @@ export function CommandPalette({
     (e: React.KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        if (inputMode.type === "feature" && inputMode.step === "hierarchy") {
-          setInputMode({ type: "feature", step: "title" });
-        } else {
-          setInputMode({ type: "none" });
-        }
+        setInputMode({ type: "none" });
       } else if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleInputSubmit();
@@ -242,18 +238,13 @@ export function CommandPalette({
     if (!onCreateDraftPlan) return;
     
     if (inputMode.type === "feature") {
-      if (inputMode.step === "title") {
-        // 다음 단계로 이동
-        setInputMode({ type: "feature", step: "hierarchy" });
-        return;
-      }
-      // hierarchy 단계에서 생성
+      // 기능 타입: 프로젝트/모듈/기능명으로 생성 (title 없음)
       onCreateDraftPlan({
         type: "feature",
-        title: draftTitle || "새 기능",
-        project: draftProject || "미지정",
-        module: draftModule || "미지정",
-        feature: draftFeature || "미지정",
+        title: "",  // 기능 타입은 프로젝트/모듈/기능으로 표시
+        project: draftProject || projectSearch || "미지정",
+        module: draftModule || moduleSearch || "미지정",
+        feature: draftFeature || featureSearch || "미지정",
       });
     } else if (inputMode.type === "sprint" || inputMode.type === "release") {
       onCreateDraftPlan({
@@ -264,16 +255,12 @@ export function CommandPalette({
     
     setInputMode({ type: "none" });
     onClose();
-  }, [inputMode, draftTitle, draftProject, draftModule, draftFeature, onCreateDraftPlan, onClose]);
+  }, [inputMode, draftTitle, draftProject, draftModule, draftFeature, projectSearch, moduleSearch, featureSearch, onCreateDraftPlan, onClose]);
 
   // 뒤로가기
   const handleInputBack = useCallback(() => {
-    if (inputMode.type === "feature" && inputMode.step === "hierarchy") {
-      setInputMode({ type: "feature", step: "title" });
-    } else {
-      setInputMode({ type: "none" });
-    }
-  }, [inputMode]);
+    setInputMode({ type: "none" });
+  }, []);
 
   // 필터된 옵션 목록
   const filteredProjects = useMemo(() => {
@@ -347,29 +334,31 @@ export function CommandPalette({
 
         {/* 입력 폼 */}
         <div className="p-4 space-y-4">
-          {/* 제목 입력 (항상 표시) */}
-          <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--notion-text-muted)" }}>
-              제목 *
-            </label>
-            <input
-              type="text"
-              value={draftTitle}
-              onChange={(e) => setDraftTitle(e.target.value)}
-              onKeyDown={handleInputKeyDown}
-              placeholder={`${typeLabel} 제목을 입력하세요`}
-              className="w-full px-3 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-              style={{
-                background: "var(--notion-bg)",
-                borderColor: "var(--notion-border)",
-                color: "var(--notion-text)",
-              }}
-              autoFocus
-            />
-          </div>
+          {/* 제목 입력 (스프린트/릴리즈만) */}
+          {(inputMode.type === "sprint" || inputMode.type === "release") && (
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--notion-text-muted)" }}>
+                제목 *
+              </label>
+              <input
+                type="text"
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+                onKeyDown={handleInputKeyDown}
+                placeholder={`${typeLabel} 제목을 입력하세요`}
+                className="w-full px-3 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+                style={{
+                  background: "var(--notion-bg)",
+                  borderColor: "var(--notion-border)",
+                  color: "var(--notion-text)",
+                }}
+                autoFocus
+              />
+            </div>
+          )}
 
-          {/* Feature 타입일 때 위계 정보 (step: hierarchy) */}
-          {inputMode.type === "feature" && inputMode.step === "hierarchy" && (
+          {/* Feature 타입일 때 위계 정보 (프로젝트/모듈/기능명) */}
+          {inputMode.type === "feature" && (
             <div className="space-y-3">
               {/* 프로젝트 */}
               <div className="relative">
@@ -527,7 +516,7 @@ export function CommandPalette({
             className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:shadow-lg hover:shadow-[#F76D57]/20"
             style={{ background: "linear-gradient(135deg, #F76D57, #f9a88b)" }}
           >
-            {inputMode.type === "feature" && inputMode.step === "title" ? "다음" : "생성"}
+            생성
           </button>
         </div>
       </>

@@ -367,6 +367,16 @@ export function PlansBoard({
     setDraftPlans((prev) => prev.filter((d) => d.tempId !== tempId));
   }, []);
 
+  // 임시 계획 수정
+  const handleUpdateDraftPlan = useCallback(
+    (tempId: string, updates: Partial<DraftPlanItem>) => {
+      setDraftPlans((prev) =>
+        prev.map((d) => (d.tempId === tempId ? { ...d, ...updates } : d))
+      );
+    },
+    []
+  );
+
   const handleCreateFromDraft = useCallback(
     async (draft: DraftPlanItem, startDate: string, endDate: string) => {
       const isFeature = draft.type === "feature";
@@ -672,7 +682,7 @@ export function PlansBoard({
   }).length;
 
   return (
-    <div className="h-auto flex flex-col">
+    <div className="h-auto flex flex-col gap-4">
       {/* 헤더 영역 */}
       <div
         className="flex-shrink-0 px-5 py-4 border-b"
@@ -786,6 +796,7 @@ export function PlansBoard({
           onAddDraftPlan={isAdmin ? handleAddDraftPlan : undefined}
           onCreateFromDraft={isAdmin ? handleCreateFromDraft : undefined}
           onRemoveDraftPlan={isAdmin ? handleRemoveDraftPlan : undefined}
+          onUpdateDraftPlan={isAdmin ? handleUpdateDraftPlan : undefined}
         />
       </div>
 
