@@ -1,195 +1,271 @@
-# Cursor V2 Prompt — Snapshot Edit Form UX: Document-style Editing (No Feature Changes)
+You are in UX-ACCELERATION MODE for Admin CUD (Create/Update/Delete) of Plans.
+Your goal is to design and implement an extremely high-usability Admin UI inspired by Airbnb-style design and interaction patterns.
 
-## Goal
+This is NOT about adding features.
+This is about making plan creation, update, and deletion feel effortless, fast, and delightful.
 
-Improve the **editing experience** of the Snapshot Create/Edit form by making it feel like a **document editor**, not a dashboard or card-based form.
+============================================================
+DESIGN SYSTEM BASELINE — AIRBNB STYLE
+============================================================
 
-⚠️ Important:
+Design principles to follow strictly:
 
-- **Do NOT remove or change any existing functionality**
-- **Do NOT remove shortcuts, quick actions, or keyboard UX**
-- **This task is visual structure + hierarchy + readability only**
+1. Calm, soft, human UI (Airbnb-like)
 
-## Scope
+   - Rounded corners (12px+)
+   - Subtle shadows (not heavy elevation)
+   - Neutral background with light surface contrast
+   - Generous spacing, but compact input density
 
-Applies to:
+2. Interaction-first design
 
-- Snapshot Create page
-- Snapshot Edit page
-- Shared edit form components
+   - Everything feels “alive” on hover
+   - Micro-animations guide the user
+   - No hard edges, no abrupt state changes
 
----
+3. Progressive disclosure
 
-## Design Principles (Must Follow)
+   - Show only what is needed at the moment
+   - Advanced options appear only on intent (hover, focus, command)
 
-### 1. Editing experience = Document, not Dashboard
+4. Mouse + Keyboard parity
+   - All actions usable with mouse
+   - Power users can complete everything with keyboard
 
-Users should feel like they are **writing a weekly document**, not filling out a management form.
+Animation & motion rules:
 
-Avoid:
+- Use short, smooth transitions (120–180ms)
+- Use ease-out curves
+- Avoid bouncy or playful motion (professional calm)
 
-- Excessive cards
-- Box-in-box layouts
-- Strong borders or shadows for structure
+============================================================
+NON-NEGOTIABLE CUD PRINCIPLES
+============================================================
 
-Prefer:
+P1) Create requires only ONE field: title.
+P2) Create happens IN CONTEXT (where the user is looking).
+P3) Update is direct manipulation first (drag, resize, inline).
+P4) Delete is fast (keyboard + Undo, no confirm modal).
+P5) Repetition solved by duplicate (Cmd/Ctrl + D).
+P6) Power users use Command Palette (Cmd/Ctrl + K).
+P7) Optimistic UI with graceful rollback on failure.
 
-- Section flow
-- Headings (h2 / h3)
-- Typography + spacing for hierarchy
+============================================================
+DATA & SECURITY CONTRACT (DO NOT VIOLATE)
+============================================================
 
----
+READ:
 
-### 2. Cards are NOT layout structure
+- ALWAYS read from `public.v_plans_with_assignees`
 
-Cards should:
+WRITE:
 
-- Be used only for **information units** (e.g. task item groups)
-- NOT be used to define major sections or chapters
+- Use existing server actions only
+- created_by / updated_by must always be set
+- Respect RLS strictly (admin/leader only)
 
-Cards should NOT:
+============================================================
+SCOPE
+============================================================
 
-- Wrap entire sections (Past Week / This Week)
-- Be nested multiple levels deep
+Only Admin Space / All Plans is affected.
+Work Space / Plans (read-only) must not change.
 
----
+============================================================
+UX IMPLEMENTATION — STEP BY STEP
+============================================================
 
-## Layout Refactor Tasks
+STEP A — AIRBNB-STYLE QUICK CREATE (HOVER SLOT)
 
-### Step 1 — Global Layout
+Surface:
 
-- Keep the current overall page layout and routing
-- Keep editor width behavior as-is (min-width already handled in bugfix)
-- No sidebar or navigation changes
+- Implement a clean timeline surface (weekly grid).
+- Each week/day cell has:
+  - soft background
+  - subtle border
+  - generous padding
 
----
+Hover behavior:
 
-### Step 2 — Meta Information (Domain / Project / Module / Feature)
+- On hover:
+  - cell background slightly brightens
+  - a soft "+" button fades in (opacity + scale)
+  - cursor changes to indicate action
 
-#### Current issue
+Click behavior:
 
-- Meta Information feels like a heavy form
-- Same visual weight as writing sections
+- Clicking "+" opens a small floating popover near cursor.
+- Popover style:
+  - White surface
+  - Rounded corners
+  - Soft shadow
+  - No hard borders
 
-#### Changes
+Popover contents (minimal):
 
-- Remove card-style container around Meta Information
-- Render Meta Information as a **document header section**
+- Title input (auto-focus)
+- Optional hint text: “Enter to create”
+- No submit button (Enter submits)
 
-Structure:
+Auto-fill behavior:
 
-- Use a section title: `Meta Information` (h2)
-- Place a subtle divider below the title
-- Arrange selects in a compact grid:
-  - 2 columns per row
-  - Domain | Project
-  - Module | Feature
+- start_date / end_date inferred from hovered slot
+- Default duration: 1 week if ambiguous
+- type, stage, status default to last-used values
+- domain/project/module/feature inferred from active filters
 
-Style rules:
+Interaction:
 
-- Labels should be small and quiet
-- Inputs should use compact spacing
-- No background box or shadow
+- Enter → create plan
+- Esc → cancel
+- Creation is optimistic:
+  - Plan appears immediately with fade-in animation
+  - If server fails, fade-out + error toast
 
-Meta Information should feel like **context**, not content.
+Acceptance:
 
----
+- Create plan with: hover → click → type → Enter
+- No page navigation
+- No modal
 
-### Step 3 — Past Week / This Week as Document Sections
+============================================================
 
-#### Current issue
+STEP B — DIRECT MANIPULATION UPDATE (AIRBNB FEEL)
 
-- Section titles exist, but cards dominate hierarchy
+Plan rendering:
 
-#### Changes
+- Plans rendered as soft bars/chips
+- Rounded ends
+- Light background color by status
+- Subtle shadow on hover
 
-- Treat `PAST WEEK` and `THIS WEEK` as **chapter titles (h2)**
-- Remove card containers that wrap entire sections
-- Add generous vertical spacing between sections
+Hover interactions:
 
----
+- On hover:
+  - Bar slightly lifts (translateY -1px)
+  - Resize handles fade in on left/right
+  - Cursor changes appropriately
 
-### Step 4 — Tasks / Risks / Collaborators as Subsections
+Drag behavior:
 
-- Convert `Tasks`, `Risks`, `Collaborators` into **subsection headings (h3)**
-- Keep icons if already present
-- Each subsection:
-  - Title (h3)
-  - Content directly below
-  - Minimal or no outer container
+- Drag bar body → shift date range
+- Resize edges → adjust start/end
+- Smooth motion with snapping to grid
+- While dragging:
+  - Ghost preview follows cursor
+  - Dates preview inline
 
-Cards may still be used:
+Inline edit:
 
-- Inside task lists
-- Inside risk lists
-- For item grouping only
+- Double-click title:
+  - Turns into inline input
+  - No modal, no side panel
+- Enter → save
+- Esc → cancel
 
----
+All updates:
 
-### Step 5 — Focus Handling (Readability First)
+- Optimistic UI first
+- Server update
+- Rollback + toast on failure
 
-#### Goal
+============================================================
 
-Help users focus without visual noise.
+STEP C — FAST DELETE + UNDO (NO MODALS)
 
-Rules:
+Delete interaction:
 
-- When a section/subsection is focused:
-  - Emphasize the heading (slightly stronger color or weight)
-  - Show a very subtle left accent line (1–2px)
-- Non-focused sections:
-  - Reduce opacity slightly (e.g. 0.65)
-  - DO NOT disable interaction
-  - DO NOT blur
+- Select plan (click or keyboard focus)
+- Press Delete / Backspace
 
-Avoid:
+Behavior:
 
-- Strong borders
-- Background color blocks
-- Drop shadows
+- Plan fades out immediately
+- Snackbar appears bottom-center:
+  - “삭제됨”
+  - Undo button (5 seconds)
 
-Focus should guide the eye, not shout.
+Undo:
 
----
+- Restores plan with fade-in
+- Cancels delete if possible or re-creates
 
-### Step 6 — Spacing & Density
+No confirmation modal allowed.
 
-- Reduce vertical padding between inputs within the same subsection
-- Increase spacing **between sections**, not inside them
-- Labels should not compete visually with content
-- Reading flow should be top → bottom without visual interruption
+============================================================
 
----
+STEP D — DUPLICATE (CMD/CTRL + D)
 
-## What Must Stay Exactly the Same
+Shortcut:
 
-- All existing shortcuts and helper UI
-- Task add / quick add / keyboard UX
-- Progress slider behavior
-- Risk handling
-- Collaborators logic
-- Data schema and API calls
+- Cmd/Ctrl + D duplicates selected plan
 
-This is a **presentation-layer refactor only**.
+Behavior:
 
----
+- New plan appears immediately
+- Shifted to next logical time slot
+- Title suffix “(copy)”
+- Optimistic insert
 
-## QA Checklist
+============================================================
 
-- Editing feels closer to writing a document than filling a form
-- Eye fatigue reduced during long editing sessions
-- Users can instantly identify:
-  - Where they are (Past / This)
-  - What they are editing (Tasks / Risks / Collaborators)
-- No feature regression
-- No behavior changes
+STEP E — COMMAND PALETTE (CMD/CTRL + K)
 
----
+Command palette design:
 
-## Deliverable
+- Airbnb-like floating command box
+- Centered, rounded, soft shadow
+- Input auto-focused
 
-1. Code changes implementing the document-style layout
-2. A short markdown summary:
-   - `snapshot-edit-document-ux.md`
-   - Before vs After (conceptual description)
-   - What was intentionally NOT changed
+Commands:
+
+- Create plan
+- Change status
+- Change stage
+- Assign users
+- Duplicate selected
+- Delete selected
+
+Interaction:
+
+- Fully keyboard-driven
+- Arrow navigation
+- Enter to execute
+- Esc to close
+
+============================================================
+IMPLEMENTATION CONSTRAINTS
+============================================================
+
+- No heavy Gantt library in this phase
+- Use existing TanStack Query
+- Use Framer Motion or CSS transitions for animation
+- Keep components small and composable
+
+Suggested structure:
+
+- components/admin-plans/TimelineSurface.tsx
+- components/admin-plans/PlanBar.tsx
+- components/admin-plans/QuickCreatePopover.tsx
+- components/admin-plans/UndoSnackbar.tsx
+- components/admin-plans/CommandPalette.tsx
+- lib/admin-plans/optimistic.ts
+- lib/admin-plans/keyboard.ts
+
+============================================================
+DELIVERY & COMMITS
+============================================================
+
+Proceed incrementally.
+
+START WITH STEP A ONLY.
+
+Commit format:
+feat(admin-plans): airbnb-style quick create on timeline
+
+For each step:
+
+- list changed files
+- show key code excerpts
+- confirm build/typecheck passes
+- STOP before moving to next step

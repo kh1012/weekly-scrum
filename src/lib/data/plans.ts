@@ -2,9 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * Plan 타입 (DB plan_type enum)
- * - feature: 기능 개발 계획 (domain/project/module/feature 필수)
- * - sprint: 스프린트 (title, start_date, end_date)
- * - release: 릴리즈 (title, start_date, end_date)
+ * - feature: 기능 개발 계획 (project/module/feature 필수, stage 사용)
+ * - sprint: 스프린트 (title, start_date, end_date만)
+ * - release: 릴리즈 (title, start_date, end_date만)
  */
 export type PlanType = "feature" | "sprint" | "release";
 
@@ -15,8 +15,13 @@ export type PlanStatus = "진행중" | "완료" | "보류" | "취소";
 
 /**
  * 담당자 역할 (DB assignee_role enum)
+ * - planner: 기획
+ * - fe: FE 개발
+ * - be: BE 개발
+ * - designer: 디자인
+ * - qa: 검증
  */
-export type AssigneeRole = "owner" | "developer" | "reviewer" | "stakeholder";
+export type AssigneeRole = "planner" | "fe" | "be" | "designer" | "qa";
 
 /**
  * Plan 기본 타입 (DB 스키마 기반)
@@ -337,16 +342,11 @@ export async function createPlan({
 }): Promise<Plan> {
   const supabase = await createClient();
 
-  // feature type 검증
+  // feature type 검증 (domain은 선택사항으로 변경)
   if (payload.type === "feature") {
-    if (
-      !payload.domain ||
-      !payload.project ||
-      !payload.module ||
-      !payload.feature
-    ) {
+    if (!payload.project || !payload.module || !payload.feature) {
       throw new Error(
-        "feature type 계획은 domain/project/module/feature가 모두 필수입니다."
+        "feature type 계획은 project/module/feature가 모두 필수입니다."
       );
     }
   }
@@ -402,16 +402,11 @@ export async function updatePlan({
 }): Promise<Plan> {
   const supabase = await createClient();
 
-  // feature type 검증 (type이 변경되는 경우)
+  // feature type 검증 (type이 변경되는 경우, domain은 선택사항)
   if (payload.type === "feature") {
-    if (
-      !payload.domain ||
-      !payload.project ||
-      !payload.module ||
-      !payload.feature
-    ) {
+    if (!payload.project || !payload.module || !payload.feature) {
       throw new Error(
-        "feature type 계획은 domain/project/module/feature가 모두 필수입니다."
+        "feature type 계획은 project/module/feature가 모두 필수입니다."
       );
     }
   }

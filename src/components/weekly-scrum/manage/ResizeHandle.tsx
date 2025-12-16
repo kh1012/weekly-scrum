@@ -54,7 +54,7 @@ export function ResizeHandle({ onResize, onResizeEnd }: ResizeHandleProps) {
 
   return (
     <div
-      className="w-1 hover:w-1.5 bg-transparent hover:bg-blue-400/50 cursor-col-resize transition-all duration-150 shrink-0 group relative"
+      className="hover:w-1.5 bg-transparent hover:bg-blue-400/50 cursor-col-resize transition-all duration-150 shrink-0 group relative"
       onMouseDown={handleMouseDown}
     >
       {/* 호버 시 더 넓은 클릭 영역 */}
@@ -62,4 +62,3 @@ export function ResizeHandle({ onResize, onResizeEnd }: ResizeHandleProps) {
     </div>
   );
 }
-

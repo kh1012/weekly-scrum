@@ -7,10 +7,10 @@
 :root {
   /* Notion Color Palette */
   --notion-bg: #ffffff;
-  --notion-bg-secondary: #f7f6f3;
-  --notion-bg-hover: #efefef;
-  --notion-bg-active: #e8e7e4;
-  --notion-sidebar-bg: #fbfbfa;
+  --notion-bg-secondary: #f8fafc;  /* slate-50: 노란끼 없는 순수 회색 */
+  --notion-bg-hover: #f1f5f9;      /* slate-100 */
+  --notion-bg-active: #e5e7eb;     /* gray-200: 노란끼 없는 순수 회색 */
+  --notion-sidebar-bg: #f9fafb;    /* gray-50 */
   
   /* Airbnb-Inspired Blue Theme */
   --primary-50: #eff6ff;

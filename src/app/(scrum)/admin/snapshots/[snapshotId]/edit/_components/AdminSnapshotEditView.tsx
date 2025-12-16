@@ -379,6 +379,7 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
                   handleUpdateCard(selectedSnapshot.tempId, updates)
                 }
                 onFocusSection={setFocusedSection}
+                activeSection={focusedSection as import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection | null}
                 compact
                 singleColumn
                 hideName
@@ -409,6 +410,7 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
                 focusedSection={
                   focusedSection as "meta" | "pastWeek" | "thisWeek" | null
                 }
+                onSectionClick={(section) => setFocusedSection(section)}
               />
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">

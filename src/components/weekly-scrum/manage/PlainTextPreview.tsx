@@ -25,12 +25,15 @@ interface PlainTextPreviewProps {
   snapshot: TempSnapshot | null;
   onCopy?: () => void;
   focusedSection?: PreviewSection | null;
+  /** 섹션 클릭 시 콜백 - 편집폼 활성화용 */
+  onSectionClick?: (section: PreviewSection) => void;
 }
 
 export function PlainTextPreview({
   snapshot,
   onCopy,
   focusedSection,
+  onSectionClick,
 }: PlainTextPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -83,12 +86,21 @@ export function PlainTextPreview({
 
   const plainText = tempSnapshotToPlainText(snapshot);
 
-  // 하이라이트 스타일
+  // 하이라이트 스타일 + hover + 클릭 가능
   const getHighlightClass = (section: PreviewSection) => {
+    const baseClass = onSectionClick 
+      ? "cursor-pointer hover:bg-gray-100 rounded-lg transition-all duration-300" 
+      : "transition-all duration-300";
+    
     if (focusedSection === section) {
-      return "bg-blue-50 rounded-lg px-2 py-1 -mx-2 transition-all duration-300";
+      return `bg-blue-50 rounded-lg px-2 py-1 -mx-2 ${onSectionClick ? "cursor-pointer hover:bg-blue-100" : ""} transition-all duration-300`;
     }
-    return "transition-all duration-300";
+    return baseClass;
+  };
+
+  // 섹션 클릭 핸들러
+  const handleSectionClick = (section: PreviewSection) => {
+    onSectionClick?.(section);
   };
 
   return (
@@ -140,6 +152,7 @@ export function PlainTextPreview({
                 sectionRefs.current["meta"] = el;
               }}
               className={`rounded-lg p-3 ${getHighlightClass("meta")}`}
+              onClick={() => handleSectionClick("meta")}
             >
               {/* Name 표시 */}
               {snapshot.name && (
@@ -159,6 +172,7 @@ export function PlainTextPreview({
                 sectionRefs.current["pastWeek"] = el;
               }}
               className={`rounded-lg p-3 ${getHighlightClass("pastWeek")}`}
+              onClick={() => handleSectionClick("pastWeek")}
             >
               <div className="text-xs font-mono font-semibold text-gray-900 mb-2">
                 * Past Week
@@ -172,6 +186,10 @@ export function PlainTextPreview({
                 className={`ml-4 rounded p-2 ${getHighlightClass(
                   "pastWeek.tasks"
                 )}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSectionClick("pastWeek.tasks");
+                }}
               >
                 <div className="text-xs font-mono text-gray-700">* Tasks</div>
                 {snapshot.pastWeek.tasks.length > 0 ? (
@@ -198,6 +216,10 @@ export function PlainTextPreview({
                 className={`ml-4 rounded p-2 ${getHighlightClass(
                   "pastWeek.risks"
                 )}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSectionClick("pastWeek.risks");
+                }}
               >
                 <div className="text-xs font-mono text-gray-700">
                   * Risks{snapshot.pastWeek.risk === null ? ": None" : ""}
@@ -214,14 +236,18 @@ export function PlainTextPreview({
                   ))}
               </div>
 
-              {/* RiskLevel */}
+              {/* RiskLevel - Risks 섹션에 포함되므로 클릭 시 pastWeek.risks로 포커스 */}
               <div
                 ref={(el) => {
                   sectionRefs.current["pastWeek.riskLevel"] = el;
                 }}
                 className={`ml-4 rounded p-2 ${getHighlightClass(
-                  "pastWeek.riskLevel"
+                  "pastWeek.risks"
                 )}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSectionClick("pastWeek.risks");
+                }}
               >
                 <div className="text-xs font-mono text-gray-700">
                   * RiskLevel: {snapshot.pastWeek.riskLevel ?? "None"}
@@ -236,6 +262,10 @@ export function PlainTextPreview({
                 className={`ml-4 rounded p-2 ${getHighlightClass(
                   "pastWeek.collaborators"
                 )}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSectionClick("pastWeek.collaborators");
+                }}
               >
                 <div className="text-xs font-mono text-gray-700">
                   * Collaborators
@@ -259,6 +289,7 @@ export function PlainTextPreview({
                 sectionRefs.current["thisWeek"] = el;
               }}
               className={`rounded-lg p-3 ${getHighlightClass("thisWeek")}`}
+              onClick={() => handleSectionClick("thisWeek")}
             >
               <div className="text-xs font-mono font-semibold text-gray-900 mb-2">
                 * This Week
@@ -271,6 +302,10 @@ export function PlainTextPreview({
                 className={`ml-4 rounded p-2 ${getHighlightClass(
                   "thisWeek.tasks"
                 )}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSectionClick("thisWeek.tasks");
+                }}
               >
                 <div className="text-xs font-mono text-gray-700">* Tasks</div>
                 {snapshot.thisWeek.tasks.length > 0 ? (

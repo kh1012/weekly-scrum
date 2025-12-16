@@ -66,7 +66,9 @@ export function PlansBoard({
   const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
 
   // Undo 스낵바 상태
-  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
+    null
+  );
   const [showUndoSnackbar, setShowUndoSnackbar] = useState(false);
 
   // 커맨드 팔레트 상태
@@ -78,7 +80,9 @@ export function PlansBoard({
   // 선택된 Plan 찾기
   const selectedPlan = useMemo(() => {
     if (!selectedPlanId) return null;
-    return [...initialPlans, ...undatedPlans].find((p) => p.id === selectedPlanId);
+    return [...initialPlans, ...undatedPlans].find(
+      (p) => p.id === selectedPlanId
+    );
   }, [selectedPlanId, initialPlans, undatedPlans]);
 
   // URL 파라미터 빌드 함수
@@ -243,13 +247,10 @@ export function PlansBoard({
   );
 
   // Plan 열기
-  const handleOpenPlan = useCallback(
-    (planId: string) => {
-      setSelectedPlanId(planId);
-      // 더블클릭 시에만 편집 페이지로 이동 (handleSelectPlan에서 처리)
-    },
-    []
-  );
+  const handleOpenPlan = useCallback((planId: string) => {
+    setSelectedPlanId(planId);
+    // 더블클릭 시에만 편집 페이지로 이동 (handleSelectPlan에서 처리)
+  }, []);
 
   // Plan 선택 (간트에서)
   const handleSelectPlan = useCallback((planId: string) => {
@@ -259,7 +260,9 @@ export function PlansBoard({
   // ===== STEP C: Fast Delete + Undo =====
   const handleDelete = useCallback(
     (planId: string) => {
-      const plan = [...initialPlans, ...undatedPlans].find((p) => p.id === planId);
+      const plan = [...initialPlans, ...undatedPlans].find(
+        (p) => p.id === planId
+      );
       if (!plan) return;
 
       // Optimistic: UI에서 즉시 숨김 (실제 삭제는 Undo 타임아웃 후)
@@ -431,11 +434,20 @@ export function PlansBoard({
         icon: CommandIcons.User,
         requiresSelection: true,
         action: () => {
-          if (selectedPlanId) router.push(`/admin/plans/${selectedPlanId}/edit`);
+          if (selectedPlanId)
+            router.push(`/admin/plans/${selectedPlanId}/edit`);
         },
       },
     ],
-    [modKey, selectedPlanId, handleDelete, handleDuplicate, handleStatusChange, handleStageChange, router]
+    [
+      modKey,
+      selectedPlanId,
+      handleDelete,
+      handleDuplicate,
+      handleStatusChange,
+      handleStageChange,
+      router,
+    ]
   );
 
   // 날짜 범위 계산
@@ -497,7 +509,10 @@ export function PlansBoard({
           </svg>
           <span className="font-medium">관리자 전용</span>
           <span style={{ color: "var(--notion-text-muted)" }}>—</span>
-          <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+          <span
+            className="text-xs"
+            style={{ color: "var(--notion-text-muted)" }}
+          >
             {modKey}+K 커맨드 · Del 삭제 · {modKey}+D 복제
           </span>
         </div>

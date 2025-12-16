@@ -64,9 +64,12 @@ export const SnapshotCardList = forwardRef<
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [optionMenuId, setOptionMenuId] = useState<string | null>(null);
-  const [optionMenuPosition, setOptionMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [optionMenuPosition, setOptionMenuPosition] = useState<{
+    top: number;
+    left: number;
+  }>({ top: 0, left: 0 });
   const optionButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  
+
   // 일괄 선택 모드
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -121,18 +124,21 @@ export const SnapshotCardList = forwardRef<
   }, []);
 
   // 옵션 메뉴 열기
-  const handleOpenOptionMenu = useCallback((e: React.MouseEvent, tempId: string) => {
-    e.stopPropagation();
-    const button = optionButtonRefs.current[tempId];
-    if (button) {
-      const rect = button.getBoundingClientRect();
-      setOptionMenuPosition({
-        top: rect.bottom + 4,
-        left: rect.right - 160, // 메뉴 너비 160px
-      });
-    }
-    setOptionMenuId((prev) => (prev === tempId ? null : tempId));
-  }, []);
+  const handleOpenOptionMenu = useCallback(
+    (e: React.MouseEvent, tempId: string) => {
+      e.stopPropagation();
+      const button = optionButtonRefs.current[tempId];
+      if (button) {
+        const rect = button.getBoundingClientRect();
+        setOptionMenuPosition({
+          top: rect.bottom + 4,
+          left: rect.right - 160, // 메뉴 너비 160px
+        });
+      }
+      setOptionMenuId((prev) => (prev === tempId ? null : tempId));
+    },
+    []
+  );
 
   // 옵션 메뉴 닫기
   const closeOptionMenu = useCallback(() => {
@@ -196,8 +202,10 @@ export const SnapshotCardList = forwardRef<
   // 선택된 카드 일괄 삭제
   const handleBulkDelete = useCallback(() => {
     if (selectedIds.size === 0) return;
-    
-    const confirmed = window.confirm(`${selectedIds.size}개의 카드를 삭제하시겠습니까?`);
+
+    const confirmed = window.confirm(
+      `${selectedIds.size}개의 카드를 삭제하시겠습니까?`
+    );
     if (confirmed) {
       selectedIds.forEach((id) => onDeleteCard(id));
       setSelectedIds(new Set());
@@ -223,93 +231,127 @@ export const SnapshotCardList = forwardRef<
       {/* 리스트 헤더 - 전체 너비 border */}
       <div className="h-12 border-b border-gray-100 bg-white/80 backdrop-blur-sm shrink-0">
         <div className="h-full px-4 flex items-center justify-between">
-        {/* 좌측: 카드 목록 */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-800">카드 목록</span>
-          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{snapshots.length}</span>
-        </div>
-        
-        {/* 우측: +추가, ... 옵션 */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onAddEmpty}
-            className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            추가
-          </button>
-          
-          {/* ... 옵션 버튼 */}
-          <button
-            ref={copyButtonRef}
-            onClick={handleOpenDropdown}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
-          </button>
-          
-          {/* 옵션 드롭다운 메뉴 */}
-          {isCopyDropdownOpen &&
-            createPortal(
-              <div
-                className="fixed w-40 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-[9999]"
-                style={{
-                  top: dropdownPosition.top,
-                  left: dropdownPosition.left,
-                }}
-                onClick={(e) => e.stopPropagation()}
+          {/* 좌측: 카드 목록 */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-800">
+              카드 목록
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              {snapshots.length}
+            </span>
+          </div>
+
+          {/* 우측: +추가, ... 옵션 */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onAddEmpty}
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
               >
-                {/* 선택 모드 */}
-                {snapshots.length > 0 && (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              추가
+            </button>
+
+            {/* ... 옵션 버튼 */}
+            <button
+              ref={copyButtonRef}
+              onClick={handleOpenDropdown}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                />
+              </svg>
+            </button>
+
+            {/* 옵션 드롭다운 메뉴 */}
+            {isCopyDropdownOpen &&
+              createPortal(
+                <div
+                  className="fixed w-40 py-1 bg-white rounded-xl shadow-lg border border-gray-100 z-[9999]"
+                  style={{
+                    top: dropdownPosition.top,
+                    left: dropdownPosition.left,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* 선택 모드 */}
+                  {snapshots.length > 0 && (
+                    <button
+                      onClick={() => {
+                        toggleSelectMode();
+                        setIsCopyDropdownOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <svg
+                        className="w-4 h-4 text-blue-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      일괄 선택
+                    </button>
+                  )}
+                  <div className="border-t border-gray-100 my-1" />
                   <button
                     onClick={() => {
-                      toggleSelectMode();
+                      onCopyAllJson();
                       setIsCopyDropdownOpen(false);
                     }}
                     className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    일괄 선택
+                    <span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
+                      J
+                    </span>
+                    JSON 전체 복사
                   </button>
-                )}
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  onClick={() => {
-                    onCopyAllJson();
-                    setIsCopyDropdownOpen(false);
-                  }}
-                  className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <span className="w-4 h-4 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
-                    J
-                  </span>
-                  JSON 전체 복사
-                </button>
-                <button
-                  onClick={() => {
-                    onCopyAllPlainText();
-                    setIsCopyDropdownOpen(false);
-                  }}
-                  className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <span className="w-4 h-4 rounded bg-gray-100 flex items-center justify-center text-gray-600 text-[10px] font-bold">
-                    T
-                  </span>
-                  Text 전체 복사
-                </button>
-              </div>,
-              document.body
-            )}
+                  <button
+                    onClick={() => {
+                      onCopyAllPlainText();
+                      setIsCopyDropdownOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <span className="w-4 h-4 rounded bg-gray-100 flex items-center justify-center text-gray-600 text-[10px] font-bold">
+                      T
+                    </span>
+                    Text 전체 복사
+                  </button>
+                </div>,
+                document.body
+              )}
           </div>
         </div>
       </div>
-      
+
       {/* 선택 모드 UI (선택 시에만 표시) */}
       {isSelectMode && (
         <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
@@ -317,27 +359,52 @@ export const SnapshotCardList = forwardRef<
             onClick={toggleSelectAll}
             className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
           >
-            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-              selectedIds.size === snapshots.length && snapshots.length > 0
-                ? "bg-blue-500 border-blue-500"
-                : "border-gray-300 bg-white"
-            }`}>
-              {selectedIds.size === snapshots.length && snapshots.length > 0 && (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
+            <div
+              className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                selectedIds.size === snapshots.length && snapshots.length > 0
+                  ? "bg-blue-500 border-blue-500"
+                  : "border-gray-300 bg-white"
+              }`}
+            >
+              {selectedIds.size === snapshots.length &&
+                snapshots.length > 0 && (
+                  <svg
+                    className="w-3 h-3 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                )}
             </div>
             전체
           </button>
-          <span className="text-xs text-blue-600 font-medium">{selectedIds.size}개 선택</span>
+          <span className="text-xs text-blue-600 font-medium">
+            {selectedIds.size}개 선택
+          </span>
           {selectedIds.size > 0 && (
             <button
               onClick={handleBulkDelete}
               className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-rose-600 bg-rose-100 hover:bg-rose-200 rounded-md transition-colors ml-auto"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
               삭제
             </button>
@@ -373,15 +440,23 @@ export const SnapshotCardList = forwardRef<
                 relative rounded-2xl border-2 transition-all duration-200 cursor-pointer flex
                 ${
                   isSelected
-                    ? "bg-gradient-to-br from-blue-50/50 to-indigo-50/50 border-blue-500 shadow-md shadow-blue-500/10"
+                    ? "border-blue-500 shadow-md shadow-blue-500/10"
                     : isChecked
                     ? "bg-blue-50/50 border-blue-300"
                     : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm"
                 }
               `}
-              onClick={() => isSelectMode ? toggleCardSelection(snapshot.tempId) : onSelectCard(snapshot.tempId)}
-              onDoubleClick={() => !isSelectMode && handleDoubleClick(snapshot.tempId)}
-              onContextMenu={(e) => !isSelectMode && handleContextMenu(e, snapshot)}
+              onClick={() =>
+                isSelectMode
+                  ? toggleCardSelection(snapshot.tempId)
+                  : onSelectCard(snapshot.tempId)
+              }
+              onDoubleClick={() =>
+                !isSelectMode && handleDoubleClick(snapshot.tempId)
+              }
+              onContextMenu={(e) =>
+                !isSelectMode && handleContextMenu(e, snapshot)
+              }
             >
               {/* 선택 모드 체크박스 */}
               {isSelectMode && (
@@ -394,8 +469,18 @@ export const SnapshotCardList = forwardRef<
                     }`}
                   >
                     {isChecked && (
-                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-3.5 h-3.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     )}
                   </div>
@@ -410,7 +495,9 @@ export const SnapshotCardList = forwardRef<
                       {/* 메타 태그 (domain, project, module, feature 순) - EntryCard 스타일 */}
                       {snapshot.domain && (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Domain</span>
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                            Domain
+                          </span>
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                             {snapshot.domain}
                           </span>
@@ -418,7 +505,9 @@ export const SnapshotCardList = forwardRef<
                       )}
                       {snapshot.project && (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Project</span>
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                            Project
+                          </span>
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                             {snapshot.project}
                           </span>
@@ -426,7 +515,9 @@ export const SnapshotCardList = forwardRef<
                       )}
                       {snapshot.module && (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Module</span>
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                            Module
+                          </span>
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                             {snapshot.module}
                           </span>
@@ -434,7 +525,9 @@ export const SnapshotCardList = forwardRef<
                       )}
                       {snapshot.feature && (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-gray-400 w-12 shrink-0">Feature</span>
+                          <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                            Feature
+                          </span>
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                             {snapshot.feature}
                           </span>
@@ -443,34 +536,44 @@ export const SnapshotCardList = forwardRef<
                       {/* 진행률 표시 */}
                       {(() => {
                         const tasks = snapshot.pastWeek?.tasks || [];
-                        const avgProgress = tasks.length > 0 
-                          ? Math.round(tasks.reduce((sum, t) => sum + t.progress, 0) / tasks.length)
-                          : null;
-                        return avgProgress !== null && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-gray-400 w-12 shrink-0">진행률</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-blue-500 rounded-full transition-all"
-                                  style={{ width: `${avgProgress}%` }}
-                                />
+                        const avgProgress =
+                          tasks.length > 0
+                            ? Math.round(
+                                tasks.reduce((sum, t) => sum + t.progress, 0) /
+                                  tasks.length
+                              )
+                            : null;
+                        return (
+                          avgProgress !== null && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                                진행률
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-blue-500 rounded-full transition-all"
+                                    style={{ width: `${avgProgress}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-medium text-gray-600">
+                                  {avgProgress}%
+                                </span>
                               </div>
-                              <span className="text-[10px] font-medium text-gray-600">{avgProgress}%</span>
                             </div>
-                          </div>
+                          )
                         );
                       })()}
                     </div>
 
-                  <div className="flex items-center gap-1">
-                    {/* 펼치기/접기 버튼 */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleExpand(snapshot.tempId);
-                      }}
-                      className={`
+                    <div className="flex items-center gap-1">
+                      {/* 펼치기/접기 버튼 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpand(snapshot.tempId);
+                        }}
+                        className={`
                         p-1.5 rounded-lg transition-all duration-200
                         ${
                           isExpanded
@@ -478,30 +581,34 @@ export const SnapshotCardList = forwardRef<
                             : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                         }
                       `}
-                    >
-                      <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          isExpanded ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
 
-                    {/* 옵션 메뉴 버튼 */}
-                    <button
-                      ref={(el) => { optionButtonRefs.current[snapshot.tempId] = el; }}
-                      onClick={(e) => handleOpenOptionMenu(e, snapshot.tempId)}
-                      aria-label="옵션"
-                      className={`
+                      {/* 옵션 메뉴 버튼 */}
+                      <button
+                        ref={(el) => {
+                          optionButtonRefs.current[snapshot.tempId] = el;
+                        }}
+                        onClick={(e) =>
+                          handleOpenOptionMenu(e, snapshot.tempId)
+                        }
+                        aria-label="옵션"
+                        className={`
                         p-1.5 rounded-lg transition-all duration-200
                         ${
                           optionMenuId === snapshot.tempId
@@ -509,143 +616,143 @@ export const SnapshotCardList = forwardRef<
                             : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                         }
                       `}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* 상태 태그 */}
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {snapshot.isOriginal && (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500">
-                      원본
-                    </span>
-                  )}
-                  {snapshot.pastWeek.tasks.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600">
-                      {snapshot.pastWeek.tasks.length} tasks
-                    </span>
-                  )}
-                  {snapshot.pastWeek.riskLevel !== null &&
-                    snapshot.pastWeek.riskLevel > 0 && (
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
-                          snapshot.pastWeek.riskLevel === 1
-                            ? "bg-yellow-50 text-yellow-600"
-                            : snapshot.pastWeek.riskLevel === 2
-                            ? "bg-orange-50 text-orange-600"
-                            : "bg-red-50 text-red-600"
-                        }`}
-                      >
-                        Risk {snapshot.pastWeek.riskLevel}
+                  {/* 상태 태그 */}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {snapshot.isOriginal && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500">
+                        원본
                       </span>
                     )}
-                </div>
-              </div>
-
-              {/* 펼친 내용 */}
-              {isExpanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-gray-100 animate-fadeIn">
-                  <div className="space-y-3">
-                    {/* Past Week Tasks */}
                     {snapshot.pastWeek.tasks.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                          </svg>
-                          Past Week
-                        </div>
-                        <ul className="space-y-1.5">
-                          {snapshot.pastWeek.tasks.map((task, i) => (
-                            <li
-                              key={i}
-                              className="flex items-center gap-2 text-xs"
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  task.progress === 100
-                                    ? "bg-emerald-500"
-                                    : task.progress >= 50
-                                    ? "bg-blue-500"
-                                    : "bg-gray-400"
-                                }`}
-                              />
-                              <span className="text-gray-700 flex-1">
-                                {task.title}
-                              </span>
-                              <span
-                                className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                                  task.progress === 100
-                                    ? "bg-emerald-50 text-emerald-600"
-                                    : "bg-gray-100 text-gray-500"
-                                }`}
-                              >
-                                {task.progress}%
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600">
+                        {snapshot.pastWeek.tasks.length} tasks
+                      </span>
                     )}
-                    {/* This Week Tasks */}
-                    {snapshot.thisWeek.tasks.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M13 7l5 5m0 0l-5 5m5-5H6"
-                            />
-                          </svg>
-                          This Week
-                        </div>
-                        <ul className="space-y-1.5">
-                          {snapshot.thisWeek.tasks.map((task, i) => (
-                            <li
-                              key={i}
-                              className="flex items-center gap-2 text-xs text-gray-700"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
-                              <span>{task}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {snapshot.pastWeek.riskLevel !== null &&
+                      snapshot.pastWeek.riskLevel > 0 && (
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
+                            snapshot.pastWeek.riskLevel === 1
+                              ? "bg-yellow-50 text-yellow-600"
+                              : snapshot.pastWeek.riskLevel === 2
+                              ? "bg-orange-50 text-orange-600"
+                              : "bg-red-50 text-red-600"
+                          }`}
+                        >
+                          Risk {snapshot.pastWeek.riskLevel}
+                        </span>
+                      )}
                   </div>
                 </div>
-              )}
+
+                {/* 펼친 내용 */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 pt-2 border-t border-gray-100 animate-fadeIn">
+                    <div className="space-y-3">
+                      {/* Past Week Tasks */}
+                      {snapshot.pastWeek.tasks.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                              />
+                            </svg>
+                            Past Week
+                          </div>
+                          <ul className="space-y-1.5">
+                            {snapshot.pastWeek.tasks.map((task, i) => (
+                              <li
+                                key={i}
+                                className="flex items-center gap-2 text-xs"
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                    task.progress === 100
+                                      ? "bg-emerald-500"
+                                      : task.progress >= 50
+                                      ? "bg-blue-500"
+                                      : "bg-gray-400"
+                                  }`}
+                                />
+                                <span className="text-gray-700 flex-1">
+                                  {task.title}
+                                </span>
+                                <span
+                                  className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                    task.progress === 100
+                                      ? "bg-emerald-50 text-emerald-600"
+                                      : "bg-gray-100 text-gray-500"
+                                  }`}
+                                >
+                                  {task.progress}%
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {/* This Week Tasks */}
+                      {snapshot.thisWeek.tasks.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 7l5 5m0 0l-5 5m5-5H6"
+                              />
+                            </svg>
+                            This Week
+                          </div>
+                          <ul className="space-y-1.5">
+                            {snapshot.thisWeek.tasks.map((task, i) => (
+                              <li
+                                key={i}
+                                className="flex items-center gap-2 text-xs text-gray-700"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                                <span>{task}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );

@@ -7,7 +7,7 @@ import type { CreatePlanActionInput } from "@/lib/actions/plans";
 import type { PlanType, PlanStatus, AssigneeRole } from "@/lib/data/plans";
 import type { WorkspaceMember } from "@/lib/data/members";
 
-const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "";
+const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
 
 interface PlanFormData extends CreatePlanActionInput {
   id?: string;
@@ -48,10 +48,11 @@ const STAGE_OPTIONS = [
 ];
 
 const ROLE_OPTIONS: { value: AssigneeRole; label: string }[] = [
-  { value: "owner", label: "담당" },
-  { value: "developer", label: "개발" },
-  { value: "reviewer", label: "리뷰" },
-  { value: "stakeholder", label: "이해관계자" },
+  { value: "planner", label: "기획" },
+  { value: "fe", label: "FE" },
+  { value: "be", label: "BE" },
+  { value: "designer", label: "디자인" },
+  { value: "qa", label: "검증" },
 ];
 
 interface AssigneeEntry {
@@ -76,9 +77,8 @@ export function PlanForm({
   const [formData, setFormData] = useState({
     type: initialData?.type || ("feature" as PlanType),
     title: initialData?.title || "",
-    stage: initialData?.stage || "기획",
+    stage: initialData?.stage || "컨셉 기획",
     status: initialData?.status || ("진행중" as PlanStatus),
-    domain: initialData?.domain || "",
     project: initialData?.project || "",
     module: initialData?.module || "",
     feature: initialData?.feature || "",
@@ -170,10 +170,10 @@ export function PlanForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // feature type 검증
+    // feature type 검증 (프로젝트/모듈/기능만 필수)
     if (isFeatureType) {
-      if (!formData.domain || !formData.project || !formData.module || !formData.feature) {
-        alert("feature 타입 계획은 도메인, 프로젝트, 모듈, 기능이 모두 필수입니다.");
+      if (!formData.project || !formData.module || !formData.feature) {
+        alert("feature 타입 계획은 프로젝트, 모듈, 기능이 모두 필수입니다.");
         return;
       }
     }
@@ -189,22 +189,24 @@ export function PlanForm({
     await onSubmit({
       type: formData.type,
       title: formData.title,
-      stage: formData.stage,
+      // stage는 feature 타입에서만 사용
+      stage: isFeatureType ? formData.stage : "",
       status: formData.status,
-      domain: formData.domain || undefined,
-      project: formData.project || undefined,
-      module: formData.module || undefined,
-      feature: formData.feature || undefined,
+      // 위계정보는 feature 타입에서만 사용
+      project: isFeatureType ? formData.project || undefined : undefined,
+      module: isFeatureType ? formData.module || undefined : undefined,
+      feature: isFeatureType ? formData.feature || undefined : undefined,
       start_date: formData.start_date || undefined,
       end_date: formData.end_date || undefined,
-      assignees: assignees.length > 0 ? assignees : undefined,
+      // 담당자는 feature 타입에서만 사용
+      assignees: isFeatureType && assignees.length > 0 ? assignees : undefined,
     });
   };
 
   // 담당자 추가
   const addAssignee = () => {
     if (members.length === 0) return;
-    setAssignees([...assignees, { user_id: members[0].user_id, role: "developer" }]);
+    setAssignees([...assignees, { user_id: members[0].user_id, role: "fe" }]);
   };
 
   // 담당자 제거
@@ -295,35 +297,41 @@ export function PlanForm({
               borderColor: "var(--notion-border)",
               color: "var(--notion-text)",
             }}
-            placeholder="계획 제목을 입력하세요"
+            placeholder={
+              formData.type === "release" ? "예: 26.1" : 
+              formData.type === "sprint" ? "예: Sprint 2025-W01" : 
+              "계획 제목을 입력하세요"
+            }
           />
         </div>
 
-        {/* 단계 */}
-        <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-            단계 *
-          </label>
-          <select
-            value={formData.stage}
-            onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-            style={{
-              background: "var(--notion-bg)",
-              borderColor: "var(--notion-border)",
-              color: "var(--notion-text)",
-            }}
-          >
-            {STAGE_OPTIONS.map((stage) => (
-              <option key={stage} value={stage}>
-                {stage}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* 단계 (feature 타입에서만) */}
+        {isFeatureType && (
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
+              단계 *
+            </label>
+            <select
+              value={formData.stage}
+              onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+              style={{
+                background: "var(--notion-bg)",
+                borderColor: "var(--notion-border)",
+                color: "var(--notion-text)",
+              }}
+            >
+              {STAGE_OPTIONS.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {/* Feature 정보 (feature type만) */}
+      {/* 위계 정보 (feature type만) */}
       {isFeatureType && (
         <div
           className="p-6 rounded-2xl space-y-4"
@@ -333,7 +341,7 @@ export function PlanForm({
           }}
         >
           <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--notion-text-muted)" }}>
-            기능 정보
+            위계 정보
             <span
               className="text-[10px] px-2 py-0.5 rounded-full"
               style={{ background: "rgba(139, 92, 246, 0.1)", color: "#8b5cf6" }}
@@ -342,27 +350,10 @@ export function PlanForm({
             </span>
           </h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                도메인 *
-              </label>
-              <input
-                type="text"
-                value={formData.domain}
-                onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                style={{
-                  background: "var(--notion-bg)",
-                  borderColor: "var(--notion-border)",
-                  color: "var(--notion-text)",
-                }}
-                placeholder="예: 토목, 건축"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                프로젝트 *
+                릴리즈 *
               </label>
               <input
                 type="text"
@@ -374,12 +365,12 @@ export function PlanForm({
                   borderColor: "var(--notion-border)",
                   color: "var(--notion-text)",
                 }}
-                placeholder="예: MeshFree"
+                placeholder="예: 26.1"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: "var(--notion-text)" }}>
-                모듈 *
+                스프린트 *
               </label>
               <input
                 type="text"
@@ -391,7 +382,7 @@ export function PlanForm({
                   borderColor: "var(--notion-border)",
                   color: "var(--notion-text)",
                 }}
-                placeholder="예: 해석기"
+                placeholder="예: 2025-W01"
               />
             </div>
             <div>
@@ -463,88 +454,93 @@ export function PlanForm({
         </div>
       </div>
 
-      {/* 담당자 */}
-      <div
-        className="p-6 rounded-2xl space-y-4"
-        style={{
-          background: "var(--notion-bg-elevated)",
-          border: "1px solid var(--notion-border)",
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold" style={{ color: "var(--notion-text-muted)" }}>
-            담당자
-          </h2>
-          <button
-            type="button"
-            onClick={addAssignee}
-            disabled={isMembersLoading}
-            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors hover:bg-blue-50"
-            style={{ color: "#3b82f6" }}
-          >
-            + 담당자 추가
-          </button>
-        </div>
-
-        {isMembersLoading ? (
-          <p className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
-            멤버 목록 로딩 중...
-          </p>
-        ) : assignees.length === 0 ? (
-          <p className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
-            담당자가 없습니다. 위의 버튼을 클릭하여 추가하세요.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {assignees.map((assignee, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <select
-                  value={assignee.user_id}
-                  onChange={(e) => updateAssignee(index, "user_id", e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                  style={{
-                    background: "var(--notion-bg)",
-                    borderColor: "var(--notion-border)",
-                    color: "var(--notion-text)",
-                  }}
-                >
-                  {members.map((m) => (
-                    <option key={m.user_id} value={m.user_id}>
-                      {m.display_name || m.email || m.user_id}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={assignee.role}
-                  onChange={(e) => updateAssignee(index, "role", e.target.value)}
-                  className="w-32 px-3 py-2 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
-                  style={{
-                    background: "var(--notion-bg)",
-                    borderColor: "var(--notion-border)",
-                    color: "var(--notion-text)",
-                  }}
-                >
-                  {ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => removeAssignee(index)}
-                  className="p-2 rounded-lg transition-colors hover:bg-red-50"
-                  style={{ color: "#ef4444" }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+      {/* 담당자 (feature 타입에서만) */}
+      {isFeatureType && (
+        <div
+          className="p-6 rounded-2xl space-y-4"
+          style={{
+            background: "var(--notion-bg-elevated)",
+            border: "1px solid var(--notion-border)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--notion-text-muted)" }}>
+              담당자
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6" }}>
+                기획 / FE / BE / 디자인 / 검증
+              </span>
+            </h2>
+            <button
+              type="button"
+              onClick={addAssignee}
+              disabled={isMembersLoading}
+              className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors hover:bg-blue-50"
+              style={{ color: "#3b82f6" }}
+            >
+              + 담당자 추가
+            </button>
           </div>
-        )}
-      </div>
+
+          {isMembersLoading ? (
+            <p className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+              멤버 목록 로딩 중...
+            </p>
+          ) : assignees.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+              담당자가 없습니다. 위의 버튼을 클릭하여 추가하세요.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {assignees.map((assignee, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <select
+                    value={assignee.user_id}
+                    onChange={(e) => updateAssignee(index, "user_id", e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+                    style={{
+                      background: "var(--notion-bg)",
+                      borderColor: "var(--notion-border)",
+                      color: "var(--notion-text)",
+                    }}
+                  >
+                    {members.map((m) => (
+                      <option key={m.user_id} value={m.user_id}>
+                        {m.display_name || m.email || m.user_id}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={assignee.role}
+                    onChange={(e) => updateAssignee(index, "role", e.target.value)}
+                    className="w-28 px-3 py-2 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+                    style={{
+                      background: "var(--notion-bg)",
+                      borderColor: "var(--notion-border)",
+                      color: "var(--notion-text)",
+                    }}
+                  >
+                    {ROLE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeAssignee(index)}
+                    className="p-2 rounded-lg transition-colors hover:bg-red-50"
+                    style={{ color: "#ef4444" }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 에러 메시지 */}
       {error && (

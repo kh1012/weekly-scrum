@@ -13,7 +13,7 @@ interface PlanFormData extends CreatePlanActionInput {
   id?: string;
 }
 
-const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "";
+const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
 
 /**
  * Plan 수정 페이지

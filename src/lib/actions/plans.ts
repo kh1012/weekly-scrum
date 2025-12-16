@@ -73,12 +73,12 @@ export async function createPlanAction(
       return { success: false, error: "로그인이 필요합니다." };
     }
 
-    // feature type 검증
+    // feature type 검증 (domain은 선택사항으로 변경)
     if (input.type === "feature") {
-      if (!input.domain || !input.project || !input.module || !input.feature) {
+      if (!input.project || !input.module || !input.feature) {
         return {
           success: false,
-          error: "feature 타입 계획은 domain, project, module, feature가 모두 필수입니다.",
+          error: "feature 타입 계획은 project, module, feature가 모두 필수입니다.",
         };
       }
     }
@@ -155,12 +155,12 @@ export async function updatePlanAction(
       return { success: false, error: "로그인이 필요합니다." };
     }
 
-    // feature type 검증
+    // feature type 검증 (domain은 선택사항으로 변경)
     if (input.type === "feature") {
-      if (!input.domain || !input.project || !input.module || !input.feature) {
+      if (!input.project || !input.module || !input.feature) {
         return {
           success: false,
-          error: "feature 타입 계획은 domain, project, module, feature가 모두 필수입니다.",
+          error: "feature 타입 계획은 project, module, feature가 모두 필수입니다.",
         };
       }
     }

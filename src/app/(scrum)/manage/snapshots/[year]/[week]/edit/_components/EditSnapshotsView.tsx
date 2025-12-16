@@ -551,7 +551,7 @@ function EditSnapshotsViewInner({
   };
 
   return (
-    <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] rounded-3xl overflow-hidden">
+    <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* 상단 툴바 */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
@@ -786,7 +786,7 @@ function EditSnapshotsViewInner({
       <div className="flex-1 flex min-h-0">
         {/* 좌측: 카드 리스트 */}
         <div
-          className="border-r border-gray-100 bg-gradient-to-b from-gray-50 to-white flex flex-col shrink-0"
+          className="border-r border-gray-100 bg-white flex flex-col shrink-0"
           style={{ width: leftPanelWidth }}
         >
           <SnapshotCardList
@@ -808,7 +808,7 @@ function EditSnapshotsViewInner({
 
         {/* 중앙: 편집 폼 */}
         <div
-          className="bg-white overflow-y-auto min-w-0 shrink-0"
+          className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white"
           style={{
             width: forceThreeColumn
               ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
@@ -823,6 +823,7 @@ function EditSnapshotsViewInner({
                 handleUpdateCard(selectedSnapshot.tempId, updates)
               }
               onFocusSection={setFocusedSection}
+              activeSection={focusedSection as import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection | null}
               compact
               singleColumn
               hideName
@@ -845,6 +846,7 @@ function EditSnapshotsViewInner({
                     | import("@/components/weekly-scrum/manage/PlainTextPreview").PreviewSection
                     | null
                 }
+                onSectionClick={(section) => setFocusedSection(section)}
               />
             </div>
           </>

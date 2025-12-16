@@ -1015,7 +1015,7 @@ function NewSnapshotViewInner({
       <div className="flex-1 flex min-h-0">
         {/* 좌측: 카드 리스트 */}
         <div
-          className="border-r border-gray-100 bg-gradient-to-b from-gray-50 to-white flex flex-col shrink-0"
+          className="border-r border-gray-100 bg-white flex flex-col shrink-0"
           style={{ width: leftPanelWidth }}
         >
           <SnapshotCardList
@@ -1037,7 +1037,7 @@ function NewSnapshotViewInner({
 
         {/* 중앙: 편집 폼 */}
         <div
-          className="bg-white overflow-y-auto min-w-0 shrink-0"
+          className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white"
           style={{
             width: forceThreeColumn
               ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
@@ -1052,6 +1052,7 @@ function NewSnapshotViewInner({
                 handleUpdateCard(selectedSnapshot.tempId, updates)
               }
               onFocusSection={setFocusedSection}
+              activeSection={focusedSection as import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection | null}
               compact
               singleColumn
               hideName
@@ -1074,6 +1075,7 @@ function NewSnapshotViewInner({
                     | import("@/components/weekly-scrum/manage/PlainTextPreview").PreviewSection
                     | null
                 }
+                onSectionClick={(section) => setFocusedSection(section)}
               />
             </div>
           </>

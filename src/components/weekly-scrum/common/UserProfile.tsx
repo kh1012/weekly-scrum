@@ -11,6 +11,9 @@ interface UserInfo {
   snapshotCount: number;
 }
 
+// 기본 workspace ID
+const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+
 /**
  * 사용자 프로필 컴포넌트
  * - GNB 우측에 표시되는 프로필 아이콘
@@ -54,10 +57,11 @@ export function UserProfile() {
         return;
       }
 
-      // 작성한 스냅샷 개수 가져오기 (snapshots 테이블에서 author_id로 매칭)
+      // 작성한 스냅샷 개수 가져오기 (snapshots 테이블에서 workspace_id + author_id로 매칭)
       const { count } = await supabase
         .from("snapshots")
         .select("*", { count: "exact", head: true })
+        .eq("workspace_id", DEFAULT_WORKSPACE_ID)
         .eq("author_id", user.id);
 
       setUserInfo({
