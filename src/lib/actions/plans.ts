@@ -368,6 +368,126 @@ export async function updatePlanStatusAction(
 }
 
 /**
+ * Plan Stage 빠른 변경 (관리자 전용)
+ */
+export async function updatePlanStageAction(
+  planId: string,
+  stage: string
+): Promise<ActionResult> {
+  try {
+    const hasAccess = await isAdminOrLeader();
+    if (!hasAccess) {
+      return { success: false, error: "권한이 없습니다." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    await updatePlanData({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      planId,
+      payload: { stage },
+      updatedBy: user.id,
+    });
+
+    revalidatePath("/admin/plans");
+    revalidatePath(`/admin/plans/${planId}`);
+    revalidatePath("/plans");
+
+    return { success: true };
+  } catch (err) {
+    console.error("[updatePlanStageAction] Error:", err);
+    const message = err instanceof Error ? err.message : "스테이지 변경에 실패했습니다.";
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Plan 복제 (관리자 전용) - Cmd/Ctrl + D
+ * - 원본 Plan의 모든 속성 복사
+ * - 날짜는 다음 주로 이동
+ * - 제목에 "(copy)" 접미사 추가
+ */
+export async function duplicatePlanAction(
+  planId: string
+): Promise<ActionResult> {
+  try {
+    const hasAccess = await isAdminOrLeader();
+    if (!hasAccess) {
+      return { success: false, error: "권한이 없습니다." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    // 원본 Plan 조회
+    const { data: originalPlan, error: fetchError } = await supabase
+      .from("v_plans_with_assignees")
+      .select("*")
+      .eq("id", planId)
+      .single();
+
+    if (fetchError || !originalPlan) {
+      return { success: false, error: "원본 계획을 찾을 수 없습니다." };
+    }
+
+    // 날짜 계산 (1주일 뒤로 이동)
+    let newStartDate: string | null = null;
+    let newEndDate: string | null = null;
+    
+    if (originalPlan.start_date && originalPlan.end_date) {
+      const startDate = new Date(originalPlan.start_date);
+      const endDate = new Date(originalPlan.end_date);
+      startDate.setDate(startDate.getDate() + 7);
+      endDate.setDate(endDate.getDate() + 7);
+      newStartDate = startDate.toISOString().split("T")[0];
+      newEndDate = endDate.toISOString().split("T")[0];
+    }
+
+    // 새 Plan 생성
+    const payload: CreatePlanPayload = {
+      type: originalPlan.type as PlanType,
+      title: `${originalPlan.title} (copy)`,
+      stage: originalPlan.stage,
+      status: originalPlan.status as PlanStatus,
+      domain: originalPlan.domain,
+      project: originalPlan.project,
+      module: originalPlan.module,
+      feature: originalPlan.feature,
+      start_date: newStartDate,
+      end_date: newEndDate,
+    };
+
+    const newPlan = await createPlanData({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      payload,
+      createdBy: user.id,
+    });
+
+    revalidatePath("/admin/plans");
+    revalidatePath("/plans");
+
+    return { success: true, planId: newPlan.id };
+  } catch (err) {
+    console.error("[duplicatePlanAction] Error:", err);
+    const message = err instanceof Error ? err.message : "복제에 실패했습니다.";
+    return { success: false, error: message };
+  }
+}
+
+/**
  * 간트 셀 클릭으로 Draft Plan 생성 (관리자 전용)
  * - type='feature'
  * - title='새 계획'

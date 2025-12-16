@@ -108,5 +108,9 @@ export interface PlansGanttViewProps {
   onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
   onOpenPlan?: (planId: string) => void;
   onRefresh?: () => void;
+  /** 선택된 Plan ID (외부에서 제어) */
+  selectedPlanId?: string;
+  /** Plan 선택 핸들러 (외부로 전달) */
+  onSelectPlan?: (planId: string) => void;
 }
 

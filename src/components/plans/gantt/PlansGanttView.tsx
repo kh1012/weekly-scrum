@@ -24,6 +24,8 @@ export function PlansGanttView({
   onMovePlan,
   onTitleUpdate,
   onOpenPlan,
+  selectedPlanId: externalSelectedPlanId,
+  onSelectPlan: externalOnSelectPlan,
 }: PlansGanttViewProps) {
   // Build tree from plans
   const tree = useMemo(() => buildTreeFromPlans(plans), [plans]);
@@ -42,8 +44,9 @@ export function PlansGanttView({
   // Gantt layout
   const layout = useGanttLayout(rangeStart, rangeEnd);
 
-  // Selected plan
-  const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
+  // Selected plan (내부 상태 또는 외부 제어)
+  const [internalSelectedPlanId, setInternalSelectedPlanId] = useState<string | undefined>();
+  const selectedPlanId = externalSelectedPlanId ?? internalSelectedPlanId;
 
   // Toggle node expand
   const handleToggle = useCallback((nodeId: string) => {
@@ -61,10 +64,14 @@ export function PlansGanttView({
   // Select plan
   const handleSelectPlan = useCallback(
     (planId: string) => {
-      setSelectedPlanId(planId);
+      if (externalOnSelectPlan) {
+        externalOnSelectPlan(planId);
+      } else {
+        setInternalSelectedPlanId(planId);
+      }
       onOpenPlan?.(planId);
     },
-    [onOpenPlan]
+    [onOpenPlan, externalOnSelectPlan]
   );
 
   // Cell click (create draft plan - 기존 방식)
@@ -143,13 +150,18 @@ export function PlansGanttView({
         }}
       >
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+          <span
+            className="text-sm font-medium"
+            style={{ color: "var(--notion-text)" }}
+          >
             간트 차트
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
             style={{
-              background: isAdmin ? "rgba(247, 109, 87, 0.1)" : "rgba(107, 114, 128, 0.1)",
+              background: isAdmin
+                ? "rgba(247, 109, 87, 0.1)"
+                : "rgba(107, 114, 128, 0.1)",
               color: isAdmin ? "#F76D57" : "#6b7280",
             }}
           >
@@ -157,14 +169,28 @@ export function PlansGanttView({
           </span>
         </div>
 
-        <div className="flex items-center gap-4 text-xs" style={{ color: "var(--notion-text-muted)" }}>
+        <div
+          className="flex items-center gap-4 text-xs"
+          style={{ color: "var(--notion-text-muted)" }}
+        >
           <span>
-            📅 {rangeStart.toLocaleDateString("ko-KR", { month: "long", day: "numeric" })} ~{" "}
-            {rangeEnd.toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
+            📅{" "}
+            {rangeStart.toLocaleDateString("ko-KR", {
+              month: "long",
+              day: "numeric",
+            })}{" "}
+            ~{" "}
+            {rangeEnd.toLocaleDateString("ko-KR", {
+              month: "long",
+              day: "numeric",
+            })}
           </span>
           <span>📋 {plans.length}개 계획</span>
           {isAdmin && (
-            <span className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
+            <span
+              className="text-[10px]"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
               💡 + 클릭 생성 · 드래그 이동 · 더블클릭 편집
             </span>
           )}
@@ -194,8 +220,12 @@ export function PlansGanttView({
           onCellClick={isAdmin ? handleCellClick : undefined}
           onResizePlan={isAdmin ? handleResizePlan : undefined}
           onMovePlan={isAdmin && onMovePlan ? handleMovePlan : undefined}
-          onTitleUpdate={isAdmin && onTitleUpdate ? handleTitleUpdate : undefined}
-          onQuickCreate={isAdmin && onQuickCreate ? handleQuickCreate : undefined}
+          onTitleUpdate={
+            isAdmin && onTitleUpdate ? handleTitleUpdate : undefined
+          }
+          onQuickCreate={
+            isAdmin && onQuickCreate ? handleQuickCreate : undefined
+          }
         />
       </div>
 
@@ -206,14 +236,23 @@ export function PlansGanttView({
           style={{ left: TREE_WIDTH }}
         >
           <div className="text-center">
-            <p className="text-lg" style={{ color: "var(--notion-text-muted)" }}>
+            <p
+              className="text-lg"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
               📆
             </p>
-            <p className="mt-2 text-sm" style={{ color: "var(--notion-text-muted)" }}>
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
               표시할 계획이 없습니다
             </p>
             {isAdmin && (
-              <p className="mt-1 text-xs" style={{ color: "var(--notion-text-muted)" }}>
+              <p
+                className="mt-1 text-xs"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
                 셀의 + 버튼을 클릭하여 새 계획을 생성하세요
               </p>
             )}
