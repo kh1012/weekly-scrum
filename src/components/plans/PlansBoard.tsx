@@ -875,15 +875,14 @@ export function PlansBoard({
     <div className="h-auto flex flex-col">
       {/* 헤더 영역 - 최소화 가능 */}
       <div
-        className="flex-shrink-0 border-b transition-all duration-200"
+        className="flex-shrink-0 transition-all duration-200"
         style={{
           background: "var(--notion-bg)",
-          borderColor: "var(--notion-border)",
         }}
       >
         {/* 최소화된 상태: 한 줄로 압축 */}
         {isHeaderCollapsed ? (
-          <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center justify-between px-0 py-2">
             <div className="flex items-center gap-3">
               <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center"
@@ -971,7 +970,7 @@ export function PlansBoard({
           </div>
         ) : (
           /* 확장된 상태: 기존 레이아웃 */
-          <div className="px-5 py-4">
+          <div className="px-0 py-4">
             {/* 상단: 제목 + 모드 배너 + 저장 버튼 */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">

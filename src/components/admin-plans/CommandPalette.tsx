@@ -66,6 +66,8 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const projectInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // 입력 모드 상태
   const [inputMode, setInputMode] = useState<InputMode>({ type: "none" });
@@ -157,6 +159,17 @@ export function CommandPalette({
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
+
+  // inputMode 변경 시 적절한 입력 필드에 포커스
+  useEffect(() => {
+    if (inputMode.type === "feature") {
+      // 기능 타입: 프로젝트 입력 필드에 포커스
+      setTimeout(() => projectInputRef.current?.focus(), 50);
+    } else if (inputMode.type === "sprint" || inputMode.type === "release") {
+      // 스프린트/릴리즈 타입: 제목 입력 필드에 포커스
+      setTimeout(() => titleInputRef.current?.focus(), 50);
+    }
+  }, [inputMode]);
 
   // 선택 인덱스 범위 보정
   useEffect(() => {
@@ -341,6 +354,7 @@ export function CommandPalette({
                 제목 *
               </label>
               <input
+                ref={titleInputRef}
                 type="text"
                 value={draftTitle}
                 onChange={(e) => setDraftTitle(e.target.value)}
@@ -352,7 +366,6 @@ export function CommandPalette({
                   borderColor: "var(--notion-border)",
                   color: "var(--notion-text)",
                 }}
-                autoFocus
               />
             </div>
           )}
@@ -366,6 +379,7 @@ export function CommandPalette({
                   프로젝트 *
                 </label>
                 <input
+                  ref={projectInputRef}
                   type="text"
                   value={draftProject || projectSearch}
                   onChange={(e) => {
