@@ -771,16 +771,65 @@ function CollaboratorEditor({
 }) {
   const [customModes, setCustomModes] = useState<Record<number, boolean>>({});
   const [multiModes, setMultiModes] = useState<Record<number, boolean>>({});
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [isMultiAddOpen, setIsMultiAddOpen] = useState(false);
+  const [multiAddSelections, setMultiAddSelections] = useState<Set<string>>(new Set());
+  const dropdownRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const multiAddRef = useRef<HTMLDivElement>(null);
+
+  // 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (openDropdownIndex !== null) {
+        const ref = dropdownRefs.current[openDropdownIndex];
+        if (ref && !ref.contains(e.target as Node)) {
+          setOpenDropdownIndex(null);
+        }
+      }
+      if (isMultiAddOpen && multiAddRef.current && !multiAddRef.current.contains(e.target as Node)) {
+        setIsMultiAddOpen(false);
+        setMultiAddSelections(new Set());
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openDropdownIndex, isMultiAddOpen]);
 
   const addCollaborator = () => {
-    // relations만 사용 (relation은 deprecated)
     onChange([...collaborators, { name: "", relations: ["pair"] }]);
   };
+
+  // 여러 명 동시 추가
+  const addMultipleCollaborators = () => {
+    if (multiAddSelections.size === 0) return;
+    const newCollaborators = Array.from(multiAddSelections).map((name) => ({
+      name,
+      relations: ["pair"] as Relation[],
+    }));
+    onChange([...collaborators, ...newCollaborators]);
+    setMultiAddSelections(new Set());
+    setIsMultiAddOpen(false);
+  };
+
+  const toggleMultiAddSelection = (name: string) => {
+    setMultiAddSelections((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
+  // 이미 추가된 협업자는 제외
+  const availableNames = NAME_OPTIONS.filter(
+    (name) => !collaborators.some((c) => c.name === name)
+  );
 
   const updateName = (index: number, name: string) => {
     const newCollaborators = [...collaborators];
     newCollaborators[index] = { ...newCollaborators[index], name };
     onChange(newCollaborators);
+    setOpenDropdownIndex(null);
   };
 
   const toggleMultiMode = (index: number) => {
@@ -789,14 +838,12 @@ function CollaboratorEditor({
 
   const toggleRelation = (index: number, rel: Relation) => {
     const newCollaborators = [...collaborators];
-    // relations만 사용 (relation이 있으면 마이그레이션)
     const currentRelations = newCollaborators[index].relations || 
       (newCollaborators[index].relation ? [newCollaborators[index].relation as Relation] : ["pair"]);
     const isMulti = multiModes[index];
     
     let newRelations: Relation[];
     if (isMulti) {
-      // 멀티 모드: 토글 방식
       if (currentRelations.includes(rel)) {
         if (currentRelations.length > 1) {
           newRelations = currentRelations.filter((r) => r !== rel);
@@ -807,11 +854,9 @@ function CollaboratorEditor({
         newRelations = [...currentRelations, rel];
       }
     } else {
-      // 단일 모드: 하나만 선택
       newRelations = [rel];
     }
     
-    // relations만 업데이트 (relation은 deprecated, 제거)
     newCollaborators[index] = {
       name: newCollaborators[index].name,
       relations: newRelations,
@@ -844,21 +889,34 @@ function CollaboratorEditor({
     return name !== "" && !NAME_OPTIONS.includes(name as never);
   };
 
+  // 해당 index 협업자에게 사용 가능한 이름 목록 (자신 제외, 다른 협업자가 사용 중인 이름 제외)
+  const getAvailableNamesForIndex = (index: number) => {
+    const currentName = collaborators[index]?.name;
+    return NAME_OPTIONS.filter(
+      (name) => name === currentName || !collaborators.some((c, i) => i !== index && c.name === name)
+    );
+  };
+
   return (
     <div className={`divide-y divide-gray-100 border border-gray-200 ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {collaborators.map((collab, index) => {
         const relations = collab.relations || [];
+        const availableNamesForThis = getAvailableNamesForIndex(index);
         
         return (
           <div key={index} className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
             {/* 이름 */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0" ref={(el) => { dropdownRefs.current[index] = el; }}>
               {isCustomMode(index, collab.name) ? (
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={collab.name}
-                    onChange={(e) => updateName(index, e.target.value)}
+                    onChange={(e) => {
+                      const newCollaborators = [...collaborators];
+                      newCollaborators[index] = { ...newCollaborators[index], name: e.target.value };
+                      onChange(newCollaborators);
+                    }}
                     placeholder="협업자 이름..."
                     tabIndex={baseTabIndex + index}
                     className={`flex-1 bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
@@ -877,26 +935,51 @@ function CollaboratorEditor({
                   </button>
                 </div>
               ) : (
-                <select
-                  value={NAME_OPTIONS.includes(collab.name as never) ? collab.name : ""}
-                  onChange={(e) => {
-                    if (e.target.value === CUSTOM_INPUT_VALUE) {
-                      toggleCustomMode(index, true);
-                    } else {
-                      updateName(index, e.target.value);
-                    }
-                  }}
-                  tabIndex={baseTabIndex + index}
-                  className={`w-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%239ca3af%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10 ${
-                    compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
-                  }`}
-                >
-                  <option value="">선택...</option>
-                  {NAME_OPTIONS.map((name) => (
-                    <option key={name} value={name}>{name}</option>
-                  ))}
-                  <option value={CUSTOM_INPUT_VALUE}>직접 입력...</option>
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenDropdownIndex(openDropdownIndex === index ? null : index)}
+                    tabIndex={baseTabIndex + index}
+                    className={`w-full text-left bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent flex items-center justify-between ${
+                      compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
+                    }`}
+                  >
+                    <span className={collab.name ? "text-gray-900" : "text-gray-400"}>
+                      {collab.name || "선택..."}
+                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${openDropdownIndex === index ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdownIndex === index && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {availableNamesForThis.map((name) => (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => updateName(index, name)}
+                          className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${
+                            collab.name === name ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-700"
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toggleCustomMode(index, true);
+                            setOpenDropdownIndex(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+                        >
+                          직접 입력...
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -963,19 +1046,87 @@ function CollaboratorEditor({
           </div>
         );
       })}
-      <button
-        type="button"
-        onClick={addCollaborator}
-        tabIndex={-1}
-        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
-          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
-        }`}
-      >
-        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        협업자 추가
-      </button>
+      {/* 하단 버튼 영역 */}
+      <div className={`flex items-center gap-2 bg-white ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
+        {/* 협업자 추가 (1명) */}
+        <button
+          type="button"
+          onClick={addCollaborator}
+          tabIndex={-1}
+          className={`flex-1 flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors border border-gray-200 rounded-lg ${
+            compact ? "px-2.5 py-1.5 text-xs" : "px-4 py-2 text-sm"
+          }`}
+        >
+          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          추가
+        </button>
+
+        {/* 여러 명 추가 */}
+        <div className="relative flex-1" ref={multiAddRef}>
+          <button
+            type="button"
+            onClick={() => setIsMultiAddOpen(!isMultiAddOpen)}
+            tabIndex={-1}
+            className={`w-full flex items-center justify-center gap-2 font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors border border-blue-200 rounded-lg ${
+              compact ? "px-2.5 py-1.5 text-xs" : "px-4 py-2 text-sm"
+            }`}
+          >
+            <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            여러 명
+          </button>
+
+          {/* 여러 명 추가 드롭다운 */}
+          {isMultiAddOpen && (
+            <div className="absolute z-50 bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+              <div className="p-2 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-700">여러 명 선택</span>
+                  {multiAddSelections.size > 0 && (
+                    <span className="text-[10px] text-blue-600 font-medium">{multiAddSelections.size}명 선택</span>
+                  )}
+                </div>
+              </div>
+              <div className="max-h-40 overflow-y-auto p-1">
+                {availableNames.length > 0 ? (
+                  availableNames.map((name) => (
+                    <label
+                      key={name}
+                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={multiAddSelections.has(name)}
+                        onChange={() => toggleMultiAddSelection(name)}
+                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs text-gray-700">{name}</span>
+                    </label>
+                  ))
+                ) : (
+                  <div className="px-2 py-3 text-xs text-gray-400 text-center">
+                    추가 가능한 협업자가 없습니다
+                  </div>
+                )}
+              </div>
+              {multiAddSelections.size > 0 && (
+                <div className="p-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={addMultipleCollaborators}
+                    className="w-full px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  >
+                    {multiAddSelections.size}명 추가하기
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
