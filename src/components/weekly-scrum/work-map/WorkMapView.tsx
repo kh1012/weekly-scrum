@@ -9,6 +9,7 @@ import { CollaborationNetworkV2 } from "./CollaborationNetworkV2";
 import { SnapshotList } from "./SnapshotList";
 import { useWorkMapPersistence } from "./persistence";
 import { useScrumContext } from "@/context/ScrumContext";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 interface WorkMapViewProps {
   items: ScrumItem[];
@@ -277,9 +278,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         className="flex items-center justify-center"
         style={{ height: "calc(100vh - 120px)", minHeight: "600px" }}
       >
-        <div className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
-          로딩 중...
-        </div>
+        <LogoLoadingSpinner title="Work Map을 불러오는 중" />
       </div>
     );
   }
@@ -304,7 +303,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🗺️</span>
+                  <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
                   <span
                     className="font-semibold"
                     style={{ color: "var(--notion-text)" }}
@@ -332,14 +333,22 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       background:
                         viewMode === "person"
                           ? "rgba(59, 130, 246, 0.15)"
-                          : "var(--notion-bg-secondary)",
+                          : "var(--gnb-filter-bg)",
                       color:
                         viewMode === "person"
                           ? "#3b82f6"
                           : "var(--notion-text-muted)",
                     }}
                   >
-                    {viewMode === "project" ? "📁" : "👤"}
+                    {viewMode === "project" ? (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    )}
                   </button>
 
                   {/* 옵션 버튼 */}
@@ -348,7 +357,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
                     style={{
                       background: isOptionsOpen
-                        ? "var(--notion-bg-secondary)"
+                        ? "var(--gnb-filter-bg)"
                         : "transparent",
                       color: "var(--notion-text-muted)",
                     }}
@@ -586,7 +595,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🗺️</span>
+              <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
               <span
                 className="font-semibold"
                 style={{ color: "var(--notion-text)" }}
@@ -609,7 +620,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               {/* 뷰 모드 토글 (스위치 형태) */}
               <div
                 className="flex items-center p-0.5 rounded-lg"
-                style={{ background: "var(--notion-bg-secondary)" }}
+                style={{ background: "var(--gnb-filter-bg)" }}
               >
                 <button
                   onClick={() => setViewMode("project")}
@@ -625,7 +636,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         : "var(--notion-text-muted)",
                   }}
                 >
-                  <span>📁</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
                   <span>Project</span>
                 </button>
                 <button
@@ -642,7 +655,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         : "var(--notion-text-muted)",
                   }}
                 >
-                  <span>👤</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
                   <span>Person</span>
                 </button>
               </div>
@@ -654,7 +669,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   className="flex items-center justify-center w-8 h-8 rounded-md transition-colors"
                   style={{
                     background: isOptionsOpen
-                      ? "var(--notion-bg-secondary)"
+                      ? "var(--gnb-filter-bg)"
                       : "transparent",
                     color: "var(--notion-text-muted)",
                   }}

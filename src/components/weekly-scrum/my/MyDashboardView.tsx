@@ -2,6 +2,7 @@
 
 import { getProgressColor } from "@/lib/colorDefines";
 import { useMyDashboard } from "./hooks/useMyDashboard";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import {
   StatCard,
   ItemRow,
@@ -48,8 +49,8 @@ export function MyDashboardView() {
 
   if (!currentData) {
     return (
-      <div className="flex items-center justify-center h-64" style={{ color: "var(--notion-text-secondary)" }}>
-        데이터가 없습니다.
+      <div className="flex items-center justify-center h-64">
+        <LogoLoadingSpinner title="대시보드를 불러오는 중" />
       </div>
     );
   }

@@ -86,10 +86,12 @@ function NewSnapshotViewInner({
   // URL에서 mode 파라미터 확인 (load: 데이터 불러오기 모달, empty: 빈 편집)
   const urlMode = searchParams.get("mode");
 
-  // 화면 모드: entry (진입점) / editor (편집)
-  const [mode, setMode] = useState<"entry" | "editor">(() => {
+  // 화면 모드: entry (진입점) / editor (편집) / loading (데이터 불러오기 모달)
+  const [mode, setMode] = useState<"entry" | "editor" | "loading">(() => {
     // URL에서 mode=empty면 바로 editor로 시작
     if (urlMode === "empty") return "editor";
+    // URL에서 mode=load면 데이터 불러오기 모달 표시
+    if (urlMode === "load") return "loading";
     return "entry";
   });
 
@@ -121,8 +123,7 @@ function NewSnapshotViewInner({
   const forceThreeColumn = true;
   const [isSaving, setIsSaving] = useState(false);
 
-  // 데이터 불러오기 모달 상태 (URL에서 mode=load면 자동 열기)
-  const [isLoadModalOpen, setIsLoadModalOpen] = useState(urlMode === "load");
+  // 데이터 불러오기 상태
   const [myWeeklyData, setMyWeeklyData] = useState<WeekData[]>([]);
   const [isLoadingMyData, setIsLoadingMyData] = useState(false);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
@@ -145,12 +146,12 @@ function NewSnapshotViewInner({
     }
   }, [workspaceId, userId]);
 
-  // 모달 열릴 때 데이터 로드
+  // mode=loading일 때 데이터 로드
   useEffect(() => {
-    if (isLoadModalOpen && myWeeklyData.length === 0) {
+    if (mode === "loading" && myWeeklyData.length === 0) {
       fetchMyEntries();
     }
-  }, [isLoadModalOpen, myWeeklyData.length, fetchMyEntries]);
+  }, [mode, myWeeklyData.length, fetchMyEntries]);
 
   // URL mode=empty로 시작 시 초기 selectedId 설정
   useEffect(() => {
@@ -205,7 +206,6 @@ function NewSnapshotViewInner({
       setTempSnapshots(loadedSnapshots);
       setSelectedId(loadedSnapshots[0].tempId);
       setMode("editor");
-      setIsLoadModalOpen(false);
       showToast(
         `${loadedSnapshots.length}개 엔트리를 불러왔습니다.`,
         "success"
@@ -280,6 +280,8 @@ function NewSnapshotViewInner({
         isDirty: true,
         createdAt: now,
         updatedAt: now,
+        // name이 비어있으면 현재 사용자의 displayName 사용
+        name: target.name?.trim() || displayName,
         pastWeek: {
           ...target.pastWeek,
           tasks: target.pastWeek.tasks.map((t) => ({ ...t })),
@@ -302,7 +304,7 @@ function NewSnapshotViewInner({
 
     // 상태 업데이트 후 복제된 카드 선택
     setSelectedId(newTempId);
-  }, []);
+  }, [displayName]);
 
   // 카드 업데이트
   const handleUpdateCard = useCallback(
@@ -504,7 +506,7 @@ function NewSnapshotViewInner({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* 데이터 불러오기 - 전체 카드 클릭 가능 */}
               <button
-                onClick={() => setIsLoadModalOpen(true)}
+                onClick={() => setMode("loading")}
                 className="group relative p-8 bg-white rounded-3xl border border-gray-200 hover:border-gray-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden cursor-pointer"
               >
                 {/* 배경 그라데이션 */}
@@ -612,139 +614,194 @@ function NewSnapshotViewInner({
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* 내 기존 주차 데이터 불러오기 모달 */}
-        {isLoadModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setIsLoadModalOpen(false)}
-            />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[70vh] overflow-hidden flex flex-col">
-              {/* 모달 헤더 */}
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  내 기존 주차 데이터 불러오기
-                </h2>
-                <button
-                  onClick={() => setIsLoadModalOpen(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+  // 데이터 불러오기 화면
+  if (mode === "loading") {
+    return (
+      <div className="h-[calc(100vh-7rem)] flex flex-col">
+        {/* 상단 헤더 */}
+        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setMode("entry")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              뒤로가기
+            </button>
+
+            <div className="h-4 w-px bg-gray-200" />
+
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
                 >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+                  데이터 불러오기
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {year}년 W{week.toString().padStart(2, "0")} ({weekRange})
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 불러오기 버튼 */}
+          <button
+            onClick={handleLoadFromWeeks}
+            disabled={selectedWeeks.size === 0}
+            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl transition-all ${
+              selectedWeeks.size > 0
+                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            불러오기 ({selectedWeeks.size})
+          </button>
+        </div>
+
+        {/* 메인 콘텐츠 */}
+        <div className="flex-1 flex items-start justify-center overflow-y-auto p-6">
+          <div className="max-w-lg w-full">
+            {isLoadingMyData ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
+                </div>
+              </div>
+            ) : myWeeklyData.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gray-100 flex items-center justify-center">
                   <svg
-                    className="w-5 h-5"
+                    className="w-10 h-10 text-gray-300"
                     fill="none"
-                    stroke="currentColor"
                     viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
+                      strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">저장된 스냅샷이 없습니다</h3>
+                <p className="text-sm text-gray-500 mb-6">새로 작성하기로 시작해보세요</p>
+                <button
+                  onClick={() => setMode("entry")}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  돌아가기
                 </button>
               </div>
+            ) : (
+              <div className="space-y-3">
+                {/* 헤더 */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">주차 선택</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      불러올 주차를 선택하세요 ({selectedWeeks.size}/{myWeeklyData.length})
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (selectedWeeks.size === myWeeklyData.length) {
+                        setSelectedWeeks(new Set());
+                      } else {
+                        setSelectedWeeks(new Set(myWeeklyData.map((w) => w.key)));
+                      }
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    {selectedWeeks.size === myWeeklyData.length ? "전체 해제" : "전체 선택"}
+                  </button>
+                </div>
 
-              {/* 모달 콘텐츠 */}
-              <div className="flex-1 overflow-y-auto p-4">
-                {isLoadingMyData ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : myWeeklyData.length === 0 ? (
-                  <div className="text-center py-12">
-                    <svg
-                      className="w-12 h-12 mx-auto text-gray-300 mb-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                {/* 주차 목록 */}
+                {myWeeklyData.map((weekData) => {
+                  const isSelected = selectedWeeks.has(weekData.key);
+                  return (
+                    <label
+                      key={weekData.key}
+                      className={`group flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? "border-blue-400 bg-blue-50/50 shadow-sm"
+                          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                      }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      <div
+                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                          isSelected
+                            ? "bg-blue-500 border-blue-500"
+                            : "border-gray-300 group-hover:border-gray-400"
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleWeek(weekData.key)}
+                        className="sr-only"
                       />
-                    </svg>
-                    <p className="text-gray-500">저장된 스냅샷이 없습니다</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-medium text-gray-700">
-                        주차 선택 ({selectedWeeks.size}/{myWeeklyData.length})
-                      </span>
-                      <button
-                        onClick={() => {
-                          if (selectedWeeks.size === myWeeklyData.length) {
-                            setSelectedWeeks(new Set());
-                          } else {
-                            setSelectedWeeks(
-                              new Set(myWeeklyData.map((w) => w.key))
-                            );
-                          }
-                        }}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        {selectedWeeks.size === myWeeklyData.length
-                          ? "전체 해제"
-                          : "전체 선택"}
-                      </button>
-                    </div>
-                    {myWeeklyData.map((weekData) => (
-                      <label
-                        key={weekData.key}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 cursor-pointer border border-gray-200"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedWeeks.has(weekData.key)}
-                          onChange={() => toggleWeek(weekData.key)}
-                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">
-                              {weekData.year}년 {weekData.week}
-                            </span>
-                            <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
-                              {weekData.entriesCount}개 엔트리
-                            </span>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {weekData.weekStartDate} ~ {weekData.weekEndDate}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <span className="text-base font-semibold text-gray-900">
+                            {weekData.year}년 {weekData.week}
+                          </span>
+                          <span className="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                            {weekData.entriesCount}개 엔트리
                           </span>
                         </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
+                        <span className="text-sm text-gray-500 mt-1">
+                          {weekData.weekStartDate} ~ {weekData.weekEndDate}
+                        </span>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
-
-              {/* 모달 푸터 */}
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
-                <button
-                  onClick={() => setIsLoadModalOpen(false)}
-                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleLoadFromWeeks}
-                  disabled={selectedWeeks.size === 0}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    selectedWeeks.size > 0
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  불러오기
-                </button>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -756,7 +813,10 @@ function NewSnapshotViewInner({
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setMode("entry")}
+            onClick={() => {
+              navigationProgress.start();
+              router.push("/manage/snapshots");
+            }}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
           >
             <svg
@@ -772,7 +832,7 @@ function NewSnapshotViewInner({
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            <span className="text-xs font-medium">옵션으로</span>
+            <span className="text-xs font-medium">스냅샷 목록으로</span>
           </button>
 
           <div className="h-4 w-px bg-gray-200" />

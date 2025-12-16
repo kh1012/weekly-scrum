@@ -8,6 +8,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import type { SnapshotSummary } from "./SnapshotsMainView";
 
 // Entry 타입 (개별 카드용)
@@ -49,12 +50,14 @@ export function SnapshotList({
   // 개별 카드 편집 핸들러
   const handleEditCard = (snapshotId: string, entryIndex?: number) => {
     navigationProgress.start();
-    const url = `/manage/snapshots/${year}/${week}/edit?snapshotId=${snapshotId}${entryIndex !== undefined ? `&entryIndex=${entryIndex}` : ""}`;
+    const url = `/manage/snapshots/${year}/${week}/edit?snapshotId=${snapshotId}${
+      entryIndex !== undefined ? `&entryIndex=${entryIndex}` : ""
+    }`;
     router.push(url);
   };
 
   // 스냅샷의 entries를 펼쳐서 개별 카드로 표시
-  const allEntries: SnapshotEntry[] = snapshots.flatMap((snapshot) => 
+  const allEntries: SnapshotEntry[] = snapshots.flatMap((snapshot) =>
     snapshot.entries.map((entry, index) => ({
       snapshotId: snapshot.id,
       entryIndex: index,
@@ -75,7 +78,7 @@ export function SnapshotList({
 
   // 로딩 중이고 데이터가 없으면 로딩 상태 표시
   if (isLoading && snapshots.length === 0) {
-    return <LoadingState />;
+    return <LogoLoadingSpinner />;
   }
 
   // 로딩이 끝나고 데이터가 없으면 빈 상태 표시
@@ -87,7 +90,11 @@ export function SnapshotList({
     <div>
       {/* 스냅샷 목록 */}
       {viewMode === "grid" ? (
-        <GridView entries={allEntries} allExpanded={allExpanded} onEditCard={handleEditCard} />
+        <GridView
+          entries={allEntries}
+          allExpanded={allExpanded}
+          onEditCard={handleEditCard}
+        />
       ) : (
         <ListView entries={allEntries} onEditCard={handleEditCard} />
       )}
@@ -96,22 +103,22 @@ export function SnapshotList({
 }
 
 // 그리드 뷰 (Pinterest 스타일)
-function GridView({ 
-  entries, 
-  allExpanded, 
-  onEditCard 
-}: { 
-  entries: SnapshotEntry[]; 
+function GridView({
+  entries,
+  allExpanded,
+  onEditCard,
+}: {
+  entries: SnapshotEntry[];
   allExpanded: boolean;
   onEditCard: (snapshotId: string, entryIndex?: number) => void;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {entries.map((entry) => (
-        <EntryCard 
-          key={`${entry.snapshotId}-${entry.entryIndex}`} 
-          entry={entry} 
-          forceExpanded={allExpanded} 
+        <EntryCard
+          key={`${entry.snapshotId}-${entry.entryIndex}`}
+          entry={entry}
+          forceExpanded={allExpanded}
           onEdit={() => onEditCard(entry.snapshotId, entry.entryIndex)}
         />
       ))}
@@ -120,19 +127,19 @@ function GridView({
 }
 
 // 리스트 뷰
-function ListView({ 
-  entries, 
-  onEditCard 
-}: { 
+function ListView({
+  entries,
+  onEditCard,
+}: {
   entries: SnapshotEntry[];
   onEditCard: (snapshotId: string, entryIndex?: number) => void;
 }) {
   return (
     <div className="space-y-2">
       {entries.map((entry) => (
-        <EntryRow 
-          key={`${entry.snapshotId}-${entry.entryIndex}`} 
-          entry={entry} 
+        <EntryRow
+          key={`${entry.snapshotId}-${entry.entryIndex}`}
+          entry={entry}
           onEdit={() => onEditCard(entry.snapshotId, entry.entryIndex)}
         />
       ))}
@@ -141,24 +148,24 @@ function ListView({
 }
 
 // Entry 카드 (그리드용) - 개별 엔트리 표시
-function EntryCard({ 
-  entry, 
+function EntryCard({
+  entry,
   forceExpanded = false,
   onEdit,
-}: { 
-  entry: SnapshotEntry; 
+}: {
+  entry: SnapshotEntry;
   forceExpanded?: boolean;
   onEdit?: () => void;
 }) {
   const [localExpanded, setLocalExpanded] = useState(false);
-  
+
   // forceExpanded가 false로 변경되면 localExpanded도 리셋
   useEffect(() => {
     if (!forceExpanded) {
       setLocalExpanded(false);
     }
   }, [forceExpanded]);
-  
+
   const isExpanded = forceExpanded || localExpanded;
 
   // 데이터 추출
@@ -167,33 +174,43 @@ function EntryCard({
   const risks = entry.risks || [];
   const riskLevel = entry.risk_level || 0;
   const collaborators = entry.collaborators || [];
-  
+
   // 진행률 계산
-  const avgProgress = pastWeekTasks.length > 0 
-    ? Math.round(pastWeekTasks.reduce((sum, t) => sum + t.progress, 0) / pastWeekTasks.length)
-    : null;
+  const avgProgress =
+    pastWeekTasks.length > 0
+      ? Math.round(
+          pastWeekTasks.reduce((sum, t) => sum + t.progress, 0) /
+            pastWeekTasks.length
+        )
+      : null;
 
   // 관계 색상 매핑
   const getRelationStyle = (relations?: string[]) => {
     const rel = relations?.[0];
-    if (rel === "pair") return { bg: "bg-purple-100", text: "text-purple-700", label: "페어" };
-    if (rel === "pre") return { bg: "bg-blue-100", text: "text-blue-700", label: "선행" };
-    if (rel === "post") return { bg: "bg-emerald-100", text: "text-emerald-700", label: "후행" };
+    if (rel === "pair")
+      return { bg: "bg-purple-100", text: "text-purple-700", label: "페어" };
+    if (rel === "pre")
+      return { bg: "bg-blue-100", text: "text-blue-700", label: "선행" };
+    if (rel === "post")
+      return { bg: "bg-emerald-100", text: "text-emerald-700", label: "후행" };
     return { bg: "bg-gray-100", text: "text-gray-600", label: "" };
   };
 
   // 리스크 레벨 색상
   const getRiskLevelStyle = (level: number) => {
-    if (level >= 3) return { bg: "bg-red-100", text: "text-red-600", label: "높음" };
-    if (level >= 2) return { bg: "bg-orange-100", text: "text-orange-600", label: "중간" };
-    if (level >= 1) return { bg: "bg-yellow-100", text: "text-yellow-600", label: "낮음" };
+    if (level >= 3)
+      return { bg: "bg-red-100", text: "text-red-600", label: "높음" };
+    if (level >= 2)
+      return { bg: "bg-orange-100", text: "text-orange-600", label: "중간" };
+    if (level >= 1)
+      return { bg: "bg-yellow-100", text: "text-yellow-600", label: "낮음" };
     return { bg: "bg-gray-100", text: "text-gray-500", label: "없음" };
   };
 
   const riskStyle = getRiskLevelStyle(riskLevel);
 
   return (
-    <div 
+    <div
       className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all cursor-pointer h-fit"
       onClick={() => setLocalExpanded(!localExpanded)}
     >
@@ -205,7 +222,9 @@ function EntryCard({
             {/* Domain */}
             {entry.domain && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">Domain</span>
+                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                  Domain
+                </span>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                   {entry.domain}
                 </span>
@@ -214,7 +233,9 @@ function EntryCard({
             {/* Project */}
             {entry.project && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">Project</span>
+                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                  Project
+                </span>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                   {entry.project}
                 </span>
@@ -223,7 +244,9 @@ function EntryCard({
             {/* Module */}
             {entry.module && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">Module</span>
+                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                  Module
+                </span>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                   {entry.module}
                 </span>
@@ -232,7 +255,9 @@ function EntryCard({
             {/* Feature */}
             {entry.feature && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">Feature</span>
+                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                  Feature
+                </span>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
                   {entry.feature}
                 </span>
@@ -241,23 +266,31 @@ function EntryCard({
             {/* 진행률 (접힌 상태에서만 표시 - 확장 시 상세 내용에서 표시됨) */}
             {!isExpanded && avgProgress !== null && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">진행률</span>
+                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                  진행률
+                </span>
                 <div className="flex items-center gap-2">
                   <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${avgProgress}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-medium text-gray-600">{avgProgress}%</span>
+                  <span className="text-[10px] font-medium text-gray-600">
+                    {avgProgress}%
+                  </span>
                 </div>
               </div>
             )}
             {/* 리스크 레벨 (접힌 상태에서도 표시) */}
             {riskLevel > 0 && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">Risk</span>
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text}`}>
+                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                  Risk
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text}`}
+                >
                   Lv.{riskLevel} {riskStyle.label}
                 </span>
               </div>
@@ -283,11 +316,15 @@ function EntryCard({
                   stroke="currentColor"
                   strokeWidth={2}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
                 </svg>
               </button>
             )}
-            
+
             {/* 펼치기/접기 버튼 */}
             <button
               onClick={(e) => {
@@ -295,17 +332,25 @@ function EntryCard({
                 setLocalExpanded(!localExpanded);
               }}
               className={`p-1.5 rounded-lg transition-all duration-200 ${
-                isExpanded ? "bg-blue-100 text-blue-600" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                isExpanded
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               }`}
             >
               <svg
-                className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                className={`w-4 h-4 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
                 strokeWidth={2}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
           </div>
@@ -320,13 +365,19 @@ function EntryCard({
             <div className="mx-4 my-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-100">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">평균 진행률</span>
-                <span className={`font-semibold ${avgProgress === 100 ? "text-emerald-600" : "text-gray-700"}`}>
+                <span
+                  className={`font-semibold ${
+                    avgProgress === 100 ? "text-emerald-600" : "text-gray-700"
+                  }`}
+                >
                   {avgProgress}%
                 </span>
               </div>
               <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all ${avgProgress === 100 ? "bg-emerald-500" : "bg-blue-500"}`}
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    avgProgress === 100 ? "bg-emerald-500" : "bg-blue-500"
+                  }`}
                   style={{ width: `${avgProgress}%` }}
                 />
               </div>
@@ -341,12 +392,19 @@ function EntryCard({
               </div>
               <ul className="space-y-1">
                 {pastWeekTasks.map((task, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-xs text-gray-700"
+                  >
                     <span className="text-gray-400 mt-0.5">•</span>
                     <span className="flex-1">{task.title}</span>
-                    <span className={`shrink-0 text-[10px] font-medium ${
-                      task.progress === 100 ? "text-emerald-600" : "text-gray-500"
-                    }`}>
+                    <span
+                      className={`shrink-0 text-[10px] font-medium ${
+                        task.progress === 100
+                          ? "text-emerald-600"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {task.progress}%
                     </span>
                   </li>
@@ -354,13 +412,21 @@ function EntryCard({
               </ul>
             </div>
           )}
-          
+
           {/* Risk 표시 */}
           {(risks.length > 0 || riskLevel > 0) && (
             <div className="mx-4 mb-3 flex items-start gap-2 text-xs">
-              <span className={`font-medium ${
-                riskLevel >= 3 ? "text-red-600" : riskLevel >= 2 ? "text-orange-600" : riskLevel >= 1 ? "text-yellow-600" : "text-gray-500"
-              }`}>
+              <span
+                className={`font-medium ${
+                  riskLevel >= 3
+                    ? "text-red-600"
+                    : riskLevel >= 2
+                    ? "text-orange-600"
+                    : riskLevel >= 1
+                    ? "text-yellow-600"
+                    : "text-gray-500"
+                }`}
+              >
                 Risk:
               </span>
               <span className="text-gray-700">
@@ -368,7 +434,7 @@ function EntryCard({
               </span>
             </div>
           )}
-          
+
           {/* Collaborators 표시 (태그 형태) */}
           {collaborators.length > 0 && (
             <div className="mx-4 mb-3 flex items-start gap-2 text-xs">
@@ -377,12 +443,14 @@ function EntryCard({
                 {collaborators.map((c, i) => {
                   const style = getRelationStyle(c.relations);
                   return (
-                    <span 
-                      key={i} 
+                    <span
+                      key={i}
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${style.bg} ${style.text}`}
                     >
                       {c.name}
-                      {style.label && <span className="opacity-75">({style.label})</span>}
+                      {style.label && (
+                        <span className="opacity-75">({style.label})</span>
+                      )}
                     </span>
                   );
                 })}
@@ -398,7 +466,10 @@ function EntryCard({
               </div>
               <ul className="space-y-1">
                 {thisWeekTasks.map((task, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-xs text-gray-700"
+                  >
                     <span className="text-gray-400 mt-0.5">•</span>
                     <span className="flex-1">{task}</span>
                   </li>
@@ -406,9 +477,11 @@ function EntryCard({
               </ul>
             </div>
           )}
-          
+
           {pastWeekTasks.length === 0 && thisWeekTasks.length === 0 && (
-            <p className="mx-4 mb-4 text-xs text-gray-400 text-center py-2">등록된 작업이 없습니다.</p>
+            <p className="mx-4 mb-4 text-xs text-gray-400 text-center py-2">
+              등록된 작업이 없습니다.
+            </p>
           )}
         </div>
       )}
@@ -417,10 +490,10 @@ function EntryCard({
 }
 
 // Entry 행 (리스트용)
-function EntryRow({ 
-  entry, 
-  onEdit 
-}: { 
+function EntryRow({
+  entry,
+  onEdit,
+}: {
   entry: SnapshotEntry;
   onEdit?: () => void;
 }) {
@@ -464,7 +537,9 @@ function EntryRow({
         )}
         {/* Risk */}
         {riskStyle && (
-          <span className={`px-2 py-0.5 text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text} rounded-md shrink-0`}>
+          <span
+            className={`px-2 py-0.5 text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text} rounded-md shrink-0`}
+          >
             Risk Lv.{riskLevel}
           </span>
         )}
@@ -480,15 +555,35 @@ function EntryRow({
           className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all"
           title="편집하기"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
           </svg>
         </button>
       )}
 
       {/* 화살표 */}
-      <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      <svg
+        className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 5l7 7-7 7"
+        />
       </svg>
     </div>
   );
@@ -513,44 +608,8 @@ function LoadingSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
   return (
     <div className="space-y-2">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div
-          key={i}
-          className="h-16 bg-gray-100 rounded-xl animate-pulse"
-        />
+        <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
       ))}
-    </div>
-  );
-}
-
-// 로딩 상태 - 로고 SVG 가속도 회전 애니메이션
-function LoadingState() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full py-16">
-      <style>{`
-        @keyframes spin-accelerate {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .spin-accelerate {
-          animation: spin-accelerate 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        }
-      `}</style>
-      <div className="w-20 h-20 mb-6 flex items-center justify-center">
-        <svg 
-          className="w-16 h-16 spin-accelerate" 
-          viewBox="0 0 640 640" 
-          fill="currentColor"
-          style={{ color: "rgba(156, 163, 175, 0.4)" }}
-        >
-          <path d="M344 170.6C362.9 161.6 376 142.3 376 120C376 89.1 350.9 64 320 64C289.1 64 264 89.1 264 120C264 142.3 277.1 161.6 296 170.6L296 269.4C293.2 270.7 290.5 272.3 288 274.1L207.9 228.3C209.5 207.5 199.3 186.7 180 175.5C153.2 160 119 169.2 103.5 196C88 222.8 97.2 257 124 272.5C125.3 273.3 126.6 274 128 274.6L128 365.4C126.7 366 125.3 366.7 124 367.5C97.2 383 88 417.2 103.5 444C119 470.8 153.2 480 180 464.5C199.3 453.4 209.4 432.5 207.8 411.7L258.3 382.8C246.8 371.6 238.4 357.2 234.5 341.1L184 370.1C181.4 368.3 178.8 366.8 176 365.4L176 274.6C178.8 273.3 181.5 271.7 184 269.9L264.1 315.7C264 317.1 263.9 318.5 263.9 320C263.9 342.3 277 361.6 295.9 370.6L295.9 469.4C277 478.4 263.9 497.7 263.9 520C263.9 550.9 289 576 319.9 576C350.8 576 375.9 550.9 375.9 520C375.9 497.7 362.8 478.4 343.9 469.4L343.9 370.6C346.7 369.3 349.4 367.7 351.9 365.9L432 411.7C430.4 432.5 440.6 453.3 459.8 464.5C486.6 480 520.8 470.8 536.3 444C551.8 417.2 542.6 383 515.8 367.5C514.5 366.7 513.1 366 511.8 365.4L511.8 274.6C513.2 274 514.5 273.3 515.8 272.5C542.6 257 551.8 222.8 536.3 196C520.8 169.2 486.8 160 460 175.5C440.7 186.6 430.6 207.5 432.2 228.3L381.6 257.2C393.1 268.4 401.5 282.8 405.4 298.9L456 269.9C458.6 271.7 461.2 273.2 464 274.6L464 365.4C461.2 366.7 458.5 368.3 456 370L375.9 324.2C376 322.8 376.1 321.4 376.1 319.9C376.1 297.6 363 278.3 344.1 269.3L344.1 170.5z"/>
-        </svg>
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        데이터를 불러오는 중입니다
-      </h3>
-      <p className="text-sm text-gray-500 text-center max-w-xs">
-        잠시만 기다려주세요.
-      </p>
     </div>
   );
 }
@@ -560,18 +619,28 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-16">
       <div className="w-20 h-20 mb-6 flex items-center justify-center bg-gray-100 rounded-2xl">
-        <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg
+          className="w-10 h-10 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
         </svg>
       </div>
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
         스냅샷이 없습니다
       </h3>
       <p className="text-sm text-gray-500 text-center max-w-xs">
-        선택한 주차에 작성된 스냅샷이 없습니다.<br />
+        선택한 주차에 작성된 스냅샷이 없습니다.
+        <br />
         우측 상단의 &quot;새로 작성하기&quot; 버튼으로 시작하세요.
       </p>
     </div>
   );
 }
-

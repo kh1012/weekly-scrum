@@ -29,6 +29,15 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
     redirect("/login");
   }
 
+  // 사용자 프로필에서 display_name 조회
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+  
+  const displayName = profile?.display_name || user.email?.split("@")[0] || "익명";
+
   const weekStartDate = getWeekStartDateString(year, week);
 
   // 해당 주차의 스냅샷 목록 조회
@@ -58,6 +67,7 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
       snapshots={snapshots || []}
       userId={user.id}
       workspaceId={DEFAULT_WORKSPACE_ID}
+      displayName={displayName}
     />
   );
 }

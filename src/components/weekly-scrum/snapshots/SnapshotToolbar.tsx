@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useMemo } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import type { SnapshotViewMode } from "./types";
 
 export type DisplayMode = "card" | "list";
@@ -17,11 +17,30 @@ interface SnapshotToolbarProps {
   onToggleSelectMode: () => void;
 }
 
+// 아이콘 컴포넌트들
+const AllIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+  </svg>
+);
+
+const PersonIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+);
+
+const LinkIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+  </svg>
+);
+
 // 뷰 모드 배열을 컴포넌트 외부에 정의하여 참조 안정성 확보
-const VIEW_MODES: Array<{ key: SnapshotViewMode; label: string; icon: string }> = [
-  { key: "all", label: "전체 보기", icon: "📋" },
-  { key: "person", label: "사람별 보기", icon: "👤" },
-  { key: "continuity", label: "연속성 분석", icon: "🔗" },
+const VIEW_MODES: Array<{ key: SnapshotViewMode; label: string; icon: React.ReactNode }> = [
+  { key: "all", label: "전체 보기", icon: <AllIcon /> },
+  { key: "person", label: "사람별 보기", icon: <PersonIcon /> },
+  { key: "continuity", label: "연속성 분석", icon: <LinkIcon /> },
 ];
 
 export function SnapshotToolbar({
@@ -94,7 +113,7 @@ export function SnapshotToolbar({
               color: viewMode === mode.key ? "#3b82f6" : "var(--notion-text-muted)",
             }}
           >
-            <span className="text-base">{mode.icon}</span>
+            {mode.icon}
             <span>{mode.label}</span>
           </button>
         ))}

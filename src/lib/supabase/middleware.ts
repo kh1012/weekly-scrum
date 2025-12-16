@@ -30,6 +30,17 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  const pathname = request.nextUrl.pathname;
+
+  // Auth code가 있으면 /auth/callback으로 포워딩 (PKCE 흐름 처리)
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && pathname !== "/auth/callback") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    // 기존 searchParams 유지 (code, redirectTo 등)
+    return NextResponse.redirect(url);
+  }
+
   // 테스트용 바이패스 체크 (localhost에서만 활성화)
   const bypassKey = request.nextUrl.searchParams.get("bypass");
   const existingBypassCookie =
@@ -78,8 +89,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const pathname = request.nextUrl.pathname;
 
   // 공개 경로 (로그인 불필요)
   const publicRoutes = ["/login", "/auth/callback"];

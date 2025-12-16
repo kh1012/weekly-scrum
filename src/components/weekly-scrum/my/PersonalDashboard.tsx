@@ -9,8 +9,11 @@
  * - 빠른 접근 카드들
  */
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
+import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
+import { getCurrentISOWeek } from "@/lib/date/isoWeek";
 
 interface PersonalDashboardProps {
   userName?: string;
@@ -45,10 +48,25 @@ function formatTrend(value: number, suffix: string = ""): string | undefined {
 
 export function PersonalDashboard({ userName, stats, trends }: PersonalDashboardProps) {
   const router = useRouter();
+  const [isNewSnapshotModalOpen, setIsNewSnapshotModalOpen] = useState(false);
+  const currentWeek = getCurrentISOWeek();
 
   const handleNavigate = (href: string) => {
     navigationProgress.start();
     router.push(href);
+  };
+
+  // 새 스냅샷 모달 핸들러
+  const handleLoadExistingData = () => {
+    setIsNewSnapshotModalOpen(false);
+    navigationProgress.start();
+    router.push(`/manage/snapshots/${currentWeek.year}/${currentWeek.week}/new?mode=load`);
+  };
+
+  const handleCreateEmpty = () => {
+    setIsNewSnapshotModalOpen(false);
+    navigationProgress.start();
+    router.push(`/manage/snapshots/${currentWeek.year}/${currentWeek.week}/new?mode=empty`);
   };
 
   return (
@@ -157,17 +175,7 @@ export function PersonalDashboard({ userName, stats, trends }: PersonalDashboard
             description="이번 주 스냅샷을 새로 작성합니다"
             icon="✏️"
             badge="Quick Action"
-            onClick={() => {
-              const now = new Date();
-              const jan4 = new Date(now.getFullYear(), 0, 4);
-              const dayOfWeek = jan4.getDay() || 7;
-              const firstMonday = new Date(jan4);
-              firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
-              const diff = now.getTime() - firstMonday.getTime();
-              const week = Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
-              const year = now.getFullYear();
-              handleNavigate(`/manage/snapshots/${year}/${week}/new`);
-            }}
+            onClick={() => setIsNewSnapshotModalOpen(true)}
             gradientFrom="from-emerald-400"
             gradientTo="to-cyan-400"
           />
@@ -197,6 +205,16 @@ export function PersonalDashboard({ userName, stats, trends }: PersonalDashboard
         </div>
       </div>
       </div>
+
+      {/* 새 스냅샷 모달 */}
+      <NewSnapshotModal
+        isOpen={isNewSnapshotModalOpen}
+        onClose={() => setIsNewSnapshotModalOpen(false)}
+        year={currentWeek.year}
+        week={currentWeek.week}
+        onLoadExistingData={handleLoadExistingData}
+        onCreateEmpty={handleCreateEmpty}
+      />
     </div>
   );
 }

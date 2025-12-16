@@ -48,6 +48,15 @@ export async function updateSnapshotAndEntries(
     return { success: false, error: "인증이 필요합니다." };
   }
 
+  // 사용자 프로필에서 display_name 가져오기 (name 필드가 비어있을 때 사용)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+  
+  const defaultName = profile?.display_name || user.email?.split("@")[0] || "익명";
+
   // 스냅샷 소유권 확인
   const { data: snapshot, error: snapshotError } = await supabase
     .from("snapshots")
@@ -93,7 +102,8 @@ export async function updateSnapshotAndEntries(
       snapshot_id: snapshotId,
       workspace_id: DEFAULT_WORKSPACE_ID,
       author_id: user.id,
-      name: entry.name,
+      // name이 비어있으면 사용자 프로필에서 가져온 display_name 사용
+      name: entry.name?.trim() || defaultName,
       domain: entry.domain,
       project: entry.project,
       module: entry.module || "",
@@ -143,6 +153,15 @@ export async function createSnapshotAndEntries(
     return { success: false, error: "인증이 필요합니다." };
   }
 
+  // 사용자 프로필에서 display_name 가져오기 (name 필드가 비어있을 때 사용)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+  
+  const defaultName = profile?.display_name || user.email?.split("@")[0] || "익명";
+
   const weekStartDate = getWeekStartDateString(year, week);
   const weekEndDate = getWeekEndDateString(year, week);
   const weekLabel = `W${week.toString().padStart(2, "0")}`;
@@ -172,7 +191,8 @@ export async function createSnapshotAndEntries(
       snapshot_id: snapshotId,
       workspace_id: DEFAULT_WORKSPACE_ID,
       author_id: user.id,
-      name: entry.name || "",
+      // name이 비어있으면 사용자 프로필에서 가져온 display_name 사용
+      name: entry.name?.trim() || defaultName,
       domain: entry.domain || "",
       project: entry.project || "",
       module: entry.module || "",

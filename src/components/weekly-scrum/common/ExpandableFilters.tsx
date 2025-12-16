@@ -84,13 +84,13 @@ function FilterSection({
         }`}
         style={{
           background: isFilterActive
-            ? "rgba(59, 130, 246, 0.12)"
-            : "var(--notion-bg-secondary)",
+            ? "var(--gnb-filter-active)"
+            : "var(--gnb-filter-bg)",
           color: isFilterActive
-            ? "#3b82f6"
+            ? "var(--primary-500)"
             : "var(--notion-text-muted)",
           border: isFilterActive
-            ? "1px solid rgba(59, 130, 246, 0.25)"
+            ? "1px solid var(--gnb-filter-active-border)"
             : "1px solid transparent",
         }}
       >
@@ -288,7 +288,7 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
       style={{
         background: hasActiveMultiFilters
           ? "rgba(239, 68, 68, 0.1)"
-          : "var(--notion-bg-secondary)",
+          : "var(--gnb-filter-bg)",
         color: hasActiveMultiFilters ? "#ef4444" : "var(--notion-text-muted)",
         border: hasActiveMultiFilters
           ? "1px solid rgba(239, 68, 68, 0.25)"

@@ -15,9 +15,11 @@ export interface SnapshotWeek {
 
 /**
  * Supabase snapshot_entry를 ScrumItem (v1 형식)으로 변환
+ * @param entry - DB에서 가져온 엔트리 데이터
+ * @param authorName - 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertEntryToScrumItem(entry: any): ScrumItem {
+function convertEntryToScrumItem(entry: any, authorName?: string): ScrumItem {
   // past_week은 { tasks: [...] } 형태의 jsonb 필드
   const pastWeek = entry.past_week || {};
   const pastWeekTasks = pastWeek.tasks || [];
@@ -44,8 +46,11 @@ function convertEntryToScrumItem(entry: any): ScrumItem {
     })
   );
 
+  // name이 비어있으면 authorName 또는 "익명" 사용
+  const entryName = entry.name?.trim() || authorName || "익명";
+
   return {
-    name: entry.name || "",
+    name: entryName,
     domain: entry.domain,
     project: entry.project,
     module: entry.module || null,
@@ -80,12 +85,27 @@ export async function getAllSnapshotsFromSupabase(
 ): Promise<Record<string, WeeklyScrumData>> {
   const supabase = await createClient();
 
-  // 1. 모든 스냅샷과 entries를 한 번에 조회
+  // 1. 모든 스냅샷과 entries 조회 (author_id는 별도 처리)
   const { data: snapshots, error } = await supabase
     .from("snapshots")
     .select("*, entries:snapshot_entries(*)")
     .eq("workspace_id", workspaceId)
     .order("week_start_date", { ascending: false });
+
+  // 2. author_id 목록으로 프로필 조회 (작성자 이름 fallback용)
+  const authorIds = [...new Set((snapshots || []).map(s => s.author_id).filter(Boolean))];
+  let profileMap: Map<string, string> = new Map();
+  
+  if (authorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", authorIds);
+    
+    if (profiles) {
+      profileMap = new Map(profiles.map(p => [p.id, p.display_name || ""]));
+    }
+  }
 
   if (error) {
     console.error("Error fetching snapshots from Supabase:", error);
@@ -97,7 +117,7 @@ export async function getAllSnapshotsFromSupabase(
     return {};
   }
 
-  // 2. snapshot_weeks에서 주차 목록 조회 (중복 없음)
+  // 3. snapshot_weeks에서 주차 목록 조회 (중복 없음)
   const weeks = await listSnapshotWeeks(workspaceId);
   
   console.log(`[getAllSnapshotsFromSupabase] Found ${weeks.length} weeks in snapshot_weeks, ${snapshots.length} snapshots`);
@@ -132,7 +152,9 @@ export async function getAllSnapshotsFromSupabase(
       // 모든 entries 합치기
       const allItems: ScrumItem[] = [];
       for (const snapshot of weekSnapshots) {
-        const items = (snapshot.entries || []).map(convertEntryToScrumItem);
+        // 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
+        const authorName = snapshot.author_id ? profileMap.get(snapshot.author_id) : undefined;
+        const items = (snapshot.entries || []).map((entry: unknown) => convertEntryToScrumItem(entry, authorName));
         allItems.push(...items);
       }
 
@@ -172,7 +194,9 @@ export async function getAllSnapshotsFromSupabase(
       
       const allItems: ScrumItem[] = [];
       for (const snapshot of weekData.snapshots) {
-        const items = (snapshot.entries || []).map(convertEntryToScrumItem);
+        // 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
+        const authorName = snapshot.author_id ? profileMap.get(snapshot.author_id) : undefined;
+        const items = (snapshot.entries || []).map((entry: unknown) => convertEntryToScrumItem(entry, authorName));
         allItems.push(...items);
       }
 

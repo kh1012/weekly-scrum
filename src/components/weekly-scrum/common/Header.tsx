@@ -103,7 +103,7 @@ export function Header({ isSidebarOpen = true, onSidebarToggle, role }: HeaderPr
               onClick={onSidebarToggle}
               className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 interactive-btn"
               style={{
-                background: "var(--notion-bg-secondary)",
+                background: "var(--gnb-filter-bg)",
                 color: "var(--notion-text-secondary)",
               }}
               title={isSidebarOpen ? "사이드바 접기" : "사이드바 열기"}

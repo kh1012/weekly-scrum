@@ -18,8 +18,8 @@ import { navigationProgress } from "@/components/weekly-scrum/common/NavigationP
 import {
   getCurrentISOWeek,
   getWeekStartDateString,
-  formatWeekRange,
 } from "@/lib/date/isoWeek";
+import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
 
 interface SnapshotsMainViewProps {
   userId: string;
@@ -217,9 +217,9 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
   const totalFilterCount = projectFilters.size + moduleFilters.size + featureFilters.size;
   const hasActiveFilters = totalFilterCount > 0;
 
-  // 초기 마운트 시 프로그래스바 시작
+  // 초기 마운트 시 프로그래스바 완료 (이미 로드된 상태이므로)
   useEffect(() => {
-    navigationProgress.start();
+    navigationProgress.done();
   }, []);
 
   // 스냅샷 목록 조회
@@ -293,8 +293,6 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
     router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=empty`);
   };
 
-  const weekRange = formatWeekRange(selectedYear, selectedWeek);
-
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
       {/* 헤더 영역 - 글래스모피즘 */}
@@ -302,7 +300,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
         <div className="flex items-center justify-between">
           {/* 좌측: 타이틀 */}
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/25">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -480,7 +478,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
             <button
               onClick={handleEditWeek}
               disabled={snapshots.length === 0}
-              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-blue-600 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -491,7 +489,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
             <button
               onClick={() => setIsNewSnapshotModalOpen(true)}
               disabled={snapshots.length > 0}
-              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl hover:from-gray-800 hover:to-gray-700 hover:shadow-lg hover:shadow-gray-900/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 hover:shadow-lg hover:shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               title={snapshots.length > 0 ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요." : ""}
             >
               <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -599,98 +597,15 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
         </div>
       </div>
 
-      {/* 새로 작성하기 모달 - 트렌디 스타일 */}
-      {isNewSnapshotModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* 배경 오버레이 - 블러 강화 */}
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-md"
-            onClick={() => setIsNewSnapshotModalOpen(false)}
-          />
-          
-          {/* 모달 콘텐츠 */}
-          <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full p-10 animate-fadeIn">
-            {/* 배경 장식 */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/10 blur-3xl" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-3xl" />
-            
-            {/* 닫기 버튼 */}
-            <button
-              onClick={() => setIsNewSnapshotModalOpen(false)}
-              className="absolute top-5 right-5 p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all hover:rotate-90 duration-300"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            {/* 헤더 */}
-            <div className="relative text-center mb-10">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-100 text-rose-600 text-xs font-semibold mb-4">
-                <span>✨</span>
-                <span>새 스냅샷</span>
-              </div>
-              <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">작성 방법을 선택하세요</h2>
-              <p className="text-gray-500">
-                {selectedYear}년 W{selectedWeek.toString().padStart(2, "0")} ({weekRange})
-              </p>
-            </div>
-
-            {/* 선택 카드 */}
-            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* 데이터 불러오기 */}
-              <button
-                onClick={handleLoadExistingData}
-                className="group relative p-7 bg-white rounded-2xl border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative">
-                  <div className="w-14 h-14 mb-5 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">데이터 불러오기</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    이전 주차의 데이터를 복사하여 시작합니다. 프로젝트 이력이 유지됩니다.
-                  </p>
-                </div>
-                {/* 화살표 */}
-                <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-
-              {/* 새로 작성하기 */}
-              <button
-                onClick={handleCreateEmpty}
-                className="group relative p-7 bg-white rounded-2xl border-2 border-gray-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative">
-                  <div className="w-14 h-14 mb-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-emerald-700 transition-colors">새로 작성하기</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    빈 스냅샷으로 시작합니다. 편집 화면에서 새로 입력합니다.
-                  </p>
-                </div>
-                {/* 화살표 */}
-                <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
-                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 새로 작성하기 모달 */}
+      <NewSnapshotModal
+        isOpen={isNewSnapshotModalOpen}
+        onClose={() => setIsNewSnapshotModalOpen(false)}
+        year={selectedYear}
+        week={selectedWeek}
+        onLoadExistingData={handleLoadExistingData}
+        onCreateEmpty={handleCreateEmpty}
+      />
     </div>
   );
 }

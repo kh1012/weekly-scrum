@@ -7,7 +7,8 @@
  * Tab으로 순차적으로 필드 이동 가능합니다.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { TempSnapshot } from "./types";
 import type { PastWeekTask, Collaborator, Relation } from "@/types/scrum";
 import {
@@ -46,25 +47,25 @@ interface SnapshotEditFormProps {
   hideName?: boolean;
 }
 
-// 공통 입력 스타일 (일반 모드)
+// 공통 입력 스타일 (일반 모드) - 편집 시 애니메이션
 const inputStyles = `
   w-full px-4 py-3 
   border border-gray-200 rounded-xl 
   text-sm text-gray-900 placeholder-gray-400
   bg-white
   transition-all duration-200
-  focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent
+  focus:outline-none focus:border-blue-500 focus:typing-glow
   hover:border-gray-300
 `;
 
-// 컴팩트 입력 스타일
+// 컴팩트 입력 스타일 - 편집 시 애니메이션
 const inputStylesCompact = `
   w-full px-3 py-2 
   border border-gray-200 rounded-lg 
   text-xs text-gray-900 placeholder-gray-400
   bg-white
   transition-all duration-200
-  focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent
+  focus:outline-none focus:border-blue-500 focus:typing-glow
   hover:border-gray-300
 `;
 
@@ -83,7 +84,7 @@ const selectStylesCompact = `
 `;
 
 /**
- * 콤보박스 + 사용자 정의 입력 컴포넌트
+ * 커스텀 드롭다운 컴포넌트 - GNB 필터 스타일
  */
 function MetaField({
   label,
@@ -102,32 +103,80 @@ function MetaField({
   tabIndex?: number;
   compact?: boolean;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [isCustom, setIsCustom] = useState(
     !options.includes(value as never) && value !== ""
   );
+  const [searchTerm, setSearchTerm] = useState("");
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = e.target.value;
-    if (selected === CUSTOM_INPUT_VALUE) {
-      setIsCustom(true);
-      onChange("");
-    } else {
-      setIsCustom(false);
-      onChange(selected);
+  // 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
+  }, [isOpen]);
+
+  // 드롭다운 위치 계산
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: "fixed",
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, [isOpen]);
+
+  // 필터링된 옵션
+  const filteredOptions = options.filter((opt) =>
+    opt.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (opt: string) => {
+    onChange(opt);
+    setIsOpen(false);
+    setSearchTerm("");
+    setIsCustom(false);
+  };
+
+  const handleCustomInput = () => {
+    setIsCustom(true);
+    setIsOpen(false);
+    setSearchTerm("");
+    onChange("");
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const inputClass = compact ? inputStylesCompact : inputStyles;
-  const selectClass = compact ? selectStylesCompact : selectStyles;
 
-  return (
-    <div className={compact ? "space-y-1" : "space-y-2"}>
-      <label className={`block font-medium text-gray-700 ${compact ? "text-xs" : "text-sm"}`}>
-        {label}
-      </label>
-      {isCustom ? (
+  if (isCustom) {
+    return (
+      <div className={compact ? "space-y-1" : "space-y-2"}>
+        <label className={`block font-medium text-gray-700 ${compact ? "text-xs" : "text-sm"}`}>
+          {label}
+        </label>
         <div className="flex gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -146,22 +195,113 @@ function MetaField({
             목록
           </button>
         </div>
-      ) : (
-        <select
-          value={options.includes(value as never) ? value : ""}
-          onChange={handleSelectChange}
-          tabIndex={tabIndex}
-          className={selectClass}
+      </div>
+    );
+  }
+
+  return (
+    <div className={compact ? "space-y-1" : "space-y-2"}>
+      <label className={`block font-medium text-gray-700 ${compact ? "text-xs" : "text-sm"}`}>
+        {label}
+      </label>
+      
+      {/* 드롭다운 트리거 버튼 */}
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        tabIndex={tabIndex}
+        className={`w-full text-left flex items-center justify-between border transition-all duration-200 ${
+          isOpen
+            ? "border-blue-500 ring-2 ring-blue-500/20"
+            : "border-gray-200 hover:border-gray-300"
+        } ${
+          compact
+            ? "px-3 py-2 rounded-lg text-xs"
+            : "px-4 py-3 rounded-xl text-sm"
+        } bg-white`}
+      >
+        <span className={value ? "text-gray-900" : "text-gray-400"}>
+          {value || "선택..."}
+        </span>
+        <svg
+          className={`${compact ? "w-4 h-4" : "w-5 h-5"} text-gray-400 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
         >
-          <option value="">선택...</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-          <option value={CUSTOM_INPUT_VALUE}>직접 입력...</option>
-        </select>
-      )}
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* 드롭다운 메뉴 (Portal) */}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            style={dropdownStyle}
+            className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden animate-fadeIn"
+          >
+            {/* 검색 입력 */}
+            <div className="p-2 border-b border-gray-100">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="검색..."
+                className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
+                autoFocus
+              />
+            </div>
+
+            {/* 옵션 목록 */}
+            <div className="max-h-48 overflow-y-auto">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleSelect(opt)}
+                    className={`w-full px-4 py-2.5 text-left text-xs transition-colors flex items-center gap-2 ${
+                      value === opt
+                        ? "bg-blue-50 text-blue-700 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {value === opt && (
+                      <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    <span className={value === opt ? "" : "ml-5.5"}>{opt}</span>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-xs text-gray-400 text-center">
+                  검색 결과 없음
+                </div>
+              )}
+            </div>
+
+            {/* 직접 입력 옵션 */}
+            <div className="border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleCustomInput}
+                className="w-full px-4 py-2.5 text-left text-xs text-gray-600 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                직접 입력...
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -182,6 +322,15 @@ function TaskEditor({
 }) {
   const addTask = () => {
     onChange([...tasks, { title: "", progress: 0 }]);
+  };
+
+  // 단축키 핸들러: Ctrl+Alt+↓ 또는 Cmd+Option+↓
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey && e.altKey && e.key === "ArrowDown") ||
+        (e.metaKey && e.altKey && e.key === "ArrowDown")) {
+      e.preventDefault();
+      addTask();
+    }
   };
 
   const updateTask = (index: number, field: keyof PastWeekTask, value: string | number) => {
@@ -211,6 +360,7 @@ function TaskEditor({
               type="text"
               value={task.title}
               onChange={(e) => updateTask(index, "title", e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="작업 내용..."
               tabIndex={baseTabIndex + index * 2}
               className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
@@ -307,19 +457,29 @@ function TaskEditor({
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={addTask}
-        tabIndex={-1}
-        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
-          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
-        }`}
-      >
-        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        작업 추가
-      </button>
+      <div className="border-t border-gray-100">
+        <button
+          type="button"
+          onClick={addTask}
+          tabIndex={-1}
+          className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+            compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
+          }`}
+        >
+          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          작업 추가
+        </button>
+        <div className="px-3 py-1.5 text-[10px] text-gray-400 text-center border-t border-gray-50">
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌥</kbd>
+          <span className="mx-0.5">+</span>
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌘</kbd>
+          <span className="mx-0.5">+</span>
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">↓</kbd>
+          <span className="ml-1">새 항목 추가</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -352,6 +512,15 @@ function ThisWeekTaskEditor({
     onChange(tasks.filter((_, i) => i !== index));
   };
 
+  // 단축키 핸들러
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey && e.altKey && e.key === "ArrowDown") ||
+        (e.metaKey && e.altKey && e.key === "ArrowDown")) {
+      e.preventDefault();
+      addTask();
+    }
+  };
+
   return (
     <div className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden ${compact ? "rounded-lg" : "rounded-xl"}`}>
       {tasks.map((task, index) => (
@@ -361,6 +530,7 @@ function ThisWeekTaskEditor({
             type="text"
             value={task}
             onChange={(e) => updateTask(index, e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="계획 작업..."
             tabIndex={baseTabIndex + index}
             className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
@@ -379,19 +549,29 @@ function ThisWeekTaskEditor({
           </button>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={addTask}
-        tabIndex={-1}
-        className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
-          compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
-        }`}
-      >
-        <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        계획 추가
-      </button>
+      <div className="border-t border-gray-100">
+        <button
+          type="button"
+          onClick={addTask}
+          tabIndex={-1}
+          className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+            compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
+          }`}
+        >
+          <svg className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          계획 추가
+        </button>
+        <div className="px-3 py-1.5 text-[10px] text-gray-400 text-center border-t border-gray-50">
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌥</kbd>
+          <span className="mx-0.5">+</span>
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌘</kbd>
+          <span className="mx-0.5">+</span>
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">↓</kbd>
+          <span className="ml-1">새 항목 추가</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -770,36 +950,39 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   );
 
   // 컴팩트 모드 스타일
-  const contentPadding = compact ? "p-4 space-y-6" : "p-8 space-y-10";
-  const sectionSpace = compact ? "space-y-4" : "space-y-6";
-  const innerSpace = compact ? "space-y-5" : "space-y-8";
-  const gridGap = compact ? "gap-3" : "gap-5";
-  const labelMargin = compact ? "mb-2" : "mb-3";
-  const labelSize = compact ? "text-xs" : "text-sm";
-  const barHeight = compact ? "h-5" : "h-6";
+  const contentPadding = compact ? "p-3" : "p-6";
+  const sectionGap = compact ? "gap-3" : "gap-4";
+  const innerSpace = compact ? "space-y-3" : "space-y-4";
+  const gridGap = compact ? "gap-2" : "gap-3";
+  const labelMargin = compact ? "mb-1.5" : "mb-2";
+  const labelSize = compact ? "text-[11px]" : "text-xs";
   
   // 1열/2열 그리드 레이아웃
   const gridCols = singleColumn ? "grid-cols-1" : "grid-cols-2";
 
   return (
-    <div className="h-full flex flex-col">
-      {/* 헤더 - h-12 통일 */}
-      <div className="h-12 px-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm flex items-center shrink-0">
-        <span className="text-sm font-semibold text-gray-800">스냅샷 편집</span>
+    <div className="h-full flex flex-col bg-gradient-to-b from-slate-50/80 to-white">
+      {/* 헤더 - 전체 너비 border */}
+      <div className="h-11 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm shrink-0 shadow-sm">
+        <div className="h-full px-4 flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+          <span className="text-sm font-semibold text-gray-800">스냅샷 편집</span>
+        </div>
       </div>
 
       {/* 콘텐츠 영역 - 스크롤 가능, 전체 너비 */}
-      <div className={`flex-1 overflow-y-auto ${contentPadding}`}>
+      <div className={`flex-1 overflow-y-auto ${contentPadding} flex flex-col ${sectionGap}`}>
         {/* 메타 영역 */}
         <section 
-          className={sectionSpace}
+          className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
           onFocus={() => onFocusSection?.("meta")}
         >
-          <div className="flex items-center gap-2">
-            <div className={`w-1 ${barHeight} rounded-full bg-gray-900`} />
-            <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>메타 정보</h3>
+          {/* 섹션 헤더 - sticky */}
+          <div className="sticky top-0 z-10 px-3 py-2 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-gray-800" />
+            <h3 className={`${labelSize} font-bold text-gray-700 uppercase tracking-wider`}>메타 정보</h3>
           </div>
-          <div className={`grid ${gridCols} ${gridGap}`}>
+          <div className={`p-3 grid ${gridCols} ${gridGap}`}>
             {!hideName && (
               <MetaField label="Name" value={snapshot.name} options={NAME_OPTIONS} onChange={(v) => handleMetaChange("name", v)} placeholder="작성자 이름" tabIndex={1} compact={compact} />
             )}
@@ -813,11 +996,12 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
         </section>
 
         {/* Past Week */}
-        <section className={sectionSpace}>
-          <div className="flex items-center justify-between">
+        <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+          {/* 섹션 헤더 - sticky */}
+          <div className="sticky top-0 z-10 px-3 py-2 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`w-1 ${barHeight} rounded-full bg-blue-500`} />
-              <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>Past Week</h3>
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <h3 className={`${labelSize} font-bold text-gray-700 uppercase tracking-wider`}>Past Week</h3>
             </div>
             
             {/* This Week → Past Week 덮어쓰기 버튼 */}
@@ -835,7 +1019,7 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
                     thisWeek: { tasks: [] },
                   });
                 }}
-                className={`flex items-center gap-1.5 font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors ${
+                className={`flex items-center gap-1.5 font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50/80 transition-colors ${
                   compact ? "px-2 py-1 text-[10px] rounded-md" : "px-3 py-1.5 text-xs rounded-lg"
                 }`}
                 title="This Week 작업을 Past Week로 복사합니다"
@@ -848,23 +1032,41 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
             )}
           </div>
 
-          <div className={innerSpace}>
-            <div onFocus={() => onFocusSection?.("pastWeek.tasks")}>
-              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Tasks</label>
+          <div className={`p-3 ${innerSpace}`}>
+            {/* Tasks 서브섹션 */}
+            <div 
+              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
+              onFocus={() => onFocusSection?.("pastWeek.tasks")}
+            >
+              <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600 ${labelMargin}`}>
+                <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                Tasks
+              </label>
               <TaskEditor tasks={snapshot.pastWeek.tasks} onChange={(tasks) => handlePastWeekChange("tasks", tasks)} baseTabIndex={10} compact={compact} />
             </div>
 
-            <div onFocus={() => onFocusSection?.("pastWeek.risks")}>
+            {/* Risks 서브섹션 */}
+            <div 
+              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
+              onFocus={() => onFocusSection?.("pastWeek.risks")}
+            >
               <div className={`flex items-center justify-between ${labelMargin}`}>
-                <label className={`${labelSize} font-medium text-gray-700`}>Risks</label>
+                <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600`}>
+                  <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Risks
+                </label>
                 {/* RiskLevel 선택 (리스크가 있을 때만) */}
                 {snapshot.pastWeek.risk && snapshot.pastWeek.risk.length > 0 && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 bg-white rounded-md p-0.5 border border-gray-100">
                     {[
-                      { value: 0, label: "없음", color: "bg-emerald-500" },
-                      { value: 1, label: "경미", color: "bg-yellow-500" },
-                      { value: 2, label: "중간", color: "bg-orange-500" },
-                      { value: 3, label: "심각", color: "bg-rose-500" },
+                      { value: 0, label: "없음", color: "bg-emerald-500", hoverColor: "hover:bg-emerald-50" },
+                      { value: 1, label: "경미", color: "bg-yellow-500", hoverColor: "hover:bg-yellow-50" },
+                      { value: 2, label: "중간", color: "bg-orange-500", hoverColor: "hover:bg-orange-50" },
+                      { value: 3, label: "심각", color: "bg-rose-500", hoverColor: "hover:bg-rose-50" },
                     ].map((level) => (
                       <button
                         key={level.value}
@@ -873,8 +1075,8 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
                         className={`
                           px-1.5 py-0.5 text-[10px] rounded font-medium transition-all
                           ${snapshot.pastWeek.riskLevel === level.value
-                            ? `${level.color} text-white`
-                            : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                            ? `${level.color} text-white shadow-sm`
+                            : `text-gray-400 ${level.hoverColor} hover:text-gray-600`
                           }
                         `}
                       >
@@ -912,8 +1114,17 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
               />
             </div>
 
-            <div onFocus={() => onFocusSection?.("pastWeek.collaborators")}>
-              <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Collaborators</label>
+            {/* Collaborators 서브섹션 */}
+            <div 
+              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
+              onFocus={() => onFocusSection?.("pastWeek.collaborators")}
+            >
+              <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600 ${labelMargin}`}>
+                <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Collaborators
+              </label>
               <CollaboratorEditor collaborators={snapshot.pastWeek.collaborators} onChange={(collabs) => handlePastWeekChange("collaborators", collabs)} baseTabIndex={70} compact={compact} />
             </div>
           </div>
@@ -921,17 +1132,28 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
 
         {/* This Week */}
         <section 
-          className={sectionSpace}
+          className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
           onFocus={() => onFocusSection?.("thisWeek")}
         >
-          <div className="flex items-center gap-2">
-            <div className={`w-1 ${barHeight} rounded-full bg-emerald-500`} />
-            <h3 className={`${labelSize} font-bold text-gray-900 uppercase tracking-wider`}>This Week</h3>
+          {/* 섹션 헤더 - sticky */}
+          <div className="sticky top-0 z-10 px-3 py-2 bg-gradient-to-r from-emerald-50 to-white border-b border-emerald-100/50 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <h3 className={`${labelSize} font-bold text-gray-700 uppercase tracking-wider`}>This Week</h3>
           </div>
 
-          <div onFocus={() => onFocusSection?.("thisWeek.tasks")}>
-            <label className={`block ${labelSize} font-medium text-gray-700 ${labelMargin}`}>Tasks</label>
-            <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} compact={compact} />
+          <div className="p-3">
+            <div 
+              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
+              onFocus={() => onFocusSection?.("thisWeek.tasks")}
+            >
+              <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600 ${labelMargin}`}>
+                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Tasks
+              </label>
+              <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} compact={compact} />
+            </div>
           </div>
         </section>
       </div>

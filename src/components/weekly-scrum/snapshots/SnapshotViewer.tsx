@@ -9,6 +9,7 @@ import { SnapshotAllView } from "./SnapshotAllView";
 import { SnapshotPersonView } from "./SnapshotPersonView";
 import { SnapshotCompareView } from "./SnapshotCompareView";
 import { SnapshotContinuityView } from "./SnapshotContinuityView";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 const STORAGE_KEY = "snapshot-viewer-state";
 
@@ -221,7 +222,7 @@ export function SnapshotViewer() {
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+        <LogoLoadingSpinner title="스냅샷을 불러오는 중" />
       </div>
     );
   }

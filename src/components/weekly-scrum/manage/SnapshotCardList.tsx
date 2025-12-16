@@ -220,8 +220,9 @@ export const SnapshotCardList = forwardRef<
 
   return (
     <div className="flex-1 flex flex-col min-h-0" onClick={closeContextMenu}>
-      {/* 리스트 헤더 - 1줄 */}
-      <div className="h-12 px-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm shrink-0 flex items-center justify-between">
+      {/* 리스트 헤더 - 전체 너비 border */}
+      <div className="h-12 border-b border-gray-100 bg-white/80 backdrop-blur-sm shrink-0">
+        <div className="h-full px-4 flex items-center justify-between">
         {/* 좌측: 카드 목록 */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-800">카드 목록</span>
@@ -305,6 +306,7 @@ export const SnapshotCardList = forwardRef<
               </div>,
               document.body
             )}
+          </div>
         </div>
       </div>
       
@@ -368,12 +370,12 @@ export const SnapshotCardList = forwardRef<
             <div
               key={snapshot.tempId}
               className={`
-                relative rounded-2xl border transition-all duration-200 cursor-pointer flex
+                relative rounded-2xl border-2 transition-all duration-200 cursor-pointer flex
                 ${
                   isSelected
-                    ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 shadow-sm"
+                    ? "bg-gradient-to-br from-blue-50/50 to-indigo-50/50 border-blue-500 shadow-md shadow-blue-500/10"
                     : isChecked
-                    ? "bg-blue-50/50 border-blue-200"
+                    ? "bg-blue-50/50 border-blue-300"
                     : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm"
                 }
               `}
@@ -459,12 +461,6 @@ export const SnapshotCardList = forwardRef<
                           </div>
                         );
                       })()}
-                      {snapshot.isDirty && (
-                        <span
-                          className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"
-                          title="수정됨"
-                        />
-                      )}
                     </div>
 
                   <div className="flex items-center gap-1">

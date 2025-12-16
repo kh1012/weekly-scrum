@@ -101,9 +101,30 @@ export function PageLoadingSpinner() {
               />
             </g>
             <rect x="16" y="22" width="32" height="38" rx="3" fill="#F76D57" />
-            <line x1="26" y1="24" x2="26" y2="56" stroke="#394240" strokeWidth="2" />
-            <line x1="32" y1="24" x2="32" y2="56" stroke="#394240" strokeWidth="2" />
-            <line x1="38" y1="24" x2="38" y2="56" stroke="#394240" strokeWidth="2" />
+            <line
+              x1="26"
+              y1="24"
+              x2="26"
+              y2="56"
+              stroke="#394240"
+              strokeWidth="2"
+            />
+            <line
+              x1="32"
+              y1="24"
+              x2="32"
+              y2="56"
+              stroke="#394240"
+              strokeWidth="2"
+            />
+            <line
+              x1="38"
+              y1="24"
+              x2="38"
+              y2="56"
+              stroke="#394240"
+              strokeWidth="2"
+            />
           </svg>
         </div>
         <div
@@ -114,6 +135,59 @@ export function PageLoadingSpinner() {
           로딩 중...
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * 로고 회전 로딩 스피너 Props
+ */
+interface LogoLoadingSpinnerProps {
+  /** 제목 */
+  title?: string;
+  /** 설명 */
+  description?: string;
+  /** 컨테이너 className (기본: h-full) */
+  className?: string;
+}
+
+/**
+ * 로고 회전 로딩 스피너
+ * - MIDAS 로고 SVG가 가속도 회전
+ * - title, description 커스터마이징 가능
+ */
+export function LogoLoadingSpinner({
+  title = "데이터를 불러오는 중입니다",
+  description = "잠시만 기다려주세요.",
+  className = "h-full",
+}: LogoLoadingSpinnerProps) {
+  return (
+    <div
+      className={`flex flex-col items-center justify-center py-16 ${className}`}
+    >
+      <style>{`
+        @keyframes spin-accelerate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .spin-accelerate {
+          animation: spin-accelerate 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+      `}</style>
+      <div className="w-20 h-20 mb-6 flex items-center justify-center">
+        <svg
+          className="w-16 h-16 spin-accelerate"
+          viewBox="0 0 640 640"
+          fill="currentColor"
+          style={{ color: "rgba(156, 163, 175, 0.4)" }}
+        >
+          <path d="M344 170.6C362.9 161.6 376 142.3 376 120C376 89.1 350.9 64 320 64C289.1 64 264 89.1 264 120C264 142.3 277.1 161.6 296 170.6L296 269.4C293.2 270.7 290.5 272.3 288 274.1L207.9 228.3C209.5 207.5 199.3 186.7 180 175.5C153.2 160 119 169.2 103.5 196C88 222.8 97.2 257 124 272.5C125.3 273.3 126.6 274 128 274.6L128 365.4C126.7 366 125.3 366.7 124 367.5C97.2 383 88 417.2 103.5 444C119 470.8 153.2 480 180 464.5C199.3 453.4 209.4 432.5 207.8 411.7L258.3 382.8C246.8 371.6 238.4 357.2 234.5 341.1L184 370.1C181.4 368.3 178.8 366.8 176 365.4L176 274.6C178.8 273.3 181.5 271.7 184 269.9L264.1 315.7C264 317.1 263.9 318.5 263.9 320C263.9 342.3 277 361.6 295.9 370.6L295.9 469.4C277 478.4 263.9 497.7 263.9 520C263.9 550.9 289 576 319.9 576C350.8 576 375.9 550.9 375.9 520C375.9 497.7 362.8 478.4 343.9 469.4L343.9 370.6C346.7 369.3 349.4 367.7 351.9 365.9L432 411.7C430.4 432.5 440.6 453.3 459.8 464.5C486.6 480 520.8 470.8 536.3 444C551.8 417.2 542.6 383 515.8 367.5C514.5 366.7 513.1 366 511.8 365.4L511.8 274.6C513.2 274 514.5 273.3 515.8 272.5C542.6 257 551.8 222.8 536.3 196C520.8 169.2 486.8 160 460 175.5C440.7 186.6 430.6 207.5 432.2 228.3L381.6 257.2C393.1 268.4 401.5 282.8 405.4 298.9L456 269.9C458.6 271.7 461.2 273.2 464 274.6L464 365.4C461.2 366.7 458.5 368.3 456 370L375.9 324.2C376 322.8 376.1 321.4 376.1 319.9C376.1 297.6 363 278.3 344.1 269.3L344.1 170.5z" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      <p className="text-sm text-gray-500 text-center max-w-xs">
+        {description}
+      </p>
     </div>
   );
 }
@@ -154,4 +228,3 @@ export function SkeletonCard({ count = 1 }: { count?: number }) {
     </div>
   );
 }
-

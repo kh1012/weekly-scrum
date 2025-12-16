@@ -2,6 +2,7 @@
 
 import { useScrumContext } from "@/context/ScrumContext";
 import { SnapshotViewer } from "@/components/weekly-scrum/snapshots";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 export default function SnapshotsPage() {
   const { currentData } = useScrumContext();
@@ -9,7 +10,7 @@ export default function SnapshotsPage() {
   if (!currentData) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p style={{ color: "var(--notion-text-muted)" }}>데이터를 불러오는 중...</p>
+        <LogoLoadingSpinner title="스냅샷을 불러오는 중" />
       </div>
     );
   }

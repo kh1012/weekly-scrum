@@ -39,6 +39,7 @@ interface EditSnapshotsViewProps {
   snapshots: SnapshotWithEntries[];
   userId: string;
   workspaceId: string;
+  displayName: string;
 }
 
 // 좌측 패널 크기 제한
@@ -103,6 +104,7 @@ function EditSnapshotsViewInner({
   snapshots,
   userId,
   workspaceId,
+  displayName,
 }: EditSnapshotsViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,7 +130,7 @@ function EditSnapshotsViewInner({
   // 엔트리들을 TempSnapshot으로 변환 (스냅샷이 없으면 빈 카드 하나 생성)
   const [tempSnapshots, setTempSnapshots] = useState<TempSnapshot[]>(() => {
     if (isNewMode) {
-      return [createEmptyTempSnapshot()];
+      return [createEmptyTempSnapshot(displayName)];
     }
     return (selectedSnapshotData?.entries || []).map(convertEntryToTempSnapshot);
   });
@@ -287,6 +289,8 @@ function EditSnapshotsViewInner({
         isDirty: true,
         createdAt: now,
         updatedAt: now,
+        // name이 비어있으면 현재 사용자의 displayName 사용
+        name: target.name?.trim() || displayName,
         pastWeek: {
           ...target.pastWeek,
           tasks: target.pastWeek.tasks.map((t) => ({ ...t })),
@@ -309,7 +313,7 @@ function EditSnapshotsViewInner({
 
     // 상태 업데이트 후 복제된 카드 선택
     setSelectedId(newTempId);
-  }, []);
+  }, [displayName]);
 
   // 카드 업데이트
   const handleUpdateCard = useCallback((tempId: string, updates: Partial<TempSnapshot>) => {
@@ -331,7 +335,7 @@ function EditSnapshotsViewInner({
       isDirty: true,
       createdAt: now,
       updatedAt: now,
-      name: "",
+      name: displayName,
       domain: "",
       project: "",
       module: "",
@@ -348,7 +352,7 @@ function EditSnapshotsViewInner({
     };
     setTempSnapshots((prev) => [...prev, newSnapshot]);
     setSelectedId(newSnapshot.tempId);
-  }, []);
+  }, [displayName]);
 
   // 리사이즈 핸들러
   const handleLeftResize = useCallback((delta: number) => {

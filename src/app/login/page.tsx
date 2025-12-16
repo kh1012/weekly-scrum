@@ -1,9 +1,25 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { Logo } from "@/components/weekly-scrum/common";
+
+/**
+ * PKCE 관련 에러인지 확인하고 사용자 친화적 메시지로 변환
+ */
+function getErrorMessage(error: string): string {
+  // PKCE code verifier 오류
+  if (error.includes("code verifier") || error.includes("code_verifier")) {
+    return "로그인 링크를 다른 브라우저나 디바이스에서 열었습니다. 이메일 링크를 요청한 동일한 브라우저에서 열어주세요.";
+  }
+  // 만료된 링크
+  if (error.includes("expired") || error.includes("invalid")) {
+    return "로그인 링크가 만료되었거나 유효하지 않습니다. 다시 시도해주세요.";
+  }
+  // 기타 오류는 원문 그대로
+  return error;
+}
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -14,6 +30,17 @@ function LoginForm() {
   } | null>(null);
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/";
+  const errorFromCallback = searchParams.get("error");
+
+  // URL에서 전달된 에러가 있으면 표시
+  useEffect(() => {
+    if (errorFromCallback) {
+      setMessage({
+        type: "error",
+        text: getErrorMessage(errorFromCallback),
+      });
+    }
+  }, [errorFromCallback]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
