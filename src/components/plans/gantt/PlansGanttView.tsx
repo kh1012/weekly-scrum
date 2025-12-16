@@ -6,6 +6,7 @@ import { useGanttLayout, TREE_WIDTH } from "./useGanttLayout";
 import { buildTreeFromPlans, flattenTree, getAllNodeIds } from "./buildTree";
 import { TreePanel } from "./TreePanel";
 import { TimelineGrid } from "./TimelineGrid";
+import { CalendarIcon, ListIcon, LightbulbIcon, CalendarDaysIcon } from "@/components/common/Icons";
 
 /**
  * Plans 간트 뷰 컴포넌트
@@ -138,10 +139,8 @@ export function PlansGanttView({
 
   return (
     <div
-      className="flex flex-col rounded-xl overflow-hidden border"
+      className="flex flex-col rounded-xl overflow-hidden border flex-1"
       style={{
-        // GNB(64px) + 배너(48px) + 헤더(80px) + 여백(48px) = 약 240px
-        height: "calc(100vh - 320px)",
         minHeight: 300,
         background: "var(--notion-bg)",
         borderColor: "var(--notion-border)",
@@ -179,8 +178,8 @@ export function PlansGanttView({
           className="flex items-center gap-4 text-xs"
           style={{ color: "var(--notion-text-muted)" }}
         >
-          <span>
-            📅{" "}
+          <span className="flex items-center gap-1">
+            <CalendarIcon className="w-3.5 h-3.5" />
             {rangeStart.toLocaleDateString("ko-KR", {
               month: "long",
               day: "numeric",
@@ -191,13 +190,17 @@ export function PlansGanttView({
               day: "numeric",
             })}
           </span>
-          <span>📋 {plans.length}개 계획</span>
+          <span className="flex items-center gap-1">
+            <ListIcon className="w-3.5 h-3.5" />
+            {plans.length}개 계획
+          </span>
           {isAdmin && (
             <span
-              className="text-[10px]"
+              className="flex items-center gap-1 text-[10px]"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              💡 + 클릭 생성 · 드래그 이동 · 더블클릭 편집
+              <LightbulbIcon className="w-3 h-3" />
+              + 클릭 생성 · 드래그 이동 · 더블클릭 편집
             </span>
           )}
         </div>
@@ -245,12 +248,12 @@ export function PlansGanttView({
           style={{ left: TREE_WIDTH }}
         >
           <div className="text-center">
-            <p
-              className="text-lg"
+            <div
+              className="flex justify-center"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              📆
-            </p>
+              <CalendarDaysIcon className="w-8 h-8" />
+            </div>
             <p
               className="mt-2 text-sm"
               style={{ color: "var(--notion-text-muted)" }}
