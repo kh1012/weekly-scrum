@@ -7,9 +7,8 @@ export interface QuickCreatePopoverProps {
   position: { x: number; y: number };
   /** 선택된 날짜 */
   date: Date;
-  /** 컨텍스트 정보 (domain/project/module/feature) */
+  /** 컨텍스트 정보 (project/module/feature) */
   context: {
-    domain: string;
     project: string;
     module: string;
     feature: string;

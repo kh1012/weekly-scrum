@@ -492,11 +492,9 @@ export async function duplicatePlanAction(
  * - type='feature'
  * - title='새 계획'
  * - stage='컨셉 기획'
- * - status='진행중'
  * - start_date=클릭한 날짜, end_date=start_date+1일
  */
 export interface CreateDraftAtCellInput {
-  domain: string;
   project: string;
   module: string;
   feature: string;
@@ -533,7 +531,7 @@ export async function createDraftPlanAtCellAction(
       title: "새 계획",
       stage: "컨셉 기획",
       status: "진행중" as PlanStatus,
-      domain: input.domain,
+      domain: null, // domain은 더 이상 사용하지 않음
       project: input.project,
       module: input.module,
       feature: input.feature,
@@ -564,7 +562,6 @@ export async function createDraftPlanAtCellAction(
  */
 export interface QuickCreatePlanInput {
   title: string;
-  domain: string;
   project: string;
   module: string;
   feature: string;
@@ -601,7 +598,7 @@ export async function quickCreatePlanAction(
       title: input.title,
       stage: "컨셉 기획",
       status: "진행중" as PlanStatus,
-      domain: input.domain,
+      domain: null, // domain은 더 이상 사용하지 않음
       project: input.project,
       module: input.module,
       feature: input.feature,

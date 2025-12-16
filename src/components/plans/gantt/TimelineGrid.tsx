@@ -29,7 +29,6 @@ interface TimelineGridProps {
   onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
   /** Quick Create 핸들러 (Airbnb 스타일) */
   onQuickCreate?: (context: {
-    domain: string;
     project: string;
     module: string;
     feature: string;
@@ -46,7 +45,6 @@ interface PopoverState {
   position: { x: number; y: number };
   date: Date;
   context: {
-    domain: string;
     project: string;
     module: string;
     feature: string;

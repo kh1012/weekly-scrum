@@ -11,7 +11,6 @@ interface PageProps {
     type?: string;
     status?: string;
     stage?: string;
-    domain?: string;
     project?: string;
     module?: string;
     feature?: string;
@@ -42,7 +41,6 @@ function parseFiltersFromParams(params: Awaited<PageProps["searchParams"]>): Pla
   if (params.type) filters.type = params.type as PlanType;
   if (params.status) filters.status = params.status as PlanStatus;
   if (params.stage) filters.stage = params.stage;
-  if (params.domain) filters.domain = params.domain;
   if (params.project) filters.project = params.project;
   if (params.module) filters.module = params.module;
   if (params.feature) filters.feature = params.feature;

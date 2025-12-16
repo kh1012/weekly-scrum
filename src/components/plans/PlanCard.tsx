@@ -95,11 +95,6 @@ export function PlanCard({ plan, mode, onStatusChange }: PlanCardProps) {
             className="flex flex-wrap gap-1 mt-1.5"
             style={{ color: "var(--notion-text-muted)" }}
           >
-            {plan.domain && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100">
-                {plan.domain}
-              </span>
-            )}
             {plan.project && (
               <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100">
                 {plan.project}

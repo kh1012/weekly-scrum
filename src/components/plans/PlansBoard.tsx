@@ -96,7 +96,6 @@ export function PlansBoard({
       if (newFilters.type) params.set("type", newFilters.type);
       if (newFilters.status) params.set("status", newFilters.status);
       if (newFilters.stage) params.set("stage", newFilters.stage);
-      if (newFilters.domain) params.set("domain", newFilters.domain);
       if (newFilters.project) params.set("project", newFilters.project);
       if (newFilters.module) params.set("module", newFilters.module);
       if (newFilters.feature) params.set("feature", newFilters.feature);
@@ -148,14 +147,12 @@ export function PlansBoard({
   // Draft Plan 생성 (셀 클릭)
   const handleCreateDraftAtCell = useCallback(
     async (context: {
-      domain: string;
       project: string;
       module: string;
       feature: string;
       date: Date;
     }) => {
       const result = await createDraftPlanAtCellAction({
-        domain: context.domain,
         project: context.project,
         module: context.module,
         feature: context.feature,
@@ -194,7 +191,6 @@ export function PlansBoard({
   // Quick Create
   const handleQuickCreate = useCallback(
     async (context: {
-      domain: string;
       project: string;
       module: string;
       feature: string;
@@ -203,7 +199,6 @@ export function PlansBoard({
     }) => {
       const result = await quickCreatePlanAction({
         title: context.title,
-        domain: context.domain,
         project: context.project,
         module: context.module,
         feature: context.feature,

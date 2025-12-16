@@ -36,7 +36,6 @@ export interface FlatRow {
   isLeaf: boolean;
   // Feature context (plans 생성 시 사용)
   context?: {
-    domain: string;
     project: string;
     module: string;
     feature: string;
@@ -85,7 +84,6 @@ export interface PlansGanttViewProps {
   plans: PlanWithAssignees[];
   /** 기존 Draft 생성 (셀 클릭 - fallback) */
   onCreateDraftAtCell?: (context: {
-    domain: string;
     project: string;
     module: string;
     feature: string;
@@ -93,7 +91,6 @@ export interface PlansGanttViewProps {
   }) => Promise<void>;
   /** Airbnb 스타일 Quick Create (팝오버에서 title 입력) */
   onQuickCreate?: (context: {
-    domain: string;
     project: string;
     module: string;
     feature: string;

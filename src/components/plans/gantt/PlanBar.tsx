@@ -193,9 +193,9 @@ export const PlanBar = memo(function PlanBar({
   // 날짜 범위 (짧은 형태)
   const dateLabel = formatShortDateRange(plan.start_date, plan.end_date);
   
-  // 도메인 라벨 (sprint/release는 type 표시)
-  const domainLabel = plan.type === "feature" 
-    ? (plan.domain || "") 
+  // 타입 라벨 (feature는 project 표시, sprint/release는 type 표시)
+  const typeLabel = plan.type === "feature" 
+    ? (plan.project || "") 
     : plan.type === "sprint" ? "Sprint" : "Release";
 
   return (
@@ -266,14 +266,14 @@ export const PlanBar = memo(function PlanBar({
 
       {/* 콘텐츠 영역 */}
       <div className="px-2.5 py-1 flex flex-col justify-center min-w-0">
-        {/* 상단: 도메인/기간 */}
+        {/* 상단: 타입/기간 */}
         <div className="flex items-center justify-between gap-1">
-          {width > 60 && domainLabel && (
+          {width > 60 && typeLabel && (
             <span
               className="text-[9px] font-semibold uppercase tracking-wide truncate"
               style={{ color: colorStyle.text, opacity: 0.8 }}
             >
-              {domainLabel}
+              {typeLabel}
             </span>
           )}
           {width > 80 && dateLabel && (

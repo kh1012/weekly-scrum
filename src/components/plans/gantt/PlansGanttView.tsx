@@ -91,7 +91,6 @@ export function PlansGanttView({
   // Quick Create (Airbnb 스타일 - title 포함)
   const handleQuickCreate = useCallback(
     async (context: {
-      domain: string;
       project: string;
       module: string;
       feature: string;

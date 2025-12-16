@@ -11,7 +11,6 @@ interface PlanFiltersProps {
   groupBy: GroupByOption;
   onGroupByChange: (groupBy: GroupByOption) => void;
   filterOptions: {
-    domains: string[];
     projects: string[];
     modules: string[];
     features: string[];

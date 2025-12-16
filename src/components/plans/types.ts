@@ -21,7 +21,6 @@ export interface PlansBoardProps {
   initialPlans: PlanWithAssignees[];
   undatedPlans?: PlanWithAssignees[]; // 일정 미지정 plans
   filterOptions: {
-    domains: string[];
     projects: string[];
     modules: string[];
     features: string[];
@@ -37,7 +36,6 @@ export interface PlansBoardProps {
  */
 export interface FilterState {
   type?: PlanType;
-  domain?: string;
   project?: string;
   module?: string;
   feature?: string;
@@ -80,9 +78,10 @@ export const TYPE_CONFIG: Record<PlanType, { label: string; emoji: string; color
  * 담당자 역할 라벨
  */
 export const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  owner: { label: "담당", color: "#f59e0b" },
-  developer: { label: "개발", color: "#3b82f6" },
-  reviewer: { label: "리뷰", color: "#10b981" },
-  stakeholder: { label: "이해관계자", color: "#6b7280" },
+  planner: { label: "기획", color: "#f59e0b" },
+  fe: { label: "FE", color: "#3b82f6" },
+  be: { label: "BE", color: "#10b981" },
+  designer: { label: "디자인", color: "#ec4899" },
+  qa: { label: "검증", color: "#6b7280" },
 };
 

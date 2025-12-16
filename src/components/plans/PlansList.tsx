@@ -43,7 +43,6 @@ function applyClientFilters(
   return plans.filter((plan) => {
     if (filters.type && plan.type !== filters.type) return false;
     if (filters.status && plan.status !== filters.status) return false;
-    if (filters.domain && plan.domain !== filters.domain) return false;
     if (filters.project && plan.project !== filters.project) return false;
     if (filters.module && plan.module !== filters.module) return false;
     if (filters.feature && plan.feature !== filters.feature) return false;

@@ -156,7 +156,6 @@ export function flattenTree(
     let context: FlatRow["context"] = undefined;
     if (node.type === "feature" && node.project && node.module && node.feature) {
       context = {
-        domain: node.project, // domain = project로 가정 (필요시 수정)
         project: node.project,
         module: node.module,
         feature: node.feature,
