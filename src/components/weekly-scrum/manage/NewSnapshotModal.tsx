@@ -38,6 +38,17 @@ export function NewSnapshotModal({
 
   const handleGoToManagement = () => {
     onClose();
+    // 현재 주차 정보를 localStorage에 저장하여 스냅샷 관리 페이지에서 해당 주차 선택
+    try {
+      const stateToSave = {
+        selectedYear: year,
+        selectedWeek: week,
+        viewMode: "grid",
+      };
+      localStorage.setItem("snapshots-main-view-state", JSON.stringify(stateToSave));
+    } catch {
+      // localStorage 사용 불가 시 무시
+    }
     navigationProgress.start();
     router.push("/manage/snapshots");
   };
