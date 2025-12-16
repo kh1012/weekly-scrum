@@ -961,17 +961,17 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   const gridCols = singleColumn ? "grid-cols-1" : "grid-cols-2";
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-slate-50/80 to-white">
-      {/* 헤더 - 전체 너비 border */}
-      <div className="h-11 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm shrink-0 shadow-sm">
+    <div className="flex flex-col bg-gradient-to-b from-slate-50/80 to-white min-h-0">
+      {/* 헤더 - PlainTextPreview와 높이 동일 (h-12) */}
+      <div className="h-12 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm shrink-0 shadow-sm">
         <div className="h-full px-4 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
           <span className="text-sm font-semibold text-gray-800">스냅샷 편집</span>
         </div>
       </div>
 
-      {/* 콘텐츠 영역 - 스크롤 가능, 전체 너비 */}
-      <div className={`flex-1 overflow-y-auto ${contentPadding} flex flex-col ${sectionGap}`}>
+      {/* 콘텐츠 영역 - 동적 높이, overflow-y-auto */}
+      <div className={`flex-1 overflow-y-auto min-h-0 ${contentPadding} flex flex-col ${sectionGap}`}>
         {/* 메타 영역 */}
         <section 
           className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
