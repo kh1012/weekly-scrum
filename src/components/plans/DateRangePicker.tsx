@@ -19,12 +19,15 @@ interface DateRangePickerProps {
   startMonth: string; // YYYY-MM
   endMonth: string; // YYYY-MM
   onChange: (startMonth: string, endMonth: string) => void;
+  /** 최소화된 헤더용 압축 모드 */
+  compact?: boolean;
 }
 
 export function DateRangePicker({
   startMonth,
   endMonth,
   onChange,
+  compact = false,
 }: DateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewYear, setViewYear] = useState(() =>
@@ -153,6 +156,11 @@ export function DateRangePicker({
     const [startY, startM] = startMonth.split("-");
     const [endY, endM] = endMonth.split("-");
 
+    if (compact) {
+      // 압축 모드: 짧은 형식
+      return `${parseInt(startM)}~${parseInt(endM)}월`;
+    }
+
     if (startY === endY) {
       return `${startY}년 ${parseInt(startM)}월 ~ ${parseInt(endM)}월`;
     }
@@ -164,17 +172,22 @@ export function DateRangePicker({
       <button
         ref={buttonRef}
         onClick={() => (isOpen ? setIsOpen(false) : handleOpen())}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+        className={`flex items-center transition-all ${
+          compact
+            ? "gap-1 px-2 py-1.5 rounded text-[10px]"
+            : "gap-2 px-3 py-1.5 rounded-lg text-sm font-medium"
+        }`}
         style={{
           background: "var(--notion-bg-secondary)",
           border: "1px solid var(--notion-border)",
           color: "var(--notion-text)",
         }}
+        title={compact ? formatDisplay() : undefined}
       >
-        <CalendarIcon size={14} />
+        <CalendarIcon size={compact ? 10 : 14} />
         <span>{formatDisplay()}</span>
         <ChevronDownIcon
-          size={12}
+          size={compact ? 8 : 12}
           className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>

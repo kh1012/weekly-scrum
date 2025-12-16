@@ -106,10 +106,11 @@ export const ClockIcon = createIcon([
   "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
 ]);
 
-// 화살표 (좌/우)
+// 화살표 (좌/우/상/하)
 export const ChevronLeftIcon = createIcon(["M15 19l-7-7 7-7"]);
 export const ChevronRightIcon = createIcon(["M9 5l7 7-7 7"]);
 export const ChevronDownIcon = createIcon(["M19 9l-7 7-7-7"]);
+export const ChevronUpIcon = createIcon(["M5 15l7-7 7 7"]);
 
 // 휴지통
 export const TrashIcon = createIcon([

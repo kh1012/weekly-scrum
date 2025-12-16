@@ -29,7 +29,8 @@ import {
   ShieldIcon,
   EyeIcon,
   SaveIcon,
-  GanttIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from "@/components/common/Icons";
 import {
   updatePlanStatusAction,
@@ -97,6 +98,24 @@ export function PlansBoard({
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // 헤더 최소화 상태
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("plans-header-collapsed") === "true";
+    }
+    return false;
+  });
+
+  // 헤더 최소화 상태 저장
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "plans-header-collapsed",
+        isHeaderCollapsed.toString()
+      );
+    }
+  }, [isHeaderCollapsed]);
+
   // 선택된 Plan (간트 뷰에서)
   const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
 
@@ -133,10 +152,10 @@ export function PlansBoard({
 
   // 임시 저장 데이터 구조
   type DraftData = {
-    creates: DraftPlanItem[];           // 새로 생성할 Plan
-    updates: PendingUpdate[];           // 수정할 Plan
-    deletes: PendingDeleteItem[];       // 삭제할 Plan
-    duplicates: string[];               // 복제할 Plan ID
+    creates: DraftPlanItem[]; // 새로 생성할 Plan
+    updates: PendingUpdate[]; // 수정할 Plan
+    deletes: PendingDeleteItem[]; // 삭제할 Plan
+    duplicates: string[]; // 복제할 Plan ID
   };
 
   // 임시 계획 (로컬 스토리지 연동)
@@ -148,7 +167,12 @@ export function PlansBoard({
           const parsed = JSON.parse(saved);
           // 기존 형식 호환 (배열 → 객체)
           if (Array.isArray(parsed)) {
-            return { creates: parsed, updates: [], deletes: [], duplicates: [] };
+            return {
+              creates: parsed,
+              updates: [],
+              deletes: [],
+              duplicates: [],
+            };
           }
           return {
             creates: parsed.creates || [],
@@ -269,7 +293,9 @@ export function PlansBoard({
   const handleStatusChange = useCallback(
     (planId: string, status: PlanStatus) => {
       setDraftData((prev) => {
-        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        const existingIndex = prev.updates.findIndex(
+          (u) => u.planId === planId
+        );
         if (existingIndex >= 0) {
           const updates = [...prev.updates];
           updates[existingIndex] = {
@@ -288,26 +314,23 @@ export function PlansBoard({
   );
 
   // Stage 변경 (임시 저장)
-  const handleStageChange = useCallback(
-    (planId: string, stage: string) => {
-      setDraftData((prev) => {
-        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
-        if (existingIndex >= 0) {
-          const updates = [...prev.updates];
-          updates[existingIndex] = {
-            ...updates[existingIndex],
-            changes: { ...updates[existingIndex].changes, stage },
-          };
-          return { ...prev, updates };
-        }
-        return {
-          ...prev,
-          updates: [...prev.updates, { planId, changes: { stage } }],
+  const handleStageChange = useCallback((planId: string, stage: string) => {
+    setDraftData((prev) => {
+      const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+      if (existingIndex >= 0) {
+        const updates = [...prev.updates];
+        updates[existingIndex] = {
+          ...updates[existingIndex],
+          changes: { ...updates[existingIndex].changes, stage },
         };
-      });
-    },
-    []
-  );
+        return { ...prev, updates };
+      }
+      return {
+        ...prev,
+        updates: [...prev.updates, { planId, changes: { stage } }],
+      };
+    });
+  }, []);
 
   // Draft Plan 생성 (셀 클릭) - 임시 저장
   const handleCreateDraftAtCell = useCallback(
@@ -341,7 +364,9 @@ export function PlansBoard({
   const handleResizePlan = useCallback(
     (planId: string, startDate: string, endDate: string) => {
       setDraftData((prev) => {
-        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        const existingIndex = prev.updates.findIndex(
+          (u) => u.planId === planId
+        );
         if (existingIndex >= 0) {
           const updates = [...prev.updates];
           updates[existingIndex] = {
@@ -399,7 +424,9 @@ export function PlansBoard({
   const handleMovePlan = useCallback(
     (planId: string, startDate: string, endDate: string) => {
       setDraftData((prev) => {
-        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        const existingIndex = prev.updates.findIndex(
+          (u) => u.planId === planId
+        );
         if (existingIndex >= 0) {
           const updates = [...prev.updates];
           updates[existingIndex] = {
@@ -425,26 +452,23 @@ export function PlansBoard({
   );
 
   // Title Update (임시 저장)
-  const handleTitleUpdate = useCallback(
-    (planId: string, newTitle: string) => {
-      setDraftData((prev) => {
-        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
-        if (existingIndex >= 0) {
-          const updates = [...prev.updates];
-          updates[existingIndex] = {
-            ...updates[existingIndex],
-            changes: { ...updates[existingIndex].changes, title: newTitle },
-          };
-          return { ...prev, updates };
-        }
-        return {
-          ...prev,
-          updates: [...prev.updates, { planId, changes: { title: newTitle } }],
+  const handleTitleUpdate = useCallback((planId: string, newTitle: string) => {
+    setDraftData((prev) => {
+      const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+      if (existingIndex >= 0) {
+        const updates = [...prev.updates];
+        updates[existingIndex] = {
+          ...updates[existingIndex],
+          changes: { ...updates[existingIndex].changes, title: newTitle },
         };
-      });
-    },
-    []
-  );
+        return { ...prev, updates };
+      }
+      return {
+        ...prev,
+        updates: [...prev.updates, { planId, changes: { title: newTitle } }],
+      };
+    });
+  }, []);
 
   // Plan 열기
   const handleOpenPlan = useCallback((planId: string) => {
@@ -532,7 +556,7 @@ export function PlansBoard({
       // 2. 수정 처리
       for (const update of draftData.updates) {
         const { planId, changes } = update;
-        
+
         // 상태 변경
         if (changes.status) {
           await updatePlanStatusAction(planId, changes.status);
@@ -634,13 +658,13 @@ export function PlansBoard({
   // Undo 처리 (임시 삭제 취소)
   const handleUndo = useCallback(() => {
     if (!pendingDelete) return;
-    
+
     // 임시 삭제 목록에서 제거
     setDraftData((prev) => ({
       ...prev,
       deletes: prev.deletes.filter((d) => d.planId !== pendingDelete.planId),
     }));
-    
+
     setPendingDelete(null);
     setShowUndoSnackbar(false);
   }, [pendingDelete]);
@@ -652,16 +676,13 @@ export function PlansBoard({
   }, []);
 
   // ===== STEP D: Duplicate (임시 저장) =====
-  const handleDuplicate = useCallback(
-    (planId: string) => {
-      // 임시 복제 목록에 추가
-      setDraftData((prev) => ({
-        ...prev,
-        duplicates: [...prev.duplicates, planId],
-      }));
-    },
-    []
-  );
+  const handleDuplicate = useCallback((planId: string) => {
+    // 임시 복제 목록에 추가
+    setDraftData((prev) => ({
+      ...prev,
+      duplicates: [...prev.duplicates, planId],
+    }));
+  }, []);
 
   // ===== STEP E: Command Palette =====
   const handleCommandPalette = useCallback(() => {
@@ -818,7 +839,7 @@ export function PlansBoard({
   const visiblePlans = useMemo(() => {
     // 임시 삭제 목록의 ID들
     const deletedIds = new Set(draftData.deletes.map((d) => d.planId));
-    
+
     // 삭제되지 않은 Plan들만 필터링하고, 임시 수정 사항 반영
     return initialPlans
       .filter((p) => !deletedIds.has(p.id))
@@ -851,99 +872,204 @@ export function PlansBoard({
   }).length;
 
   return (
-    <div className="h-auto flex flex-col gap-4">
-      {/* 헤더 영역 */}
+    <div className="h-auto flex flex-col">
+      {/* 헤더 영역 - 최소화 가능 */}
       <div
-        className="flex-shrink-0 px-5 py-4 border-b"
+        className="flex-shrink-0 border-b transition-all duration-200"
         style={{
           background: "var(--notion-bg)",
           borderColor: "var(--notion-border)",
         }}
       >
-        {/* 상단: 제목 + 모드 배너 + 저장 버튼 */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, #F76D57, #f9a88b)",
-              }}
-            >
-              <CalendarIcon size={20} className="text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1
-                  className="text-lg font-semibold"
-                  style={{ color: "var(--notion-text)" }}
-                >
-                  {isAdmin ? "All Plans" : "Plans"}
-                </h1>
+        {/* 최소화된 상태: 한 줄로 압축 */}
+        {isHeaderCollapsed ? (
+          <div className="flex items-center justify-between px-4 py-2">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, #F76D57, #f9a88b)",
+                }}
+              >
+                <CalendarIcon size={14} className="text-white" />
+              </div>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--notion-text)" }}
+              >
+                {isAdmin ? "All Plans" : "Plans"}
+              </span>
+              <span
+                className="text-xs px-1.5 py-0.5 rounded"
+                style={{
+                  background: "var(--notion-bg-secondary)",
+                  color: "var(--notion-text-muted)",
+                }}
+              >
+                {filteredCount}개
+              </span>
+              {isAdmin && (
                 <span
-                  className="text-xs px-2 py-0.5 rounded-full"
+                  className="text-[10px] px-1.5 py-0.5 rounded"
                   style={{
-                    background: "var(--notion-bg-secondary)",
-                    color: "var(--notion-text-muted)",
+                    background: "rgba(247, 109, 87, 0.1)",
+                    color: "#F76D57",
                   }}
                 >
-                  {isPending ? "로딩 중..." : `${filteredCount}개`}
+                  {modKey}+K
                 </span>
-              </div>
-              <p
-                className="text-xs mt-0.5"
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* 간트 필터 (압축) */}
+              <GanttFilters
+                filters={ganttFilters}
+                onChange={setGanttFilters}
+                compact
+              />
+
+              {/* 기간 설정 (압축) */}
+              <DateRangePicker
+                startMonth={startMonth}
+                endMonth={endMonth}
+                onChange={handleDateRangeChange}
+                compact
+              />
+
+              {/* 저장 버튼 */}
+              {isAdmin && hasUnsavedChanges && (
+                <button
+                  onClick={handleSaveAll}
+                  disabled={isSaving}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: isSaving
+                      ? "var(--notion-bg-secondary)"
+                      : "linear-gradient(135deg, #10b981, #34d399)",
+                    color: isSaving ? "var(--notion-text-muted)" : "white",
+                  }}
+                >
+                  <SaveIcon size={12} />
+                  {isSaving ? "저장..." : `저장 (${totalChanges})`}
+                </button>
+              )}
+
+              {/* 새 계획 버튼 */}
+              {isAdmin && <CreatePlanPopover compact />}
+
+              {/* 확장 버튼 */}
+              <button
+                onClick={() => setIsHeaderCollapsed(false)}
+                className="p-1.5 rounded-lg hover:bg-black/5 transition-colors"
                 style={{ color: "var(--notion-text-muted)" }}
+                title="헤더 확장"
               >
-                {isAdmin ? (
-                  <span className="flex items-center gap-1.5">
-                    <ShieldIcon size={12} style={{ color: "#F76D57" }} />
-                    관리자 모드 — {modKey}+K 커맨드
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5">
-                    <EyeIcon size={12} />
-                    읽기 전용
-                  </span>
-                )}
-              </p>
+                <ChevronDownIcon size={16} />
+              </button>
             </div>
           </div>
+        ) : (
+          /* 확장된 상태: 기존 레이아웃 */
+          <div className="px-5 py-4">
+            {/* 상단: 제목 + 모드 배너 + 저장 버튼 */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg, #F76D57, #f9a88b)",
+                  }}
+                >
+                  <CalendarIcon size={20} className="text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1
+                      className="text-lg font-semibold"
+                      style={{ color: "var(--notion-text)" }}
+                    >
+                      {isAdmin ? "All Plans" : "Plans"}
+                    </h1>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{
+                        background: "var(--notion-bg-secondary)",
+                        color: "var(--notion-text-muted)",
+                      }}
+                    >
+                      {isPending ? "로딩 중..." : `${filteredCount}개`}
+                    </span>
+                  </div>
+                  <p
+                    className="text-xs mt-0.5"
+                    style={{ color: "var(--notion-text-muted)" }}
+                  >
+                    {isAdmin ? (
+                      <span className="flex items-center gap-1.5">
+                        <ShieldIcon size={12} style={{ color: "#F76D57" }} />
+                        관리자 모드 — {modKey}+K 커맨드
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5">
+                        <EyeIcon size={12} />
+                        읽기 전용
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
 
-          {/* 우측: 저장 버튼 (임시 데이터 있을 때만) */}
-          {isAdmin && hasUnsavedChanges && (
-            <button
-              onClick={handleSaveAll}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:shadow-lg"
-              style={{
-                background: isSaving
-                  ? "var(--notion-bg-secondary)"
-                  : "linear-gradient(135deg, #10b981, #34d399)",
-                color: isSaving ? "var(--notion-text-muted)" : "white",
-              }}
-            >
-              <SaveIcon size={16} />
-              {isSaving ? "저장 중..." : `저장하기 (${totalChanges})`}
-            </button>
-          )}
-        </div>
+              <div className="flex items-center gap-3">
+                {/* 저장 버튼 (임시 데이터 있을 때만) */}
+                {isAdmin && hasUnsavedChanges && (
+                  <button
+                    onClick={handleSaveAll}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:shadow-lg"
+                    style={{
+                      background: isSaving
+                        ? "var(--notion-bg-secondary)"
+                        : "linear-gradient(135deg, #10b981, #34d399)",
+                      color: isSaving ? "var(--notion-text-muted)" : "white",
+                    }}
+                  >
+                    <SaveIcon size={16} />
+                    {isSaving ? "저장 중..." : `저장하기 (${totalChanges})`}
+                  </button>
+                )}
 
-        {/* 하단: 필터 + 기간 설정 + 계획 등록 */}
-        <div className="flex items-center justify-between">
-          {/* 간트 필터 */}
-          <GanttFilters filters={ganttFilters} onChange={setGanttFilters} />
+                {/* 최소화 버튼 */}
+                <button
+                  onClick={() => setIsHeaderCollapsed(true)}
+                  className="p-2 rounded-lg hover:bg-black/5 transition-colors"
+                  style={{ color: "var(--notion-text-muted)" }}
+                  title="헤더 최소화"
+                >
+                  <ChevronUpIcon size={18} />
+                </button>
+              </div>
+            </div>
 
-          <div className="flex items-center gap-3">
-            {/* 기간 설정 */}
-            <DateRangePicker
-              startMonth={startMonth}
-              endMonth={endMonth}
-              onChange={handleDateRangeChange}
-            />
+            {/* 하단: 필터 + 기간 설정 + 계획 등록 */}
+            <div className="flex items-center justify-between">
+              {/* 간트 필터 */}
+              <GanttFilters filters={ganttFilters} onChange={setGanttFilters} />
 
-            {/* 새 계획 버튼 (admin 모드만) - 팝오버 */}
-            {isAdmin && <CreatePlanPopover />}
+              <div className="flex items-center gap-3">
+                {/* 기간 설정 */}
+                <DateRangePicker
+                  startMonth={startMonth}
+                  endMonth={endMonth}
+                  onChange={handleDateRangeChange}
+                />
+
+                {/* 새 계획 버튼 (admin 모드만) - 팝오버 */}
+                {isAdmin && <CreatePlanPopover />}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 간트 뷰 */}

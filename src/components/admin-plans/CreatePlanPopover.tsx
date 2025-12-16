@@ -36,7 +36,12 @@ const STAGE_OPTIONS = [
   "QA",
 ];
 
-export function CreatePlanPopover() {
+interface CreatePlanPopoverProps {
+  /** 최소화된 헤더용 압축 모드 */
+  compact?: boolean;
+}
+
+export function CreatePlanPopover({ compact = false }: CreatePlanPopoverProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -246,14 +251,19 @@ export function CreatePlanPopover() {
       <button
         ref={buttonRef}
         onClick={() => (isOpen ? handleClose() : handleOpen())}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-[#F76D57]/20"
+        className={`flex items-center transition-all duration-200 hover:shadow-lg hover:shadow-[#F76D57]/20 ${
+          compact
+            ? "gap-1 px-2 py-1.5 rounded-lg text-xs font-medium"
+            : "gap-2 px-4 py-2 rounded-xl text-sm font-medium"
+        }`}
         style={{
           background: "linear-gradient(135deg, #F76D57, #f9a88b)",
           color: "white",
         }}
+        title={compact ? "계획 등록" : undefined}
       >
         <svg
-          className="w-4 h-4"
+          className={compact ? "w-3 h-3" : "w-4 h-4"}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -265,7 +275,7 @@ export function CreatePlanPopover() {
             d="M12 4v16m8-8H4"
           />
         </svg>
-        계획 등록
+        {compact ? "등록" : "계획 등록"}
       </button>
 
       {/* 팝오버 */}
