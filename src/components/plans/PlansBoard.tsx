@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useTransition, useCallback, useMemo } from "react";
+import { useState, useTransition, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { MonthSelector } from "./MonthSelector";
-import { PlanFilters } from "./PlanFilters";
-import { PlansList } from "./PlansList";
+import { DateRangePicker } from "./DateRangePicker";
+import { GanttFilters, defaultGanttFilters, type GanttFilterState } from "./GanttFilters";
 import { PlansGanttView } from "./gantt";
 import {
   UndoSnackbar,
@@ -17,10 +15,18 @@ import {
   type CommandItem,
 } from "@/components/admin-plans";
 import {
+  CalendarIcon,
+  ShieldIcon,
+  EyeIcon,
+  SaveIcon,
+  GanttIcon,
+} from "@/components/common/Icons";
+import {
   updatePlanStatusAction,
   createDraftPlanAtCellAction,
   resizePlanAction,
   quickCreatePlanAction,
+  createPlanAction,
   movePlanAction,
   updatePlanTitleAction,
   deletePlanAction,
@@ -29,9 +35,6 @@ import {
 } from "@/lib/actions/plans";
 import type { PlansBoardProps, FilterState, GroupByOption } from "./types";
 import type { PlanStatus } from "@/lib/data/plans";
-
-type ViewMode = "list" | "gantt";
-type MonthRangeOption = 3 | 4 | 5 | 6;
 
 /** 삭제 대기 상태 */
 interface PendingDelete {
@@ -57,17 +60,34 @@ export function PlansBoard({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [selectedMonth, setSelectedMonth] = useState(initialMonth);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [groupBy, setGroupBy] = useState<GroupByOption>("none");
-  const [viewMode, setViewMode] = useState<ViewMode>("gantt");
-  const [monthRange, setMonthRange] = useState<MonthRangeOption>(3);
+  const [ganttFilters, setGanttFilters] = useState<GanttFilterState>(defaultGanttFilters);
+
+  // 기간 설정 (기본: 현재 월 기준 3개월)
+  const [startMonth, setStartMonth] = useState(() => {
+    const [y, m] = initialMonth.split("-").map(Number);
+    const start = new Date(y, m - 2, 1); // 1개월 전부터
+    return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [endMonth, setEndMonth] = useState(() => {
+    const [y, m] = initialMonth.split("-").map(Number);
+    const end = new Date(y, m, 1); // 1개월 후까지
+    return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  // 로컬 스토리지 키
+  const STORAGE_KEY = "plans-draft-data";
+
+  // 저장 상태
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // 선택된 Plan (간트 뷰에서)
   const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
 
-  // 임시 계획 (클라이언트에서만 관리)
-  const [draftPlans, setDraftPlans] = useState<Array<{
+  // 임시 계획 타입
+  type DraftPlanItem = {
     tempId: string;
     type: "feature" | "sprint" | "release";
     title: string;
@@ -77,7 +97,48 @@ export function PlansBoard({
     stage?: string;
     start_date?: string;
     end_date?: string;
-  }>>([]);
+  };
+
+  // 임시 계획 (로컬 스토리지 연동)
+  const [draftPlans, setDraftPlans] = useState<DraftPlanItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
+
+  // draftPlans 변경 시 로컬 스토리지 저장 및 unsaved 상태 업데이트
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (draftPlans.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draftPlans));
+        setHasUnsavedChanges(true);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+        setHasUnsavedChanges(false);
+      }
+    }
+  }, [draftPlans, STORAGE_KEY]);
+
+  // 페이지 이탈 시 경고
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Undo 스낵바 상태
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
@@ -121,23 +182,15 @@ export function PlansBoard({
     [mode]
   );
 
-  // 월 변경
-  const handleMonthChange = (month: string) => {
-    setSelectedMonth(month);
-    startTransition(() => {
-      router.push(buildUrlWithParams(month, filters));
-    });
-  };
-
   // 필터 변경
   const handleFiltersChange = useCallback(
     (newFilters: FilterState) => {
       setFilters(newFilters);
       startTransition(() => {
-        router.push(buildUrlWithParams(selectedMonth, newFilters));
+        router.push(buildUrlWithParams(startMonth, newFilters));
       });
     },
-    [selectedMonth, buildUrlWithParams, router]
+    [startMonth, buildUrlWithParams, router]
   );
 
   // 상태 변경
@@ -289,16 +342,16 @@ export function PlansBoard({
   }, []);
 
   const handleCreateFromDraft = useCallback(
-    async (draft: typeof draftPlans[0], startDate: string, endDate: string) => {
+    async (draft: DraftPlanItem, startDate: string, endDate: string) => {
       const isFeature = draft.type === "feature";
       
-      await quickCreatePlanAction({
+      await createPlanAction({
         type: draft.type,
         title: draft.title,
-        stage: isFeature ? draft.stage : "",
-        project: isFeature ? draft.project : undefined,
-        module: isFeature ? draft.module : undefined,
-        feature: isFeature ? draft.feature : undefined,
+        stage: isFeature ? (draft.stage || "") : "",
+        project: isFeature ? (draft.project || "") : undefined,
+        module: isFeature ? (draft.module || "") : undefined,
+        feature: isFeature ? (draft.feature || "") : undefined,
         start_date: startDate,
         end_date: endDate,
       });
@@ -313,6 +366,50 @@ export function PlansBoard({
     },
     [router, handleRemoveDraftPlan]
   );
+
+  // ===== 저장하기 (모든 임시 계획을 실제 생성) =====
+  const handleSaveAll = useCallback(async () => {
+    if (draftPlans.length === 0) return;
+    
+    setIsSaving(true);
+    
+    try {
+      for (const draft of draftPlans) {
+        const isFeature = draft.type === "feature";
+        
+        await createPlanAction({
+          type: draft.type,
+          title: draft.title,
+          stage: isFeature ? (draft.stage || "") : "",
+          project: isFeature ? (draft.project || "") : undefined,
+          module: isFeature ? (draft.module || "") : undefined,
+          feature: isFeature ? (draft.feature || "") : undefined,
+          start_date: draft.start_date,
+          end_date: draft.end_date,
+        });
+      }
+
+      // 임시 데이터 비우기
+      setDraftPlans([]);
+      localStorage.removeItem(STORAGE_KEY);
+      setHasUnsavedChanges(false);
+
+      // 새로고침
+      startTransition(() => {
+        router.refresh();
+      });
+
+      // 토스트 표시 (UndoSnackbar 재활용)
+      setPendingDelete({ planId: "", planTitle: `${draftPlans.length}개 계획이 저장되었습니다` });
+      setShowUndoSnackbar(true);
+      setTimeout(() => setShowUndoSnackbar(false), 3000);
+    } catch (error) {
+      console.error("Failed to save drafts:", error);
+      alert("저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [draftPlans, router, STORAGE_KEY]);
 
   // ===== STEP C: Fast Delete + Undo =====
   const handleDelete = useCallback(
@@ -382,7 +479,7 @@ export function PlansBoard({
   // 키보드 단축키 등록
   useKeyboardShortcuts({
     selectedPlanId,
-    enabled: isAdmin && viewMode === "gantt",
+    enabled: isAdmin,
     onDelete: handleDelete,
     onDuplicate: handleDuplicate,
     onCommandPalette: handleCommandPalette,
@@ -507,18 +604,22 @@ export function PlansBoard({
     ]
   );
 
-  // 날짜 범위 계산
-  const getMultiMonthRange = () => {
-    const [year, month] = selectedMonth.split("-").map(Number);
-    const monthsBefore = Math.floor((monthRange - 1) / 2);
-    const monthsAfter = monthRange - 1 - monthsBefore;
+  // 날짜 범위 계산 (DateRangePicker에서 선택한 기간)
+  const rangeStart = useMemo(() => {
+    const [y, m] = startMonth.split("-").map(Number);
+    return new Date(y, m - 1, 1);
+  }, [startMonth]);
 
-    const rangeStart = new Date(year, month - 1 - monthsBefore, 1);
-    const rangeEnd = new Date(year, month + monthsAfter, 0);
-    return { rangeStart, rangeEnd };
-  };
+  const rangeEnd = useMemo(() => {
+    const [y, m] = endMonth.split("-").map(Number);
+    return new Date(y, m, 0); // 해당 월의 마지막 날
+  }, [endMonth]);
 
-  const { rangeStart, rangeEnd } = getMultiMonthRange();
+  // 기간 변경 핸들러
+  const handleDateRangeChange = useCallback((newStart: string, newEnd: string) => {
+    setStartMonth(newStart);
+    setEndMonth(newEnd);
+  }, []);
 
   // 삭제 대기 중인 Plan 필터링
   const visiblePlans = useMemo(() => {
@@ -539,345 +640,122 @@ export function PlansBoard({
   }).length;
 
   return (
-    <div className="space-y-6">
-      {/* 모드 배너 */}
-      {isAdmin ? (
-        <div
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(247, 109, 87, 0.08), rgba(249, 235, 178, 0.05))",
-            border: "1px solid rgba(247, 109, 87, 0.15)",
-            color: "#c94a3a",
-          }}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-            />
-          </svg>
-          <span className="font-medium">관리자 전용</span>
-          <span style={{ color: "var(--notion-text-muted)" }}>—</span>
-          <span
-            className="text-xs"
-            style={{ color: "var(--notion-text-muted)" }}
-          >
-            {modKey}+K 커맨드 · Del 삭제 · {modKey}+D 복제
-          </span>
-        </div>
-      ) : (
-        <div
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm"
-          style={{
-            background: "rgba(107, 114, 128, 0.06)",
-            border: "1px solid rgba(107, 114, 128, 0.1)",
-            color: "#6b7280",
-          }}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            />
-          </svg>
-          <span className="font-medium">읽기 전용</span>
-          <span style={{ color: "var(--notion-text-muted)" }}>
-            — 계획을 조회만 할 수 있습니다.
-          </span>
-        </div>
-      )}
-
-      {/* 헤더 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">📆</span>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1
-                className="text-xl font-semibold"
-                style={{ color: "var(--notion-text)" }}
-              >
-                {isAdmin ? "All Plans" : "Plans"}
-              </h1>
-              {selectedPlan && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium animate-in fade-in-0 duration-150"
-                  style={{
-                    background: "rgba(59, 130, 246, 0.1)",
-                    color: "#3b82f6",
-                  }}
-                >
-                  선택: {selectedPlan.title}
-                </span>
-              )}
-            </div>
-            <p
-              className="text-sm mt-0.5"
-              style={{ color: "var(--notion-text-muted)" }}
-            >
-              {isPending
-                ? "로딩 중..."
-                : `${filteredCount}개 / 전체 ${totalCount}개`}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* 뷰 모드 전환 */}
-          <div
-            className="flex rounded-lg overflow-hidden"
-            style={{
-              background: "var(--notion-bg-secondary)",
-              border: "1px solid var(--notion-border)",
-            }}
-          >
-            <button
-              onClick={() => setViewMode("gantt")}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
-              style={{
-                background:
-                  viewMode === "gantt" ? "var(--notion-bg)" : "transparent",
-                color:
-                  viewMode === "gantt"
-                    ? "var(--notion-text)"
-                    : "var(--notion-text-muted)",
-                boxShadow:
-                  viewMode === "gantt" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-              }}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 6h16M4 10h8m-8 4h10m-10 4h6"
-                />
-              </svg>
-              간트
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
-              style={{
-                background:
-                  viewMode === "list" ? "var(--notion-bg)" : "transparent",
-                color:
-                  viewMode === "list"
-                    ? "var(--notion-text)"
-                    : "var(--notion-text-muted)",
-                boxShadow:
-                  viewMode === "list" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-              }}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-              리스트
-            </button>
-          </div>
-
-          {/* 월 선택 */}
-          <MonthSelector
-            selectedMonth={selectedMonth}
-            onChange={handleMonthChange}
-          />
-
-          {/* 개월 수 선택 (간트 뷰에서만 표시) */}
-          {viewMode === "gantt" && (
+    <div className="h-[calc(100vh-3.5rem-1px)] flex flex-col">
+      {/* 헤더 영역 */}
+      <div
+        className="flex-shrink-0 px-5 py-4 border-b"
+        style={{
+          background: "var(--notion-bg)",
+          borderColor: "var(--notion-border)",
+        }}
+      >
+        {/* 상단: 제목 + 모드 배너 + 저장 버튼 */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
             <div
-              className="flex items-center rounded-lg overflow-hidden"
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{
-                background: "var(--notion-bg-secondary)",
-                border: "1px solid var(--notion-border)",
+                background: "linear-gradient(135deg, #F76D57, #f9a88b)",
               }}
             >
-              {([3, 4, 5, 6] as MonthRangeOption[]).map((num) => (
-                <button
-                  key={num}
-                  onClick={() => setMonthRange(num)}
-                  className="px-2.5 py-1.5 text-xs font-medium transition-colors"
+              <CalendarIcon size={20} className="text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1
+                  className="text-lg font-semibold"
+                  style={{ color: "var(--notion-text)" }}
+                >
+                  {isAdmin ? "All Plans" : "Plans"}
+                </h1>
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
                   style={{
-                    background:
-                      monthRange === num ? "var(--notion-bg)" : "transparent",
-                    color:
-                      monthRange === num
-                        ? "var(--notion-text)"
-                        : "var(--notion-text-muted)",
-                    boxShadow:
-                      monthRange === num ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                    background: "var(--notion-bg-secondary)",
+                    color: "var(--notion-text-muted)",
                   }}
                 >
-                  {num}개월
-                </button>
-              ))}
+                  {isPending ? "로딩 중..." : `${filteredCount}개`}
+                </span>
+              </div>
+              <p
+                className="text-xs mt-0.5"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                {isAdmin ? (
+                  <span className="flex items-center gap-1.5">
+                    <ShieldIcon size={12} style={{ color: "#F76D57" }} />
+                    관리자 모드 — {modKey}+K 커맨드
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <EyeIcon size={12} />
+                    읽기 전용
+                  </span>
+                )}
+              </p>
             </div>
-          )}
+          </div>
 
-          {/* 새 계획 버튼 (admin 모드만) - 팝오버 */}
-          {isAdmin && <CreatePlanPopover />}
+          {/* 우측: 저장 버튼 (임시 데이터 있을 때만) */}
+          {isAdmin && hasUnsavedChanges && (
+            <button
+              onClick={handleSaveAll}
+              disabled={isSaving}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:shadow-lg"
+              style={{
+                background: isSaving
+                  ? "var(--notion-bg-secondary)"
+                  : "linear-gradient(135deg, #10b981, #34d399)",
+                color: isSaving ? "var(--notion-text-muted)" : "white",
+              }}
+            >
+              <SaveIcon size={16} />
+              {isSaving ? "저장 중..." : `저장하기 (${draftPlans.length})`}
+            </button>
+          )}
+        </div>
+
+        {/* 하단: 필터 + 기간 설정 + 계획 등록 */}
+        <div className="flex items-center justify-between">
+          {/* 간트 필터 */}
+          <GanttFilters filters={ganttFilters} onChange={setGanttFilters} />
+
+          <div className="flex items-center gap-3">
+            {/* 기간 설정 */}
+            <DateRangePicker
+              startMonth={startMonth}
+              endMonth={endMonth}
+              onChange={handleDateRangeChange}
+            />
+
+            {/* 새 계획 버튼 (admin 모드만) - 팝오버 */}
+            {isAdmin && <CreatePlanPopover />}
+          </div>
         </div>
       </div>
 
-      {/* 뷰 모드별 렌더링 */}
-      {viewMode === "gantt" ? (
-        <>
-          {/* 간트 뷰 */}
-          <PlansGanttView
-            mode={mode}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
-            plans={visiblePlans}
-            onCreateDraftAtCell={isAdmin ? handleCreateDraftAtCell : undefined}
-            onQuickCreate={isAdmin ? handleQuickCreate : undefined}
-            onResizePlan={isAdmin ? handleResizePlan : undefined}
-            onMovePlan={isAdmin ? handleMovePlan : undefined}
-            onTitleUpdate={isAdmin ? handleTitleUpdate : undefined}
-            onOpenPlan={isAdmin ? handleOpenPlan : undefined}
-            selectedPlanId={selectedPlanId}
-            onSelectPlan={handleSelectPlan}
-            draftPlans={isAdmin ? draftPlans : undefined}
-            onAddDraftPlan={isAdmin ? handleAddDraftPlan : undefined}
-            onCreateFromDraft={isAdmin ? handleCreateFromDraft : undefined}
-            onRemoveDraftPlan={isAdmin ? handleRemoveDraftPlan : undefined}
-          />
-
-          {/* 일정 미지정 */}
-          {visibleUndatedPlans.length > 0 && (
-            <section
-              className="p-4 rounded-xl border"
-              style={{
-                background: "var(--notion-bg-secondary)",
-                borderColor: "var(--notion-border)",
-              }}
-            >
-              <h2
-                className="text-sm font-semibold mb-4 flex items-center gap-2"
-                style={{ color: "var(--notion-text-muted)" }}
-              >
-                ⏳ 일정 미지정
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full"
-                  style={{
-                    background: "rgba(245, 158, 11, 0.1)",
-                    color: "#f59e0b",
-                  }}
-                >
-                  {visibleUndatedPlans.length}
-                </span>
-              </h2>
-              <PlansList
-                plans={visibleUndatedPlans}
-                mode={mode}
-                groupBy="none"
-                filters={{}}
-                onStatusChange={isAdmin ? handleStatusChange : undefined}
-              />
-            </section>
-          )}
-        </>
-      ) : (
-        <>
-          {/* 리스트 뷰 */}
-          <PlanFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            groupBy={groupBy}
-            onGroupByChange={setGroupBy}
-            filterOptions={filterOptions}
-            members={members}
-          />
-
-          <div className="space-y-8">
-            <section>
-              <h2
-                className="text-sm font-semibold mb-4 flex items-center gap-2"
-                style={{ color: "var(--notion-text-muted)" }}
-              >
-                📅 {selectedMonth} 계획
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full"
-                  style={{
-                    background: "rgba(59, 130, 246, 0.1)",
-                    color: "#3b82f6",
-                  }}
-                >
-                  {visiblePlans.length}
-                </span>
-              </h2>
-              <PlansList
-                plans={visiblePlans}
-                mode={mode}
-                groupBy={groupBy}
-                filters={filters}
-                onStatusChange={isAdmin ? handleStatusChange : undefined}
-              />
-            </section>
-
-            {visibleUndatedPlans.length > 0 && (
-              <section>
-                <h2
-                  className="text-sm font-semibold mb-4 flex items-center gap-2"
-                  style={{ color: "var(--notion-text-muted)" }}
-                >
-                  ⏳ 일정 미지정
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{
-                      background: "rgba(245, 158, 11, 0.1)",
-                      color: "#f59e0b",
-                    }}
-                  >
-                    {visibleUndatedPlans.length}
-                  </span>
-                </h2>
-                <PlansList
-                  plans={visibleUndatedPlans}
-                  mode={mode}
-                  groupBy={groupBy}
-                  filters={filters}
-                  onStatusChange={isAdmin ? handleStatusChange : undefined}
-                />
-              </section>
-            )}
-          </div>
-        </>
-      )}
+      {/* 간트 뷰 */}
+      <div className="flex-1 overflow-hidden">
+        <PlansGanttView
+          mode={mode}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          plans={visiblePlans}
+          onCreateDraftAtCell={isAdmin ? handleCreateDraftAtCell : undefined}
+          onQuickCreate={isAdmin ? handleQuickCreate : undefined}
+          onResizePlan={isAdmin ? handleResizePlan : undefined}
+          onMovePlan={isAdmin ? handleMovePlan : undefined}
+          onTitleUpdate={isAdmin ? handleTitleUpdate : undefined}
+          onOpenPlan={isAdmin ? handleOpenPlan : undefined}
+          selectedPlanId={selectedPlanId}
+          onSelectPlan={handleSelectPlan}
+          draftPlans={isAdmin ? draftPlans : undefined}
+          onAddDraftPlan={isAdmin ? handleAddDraftPlan : undefined}
+          onCreateFromDraft={isAdmin ? handleCreateFromDraft : undefined}
+          onRemoveDraftPlan={isAdmin ? handleRemoveDraftPlan : undefined}
+        />
+      </div>
 
       {/* Undo 스낵바 */}
       <UndoSnackbar
