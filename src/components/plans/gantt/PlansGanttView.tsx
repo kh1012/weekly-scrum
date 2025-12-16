@@ -45,7 +45,9 @@ export function PlansGanttView({
   const layout = useGanttLayout(rangeStart, rangeEnd);
 
   // Selected plan (내부 상태 또는 외부 제어)
-  const [internalSelectedPlanId, setInternalSelectedPlanId] = useState<string | undefined>();
+  const [internalSelectedPlanId, setInternalSelectedPlanId] = useState<
+    string | undefined
+  >();
   const selectedPlanId = externalSelectedPlanId ?? internalSelectedPlanId;
 
   // Toggle node expand
@@ -135,8 +137,9 @@ export function PlansGanttView({
     <div
       className="flex flex-col rounded-xl overflow-hidden border"
       style={{
-        height: "calc(100vh - 200px)",
-        minHeight: 400,
+        // GNB(64px) + 배너(48px) + 헤더(80px) + 여백(48px) = 약 240px
+        height: "calc(100vh - 320px)",
+        minHeight: 300,
         background: "var(--notion-bg)",
         borderColor: "var(--notion-border)",
       }}

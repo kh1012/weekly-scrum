@@ -36,7 +36,7 @@ export const TreePanel = memo(function TreePanel({
           color: "var(--notion-text)",
         }}
       >
-        프로젝트 / 모듈 / 기능
+        릴리즈 / 스프린트 / 기능
       </div>
 
       {/* Tree Rows */}
