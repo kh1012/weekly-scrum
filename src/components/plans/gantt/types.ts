@@ -101,33 +101,35 @@ export interface DragState {
 
 /**
  * Gantt View Props
+ * - 모든 변경은 임시 저장 (void 반환)
+ * - 저장 버튼 클릭 시에만 서버에 반영
  */
 export interface PlansGanttViewProps {
   mode: GanttMode;
   rangeStart: Date;
   rangeEnd: Date;
   plans: PlanWithAssignees[];
-  /** 기존 Draft 생성 (셀 클릭 - fallback) */
+  /** 기존 Draft 생성 (셀 클릭 - 임시 저장) */
   onCreateDraftAtCell?: (context: {
     project: string;
     module: string;
     feature: string;
     date: Date;
-  }) => Promise<void>;
-  /** Airbnb 스타일 Quick Create (팝오버에서 title 입력) */
+  }) => void;
+  /** Airbnb 스타일 Quick Create (팝오버에서 title 입력 - 임시 저장) */
   onQuickCreate?: (context: {
     project: string;
     module: string;
     feature: string;
     date: Date;
     title: string;
-  }) => Promise<void>;
-  /** 리사이즈 (시작/종료일 조정) */
-  onResizePlan?: (planId: string, startDate: string, endDate: string) => Promise<void>;
-  /** 드래그 이동 (날짜 범위 유지하며 이동) */
+  }) => void;
+  /** 리사이즈 (시작/종료일 조정 - 임시 저장) */
+  onResizePlan?: (planId: string, startDate: string, endDate: string) => void;
+  /** 드래그 이동 (날짜 범위 유지하며 이동 - 임시 저장) */
   onMovePlan?: (planId: string, startDate: string, endDate: string) => void;
-  /** 인라인 타이틀 수정 */
-  onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
+  /** 인라인 타이틀 수정 (임시 저장) */
+  onTitleUpdate?: (planId: string, newTitle: string) => void;
   onOpenPlan?: (planId: string) => void;
   onRefresh?: () => void;
   /** 선택된 Plan ID (외부에서 제어) */
@@ -138,8 +140,8 @@ export interface PlansGanttViewProps {
   draftPlans?: DraftPlan[];
   /** 임시 계획 추가 핸들러 */
   onAddDraftPlan?: (type: PlanType, defaultValues?: Partial<DraftPlan>) => void;
-  /** 임시 계획 -> 실제 생성 핸들러 */
-  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => Promise<void>;
+  /** 임시 계획 날짜 설정 핸들러 (임시 저장) */
+  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => void;
   /** 임시 계획 삭제 핸들러 */
   onRemoveDraftPlan?: (tempId: string) => void;
   /** 임시 계획 수정 핸들러 */

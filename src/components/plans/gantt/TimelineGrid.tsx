@@ -26,20 +26,20 @@ interface TimelineGridProps {
   onResizePlan?: (planId: string, startDate: string, endDate: string) => void;
   /** Plan 이동 핸들러 */
   onMovePlan?: (planId: string, startDate: string, endDate: string) => void;
-  /** 인라인 타이틀 수정 핸들러 */
-  onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
-  /** Quick Create 핸들러 (Airbnb 스타일) */
+  /** 인라인 타이틀 수정 핸들러 (임시 저장) */
+  onTitleUpdate?: (planId: string, newTitle: string) => void;
+  /** Quick Create 핸들러 (Airbnb 스타일 - 임시 저장) */
   onQuickCreate?: (context: {
     project: string;
     module: string;
     feature: string;
     date: Date;
     title: string;
-  }) => Promise<void>;
+  }) => void;
   /** 임시 계획 목록 */
   draftPlans?: DraftPlan[];
-  /** 임시 계획 -> 실제 생성 핸들러 */
-  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => Promise<void>;
+  /** 임시 계획 날짜 설정 핸들러 (임시 저장) */
+  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => void;
 }
 
 /**

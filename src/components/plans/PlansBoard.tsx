@@ -33,11 +33,8 @@ import {
 } from "@/components/common/Icons";
 import {
   updatePlanStatusAction,
-  createDraftPlanAtCellAction,
   resizePlanAction,
-  quickCreatePlanAction,
   createPlanAction,
-  movePlanAction,
   updatePlanTitleAction,
   deletePlanAction,
   duplicatePlanAction,
@@ -103,7 +100,7 @@ export function PlansBoard({
   // 선택된 Plan (간트 뷰에서)
   const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
 
-  // 임시 계획 타입
+  // 임시 계획 타입 (새로 생성할 Plan)
   type DraftPlanItem = {
     tempId: string;
     type: "feature" | "sprint" | "release";
@@ -116,33 +113,91 @@ export function PlansBoard({
     end_date?: string;
   };
 
+  // 기존 Plan 수정 임시 저장 타입
+  type PendingUpdate = {
+    planId: string;
+    changes: {
+      status?: PlanStatus;
+      stage?: string;
+      title?: string;
+      start_date?: string;
+      end_date?: string;
+    };
+  };
+
+  // 삭제 대기 목록 타입
+  type PendingDeleteItem = {
+    planId: string;
+    planTitle: string;
+  };
+
+  // 임시 저장 데이터 구조
+  type DraftData = {
+    creates: DraftPlanItem[];           // 새로 생성할 Plan
+    updates: PendingUpdate[];           // 수정할 Plan
+    deletes: PendingDeleteItem[];       // 삭제할 Plan
+    duplicates: string[];               // 복제할 Plan ID
+  };
+
   // 임시 계획 (로컬 스토리지 연동)
-  const [draftPlans, setDraftPlans] = useState<DraftPlanItem[]>(() => {
+  const [draftData, setDraftData] = useState<DraftData>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          // 기존 형식 호환 (배열 → 객체)
+          if (Array.isArray(parsed)) {
+            return { creates: parsed, updates: [], deletes: [], duplicates: [] };
+          }
+          return {
+            creates: parsed.creates || [],
+            updates: parsed.updates || [],
+            deletes: parsed.deletes || [],
+            duplicates: parsed.duplicates || [],
+          };
         } catch {
-          return [];
+          return { creates: [], updates: [], deletes: [], duplicates: [] };
         }
       }
     }
-    return [];
+    return { creates: [], updates: [], deletes: [], duplicates: [] };
   });
 
-  // draftPlans 변경 시 로컬 스토리지 저장 및 unsaved 상태 업데이트
+  // 하위 호환을 위한 draftPlans alias
+  const draftPlans = draftData.creates;
+  const setDraftPlans = (fn: (prev: DraftPlanItem[]) => DraftPlanItem[]) => {
+    setDraftData((prev) => ({
+      ...prev,
+      creates: typeof fn === "function" ? fn(prev.creates) : fn,
+    }));
+  };
+
+  // draftData 변경 시 로컬 스토리지 저장 및 unsaved 상태 업데이트
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (draftPlans.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(draftPlans));
+      const hasChanges =
+        draftData.creates.length > 0 ||
+        draftData.updates.length > 0 ||
+        draftData.deletes.length > 0 ||
+        draftData.duplicates.length > 0;
+
+      if (hasChanges) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
         setHasUnsavedChanges(true);
       } else {
         localStorage.removeItem(STORAGE_KEY);
         setHasUnsavedChanges(false);
       }
     }
-  }, [draftPlans, STORAGE_KEY]);
+  }, [draftData, STORAGE_KEY]);
+
+  // 변경 건수 계산
+  const totalChanges =
+    draftData.creates.length +
+    draftData.updates.length +
+    draftData.deletes.length +
+    draftData.duplicates.length;
 
   // 페이지 이탈 시 경고
   useEffect(() => {
@@ -210,119 +265,185 @@ export function PlansBoard({
     [startMonth, buildUrlWithParams, router]
   );
 
-  // 상태 변경
-  const handleStatusChange = async (planId: string, status: PlanStatus) => {
-    const result = await updatePlanStatusAction(planId, status);
-    if (!result.success) {
-      alert(result.error || "상태 변경에 실패했습니다.");
-    }
-    startTransition(() => router.refresh());
-  };
+  // 상태 변경 (임시 저장)
+  const handleStatusChange = useCallback(
+    (planId: string, status: PlanStatus) => {
+      setDraftData((prev) => {
+        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        if (existingIndex >= 0) {
+          const updates = [...prev.updates];
+          updates[existingIndex] = {
+            ...updates[existingIndex],
+            changes: { ...updates[existingIndex].changes, status },
+          };
+          return { ...prev, updates };
+        }
+        return {
+          ...prev,
+          updates: [...prev.updates, { planId, changes: { status } }],
+        };
+      });
+    },
+    []
+  );
 
-  // Stage 변경
-  const handleStageChange = async (planId: string, stage: string) => {
-    const result = await updatePlanStageAction(planId, stage);
-    if (!result.success) {
-      alert(result.error || "스테이지 변경에 실패했습니다.");
-    }
-    startTransition(() => router.refresh());
-  };
+  // Stage 변경 (임시 저장)
+  const handleStageChange = useCallback(
+    (planId: string, stage: string) => {
+      setDraftData((prev) => {
+        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        if (existingIndex >= 0) {
+          const updates = [...prev.updates];
+          updates[existingIndex] = {
+            ...updates[existingIndex],
+            changes: { ...updates[existingIndex].changes, stage },
+          };
+          return { ...prev, updates };
+        }
+        return {
+          ...prev,
+          updates: [...prev.updates, { planId, changes: { stage } }],
+        };
+      });
+    },
+    []
+  );
 
-  // Draft Plan 생성 (셀 클릭)
+  // Draft Plan 생성 (셀 클릭) - 임시 저장
   const handleCreateDraftAtCell = useCallback(
-    async (context: {
+    (context: {
       project: string;
       module: string;
       feature: string;
       date: Date;
     }) => {
-      const result = await createDraftPlanAtCellAction({
+      const dateStr = context.date.toISOString().split("T")[0];
+      const newDraft: DraftPlanItem = {
+        tempId: crypto.randomUUID(),
+        type: "feature",
+        title: "",
         project: context.project,
         module: context.module,
         feature: context.feature,
-        date: context.date.toISOString().split("T")[0],
-      });
-
-      if (!result.success) {
-        alert(result.error || "생성에 실패했습니다.");
-        return;
-      }
-
-      startTransition(() => router.refresh());
+        stage: "컨셉 기획",
+        start_date: dateStr,
+        end_date: dateStr,
+      };
+      setDraftData((prev) => ({
+        ...prev,
+        creates: [...prev.creates, newDraft],
+      }));
     },
-    [router]
+    []
   );
 
-  // 리사이즈
+  // 리사이즈 (임시 저장)
   const handleResizePlan = useCallback(
-    async (planId: string, startDate: string, endDate: string) => {
-      const result = await resizePlanAction({
-        planId,
-        start_date: startDate,
-        end_date: endDate,
+    (planId: string, startDate: string, endDate: string) => {
+      setDraftData((prev) => {
+        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        if (existingIndex >= 0) {
+          const updates = [...prev.updates];
+          updates[existingIndex] = {
+            ...updates[existingIndex],
+            changes: {
+              ...updates[existingIndex].changes,
+              start_date: startDate,
+              end_date: endDate,
+            },
+          };
+          return { ...prev, updates };
+        }
+        return {
+          ...prev,
+          updates: [
+            ...prev.updates,
+            { planId, changes: { start_date: startDate, end_date: endDate } },
+          ],
+        };
       });
-
-      if (!result.success) {
-        alert(result.error || "기간 변경에 실패했습니다.");
-        return;
-      }
-
-      startTransition(() => router.refresh());
     },
-    [router]
+    []
   );
 
-  // Quick Create
+  // Quick Create (임시 저장)
   const handleQuickCreate = useCallback(
-    async (context: {
+    (context: {
       project: string;
       module: string;
       feature: string;
       date: Date;
       title: string;
     }) => {
-      const result = await quickCreatePlanAction({
+      const dateStr = context.date.toISOString().split("T")[0];
+      const newDraft: DraftPlanItem = {
+        tempId: crypto.randomUUID(),
+        type: "feature",
         title: context.title,
         project: context.project,
         module: context.module,
         feature: context.feature,
-        date: context.date.toISOString().split("T")[0],
-      });
-
-      if (!result.success) {
-        throw new Error(result.error || "생성에 실패했습니다.");
-      }
-
-      startTransition(() => router.refresh());
+        stage: "컨셉 기획",
+        start_date: dateStr,
+        end_date: dateStr,
+      };
+      setDraftData((prev) => ({
+        ...prev,
+        creates: [...prev.creates, newDraft],
+      }));
     },
-    [router]
+    []
   );
 
-  // Move Plan
+  // Move Plan (임시 저장)
   const handleMovePlan = useCallback(
     (planId: string, startDate: string, endDate: string) => {
-      movePlanAction(planId, startDate, endDate).then((result) => {
-        if (!result.success) {
-          alert(result.error || "이동에 실패했습니다.");
+      setDraftData((prev) => {
+        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        if (existingIndex >= 0) {
+          const updates = [...prev.updates];
+          updates[existingIndex] = {
+            ...updates[existingIndex],
+            changes: {
+              ...updates[existingIndex].changes,
+              start_date: startDate,
+              end_date: endDate,
+            },
+          };
+          return { ...prev, updates };
         }
-        startTransition(() => router.refresh());
+        return {
+          ...prev,
+          updates: [
+            ...prev.updates,
+            { planId, changes: { start_date: startDate, end_date: endDate } },
+          ],
+        };
       });
     },
-    [router]
+    []
   );
 
-  // Title Update
+  // Title Update (임시 저장)
   const handleTitleUpdate = useCallback(
-    async (planId: string, newTitle: string) => {
-      const result = await updatePlanTitleAction(planId, newTitle);
-
-      if (!result.success) {
-        throw new Error(result.error || "제목 변경에 실패했습니다.");
-      }
-
-      startTransition(() => router.refresh());
+    (planId: string, newTitle: string) => {
+      setDraftData((prev) => {
+        const existingIndex = prev.updates.findIndex((u) => u.planId === planId);
+        if (existingIndex >= 0) {
+          const updates = [...prev.updates];
+          updates[existingIndex] = {
+            ...updates[existingIndex],
+            changes: { ...updates[existingIndex].changes, title: newTitle },
+          };
+          return { ...prev, updates };
+        }
+        return {
+          ...prev,
+          updates: [...prev.updates, { planId, changes: { title: newTitle } }],
+        };
+      });
     },
-    [router]
+    []
   );
 
   // Plan 열기
@@ -377,56 +498,91 @@ export function PlansBoard({
     []
   );
 
+  // 드래프트에 기간 설정 (임시 저장 - 서버 생성하지 않음)
   const handleCreateFromDraft = useCallback(
-    async (draft: DraftPlanItem, startDate: string, endDate: string) => {
-      const isFeature = draft.type === "feature";
-
-      await createPlanAction({
-        type: draft.type,
-        title: draft.title,
-        stage: isFeature ? draft.stage || "" : "",
-        project: isFeature ? draft.project || "" : undefined,
-        module: isFeature ? draft.module || "" : undefined,
-        feature: isFeature ? draft.feature || "" : undefined,
-        start_date: startDate,
-        end_date: endDate,
-      });
-
-      // 임시 계획 제거
-      handleRemoveDraftPlan(draft.tempId);
-
-      // 새로고침
-      startTransition(() => {
-        router.refresh();
-      });
+    (draft: DraftPlanItem, startDate: string, endDate: string) => {
+      // 드래프트의 날짜만 업데이트 (저장 버튼 클릭 시 실제 생성)
+      setDraftData((prev) => ({
+        ...prev,
+        creates: prev.creates.map((d) =>
+          d.tempId === draft.tempId
+            ? { ...d, start_date: startDate, end_date: endDate }
+            : d
+        ),
+      }));
     },
-    [router, handleRemoveDraftPlan]
+    []
   );
 
-  // ===== 저장하기 (모든 임시 계획을 실제 생성) =====
+  // ===== 저장하기 (모든 임시 변경 사항을 서버에 반영) =====
   const handleSaveAll = useCallback(async () => {
-    if (draftPlans.length === 0) return;
+    if (totalChanges === 0) return;
 
     setIsSaving(true);
 
     try {
-      for (const draft of draftPlans) {
-        const isFeature = draft.type === "feature";
+      let savedCount = 0;
 
-        await createPlanAction({
-          type: draft.type,
-          title: draft.title,
-          stage: isFeature ? draft.stage || "" : "",
-          project: isFeature ? draft.project || "" : undefined,
-          module: isFeature ? draft.module || "" : undefined,
-          feature: isFeature ? draft.feature || "" : undefined,
-          start_date: draft.start_date,
-          end_date: draft.end_date,
-        });
+      // 1. 삭제 처리
+      for (const del of draftData.deletes) {
+        const result = await deletePlanAction(del.planId);
+        if (result.success) savedCount++;
+      }
+
+      // 2. 수정 처리
+      for (const update of draftData.updates) {
+        const { planId, changes } = update;
+        
+        // 상태 변경
+        if (changes.status) {
+          await updatePlanStatusAction(planId, changes.status);
+        }
+        // 스테이지 변경
+        if (changes.stage) {
+          await updatePlanStageAction(planId, changes.stage);
+        }
+        // 제목 변경
+        if (changes.title) {
+          await updatePlanTitleAction(planId, changes.title);
+        }
+        // 기간 변경 (리사이즈/이동)
+        if (changes.start_date || changes.end_date) {
+          await resizePlanAction({
+            planId,
+            start_date: changes.start_date!,
+            end_date: changes.end_date!,
+          });
+        }
+        savedCount++;
+      }
+
+      // 3. 복제 처리
+      for (const planId of draftData.duplicates) {
+        const result = await duplicatePlanAction(planId);
+        if (result.success) savedCount++;
+      }
+
+      // 4. 새 계획 생성
+      for (const draft of draftData.creates) {
+        // 날짜가 설정된 것만 생성
+        if (draft.start_date && draft.end_date) {
+          const isFeature = draft.type === "feature";
+          await createPlanAction({
+            type: draft.type,
+            title: draft.title,
+            stage: isFeature ? draft.stage || "" : "",
+            project: isFeature ? draft.project || "" : undefined,
+            module: isFeature ? draft.module || "" : undefined,
+            feature: isFeature ? draft.feature || "" : undefined,
+            start_date: draft.start_date,
+            end_date: draft.end_date,
+          });
+          savedCount++;
+        }
       }
 
       // 임시 데이터 비우기
-      setDraftPlans([]);
+      setDraftData({ creates: [], updates: [], deletes: [], duplicates: [] });
       localStorage.removeItem(STORAGE_KEY);
       setHasUnsavedChanges(false);
 
@@ -438,19 +594,22 @@ export function PlansBoard({
       // 토스트 표시 (UndoSnackbar 재활용)
       setPendingDelete({
         planId: "",
-        planTitle: `${draftPlans.length}개 계획이 저장되었습니다`,
+        planTitle: `${savedCount}개 변경 사항이 저장되었습니다`,
       });
       setShowUndoSnackbar(true);
-      setTimeout(() => setShowUndoSnackbar(false), 3000);
+      setTimeout(() => {
+        setShowUndoSnackbar(false);
+        setPendingDelete(null);
+      }, 3000);
     } catch (error) {
-      console.error("Failed to save drafts:", error);
+      console.error("Failed to save changes:", error);
       alert("저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsSaving(false);
     }
-  }, [draftPlans, router, STORAGE_KEY]);
+  }, [draftData, totalChanges, router, STORAGE_KEY]);
 
-  // ===== STEP C: Fast Delete + Undo =====
+  // ===== STEP C: Fast Delete (임시 저장) =====
   const handleDelete = useCallback(
     (planId: string) => {
       const plan = [...initialPlans, ...undatedPlans].find(
@@ -458,7 +617,13 @@ export function PlansBoard({
       );
       if (!plan) return;
 
-      // Optimistic: UI에서 즉시 숨김 (실제 삭제는 Undo 타임아웃 후)
+      // 임시 삭제 목록에 추가
+      setDraftData((prev) => ({
+        ...prev,
+        deletes: [...prev.deletes, { planId, planTitle: plan.title }],
+      }));
+
+      // 스낵바 표시
       setPendingDelete({ planId, planTitle: plan.title });
       setShowUndoSnackbar(true);
       setSelectedPlanId(undefined);
@@ -466,43 +631,36 @@ export function PlansBoard({
     [initialPlans, undatedPlans]
   );
 
-  // 실제 삭제 실행 (Undo 타임아웃 후)
-  const executeDelete = useCallback(async () => {
-    if (!pendingDelete) return;
-
-    const result = await deletePlanAction(pendingDelete.planId);
-    if (!result.success) {
-      alert(result.error || "삭제에 실패했습니다.");
-    }
-    setPendingDelete(null);
-    startTransition(() => router.refresh());
-  }, [pendingDelete, router]);
-
-  // Undo 처리
+  // Undo 처리 (임시 삭제 취소)
   const handleUndo = useCallback(() => {
-    // 삭제 취소 - pending 상태만 클리어
+    if (!pendingDelete) return;
+    
+    // 임시 삭제 목록에서 제거
+    setDraftData((prev) => ({
+      ...prev,
+      deletes: prev.deletes.filter((d) => d.planId !== pendingDelete.planId),
+    }));
+    
     setPendingDelete(null);
     setShowUndoSnackbar(false);
-  }, []);
+  }, [pendingDelete]);
 
-  // Undo 스낵바 닫힘 (타임아웃 또는 수동)
+  // Undo 스낵바 닫힘 (임시 저장이므로 실제 삭제 안 함)
   const handleUndoClose = useCallback(() => {
     setShowUndoSnackbar(false);
-    // 실제 삭제 실행
-    executeDelete();
-  }, [executeDelete]);
+    setPendingDelete(null);
+  }, []);
 
-  // ===== STEP D: Duplicate =====
+  // ===== STEP D: Duplicate (임시 저장) =====
   const handleDuplicate = useCallback(
-    async (planId: string) => {
-      const result = await duplicatePlanAction(planId);
-      if (!result.success) {
-        alert(result.error || "복제에 실패했습니다.");
-        return;
-      }
-      startTransition(() => router.refresh());
+    (planId: string) => {
+      // 임시 복제 목록에 추가
+      setDraftData((prev) => ({
+        ...prev,
+        duplicates: [...prev.duplicates, planId],
+      }));
     },
-    [router]
+    []
   );
 
   // ===== STEP E: Command Palette =====
@@ -656,16 +814,34 @@ export function PlansBoard({
     []
   );
 
-  // 삭제 대기 중인 Plan 필터링
+  // 삭제 대기 중인 Plan 필터링 + 임시 수정 사항 반영
   const visiblePlans = useMemo(() => {
-    if (!pendingDelete) return initialPlans;
-    return initialPlans.filter((p) => p.id !== pendingDelete.planId);
-  }, [initialPlans, pendingDelete]);
+    // 임시 삭제 목록의 ID들
+    const deletedIds = new Set(draftData.deletes.map((d) => d.planId));
+    
+    // 삭제되지 않은 Plan들만 필터링하고, 임시 수정 사항 반영
+    return initialPlans
+      .filter((p) => !deletedIds.has(p.id))
+      .map((plan) => {
+        // 임시 수정 사항이 있으면 반영
+        const update = draftData.updates.find((u) => u.planId === plan.id);
+        if (update) {
+          return {
+            ...plan,
+            ...update.changes,
+            // 날짜는 별도 처리 (null이 아닌 경우만)
+            start_date: update.changes.start_date || plan.start_date,
+            end_date: update.changes.end_date || plan.end_date,
+          };
+        }
+        return plan;
+      });
+  }, [initialPlans, draftData.deletes, draftData.updates]);
 
   const visibleUndatedPlans = useMemo(() => {
-    if (!pendingDelete) return undatedPlans;
-    return undatedPlans.filter((p) => p.id !== pendingDelete.planId);
-  }, [undatedPlans, pendingDelete]);
+    const deletedIds = new Set(draftData.deletes.map((d) => d.planId));
+    return undatedPlans.filter((p) => !deletedIds.has(p.id));
+  }, [undatedPlans, draftData.deletes]);
 
   const totalCount = initialPlans.length + undatedPlans.length;
   const filteredCount = visiblePlans.filter((p) => {
@@ -746,7 +922,7 @@ export function PlansBoard({
               }}
             >
               <SaveIcon size={16} />
-              {isSaving ? "저장 중..." : `저장하기 (${draftPlans.length})`}
+              {isSaving ? "저장 중..." : `저장하기 (${totalChanges})`}
             </button>
           )}
         </div>

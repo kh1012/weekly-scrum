@@ -16,7 +16,7 @@ interface PlanBarProps {
   onResizeStart?: (type: DragType, planId: string) => void;
   onMoveStart?: (planId: string) => void;
   /** 인라인 타이틀 수정 */
-  onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
+  onTitleUpdate?: (planId: string, newTitle: string) => void;
 }
 
 /**

@@ -21,7 +21,7 @@ interface TimelineRowProps {
   /** 드래그 이동 시작 핸들러 */
   onMoveStart?: (planId: string) => void;
   /** 인라인 타이틀 수정 핸들러 */
-  onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
+  onTitleUpdate?: (planId: string, newTitle: string) => void;
   onCellClick?: (row: FlatRow, date: Date) => void;
   /** 빠른 생성 팝오버 트리거 */
   onQuickCreate?: (row: FlatRow, date: Date, position: { x: number; y: number }) => void;

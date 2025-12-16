@@ -18,7 +18,7 @@ interface DraftTimelineRowProps {
   days: Date[];
   totalWidth: number;
   calculateBarLayout: (startDate: string | null, endDate: string | null) => BarLayout;
-  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => Promise<void>;
+  onCreateFromDraft?: (draft: DraftPlan, startDate: string, endDate: string) => void;
 }
 
 /**
@@ -58,8 +58,8 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
     setDragEnd(clampedIndex);
   }, [isDragging, days.length]);
 
-  // 드래그 종료
-  const handleMouseUp = useCallback(async () => {
+  // 드래그 종료 (날짜 설정 - 임시 저장)
+  const handleMouseUp = useCallback(() => {
     if (!isDragging || dragStart === null || dragEnd === null || !onCreateFromDraft) {
       setIsDragging(false);
       setDragStart(null);
@@ -73,15 +73,12 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
     const startDate = days[startIdx].toISOString().split("T")[0];
     const endDate = days[endIdx].toISOString().split("T")[0];
 
-    setIsCreating(true);
-    try {
-      await onCreateFromDraft(draft, startDate, endDate);
-    } finally {
-      setIsCreating(false);
-      setIsDragging(false);
-      setDragStart(null);
-      setDragEnd(null);
-    }
+    // 임시 저장 (서버 호출 없음)
+    onCreateFromDraft(draft, startDate, endDate);
+    
+    setIsDragging(false);
+    setDragStart(null);
+    setDragEnd(null);
   }, [isDragging, dragStart, dragEnd, days, draft, onCreateFromDraft]);
 
   // 드래그 영역 계산
