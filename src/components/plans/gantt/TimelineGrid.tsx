@@ -23,6 +23,10 @@ interface TimelineGridProps {
   onSelectPlan?: (planId: string) => void;
   onCellClick?: (row: FlatRow, date: Date) => void;
   onResizePlan?: (planId: string, startDate: string, endDate: string) => void;
+  /** Plan 이동 핸들러 */
+  onMovePlan?: (planId: string, startDate: string, endDate: string) => void;
+  /** 인라인 타이틀 수정 핸들러 */
+  onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
   /** Quick Create 핸들러 (Airbnb 스타일) */
   onQuickCreate?: (context: {
     domain: string;
@@ -52,6 +56,8 @@ interface PopoverState {
 /**
  * 타임라인 그리드 컴포넌트
  * - Airbnb 스타일 Quick Create 팝오버 지원
+ * - Drag to Move 지원
+ * - 인라인 타이틀 편집 지원
  */
 export const TimelineGrid = memo(function TimelineGrid({
   rows,
@@ -64,6 +70,8 @@ export const TimelineGrid = memo(function TimelineGrid({
   onSelectPlan,
   onCellClick,
   onResizePlan,
+  onMovePlan,
+  onTitleUpdate,
   onQuickCreate,
 }: TimelineGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -76,7 +84,7 @@ export const TimelineGrid = memo(function TimelineGrid({
   const [popoverState, setPopoverState] = useState<PopoverState | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Drag state
+  // Drag state (resize + move 통합)
   const [dragState, setDragState] = useState<DragState | null>(null);
   const dragStartXRef = useRef<number>(0);
 
@@ -138,20 +146,26 @@ export const TimelineGrid = memo(function TimelineGrid({
     [popoverState, onQuickCreate]
   );
 
-  // Resize start handler
-  const handleResizeStart = useCallback(
+  // Plan 찾기 헬퍼
+  const findPlan = useCallback(
+    (planId: string) => {
+      for (const row of rows) {
+        if (row.node.plans) {
+          const plan = row.node.plans.find((p) => p.id === planId);
+          if (plan) return plan;
+        }
+      }
+      return null;
+    },
+    [rows]
+  );
+
+  // Resize/Move 시작 핸들러
+  const handleDragStart = useCallback(
     (type: DragType, planId: string) => {
       if (!type) return;
 
-      // Find the plan
-      let plan = null;
-      for (const row of rows) {
-        if (row.node.plans) {
-          plan = row.node.plans.find((p) => p.id === planId);
-          if (plan) break;
-        }
-      }
-
+      const plan = findPlan(planId);
       if (!plan || !plan.start_date || !plan.end_date) return;
 
       setDragState({
@@ -165,10 +179,18 @@ export const TimelineGrid = memo(function TimelineGrid({
 
       dragStartXRef.current = 0; // Will be set in mousemove
     },
-    [rows]
+    [findPlan]
   );
 
-  // Mouse move handler for resize
+  // Move 시작 핸들러
+  const handleMoveStart = useCallback(
+    (planId: string) => {
+      handleDragStart("move", planId);
+    },
+    [handleDragStart]
+  );
+
+  // Mouse move handler for drag (resize + move)
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (!dragState || !containerRef.current) return;
@@ -189,7 +211,15 @@ export const TimelineGrid = memo(function TimelineGrid({
       let newStart = dragState.currentStart;
       let newEnd = dragState.currentEnd;
 
-      if (dragState.type === "resize-left") {
+      if (dragState.type === "move") {
+        // Move: 시작/종료 날짜 모두 동일하게 이동
+        const startDate = new Date(dragState.originalStart);
+        const endDate = new Date(dragState.originalEnd);
+        startDate.setDate(startDate.getDate() + deltaDays);
+        endDate.setDate(endDate.getDate() + deltaDays);
+        newStart = startDate.toISOString().split("T")[0];
+        newEnd = endDate.toISOString().split("T")[0];
+      } else if (dragState.type === "resize-left") {
         const startDate = new Date(dragState.originalStart);
         startDate.setDate(startDate.getDate() + deltaDays);
         newStart = startDate.toISOString().split("T")[0];
@@ -218,25 +248,37 @@ export const TimelineGrid = memo(function TimelineGrid({
     [dragState]
   );
 
-  // Mouse up handler for resize
+  // Mouse up handler for drag
   const handleMouseUp = useCallback(() => {
     if (!dragState) return;
 
     // Apply the change
-    if (
+    const hasChanged =
       dragState.currentStart !== dragState.originalStart ||
-      dragState.currentEnd !== dragState.originalEnd
-    ) {
-      onResizePlan?.(
-        dragState.planId,
-        dragState.currentStart,
-        dragState.currentEnd
-      );
+      dragState.currentEnd !== dragState.originalEnd;
+
+    if (hasChanged) {
+      if (dragState.type === "move" && onMovePlan) {
+        onMovePlan(
+          dragState.planId,
+          dragState.currentStart,
+          dragState.currentEnd
+        );
+      } else if (
+        (dragState.type === "resize-left" || dragState.type === "resize-right") &&
+        onResizePlan
+      ) {
+        onResizePlan(
+          dragState.planId,
+          dragState.currentStart,
+          dragState.currentEnd
+        );
+      }
     }
 
     setDragState(null);
     dragStartXRef.current = 0;
-  }, [dragState, onResizePlan]);
+  }, [dragState, onResizePlan, onMovePlan]);
 
   // Tooltip for drag
   const dragTooltip = dragState
@@ -245,6 +287,13 @@ export const TimelineGrid = memo(function TimelineGrid({
         new Date(dragState.currentEnd)
       )
     : null;
+
+  // 드래그 타입에 따른 커서
+  const getDragCursor = () => {
+    if (!dragState) return undefined;
+    if (dragState.type === "move") return "grabbing";
+    return "ew-resize";
+  };
 
   const isAdmin = mode === "admin";
 
@@ -256,20 +305,26 @@ export const TimelineGrid = memo(function TimelineGrid({
       onMouseUp={dragState ? handleMouseUp : undefined}
       onMouseLeave={dragState ? handleMouseUp : undefined}
       style={{
-        cursor: dragState ? "ew-resize" : undefined,
+        cursor: getDragCursor(),
       }}
     >
-      {/* Drag Tooltip */}
+      {/* Drag Tooltip (Airbnb 스타일) */}
       {dragState && dragTooltip && (
         <div
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg"
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm font-medium animate-in fade-in-0 zoom-in-95 duration-150"
           style={{
-            background: "var(--notion-bg-elevated)",
+            background: "var(--notion-bg)",
             border: "1px solid var(--notion-border)",
             color: "var(--notion-text)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
           }}
         >
-          {dragTooltip}
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+              {dragState.type === "move" ? "📅 이동" : "↔️ 조정"}
+            </span>
+            <span>{dragTooltip}</span>
+          </div>
         </div>
       )}
 
@@ -295,11 +350,14 @@ export const TimelineGrid = memo(function TimelineGrid({
             calculateBarLayout={calculateBarLayout}
             selectedPlanId={selectedPlanId}
             onSelectPlan={onSelectPlan}
-            onResizeStart={handleResizeStart}
+            onResizeStart={handleDragStart}
+            onMoveStart={isAdmin && onMovePlan ? handleMoveStart : undefined}
+            onTitleUpdate={isAdmin ? onTitleUpdate : undefined}
             onCellClick={onCellClick}
             onQuickCreate={isAdmin && onQuickCreate ? handleQuickCreate : undefined}
             hoveredCell={hoveredCell}
             onCellHover={handleCellHover}
+            dragState={dragState}
           />
         ))}
       </div>

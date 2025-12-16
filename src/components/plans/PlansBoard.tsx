@@ -12,6 +12,8 @@ import {
   createDraftPlanAtCellAction,
   resizePlanAction,
   quickCreatePlanAction,
+  movePlanAction,
+  updatePlanTitleAction,
 } from "@/lib/actions/plans";
 import type { PlansBoardProps, FilterState, GroupByOption } from "./types";
 import type { PlanStatus } from "@/lib/data/plans";
@@ -168,6 +170,40 @@ export function PlansBoard({
       }
 
       // 새로고침하여 새 Plan 반영
+      startTransition(() => {
+        router.refresh();
+      });
+    },
+    [router]
+  );
+
+  // Move Plan (드래그 이동)
+  const handleMovePlan = useCallback(
+    (planId: string, startDate: string, endDate: string) => {
+      // Optimistic: 즉시 서버 호출
+      movePlanAction(planId, startDate, endDate).then((result) => {
+        if (!result.success) {
+          alert(result.error || "이동에 실패했습니다.");
+        }
+        // 새로고침
+        startTransition(() => {
+          router.refresh();
+        });
+      });
+    },
+    [router]
+  );
+
+  // Title Update (인라인 편집)
+  const handleTitleUpdate = useCallback(
+    async (planId: string, newTitle: string) => {
+      const result = await updatePlanTitleAction(planId, newTitle);
+
+      if (!result.success) {
+        throw new Error(result.error || "제목 변경에 실패했습니다.");
+      }
+
+      // 새로고침
       startTransition(() => {
         router.refresh();
       });
@@ -414,6 +450,8 @@ export function PlansBoard({
             onCreateDraftAtCell={isAdmin ? handleCreateDraftAtCell : undefined}
             onQuickCreate={isAdmin ? handleQuickCreate : undefined}
             onResizePlan={isAdmin ? handleResizePlan : undefined}
+            onMovePlan={isAdmin ? handleMovePlan : undefined}
+            onTitleUpdate={isAdmin ? handleTitleUpdate : undefined}
             onOpenPlan={isAdmin ? handleOpenPlan : undefined}
           />
 

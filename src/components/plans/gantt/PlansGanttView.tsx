@@ -11,7 +11,7 @@ import { TimelineGrid } from "./TimelineGrid";
  * Plans 간트 뷰 컴포넌트
  * - mode='readonly': 조회만 가능 (/plans)
  * - mode='admin': CRUD + 간트 상호작용 (/admin/plans)
- * - Airbnb 스타일 Quick Create 지원
+ * - Airbnb 스타일 Quick Create, Drag to Move, Inline Edit 지원
  */
 export function PlansGanttView({
   mode,
@@ -21,6 +21,8 @@ export function PlansGanttView({
   onCreateDraftAtCell,
   onQuickCreate,
   onResizePlan,
+  onMovePlan,
+  onTitleUpdate,
   onOpenPlan,
 }: PlansGanttViewProps) {
   // Build tree from plans
@@ -102,6 +104,24 @@ export function PlansGanttView({
     [onResizePlan]
   );
 
+  // Move plan (드래그 이동)
+  const handleMovePlan = useCallback(
+    (planId: string, startDate: string, endDate: string) => {
+      if (!onMovePlan) return;
+      onMovePlan(planId, startDate, endDate);
+    },
+    [onMovePlan]
+  );
+
+  // Title update (인라인 편집)
+  const handleTitleUpdate = useCallback(
+    async (planId: string, newTitle: string) => {
+      if (!onTitleUpdate) return;
+      await onTitleUpdate(planId, newTitle);
+    },
+    [onTitleUpdate]
+  );
+
   const isAdmin = mode === "admin";
 
   return (
@@ -145,7 +165,7 @@ export function PlansGanttView({
           <span>📋 {plans.length}개 계획</span>
           {isAdmin && (
             <span className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
-              💡 셀의 + 버튼으로 빠른 생성
+              💡 + 클릭 생성 · 드래그 이동 · 더블클릭 편집
             </span>
           )}
         </div>
@@ -173,6 +193,8 @@ export function PlansGanttView({
           onSelectPlan={handleSelectPlan}
           onCellClick={isAdmin ? handleCellClick : undefined}
           onResizePlan={isAdmin ? handleResizePlan : undefined}
+          onMovePlan={isAdmin && onMovePlan ? handleMovePlan : undefined}
+          onTitleUpdate={isAdmin && onTitleUpdate ? handleTitleUpdate : undefined}
           onQuickCreate={isAdmin && onQuickCreate ? handleQuickCreate : undefined}
         />
       </div>

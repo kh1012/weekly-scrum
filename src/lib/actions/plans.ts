@@ -232,6 +232,101 @@ export async function deletePlanAction(planId: string): Promise<ActionResult> {
 }
 
 /**
+ * Plan 제목 빠른 변경 (관리자 전용) - 인라인 편집용
+ */
+export async function updatePlanTitleAction(
+  planId: string,
+  title: string
+): Promise<ActionResult> {
+  try {
+    const hasAccess = await isAdminOrLeader();
+    if (!hasAccess) {
+      return { success: false, error: "권한이 없습니다." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    if (!title.trim()) {
+      return { success: false, error: "제목은 비워둘 수 없습니다." };
+    }
+
+    await updatePlanData({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      planId,
+      payload: { title: title.trim() },
+      updatedBy: user.id,
+    });
+
+    revalidatePath("/admin/plans");
+    revalidatePath(`/admin/plans/${planId}`);
+    revalidatePath("/plans");
+
+    return { success: true };
+  } catch (err) {
+    console.error("[updatePlanTitleAction] Error:", err);
+    const message = err instanceof Error ? err.message : "제목 변경에 실패했습니다.";
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Plan 날짜 이동 (관리자 전용) - 드래그 이동용
+ */
+export async function movePlanAction(
+  planId: string,
+  startDate: string,
+  endDate: string
+): Promise<ActionResult> {
+  try {
+    const hasAccess = await isAdminOrLeader();
+    if (!hasAccess) {
+      return { success: false, error: "권한이 없습니다." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    // 날짜 검증
+    if (new Date(endDate) < new Date(startDate)) {
+      return { success: false, error: "종료일은 시작일보다 이후여야 합니다." };
+    }
+
+    await updatePlanData({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      planId,
+      payload: {
+        start_date: startDate,
+        end_date: endDate,
+      },
+      updatedBy: user.id,
+    });
+
+    revalidatePath("/admin/plans");
+    revalidatePath(`/admin/plans/${planId}`);
+    revalidatePath("/plans");
+
+    return { success: true, planId };
+  } catch (err) {
+    console.error("[movePlanAction] Error:", err);
+    const message = err instanceof Error ? err.message : "이동에 실패했습니다.";
+    return { success: false, error: message };
+  }
+}
+
+/**
  * Plan 상태 빠른 변경 (관리자 전용)
  */
 export async function updatePlanStatusAction(

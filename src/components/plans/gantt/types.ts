@@ -100,7 +100,12 @@ export interface PlansGanttViewProps {
     date: Date;
     title: string;
   }) => Promise<void>;
+  /** 리사이즈 (시작/종료일 조정) */
   onResizePlan?: (planId: string, startDate: string, endDate: string) => Promise<void>;
+  /** 드래그 이동 (날짜 범위 유지하며 이동) */
+  onMovePlan?: (planId: string, startDate: string, endDate: string) => void;
+  /** 인라인 타이틀 수정 */
+  onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
   onOpenPlan?: (planId: string) => void;
   onRefresh?: () => void;
 }

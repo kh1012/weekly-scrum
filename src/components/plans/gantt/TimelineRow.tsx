@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useState } from "react";
-import type { FlatRow, GanttMode, DragType } from "./types";
+import type { FlatRow, GanttMode, DragType, DragState } from "./types";
 import type { BarLayout } from "./useGanttLayout";
 import { ROW_HEIGHT, DAY_WIDTH } from "./useGanttLayout";
 import { PlanBar } from "./PlanBar";
@@ -18,16 +18,24 @@ interface TimelineRowProps {
   selectedPlanId?: string;
   onSelectPlan?: (planId: string) => void;
   onResizeStart?: (type: DragType, planId: string) => void;
+  /** 드래그 이동 시작 핸들러 */
+  onMoveStart?: (planId: string) => void;
+  /** 인라인 타이틀 수정 핸들러 */
+  onTitleUpdate?: (planId: string, newTitle: string) => Promise<void>;
   onCellClick?: (row: FlatRow, date: Date) => void;
   /** 빠른 생성 팝오버 트리거 */
   onQuickCreate?: (row: FlatRow, date: Date, position: { x: number; y: number }) => void;
   hoveredCell?: { rowId: string; dayIndex: number } | null;
   onCellHover?: (rowId: string, dayIndex: number | null) => void;
+  /** 현재 드래그 상태 (프리뷰용) */
+  dragState?: DragState | null;
 }
 
 /**
  * 타임라인 Row 컴포넌트
  * - Airbnb 스타일: 호버 시 '+' 버튼 fade-in
+ * - Drag to Move 지원
+ * - 인라인 타이틀 편집 지원
  */
 export const TimelineRow = memo(function TimelineRow({
   row,
@@ -38,10 +46,13 @@ export const TimelineRow = memo(function TimelineRow({
   selectedPlanId,
   onSelectPlan,
   onResizeStart,
+  onMoveStart,
+  onTitleUpdate,
   onCellClick,
   onQuickCreate,
   hoveredCell,
   onCellHover,
+  dragState,
 }: TimelineRowProps) {
   const isAdmin = mode === "admin";
   const isLeaf = row.isLeaf;
@@ -206,7 +217,12 @@ export const TimelineRow = memo(function TimelineRow({
 
       {/* Plan Bars */}
       {plans.map((plan) => {
-        const layout = calculateBarLayout(plan.start_date, plan.end_date);
+        // 드래그 중인 Plan이면 현재 드래그 상태의 날짜로 레이아웃 계산
+        const isDragging = dragState?.planId === plan.id;
+        const startDate = isDragging ? dragState.currentStart : plan.start_date;
+        const endDate = isDragging ? dragState.currentEnd : plan.end_date;
+        
+        const layout = calculateBarLayout(startDate, endDate);
         if (!layout.visible) return null;
 
         return (
@@ -219,6 +235,8 @@ export const TimelineRow = memo(function TimelineRow({
             isSelected={selectedPlanId === plan.id}
             onSelect={() => onSelectPlan?.(plan.id)}
             onResizeStart={onResizeStart}
+            onMoveStart={onMoveStart}
+            onTitleUpdate={onTitleUpdate}
           />
         );
       })}
