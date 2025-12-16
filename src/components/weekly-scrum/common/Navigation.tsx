@@ -166,6 +166,8 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/admin/snapshots",
         emoji: "📋",
         icon: Icons.listCheck,
+        description: "Coming Soon",
+        disabled: true,
       },
       {
         key: "admin-plans",

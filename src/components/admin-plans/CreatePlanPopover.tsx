@@ -425,7 +425,8 @@ export function CreatePlanPopover() {
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+                    onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                    className="w-full px-3 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40 cursor-pointer"
                     style={{
                       background: "var(--notion-bg)",
                       borderColor: "var(--notion-border)",
@@ -441,7 +442,8 @@ export function CreatePlanPopover() {
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+                    onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                    className="w-full px-3 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40 cursor-pointer"
                     style={{
                       background: "var(--notion-bg)",
                       borderColor: "var(--notion-border)",

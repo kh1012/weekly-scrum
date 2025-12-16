@@ -416,7 +416,8 @@ export function PlanForm({
               type="date"
               value={formData.start_date}
               onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40 cursor-pointer"
               style={{
                 background: "var(--notion-bg)",
                 borderColor: "var(--notion-border)",
@@ -432,7 +433,8 @@ export function PlanForm({
               type="date"
               value={formData.end_date}
               onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40"
+              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+              className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#F76D57]/40 cursor-pointer"
               style={{
                 background: "var(--notion-bg)",
                 borderColor: "var(--notion-border)",
