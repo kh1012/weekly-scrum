@@ -28,20 +28,14 @@ export default function EditPlanPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 기존 데이터 로드
+  // 기존 데이터 로드 (뷰 사용 - READ는 항상 v_plans_with_assignees)
   useEffect(() => {
     async function loadPlan() {
       try {
         const supabase = createClient();
         const { data, error } = await supabase
-          .from("plans")
-          .select(`
-            *,
-            plan_assignees (
-              user_id,
-              role
-            )
-          `)
+          .from("v_plans_with_assignees")
+          .select("*")
           .eq("workspace_id", DEFAULT_WORKSPACE_ID)
           .eq("id", planId)
           .single();
