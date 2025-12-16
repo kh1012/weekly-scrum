@@ -208,7 +208,7 @@ export function PlansGanttView({
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Tree Panel (Sticky Left) */}
         <TreePanel
           rows={flatRows}
@@ -243,38 +243,38 @@ export function PlansGanttView({
           draftPlans={isAdmin ? draftPlans : undefined}
           onCreateFromDraft={isAdmin ? onCreateFromDraft : undefined}
         />
-      </div>
 
-      {/* Empty State */}
-      {plans.length === 0 && (
-        <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          style={{ left: TREE_WIDTH }}
-        >
-          <div className="text-center">
-            <div
-              className="flex justify-center"
-              style={{ color: "var(--notion-text-muted)" }}
-            >
-              <CalendarDaysIcon className="w-8 h-8" />
-            </div>
-            <p
-              className="mt-2 text-sm"
-              style={{ color: "var(--notion-text-muted)" }}
-            >
-              표시할 계획이 없습니다
-            </p>
-            {isAdmin && (
-              <p
-                className="mt-1 text-xs"
+        {/* Empty State - Timeline 영역 내부에 표시 */}
+        {plans.length === 0 && draftPlans.length === 0 && (
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            style={{ left: TREE_WIDTH }}
+          >
+            <div className="text-center">
+              <div
+                className="flex justify-center"
                 style={{ color: "var(--notion-text-muted)" }}
               >
-                셀의 + 버튼을 클릭하여 새 계획을 생성하세요
+                <CalendarDaysIcon className="w-8 h-8" />
+              </div>
+              <p
+                className="mt-2 text-sm"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                표시할 계획이 없습니다
               </p>
-            )}
+              {isAdmin && (
+                <p
+                  className="mt-1 text-xs"
+                  style={{ color: "var(--notion-text-muted)" }}
+                >
+                  ⌘+K로 임시 계획을 생성하세요
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

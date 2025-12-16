@@ -6,6 +6,13 @@ import type { BarLayout } from "./useGanttLayout";
 import { ROW_HEIGHT, DAY_WIDTH } from "./useGanttLayout";
 import { PlusIcon, StarIcon } from "@/components/common/Icons";
 
+// 타입별 색상 (GanttFilters와 동기화)
+const TYPE_COLORS = {
+  release: "#ec4899",  // 핑크
+  sprint: "#f59e0b",   // 주황
+  feature: "#10b981",  // 초록
+} as const;
+
 interface DraftTimelineRowProps {
   draft: DraftPlan;
   days: Date[];
@@ -88,6 +95,9 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
     };
   };
 
+  // 타입별 색상
+  const typeColor = TYPE_COLORS[draft.type];
+
   // 기존 날짜가 있는 경우 바 표시
   const hasExistingDates = draft.start_date && draft.end_date;
   const barLayout = hasExistingDates
@@ -95,6 +105,15 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
     : null;
 
   const dragRange = getDragRange();
+
+  // 기능 타입 표시용 레이블
+  const getDisplayLabel = () => {
+    if (draft.type === "feature") {
+      const parts = [draft.project, draft.module, draft.feature].filter(Boolean);
+      return parts.length > 0 ? parts.join(" / ") : "기능";
+    }
+    return draft.title || (draft.type === "release" ? "릴리즈" : "스프린트");
+  };
 
   return (
     <div
@@ -105,7 +124,7 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
         width: totalWidth,
         minWidth: totalWidth,
         borderColor: "var(--notion-border)",
-        background: "rgba(247, 109, 87, 0.03)",
+        background: `${typeColor}06`,
       }}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -140,8 +159,8 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
                   <div
                     className="w-5 h-5 rounded-full flex items-center justify-center"
                     style={{
-                      background: "rgba(247, 109, 87, 0.2)",
-                      color: "#F76D57",
+                      background: `${typeColor}30`,
+                      color: typeColor,
                     }}
                   >
                     <PlusIcon size={12} />
@@ -160,14 +179,14 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
           style={{
             left: dragRange.left,
             width: dragRange.width,
-            background: "rgba(247, 109, 87, 0.2)",
-            borderColor: "#F76D57",
+            background: `${typeColor}25`,
+            borderColor: typeColor,
           }}
         >
           <div className="absolute inset-0 flex items-center justify-center">
             <span
               className="text-xs font-medium px-2 py-1 rounded"
-              style={{ background: "#F76D57", color: "white" }}
+              style={{ background: typeColor, color: "white" }}
             >
               {Math.abs((dragEnd ?? 0) - (dragStart ?? 0)) + 1}일
             </span>
@@ -182,13 +201,13 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
           style={{
             left: barLayout.left,
             width: barLayout.width,
-            background: "linear-gradient(135deg, rgba(247, 109, 87, 0.3), rgba(249, 168, 139, 0.3))",
-            border: "1px dashed #F76D57",
+            background: `linear-gradient(135deg, ${typeColor}40, ${typeColor}20)`,
+            border: `1px dashed ${typeColor}`,
           }}
         >
-          <StarIcon size={12} filled style={{ color: "#F76D57" }} />
-          <span className="ml-1 text-xs font-medium truncate" style={{ color: "#F76D57" }}>
-            {draft.title}
+          <StarIcon size={12} filled style={{ color: typeColor }} />
+          <span className="ml-1 text-xs font-medium truncate" style={{ color: typeColor }}>
+            {getDisplayLabel()}
           </span>
         </div>
       )}
@@ -196,7 +215,10 @@ export const DraftTimelineRow = memo(function DraftTimelineRow({
       {/* 생성 중 로딩 */}
       {isCreating && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-          <div className="w-5 h-5 border-2 border-[#F76D57] border-t-transparent rounded-full animate-spin" />
+          <div
+            className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: typeColor, borderTopColor: "transparent" }}
+          />
         </div>
       )}
     </div>
