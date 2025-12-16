@@ -90,33 +90,62 @@ export function PlanForm({
     initialData?.assignees || []
   );
 
-  // 멤버 목록 로드
+  // 멤버 목록 로드 (별도 쿼리 방식 - FK 관계 없이 안전하게 조회)
   useEffect(() => {
     async function loadMembers() {
       try {
+        if (!DEFAULT_WORKSPACE_ID) {
+          console.error("DEFAULT_WORKSPACE_ID is not set");
+          return;
+        }
+
         const supabase = createClient();
-        const { data, error } = await supabase
+
+        // 1. workspace_members 먼저 조회
+        const { data: membersData, error: membersError } = await supabase
           .from("workspace_members")
-          .select(`
-            user_id,
-            role,
-            profiles:user_id (
-              display_name,
-              email
-            )
-          `)
+          .select("user_id, role")
           .eq("workspace_id", DEFAULT_WORKSPACE_ID);
 
-        if (error) throw error;
+        if (membersError) throw membersError;
+        if (!membersData || membersData.length === 0) {
+          setMembers([]);
+          return;
+        }
 
+        // 타입 정의
         interface MemberRow {
           user_id: string;
           role: string;
-          profiles: { display_name: string | null; email: string | null } | null;
+        }
+        interface ProfileRow {
+          user_id: string;
+          display_name: string | null;
+          email: string | null;
         }
 
-        const memberList = ((data || []) as MemberRow[]).map((m) => {
-          const profile = m.profiles;
+        // 2. profiles 별도 조회
+        const userIds = (membersData as MemberRow[]).map((m) => m.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, email")
+          .in("user_id", userIds);
+
+        if (profilesError) {
+          console.error("Failed to fetch profiles:", profilesError);
+        }
+
+        // 3. 조합
+        const profileMap = new Map<string, { display_name: string | null; email: string | null }>();
+        for (const p of (profilesData || []) as ProfileRow[]) {
+          profileMap.set(p.user_id, {
+            display_name: p.display_name,
+            email: p.email,
+          });
+        }
+
+        const memberList = (membersData as MemberRow[]).map((m) => {
+          const profile = profileMap.get(m.user_id);
           return {
             user_id: m.user_id,
             display_name: profile?.display_name || null,

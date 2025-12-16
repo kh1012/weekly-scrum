@@ -105,9 +105,9 @@ export interface PlanFilters {
 }
 
 /**
- * v_plans_with_assignees 뷰 Row 타입
- * - 뷰는 plans + plan_assignees + profiles를 JOIN한 결과
- * - assignees는 JSON array로 포함됨
+ * IMPORTANT CONTRACT:
+ * This function is tightly coupled to the SQL view `v_plans_with_assignees`.
+ * Any change to the view schema MUST update this mapping.
  */
 interface ViewPlanRow {
   id: string;

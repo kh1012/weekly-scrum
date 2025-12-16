@@ -1,162 +1,195 @@
-# Cursor V2 Prompt — Legacy JSON → Supabase Migration (Snapshots / Snapshot Entries)
+# Cursor V2 Prompt — Snapshot Edit Form UX: Document-style Editing (No Feature Changes)
 
-## 목표
+## Goal
 
-레거시 주간 스냅샷 JSON(예: year/week/weekStart/weekEnd/items[])을 Supabase(Postgres) 테이블로 **실제 마이그레이션**한다.
+Improve the **editing experience** of the Snapshot Create/Edit form by making it feel like a **document editor**, not a dashboard or card-based form.
 
-### 마이그레이션 대상 테이블
+⚠️ Important:
 
-- `public.snapshots`
-- `public.snapshot_entries`
+- **Do NOT remove or change any existing functionality**
+- **Do NOT remove shortcuts, quick actions, or keyboard UX**
+- **This task is visual structure + hierarchy + readability only**
 
-### 핵심 연결 규칙(이미 적용됨)
+## Scope
 
-- `snapshot_entries.author_display_name` 컬럼이 존재한다.
-- `profiles` insert 트리거가 있어 `profiles.display_name == author_display_name`일 때, `author_id`가 자동으로 채워진다.
-- 따라서 마이그레이션 단계에서는 `author_id`를 몰라도 되고, **반드시 `author_display_name`을 넣는다.**
+Applies to:
 
----
-
-## 주의사항(필수)
-
-1. 레거시 JSON의 `pastWeek.risk` 키는 Supabase의 `snapshot_entries.risks`(jsonb)와 매칭한다.
-
-   - 레거시 `pastWeek.risk`는 `null | string[]` 형태이므로,
-     - null → `[]`
-     - string[] → 그대로 `risks`로 저장
-   - (기존에 `risk` 컬럼은 사용하지 않는다)
-
-2. 레거시 JSON의 `pastWeek.collaborators[].relation`은 단일 string이지만,
-   Supabase에서는 `relations` 키에 **배열**로 저장한다.
-
-   - 예) `{ name: "한내경", relation: "pre" }`
-   - → `{ name: "한내경", relations: ["pre"] }`
-   - relation이 null/빈값이면 → `relations: []`
-
-3. 마이그레이션은 **idempotent**(재실행 안전)해야 한다.
-
-   - 동일 weekStart/weekEnd/week 값이 이미 있으면 snapshots 중복 생성 금지
-   - 동일 snapshot_id + author_display_name + domain/project/module/feature 조합이 이미 있으면 snapshot_entries 중복 생성 금지(또는 upsert)
-
-4. 모든 INSERT/UPSERT는 트랜잭션으로 처리하고, 실패 시 롤백한다.
+- Snapshot Create page
+- Snapshot Edit page
+- Shared edit form components
 
 ---
 
-## 레거시 데이터 형식(참고)
+## Design Principles (Must Follow)
 
-- 최상위:
-  - year: number
-  - week: "W49" (string)
-  - weekStart: "YYYY-MM-DD"
-  - weekEnd: "YYYY-MM-DD"
-  - schemaVersion: number
-  - items: Entry[]
-- Entry:
-  - name, domain, project, module, feature: string
-  - pastWeek:
-    - tasks: { title: string, progress: number }[]
-    - risk: string[] | null
-    - riskLevel: number | null
-    - collaborators: { name: string, relation: string }[]
-  - thisWeek:
-    - tasks: string[] (또는 빈 배열)
+### 1. Editing experience = Document, not Dashboard
 
----
+Users should feel like they are **writing a weekly document**, not filling out a management form.
 
-## 해야 할 일(구현 작업)
+Avoid:
 
-### 0) 코드 위치/형태
+- Excessive cards
+- Box-in-box layouts
+- Strong borders or shadows for structure
 
-- 이 repo에 이미 Supabase client 설정이 있다면 그걸 사용하고, 없다면 최소한으로 추가한다.
-- 실행 방식은 2개 중 하나로 만든다.
-  1. Node 스크립트: `scripts/migrate-legacy-snapshots.ts`
-  2. Next.js에서 실행 가능한 스크립트(단, 서버 전용 env 사용)
+Prefer:
 
-※ 로컬 실행 기준으로 작성하고, `.env.local`의 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`를 사용한다.
-
-- **서비스 롤 키**를 사용해야 RLS에 막히지 않고 마이그레이션 가능(단, 외부 노출 금지)
-
-### 1) 입력 데이터
-
-- 레거시 JSON 파일을 `./data/legacy/W49-2025.json` 같은 형태로 저장하고 읽어온다.
-- 파일 경로는 스크립트 인자로 받을 수 있게 해라.
-  - 예: `pnpm migrate:legacy -- ./data/legacy/W49-2025.json`
-
-### 2) snapshots upsert
-
-- `public.snapshots`에 다음 정보를 생성/업서트한다.
-  - year, week, week_start, week_end, schema_version
-- unique 키(가정):
-  - `(year, week)` 또는 `(week_start, week_end)` 중 프로젝트에서 쓰는 기준에 맞춰 upsert
-- 반환된 snapshot.id를 entries에 연결한다.
-
-### 3) snapshot_entries upsert
-
-레거시 items를 순회하며 `public.snapshot_entries`에 넣는다.
-
-필드 매핑(가정/원칙):
-
-- snapshot_id: snapshots.id
-- author_display_name: legacy item.name
-- author_id: NULL (트리거가 나중에 채움)
-- domain/project/module/feature: legacy 그대로
-- past_week: jsonb 로 저장(필요 시)
-- this_week: jsonb 로 저장(필요 시)
-- tasks:
-  - 과거(tasks objects) / 이번주(tasks strings)는 현재 스키마에 맞춰 저장
-- risks: jsonb array
-  - `risks = pastWeek.risk ?? []`
-- risk_level:
-  - `riskLevel = pastWeek.riskLevel ?? null`
-- collaborators: jsonb array
-  - `collaborators = (pastWeek.collaborators ?? []).map(c => ({ name: c.name, relations: c.relation ? [c.relation] : [] }))`
-
-중복 방지 키(권장):
-
-- `(snapshot_id, author_display_name, domain, project, module, feature)` 조합으로 upsert
-
-### 4) 로깅/검증
-
-- 실행 결과로:
-  - 생성/업데이트된 snapshots 수
-  - 생성/업데이트된 entries 수
-  - 누락/형식이상 데이터(예: name 없음, domain 없음 등) 목록을 출력
-- dry-run 옵션 추가(선택):
-  - `--dry-run`이면 DB write 없이 변환 결과만 콘솔 출력
-
-### 5) 실행 커맨드 추가
-
-- package.json에 실행 스크립트 추가:
-  - `"migrate:legacy": "tsx scripts/migrate-legacy-snapshots.ts"` (tsx 사용 가능하면)
-  - 또는 ts-node/esm 구성에 맞게
+- Section flow
+- Headings (h2 / h3)
+- Typography + spacing for hierarchy
 
 ---
 
-## 구현 디테일 요구사항(중요)
+### 2. Cards are NOT layout structure
 
-- `relations`는 반드시 **배열**로 저장할 것
-- `risks`는 반드시 **배열(jsonb)** 로 저장할 것
-- null/undefined는 DB에 일관되게:
-  - arrays → `[]`
-  - scalar nullable → `null`
-- 실패 시 중간에 일부만 들어가는 상황이 없도록 트랜잭션 또는 단계적 안전장치(최소 upsert+에러 즉시 종료)
+Cards should:
 
----
+- Be used only for **information units** (e.g. task item groups)
+- NOT be used to define major sections or chapters
 
-## 최종 산출물
+Cards should NOT:
 
-1. `scripts/migrate-legacy-snapshots.ts` (실행 가능)
-2. `data/legacy/` 샘플 파일(또는 README에 경로 안내)
-3. `docs/migration-legacy-snapshots.md`
-   - 실행 방법
-   - 필드 매핑표
-   - 주의사항(risks/relations 변환, author_display_name 트리거 연결)
-   - 롤백 전략(필요 시 delete 조건)
+- Wrap entire sections (Past Week / This Week)
+- Be nested multiple levels deep
 
 ---
 
-## 시작 지점
+## Layout Refactor Tasks
 
-- 이미 있는 DB 스키마/테이블 컬럼명을 우선 확인하고(현재 프로젝트 실제 컬럼 기준),
-  위 가정과 다른 부분은 **프로젝트 스키마에 맞춰 조정**해라.
-- 조정한 내용은 `docs/migration-legacy-snapshots.md`에 명확히 기록해라.
+### Step 1 — Global Layout
+
+- Keep the current overall page layout and routing
+- Keep editor width behavior as-is (min-width already handled in bugfix)
+- No sidebar or navigation changes
+
+---
+
+### Step 2 — Meta Information (Domain / Project / Module / Feature)
+
+#### Current issue
+
+- Meta Information feels like a heavy form
+- Same visual weight as writing sections
+
+#### Changes
+
+- Remove card-style container around Meta Information
+- Render Meta Information as a **document header section**
+
+Structure:
+
+- Use a section title: `Meta Information` (h2)
+- Place a subtle divider below the title
+- Arrange selects in a compact grid:
+  - 2 columns per row
+  - Domain | Project
+  - Module | Feature
+
+Style rules:
+
+- Labels should be small and quiet
+- Inputs should use compact spacing
+- No background box or shadow
+
+Meta Information should feel like **context**, not content.
+
+---
+
+### Step 3 — Past Week / This Week as Document Sections
+
+#### Current issue
+
+- Section titles exist, but cards dominate hierarchy
+
+#### Changes
+
+- Treat `PAST WEEK` and `THIS WEEK` as **chapter titles (h2)**
+- Remove card containers that wrap entire sections
+- Add generous vertical spacing between sections
+
+---
+
+### Step 4 — Tasks / Risks / Collaborators as Subsections
+
+- Convert `Tasks`, `Risks`, `Collaborators` into **subsection headings (h3)**
+- Keep icons if already present
+- Each subsection:
+  - Title (h3)
+  - Content directly below
+  - Minimal or no outer container
+
+Cards may still be used:
+
+- Inside task lists
+- Inside risk lists
+- For item grouping only
+
+---
+
+### Step 5 — Focus Handling (Readability First)
+
+#### Goal
+
+Help users focus without visual noise.
+
+Rules:
+
+- When a section/subsection is focused:
+  - Emphasize the heading (slightly stronger color or weight)
+  - Show a very subtle left accent line (1–2px)
+- Non-focused sections:
+  - Reduce opacity slightly (e.g. 0.65)
+  - DO NOT disable interaction
+  - DO NOT blur
+
+Avoid:
+
+- Strong borders
+- Background color blocks
+- Drop shadows
+
+Focus should guide the eye, not shout.
+
+---
+
+### Step 6 — Spacing & Density
+
+- Reduce vertical padding between inputs within the same subsection
+- Increase spacing **between sections**, not inside them
+- Labels should not compete visually with content
+- Reading flow should be top → bottom without visual interruption
+
+---
+
+## What Must Stay Exactly the Same
+
+- All existing shortcuts and helper UI
+- Task add / quick add / keyboard UX
+- Progress slider behavior
+- Risk handling
+- Collaborators logic
+- Data schema and API calls
+
+This is a **presentation-layer refactor only**.
+
+---
+
+## QA Checklist
+
+- Editing feels closer to writing a document than filling a form
+- Eye fatigue reduced during long editing sessions
+- Users can instantly identify:
+  - Where they are (Past / This)
+  - What they are editing (Tasks / Risks / Collaborators)
+- No feature regression
+- No behavior changes
+
+---
+
+## Deliverable
+
+1. Code changes implementing the document-style layout
+2. A short markdown summary:
+   - `snapshot-edit-document-ux.md`
+   - Before vs After (conceptual description)
+   - What was intentionally NOT changed

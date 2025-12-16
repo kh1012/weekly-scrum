@@ -22,6 +22,7 @@ import {
   RISK_LEVEL_OPTIONS,
   CUSTOM_INPUT_VALUE,
 } from "@/lib/snapshotMetaOptions";
+import { ShortcutHint } from "./ShortcutHint";
 
 // 섹션 타입 (PlainTextPreview와 동일)
 export type FormSection = 
@@ -131,20 +132,55 @@ function MetaField({
     }
   }, [isOpen]);
 
-  // 드롭다운 위치 계산
+  // 드롭다운 위치 계산 함수 (viewport 감지: 아래 공간 부족 시 위로)
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
+  
+  const calculateDropdownPosition = useCallback(() => {
+    if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownHeight = 280; // 예상 드롭다운 높이 (max-h-48 = 192px + 검색 + 직접입력)
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      // 아래 공간이 부족하고 위 공간이 충분하면 위로 표시
+      const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      
       setDropdownStyle({
         position: "fixed",
-        top: rect.bottom + 4,
+        ...(showAbove
+          ? { bottom: window.innerHeight - rect.top + 4 }
+          : { top: rect.bottom + 4 }),
         left: rect.left,
         width: rect.width,
         zIndex: 9999,
       });
     }
-  }, [isOpen]);
+  }, []);
+
+  // 드롭다운 열기 핸들러 - 위치를 먼저 계산한 후 열기
+  const openDropdown = useCallback(() => {
+    calculateDropdownPosition();
+    setIsOpen(true);
+  }, [calculateDropdownPosition]);
+
+  // 드롭다운 닫기 핸들러
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false);
+    setSearchTerm("");
+  }, []);
+  
+  // 스크롤/리사이즈 시 위치 재계산
+  useEffect(() => {
+    if (isOpen) {
+      const handleScrollOrResize = () => calculateDropdownPosition();
+      window.addEventListener("scroll", handleScrollOrResize, true);
+      window.addEventListener("resize", handleScrollOrResize);
+      return () => {
+        window.removeEventListener("scroll", handleScrollOrResize, true);
+        window.removeEventListener("resize", handleScrollOrResize);
+      };
+    }
+  }, [isOpen, calculateDropdownPosition]);
 
   // 필터링된 옵션
   const filteredOptions = options.filter((opt) =>
@@ -153,15 +189,13 @@ function MetaField({
 
   const handleSelect = (opt: string) => {
     onChange(opt);
-    setIsOpen(false);
-    setSearchTerm("");
+    closeDropdown();
     setIsCustom(false);
   };
 
   const handleCustomInput = () => {
     setIsCustom(true);
-    setIsOpen(false);
-    setSearchTerm("");
+    closeDropdown();
     onChange("");
     setTimeout(() => inputRef.current?.focus(), 0);
   };
@@ -209,7 +243,7 @@ function MetaField({
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => (isOpen ? closeDropdown() : openDropdown())}
         tabIndex={tabIndex}
         className={`w-full text-left flex items-center justify-between border transition-all duration-200 ${
           isOpen
@@ -485,14 +519,7 @@ function TaskEditor({
           </svg>
           작업 추가
         </button>
-        <div className="px-3 py-1.5 text-[10px] text-gray-400 text-center border-t border-gray-50">
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌥</kbd>
-          <span className="mx-0.5">+</span>
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌘</kbd>
-          <span className="mx-0.5">+</span>
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">↓</kbd>
-          <span className="ml-1">새 항목 추가</span>
-        </div>
+        <ShortcutHint label="새 항목 추가" />
       </div>
     </div>
   );
@@ -591,14 +618,7 @@ function ThisWeekTaskEditor({
           </svg>
           계획 추가
         </button>
-        <div className="px-3 py-1.5 text-[10px] text-gray-400 text-center border-t border-gray-50">
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌥</kbd>
-          <span className="mx-0.5">+</span>
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌘</kbd>
-          <span className="mx-0.5">+</span>
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">↓</kbd>
-          <span className="ml-1">새 항목 추가</span>
-        </div>
+        <ShortcutHint label="새 항목 추가" />
       </div>
     </div>
   );
@@ -705,14 +725,7 @@ function RiskEditor({
           </svg>
           리스크 추가
         </button>
-        <div className="px-3 py-1.5 text-[10px] text-gray-400 text-center border-t border-gray-50">
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌥</kbd>
-          <span className="mx-0.5">+</span>
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">⌘</kbd>
-          <span className="mx-0.5">+</span>
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px]">↓</kbd>
-          <span className="ml-1">새 항목 추가</span>
-        </div>
+        <ShortcutHint label="새 항목 추가" />
       </div>
     </div>
   );
@@ -774,26 +787,131 @@ function CollaboratorEditor({
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [isMultiAddOpen, setIsMultiAddOpen] = useState(false);
   const [multiAddSelections, setMultiAddSelections] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [multiAddSearchTerm, setMultiAddSearchTerm] = useState("");
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const [multiAddDropdownStyle, setMultiAddDropdownStyle] = useState<React.CSSProperties>({});
   const dropdownRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const buttonRefs = useRef<Record<number, HTMLButtonElement | null>>({});
   const multiAddRef = useRef<HTMLDivElement>(null);
+  const multiAddButtonRef = useRef<HTMLButtonElement>(null);
+  const portalDropdownRef = useRef<HTMLDivElement>(null);
+  const multiAddPortalRef = useRef<HTMLDivElement>(null);
 
   // 드롭다운 외부 클릭 감지
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (openDropdownIndex !== null) {
-        const ref = dropdownRefs.current[openDropdownIndex];
-        if (ref && !ref.contains(e.target as Node)) {
+        const buttonRef = buttonRefs.current[openDropdownIndex];
+        const portalRef = portalDropdownRef.current;
+        if (
+          buttonRef && !buttonRef.contains(e.target as Node) &&
+          (!portalRef || !portalRef.contains(e.target as Node))
+        ) {
           setOpenDropdownIndex(null);
+          setSearchTerm("");
         }
       }
-      if (isMultiAddOpen && multiAddRef.current && !multiAddRef.current.contains(e.target as Node)) {
-        setIsMultiAddOpen(false);
-        setMultiAddSelections(new Set());
+      if (isMultiAddOpen) {
+        const portalRef = multiAddPortalRef.current;
+        if (
+          multiAddButtonRef.current && !multiAddButtonRef.current.contains(e.target as Node) &&
+          (!portalRef || !portalRef.contains(e.target as Node))
+        ) {
+          setIsMultiAddOpen(false);
+          setMultiAddSelections(new Set());
+          setMultiAddSearchTerm("");
+        }
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDropdownIndex, isMultiAddOpen]);
+
+  // 협업자 드롭다운 위치 계산 함수 (viewport 감지: 아래 공간 부족 시 위로)
+  const calculateCollaboratorDropdownPosition = useCallback((index: number) => {
+    if (buttonRefs.current[index]) {
+      const rect = buttonRefs.current[index]!.getBoundingClientRect();
+      const dropdownHeight = 280; // 예상 드롭다운 높이
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      // 아래 공간이 부족하고 위 공간이 충분하면 위로 표시
+      const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      
+      setDropdownStyle({
+        position: "fixed",
+        ...(showAbove
+          ? { bottom: window.innerHeight - rect.top + 4 }
+          : { top: rect.bottom + 4 }),
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, []);
+
+  // 여러 명 추가 드롭다운 위치 계산 함수 (viewport 감지)
+  const calculateMultiAddDropdownPosition = useCallback(() => {
+    if (multiAddButtonRef.current) {
+      const rect = multiAddButtonRef.current.getBoundingClientRect();
+      const dropdownHeight = 280; // 예상 드롭다운 높이
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      // 아래 공간이 부족하고 위 공간이 충분하면 위로 표시
+      const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      
+      setMultiAddDropdownStyle({
+        position: "fixed",
+        ...(showAbove
+          ? { bottom: window.innerHeight - rect.top + 4 }
+          : { top: rect.bottom + 4 }),
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, []);
+
+  // 협업자 드롭다운 열기 핸들러
+  const openCollaboratorDropdown = useCallback((index: number) => {
+    calculateCollaboratorDropdownPosition(index);
+    setOpenDropdownIndex(index);
+    setSearchTerm("");
+  }, [calculateCollaboratorDropdownPosition]);
+
+  // 여러 명 추가 드롭다운 열기 핸들러
+  const openMultiAddDropdown = useCallback(() => {
+    calculateMultiAddDropdownPosition();
+    setIsMultiAddOpen(true);
+    setMultiAddSearchTerm("");
+  }, [calculateMultiAddDropdownPosition]);
+
+  // 스크롤/리사이즈 시 위치 재계산
+  useEffect(() => {
+    if (openDropdownIndex !== null) {
+      const handleScrollOrResize = () => calculateCollaboratorDropdownPosition(openDropdownIndex);
+      window.addEventListener("scroll", handleScrollOrResize, true);
+      window.addEventListener("resize", handleScrollOrResize);
+      return () => {
+        window.removeEventListener("scroll", handleScrollOrResize, true);
+        window.removeEventListener("resize", handleScrollOrResize);
+      };
+    }
+  }, [openDropdownIndex, calculateCollaboratorDropdownPosition]);
+
+  useEffect(() => {
+    if (isMultiAddOpen) {
+      const handleScrollOrResize = () => calculateMultiAddDropdownPosition();
+      window.addEventListener("scroll", handleScrollOrResize, true);
+      window.addEventListener("resize", handleScrollOrResize);
+      return () => {
+        window.removeEventListener("scroll", handleScrollOrResize, true);
+        window.removeEventListener("resize", handleScrollOrResize);
+      };
+    }
+  }, [isMultiAddOpen, calculateMultiAddDropdownPosition]);
 
   const addCollaborator = () => {
     onChange([...collaborators, { name: "", relations: ["pair"] }]);
@@ -937,8 +1055,16 @@ function CollaboratorEditor({
               ) : (
                 <div className="relative">
                   <button
+                    ref={(el) => { buttonRefs.current[index] = el; }}
                     type="button"
-                    onClick={() => setOpenDropdownIndex(openDropdownIndex === index ? null : index)}
+                    onClick={() => {
+                      if (openDropdownIndex === index) {
+                        setOpenDropdownIndex(null);
+                        setSearchTerm("");
+                      } else {
+                        openCollaboratorDropdown(index);
+                      }
+                    }}
                     tabIndex={baseTabIndex + index}
                     className={`w-full text-left bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent flex items-center justify-between ${
                       compact ? "px-2 py-1.5 rounded text-xs" : "px-3 py-2 rounded-lg text-sm"
@@ -951,33 +1077,75 @@ function CollaboratorEditor({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {openDropdownIndex === index && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {availableNamesForThis.map((name) => (
-                        <button
-                          key={name}
-                          type="button"
-                          onClick={() => updateName(index, name)}
-                          className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${
-                            collab.name === name ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-700"
-                          }`}
-                        >
-                          {name}
-                        </button>
-                      ))}
+                  {openDropdownIndex === index && createPortal(
+                    <div
+                      ref={portalDropdownRef}
+                      style={dropdownStyle}
+                      className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden animate-fadeIn"
+                    >
+                      {/* 검색 입력 */}
+                      <div className="p-2 border-b border-gray-100">
+                        <input
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          placeholder="검색..."
+                          className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
+                          autoFocus
+                        />
+                      </div>
+                      {/* 옵션 목록 */}
+                      <div className="max-h-48 overflow-y-auto">
+                        {availableNamesForThis.filter((name) =>
+                          name.toLowerCase().includes(searchTerm.toLowerCase())
+                        ).length > 0 ? (
+                          availableNamesForThis
+                            .filter((name) => name.toLowerCase().includes(searchTerm.toLowerCase()))
+                            .map((name) => (
+                              <button
+                                key={name}
+                                type="button"
+                                onClick={() => {
+                                  updateName(index, name);
+                                  setSearchTerm("");
+                                }}
+                                className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-50 transition-colors flex items-center gap-2 ${
+                                  collab.name === name ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-700"
+                                }`}
+                              >
+                                {collab.name === name && (
+                                  <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                                <span className={collab.name === name ? "" : "ml-5.5"}>{name}</span>
+                              </button>
+                            ))
+                        ) : (
+                          <div className="px-4 py-3 text-xs text-gray-400 text-center">
+                            검색 결과 없음
+                          </div>
+                        )}
+                      </div>
+                      {/* 직접 입력 옵션 */}
                       <div className="border-t border-gray-100">
                         <button
                           type="button"
                           onClick={() => {
                             toggleCustomMode(index, true);
                             setOpenDropdownIndex(null);
+                            setSearchTerm("");
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+                          className="w-full px-4 py-2.5 text-left text-xs text-gray-600 hover:bg-gray-50 flex items-center gap-2"
                         >
+                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
                           직접 입력...
                         </button>
                       </div>
-                    </div>
+                    </div>,
+                    document.body
                   )}
                 </div>
               )}
@@ -1066,8 +1234,16 @@ function CollaboratorEditor({
         {/* 여러 명 추가 */}
         <div className="relative flex-1" ref={multiAddRef}>
           <button
+            ref={multiAddButtonRef}
             type="button"
-            onClick={() => setIsMultiAddOpen(!isMultiAddOpen)}
+            onClick={() => {
+              if (isMultiAddOpen) {
+                setIsMultiAddOpen(false);
+                setMultiAddSearchTerm("");
+              } else {
+                openMultiAddDropdown();
+              }
+            }}
             tabIndex={-1}
             className={`w-full flex items-center justify-center gap-2 font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors border border-blue-200 rounded-lg ${
               compact ? "px-2.5 py-1.5 text-xs" : "px-4 py-2 text-sm"
@@ -1079,36 +1255,53 @@ function CollaboratorEditor({
             여러 명
           </button>
 
-          {/* 여러 명 추가 드롭다운 */}
-          {isMultiAddOpen && (
-            <div className="absolute z-50 bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+          {/* 여러 명 추가 드롭다운 (Portal) */}
+          {isMultiAddOpen && createPortal(
+            <div
+              ref={multiAddPortalRef}
+              style={multiAddDropdownStyle}
+              className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden animate-fadeIn"
+            >
               <div className="p-2 border-b border-gray-100">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-gray-700">여러 명 선택</span>
                   {multiAddSelections.size > 0 && (
                     <span className="text-[10px] text-blue-600 font-medium">{multiAddSelections.size}명 선택</span>
                   )}
                 </div>
+                {/* 검색 입력 */}
+                <input
+                  type="text"
+                  value={multiAddSearchTerm}
+                  onChange={(e) => setMultiAddSearchTerm(e.target.value)}
+                  placeholder="검색..."
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
+                  autoFocus
+                />
               </div>
-              <div className="max-h-40 overflow-y-auto p-1">
-                {availableNames.length > 0 ? (
-                  availableNames.map((name) => (
-                    <label
-                      key={name}
-                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={multiAddSelections.has(name)}
-                        onChange={() => toggleMultiAddSelection(name)}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-xs text-gray-700">{name}</span>
-                    </label>
-                  ))
+              <div className="max-h-48 overflow-y-auto p-1">
+                {availableNames.filter((name) =>
+                  name.toLowerCase().includes(multiAddSearchTerm.toLowerCase())
+                ).length > 0 ? (
+                  availableNames
+                    .filter((name) => name.toLowerCase().includes(multiAddSearchTerm.toLowerCase()))
+                    .map((name) => (
+                      <label
+                        key={name}
+                        className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={multiAddSelections.has(name)}
+                          onChange={() => toggleMultiAddSelection(name)}
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs text-gray-700">{name}</span>
+                      </label>
+                    ))
                 ) : (
                   <div className="px-2 py-3 text-xs text-gray-400 text-center">
-                    추가 가능한 협업자가 없습니다
+                    {availableNames.length === 0 ? "추가 가능한 협업자가 없습니다" : "검색 결과 없음"}
                   </div>
                 )}
               </div>
@@ -1116,14 +1309,18 @@ function CollaboratorEditor({
                 <div className="p-2 border-t border-gray-100">
                   <button
                     type="button"
-                    onClick={addMultipleCollaborators}
+                    onClick={() => {
+                      addMultipleCollaborators();
+                      setMultiAddSearchTerm("");
+                    }}
                     className="w-full px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                   >
                     {multiAddSelections.size}명 추가하기
                   </button>
                 </div>
               )}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>
@@ -1170,29 +1367,52 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
   // 1열/2열 그리드 레이아웃
   const gridCols = singleColumn ? "grid-cols-1" : "grid-cols-2";
 
+  // 포커스 상태에 따른 섹션 스타일
+  const [currentFocus, setCurrentFocus] = useState<FormSection | null>(null);
+  
+  const handleFocus = (section: FormSection) => {
+    setCurrentFocus(section);
+    onFocusSection?.(section);
+  };
+
+  const getSectionOpacity = (section: FormSection) => {
+    if (!currentFocus) return "opacity-100";
+    if (currentFocus === section || currentFocus.startsWith(section + ".") || section.startsWith(currentFocus.split(".")[0])) {
+      return "opacity-100";
+    }
+    return "opacity-60";
+  };
+
+  const getFocusAccent = (section: FormSection) => {
+    if (!currentFocus) return "";
+    if (currentFocus === section || currentFocus.startsWith(section + ".")) {
+      return "border-l-2 border-l-blue-500 pl-3";
+    }
+    return "";
+  };
+
   return (
-    <div className="flex flex-col bg-gradient-to-b from-slate-50/80 to-white min-h-0">
+    <div className="flex flex-col bg-white min-h-0">
       {/* 헤더 - PlainTextPreview와 높이 동일 (h-12) */}
-      <div className="h-12 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm shrink-0">
-        <div className="h-full px-4 flex items-center gap-2">
+      <div className="h-12 border-b border-gray-100 bg-white shrink-0">
+        <div className="h-full px-5 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
           <span className="text-sm font-semibold text-gray-800">스냅샷 편집</span>
         </div>
       </div>
 
-      {/* 콘텐츠 영역 - 동적 높이, overflow-y-auto */}
-      <div className={`flex-1 overflow-y-auto min-h-0 ${contentPadding} flex flex-col ${sectionGap}`}>
-        {/* 메타 영역 */}
+      {/* 콘텐츠 영역 - 문서 스타일 레이아웃 */}
+      <div className={`flex-1 overflow-y-auto min-h-0 ${compact ? "px-4 py-4" : "px-6 py-6"}`}>
+        {/* 메타 정보 - 문서 헤더 스타일 */}
         <section 
-          className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
-          onFocus={() => onFocusSection?.("meta")}
+          className={`mb-8 transition-opacity duration-200 ${getSectionOpacity("meta")} ${getFocusAccent("meta")}`}
+          onFocus={() => handleFocus("meta")}
         >
-          {/* 섹션 헤더 - sticky */}
-          <div className="sticky top-0 z-10 px-3 py-2 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-gray-800" />
-            <h3 className={`${labelSize} font-bold text-gray-700 uppercase tracking-wider`}>메타 정보</h3>
-          </div>
-          <div className={`p-3 grid ${gridCols} ${gridGap}`}>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            메타 정보
+          </h2>
+          <div className="border-b border-gray-100 mb-4" />
+          <div className={`grid ${gridCols} ${compact ? "gap-x-3 gap-y-2" : "gap-x-4 gap-y-3"}`}>
             {!hideName && (
               <MetaField label="Name" value={snapshot.name} options={NAME_OPTIONS} onChange={(v) => handleMetaChange("name", v)} placeholder="작성자 이름" tabIndex={1} compact={compact} />
             )}
@@ -1205,21 +1425,19 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
           </div>
         </section>
 
-        {/* Past Week */}
-        <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
-          {/* 섹션 헤더 - sticky */}
-          <div className="sticky top-0 z-10 px-3 py-2 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100/50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        {/* Past Week - 챕터 스타일 */}
+        <section className={`mb-10 transition-opacity duration-200 ${getSectionOpacity("pastWeek")}`}>
+          <div className={`flex items-center justify-between mb-4 ${getFocusAccent("pastWeek")}`}>
+            <h2 className="text-sm font-bold text-blue-600 uppercase tracking-wide flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <h3 className={`${labelSize} font-bold text-gray-700 uppercase tracking-wider`}>Past Week</h3>
-            </div>
+              Past Week
+            </h2>
             
-            {/* This Week → Past Week 덮어쓰기 버튼 */}
+            {/* This Week → Past Week 가져오기 버튼 */}
             {snapshot.thisWeek.tasks.length > 0 && (
               <button
                 type="button"
                 onClick={() => {
-                  // This Week tasks를 Past Week로 이동 (This Week은 비움)
                   const newTasks = snapshot.thisWeek.tasks.map((title) => ({
                     title,
                     progress: 0,
@@ -1229,12 +1447,10 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
                     thisWeek: { tasks: [] },
                   });
                 }}
-                className={`flex items-center gap-1.5 font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50/80 transition-colors ${
-                  compact ? "px-2 py-1 text-[10px] rounded-md" : "px-3 py-1.5 text-xs rounded-lg"
-                }`}
+                className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                 title="This Week 작업을 Past Week로 복사합니다"
               >
-                <svg className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                 </svg>
                 This Week에서 가져오기
@@ -1242,36 +1458,36 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
             )}
           </div>
 
-          <div className={`p-3 ${innerSpace}`}>
+          <div className={`space-y-6 ${compact ? "pl-0" : "pl-1"}`}>
             {/* Tasks 서브섹션 */}
             <div 
-              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
-              onFocus={() => onFocusSection?.("pastWeek.tasks")}
+              className={`transition-opacity duration-200 ${getSectionOpacity("pastWeek.tasks")} ${getFocusAccent("pastWeek.tasks")}`}
+              onFocus={() => handleFocus("pastWeek.tasks")}
             >
-              <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600 ${labelMargin}`}>
+              <h3 className={`flex items-center gap-1.5 ${labelSize} font-semibold text-gray-700 ${labelMargin}`}>
                 <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
                 Tasks
-              </label>
+              </h3>
               <TaskEditor tasks={snapshot.pastWeek.tasks} onChange={(tasks) => handlePastWeekChange("tasks", tasks)} baseTabIndex={10} compact={compact} />
             </div>
 
             {/* Risks 서브섹션 */}
             <div 
-              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
-              onFocus={() => onFocusSection?.("pastWeek.risks")}
+              className={`transition-opacity duration-200 ${getSectionOpacity("pastWeek.risks")} ${getFocusAccent("pastWeek.risks")}`}
+              onFocus={() => handleFocus("pastWeek.risks")}
             >
               <div className={`flex items-center justify-between ${labelMargin}`}>
-                <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600`}>
+                <h3 className={`flex items-center gap-1.5 ${labelSize} font-semibold text-gray-700`}>
                   <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   Risks
-                </label>
+                </h3>
                 {/* RiskLevel 선택 (리스크가 있을 때만) */}
                 {snapshot.pastWeek.risk && snapshot.pastWeek.risk.length > 0 && (
-                  <div className="flex items-center gap-0.5 bg-white rounded-md p-0.5 border border-gray-100">
+                  <div className="flex items-center gap-0.5 bg-gray-50 rounded-md p-0.5">
                     {[
                       { value: 0, label: "없음", color: "bg-emerald-500", hoverColor: "hover:bg-emerald-50" },
                       { value: 1, label: "경미", color: "bg-yellow-500", hoverColor: "hover:bg-yellow-50" },
@@ -1300,7 +1516,6 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
                 risks={snapshot.pastWeek.risk}
                 onChange={(risks) => handlePastWeekChange("risk", risks)}
                 onAddRisk={() => {
-                  // risk와 riskLevel을 한 번에 업데이트
                   const newRisks = [...(snapshot.pastWeek.risk || []), ""];
                   onUpdate({
                     pastWeek: {
@@ -1326,44 +1541,40 @@ export function SnapshotEditForm({ snapshot, onUpdate, compact = false, singleCo
 
             {/* Collaborators 서브섹션 */}
             <div 
-              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
-              onFocus={() => onFocusSection?.("pastWeek.collaborators")}
+              className={`transition-opacity duration-200 ${getSectionOpacity("pastWeek.collaborators")} ${getFocusAccent("pastWeek.collaborators")}`}
+              onFocus={() => handleFocus("pastWeek.collaborators")}
             >
-              <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600 ${labelMargin}`}>
+              <h3 className={`flex items-center gap-1.5 ${labelSize} font-semibold text-gray-700 ${labelMargin}`}>
                 <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 Collaborators
-              </label>
+              </h3>
               <CollaboratorEditor collaborators={snapshot.pastWeek.collaborators} onChange={(collabs) => handlePastWeekChange("collaborators", collabs)} baseTabIndex={70} compact={compact} />
             </div>
           </div>
         </section>
 
-        {/* This Week */}
-        <section 
-          className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
-          onFocus={() => onFocusSection?.("thisWeek")}
-        >
-          {/* 섹션 헤더 - sticky */}
-          <div className="sticky top-0 z-10 px-3 py-2 bg-gradient-to-r from-emerald-50 to-white border-b border-emerald-100/50 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <h3 className={`${labelSize} font-bold text-gray-700 uppercase tracking-wider`}>This Week</h3>
+        {/* This Week - 챕터 스타일 */}
+        <section className={`transition-opacity duration-200 ${getSectionOpacity("thisWeek")}`}>
+          <div className={`mb-4 ${getFocusAccent("thisWeek")}`}>
+            <h2 className="text-sm font-bold text-emerald-600 uppercase tracking-wide flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              This Week
+            </h2>
           </div>
 
-          <div className="p-3">
-            <div 
-              className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 hover:border-slate-200 transition-colors"
-              onFocus={() => onFocusSection?.("thisWeek.tasks")}
-            >
-              <label className={`flex items-center gap-1.5 ${labelSize} font-semibold text-slate-600 ${labelMargin}`}>
-                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Tasks
-              </label>
-              <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} compact={compact} />
-            </div>
+          <div 
+            className={`transition-opacity duration-200 ${compact ? "pl-0" : "pl-1"} ${getSectionOpacity("thisWeek.tasks")} ${getFocusAccent("thisWeek.tasks")}`}
+            onFocus={() => handleFocus("thisWeek.tasks")}
+          >
+            <h3 className={`flex items-center gap-1.5 ${labelSize} font-semibold text-gray-700 ${labelMargin}`}>
+              <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Tasks
+            </h3>
+            <ThisWeekTaskEditor tasks={snapshot.thisWeek.tasks} onChange={handleThisWeekChange} baseTabIndex={100} compact={compact} />
           </div>
         </section>
       </div>

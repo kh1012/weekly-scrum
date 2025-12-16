@@ -2,7 +2,7 @@
 
 /**
  * 관리자용 스냅샷 편집 뷰
- * 
+ *
  * - 기존 편집폼(3열) 재사용
  * - mode = 'admin' (snapshotId 기반 데이터 로딩)
  * - 저장 버튼: "업데이트하기"
@@ -11,16 +11,29 @@
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { SnapshotCardList, SnapshotCardListRef } from "@/components/weekly-scrum/manage/SnapshotCardList";
+import {
+  SnapshotCardList,
+  SnapshotCardListRef,
+} from "@/components/weekly-scrum/manage/SnapshotCardList";
 import { SnapshotEditForm } from "@/components/weekly-scrum/manage/SnapshotEditForm";
 import { PlainTextPreview } from "@/components/weekly-scrum/manage/PlainTextPreview";
 import { ResizeHandle } from "@/components/weekly-scrum/manage/ResizeHandle";
-import { ToastProvider, useToast } from "@/components/weekly-scrum/manage/Toast";
+import {
+  ToastProvider,
+  useToast,
+} from "@/components/weekly-scrum/manage/Toast";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import type { TempSnapshot } from "@/components/weekly-scrum/manage/types";
-import { tempSnapshotToV2Json, tempSnapshotToPlainText } from "@/components/weekly-scrum/manage/types";
+import {
+  tempSnapshotToV2Json,
+  tempSnapshotToPlainText,
+} from "@/components/weekly-scrum/manage/types";
 import { updateAdminSnapshotAction } from "../../../_actions";
-import type { Database, PastWeekTask, Collaborator } from "@/lib/supabase/types";
+import type {
+  Database,
+  PastWeekTask,
+  Collaborator,
+} from "@/lib/supabase/types";
 
 type SnapshotEntryRow = Database["public"]["Tables"]["snapshot_entries"]["Row"];
 
@@ -80,44 +93,55 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
   const [tempSnapshots, setTempSnapshots] = useState<TempSnapshot[]>(() =>
     snapshot.entries.map(convertEntryToTempSnapshot)
   );
-  const [selectedId, setSelectedId] = useState<string | null>(tempSnapshots[0]?.tempId || null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    tempSnapshots[0]?.tempId || null
+  );
   const [deletedEntryIds, setDeletedEntryIds] = useState<string[]>([]);
 
   // 패널 상태
-  const [leftPanelWidth, setLeftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(
+    DEFAULT_LEFT_PANEL_WIDTH
+  );
   const [editPanelRatio, setEditPanelRatio] = useState(0.5);
   const [focusedSection, setFocusedSection] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const selectedSnapshot = tempSnapshots.find((s) => s.tempId === selectedId) || null;
+  const selectedSnapshot =
+    tempSnapshots.find((s) => s.tempId === selectedId) || null;
 
   // 카드 업데이트
-  const handleUpdateCard = useCallback((tempId: string, updates: Partial<TempSnapshot>) => {
-    setTempSnapshots((prev) =>
-      prev.map((s) =>
-        s.tempId === tempId
-          ? { ...s, ...updates, isDirty: true, updatedAt: new Date() }
-          : s
-      )
-    );
-  }, []);
+  const handleUpdateCard = useCallback(
+    (tempId: string, updates: Partial<TempSnapshot>) => {
+      setTempSnapshots((prev) =>
+        prev.map((s) =>
+          s.tempId === tempId
+            ? { ...s, ...updates, isDirty: true, updatedAt: new Date() }
+            : s
+        )
+      );
+    },
+    []
+  );
 
   // 카드 삭제
-  const handleDeleteCard = useCallback((tempId: string) => {
-    setTempSnapshots((prev) => {
-      const target = prev.find((s) => s.tempId === tempId);
-      if (target?.isOriginal) {
-        setDeletedEntryIds((ids) => [...ids, tempId]);
-      }
+  const handleDeleteCard = useCallback(
+    (tempId: string) => {
+      setTempSnapshots((prev) => {
+        const target = prev.find((s) => s.tempId === tempId);
+        if (target?.isOriginal) {
+          setDeletedEntryIds((ids) => [...ids, tempId]);
+        }
 
-      const newSnapshots = prev.filter((s) => s.tempId !== tempId);
-      if (selectedId === tempId) {
-        setSelectedId(newSnapshots[0]?.tempId || null);
-      }
-      return newSnapshots;
-    });
-    showToast("엔트리 삭제됨 (저장 시 반영)", "info");
-  }, [selectedId, showToast]);
+        const newSnapshots = prev.filter((s) => s.tempId !== tempId);
+        if (selectedId === tempId) {
+          setSelectedId(newSnapshots[0]?.tempId || null);
+        }
+        return newSnapshots;
+      });
+      showToast("엔트리 삭제됨 (저장 시 반영)", "info");
+    },
+    [selectedId, showToast]
+  );
 
   // 새 엔트리 추가
   const handleAddEmpty = useCallback(() => {
@@ -190,18 +214,24 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
   }, [selectedSnapshot, showToast]);
 
   // 개별 카드 JSON 복사
-  const handleCopyJsonCard = useCallback((snapshot: TempSnapshot) => {
-    const json = tempSnapshotToV2Json(snapshot);
-    navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-    showToast("JSON 복사됨", "success");
-  }, [showToast]);
+  const handleCopyJsonCard = useCallback(
+    (snapshot: TempSnapshot) => {
+      const json = tempSnapshotToV2Json(snapshot);
+      navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+      showToast("JSON 복사됨", "success");
+    },
+    [showToast]
+  );
 
   // 개별 카드 텍스트 복사
-  const handleCopyPlainTextCard = useCallback((snapshot: TempSnapshot) => {
-    const text = tempSnapshotToPlainText(snapshot);
-    navigator.clipboard.writeText(text);
-    showToast("텍스트 복사됨", "success");
-  }, [showToast]);
+  const handleCopyPlainTextCard = useCallback(
+    (snapshot: TempSnapshot) => {
+      const text = tempSnapshotToPlainText(snapshot);
+      navigator.clipboard.writeText(text);
+      showToast("텍스트 복사됨", "success");
+    },
+    [showToast]
+  );
 
   // 전체 JSON 복사
   const handleCopyAllJson = useCallback(() => {
@@ -212,7 +242,9 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
 
   // 전체 텍스트 복사
   const handleCopyAllPlainText = useCallback(() => {
-    const allText = tempSnapshots.map(tempSnapshotToPlainText).join("\n\n---\n\n");
+    const allText = tempSnapshots
+      .map(tempSnapshotToPlainText)
+      .join("\n\n---\n\n");
     navigator.clipboard.writeText(allText);
     showToast("전체 텍스트 복사됨", "success");
   }, [tempSnapshots, showToast]);
@@ -227,8 +259,18 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
             onClick={() => navigationProgress.start()}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             <span className="text-sm font-medium">상세로</span>
           </Link>
@@ -263,9 +305,24 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg transition-colors flex items-center gap-2"
           >
             {isSaving && (
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="w-4 h-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
             )}
             업데이트하기
@@ -299,7 +356,10 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
         <ResizeHandle
           onResize={(delta) => {
             setLeftPanelWidth((prev) =>
-              Math.max(MIN_LEFT_PANEL_WIDTH, Math.min(MAX_LEFT_PANEL_WIDTH, prev + delta))
+              Math.max(
+                MIN_LEFT_PANEL_WIDTH,
+                Math.min(MAX_LEFT_PANEL_WIDTH, prev + delta)
+              )
             );
           }}
         />
@@ -315,7 +375,9 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
               <SnapshotEditForm
                 key={selectedSnapshot.tempId}
                 snapshot={selectedSnapshot}
-                onUpdate={(updates) => handleUpdateCard(selectedSnapshot.tempId, updates)}
+                onUpdate={(updates) =>
+                  handleUpdateCard(selectedSnapshot.tempId, updates)
+                }
                 onFocusSection={setFocusedSection}
                 compact
                 singleColumn
@@ -333,7 +395,9 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
             onResize={(delta) => {
               const containerWidth = window.innerWidth - leftPanelWidth - 8;
               const deltaRatio = delta / containerWidth;
-              setEditPanelRatio((prev) => Math.max(0.25, Math.min(0.75, prev + deltaRatio)));
+              setEditPanelRatio((prev) =>
+                Math.max(0.25, Math.min(0.75, prev + deltaRatio))
+              );
             }}
           />
 
@@ -342,7 +406,9 @@ function AdminSnapshotEditViewInner({ snapshot }: AdminSnapshotEditViewProps) {
             {selectedSnapshot ? (
               <PlainTextPreview
                 snapshot={selectedSnapshot}
-                focusedSection={focusedSection as "meta" | "pastWeek" | "thisWeek" | null}
+                focusedSection={
+                  focusedSection as "meta" | "pastWeek" | "thisWeek" | null
+                }
               />
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
@@ -363,4 +429,3 @@ export function AdminSnapshotEditView(props: AdminSnapshotEditViewProps) {
     </ToastProvider>
   );
 }
-
