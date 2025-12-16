@@ -83,12 +83,22 @@ export interface PlansGanttViewProps {
   rangeStart: Date;
   rangeEnd: Date;
   plans: PlanWithAssignees[];
+  /** 기존 Draft 생성 (셀 클릭 - fallback) */
   onCreateDraftAtCell?: (context: {
     domain: string;
     project: string;
     module: string;
     feature: string;
     date: Date;
+  }) => Promise<void>;
+  /** Airbnb 스타일 Quick Create (팝오버에서 title 입력) */
+  onQuickCreate?: (context: {
+    domain: string;
+    project: string;
+    module: string;
+    feature: string;
+    date: Date;
+    title: string;
   }) => Promise<void>;
   onResizePlan?: (planId: string, startDate: string, endDate: string) => Promise<void>;
   onOpenPlan?: (planId: string) => void;

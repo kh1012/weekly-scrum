@@ -5,7 +5,8 @@ import type { FlatRow, GanttMode, DragType, DragState } from "./types";
 import type { BarLayout, MonthGroup } from "./useGanttLayout";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineRow } from "./TimelineRow";
-import { DAY_WIDTH, xToDate, formatDateRange } from "./useGanttLayout";
+import { DAY_WIDTH, formatDateRange } from "./useGanttLayout";
+import { QuickCreatePopover } from "@/components/admin-plans";
 
 interface TimelineGridProps {
   rows: FlatRow[];
@@ -22,10 +23,35 @@ interface TimelineGridProps {
   onSelectPlan?: (planId: string) => void;
   onCellClick?: (row: FlatRow, date: Date) => void;
   onResizePlan?: (planId: string, startDate: string, endDate: string) => void;
+  /** Quick Create 핸들러 (Airbnb 스타일) */
+  onQuickCreate?: (context: {
+    domain: string;
+    project: string;
+    module: string;
+    feature: string;
+    date: Date;
+    title: string;
+  }) => Promise<void>;
+}
+
+/**
+ * Quick Create 팝오버 상태
+ */
+interface PopoverState {
+  isOpen: boolean;
+  position: { x: number; y: number };
+  date: Date;
+  context: {
+    domain: string;
+    project: string;
+    module: string;
+    feature: string;
+  };
 }
 
 /**
  * 타임라인 그리드 컴포넌트
+ * - Airbnb 스타일 Quick Create 팝오버 지원
  */
 export const TimelineGrid = memo(function TimelineGrid({
   rows,
@@ -33,18 +59,22 @@ export const TimelineGrid = memo(function TimelineGrid({
   months,
   totalWidth,
   mode,
-  rangeStart,
   calculateBarLayout,
   selectedPlanId,
   onSelectPlan,
   onCellClick,
   onResizePlan,
+  onQuickCreate,
 }: TimelineGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredCell, setHoveredCell] = useState<{
     rowId: string;
     dayIndex: number;
   } | null>(null);
+
+  // Quick Create 팝오버 상태
+  const [popoverState, setPopoverState] = useState<PopoverState | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Drag state
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -67,6 +97,45 @@ export const TimelineGrid = memo(function TimelineGrid({
       }
     },
     []
+  );
+
+  // Quick Create 팝오버 열기
+  const handleQuickCreate = useCallback(
+    (row: FlatRow, date: Date, position: { x: number; y: number }) => {
+      if (!row.context) return;
+      setPopoverState({
+        isOpen: true,
+        position,
+        date,
+        context: row.context,
+      });
+    },
+    []
+  );
+
+  // Quick Create 팝오버 닫기
+  const handleClosePopover = useCallback(() => {
+    setPopoverState(null);
+  }, []);
+
+  // Quick Create 생성 핸들러
+  const handleCreate = useCallback(
+    async (title: string) => {
+      if (!popoverState || !onQuickCreate) return;
+
+      setIsCreating(true);
+      try {
+        await onQuickCreate({
+          ...popoverState.context,
+          date: popoverState.date,
+          title,
+        });
+        setPopoverState(null);
+      } finally {
+        setIsCreating(false);
+      }
+    },
+    [popoverState, onQuickCreate]
   );
 
   // Resize start handler
@@ -177,6 +246,8 @@ export const TimelineGrid = memo(function TimelineGrid({
       )
     : null;
 
+  const isAdmin = mode === "admin";
+
   return (
     <div
       ref={containerRef}
@@ -226,6 +297,7 @@ export const TimelineGrid = memo(function TimelineGrid({
             onSelectPlan={onSelectPlan}
             onResizeStart={handleResizeStart}
             onCellClick={onCellClick}
+            onQuickCreate={isAdmin && onQuickCreate ? handleQuickCreate : undefined}
             hoveredCell={hoveredCell}
             onCellHover={handleCellHover}
           />
@@ -242,7 +314,18 @@ export const TimelineGrid = memo(function TimelineGrid({
           }}
         />
       )}
+
+      {/* Quick Create Popover (Airbnb 스타일) */}
+      {popoverState && popoverState.isOpen && (
+        <QuickCreatePopover
+          position={popoverState.position}
+          date={popoverState.date}
+          context={popoverState.context}
+          onCreate={handleCreate}
+          onClose={handleClosePopover}
+          isLoading={isCreating}
+        />
+      )}
     </div>
   );
 });
-

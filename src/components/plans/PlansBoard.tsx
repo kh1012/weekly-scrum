@@ -11,6 +11,7 @@ import {
   updatePlanStatusAction,
   createDraftPlanAtCellAction,
   resizePlanAction,
+  quickCreatePlanAction,
 } from "@/lib/actions/plans";
 import type { PlansBoardProps, FilterState, GroupByOption } from "./types";
 import type { PlanStatus } from "@/lib/data/plans";
@@ -136,6 +137,37 @@ export function PlansBoard({
       }
 
       // 새로고침
+      startTransition(() => {
+        router.refresh();
+      });
+    },
+    [router]
+  );
+
+  // Quick Create (Airbnb 스타일 - 팝오버에서 title 입력)
+  const handleQuickCreate = useCallback(
+    async (context: {
+      domain: string;
+      project: string;
+      module: string;
+      feature: string;
+      date: Date;
+      title: string;
+    }) => {
+      const result = await quickCreatePlanAction({
+        title: context.title,
+        domain: context.domain,
+        project: context.project,
+        module: context.module,
+        feature: context.feature,
+        date: context.date.toISOString().split("T")[0],
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "생성에 실패했습니다.");
+      }
+
+      // 새로고침하여 새 Plan 반영
       startTransition(() => {
         router.refresh();
       });
@@ -380,6 +412,7 @@ export function PlansBoard({
             rangeEnd={rangeEnd}
             plans={initialPlans}
             onCreateDraftAtCell={isAdmin ? handleCreateDraftAtCell : undefined}
+            onQuickCreate={isAdmin ? handleQuickCreate : undefined}
             onResizePlan={isAdmin ? handleResizePlan : undefined}
             onOpenPlan={isAdmin ? handleOpenPlan : undefined}
           />

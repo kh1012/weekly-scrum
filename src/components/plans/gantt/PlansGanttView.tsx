@@ -11,6 +11,7 @@ import { TimelineGrid } from "./TimelineGrid";
  * Plans 간트 뷰 컴포넌트
  * - mode='readonly': 조회만 가능 (/plans)
  * - mode='admin': CRUD + 간트 상호작용 (/admin/plans)
+ * - Airbnb 스타일 Quick Create 지원
  */
 export function PlansGanttView({
   mode,
@@ -18,6 +19,7 @@ export function PlansGanttView({
   rangeEnd,
   plans,
   onCreateDraftAtCell,
+  onQuickCreate,
   onResizePlan,
   onOpenPlan,
 }: PlansGanttViewProps) {
@@ -63,7 +65,7 @@ export function PlansGanttView({
     [onOpenPlan]
   );
 
-  // Cell click (create draft plan)
+  // Cell click (create draft plan - 기존 방식)
   const handleCellClick = useCallback(
     async (row: FlatRow, date: Date) => {
       if (!onCreateDraftAtCell || !row.context) return;
@@ -73,6 +75,22 @@ export function PlansGanttView({
       });
     },
     [onCreateDraftAtCell]
+  );
+
+  // Quick Create (Airbnb 스타일 - title 포함)
+  const handleQuickCreate = useCallback(
+    async (context: {
+      domain: string;
+      project: string;
+      module: string;
+      feature: string;
+      date: Date;
+      title: string;
+    }) => {
+      if (!onQuickCreate) return;
+      await onQuickCreate(context);
+    },
+    [onQuickCreate]
   );
 
   // Resize plan
@@ -127,7 +145,7 @@ export function PlansGanttView({
           <span>📋 {plans.length}개 계획</span>
           {isAdmin && (
             <span className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
-              💡 셀 클릭으로 빠른 생성
+              💡 셀의 + 버튼으로 빠른 생성
             </span>
           )}
         </div>
@@ -155,6 +173,7 @@ export function PlansGanttView({
           onSelectPlan={handleSelectPlan}
           onCellClick={isAdmin ? handleCellClick : undefined}
           onResizePlan={isAdmin ? handleResizePlan : undefined}
+          onQuickCreate={isAdmin && onQuickCreate ? handleQuickCreate : undefined}
         />
       </div>
 
@@ -173,7 +192,7 @@ export function PlansGanttView({
             </p>
             {isAdmin && (
               <p className="mt-1 text-xs" style={{ color: "var(--notion-text-muted)" }}>
-                셀을 클릭하여 새 계획을 생성하세요
+                셀의 + 버튼을 클릭하여 새 계획을 생성하세요
               </p>
             )}
           </div>
@@ -182,4 +201,3 @@ export function PlansGanttView({
     </div>
   );
 }
-

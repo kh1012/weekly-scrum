@@ -1,7 +1,6 @@
 "use client";
 
-import { memo, useCallback } from "react";
-import type { PlanWithAssignees } from "@/lib/data/plans";
+import { memo, useCallback, useState } from "react";
 import type { FlatRow, GanttMode, DragType } from "./types";
 import type { BarLayout } from "./useGanttLayout";
 import { ROW_HEIGHT, DAY_WIDTH } from "./useGanttLayout";
@@ -20,12 +19,15 @@ interface TimelineRowProps {
   onSelectPlan?: (planId: string) => void;
   onResizeStart?: (type: DragType, planId: string) => void;
   onCellClick?: (row: FlatRow, date: Date) => void;
+  /** 빠른 생성 팝오버 트리거 */
+  onQuickCreate?: (row: FlatRow, date: Date, position: { x: number; y: number }) => void;
   hoveredCell?: { rowId: string; dayIndex: number } | null;
   onCellHover?: (rowId: string, dayIndex: number | null) => void;
 }
 
 /**
  * 타임라인 Row 컴포넌트
+ * - Airbnb 스타일: 호버 시 '+' 버튼 fade-in
  */
 export const TimelineRow = memo(function TimelineRow({
   row,
@@ -37,6 +39,7 @@ export const TimelineRow = memo(function TimelineRow({
   onSelectPlan,
   onResizeStart,
   onCellClick,
+  onQuickCreate,
   hoveredCell,
   onCellHover,
 }: TimelineRowProps) {
@@ -44,7 +47,10 @@ export const TimelineRow = memo(function TimelineRow({
   const isLeaf = row.isLeaf;
   const plans = row.node.plans || [];
 
-  // Cell 클릭 핸들러
+  // '+' 버튼 호버 상태
+  const [hoveredPlusBtn, setHoveredPlusBtn] = useState<number | null>(null);
+
+  // Cell 클릭 핸들러 (기존 방식 - fallback)
   const handleCellClick = useCallback(
     (dayIndex: number) => {
       if (!isAdmin || !isLeaf || !onCellClick) return;
@@ -52,6 +58,25 @@ export const TimelineRow = memo(function TimelineRow({
       onCellClick(row, date);
     },
     [isAdmin, isLeaf, onCellClick, days, row]
+  );
+
+  // '+' 버튼 클릭 핸들러 (Airbnb 스타일 Quick Create)
+  const handlePlusClick = useCallback(
+    (e: React.MouseEvent, dayIndex: number) => {
+      e.stopPropagation();
+      if (!isAdmin || !isLeaf) return;
+      const date = days[dayIndex];
+      
+      if (onQuickCreate) {
+        // 팝오버 위치 계산 (버튼 기준)
+        const rect = (e.target as HTMLElement).getBoundingClientRect();
+        onQuickCreate(row, date, { x: rect.left, y: rect.bottom + 8 });
+      } else if (onCellClick) {
+        // 팝오버 미지원 시 기존 방식
+        onCellClick(row, date);
+      }
+    },
+    [isAdmin, isLeaf, onQuickCreate, onCellClick, days, row]
   );
 
   // Cell hover 핸들러
@@ -86,26 +111,73 @@ export const TimelineRow = memo(function TimelineRow({
             const isHovered =
               hoveredCell?.rowId === row.id &&
               hoveredCell?.dayIndex === index;
+            const isPlusBtnHovered = hoveredPlusBtn === index;
 
             return (
               <div
                 key={index}
-                className="h-full transition-colors cursor-pointer"
+                className="h-full relative group"
                 style={{
                   width: DAY_WIDTH,
                   minWidth: DAY_WIDTH,
+                  // Airbnb 스타일: 부드러운 배경색 전환
                   background: isHovered
-                    ? "rgba(59, 130, 246, 0.15)"
+                    ? "rgba(59, 130, 246, 0.08)"
                     : isWeekend
                       ? "rgba(0, 0, 0, 0.02)"
                       : "transparent",
                   borderRight: "1px solid rgba(0, 0, 0, 0.03)",
+                  transition: "background 150ms ease-out",
                 }}
                 onClick={() => handleCellClick(index)}
                 onMouseEnter={() => handleCellMouseEnter(index)}
                 onMouseLeave={handleCellMouseLeave}
-                title={isHovered ? "클릭하여 계획 생성" : undefined}
-              />
+              >
+                {/* Airbnb 스타일 '+' 버튼 */}
+                {isHovered && (
+                  <button
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{
+                      // 버튼 자체의 fade-in + scale 애니메이션
+                      animation: "airbnbFadeIn 150ms ease-out",
+                    }}
+                    onClick={(e) => handlePlusClick(e, index)}
+                    onMouseEnter={() => setHoveredPlusBtn(index)}
+                    onMouseLeave={() => setHoveredPlusBtn(null)}
+                    title="클릭하여 계획 생성"
+                  >
+                    <span
+                      className="flex items-center justify-center rounded-full transition-all duration-150"
+                      style={{
+                        width: isPlusBtnHovered ? 28 : 24,
+                        height: isPlusBtnHovered ? 28 : 24,
+                        background: isPlusBtnHovered
+                          ? "linear-gradient(135deg, #F76D57, #f9a88b)"
+                          : "rgba(59, 130, 246, 0.15)",
+                        color: isPlusBtnHovered ? "white" : "#3b82f6",
+                        boxShadow: isPlusBtnHovered
+                          ? "0 4px 12px rgba(247, 109, 87, 0.3)"
+                          : "none",
+                        transform: isPlusBtnHovered ? "scale(1.05)" : "scale(1)",
+                      }}
+                    >
+                      <svg
+                        className="transition-transform duration-150"
+                        style={{
+                          width: isPlusBtnHovered ? 14 : 12,
+                          height: isPlusBtnHovered ? 14 : 12,
+                        }}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </span>
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
@@ -150,7 +222,20 @@ export const TimelineRow = memo(function TimelineRow({
           />
         );
       })}
+
+      {/* Airbnb 스타일 애니메이션 정의 */}
+      <style jsx>{`
+        @keyframes airbnbFadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 });
-

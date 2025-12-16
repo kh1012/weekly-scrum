@@ -344,6 +344,74 @@ export async function createDraftPlanAtCellAction(
 }
 
 /**
+ * 간트 셀에서 Quick Create (관리자 전용) - Airbnb 스타일
+ * - title 입력으로 빠른 Plan 생성
+ */
+export interface QuickCreatePlanInput {
+  title: string;
+  domain: string;
+  project: string;
+  module: string;
+  feature: string;
+  date: string; // YYYY-MM-DD (시작일)
+}
+
+export async function quickCreatePlanAction(
+  input: QuickCreatePlanInput
+): Promise<ActionResult> {
+  try {
+    // 권한 확인
+    const hasAccess = await isAdminOrLeader();
+    if (!hasAccess) {
+      return { success: false, error: "권한이 없습니다. 관리자만 생성할 수 있습니다." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    // 시작일 기준으로 종료일 계산 (시작일 + 6일 = 1주일)
+    const startDate = new Date(input.date);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 6);
+
+    const payload: CreatePlanPayload = {
+      type: "feature" as PlanType,
+      title: input.title,
+      stage: "컨셉 기획",
+      status: "진행중" as PlanStatus,
+      domain: input.domain,
+      project: input.project,
+      module: input.module,
+      feature: input.feature,
+      start_date: input.date,
+      end_date: endDate.toISOString().split("T")[0],
+    };
+
+    const plan = await createPlanData({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      payload,
+      createdBy: user.id,
+    });
+
+    revalidatePath("/admin/plans");
+    revalidatePath("/plans");
+
+    return { success: true, planId: plan.id };
+  } catch (err) {
+    console.error("[quickCreatePlanAction] Error:", err);
+    const message = err instanceof Error ? err.message : "생성에 실패했습니다.";
+    return { success: false, error: message };
+  }
+}
+
+/**
  * 간트 막대 리사이즈 (관리자 전용)
  * - start_date 또는 end_date 변경
  */
