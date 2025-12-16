@@ -475,7 +475,7 @@ function EditSnapshotsViewInner({
   };
 
   return (
-    <div className="flex flex-col w-full h-[calc(100vh-7rem)] rounded-3xl overflow-hidden">
+    <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] rounded-3xl overflow-hidden">
       {/* 상단 툴바 */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">

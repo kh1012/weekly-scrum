@@ -298,7 +298,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
   };
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
       {/* 헤더 영역 - 글래스모피즘 */}
       <div className="shrink-0 px-6 py-5 bg-gradient-to-r from-white via-white to-slate-50/50 border-b border-gray-100">
         <div className="flex items-center justify-between">

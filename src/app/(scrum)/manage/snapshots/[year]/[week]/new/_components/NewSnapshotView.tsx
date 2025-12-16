@@ -442,7 +442,7 @@ function NewSnapshotViewInner({
   // 진입점 화면 - 전체 너비 사용
   if (mode === "entry") {
     return (
-      <div className="h-[calc(100vh-7rem)] flex flex-col">
+      <div className="h-[calc(100vh-3.5rem)] flex flex-col">
         {/* 상단 헤더 - 좌측 정렬 */}
         <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
           <div className="flex items-center gap-4">
@@ -621,7 +621,7 @@ function NewSnapshotViewInner({
   // 데이터 불러오기 화면
   if (mode === "loading") {
     return (
-      <div className="h-[calc(100vh-7rem)] flex flex-col">
+      <div className="h-[calc(100vh-3.5rem)] flex flex-col">
         {/* 상단 헤더 */}
         <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
           <div className="flex items-center gap-4">
@@ -862,7 +862,7 @@ function NewSnapshotViewInner({
 
   // 편집 화면
   return (
-    <div className="flex flex-col w-full h-[calc(100vh-7rem)] overflow-hidden">
+    <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* 상단 툴바 */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
