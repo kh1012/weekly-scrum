@@ -24,3 +24,4 @@ export {
 } from "./LoadingSpinner";
 export { Logo } from "./Logo";
 export { NavigationProgress, navigationProgress } from "./NavigationProgress";
+export { AccessDenied } from "./AccessDenied";
