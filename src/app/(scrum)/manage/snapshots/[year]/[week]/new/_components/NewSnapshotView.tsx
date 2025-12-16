@@ -263,48 +263,51 @@ function NewSnapshotViewInner({
   );
 
   // 카드 복제
-  const handleDuplicateCard = useCallback((tempId: string) => {
-    const newTempId = `temp-${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}`;
+  const handleDuplicateCard = useCallback(
+    (tempId: string) => {
+      const newTempId = `temp-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 9)}`;
 
-    setTempSnapshots((prev) => {
-      const target = prev.find((s) => s.tempId === tempId);
-      if (!target) return prev;
+      setTempSnapshots((prev) => {
+        const target = prev.find((s) => s.tempId === tempId);
+        if (!target) return prev;
 
-      const now = new Date();
-      const duplicated: TempSnapshot = {
-        ...target,
-        tempId: newTempId,
-        isOriginal: false,
-        isDirty: true,
-        createdAt: now,
-        updatedAt: now,
-        // name이 비어있으면 현재 사용자의 displayName 사용
-        name: target.name?.trim() || displayName,
-        pastWeek: {
-          ...target.pastWeek,
-          tasks: target.pastWeek.tasks.map((t) => ({ ...t })),
-          risk: target.pastWeek.risk ? [...target.pastWeek.risk] : null,
-          collaborators: target.pastWeek.collaborators.map((c) => ({
-            ...c,
-            relations: c.relations ? [...c.relations] : undefined,
-          })),
-        },
-        thisWeek: {
-          tasks: [...target.thisWeek.tasks],
-        },
-      };
+        const now = new Date();
+        const duplicated: TempSnapshot = {
+          ...target,
+          tempId: newTempId,
+          isOriginal: false,
+          isDirty: true,
+          createdAt: now,
+          updatedAt: now,
+          // name이 비어있으면 현재 사용자의 displayName 사용
+          name: target.name?.trim() || displayName,
+          pastWeek: {
+            ...target.pastWeek,
+            tasks: target.pastWeek.tasks.map((t) => ({ ...t })),
+            risk: target.pastWeek.risk ? [...target.pastWeek.risk] : null,
+            collaborators: target.pastWeek.collaborators.map((c) => ({
+              ...c,
+              relations: c.relations ? [...c.relations] : undefined,
+            })),
+          },
+          thisWeek: {
+            tasks: [...target.thisWeek.tasks],
+          },
+        };
 
-      const targetIndex = prev.findIndex((s) => s.tempId === tempId);
-      const newSnapshots = [...prev];
-      newSnapshots.splice(targetIndex + 1, 0, duplicated);
-      return newSnapshots;
-    });
+        const targetIndex = prev.findIndex((s) => s.tempId === tempId);
+        const newSnapshots = [...prev];
+        newSnapshots.splice(targetIndex + 1, 0, duplicated);
+        return newSnapshots;
+      });
 
-    // 상태 업데이트 후 복제된 카드 선택
-    setSelectedId(newTempId);
-  }, [displayName]);
+      // 상태 업데이트 후 복제된 카드 선택
+      setSelectedId(newTempId);
+    },
+    [displayName]
+  );
 
   // 카드 업데이트
   const handleUpdateCard = useCallback(
@@ -684,8 +687,18 @@ function NewSnapshotViewInner({
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              />
             </svg>
             불러오기 ({selectedWeeks.size})
           </button>
@@ -718,8 +731,12 @@ function NewSnapshotViewInner({
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">저장된 스냅샷이 없습니다</h3>
-                <p className="text-sm text-gray-500 mb-6">새로 작성하기로 시작해보세요</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  저장된 스냅샷이 없습니다
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  새로 작성하기로 시작해보세요
+                </p>
                 <button
                   onClick={() => setMode("entry")}
                   className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -736,7 +753,9 @@ function NewSnapshotViewInner({
                 <div className="px-5 py-4 border-b border-gray-100 bg-white">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-sm font-semibold text-gray-900">주차 선택</h2>
+                      <h2 className="text-sm font-semibold text-gray-900">
+                        주차 선택
+                      </h2>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {selectedWeeks.size}/{myWeeklyData.length}개 선택됨
                       </p>
@@ -746,12 +765,16 @@ function NewSnapshotViewInner({
                         if (selectedWeeks.size === myWeeklyData.length) {
                           setSelectedWeeks(new Set());
                         } else {
-                          setSelectedWeeks(new Set(myWeeklyData.map((w) => w.key)));
+                          setSelectedWeeks(
+                            new Set(myWeeklyData.map((w) => w.key))
+                          );
                         }
                       }}
                       className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                     >
-                      {selectedWeeks.size === myWeeklyData.length ? "전체 해제" : "전체 선택"}
+                      {selectedWeeks.size === myWeeklyData.length
+                        ? "전체 해제"
+                        : "전체 선택"}
                     </button>
                   </div>
                 </div>
@@ -777,8 +800,18 @@ function NewSnapshotViewInner({
                           }`}
                         >
                           {isSelected && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={3}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           )}
                         </div>
@@ -813,12 +846,24 @@ function NewSnapshotViewInner({
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">
                       <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <svg
+                          className="w-8 h-8 text-gray-300"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
                         </svg>
                       </div>
                       <p className="text-sm text-gray-500">주차를 선택하면</p>
-                      <p className="text-xs text-gray-400 mt-1">엔트리 목록이 표시됩니다</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        엔트리 목록이 표시됩니다
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -830,16 +875,21 @@ function NewSnapshotViewInner({
                       </span>
                       <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
                         {Array.from(selectedWeeks).reduce((acc, weekKey) => {
-                          const week = myWeeklyData.find(w => w.key === weekKey);
+                          const week = myWeeklyData.find(
+                            (w) => w.key === weekKey
+                          );
                           return acc + (week?.entriesCount || 0);
-                        }, 0)}개
+                        }, 0)}
+                        개
                       </span>
                     </div>
 
                     {/* 엔트리 카드 그리드 */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
                       {Array.from(selectedWeeks).flatMap((weekKey) => {
-                        const weekData = myWeeklyData.find(w => w.key === weekKey);
+                        const weekData = myWeeklyData.find(
+                          (w) => w.key === weekKey
+                        );
                         if (!weekData) return [];
                         return weekData.entries.map((entry, idx) => (
                           <LoadingEntryCard
@@ -1090,10 +1140,7 @@ function LoadingEntryCard({
   const tasks = entry.past_week_tasks || [];
   const avgProgress =
     tasks.length > 0
-      ? Math.round(
-          tasks.reduce((sum, t) => sum + t.progress, 0) /
-            tasks.length
-        )
+      ? Math.round(tasks.reduce((sum, t) => sum + t.progress, 0) / tasks.length)
       : null;
 
   // 리스크 레벨 색상
@@ -1114,9 +1161,13 @@ function LoadingEntryCard({
     <div className="bg-white rounded-xl border border-gray-200 p-3 hover:shadow-sm transition-shadow">
       {/* 주차 라벨 */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-medium text-gray-400">{weekLabel}</span>
+        <span className="text-[10px] font-medium text-gray-400">
+          {weekLabel}
+        </span>
         {riskStyle && (
-          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${riskStyle.bg} ${riskStyle.text}`}>
+          <span
+            className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${riskStyle.bg} ${riskStyle.text}`}
+          >
             Lv.{entry.risk_level}
           </span>
         )}
@@ -1126,7 +1177,9 @@ function LoadingEntryCard({
       <div className="space-y-1.5">
         {entry.domain && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">Domain</span>
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+              Domain
+            </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
               {entry.domain}
             </span>
@@ -1134,7 +1187,9 @@ function LoadingEntryCard({
         )}
         {entry.project && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">Project</span>
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+              Project
+            </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
               {entry.project}
             </span>
@@ -1142,7 +1197,9 @@ function LoadingEntryCard({
         )}
         {entry.module && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">Module</span>
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+              Module
+            </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
               {entry.module}
             </span>
@@ -1150,7 +1207,9 @@ function LoadingEntryCard({
         )}
         {entry.feature && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">Feature</span>
+            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+              Feature
+            </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
               {entry.feature}
             </span>
@@ -1165,18 +1224,22 @@ function LoadingEntryCard({
             <>
               <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${avgProgress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                  className={`h-full rounded-full ${
+                    avgProgress === 100 ? "bg-emerald-500" : "bg-blue-500"
+                  }`}
                   style={{ width: `${avgProgress}%` }}
                 />
               </div>
-              <span className="text-[10px] font-medium text-gray-500">{avgProgress}%</span>
+              <span className="text-[10px] font-medium text-gray-500">
+                {avgProgress}%
+              </span>
             </>
           )}
         </div>
         <div className="flex items-center gap-2 text-[10px] text-gray-400">
-          <span>{entry.past_week_tasks.length}개 작업</span>
-          {entry.collaborators.length > 0 && (
-            <span>· {entry.collaborators.length}명 협업</span>
+          <span>{(entry.past_week_tasks || []).length}개 작업</span>
+          {(entry.collaborators || []).length > 0 && (
+            <span>· {(entry.collaborators || []).length}명 협업</span>
           )}
         </div>
       </div>
