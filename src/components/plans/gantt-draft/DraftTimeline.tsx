@@ -8,7 +8,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useCallback, useEffect } from "react";
-import { useDraftStore, selectFilteredRows, selectVisibleBars } from "./store";
+import { useDraftStore } from "./store";
 import { buildRenderRows, formatDate, xToDate } from "./laneLayout";
 import { DraftBar } from "./DraftBar";
 import { CreatePlanModal } from "./CreatePlanModal";
@@ -54,12 +54,52 @@ export function DraftTimeline({ rangeStart, rangeEnd, isEditing }: DraftTimeline
 
   const [showCreateModal, setShowCreateModal] = useState<DragCreateState | null>(null);
 
-  const rows = useDraftStore((s) => selectFilteredRows(s));
-  const bars = useDraftStore((s) => selectVisibleBars(s));
+  const allRows = useDraftStore((s) => s.rows);
+  const allBars = useDraftStore((s) => s.bars);
+  const searchQuery = useDraftStore((s) => s.ui.searchQuery);
+  const filters = useDraftStore((s) => s.ui.filters);
   const addBar = useDraftStore((s) => s.addBar);
   const addRow = useDraftStore((s) => s.addRow);
   const selectedBarId = useDraftStore((s) => s.ui.selectedBarId);
   const selectBar = useDraftStore((s) => s.selectBar);
+
+  // 필터링된 rows (useMemo로 캐싱)
+  const rows = useMemo(() => {
+    return allRows.filter((row) => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const match =
+          row.project.toLowerCase().includes(q) ||
+          row.module.toLowerCase().includes(q) ||
+          row.feature.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      if (filters.projects.length > 0 && !filters.projects.includes(row.project)) {
+        return false;
+      }
+      if (filters.modules.length > 0 && !filters.modules.includes(row.module)) {
+        return false;
+      }
+      if (filters.features.length > 0 && !filters.features.includes(row.feature)) {
+        return false;
+      }
+      return true;
+    });
+  }, [allRows, searchQuery, filters]);
+
+  // 필터링된 bars (useMemo로 캐싱)
+  const bars = useMemo(() => {
+    const rowIds = new Set(rows.map((r) => r.rowId));
+    return allBars.filter((bar) => {
+      if (bar.deleted) return false;
+      if (!rowIds.has(bar.rowId)) return false;
+      const { stages } = filters;
+      if (stages.length > 0 && !stages.includes(bar.stage)) {
+        return false;
+      }
+      return true;
+    });
+  }, [allBars, rows, filters]);
 
   // 날짜 범위 계산
   const days = useMemo(() => {

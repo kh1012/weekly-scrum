@@ -8,7 +8,7 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import { useDraftStore, selectFilteredRows } from "./store";
+import { useDraftStore } from "./store";
 import {
   FolderIcon,
   CubeIcon,
@@ -91,7 +91,6 @@ interface DraftTreePanelProps {
 }
 
 export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps) {
-  const rows = useDraftStore((s) => selectFilteredRows(s));
   const allRows = useDraftStore((s) => s.rows);
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
   const filters = useDraftStore((s) => s.ui.filters);
@@ -100,6 +99,38 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
   const resetFilters = useDraftStore((s) => s.resetFilters);
   const selectRow = useDraftStore((s) => s.selectRow);
   const selectedRowId = useDraftStore((s) => s.ui.selectedRowId);
+
+  // 필터링된 rows (useMemo로 캐싱)
+  const rows = useMemo(() => {
+    return allRows.filter((row) => {
+      // 검색어 필터
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const match =
+          row.project.toLowerCase().includes(q) ||
+          row.module.toLowerCase().includes(q) ||
+          row.feature.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+
+      // 프로젝트 필터
+      if (filters.projects.length > 0 && !filters.projects.includes(row.project)) {
+        return false;
+      }
+
+      // 모듈 필터
+      if (filters.modules.length > 0 && !filters.modules.includes(row.module)) {
+        return false;
+      }
+
+      // 기능 필터
+      if (filters.features.length > 0 && !filters.features.includes(row.feature)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [allRows, searchQuery, filters]);
 
   const [showFilters, setShowFilters] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
