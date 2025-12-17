@@ -1,0 +1,602 @@
+/**
+ * Draft Store for Gantt View
+ * - zustand + persist (localStorage)
+ * - Undo/Redo 지원 (최대 20 step)
+ */
+
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { v4 as uuidv4 } from "uuid";
+import type {
+  DraftState,
+  DraftRow,
+  DraftBar,
+  DraftUIState,
+  UndoAction,
+  LockState,
+  PlanStatus,
+  DraftAssignee,
+} from "./types";
+
+const MAX_UNDO_STACK = 20;
+
+/**
+ * 초기 UI 상태
+ */
+const initialUIState: DraftUIState = {
+  selectedBarId: undefined,
+  selectedRowId: undefined,
+  zoom: "week",
+  searchQuery: "",
+  filters: {
+    projects: [],
+    modules: [],
+    features: [],
+    stages: [],
+  },
+  lockState: {
+    isLocked: false,
+    isMyLock: false,
+  },
+  lastSyncAt: undefined,
+  isEditing: false,
+};
+
+/**
+ * 초기 Draft 상태
+ */
+const initialState: DraftState = {
+  rows: [],
+  bars: [],
+  ui: initialUIState,
+  undoStack: [],
+  redoStack: [],
+};
+
+/**
+ * rowId 생성 헬퍼
+ */
+export function createRowId(project: string, module: string, feature: string): string {
+  return `${project}::${module}::${feature}`;
+}
+
+/**
+ * Draft Store Actions
+ */
+interface DraftActions {
+  // === 초기화/동기화 ===
+  /** 서버 데이터로 Draft 초기화 (hydrate) */
+  hydrate: (rows: DraftRow[], bars: DraftBar[]) => void;
+  /** Draft 전체 리셋 */
+  reset: () => void;
+  /** 마지막 동기화 시간 업데이트 */
+  updateLastSyncAt: () => void;
+
+  // === Row 관리 ===
+  /** Row 추가 (동일 row identity면 기존 row 반환) */
+  addRow: (project: string, module: string, feature: string, domain?: string) => DraftRow;
+  /** Row 업데이트 */
+  updateRow: (rowId: string, updates: Partial<Omit<DraftRow, "rowId">>) => void;
+  /** Row 순서 변경 (reorder) */
+  reorderRows: (newOrder: string[]) => void;
+
+  // === Bar (Plan) 관리 ===
+  /** Bar 추가 */
+  addBar: (params: {
+    rowId: string;
+    title: string;
+    stage: string;
+    status: PlanStatus;
+    startDate: string;
+    endDate: string;
+    assignees?: DraftAssignee[];
+    serverId?: string;
+  }) => DraftBar;
+  /** Bar 업데이트 */
+  updateBar: (clientUid: string, updates: Partial<Omit<DraftBar, "clientUid" | "rowId">>) => void;
+  /** Bar 삭제 (soft delete) */
+  deleteBar: (clientUid: string) => void;
+  /** Bar 복원 */
+  restoreBar: (clientUid: string) => void;
+  /** Bar 이동 (날짜 변경, 기간 유지) */
+  moveBar: (clientUid: string, newStartDate: string, newEndDate: string) => void;
+  /** Bar 리사이즈 (시작/종료일 개별 변경) */
+  resizeBar: (clientUid: string, startDate: string, endDate: string) => void;
+
+  // === UI 상태 ===
+  /** Bar 선택 */
+  selectBar: (clientUid: string | undefined) => void;
+  /** Row 선택 */
+  selectRow: (rowId: string | undefined) => void;
+  /** Zoom 변경 */
+  setZoom: (zoom: "week" | "month" | "quarter") => void;
+  /** 검색어 설정 */
+  setSearchQuery: (query: string) => void;
+  /** 필터 설정 */
+  setFilters: (filters: Partial<DraftUIState["filters"]>) => void;
+  /** 필터 초기화 */
+  resetFilters: () => void;
+  /** Lock 상태 설정 */
+  setLockState: (lockState: LockState) => void;
+  /** 편집 모드 설정 */
+  setEditing: (isEditing: boolean) => void;
+
+  // === Undo/Redo ===
+  /** Undo */
+  undo: () => void;
+  /** Redo */
+  redo: () => void;
+  /** Undo 가능 여부 */
+  canUndo: () => boolean;
+  /** Redo 가능 여부 */
+  canRedo: () => boolean;
+
+  // === 유틸리티 ===
+  /** dirty bars 조회 */
+  getDirtyBars: () => DraftBar[];
+  /** deleted bars 조회 */
+  getDeletedBars: () => DraftBar[];
+  /** Commit 후 dirty/deleted 정리 */
+  clearDirtyFlags: () => void;
+  /** 변경 사항 존재 여부 */
+  hasUnsavedChanges: () => boolean;
+}
+
+type DraftStore = DraftState & DraftActions;
+
+/**
+ * Undo 액션 추가 헬퍼 (스택 제한)
+ */
+function pushUndo(state: DraftState, action: UndoAction): Partial<DraftState> {
+  const newStack = [...state.undoStack, action];
+  if (newStack.length > MAX_UNDO_STACK) {
+    newStack.shift();
+  }
+  return {
+    undoStack: newStack,
+    redoStack: [], // redo 스택 초기화
+  };
+}
+
+/**
+ * Draft Store 생성
+ */
+export const useDraftStore = create<DraftStore>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
+
+      // === 초기화/동기화 ===
+      hydrate: (rows, bars) => {
+        set({
+          rows,
+          bars,
+          undoStack: [],
+          redoStack: [],
+          ui: {
+            ...get().ui,
+            lastSyncAt: new Date().toISOString(),
+          },
+        });
+      },
+
+      reset: () => {
+        set(initialState);
+      },
+
+      updateLastSyncAt: () => {
+        set({
+          ui: {
+            ...get().ui,
+            lastSyncAt: new Date().toISOString(),
+          },
+        });
+      },
+
+      // === Row 관리 ===
+      addRow: (project, module, feature, domain) => {
+        const state = get();
+        const rowId = createRowId(project, module, feature);
+
+        // 기존 row 확인
+        const existing = state.rows.find((r) => r.rowId === rowId);
+        if (existing) {
+          return existing;
+        }
+
+        const newRow: DraftRow = {
+          rowId,
+          project,
+          module,
+          feature,
+          domain,
+          orderIndex: state.rows.length,
+          expanded: true,
+        };
+
+        set({
+          rows: [...state.rows, newRow],
+          ...pushUndo(state, { type: "ADD_ROW", row: newRow }),
+        });
+
+        return newRow;
+      },
+
+      updateRow: (rowId, updates) => {
+        const state = get();
+        const rowIndex = state.rows.findIndex((r) => r.rowId === rowId);
+        if (rowIndex === -1) return;
+
+        const prevRow = state.rows[rowIndex];
+        const nextRow = { ...prevRow, ...updates };
+
+        const newRows = [...state.rows];
+        newRows[rowIndex] = nextRow;
+
+        set({
+          rows: newRows,
+          ...pushUndo(state, { type: "UPDATE_ROW", rowId, prevRow, nextRow }),
+        });
+      },
+
+      reorderRows: (newOrder) => {
+        const state = get();
+        const prevOrder = [...state.rows];
+
+        const reordered = newOrder
+          .map((rowId, idx) => {
+            const row = state.rows.find((r) => r.rowId === rowId);
+            return row ? { ...row, orderIndex: idx } : null;
+          })
+          .filter((r): r is DraftRow => r !== null);
+
+        set({
+          rows: reordered,
+          ...pushUndo(state, { type: "REORDER_ROWS", prevOrder, nextOrder: reordered }),
+        });
+      },
+
+      // === Bar 관리 ===
+      addBar: (params) => {
+        const state = get();
+        const now = new Date().toISOString();
+
+        const newBar: DraftBar = {
+          clientUid: uuidv4(),
+          rowId: params.rowId,
+          serverId: params.serverId,
+          title: params.title,
+          stage: params.stage,
+          status: params.status,
+          startDate: params.startDate,
+          endDate: params.endDate,
+          assignees: params.assignees || [],
+          dirty: true,
+          deleted: false,
+          createdAtLocal: now,
+          updatedAtLocal: now,
+        };
+
+        set({
+          bars: [...state.bars, newBar],
+          ...pushUndo(state, { type: "ADD_BAR", bar: newBar }),
+        });
+
+        return newBar;
+      },
+
+      updateBar: (clientUid, updates) => {
+        const state = get();
+        const barIndex = state.bars.findIndex((b) => b.clientUid === clientUid);
+        if (barIndex === -1) return;
+
+        const prevBar = state.bars[barIndex];
+        const nextBar: DraftBar = {
+          ...prevBar,
+          ...updates,
+          dirty: true,
+          updatedAtLocal: new Date().toISOString(),
+        };
+
+        const newBars = [...state.bars];
+        newBars[barIndex] = nextBar;
+
+        set({
+          bars: newBars,
+          ...pushUndo(state, { type: "UPDATE_BAR", barId: clientUid, prevBar, nextBar }),
+        });
+      },
+
+      deleteBar: (clientUid) => {
+        const state = get();
+        const bar = state.bars.find((b) => b.clientUid === clientUid);
+        if (!bar) return;
+
+        const newBars = state.bars.map((b) =>
+          b.clientUid === clientUid
+            ? { ...b, deleted: true, dirty: true, updatedAtLocal: new Date().toISOString() }
+            : b
+        );
+
+        set({
+          bars: newBars,
+          ui: {
+            ...state.ui,
+            selectedBarId: state.ui.selectedBarId === clientUid ? undefined : state.ui.selectedBarId,
+          },
+          ...pushUndo(state, { type: "DELETE_BAR", bar }),
+        });
+      },
+
+      restoreBar: (clientUid) => {
+        const state = get();
+        const bar = state.bars.find((b) => b.clientUid === clientUid);
+        if (!bar) return;
+
+        const newBars = state.bars.map((b) =>
+          b.clientUid === clientUid
+            ? { ...b, deleted: false, dirty: true, updatedAtLocal: new Date().toISOString() }
+            : b
+        );
+
+        set({
+          bars: newBars,
+          ...pushUndo(state, { type: "RESTORE_BAR", bar }),
+        });
+      },
+
+      moveBar: (clientUid, newStartDate, newEndDate) => {
+        get().updateBar(clientUid, { startDate: newStartDate, endDate: newEndDate });
+      },
+
+      resizeBar: (clientUid, startDate, endDate) => {
+        get().updateBar(clientUid, { startDate, endDate });
+      },
+
+      // === UI 상태 ===
+      selectBar: (clientUid) => {
+        set({ ui: { ...get().ui, selectedBarId: clientUid } });
+      },
+
+      selectRow: (rowId) => {
+        set({ ui: { ...get().ui, selectedRowId: rowId } });
+      },
+
+      setZoom: (zoom) => {
+        set({ ui: { ...get().ui, zoom } });
+      },
+
+      setSearchQuery: (query) => {
+        set({ ui: { ...get().ui, searchQuery: query } });
+      },
+
+      setFilters: (filters) => {
+        set({
+          ui: {
+            ...get().ui,
+            filters: { ...get().ui.filters, ...filters },
+          },
+        });
+      },
+
+      resetFilters: () => {
+        set({
+          ui: {
+            ...get().ui,
+            searchQuery: "",
+            filters: { projects: [], modules: [], features: [], stages: [] },
+          },
+        });
+      },
+
+      setLockState: (lockState) => {
+        set({ ui: { ...get().ui, lockState } });
+      },
+
+      setEditing: (isEditing) => {
+        set({ ui: { ...get().ui, isEditing } });
+      },
+
+      // === Undo/Redo ===
+      undo: () => {
+        const state = get();
+        if (state.undoStack.length === 0) return;
+
+        const action = state.undoStack[state.undoStack.length - 1];
+        const newUndoStack = state.undoStack.slice(0, -1);
+        const newRedoStack = [...state.redoStack, action];
+
+        let newBars = state.bars;
+        let newRows = state.rows;
+
+        switch (action.type) {
+          case "ADD_BAR":
+            newBars = newBars.filter((b) => b.clientUid !== action.bar.clientUid);
+            break;
+          case "UPDATE_BAR":
+            newBars = newBars.map((b) =>
+              b.clientUid === action.barId ? action.prevBar : b
+            );
+            break;
+          case "DELETE_BAR":
+            newBars = newBars.map((b) =>
+              b.clientUid === action.bar.clientUid ? { ...action.bar, deleted: false } : b
+            );
+            break;
+          case "RESTORE_BAR":
+            newBars = newBars.map((b) =>
+              b.clientUid === action.bar.clientUid ? { ...action.bar, deleted: true } : b
+            );
+            break;
+          case "ADD_ROW":
+            newRows = newRows.filter((r) => r.rowId !== action.row.rowId);
+            break;
+          case "UPDATE_ROW":
+            newRows = newRows.map((r) =>
+              r.rowId === action.rowId ? action.prevRow : r
+            );
+            break;
+          case "REORDER_ROWS":
+            newRows = action.prevOrder;
+            break;
+        }
+
+        set({
+          bars: newBars,
+          rows: newRows,
+          undoStack: newUndoStack,
+          redoStack: newRedoStack,
+        });
+      },
+
+      redo: () => {
+        const state = get();
+        if (state.redoStack.length === 0) return;
+
+        const action = state.redoStack[state.redoStack.length - 1];
+        const newRedoStack = state.redoStack.slice(0, -1);
+        const newUndoStack = [...state.undoStack, action];
+
+        let newBars = state.bars;
+        let newRows = state.rows;
+
+        switch (action.type) {
+          case "ADD_BAR":
+            newBars = [...newBars, action.bar];
+            break;
+          case "UPDATE_BAR":
+            newBars = newBars.map((b) =>
+              b.clientUid === action.barId ? action.nextBar : b
+            );
+            break;
+          case "DELETE_BAR":
+            newBars = newBars.map((b) =>
+              b.clientUid === action.bar.clientUid ? { ...b, deleted: true } : b
+            );
+            break;
+          case "RESTORE_BAR":
+            newBars = newBars.map((b) =>
+              b.clientUid === action.bar.clientUid ? { ...b, deleted: false } : b
+            );
+            break;
+          case "ADD_ROW":
+            newRows = [...newRows, action.row];
+            break;
+          case "UPDATE_ROW":
+            newRows = newRows.map((r) =>
+              r.rowId === action.rowId ? action.nextRow : r
+            );
+            break;
+          case "REORDER_ROWS":
+            newRows = action.nextOrder;
+            break;
+        }
+
+        set({
+          bars: newBars,
+          rows: newRows,
+          undoStack: newUndoStack,
+          redoStack: newRedoStack,
+        });
+      },
+
+      canUndo: () => get().undoStack.length > 0,
+      canRedo: () => get().redoStack.length > 0,
+
+      // === 유틸리티 ===
+      getDirtyBars: () => get().bars.filter((b) => b.dirty && !b.deleted),
+      getDeletedBars: () => get().bars.filter((b) => b.deleted && b.serverId),
+
+      clearDirtyFlags: () => {
+        const state = get();
+        // 삭제된 bar 중 서버에 반영된 것은 제거
+        // dirty 플래그만 false로
+        const newBars = state.bars
+          .filter((b) => !b.deleted)
+          .map((b) => ({ ...b, dirty: false }));
+
+        set({
+          bars: newBars,
+          undoStack: [],
+          redoStack: [],
+        });
+      },
+
+      hasUnsavedChanges: () => {
+        const state = get();
+        return state.bars.some((b) => b.dirty);
+      },
+    }),
+    {
+      name: "gantt-draft-store",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        rows: state.rows,
+        bars: state.bars,
+        ui: {
+          zoom: state.ui.zoom,
+          filters: state.ui.filters,
+          searchQuery: state.ui.searchQuery,
+        },
+      }),
+    }
+  )
+);
+
+/**
+ * Store 외부에서 사용할 수 있는 선택자
+ */
+export const selectFilteredRows = (state: DraftState): DraftRow[] => {
+  const { rows, ui } = state;
+  const { searchQuery, filters } = ui;
+
+  return rows.filter((row) => {
+    // 검색어 필터
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const match =
+        row.project.toLowerCase().includes(q) ||
+        row.module.toLowerCase().includes(q) ||
+        row.feature.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+
+    // 프로젝트 필터
+    if (filters.projects.length > 0 && !filters.projects.includes(row.project)) {
+      return false;
+    }
+
+    // 모듈 필터
+    if (filters.modules.length > 0 && !filters.modules.includes(row.module)) {
+      return false;
+    }
+
+    // 기능 필터
+    if (filters.features.length > 0 && !filters.features.includes(row.feature)) {
+      return false;
+    }
+
+    return true;
+  });
+};
+
+export const selectVisibleBars = (state: DraftState): DraftBar[] => {
+  const filteredRows = selectFilteredRows(state);
+  const rowIds = new Set(filteredRows.map((r) => r.rowId));
+
+  return state.bars.filter((bar) => {
+    // 삭제된 bar 제외
+    if (bar.deleted) return false;
+    // 필터된 row에 속한 bar만
+    if (!rowIds.has(bar.rowId)) return false;
+
+    // 스테이지 필터
+    const { stages } = state.ui.filters;
+    if (stages.length > 0 && !stages.includes(bar.stage)) {
+      return false;
+    }
+
+    return true;
+  });
+};
+

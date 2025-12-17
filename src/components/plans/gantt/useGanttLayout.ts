@@ -182,6 +182,16 @@ export function formatDate(date: Date): string {
   return `${date.getMonth() + 1}.${date.getDate()}`;
 }
 
+/**
+ * 날짜를 로컬 YYYY-MM-DD 문자열로 변환 (UTC 변환 문제 방지)
+ */
+export function formatLocalDateStr(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function formatDateRange(start: Date, end: Date): string {
   const diffTime = end.getTime() - start.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;

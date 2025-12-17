@@ -15,10 +15,20 @@ const STAGE_COLORS: Record<string, StageColorConfig> = {
     border: "rgba(139, 92, 246, 0.4)",
     text: "#7c3aed",
   },
+  "UX 기획": {
+    bg: "rgba(99, 102, 241, 0.15)",
+    border: "rgba(99, 102, 241, 0.4)",
+    text: "#4f46e5",
+  },
   "상세 기획": {
     bg: "rgba(99, 102, 241, 0.15)",
     border: "rgba(99, 102, 241, 0.4)",
     text: "#4f46e5",
+  },
+  "UI 디자인": {
+    bg: "rgba(236, 72, 153, 0.15)",
+    border: "rgba(236, 72, 153, 0.4)",
+    text: "#db2777",
   },
   "디자인": {
     bg: "rgba(236, 72, 153, 0.15)",
@@ -36,6 +46,11 @@ const STAGE_COLORS: Record<string, StageColorConfig> = {
     text: "#2563eb",
   },
   "QA": {
+    bg: "rgba(245, 158, 11, 0.15)",
+    border: "rgba(245, 158, 11, 0.4)",
+    text: "#d97706",
+  },
+  "QA 검증": {
     bg: "rgba(245, 158, 11, 0.15)",
     border: "rgba(245, 158, 11, 0.4)",
     text: "#d97706",

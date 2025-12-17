@@ -148,6 +148,63 @@ export const CalendarDaysIcon = createIcon([
   "M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01",
 ]);
 
+// 잠금 (닫힘)
+export const LockClosedIcon = createIcon([
+  "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+]);
+
+// 잠금 (열림)
+export const LockOpenIcon = createIcon([
+  "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z",
+]);
+
+// 재생
+export const PlayIcon = createIcon([
+  "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z",
+  "M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+]);
+
+// 정지
+export const StopIcon = createIcon([
+  "M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  "M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
+]);
+
+// 실행 취소
+export const UndoIcon = createIcon([
+  "M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6",
+]);
+
+// 다시 실행
+export const RedoIcon = createIcon([
+  "M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6",
+]);
+
+// 도움말
+export const HelpIcon = createIcon([
+  "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+]);
+
+// 드래그 핸들
+export const DragHandleIcon = createIcon([
+  "M4 8h16M4 16h16",
+]);
+
+// 더블 화살표 (확장/축소)
+export const ExpandIcon = createIcon([
+  "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4",
+]);
+
+// 줌 인
+export const ZoomInIcon = createIcon([
+  "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7",
+]);
+
+// 줌 아웃
+export const ZoomOutIcon = createIcon([
+  "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7",
+]);
+
 // 스타 (임시)
 export const StarIcon = memo(function StarIcon({
   size = 16,

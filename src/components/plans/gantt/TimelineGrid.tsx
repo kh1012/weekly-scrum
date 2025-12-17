@@ -6,7 +6,7 @@ import type { BarLayout, MonthGroup } from "./useGanttLayout";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineRow } from "./TimelineRow";
 import { DraftTimelineRow } from "./DraftTimelineRow";
-import { DAY_WIDTH, ROW_HEIGHT, formatDateRange } from "./useGanttLayout";
+import { DAY_WIDTH, ROW_HEIGHT, formatDateRange, formatLocalDateStr } from "./useGanttLayout";
 import { QuickCreatePopover } from "@/components/admin-plans";
 
 interface TimelineGridProps {
@@ -239,12 +239,12 @@ export const TimelineGrid = memo(function TimelineGrid({
         const endDate = new Date(dragState.originalEnd);
         startDate.setDate(startDate.getDate() + deltaDays);
         endDate.setDate(endDate.getDate() + deltaDays);
-        newStart = startDate.toISOString().split("T")[0];
-        newEnd = endDate.toISOString().split("T")[0];
+        newStart = formatLocalDateStr(startDate);
+        newEnd = formatLocalDateStr(endDate);
       } else if (dragState.type === "resize-left") {
         const startDate = new Date(dragState.originalStart);
         startDate.setDate(startDate.getDate() + deltaDays);
-        newStart = startDate.toISOString().split("T")[0];
+        newStart = formatLocalDateStr(startDate);
 
         // Validation: start <= end
         if (new Date(newStart) > new Date(dragState.originalEnd)) {
@@ -253,7 +253,7 @@ export const TimelineGrid = memo(function TimelineGrid({
       } else if (dragState.type === "resize-right") {
         const endDate = new Date(dragState.originalEnd);
         endDate.setDate(endDate.getDate() + deltaDays);
-        newEnd = endDate.toISOString().split("T")[0];
+        newEnd = formatLocalDateStr(endDate);
 
         // Validation: end >= start
         if (new Date(newEnd) < new Date(dragState.originalStart)) {

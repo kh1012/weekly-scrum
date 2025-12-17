@@ -8,6 +8,7 @@ import {
   useEffect,
 } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { DateRangePicker } from "./DateRangePicker";
 import {
   GanttFilters,
@@ -15,6 +16,7 @@ import {
   type GanttFilterState,
 } from "./GanttFilters";
 import { PlansGanttView } from "./gantt";
+import { formatLocalDateStr } from "./gantt/useGanttLayout";
 import {
   UndoSnackbar,
   CommandPalette,
@@ -341,7 +343,7 @@ export function PlansBoard({
       feature: string;
       date: Date;
     }) => {
-      const dateStr = context.date.toISOString().split("T")[0];
+      const dateStr = formatLocalDateStr(context.date);
       const newDraft: DraftPlanItem = {
         tempId: crypto.randomUUID(),
         type: "feature",
@@ -401,7 +403,7 @@ export function PlansBoard({
       date: Date;
       title: string;
     }) => {
-      const dateStr = context.date.toISOString().split("T")[0];
+      const dateStr = formatLocalDateStr(context.date);
       const newDraft: DraftPlanItem = {
         tempId: crypto.randomUUID(),
         type: "feature",
@@ -652,11 +654,7 @@ export function PlansBoard({
 
   // ===== 변경점 초기화 =====
   const handleResetDrafts = useCallback(() => {
-    if (
-      !confirm(
-        "모든 임시 변경 사항이 삭제됩니다. 계속하시겠습니까?"
-      )
-    ) {
+    if (!confirm("모든 임시 변경 사항이 삭제됩니다. 계속하시겠습니까?")) {
       return;
     }
 
@@ -951,15 +949,27 @@ export function PlansBoard({
                 {filteredCount}개
               </span>
               {isAdmin && (
-                <span
-                  className="text-[10px] px-1.5 py-0.5 rounded"
-                  style={{
-                    background: "rgba(247, 109, 87, 0.1)",
-                    color: "#F76D57",
-                  }}
-                >
-                  {modKey}+K
-                </span>
+                <>
+                  <Link
+                    href="/plans/gantt"
+                    className="text-[10px] px-2 py-1 rounded font-medium transition-colors hover:opacity-80"
+                    style={{
+                      background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                      color: "white",
+                    }}
+                  >
+                    ✨ 새 간트 편집기
+                  </Link>
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded"
+                    style={{
+                      background: "rgba(247, 109, 87, 0.1)",
+                      color: "#F76D57",
+                    }}
+                  >
+                    {modKey}+K
+                  </span>
+                </>
               )}
             </div>
 
