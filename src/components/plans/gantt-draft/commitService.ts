@@ -56,22 +56,34 @@ export async function commitFeaturePlans(
     let deletedCount = 0;
     let upsertedCount = 0;
 
-    // 삭제 처리 (client_uid 기준)
+    // 삭제 처리
     if (toDelete.length > 0) {
-      const deleteClientUids = toDelete.map((p) => p.clientUid);
-      
-      const { error: deleteError, count } = await supabase
-        .from("plans")
-        .delete()
-        .eq("workspace_id", payload.workspaceId || DEFAULT_WORKSPACE_ID)
-        .in("client_uid", deleteClientUids);
+      for (const plan of toDelete) {
+        // serverId가 있으면 id로 삭제, 없으면 client_uid로 삭제
+        const serverId = (plan as unknown as { serverId?: string }).serverId;
+        
+        let deleteQuery = supabase
+          .from("plans")
+          .delete()
+          .eq("workspace_id", payload.workspaceId || DEFAULT_WORKSPACE_ID);
+        
+        if (serverId) {
+          // 서버 ID로 삭제 (기존 데이터)
+          deleteQuery = deleteQuery.eq("id", serverId);
+        } else {
+          // client_uid로 삭제 (새로 생성된 데이터)
+          deleteQuery = deleteQuery.eq("client_uid", plan.clientUid);
+        }
+        
+        const { error: deleteError } = await deleteQuery;
 
-      if (deleteError) {
-        console.error("[commitFeaturePlans] Delete error:", deleteError);
-        return { success: false, error: "삭제 중 오류가 발생했습니다." };
+        if (deleteError) {
+          console.error("[commitFeaturePlans] Delete error:", deleteError, { plan });
+          return { success: false, error: "삭제 중 오류가 발생했습니다." };
+        }
+        
+        deletedCount++;
       }
-
-      deletedCount = count || toDelete.length;
     }
 
     // 업서트 처리
@@ -112,14 +124,13 @@ export async function commitFeaturePlans(
             return { success: false, error: `업데이트 오류: ${plan.title}` };
           }
 
-          // 담당자 업데이트
-          if (plan.assignees && plan.assignees.length > 0) {
-            // 기존 담당자 삭제
-            await supabase
-              .from("plan_assignees")
-              .delete()
-              .eq("plan_id", existingPlan.id);
+          // 담당자 업데이트 - 항상 기존 담당자 삭제 후 새로 추가
+          await supabase
+            .from("plan_assignees")
+            .delete()
+            .eq("plan_id", existingPlan.id);
 
+          if (plan.assignees && plan.assignees.length > 0) {
             // 새 담당자 추가
             const assigneeRows = plan.assignees.map((a) => ({
               plan_id: existingPlan.id,
@@ -128,7 +139,10 @@ export async function commitFeaturePlans(
               role: a.role,
             }));
 
-            await supabase.from("plan_assignees").insert(assigneeRows);
+            const { error: assigneeError } = await supabase.from("plan_assignees").insert(assigneeRows);
+            if (assigneeError) {
+              console.error("[commitFeaturePlans] Assignee insert error:", assigneeError);
+            }
           }
         } else {
           // Insert
@@ -194,6 +208,12 @@ export async function commitFeaturePlans(
   }
 }
 
+interface FetchedAssignee {
+  userId: string;
+  role: string;
+  displayName?: string;
+}
+
 /**
  * Feature Plans 조회 (hydrate용)
  */
@@ -213,29 +233,84 @@ export async function fetchFeaturePlans(
     startDate: string;
     endDate: string;
     domain?: string;
+    assignees?: FetchedAssignee[];
   }>;
   error?: string;
 }> {
   try {
     const supabase = await createClient();
+    const targetWorkspaceId = workspaceId || DEFAULT_WORKSPACE_ID;
 
-    const { data, error } = await supabase
-      .from("v_plans_with_assignees")
+    // plans 조회
+    const { data: plansData, error: plansError } = await supabase
+      .from("plans")
       .select("*")
-      .eq("workspace_id", workspaceId || DEFAULT_WORKSPACE_ID)
+      .eq("workspace_id", targetWorkspaceId)
       .eq("type", "feature")
       .not("start_date", "is", null)
       .not("end_date", "is", null)
       .order("start_date", { ascending: true });
 
-    if (error) {
-      console.error("[fetchFeaturePlans] Error:", error);
+    if (plansError) {
+      console.error("[fetchFeaturePlans] Plans error:", plansError);
       return { success: false, error: "데이터 조회에 실패했습니다." };
     }
 
-    const plans = (data || []).map((row) => ({
+    if (!plansData || plansData.length === 0) {
+      return { success: true, plans: [] };
+    }
+
+    // plan_assignees 조회 (profiles와 별도 조회)
+    const planIds = plansData.map((p) => p.id);
+    const { data: assigneesData, error: assigneesError } = await supabase
+      .from("plan_assignees")
+      .select("plan_id, user_id, role")
+      .eq("workspace_id", targetWorkspaceId)
+      .in("plan_id", planIds);
+
+    if (assigneesError) {
+      console.error("[fetchFeaturePlans] Assignees error:", assigneesError);
+      // 담당자 조회 실패해도 계획은 반환
+    }
+
+    // profiles 별도 조회
+    const userIds = [...new Set((assigneesData || []).map((a) => a.user_id))];
+    let profilesMap = new Map<string, string>();
+    
+    if (userIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", userIds);
+
+      if (profilesError) {
+        console.error("[fetchFeaturePlans] Profiles error:", profilesError);
+      } else {
+        for (const p of profilesData || []) {
+          if (p.display_name) {
+            profilesMap.set(p.user_id, p.display_name);
+          }
+        }
+      }
+    }
+
+    // assignees를 plan_id 기준으로 그룹핑
+    const assigneesMap = new Map<string, FetchedAssignee[]>();
+    for (const a of assigneesData || []) {
+      const planId = a.plan_id;
+      if (!assigneesMap.has(planId)) {
+        assigneesMap.set(planId, []);
+      }
+      assigneesMap.get(planId)!.push({
+        userId: a.user_id,
+        role: a.role,
+        displayName: profilesMap.get(a.user_id) || undefined,
+      });
+    }
+
+    const plans = plansData.map((row) => ({
       id: row.id,
-      clientUid: row.client_uid || row.id, // client_uid가 없으면 id 사용
+      clientUid: row.client_uid || row.id,
       project: row.project || "",
       module: row.module || "",
       feature: row.feature || "",
@@ -245,7 +320,10 @@ export async function fetchFeaturePlans(
       startDate: row.start_date,
       endDate: row.end_date,
       domain: row.domain,
+      assignees: assigneesMap.get(row.id) || [],
     }));
+
+    console.log("[fetchFeaturePlans] Loaded", plans.length, "plans with assignees");
 
     return { success: true, plans };
   } catch (err) {

@@ -12,7 +12,11 @@ interface IconProps extends SVGProps<SVGSVGElement> {
 }
 
 const createIcon = (paths: string[], viewBox = "0 0 24 24") => {
-  const Icon = memo(function Icon({ size = 16, className = "", ...props }: IconProps) {
+  const Icon = memo(function Icon({
+    size = 16,
+    className = "",
+    ...props
+  }: IconProps) {
     return (
       <svg
         width={size}
@@ -62,12 +66,15 @@ export const CubeIcon = createIcon([
 ]);
 
 // 코드 (기능)
-export const CodeIcon = createIcon([
-  "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
-]);
+export const CodeIcon = createIcon(["M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"]);
 
 // 체크
 export const CheckIcon = createIcon(["M5 13l4 4L19 7"]);
+
+// 정보
+export const InfoIcon = createIcon([
+  "M12 16v-4m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+]);
 
 // 플러스
 export const PlusIcon = createIcon(["M12 4v16m8-8H4"]);
@@ -87,9 +94,7 @@ export const EyeIcon = createIcon([
 ]);
 
 // 간트
-export const GanttIcon = createIcon([
-  "M4 6h16M4 10h8m-8 4h10m-10 4h6",
-]);
+export const GanttIcon = createIcon(["M4 6h16M4 10h8m-8 4h10m-10 4h6"]);
 
 // 검색
 export const SearchIcon = createIcon([
@@ -111,6 +116,19 @@ export const ChevronLeftIcon = createIcon(["M15 19l-7-7 7-7"]);
 export const ChevronRightIcon = createIcon(["M9 5l7 7-7 7"]);
 export const ChevronDownIcon = createIcon(["M19 9l-7 7-7-7"]);
 export const ChevronUpIcon = createIcon(["M5 15l7-7 7 7"]);
+
+// 더블 화살표 (모두 펼치기/접기)
+export const ChevronsDownIcon = createIcon(["M7 7l5 5 5-5", "M7 13l5 5 5-5"]);
+export const ChevronsUpIcon = createIcon([
+  "M17 17l-5-5-5 5",
+  "M17 11l-5-5-5 5",
+]);
+
+// 모두 펼치기 (계층 구조 확장)
+export const ExpandAllIcon = createIcon(["M4 6h16", "M4 12h16", "M4 18h16"]);
+
+// 모두 접기 (계층 구조 축소)
+export const CollapseAllIcon = createIcon(["M4 6h16", "M4 12h10", "M4 18h6"]);
 
 // 휴지통
 export const TrashIcon = createIcon([
@@ -138,9 +156,7 @@ export const LightbulbIcon = createIcon([
 ]);
 
 // 리스트
-export const ListIcon = createIcon([
-  "M4 6h16M4 10h16M4 14h16M4 18h16",
-]);
+export const ListIcon = createIcon(["M4 6h16M4 10h16M4 14h16M4 18h16"]);
 
 // 캘린더 (날짜)
 export const CalendarDaysIcon = createIcon([
@@ -185,10 +201,13 @@ export const HelpIcon = createIcon([
   "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
 ]);
 
-// 드래그 핸들
-export const DragHandleIcon = createIcon([
-  "M4 8h16M4 16h16",
+// 경고
+export const AlertIcon = createIcon([
+  "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
 ]);
+
+// 드래그 핸들
+export const DragHandleIcon = createIcon(["M4 8h16M4 16h16"]);
 
 // 더블 화살표 (확장/축소)
 export const ExpandIcon = createIcon([
@@ -230,3 +249,12 @@ export const StarIcon = memo(function StarIcon({
   );
 });
 
+// 사용자
+export const UserIcon = createIcon([
+  "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z",
+]);
+
+// 로딩 스피너
+export const LoadingIcon = createIcon([
+  "M12 2v4m0 12v4m10-10h-4M6 12H2m15.07-5.07l-2.83 2.83M8.76 15.24l-2.83 2.83m11.31 0l-2.83-2.83M8.76 8.76L5.93 5.93",
+]);

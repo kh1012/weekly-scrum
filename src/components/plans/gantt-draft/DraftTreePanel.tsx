@@ -1,13 +1,14 @@
 /**
  * Draft Tree Panel (좌측)
  * - Project > Module > Feature 계층 표시
- * - 검색 + 체크박스 필터
- * - Drag & Drop reorder
+ * - laneCount에 따른 동적 높이 (Timeline과 동기화)
+ * - 검색 + 필터
  */
 
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useDraftStore } from "./store";
 import {
   FolderIcon,
@@ -16,69 +17,25 @@ import {
   SearchIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  ExpandAllIcon,
+  CollapseAllIcon,
   FilterIcon,
   XIcon,
+  TrashIcon,
+  PlusIcon,
+  CheckIcon,
 } from "@/components/common/Icons";
-import type { DraftRow } from "./types";
+import { AddRowModal } from "./AddRowModal";
+import {
+  buildFlatTree,
+  calculateNodePositions,
+  ROW_HEIGHT,
+  LANE_HEIGHT,
+} from "./laneLayout";
+import type { FlatTreeNode } from "./laneLayout";
 
-const TREE_WIDTH = 280;
-
-interface TreeNode {
-  type: "project" | "module" | "feature";
-  label: string;
-  id: string;
-  children?: TreeNode[];
-  row?: DraftRow;
-}
-
-/**
- * rows를 트리 구조로 변환
- */
-function buildTree(rows: DraftRow[]): TreeNode[] {
-  const projectMap = new Map<string, Map<string, DraftRow[]>>();
-
-  for (const row of rows) {
-    if (!projectMap.has(row.project)) {
-      projectMap.set(row.project, new Map());
-    }
-    const moduleMap = projectMap.get(row.project)!;
-    if (!moduleMap.has(row.module)) {
-      moduleMap.set(row.module, []);
-    }
-    moduleMap.get(row.module)!.push(row);
-  }
-
-  const tree: TreeNode[] = [];
-
-  for (const [project, moduleMap] of projectMap) {
-    const moduleNodes: TreeNode[] = [];
-
-    for (const [module, features] of moduleMap) {
-      const featureNodes: TreeNode[] = features.map((row) => ({
-        type: "feature" as const,
-        label: row.feature,
-        id: row.rowId,
-        row,
-      }));
-
-      moduleNodes.push({
-        type: "module" as const,
-        label: module,
-        id: `${project}::${module}`,
-        children: featureNodes,
-      });
-    }
-
-    tree.push({
-      type: "project" as const,
-      label: project,
-      id: project,
-      children: moduleNodes,
-    });
-  }
-
-  return tree;
-}
+export const TREE_WIDTH = 280;
+const HEADER_HEIGHT = 76; // 38px + 38px (검색 + 필터/버튼, p-2 패딩 포함)
 
 interface DraftTreePanelProps {
   isEditing: boolean;
@@ -88,10 +45,24 @@ interface DraftTreePanelProps {
     features: string[];
     stages: string[];
   };
+  /** 외부 스크롤 동기화용 (Timeline에서 전달) */
+  scrollTop?: number;
+  onScroll?: (scrollTop: number) => void;
+  /** AddRowModal 표시 상태 (상위에서 관리) */
+  showAddRowModal?: boolean;
+  onShowAddRowModal?: (show: boolean) => void;
 }
 
-export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps) {
+export function DraftTreePanel({
+  isEditing,
+  filterOptions,
+  scrollTop: externalScrollTop,
+  onScroll,
+  showAddRowModal: externalShowAddRowModal,
+  onShowAddRowModal,
+}: DraftTreePanelProps) {
   const allRows = useDraftStore((s) => s.rows);
+  const allBars = useDraftStore((s) => s.bars);
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
   const filters = useDraftStore((s) => s.ui.filters);
   const setSearchQuery = useDraftStore((s) => s.setSearchQuery);
@@ -99,10 +70,111 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
   const resetFilters = useDraftStore((s) => s.resetFilters);
   const selectRow = useDraftStore((s) => s.selectRow);
   const selectedRowId = useDraftStore((s) => s.ui.selectedRowId);
+  const deleteRow = useDraftStore((s) => s.deleteRow);
+  const addRow = useDraftStore((s) => s.addRow);
+  const expandedNodesArray = useDraftStore((s) => s.ui.expandedNodes);
+  const toggleNodeStore = useDraftStore((s) => s.toggleNode);
+  const expandAllNodes = useDraftStore((s) => s.expandAllNodes);
+  const collapseAllNodes = useDraftStore((s) => s.collapseAllNodes);
+  const expandToLevel = useDraftStore((s) => s.expandToLevel);
+  const renameNode = useDraftStore((s) => s.renameNode);
+  const reorderRows = useDraftStore((s) => s.reorderRows);
 
-  // 필터링된 rows (useMemo로 캐싱)
-  const rows = useMemo(() => {
+  // 외부에서 관리되지 않는 경우 로컬 상태 사용
+  const [localShowAddRowModal, setLocalShowAddRowModal] = useState(false);
+
+  // 편집 상태
+  const [editingNode, setEditingNode] = useState<{
+    id: string;
+    type: "project" | "module" | "feature";
+    label: string;
+    project?: string;
+    module?: string;
+  } | null>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  // 드래그앤드롭 상태
+  const [dragState, setDragState] = useState<{
+    draggingNode: FlatTreeNode | null;
+    dropTargetId: string | null;
+    dropPosition: "before" | "after" | null;
+  }>({ draggingNode: null, dropTargetId: null, dropPosition: null });
+  const showAddRowModal = externalShowAddRowModal ?? localShowAddRowModal;
+  const setShowAddRowModal = onShowAddRowModal ?? setLocalShowAddRowModal;
+
+  const [showFilters, setShowFilters] = useState(false);
+  const [showExpandMenu, setShowExpandMenu] = useState(false);
+  const [expandMenuPosition, setExpandMenuPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const expandMenuRef = useRef<HTMLDivElement>(null);
+  const expandButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 필터 팝오버 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!showFilters) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        filterRef.current &&
+        !filterRef.current.contains(target) &&
+        filterButtonRef.current &&
+        !filterButtonRef.current.contains(target)
+      ) {
+        setShowFilters(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
+
+  // 펼치기 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!showExpandMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        expandMenuRef.current &&
+        !expandMenuRef.current.contains(target) &&
+        expandButtonRef.current &&
+        !expandButtonRef.current.contains(target)
+      ) {
+        setShowExpandMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showExpandMenu]);
+
+  // Set으로 변환 (빠른 조회용)
+  const expandedNodes = useMemo(
+    () => new Set(expandedNodesArray),
+    [expandedNodesArray]
+  );
+
+  // 활성 bars (삭제되지 않은 것들)
+  const activeBars = useMemo(
+    () => allBars.filter((b) => !b.deleted),
+    [allBars]
+  );
+
+  // 필터링된 rows
+  const filteredRows = useMemo(() => {
     return allRows.filter((row) => {
+      // 로컬에서 생성된 row는 bars 없이도 표시
+      if (!row.isLocal) {
+        const hasBars = activeBars.some((b) => b.rowId === row.rowId);
+        if (!hasBars) return false;
+      }
+
       // 검색어 필터
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -114,7 +186,10 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
       }
 
       // 프로젝트 필터
-      if (filters.projects.length > 0 && !filters.projects.includes(row.project)) {
+      if (
+        filters.projects.length > 0 &&
+        !filters.projects.includes(row.project)
+      ) {
         return false;
       }
 
@@ -124,20 +199,82 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
       }
 
       // 기능 필터
-      if (filters.features.length > 0 && !filters.features.includes(row.feature)) {
+      if (
+        filters.features.length > 0 &&
+        !filters.features.includes(row.feature)
+      ) {
         return false;
       }
 
       return true;
     });
-  }, [allRows, searchQuery, filters]);
+  }, [allRows, activeBars, searchQuery, filters]);
 
-  const [showFilters, setShowFilters] = useState(false);
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  // 필터 레벨 결정 (가장 하위 레벨 기준)
+  // 기능 필터가 있으면 2, 모듈 필터가 있으면 1, 프로젝트 필터가 있으면 0, 없으면 -1
+  const filterLevel = useMemo(() => {
+    if (filters.features.length > 0) return 2; // feature level
+    if (filters.modules.length > 0) return 1; // module level
+    if (filters.projects.length > 0) return 0; // project level
+    return -1; // no filter
+  }, [
+    filters.features.length,
+    filters.modules.length,
+    filters.projects.length,
+  ]);
 
-  const tree = useMemo(() => buildTree(rows), [rows]);
+  // 현재 펼침 레벨 계산 (프로젝트=0, 모듈=1, 기능=2)
+  // expandedNodesArray가 비어있으면 프로젝트까지 보기 상태
+  // 프로젝트 노드만 펼쳐져 있으면 모듈까지 보기
+  // 모듈 노드도 펼쳐져 있으면 기능까지 보기
+  const currentExpandLevel = useMemo(() => {
+    if (expandedNodesArray.length === 0) return 0; // 프로젝트까지 보기
+    // 모듈 노드가 펼쳐져 있는지 확인 (::가 하나만 있는 경우)
+    const hasModuleExpanded = expandedNodesArray.some(
+      (id) => id.includes("::") && id.split("::").length === 2
+    );
+    if (hasModuleExpanded) return 2; // 기능까지 보기
+    return 1; // 모듈까지 보기
+  }, [expandedNodesArray]);
 
-  // 모든 프로젝트/모듈 목록 (필터용)
+  // FlatTree와 nodePositions 계산 (Timeline과 동일)
+  const flatNodes = useMemo(
+    () => buildFlatTree(filteredRows, activeBars, expandedNodes),
+    [filteredRows, activeBars, expandedNodes]
+  );
+
+  // 필터 레벨에 따라 노드 필터링 (상위 레벨 숨김) + top 재계산
+  const visibleNodePositions = useMemo(() => {
+    const allPositions = calculateNodePositions(flatNodes);
+
+    // 필터가 없으면 모든 노드 표시
+    if (filterLevel === -1) return allPositions;
+
+    // 필터 레벨 이상의 노드만 표시
+    const filtered = allPositions.filter(({ node }) => {
+      const nodeLevel =
+        node.type === "project" ? 0 : node.type === "module" ? 1 : 2;
+      return nodeLevel >= filterLevel;
+    });
+
+    // top 값 재계산
+    let currentTop = 0;
+    return filtered.map((pos) => {
+      const newPos = { ...pos, top: currentTop };
+      currentTop += pos.height;
+      return newPos;
+    });
+  }, [flatNodes, filterLevel]);
+
+  const nodePositions = visibleNodePositions;
+
+  const totalHeight = useMemo(() => {
+    if (nodePositions.length === 0) return 0;
+    const last = nodePositions[nodePositions.length - 1];
+    return last.top + last.height;
+  }, [nodePositions]);
+
+  // 모든 프로젝트/모듈/기능 목록 (필터용)
   const allProjects = useMemo(
     () => [...new Set(allRows.map((r) => r.project))].sort(),
     [allRows]
@@ -151,23 +288,50 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
     [allRows]
   );
 
-  const toggleNode = useCallback((nodeId: string) => {
-    setExpandedNodes((prev) => {
-      const next = new Set(prev);
-      if (next.has(nodeId)) {
-        next.delete(nodeId);
-      } else {
-        next.add(nodeId);
-      }
-      return next;
-    });
-  }, []);
+  // 선택된 프로젝트에 따라 사용 가능한 모듈 목록
+  const availableModules = useMemo(() => {
+    if (filters.projects.length === 0) {
+      return allModules; // 프로젝트 선택 없으면 모든 모듈 사용 가능
+    }
+    return [
+      ...new Set(
+        allRows
+          .filter((r) => filters.projects.includes(r.project))
+          .map((r) => r.module)
+      ),
+    ].sort();
+  }, [allRows, filters.projects, allModules]);
 
-  const handleRowClick = useCallback(
-    (rowId: string) => {
-      selectRow(rowId);
+  // 선택된 모듈에 따라 사용 가능한 기능 목록
+  const availableFeatures = useMemo(() => {
+    if (filters.modules.length === 0 && filters.projects.length === 0) {
+      return allFeatures; // 아무것도 선택 안됐으면 모든 기능 사용 가능
+    }
+    let filteredRows = allRows;
+    if (filters.projects.length > 0) {
+      filteredRows = filteredRows.filter((r) =>
+        filters.projects.includes(r.project)
+      );
+    }
+    if (filters.modules.length > 0) {
+      filteredRows = filteredRows.filter((r) =>
+        filters.modules.includes(r.module)
+      );
+    }
+    return [...new Set(filteredRows.map((r) => r.feature))].sort();
+  }, [allRows, filters.projects, filters.modules, allFeatures]);
+
+  const hasActiveFilters =
+    searchQuery ||
+    filters.projects.length > 0 ||
+    filters.modules.length > 0 ||
+    filters.features.length > 0;
+
+  const toggleNode = useCallback(
+    (nodeId: string) => {
+      toggleNodeStore(nodeId);
     },
-    [selectRow]
+    [toggleNodeStore]
   );
 
   const toggleProjectFilter = (project: string) => {
@@ -176,6 +340,8 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
       ? current.filter((p) => p !== project)
       : [...current, project];
     setFilters({ projects: next });
+    // 필터 적용 시 기능까지 펼치기
+    expandToLevel(1);
   };
 
   const toggleModuleFilter = (module: string) => {
@@ -184,88 +350,560 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
       ? current.filter((m) => m !== module)
       : [...current, module];
     setFilters({ modules: next });
+    // 필터 적용 시 기능까지 펼치기
+    expandToLevel(1);
   };
 
-  const hasActiveFilters =
-    searchQuery ||
-    filters.projects.length > 0 ||
-    filters.modules.length > 0 ||
-    filters.features.length > 0;
+  const toggleFeatureFilter = (feature: string) => {
+    const current = filters.features;
+    const next = current.includes(feature)
+      ? current.filter((f) => f !== feature)
+      : [...current, feature];
+    setFilters({ features: next });
+    // 필터 적용 시 기능까지 펼치기
+    expandToLevel(1);
+  };
 
   const getNodeIcon = (type: "project" | "module" | "feature") => {
     switch (type) {
       case "project":
-        return <FolderIcon className="w-4 h-4" style={{ color: "#f59e0b" }} />;
+        return (
+          <FolderIcon
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: "#f59e0b" }}
+          />
+        );
       case "module":
-        return <CubeIcon className="w-4 h-4" style={{ color: "#8b5cf6" }} />;
+        return (
+          <CubeIcon
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: "#8b5cf6" }}
+          />
+        );
       case "feature":
-        return <CodeIcon className="w-4 h-4" style={{ color: "#10b981" }} />;
+        return (
+          <CodeIcon
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: "#10b981" }}
+          />
+        );
     }
   };
 
-  const renderNode = (node: TreeNode, depth: number = 0) => {
+  const handleScroll = useCallback(() => {
+    if (scrollContainerRef.current && onScroll) {
+      onScroll(scrollContainerRef.current.scrollTop);
+    }
+  }, [onScroll]);
+
+  // 외부 scrollTop 동기화
+  useMemo(() => {
+    if (scrollContainerRef.current && externalScrollTop !== undefined) {
+      scrollContainerRef.current.scrollTop = externalScrollTop;
+    }
+  }, [externalScrollTop]);
+
+  const handleAddRow = (project: string, module: string, feature: string) => {
+    // 새로 추가하는 프로젝트가 현재 필터에 없으면 필터 초기화
+    if (filters.projects.length > 0 && !filters.projects.includes(project)) {
+      resetFilters();
+    }
+
+    addRow(project, module, feature);
+    setShowAddRowModal(false);
+  };
+
+  // 드래그앤드롭 핸들러
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, node: FlatTreeNode) => {
+      if (!isEditing) {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", node.id);
+      setDragState({
+        draggingNode: node,
+        dropTargetId: null,
+        dropPosition: null,
+      });
+    },
+    [isEditing]
+  );
+
+  const handleDragOver = useCallback(
+    (
+      e: React.DragEvent,
+      targetNode: FlatTreeNode,
+      top: number,
+      height: number
+    ) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+
+      if (!dragState.draggingNode) return;
+
+      // 같은 타입의 노드끼리만 이동 가능
+      if (dragState.draggingNode.type !== targetNode.type) {
+        setDragState((prev) => ({
+          ...prev,
+          dropTargetId: null,
+          dropPosition: null,
+        }));
+        return;
+      }
+
+      // 자기 자신에게는 드롭 불가
+      if (dragState.draggingNode.id === targetNode.id) {
+        setDragState((prev) => ({
+          ...prev,
+          dropTargetId: null,
+          dropPosition: null,
+        }));
+        return;
+      }
+
+      // module은 같은 프로젝트 내에서만 이동 가능
+      if (dragState.draggingNode.type === "module") {
+        // 모듈 노드 ID에서 프로젝트 추출 (형식: project::module)
+        const dragProject = dragState.draggingNode.id.split("::")[0];
+        const targetProject = targetNode.id.split("::")[0];
+        if (dragProject !== targetProject) {
+          setDragState((prev) => ({
+            ...prev,
+            dropTargetId: null,
+            dropPosition: null,
+          }));
+          return;
+        }
+      }
+
+      // feature는 같은 모듈 내에서만 이동 가능
+      if (dragState.draggingNode.type === "feature") {
+        const dragRow = dragState.draggingNode.row;
+        const targetRow = targetNode.row;
+        if (
+          dragRow?.project !== targetRow?.project ||
+          dragRow?.module !== targetRow?.module
+        ) {
+          setDragState((prev) => ({
+            ...prev,
+            dropTargetId: null,
+            dropPosition: null,
+          }));
+          return;
+        }
+      }
+
+      // 마우스 위치에 따라 before/after 결정
+      const rect = (e.target as HTMLElement).getBoundingClientRect();
+      const mouseY = e.clientY - rect.top;
+      const position = mouseY < height / 2 ? "before" : "after";
+
+      setDragState((prev) => ({
+        ...prev,
+        dropTargetId: targetNode.id,
+        dropPosition: position,
+      }));
+    },
+    [dragState.draggingNode]
+  );
+
+  const handleDragLeave = useCallback(() => {
+    setDragState((prev) => ({
+      ...prev,
+      dropTargetId: null,
+      dropPosition: null,
+    }));
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent, targetNode: FlatTreeNode) => {
+      e.preventDefault();
+
+      const { draggingNode, dropPosition } = dragState;
+      if (!draggingNode || !dropPosition) {
+        setDragState({
+          draggingNode: null,
+          dropTargetId: null,
+          dropPosition: null,
+        });
+        return;
+      }
+
+      // 같은 타입만 이동 가능
+      if (draggingNode.type !== targetNode.type) {
+        setDragState({
+          draggingNode: null,
+          dropTargetId: null,
+          dropPosition: null,
+        });
+        return;
+      }
+
+      // 새로운 순서 계산
+      const currentRows = [...allRows];
+
+      if (draggingNode.type === "module") {
+        // 모듈 이동: 해당 모듈에 속한 모든 rows를 그룹으로 이동
+        const dragModuleParts = draggingNode.id.split("::");
+        const dragProject = dragModuleParts[0];
+        const dragModule = dragModuleParts[1];
+
+        const targetModuleParts = targetNode.id.split("::");
+        const targetModule = targetModuleParts[1];
+
+        // 같은 프로젝트 내의 모듈들을 수집
+        const projectRows = currentRows.filter(
+          (r) => r.project === dragProject
+        );
+        const modules = [...new Set(projectRows.map((r) => r.module))];
+
+        // 모듈 순서 변경
+        const filteredModules = modules.filter((m) => m !== dragModule);
+        const targetModuleIndex = filteredModules.indexOf(targetModule);
+
+        if (targetModuleIndex === -1) {
+          setDragState({
+            draggingNode: null,
+            dropTargetId: null,
+            dropPosition: null,
+          });
+          return;
+        }
+
+        const insertIndex =
+          dropPosition === "before" ? targetModuleIndex : targetModuleIndex + 1;
+        filteredModules.splice(insertIndex, 0, dragModule);
+
+        // 새 순서대로 rows 정렬
+        const sortedRows = currentRows
+          .map((row) => {
+            if (row.project !== dragProject) return row;
+            const moduleOrder = filteredModules.indexOf(row.module);
+            return {
+              ...row,
+              orderIndex: moduleOrder * 1000 + (row.orderIndex % 1000),
+            };
+          })
+          .sort((a, b) => a.orderIndex - b.orderIndex);
+
+        const newOrder = sortedRows.map((r) => r.rowId);
+        reorderRows(newOrder);
+      } else {
+        // feature 이동: 기존 로직
+        const sameTypeRows = currentRows.filter((row) => {
+          const dragRow = draggingNode.row;
+          return (
+            row.project === dragRow?.project && row.module === dragRow?.module
+          );
+        });
+
+        const rowIds = sameTypeRows.map((r) => r.rowId);
+        const dragRowId = draggingNode.row?.rowId || draggingNode.id;
+        const targetRowId = targetNode.row?.rowId || targetNode.id;
+
+        const filteredIds = rowIds.filter((id) => id !== dragRowId);
+        const targetIndex = filteredIds.indexOf(targetRowId);
+
+        if (targetIndex === -1) {
+          setDragState({
+            draggingNode: null,
+            dropTargetId: null,
+            dropPosition: null,
+          });
+          return;
+        }
+
+        const insertIndex =
+          dropPosition === "before" ? targetIndex : targetIndex + 1;
+        filteredIds.splice(insertIndex, 0, dragRowId);
+
+        const newOrder = currentRows
+          .map((row) => {
+            const newIndex = filteredIds.indexOf(row.rowId);
+            return newIndex !== -1 ? { ...row, orderIndex: newIndex } : row;
+          })
+          .sort((a, b) => a.orderIndex - b.orderIndex)
+          .map((r) => r.rowId);
+
+        reorderRows(newOrder);
+      }
+      setDragState({
+        draggingNode: null,
+        dropTargetId: null,
+        dropPosition: null,
+      });
+    },
+    [dragState, allRows, reorderRows]
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setDragState({
+      draggingNode: null,
+      dropTargetId: null,
+      dropPosition: null,
+    });
+  }, []);
+
+  const renderNode = (pos: {
+    node: FlatTreeNode;
+    top: number;
+    height: number;
+  }) => {
+    const { node, top, height } = pos;
     const isExpanded = expandedNodes.has(node.id);
-    const hasChildren = node.children && node.children.length > 0;
+    const hasChildren = node.type !== "feature";
     const isSelected = node.row?.rowId === selectedRowId;
 
+    // feature의 bar 개수
+    const barCount = node.bars?.length || 0;
+
+    const handleDelete = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!node.row) return;
+
+      const confirmed = confirm(
+        `"${node.label}" 기능과 관련된 ${barCount}개의 계획을 삭제하시겠습니까?`
+      );
+      if (confirmed) {
+        deleteRow(node.row.rowId);
+      }
+    };
+
+    const handleClick = () => {
+      if (hasChildren) {
+        toggleNode(node.id);
+      } else if (node.row) {
+        selectRow(node.row.rowId);
+      }
+    };
+
+    const handleDoubleClick = (e: React.MouseEvent) => {
+      if (!isEditing) return;
+      e.stopPropagation();
+
+      // nodeId 파싱 (project::module::feature 형식)
+      const idParts = node.id.split("::");
+
+      // 편집 모드 시작
+      setEditingNode({
+        id: node.id,
+        type: node.type,
+        label: node.label,
+        project:
+          node.type !== "project" ? node.row?.project || idParts[0] : undefined,
+        module:
+          node.type === "feature" ? node.row?.module || idParts[1] : undefined,
+      });
+
+      // input에 포커스 및 텍스트 전체 선택
+      setTimeout(() => {
+        editInputRef.current?.focus();
+        editInputRef.current?.select();
+      }, 50);
+    };
+
+    const handleEditSubmit = () => {
+      if (!editingNode) return;
+
+      const newLabel = editingNode.label.trim();
+      if (!newLabel || newLabel === node.label) {
+        setEditingNode(null);
+        return;
+      }
+
+      renameNode(
+        editingNode.type,
+        node.label,
+        newLabel,
+        editingNode.project,
+        editingNode.module
+      );
+      setEditingNode(null);
+    };
+
+    const handleEditKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleEditSubmit();
+      } else if (e.key === "Escape") {
+        setEditingNode(null);
+      }
+    };
+
+    const isEditingThis = editingNode?.id === node.id;
+
+    // Airbnb 스타일 배경색 (project/module/feature 구분)
+    let bgStyle = "";
+    if (node.type === "project") {
+      bgStyle =
+        "linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, rgba(251, 191, 36, 0.03) 100%)";
+    } else if (node.type === "module") {
+      bgStyle =
+        "linear-gradient(90deg, rgba(139, 92, 246, 0.06) 0%, rgba(139, 92, 246, 0.02) 100%)";
+    }
+
+    // 드롭 인디케이터 표시 여부
+    const isDropTarget = dragState.dropTargetId === node.id;
+    const showDropBefore = isDropTarget && dragState.dropPosition === "before";
+    const showDropAfter = isDropTarget && dragState.dropPosition === "after";
+    const isDragging = dragState.draggingNode?.id === node.id;
+
     return (
-      <div key={node.id}>
+      <div
+        key={node.id}
+        draggable={
+          isEditing && (node.type === "feature" || node.type === "module")
+        }
+        onDragStart={(e) => handleDragStart(e, node)}
+        onDragOver={(e) => handleDragOver(e, node, top, height)}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, node)}
+        onDragEnd={handleDragEnd}
+        className={`absolute left-0 right-0 flex items-center gap-1.5 group transition-all duration-150 ${
+          isSelected ? "" : "hover:translate-x-0.5"
+        } ${isDragging ? "opacity-50" : ""}`}
+        style={{
+          top,
+          height,
+          paddingLeft: `${10 + node.depth * 14}px`,
+          paddingRight: 8,
+          background: isSelected
+            ? "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)"
+            : bgStyle,
+          borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
+          borderTop: showDropBefore ? "2px solid #3b82f6" : undefined,
+          borderBottomColor: showDropAfter ? "#3b82f6" : undefined,
+          borderBottomWidth: showDropAfter ? 2 : 1,
+          cursor:
+            isEditing && (node.type === "feature" || node.type === "module")
+              ? "grab"
+              : undefined,
+        }}
+      >
+        {/* 좌측 영역: 클릭 시 펼치기/접기 (feature는 확장 없음) */}
         <div
-          className={`flex items-center gap-1.5 px-2 py-1.5 cursor-pointer transition-colors ${
-            isSelected
-              ? "bg-blue-100 dark:bg-blue-900/30"
-              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+          className={`flex items-center gap-1.5 flex-shrink-0 ${
+            hasChildren ? "cursor-pointer" : ""
           }`}
-          style={{ paddingLeft: `${8 + depth * 16}px` }}
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             if (hasChildren) {
-              toggleNode(node.id);
-            } else if (node.row) {
-              handleRowClick(node.row.rowId);
+              handleClick();
             }
           }}
         >
           {/* 확장 아이콘 */}
           {hasChildren ? (
-            isExpanded ? (
-              <ChevronDownIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--notion-text-muted)" }} />
-            ) : (
-              <ChevronRightIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--notion-text-muted)" }} />
-            )
+            <div
+              className={`w-5 h-5 rounded-md flex items-center justify-center transition-all duration-150 `}
+            >
+              {isExpanded ? (
+                <ChevronDownIcon className="w-3.5 h-3.5 text-gray-500" />
+              ) : (
+                <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500" />
+              )}
+            </div>
           ) : (
-            <span className="w-3.5" />
+            <span className="w-5 flex-shrink-0" />
           )}
 
-          {/* 타입 아이콘 */}
-          {getNodeIcon(node.type)}
-
-          {/* 라벨 */}
-          <span
-            className="text-sm truncate flex-1"
-            style={{ color: "var(--notion-text)" }}
+          {/* 타입 아이콘 - Airbnb 스타일 */}
+          <div
+            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
+            style={{
+              background:
+                node.type === "project"
+                  ? "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)"
+                  : node.type === "module"
+                  ? "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)"
+                  : "linear-gradient(135deg, #34d399 0%, #10b981 100%)",
+            }}
           >
-            {node.label}
-          </span>
+            {node.type === "project" && (
+              <FolderIcon className="w-3 h-3 text-white" />
+            )}
+            {node.type === "module" && (
+              <CubeIcon className="w-3 h-3 text-white" />
+            )}
+            {node.type === "feature" && (
+              <CodeIcon className="w-3 h-3 text-white" />
+            )}
+          </div>
+        </div>
 
-          {/* 카운트 (project/module) */}
-          {hasChildren && (
+        {/* 우측 영역: 라벨 - 더블 클릭으로 편집 가능 */}
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onDoubleClick={handleDoubleClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            // 라벨 클릭 시 feature면 선택
+            if (node.type === "feature" && node.row) {
+              selectRow(node.row.rowId);
+            }
+          }}
+        >
+          {isEditingThis ? (
+            <input
+              ref={editInputRef}
+              type="text"
+              value={editingNode?.label || ""}
+              onChange={(e) =>
+                setEditingNode((prev) =>
+                  prev ? { ...prev, label: e.target.value } : null
+                )
+              }
+              onBlur={handleEditSubmit}
+              onKeyDown={handleEditKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full text-[13px] px-2 py-0.5 rounded-md bg-white border border-blue-400 outline-none focus:ring-2 focus:ring-blue-200"
+              style={{ minWidth: 0 }}
+            />
+          ) : (
             <span
-              className="text-xs px-1.5 py-0.5 rounded"
-              style={{
-                background: "var(--notion-bg-tertiary)",
-                color: "var(--notion-text-muted)",
-              }}
+              className={`block text-[13px] truncate transition-colors duration-150 ${
+                isSelected
+                  ? "text-blue-700 font-semibold"
+                  : node.type === "project"
+                  ? "text-gray-800 font-semibold"
+                  : node.type === "module"
+                  ? "text-gray-700 font-medium"
+                  : "text-gray-600"
+              } ${
+                isEditing
+                  ? "hover:underline hover:decoration-dotted cursor-text"
+                  : ""
+              }`}
+              title={isEditing ? "더블 클릭하여 수정" : undefined}
             >
-              {node.children!.length}
+              {node.label}
             </span>
           )}
         </div>
 
-        {/* 자식 노드 */}
-        {hasChildren && isExpanded && (
-          <div>
-            {node.children!.map((child) => renderNode(child, depth + 1))}
-          </div>
+        {/* feature의 경우 bar 개수 표시 - Airbnb 스타일 뱃지 */}
+        {node.type === "feature" && barCount > 0 && (
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+            style={{
+              background: "linear-gradient(135deg, #34d399 0%, #10b981 100%)",
+              color: "white",
+            }}
+          >
+            {barCount}
+          </span>
+        )}
+
+        {/* 삭제 버튼 (feature 노드, 편집 모드일 때만) - Airbnb 스타일 */}
+        {node.type === "feature" && isEditing && (
+          <button
+            onClick={handleDelete}
+            className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center transition-all duration-150 hover:bg-red-100 active:scale-95 flex-shrink-0"
+            title="기능 삭제"
+          >
+            <TrashIcon className="w-3.5 h-3.5 text-red-500" />
+          </button>
         )}
       </div>
     );
@@ -273,162 +911,423 @@ export function DraftTreePanel({ isEditing, filterOptions }: DraftTreePanelProps
 
   return (
     <div
-      className="flex flex-col border-r flex-shrink-0"
+      className="flex-shrink-0 overflow-hidden flex flex-col relative"
       style={{
         width: TREE_WIDTH,
-        background: "var(--notion-bg)",
-        borderColor: "var(--notion-border)",
+        background: "linear-gradient(180deg, #fafbfc 0%, #ffffff 100%)",
+        borderRight: "1px solid rgba(0, 0, 0, 0.06)",
       }}
     >
-      {/* 검색 + 필터 */}
-      <div className="p-2 border-b" style={{ borderColor: "var(--notion-border)" }}>
-        {/* 검색 입력 */}
-        <div className="relative">
-          <SearchIcon
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4"
-            style={{ color: "var(--notion-text-muted)" }}
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="검색..."
-            className="w-full pl-8 pr-8 py-1.5 text-sm rounded-md border"
-            style={{
-              background: "var(--notion-bg-secondary)",
-              borderColor: "var(--notion-border)",
-              color: "var(--notion-text)",
-            }}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-            >
-              <XIcon className="w-3.5 h-3.5" style={{ color: "var(--notion-text-muted)" }} />
-            </button>
-          )}
-        </div>
-
-        {/* 필터 토글 */}
-        <div className="flex items-center justify-between mt-2">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors ${
-              showFilters ? "bg-blue-100 dark:bg-blue-900/30" : ""
-            }`}
-            style={{ color: hasActiveFilters ? "#3b82f6" : "var(--notion-text-muted)" }}
-          >
-            <FilterIcon className="w-3.5 h-3.5" />
-            필터
-            {hasActiveFilters && (
-              <span className="ml-1 px-1 py-0.5 text-xs rounded-full bg-blue-500 text-white">
-                {filters.projects.length + filters.modules.length + filters.features.length}
-              </span>
-            )}
-          </button>
-
-          {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              className="text-xs px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-              style={{ color: "var(--notion-text-muted)" }}
-            >
-              초기화
-            </button>
-          )}
-        </div>
-
-        {/* 필터 패널 */}
-        {showFilters && (
-          <div className="mt-2 p-2 rounded-md border" style={{ borderColor: "var(--notion-border)" }}>
-            {/* 프로젝트 필터 */}
-            <div className="mb-2">
-              <div className="text-xs font-medium mb-1" style={{ color: "var(--notion-text-muted)" }}>
-                프로젝트
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {allProjects.map((project) => (
-                  <button
-                    key={project}
-                    onClick={() => toggleProjectFilter(project)}
-                    className={`px-2 py-0.5 text-xs rounded transition-colors ${
-                      filters.projects.includes(project)
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-100 dark:bg-gray-800"
-                    }`}
-                    style={{
-                      color: filters.projects.includes(project)
-                        ? "white"
-                        : "var(--notion-text)",
-                    }}
-                  >
-                    {project}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 모듈 필터 */}
-            <div>
-              <div className="text-xs font-medium mb-1" style={{ color: "var(--notion-text-muted)" }}>
-                모듈
-              </div>
-              <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-                {allModules.map((module) => (
-                  <button
-                    key={module}
-                    onClick={() => toggleModuleFilter(module)}
-                    className={`px-2 py-0.5 text-xs rounded transition-colors ${
-                      filters.modules.includes(module)
-                        ? "bg-purple-500 text-white"
-                        : "bg-gray-100 dark:bg-gray-800"
-                    }`}
-                    style={{
-                      color: filters.modules.includes(module)
-                        ? "white"
-                        : "var(--notion-text)",
-                    }}
-                  >
-                    {module}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 트리 영역 */}
-      <div className="flex-1 overflow-y-auto">
-        {tree.length === 0 ? (
-          <div className="flex items-center justify-center h-full p-4">
-            <p className="text-sm text-center" style={{ color: "var(--notion-text-muted)" }}>
-              {hasActiveFilters
-                ? "필터 조건에 맞는 항목이 없습니다"
-                : "계획이 없습니다"}
-            </p>
-          </div>
-        ) : (
-          <div className="py-1">
-            {tree.map((node) => renderNode(node))}
-          </div>
-        )}
-      </div>
-
-      {/* 요약 */}
+      {/* 헤더 영역 - 2행 (76px) */}
       <div
-        className="px-3 py-2 border-t text-xs"
+        className="flex-shrink-0 relative flex flex-col"
         style={{
-          borderColor: "var(--notion-border)",
-          color: "var(--notion-text-muted)",
+          height: HEADER_HEIGHT,
+          background: "linear-gradient(180deg, #f8f9fa 0%, #f3f4f6 100%)",
+          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
         }}
       >
-        {rows.length}개 기능 · {allRows.length}개 전체
+        {/* 1행: 검색창 (38px) */}
+        <div className="flex items-center px-3" style={{ height: 38 }}>
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md flex-1 transition-all duration-150 focus-within:ring-1 focus-within:ring-blue-200"
+            style={{
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.06)",
+            }}
+          >
+            <SearchIcon className="w-3 h-3 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="검색..."
+              className="flex-1 text-[11px] bg-transparent border-none outline-none text-gray-700 placeholder:text-gray-400"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <XIcon className="w-2 h-2 text-gray-400" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 2행: 필터, 펼치기/접기, 추가 (38px) */}
+        <div
+          className="flex items-center justify-between px-3"
+          style={{ height: 38, borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}
+        >
+          {/* 좌측: 필터 */}
+          <div className="relative">
+            <button
+              ref={filterButtonRef}
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-all duration-150 active:scale-95 ${
+                showFilters || hasActiveFilters
+                  ? "bg-blue-100 text-blue-600"
+                  : "hover:bg-white text-gray-500"
+              }`}
+              title="필터 옵션"
+            >
+              <FilterIcon className="w-3 h-3" />
+              <span>필터</span>
+              {hasActiveFilters && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              )}
+            </button>
+          </div>
+
+          {/* 우측: 펼치기/접기 + 추가 */}
+          <div className="flex items-center gap-0.5">
+            {/* 펼치기/접기 드롭다운 */}
+            <div className="relative">
+              <button
+                ref={expandButtonRef}
+                onClick={() => {
+                  if (!showExpandMenu && expandButtonRef.current) {
+                    const rect =
+                      expandButtonRef.current.getBoundingClientRect();
+                    setExpandMenuPosition({
+                      top: rect.top,
+                      left: rect.right + 4,
+                    });
+                  }
+                  setShowExpandMenu(!showExpandMenu);
+                }}
+                className={`p-1.5 rounded-md transition-all duration-150 hover:bg-white active:scale-95 ${
+                  showExpandMenu ? "bg-white text-blue-600" : "text-gray-500"
+                }`}
+                title="펼치기/접기"
+              >
+                {expandedNodesArray.length > 0 ? (
+                  <CollapseAllIcon className="w-3.5 h-3.5" />
+                ) : (
+                  <ExpandAllIcon className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
+
+            {/* 새 기능 추가 버튼 (편집 모드일 때만) */}
+            {isEditing && (
+              <button
+                onClick={() => setShowAddRowModal(true)}
+                className="p-1.5 rounded-md transition-all duration-150 hover:bg-blue-50 active:scale-95"
+                title="새 기능 추가"
+              >
+                <PlusIcon className="w-3.5 h-3.5 text-blue-500" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* 필터 팝오버 - 체크박스 형태 */}
+      {showFilters && (
+        <div
+          ref={filterRef}
+          className="absolute left-2 right-2 z-50 p-3 rounded-xl shadow-xl"
+          style={{
+            top: HEADER_HEIGHT,
+            background: "white",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            boxShadow:
+              "0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          {/* 헤더 */}
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold text-gray-700">필터</span>
+            {hasActiveFilters && (
+              <button
+                onClick={resetFilters}
+                className="text-[10px] text-blue-600 hover:text-blue-700 font-medium"
+              >
+                전체 해제
+              </button>
+            )}
+          </div>
+
+          {/* 프로젝트 필터 */}
+          {allProjects.length > 0 && (
+            <div className="mb-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                프로젝트
+              </div>
+              <div className="space-y-1 max-h-24 overflow-y-auto">
+                {allProjects.map((project) => (
+                  <label
+                    key={project}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.projects.includes(project)}
+                      onChange={() => toggleProjectFilter(project)}
+                      className="w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    <FolderIcon className="w-3 h-3 text-amber-500" />
+                    <span className="text-xs text-gray-700">{project}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 모듈 필터 */}
+          {allModules.length > 0 && (
+            <div className="mb-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                모듈
+                {filters.projects.length > 0 && (
+                  <span className="ml-1 text-gray-300 font-normal">
+                    ({availableModules.length}개 사용 가능)
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1 max-h-24 overflow-y-auto">
+                {allModules.map((module) => {
+                  const isAvailable = availableModules.includes(module);
+                  return (
+                    <label
+                      key={module}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${
+                        isAvailable
+                          ? "cursor-pointer hover:bg-gray-50"
+                          : "cursor-not-allowed opacity-40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.modules.includes(module)}
+                        onChange={() =>
+                          isAvailable && toggleModuleFilter(module)
+                        }
+                        disabled={!isAvailable}
+                        className="w-3.5 h-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 disabled:opacity-50"
+                      />
+                      <CubeIcon
+                        className={`w-3 h-3 ${
+                          isAvailable ? "text-violet-500" : "text-gray-400"
+                        }`}
+                      />
+                      <span
+                        className={`text-xs ${
+                          isAvailable ? "text-gray-700" : "text-gray-400"
+                        }`}
+                      >
+                        {module}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 기능 필터 */}
+          {allFeatures.length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                기능
+                {(filters.projects.length > 0 ||
+                  filters.modules.length > 0) && (
+                  <span className="ml-1 text-gray-300 font-normal">
+                    ({availableFeatures.length}개 사용 가능)
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1 max-h-24 overflow-y-auto">
+                {allFeatures.map((feature) => {
+                  const isAvailable = availableFeatures.includes(feature);
+                  return (
+                    <label
+                      key={feature}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${
+                        isAvailable
+                          ? "cursor-pointer hover:bg-gray-50"
+                          : "cursor-not-allowed opacity-40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.features.includes(feature)}
+                        onChange={() =>
+                          isAvailable && toggleFeatureFilter(feature)
+                        }
+                        disabled={!isAvailable}
+                        className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-50"
+                      />
+                      <CodeIcon
+                        className={`w-3 h-3 ${
+                          isAvailable ? "text-emerald-500" : "text-gray-400"
+                        }`}
+                      />
+                      <span
+                        className={`text-xs ${
+                          isAvailable ? "text-gray-700" : "text-gray-400"
+                        }`}
+                      >
+                        {feature}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 빈 상태 */}
+          {allProjects.length === 0 &&
+            allModules.length === 0 &&
+            allFeatures.length === 0 && (
+              <div className="text-xs text-gray-400 text-center py-4">
+                필터할 항목이 없습니다
+              </div>
+            )}
+        </div>
+      )}
+
+      {/* 트리 영역 (스크롤) - Airbnb 스타일 */}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto overflow-x-hidden"
+        style={{
+          background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
+        }}
+        onScroll={handleScroll}
+      >
+        <div className="relative" style={{ height: totalHeight }}>
+          {nodePositions.map((pos) => renderNode(pos))}
+        </div>
+
+        {/* 검색 결과 없음 - Airbnb 스타일 */}
+        {searchQuery && nodePositions.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+              style={{
+                background: "linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)",
+              }}
+            >
+              <SearchIcon className="w-6 h-6 text-gray-400" />
+            </div>
+            <span className="text-sm font-medium text-gray-500">
+              검색 결과 없음
+            </span>
+            <span className="text-xs text-gray-400 mt-1">
+              다른 검색어를 시도해보세요
+            </span>
+          </div>
+        )}
+
+        {/* 빈 상태 - Airbnb 스타일 */}
+        {!searchQuery && nodePositions.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+              style={{
+                background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+              }}
+            >
+              <FolderIcon className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-600">
+              기능이 없습니다
+            </span>
+            <span className="text-xs text-gray-400 mt-1 text-center">
+              {isEditing
+                ? "상단의 + 버튼으로 새 기능을 추가하세요"
+                : "작업 시작 후 기능을 추가할 수 있습니다"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* AddRowModal */}
+      <AddRowModal
+        isOpen={showAddRowModal}
+        onClose={() => setShowAddRowModal(false)}
+        onAdd={handleAddRow}
+        existingProjects={allProjects}
+        existingModules={allModules}
+      />
+
+      {/* 펼치기 드롭다운 메뉴 (Portal) */}
+      {showExpandMenu &&
+        expandMenuPosition &&
+        createPortal(
+          <div
+            ref={expandMenuRef}
+            className="fixed z-[9999] py-1 rounded-lg shadow-lg min-w-[140px]"
+            style={{
+              top: expandMenuPosition.top,
+              left: expandMenuPosition.left,
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              boxShadow:
+                "0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <button
+              onClick={() => {
+                collapseAllNodes();
+                setShowExpandMenu(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors flex items-center justify-between gap-2"
+            >
+              <span
+                style={{
+                  color: currentExpandLevel === 0 ? "#3b82f6" : "#374151",
+                }}
+              >
+                프로젝트까지 보기
+              </span>
+              {currentExpandLevel === 0 && (
+                <CheckIcon className="w-3 h-3 text-blue-500" />
+              )}
+            </button>
+            <button
+              onClick={() => {
+                expandToLevel(0);
+                setShowExpandMenu(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors flex items-center justify-between gap-2"
+            >
+              <span
+                style={{
+                  color: currentExpandLevel === 1 ? "#3b82f6" : "#374151",
+                }}
+              >
+                모듈까지 보기
+              </span>
+              {currentExpandLevel === 1 && (
+                <CheckIcon className="w-3 h-3 text-blue-500" />
+              )}
+            </button>
+            <button
+              onClick={() => {
+                expandToLevel(1);
+                setShowExpandMenu(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors flex items-center justify-between gap-2"
+            >
+              <span
+                style={{
+                  color: currentExpandLevel === 2 ? "#3b82f6" : "#374151",
+                }}
+              >
+                기능까지 보기
+              </span>
+              {currentExpandLevel === 2 && (
+                <CheckIcon className="w-3 h-3 text-blue-500" />
+              )}
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
-
-export { TREE_WIDTH };
-

@@ -8,6 +8,7 @@
 "use client";
 
 import { XIcon } from "@/components/common/Icons";
+import { getOSKeys } from "./useOS";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -131,6 +132,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               <ShortcutRow keys={["⌘", "Z"]} description="실행 취소 (Undo)" />
               <ShortcutRow keys={["⌘", "⇧", "Z"]} description="다시 실행 (Redo)" />
               <ShortcutRow keys={["⌘", "S"]} description="저장 (Commit)" />
+              <ShortcutRow keys={["⌘", "D"]} description="선택 항목 복제" />
               <ShortcutRow keys={["Delete"]} description="선택 항목 삭제" />
               <ShortcutRow keys={["Esc"]} description="선택 해제 / 모달 닫기" />
             </div>
@@ -217,10 +219,13 @@ function ShortcutRow({
   keys: string[];
   description: string;
 }) {
+  // OS에 맞는 키 표시로 변환
+  const displayKeys = getOSKeys(keys);
+  
   return (
     <div className="flex items-center gap-2">
       <div className="flex gap-0.5">
-        {keys.map((key, i) => (
+        {displayKeys.map((key, i) => (
           <kbd
             key={i}
             className="px-1.5 py-0.5 text-xs rounded font-mono"

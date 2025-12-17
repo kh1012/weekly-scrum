@@ -1,22 +1,32 @@
 /**
- * Draft Gantt View
+ * Draft Gantt View - Airbnb Style
  * - 메인 컨테이너
  * - 좌측 Tree + 우측 Timeline
- * - Lock, Commit, Command Palette, Help 통합
+ * - 하단 FloatingDock (보조 액션)
+ * - Toast 알림
  */
 
 "use client";
 
-import { useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useDraftStore, createRowId } from "./store";
 import { useLock } from "./useLock";
-import { DraftTreePanel, TREE_WIDTH } from "./DraftTreePanel";
+import { DraftTreePanel } from "./DraftTreePanel";
 import { DraftTimeline } from "./DraftTimeline";
 import { GanttHeader } from "./GanttHeader";
 import { CommandPalette } from "./CommandPalette";
 import { HelpModal } from "./HelpModal";
+// FloatingDock은 GanttHeader로 통합됨
+import { Toast, ToastType } from "./Toast";
 import { commitFeaturePlans } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
+import type { WorkspaceMemberOption } from "./CreatePlanModal";
+
+interface InitialAssignee {
+  userId: string;
+  role: string;
+  displayName?: string;
+}
 
 interface InitialPlan {
   id: string;
@@ -30,59 +40,118 @@ interface InitialPlan {
   startDate: string;
   endDate: string;
   domain?: string;
+  assignees?: InitialAssignee[];
 }
 
 interface DraftGanttViewProps {
   workspaceId: string;
   initialPlans?: InitialPlan[];
+  members?: WorkspaceMemberOption[];
 }
 
-export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttViewProps) {
+export function DraftGanttView({
+  workspaceId,
+  initialPlans = [],
+  members = [],
+}: DraftGanttViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showAddRowModal, setShowAddRowModal] = useState(false);
+
+  // Toast 상태
+  const [toast, setToast] = useState<{
+    isOpen: boolean;
+    type: ToastType;
+    title: string;
+    message?: string;
+  }>({ isOpen: false, type: "success", title: "" });
+
+  // 드래그 중인 기간 정보 (FloatingDock에 표시)
+  const [dragDateInfo, setDragDateInfo] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
 
   const hydrate = useDraftStore((s) => s.hydrate);
   const clearDirtyFlags = useDraftStore((s) => s.clearDirtyFlags);
   const getDirtyBars = useDraftStore((s) => s.getDirtyBars);
   const getDeletedBars = useDraftStore((s) => s.getDeletedBars);
+  const discardAllChanges = useDraftStore((s) => s.discardAllChanges);
+  const canUndo = useDraftStore((s) => s.canUndo());
+  const canRedo = useDraftStore((s) => s.canRedo());
+  const undo = useDraftStore((s) => s.undo);
+  const redo = useDraftStore((s) => s.redo);
   const bars = useDraftStore((s) => s.bars);
   const rows = useDraftStore((s) => s.rows);
   const isEditing = useDraftStore((s) => s.ui.isEditing);
   const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
 
-  const { startEditing, stopEditing, canEdit } = useLock({ workspaceId });
+  const {
+    startEditing,
+    stopEditing,
+    canEdit,
+    refreshLockState,
+    extendLockIfNeeded,
+  } = useLock({
+    workspaceId,
+  });
 
-  // 날짜 범위 (현재 기준 3개월)
-  const rangeStart = useRef(new Date());
-  const rangeEnd = useRef(new Date());
+  // 날짜 범위 설정 (기본 3개월: 전월 1일 ~ 익월 말일)
+  const [rangeMonths, setRangeMonths] = useState(3);
 
-  useEffect(() => {
+  // 범위 계산 함수
+  const calculateRange = useCallback((months: number) => {
     const today = new Date();
-    const start = new Date(today);
-    start.setMonth(start.getMonth() - 1);
-    start.setDate(1);
-    rangeStart.current = start;
+    // 전월 1일부터 시작 (1개월 전 확보)
+    const beforeMonths = Math.floor(months / 3); // 3개월이면 1개월 전, 6개월이면 2개월 전
+    const afterMonths = months - beforeMonths - 1; // 나머지는 미래
 
-    const end = new Date(today);
-    end.setMonth(end.getMonth() + 2);
-    end.setDate(0);
-    rangeEnd.current = end;
+    const start = new Date(
+      today.getFullYear(),
+      today.getMonth() - beforeMonths,
+      1,
+      0,
+      0,
+      0,
+      0
+    );
+    const end = new Date(
+      today.getFullYear(),
+      today.getMonth() + afterMonths + 1,
+      0, // 말일
+      0,
+      0,
+      0,
+      0
+    );
+    return { start, end };
   }, []);
 
-  // 초기 데이터 로드 (서버에서 받은 initialPlans 사용)
+  // 범위를 state로 관리 (리렌더링을 위해)
+  const [rangeStart, setRangeStart] = useState<Date>(
+    () => calculateRange(3).start
+  );
+  const [rangeEnd, setRangeEnd] = useState<Date>(() => calculateRange(3).end);
+
+  // rangeMonths 변경 시 범위 업데이트
+  useEffect(() => {
+    const { start, end } = calculateRange(rangeMonths);
+    setRangeStart(start);
+    setRangeEnd(end);
+  }, [rangeMonths, calculateRange]);
+
+  // 초기 데이터 로드
   useEffect(() => {
     if (initialPlans.length === 0) return;
 
-    // Plans를 Rows와 Bars로 변환
     const rowMap = new Map<string, DraftRow>();
     const loadedBars: DraftBar[] = [];
 
     for (const plan of initialPlans) {
       const rowId = createRowId(plan.project, plan.module, plan.feature);
 
-      // Row 생성 (없으면)
       if (!rowMap.has(rowId)) {
         rowMap.set(rowId, {
           rowId,
@@ -95,7 +164,6 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
         });
       }
 
-      // Bar 생성
       loadedBars.push({
         clientUid: plan.clientUid,
         rowId,
@@ -105,7 +173,11 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
         status: plan.status as PlanStatus,
         startDate: plan.startDate,
         endDate: plan.endDate,
-        assignees: [],
+        assignees: (plan.assignees || []).map((a) => ({
+          userId: a.userId,
+          role: a.role as "planner" | "designer" | "fe" | "be" | "qa",
+          displayName: a.displayName,
+        })),
         dirty: false,
         deleted: false,
         createdAtLocal: new Date().toISOString(),
@@ -116,6 +188,14 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
     hydrate(Array.from(rowMap.values()), loadedBars);
   }, [initialPlans, hydrate]);
 
+  // 토스트 표시 헬퍼
+  const showToast = useCallback(
+    (type: ToastType, title: string, message?: string) => {
+      setToast({ isOpen: true, type, title, message });
+    },
+    []
+  );
+
   // 커밋 핸들러
   const handleCommit = useCallback(async () => {
     setIsCommitting(true);
@@ -123,21 +203,21 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
     try {
       const dirtyBars = getDirtyBars();
       const deletedBars = getDeletedBars();
-
       const allBars = [...dirtyBars, ...deletedBars];
 
       if (allBars.length === 0) {
+        showToast("info", "변경사항 없음", "저장할 변경사항이 없습니다.");
         setIsCommitting(false);
         return;
       }
 
-      // Bar에서 Row 정보 추출
       const payload = {
         workspaceId,
         plans: allBars.map((bar) => {
           const row = rows.find((r) => r.rowId === bar.rowId);
           return {
             clientUid: bar.clientUid,
+            serverId: bar.serverId,
             domain: row?.domain,
             project: row?.project || "",
             module: row?.module || "",
@@ -157,29 +237,67 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
 
       if (result.success) {
         clearDirtyFlags();
-        alert(`저장 완료: ${result.upsertedCount}개 저장, ${result.deletedCount}개 삭제`);
+        // localStorage 캐시는 유지 (편집 모드 유지를 위해)
+
+        const count = (result.upsertedCount || 0) + (result.deletedCount || 0);
+        showToast("success", "저장 완료!", `${count}개 계획이 저장되었습니다.`);
+
+        // 편집 모드 유지 - 새로고침하지 않음
       } else {
-        alert(`저장 실패: ${result.error}`);
+        showToast(
+          "error",
+          "저장 실패",
+          result.error || "알 수 없는 오류가 발생했습니다."
+        );
       }
     } catch (err) {
       console.error("[handleCommit] Error:", err);
-      alert("저장 중 오류가 발생했습니다.");
+      showToast(
+        "error",
+        "저장 실패",
+        err instanceof Error ? err.message : "저장 중 오류가 발생했습니다."
+      );
     } finally {
       setIsCommitting(false);
     }
-  }, [workspaceId, getDirtyBars, getDeletedBars, rows, clearDirtyFlags]);
+  }, [
+    workspaceId,
+    getDirtyBars,
+    getDeletedBars,
+    rows,
+    clearDirtyFlags,
+    showToast,
+  ]);
+
+  // 변경사항 폐기 핸들러
+  const handleDiscardChanges = useCallback(() => {
+    discardAllChanges();
+    showToast("info", "변경사항 폐기됨", "모든 변경사항이 취소되었습니다.");
+  }, [discardAllChanges, showToast]);
+
+  // 새로고침 핸들러 (락 상태 동기화)
+  const handleRefresh = useCallback(async () => {
+    try {
+      await refreshLockState();
+      showToast("info", "상태 동기화 완료", "서버와 동기화되었습니다.");
+    } catch {
+      showToast(
+        "error",
+        "동기화 실패",
+        "서버와 동기화 중 오류가 발생했습니다."
+      );
+    }
+  }, [refreshLockState, showToast]);
 
   // 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K: Command Palette
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setShowCommandPalette(true);
         return;
       }
 
-      // Cmd/Ctrl + S: Save
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         if (isEditing && hasUnsavedChanges) {
@@ -188,41 +306,106 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
         return;
       }
 
-      // ?: Help
-      if (e.key === "?" && !e.metaKey && !e.ctrlKey) {
+      // Undo/Redo
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        if (e.shiftKey) {
+          e.preventDefault();
+          if (canRedo) redo();
+        } else {
+          e.preventDefault();
+          if (canUndo) undo();
+        }
+        return;
+      }
+
+      // 복제 (Cmd/Ctrl + D)
+      if ((e.metaKey || e.ctrlKey) && e.key === "d") {
         e.preventDefault();
-        setShowHelp(true);
+        const selectedBarId = useDraftStore.getState().ui.selectedBarId;
+        if (isEditing && selectedBarId) {
+          useDraftStore.getState().duplicateBar(selectedBarId);
+        }
         return;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing, hasUnsavedChanges, handleCommit]);
+  }, [
+    isEditing,
+    hasUnsavedChanges,
+    handleCommit,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+  ]);
 
-  // Unsaved changes 경고
+  // 페이지 이탈 시 락 해제
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isEditing) {
+        fetch("/api/release-lock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ workspaceId }),
+          keepalive: true,
+        }).catch(() => {});
+      }
+
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = "";
+        e.returnValue = "저장되지 않은 변경 사항이 있습니다.";
+        return e.returnValue;
+      }
+    };
+
+    const handlePageHide = () => {
+      if (isEditing) {
+        fetch("/api/release-lock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ workspaceId }),
+          keepalive: true,
+        }).catch(() => {});
       }
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [hasUnsavedChanges, isEditing, workspaceId]);
 
   if (isLoading) {
     return (
-      <div
-        className="flex items-center justify-center h-full"
-        style={{ background: "var(--notion-bg)" }}
-      >
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4" />
-          <p className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
-            데이터를 불러오는 중...
+      <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+        <div className="flex flex-col items-center gap-4">
+          {/* 로고 스피너 */}
+          <div className="relative">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse"
+              style={{
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                boxShadow: "0 8px 32px rgba(59, 130, 246, 0.3)",
+              }}
+            >
+              <span className="text-2xl font-bold text-white">G</span>
+            </div>
+            <div
+              className="absolute -inset-2 rounded-3xl animate-spin"
+              style={{
+                border: "2px solid transparent",
+                borderTopColor: "#3b82f6",
+                borderRightColor: "#8b5cf6",
+              }}
+            />
+          </div>
+          <p className="text-sm text-gray-500 font-medium animate-pulse">
+            계획 데이터를 불러오는 중...
           </p>
         </div>
       </div>
@@ -230,24 +413,36 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
   }
 
   return (
-    <div
-      className="flex flex-col h-full rounded-xl overflow-hidden border"
-      style={{
-        background: "var(--notion-bg)",
-        borderColor: "var(--notion-border)",
-      }}
-    >
-      {/* 헤더 */}
+    <div className="flex flex-col h-full bg-white">
+      {/* 헤더 - Airbnb 스타일 (보조 액션 포함) */}
       <GanttHeader
         workspaceId={workspaceId}
         onCommit={handleCommit}
-        onOpenHelp={() => setShowHelp(true)}
-        onOpenCommandPalette={() => setShowCommandPalette(true)}
         isCommitting={isCommitting}
+        onDiscardChanges={handleDiscardChanges}
+        // 중앙 액션 props
+        onUndo={undo}
+        onRedo={redo}
+        onRefresh={handleRefresh}
+        onOpenCommandPalette={() => setShowCommandPalette(true)}
+        onOpenHelp={() => setShowHelp(true)}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        dragInfo={dragDateInfo}
+        // 기간 범위 props
+        rangeMonths={rangeMonths}
+        onRangeMonthsChange={setRangeMonths}
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        onCustomRangeChange={(start, end) => {
+          setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
+          setRangeStart(start);
+          setRangeEnd(end);
+        }}
       />
 
-      {/* 메인 영역 */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* 메인 영역 - border 없이 꽉 차게 */}
+      <div className="flex flex-1 overflow-hidden bg-white">
         {/* 좌측 Tree */}
         <DraftTreePanel
           isEditing={isEditing}
@@ -257,13 +452,19 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
             features: [...new Set(rows.map((r) => r.feature))],
             stages: [...new Set(bars.map((b) => b.stage))],
           }}
+          showAddRowModal={showAddRowModal}
+          onShowAddRowModal={setShowAddRowModal}
         />
 
         {/* 우측 Timeline */}
         <DraftTimeline
-          rangeStart={rangeStart.current}
-          rangeEnd={rangeEnd.current}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
           isEditing={isEditing}
+          isAdmin={true}
+          members={members}
+          onDragDateChange={setDragDateInfo}
+          onAction={extendLockIfNeeded}
         />
       </div>
 
@@ -275,13 +476,22 @@ export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttVie
         onStopEditing={stopEditing}
         onCommit={handleCommit}
         onOpenHelp={() => setShowHelp(true)}
+        onAddRow={() => setShowAddRowModal(true)}
         isEditing={isEditing}
         canEdit={canEdit}
       />
 
       {/* Help Modal */}
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* Toast */}
+      <Toast
+        isOpen={toast.isOpen}
+        onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+      />
     </div>
   );
 }
-

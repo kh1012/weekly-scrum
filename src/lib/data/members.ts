@@ -69,15 +69,20 @@ export async function listWorkspaceMembers({
       });
     }
 
-    return members.map((member) => {
+    const result = members.map((member) => {
       const profile = profileMap.get(member.user_id);
+      // 빈 문자열도 null 처리
+      const displayName = profile?.display_name?.trim() || null;
+      const email = profile?.email?.trim() || null;
       return {
         user_id: member.user_id,
-        display_name: profile?.display_name || null,
-        email: profile?.email || null,
+        display_name: displayName,
+        email: email,
         role: member.role as "admin" | "leader" | "member",
       };
     });
+
+    return result;
   } catch (err) {
     console.error("[listWorkspaceMembers] Unexpected error:", err);
     return [];

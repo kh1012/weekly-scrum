@@ -27,13 +27,21 @@ const FULL_WIDTH_PAGES = [
 ];
 
 // 동적 경로 패턴 (하위 경로 모두 포함)
-const FULL_WIDTH_DYNAMIC_PATTERNS = ["/manage/snapshots/", "/admin/"];
+const FULL_WIDTH_DYNAMIC_PATTERNS = [
+  "/manage/snapshots/",
+  "/admin/",
+  "/plans/gantt",
+];
 
 // padding 없는 페이지 경로
 const NO_PADDING_PAGES = ["/calendar", "/my"];
 
 // padding 없는 동적 경로 패턴
-const NO_PADDING_DYNAMIC_PATTERNS = ["/manage/snapshots/"];
+const NO_PADDING_DYNAMIC_PATTERNS = [
+  "/manage/snapshots/",
+  "/plans/gantt",
+  "/admin/plans/gantt",
+];
 
 // localStorage 키
 const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
@@ -124,9 +132,11 @@ export function MainContent({ children }: { children: ReactNode }) {
   // GNB 높이: h-14 (3.5rem = 56px) + borderBottom 1px = 57px
   return (
     <main
-      className={`mx-auto ${useNoPadding ? "h-[calc(100vh-3.5rem-1px)] overflow-hidden" : "px-4 py-6 sm:px-6 lg:px-8"} ${
-        useFullWidth ? "max-w-full" : "max-w-6xl"
-      }`}
+      className={`mx-auto ${
+        useNoPadding
+          ? "h-[calc(100vh-3.5rem-1px)] overflow-hidden"
+          : "px-4 py-6 sm:px-6 lg:px-8"
+      } ${useFullWidth ? "max-w-full" : "max-w-6xl"}`}
     >
       {children}
     </main>

@@ -1,15 +1,15 @@
 /**
- * Create Plan Modal
- * - 드래그 생성 후 보충 데이터 입력
- * - 담당자 선택 기능 포함
+ * Edit Plan Modal
+ * - 기존 bar의 상세 정보 수정
  */
 
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { XIcon, CalendarIcon, UserIcon } from "@/components/common/Icons";
-import type { PlanStatus, DraftAssignee } from "./types";
+import { XIcon, CalendarIcon, UserIcon, TrashIcon } from "@/components/common/Icons";
+import type { PlanStatus, DraftAssignee, DraftBar } from "./types";
 import type { AssigneeRole } from "@/lib/data/plans";
+import type { WorkspaceMemberOption } from "./CreatePlanModal";
 
 const STAGES = [
   "컨셉 기획",
@@ -30,38 +30,28 @@ const ROLES: { value: AssigneeRole; label: string; color: string }[] = [
   { value: "qa", label: "QA", color: "#8b5cf6" },
 ];
 
-export interface WorkspaceMemberOption {
-  userId: string;
-  displayName: string;
-  email?: string;
-}
-
-interface CreatePlanModalProps {
+interface EditPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: {
+  onSave: (data: {
     title: string;
     stage: string;
     status: PlanStatus;
     assignees: DraftAssignee[];
   }) => void;
-  defaultValues?: {
-    project: string;
-    module: string;
-    feature: string;
-    startDate: string;
-    endDate: string;
-  };
+  onDelete: () => void;
+  bar: DraftBar | null;
   members?: WorkspaceMemberOption[];
 }
 
-export function CreatePlanModal({
+export function EditPlanModal({
   isOpen,
   onClose,
-  onCreate,
-  defaultValues,
+  onSave,
+  onDelete,
+  bar,
   members = [],
-}: CreatePlanModalProps) {
+}: EditPlanModalProps) {
   const [title, setTitle] = useState("");
   const [stage, setStage] = useState("컨셉 기획");
   const [status, setStatus] = useState<PlanStatus>("진행중");
@@ -70,16 +60,25 @@ export function CreatePlanModal({
 
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // bar가 변경될 때 초기값 설정
   useEffect(() => {
-    if (isOpen) {
-      setTitle("");
-      setStage("컨셉 기획");
-      setStatus("진행중");
-      setSelectedAssignee("");
-      setSelectedRole("planner");
+    if (isOpen && bar) {
+      setTitle(bar.title);
+      setStage(bar.stage);
+      setStatus(bar.status);
+      
+      // 첫 번째 담당자 정보
+      if (bar.assignees && bar.assignees.length > 0) {
+        setSelectedAssignee(bar.assignees[0].userId);
+        setSelectedRole(bar.assignees[0].role);
+      } else {
+        setSelectedAssignee("");
+        setSelectedRole("planner");
+      }
+      
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen]);
+  }, [isOpen, bar]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +95,7 @@ export function CreatePlanModal({
       });
     }
 
-    onCreate({
+    onSave({
       title: title.trim(),
       stage,
       status,
@@ -110,7 +109,14 @@ export function CreatePlanModal({
     }
   };
 
-  if (!isOpen) return null;
+  const handleDelete = () => {
+    const confirmed = confirm("이 계획을 삭제하시겠습니까?");
+    if (confirmed) {
+      onDelete();
+    }
+  };
+
+  if (!isOpen || !bar) return null;
 
   return (
     <div
@@ -129,8 +135,7 @@ export function CreatePlanModal({
         className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
         style={{
           background: "white",
-          boxShadow:
-            "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
         }}
       >
         {/* 헤더 - 그라디언트 배경 */}
@@ -142,53 +147,46 @@ export function CreatePlanModal({
           }}
         >
           <h2 className="text-lg font-semibold text-gray-900">
-            새 계획 만들기
+            계획 수정
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-150 active:scale-95"
-          >
-            <XIcon className="w-5 h-5 text-gray-400" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleDelete}
+              className="p-2 rounded-lg hover:bg-red-50 transition-all duration-150 active:scale-95"
+              title="삭제"
+            >
+              <TrashIcon className="w-4 h-4 text-red-500" />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-150 active:scale-95"
+            >
+              <XIcon className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
         </div>
 
-        {/* 컨텍스트 정보 배너 */}
-        {defaultValues && (
+        {/* 기간 정보 배너 */}
+        <div
+          className="px-5 py-3 flex items-center gap-2"
+          style={{
+            background: "linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)",
+            borderBottom: "1px solid rgba(59, 130, 246, 0.1)",
+          }}
+        >
           <div
-            className="px-5 py-3"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)",
-              borderBottom: "1px solid rgba(59, 130, 246, 0.1)",
-            }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)" }}
           >
-            <div className="flex items-center gap-2 text-xs text-gray-600 font-medium">
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                {defaultValues.project}
-              </span>
-              <span className="text-gray-400">›</span>
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded">
-                {defaultValues.module}
-              </span>
-              <span className="text-gray-400">›</span>
-              <span className="text-gray-700">{defaultValues.feature}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <div
-                className="w-6 h-6 rounded-md flex items-center justify-center"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                }}
-              >
-                <CalendarIcon className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">
-                {defaultValues.startDate} ~ {defaultValues.endDate}
-              </span>
+            <CalendarIcon className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 font-medium">기간</div>
+            <div className="text-sm font-semibold text-gray-800">
+              {bar.startDate} ~ {bar.endDate}
             </div>
           </div>
-        )}
+        </div>
 
         {/* 폼 */}
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
@@ -238,10 +236,9 @@ export function CreatePlanModal({
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                   style={{
-                    background:
-                      stage === s
-                        ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
-                        : "#f1f5f9",
+                    background: stage === s 
+                      ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" 
+                      : "#f1f5f9",
                   }}
                 >
                   {s}
@@ -288,27 +285,26 @@ export function CreatePlanModal({
                       onClick={() => !isDisabled && setSelectedRole(role.value)}
                       disabled={isDisabled}
                       className={`flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all duration-150 ${
-                        isDisabled
+                        isDisabled 
                           ? "opacity-40 cursor-not-allowed"
                           : isSelected
-                          ? "text-white shadow-md active:scale-95"
-                          : "hover:opacity-80 active:scale-95"
+                            ? "text-white shadow-md active:scale-95"
+                            : "hover:opacity-80 active:scale-95"
                       }`}
                       style={{
-                        background: isDisabled
-                          ? "#e5e7eb"
-                          : isSelected
-                          ? role.color
-                          : `${role.color}15`,
-                        color: isDisabled
-                          ? "#9ca3af"
-                          : isSelected
-                          ? "white"
-                          : role.color,
-                        boxShadow:
-                          isSelected && !isDisabled
-                            ? `0 0 0 2px white, 0 0 0 4px ${role.color}`
-                            : undefined,
+                        background: isDisabled 
+                          ? "#e5e7eb" 
+                          : isSelected 
+                            ? role.color 
+                            : `${role.color}15`,
+                        color: isDisabled 
+                          ? "#9ca3af" 
+                          : isSelected 
+                            ? "white" 
+                            : role.color,
+                        boxShadow: isSelected && !isDisabled
+                          ? `0 0 0 2px white, 0 0 0 4px ${role.color}`
+                          : undefined,
                       }}
                     >
                       {role.label}
@@ -317,28 +313,23 @@ export function CreatePlanModal({
                 })}
               </div>
             </div>
-
+            
             {/* 선택된 담당자 표시 */}
             {selectedAssignee && (
-              <div
+              <div 
                 className="mt-3 flex items-center gap-2 p-3 rounded-lg"
                 style={{ background: "#f8fafc" }}
               >
                 <span
                   className="px-2.5 py-1 text-xs font-bold rounded-md text-white"
                   style={{
-                    background:
-                      ROLES.find((r) => r.value === selectedRole)?.color ||
-                      "#6b7280",
+                    background: ROLES.find((r) => r.value === selectedRole)?.color || "#6b7280",
                   }}
                 >
                   {ROLES.find((r) => r.value === selectedRole)?.label}
                 </span>
                 <span className="text-sm font-medium text-gray-800">
-                  {
-                    members.find((m) => m.userId === selectedAssignee)
-                      ?.displayName
-                  }
+                  {members.find((m) => m.userId === selectedAssignee)?.displayName}
                 </span>
               </div>
             )}
@@ -362,7 +353,7 @@ export function CreatePlanModal({
                 background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
               }}
             >
-              만들기
+              저장
             </button>
           </div>
         </form>
@@ -370,3 +361,4 @@ export function CreatePlanModal({
     </div>
   );
 }
+

@@ -8,8 +8,8 @@
 import { createClient } from "@/lib/supabase/browser";
 import type { LockState } from "./types";
 
-const DEFAULT_TTL_SECONDS = 60; // 60초 TTL
-const HEARTBEAT_INTERVAL = 15000; // 15초마다 heartbeat
+const DEFAULT_TTL_SECONDS = 600; // 10분 TTL
+const HEARTBEAT_INTERVAL = 60000; // 1분마다 heartbeat
 
 /**
  * Lock 상태 조회
@@ -27,7 +27,11 @@ export async function getWorkspaceLock(workspaceId: string): Promise<LockState> 
       return { isLocked: false };
     }
 
-    if (!data || !data.locked) {
+    // RPC가 배열로 반환하는 경우 처리
+    const result = Array.isArray(data) ? data[0] : data;
+
+    // 결과가 없거나 holder_user_id가 없으면 락 없음
+    if (!result || !result.holder_user_id) {
       return { isLocked: false };
     }
 
@@ -37,10 +41,10 @@ export async function getWorkspaceLock(workspaceId: string): Promise<LockState> 
 
     return {
       isLocked: true,
-      lockedBy: data.locked_by,
-      lockedByName: data.locked_by_name || data.locked_by,
-      expiresAt: data.expires_at,
-      isMyLock: currentUserId === data.locked_by,
+      lockedBy: result.holder_user_id,
+      lockedByName: result.holder_display_name || result.holder_user_id,
+      expiresAt: result.expires_at,
+      isMyLock: currentUserId === result.holder_user_id,
     };
   } catch (err) {
     console.error("[getWorkspaceLock] Error:", err);
@@ -58,6 +62,13 @@ export async function tryAcquireLock(
   const supabase = createClient();
 
   try {
+    // 먼저 사용자 인증 상태 확인
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      console.error("[tryAcquireLock] 인증 오류:", userError);
+      return { success: false, lockState: { isLocked: false } };
+    }
+
     const { data, error } = await supabase.rpc("try_acquire_workspace_lock", {
       p_workspace_id: workspaceId,
       p_ttl_seconds: ttlSeconds,
@@ -70,13 +81,19 @@ export async function tryAcquireLock(
       return { success: false, lockState: currentState };
     }
 
-    if (data?.acquired) {
+    // RPC가 배열로 반환하는 경우 처리
+    const result = Array.isArray(data) ? data[0] : data;
+
+    // RPC는 ok: true/false를 반환함
+    if (result?.ok) {
       return {
         success: true,
         lockState: {
           isLocked: true,
           isMyLock: true,
-          expiresAt: data.expires_at,
+          lockedBy: result.holder_user_id,
+          lockedByName: result.holder_display_name,
+          expiresAt: result.expires_at,
         },
       };
     }
@@ -110,9 +127,12 @@ export async function heartbeatLock(
       return { success: false };
     }
 
+    // RPC가 배열로 반환하는 경우 처리
+    const result = Array.isArray(data) ? data[0] : data;
+
     return {
-      success: data?.success ?? false,
-      expiresAt: data?.expires_at,
+      success: result?.success ?? false,
+      expiresAt: result?.expires_at,
     };
   } catch (err) {
     console.error("[heartbeatLock] Error:", err);
@@ -136,7 +156,10 @@ export async function releaseLock(workspaceId: string): Promise<boolean> {
       return false;
     }
 
-    return data?.released ?? false;
+    // RPC가 배열로 반환하는 경우 처리
+    const result = Array.isArray(data) ? data[0] : data;
+
+    return result?.released ?? false;
   } catch (err) {
     console.error("[releaseLock] Error:", err);
     return false;
@@ -254,6 +277,15 @@ export class LockManager {
     };
 
     document.addEventListener("visibilitychange", handler);
+  }
+
+  /**
+   * 외부에서 heartbeat 시작 (페이지 새로고침 후 락 복원 시)
+   */
+  startHeartbeatExternal(): void {
+    this.isActive = true;
+    this.startHeartbeat();
+    this.setupVisibilityHandler();
   }
 
   /**

@@ -31,6 +31,8 @@ export interface DraftRow {
   domain?: string;
   orderIndex: number;
   expanded?: boolean;
+  /** 로컬에서 생성된 row (bars 없어도 표시) */
+  isLocal?: boolean;
 }
 
 /**
@@ -57,6 +59,8 @@ export interface DraftBar {
   createdAtLocal: string;
   /** 수정 시간 (로컬) */
   updatedAtLocal: string;
+  /** 사용자가 지정한 레인 (수동 배치) */
+  preferredLane?: number;
 }
 
 /**
@@ -87,6 +91,8 @@ export interface DraftUIState {
   lockState: LockState;
   lastSyncAt?: string;
   isEditing: boolean;
+  /** 펼쳐진 트리 노드 ID 목록 */
+  expandedNodes: string[];
 }
 
 /**

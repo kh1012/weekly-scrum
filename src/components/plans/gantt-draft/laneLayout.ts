@@ -2,9 +2,35 @@
  * Lane 레이아웃 계산
  * - 동일 row의 bars가 겹치면 lane 분리
  * - (startDate asc, duration desc) 정렬 후 가장 위 lane에 배치
+ * - 트리 구조 동기화 지원
  */
 
 import type { DraftBar, BarWithLane, RenderRow, DraftRow } from "./types";
+
+/** 트리 노드 타입 */
+export interface FlatTreeNode {
+  type: "project" | "module" | "feature";
+  id: string;
+  label: string;
+  depth: number;
+  row?: DraftRow;
+  bars?: BarWithLane[];
+  laneCount: number;
+  isExpanded?: boolean;
+}
+
+/** 행 높이 상수 */
+export const ROW_HEIGHT = 48;
+export const LANE_HEIGHT = 48;
+
+/**
+ * 날짜 문자열을 로컬 Date로 파싱 (시간대 문제 방지)
+ * "2025-11-04" 형식을 로컬 시간으로 파싱
+ */
+export function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
 
 /**
  * 두 기간이 겹치는지 확인
@@ -29,13 +55,26 @@ function getDuration(start: string, end: string): number {
 
 /**
  * bars를 lane에 배치
+ * - preferredLane이 있으면 우선 사용 (겹치지 않으면)
  * - 가장 위(lane=0)부터 시도, 겹치면 다음 lane
  */
 export function assignLanesToBars(bars: DraftBar[]): BarWithLane[] {
   if (bars.length === 0) return [];
 
-  // (startDate asc, duration desc) 정렬
+  // preferredLane이 있는 bars 먼저 처리, 그 다음 시작일 순
   const sorted = [...bars].sort((a, b) => {
+    // preferredLane이 있는 것 우선
+    const aHasPreferred = a.preferredLane !== undefined;
+    const bHasPreferred = b.preferredLane !== undefined;
+    if (aHasPreferred && !bHasPreferred) return -1;
+    if (!aHasPreferred && bHasPreferred) return 1;
+
+    // preferredLane 순서
+    if (aHasPreferred && bHasPreferred) {
+      return (a.preferredLane || 0) - (b.preferredLane || 0);
+    }
+
+    // 시작일 순
     const startCompare = a.startDate.localeCompare(b.startDate);
     if (startCompare !== 0) return startCompare;
 
@@ -46,20 +85,33 @@ export function assignLanesToBars(bars: DraftBar[]): BarWithLane[] {
   });
 
   const result: BarWithLane[] = [];
-  const lanes: Array<{ end: string }[]> = []; // lanes[laneIdx] = [{end: 'YYYY-MM-DD'}]
+  const lanes: Array<{ end: string; start: string }[]> = []; // lanes[laneIdx] = [{start, end}]
 
   for (const bar of sorted) {
     let assignedLane = -1;
 
-    // 배치 가능한 가장 위 lane 찾기
-    for (let lane = 0; lane < lanes.length; lane++) {
-      const laneOccupants = lanes[lane];
-      const canFit = laneOccupants.every(
-        (occupant) => !isOverlapping(bar.startDate, bar.endDate, bar.startDate, occupant.end)
-      );
+    // preferredLane이 있으면 해당 레인에 배치 시도
+    if (bar.preferredLane !== undefined) {
+      const preferredLane = bar.preferredLane;
+      
+      // 필요한 레인 수만큼 확장
+      while (lanes.length <= preferredLane) {
+        lanes.push([]);
+      }
 
-      if (canFit) {
-        // 더 정확한 겹침 검사
+      // 해당 레인에 겹치는 bar가 있는지 확인
+      const hasOverlap = result
+        .filter((r) => r.lane === preferredLane)
+        .some((r) => isOverlapping(bar.startDate, bar.endDate, r.startDate, r.endDate));
+
+      if (!hasOverlap) {
+        assignedLane = preferredLane;
+      }
+    }
+
+    // preferredLane에 배치 못했으면 빈 레인 찾기
+    if (assignedLane === -1) {
+      for (let lane = 0; lane < lanes.length; lane++) {
         const hasOverlap = result
           .filter((r) => r.lane === lane)
           .some((r) => isOverlapping(bar.startDate, bar.endDate, r.startDate, r.endDate));
@@ -77,7 +129,7 @@ export function assignLanesToBars(bars: DraftBar[]): BarWithLane[] {
       lanes.push([]);
     }
 
-    lanes[assignedLane].push({ end: bar.endDate });
+    lanes[assignedLane].push({ start: bar.startDate, end: bar.endDate });
     result.push({ ...bar, lane: assignedLane });
   }
 
@@ -119,6 +171,118 @@ export function buildRenderRows(
 }
 
 /**
+ * 트리 구조를 플랫 리스트로 변환 (좌우 동기화용)
+ * - expandedNodes: 펼쳐진 노드 ID Set
+ */
+export function buildFlatTree(
+  rows: DraftRow[],
+  bars: DraftBar[],
+  expandedNodes: Set<string>
+): FlatTreeNode[] {
+  // rowId별 bars 그룹핑
+  const barsByRow = new Map<string, DraftBar[]>();
+  for (const bar of bars) {
+    if (bar.deleted) continue;
+    const existing = barsByRow.get(bar.rowId) || [];
+    existing.push(bar);
+    barsByRow.set(bar.rowId, existing);
+  }
+
+  // 프로젝트 > 모듈 > 기능 트리 구성
+  const projectMap = new Map<string, Map<string, DraftRow[]>>();
+  for (const row of rows) {
+    if (!projectMap.has(row.project)) {
+      projectMap.set(row.project, new Map());
+    }
+    const moduleMap = projectMap.get(row.project)!;
+    if (!moduleMap.has(row.module)) {
+      moduleMap.set(row.module, []);
+    }
+    moduleMap.get(row.module)!.push(row);
+  }
+
+  const result: FlatTreeNode[] = [];
+
+  for (const [project, moduleMap] of projectMap) {
+    const projectId = project;
+    const isProjectExpanded = expandedNodes.has(projectId);
+
+    // 프로젝트 노드
+    result.push({
+      type: "project",
+      id: projectId,
+      label: project,
+      depth: 0,
+      laneCount: 1,
+      isExpanded: isProjectExpanded,
+    });
+
+    if (!isProjectExpanded) continue;
+
+    for (const [module, features] of moduleMap) {
+      const moduleId = `${project}::${module}`;
+      const isModuleExpanded = expandedNodes.has(moduleId);
+
+      // 모듈 노드
+      result.push({
+        type: "module",
+        id: moduleId,
+        label: module,
+        depth: 1,
+        laneCount: 1,
+        isExpanded: isModuleExpanded,
+      });
+
+      if (!isModuleExpanded) continue;
+
+      for (const row of features) {
+        const rowBars = barsByRow.get(row.rowId) || [];
+        const barsWithLane = assignLanesToBars(rowBars);
+        const laneCount = barsWithLane.length > 0
+          ? Math.max(...barsWithLane.map((b) => b.lane)) + 1
+          : 1;
+
+        // 기능 노드
+        result.push({
+          type: "feature",
+          id: row.rowId,
+          label: row.feature,
+          depth: 2,
+          row,
+          bars: barsWithLane,
+          laneCount,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * FlatTreeNode 리스트에서 각 노드의 Y 위치 계산
+ */
+export function calculateNodePositions(
+  nodes: FlatTreeNode[]
+): Array<{ node: FlatTreeNode; top: number; height: number }> {
+  const result: Array<{ node: FlatTreeNode; top: number; height: number }> = [];
+  let currentTop = 0;
+
+  for (const node of nodes) {
+    // feature 노드는 laneCount에 따라 높이 결정
+    // project/module 노드는 고정 높이
+    const height = node.type === "feature"
+      ? Math.max(1, node.laneCount) * LANE_HEIGHT
+      : ROW_HEIGHT;
+
+    result.push({ node, top: currentTop, height });
+    currentTop += height;
+  }
+
+  return result;
+}
+
+/**
  * 날짜 범위 내에 있는지 확인
  */
 export function isBarInRange(
@@ -126,8 +290,8 @@ export function isBarInRange(
   rangeStart: Date,
   rangeEnd: Date
 ): boolean {
-  const barStart = new Date(bar.startDate);
-  const barEnd = new Date(bar.endDate);
+  const barStart = parseLocalDate(bar.startDate);
+  const barEnd = parseLocalDate(bar.endDate);
   
   // bar가 range와 겹치는지 확인
   return barStart <= rangeEnd && barEnd >= rangeStart;
@@ -141,15 +305,22 @@ export function calculateBarPosition(
   rangeStart: Date,
   dayWidth: number
 ): { left: number; width: number } {
-  const barStart = new Date(bar.startDate);
-  const barEnd = new Date(bar.endDate);
+  const barStart = parseLocalDate(bar.startDate);
+  const barEnd = parseLocalDate(bar.endDate);
+
+  // rangeStart도 자정으로 정규화하여 비교
+  const rangeStartMidnight = new Date(
+    rangeStart.getFullYear(),
+    rangeStart.getMonth(),
+    rangeStart.getDate()
+  );
 
   // rangeStart 기준 offset (일 단위)
-  const startOffset = Math.floor(
-    (barStart.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
+  const startOffset = Math.round(
+    (barStart.getTime() - rangeStartMidnight.getTime()) / (1000 * 60 * 60 * 24)
   );
-  const endOffset = Math.floor(
-    (barEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
+  const endOffset = Math.round(
+    (barEnd.getTime() - rangeStartMidnight.getTime()) / (1000 * 60 * 60 * 24)
   );
 
   const left = startOffset * dayWidth;
@@ -193,8 +364,8 @@ export function calculateMovedDates(
 ): { startDate: string; endDate: string } {
   const daysDelta = Math.round(deltaX / dayWidth);
 
-  const originalStart = new Date(bar.startDate);
-  const originalEnd = new Date(bar.endDate);
+  const originalStart = parseLocalDate(bar.startDate);
+  const originalEnd = parseLocalDate(bar.endDate);
 
   const newStart = new Date(originalStart);
   newStart.setDate(newStart.getDate() + daysDelta);
@@ -220,8 +391,8 @@ export function calculateResizedDates(
 ): { startDate: string; endDate: string } {
   const daysDelta = Math.round(deltaX / dayWidth);
 
-  const originalStart = new Date(bar.startDate);
-  const originalEnd = new Date(bar.endDate);
+  const originalStart = parseLocalDate(bar.startDate);
+  const originalEnd = parseLocalDate(bar.endDate);
 
   let newStart = new Date(originalStart);
   let newEnd = new Date(originalEnd);
@@ -246,5 +417,56 @@ export function calculateResizedDates(
     startDate: formatDate(newStart),
     endDate: formatDate(newEnd),
   };
+}
+
+/**
+ * 프로젝트/모듈 노드의 하위 feature들의 bars에서 전체 기간 범위 계산
+ * - flatNodes 기반이 아닌 전체 rows/bars 기반으로 계산 (접힌 노드도 포함)
+ * @param node 프로젝트 또는 모듈 노드
+ * @param allRows 전체 rows
+ * @param allBars 전체 bars (삭제되지 않은 것만)
+ * @returns { minStart, maxEnd } 또는 null (bars가 없는 경우)
+ */
+export function getNodeDateRange(
+  node: FlatTreeNode,
+  allRows: DraftRow[],
+  allBars: DraftBar[]
+): { minStart: string; maxEnd: string } | null {
+  // 프로젝트/모듈에 해당하는 rowIds 찾기
+  const matchingRowIds: string[] = [];
+
+  for (const row of allRows) {
+    if (node.type === "project" && row.project === node.label) {
+      matchingRowIds.push(row.rowId);
+    } else if (node.type === "module") {
+      // 모듈 ID 형식: "프로젝트::모듈"
+      const [project, module] = node.id.split("::");
+      if (row.project === project && row.module === module) {
+        matchingRowIds.push(row.rowId);
+      }
+    }
+  }
+
+  if (matchingRowIds.length === 0) return null;
+
+  // 해당 rows의 bars에서 범위 추출
+  let minStart: string | null = null;
+  let maxEnd: string | null = null;
+
+  for (const bar of allBars) {
+    if (!matchingRowIds.includes(bar.rowId)) continue;
+    if (bar.deleted) continue;
+
+    if (!minStart || bar.startDate < minStart) {
+      minStart = bar.startDate;
+    }
+    if (!maxEnd || bar.endDate > maxEnd) {
+      maxEnd = bar.endDate;
+    }
+  }
+
+  if (!minStart || !maxEnd) return null;
+
+  return { minStart, maxEnd };
 }
 

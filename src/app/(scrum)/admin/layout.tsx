@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
 import { AccessDenied } from "@/components/weekly-scrum/common";
 
