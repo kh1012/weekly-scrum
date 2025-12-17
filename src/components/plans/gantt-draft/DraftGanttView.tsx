@@ -15,15 +15,30 @@ import { DraftTimeline } from "./DraftTimeline";
 import { GanttHeader } from "./GanttHeader";
 import { CommandPalette } from "./CommandPalette";
 import { HelpModal } from "./HelpModal";
-import { commitFeaturePlans, fetchFeaturePlans } from "./commitService";
+import { commitFeaturePlans } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
+
+interface InitialPlan {
+  id: string;
+  clientUid: string;
+  project: string;
+  module: string;
+  feature: string;
+  title: string;
+  stage: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  domain?: string;
+}
 
 interface DraftGanttViewProps {
   workspaceId: string;
+  initialPlans?: InitialPlan[];
 }
 
-export function DraftGanttView({ workspaceId }: DraftGanttViewProps) {
-  const [isLoading, setIsLoading] = useState(true);
+export function DraftGanttView({ workspaceId, initialPlans = [] }: DraftGanttViewProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -56,60 +71,50 @@ export function DraftGanttView({ workspaceId }: DraftGanttViewProps) {
     rangeEnd.current = end;
   }, []);
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 (서버에서 받은 initialPlans 사용)
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
+    if (initialPlans.length === 0) return;
 
-      const result = await fetchFeaturePlans(workspaceId);
+    // Plans를 Rows와 Bars로 변환
+    const rowMap = new Map<string, DraftRow>();
+    const loadedBars: DraftBar[] = [];
 
-      if (result.success && result.plans) {
-        // Plans를 Rows와 Bars로 변환
-        const rowMap = new Map<string, DraftRow>();
-        const loadedBars: DraftBar[] = [];
+    for (const plan of initialPlans) {
+      const rowId = createRowId(plan.project, plan.module, plan.feature);
 
-        for (const plan of result.plans) {
-          const rowId = createRowId(plan.project, plan.module, plan.feature);
-
-          // Row 생성 (없으면)
-          if (!rowMap.has(rowId)) {
-            rowMap.set(rowId, {
-              rowId,
-              project: plan.project,
-              module: plan.module,
-              feature: plan.feature,
-              domain: plan.domain,
-              orderIndex: rowMap.size,
-              expanded: true,
-            });
-          }
-
-          // Bar 생성
-          loadedBars.push({
-            clientUid: plan.clientUid,
-            rowId,
-            serverId: plan.id,
-            title: plan.title,
-            stage: plan.stage,
-            status: plan.status as PlanStatus,
-            startDate: plan.startDate,
-            endDate: plan.endDate,
-            assignees: [],
-            dirty: false,
-            deleted: false,
-            createdAtLocal: new Date().toISOString(),
-            updatedAtLocal: new Date().toISOString(),
-          });
-        }
-
-        hydrate(Array.from(rowMap.values()), loadedBars);
+      // Row 생성 (없으면)
+      if (!rowMap.has(rowId)) {
+        rowMap.set(rowId, {
+          rowId,
+          project: plan.project,
+          module: plan.module,
+          feature: plan.feature,
+          domain: plan.domain,
+          orderIndex: rowMap.size,
+          expanded: true,
+        });
       }
 
-      setIsLoading(false);
-    };
+      // Bar 생성
+      loadedBars.push({
+        clientUid: plan.clientUid,
+        rowId,
+        serverId: plan.id,
+        title: plan.title,
+        stage: plan.stage,
+        status: plan.status as PlanStatus,
+        startDate: plan.startDate,
+        endDate: plan.endDate,
+        assignees: [],
+        dirty: false,
+        deleted: false,
+        createdAtLocal: new Date().toISOString(),
+        updatedAtLocal: new Date().toISOString(),
+      });
+    }
 
-    loadData();
-  }, [workspaceId, hydrate]);
+    hydrate(Array.from(rowMap.values()), loadedBars);
+  }, [initialPlans, hydrate]);
 
   // 커밋 핸들러
   const handleCommit = useCallback(async () => {
