@@ -626,7 +626,7 @@ export function CommandPalette({
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
                         isSelected
                           ? "bg-blue-500/10"
-                          : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                          : "hover:bg-blue-500/10"
                       } ${isLoading ? "cursor-wait opacity-70" : ""}`}
                       style={{ color: "var(--notion-text)" }}
                       onClick={() => executeCommand(cmd)}

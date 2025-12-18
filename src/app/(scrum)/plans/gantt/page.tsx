@@ -1,26 +1,16 @@
-/**
- * /plans/gantt - Draft-first Gantt View
- * Feature 타입 Plan 편집용
- */
-
-export const dynamic = "force-dynamic";
-
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import { fetchFeaturePlans } from "@/components/plans/gantt-draft/commitService";
-import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
 import { listWorkspaceMembers } from "@/lib/data/members";
-import { redirect } from "next/navigation";
 
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 
-export default async function PlansGanttPage() {
-  // 권한 확인
-  const hasAccess = await isAdminOrLeader();
-
-  if (!hasAccess) {
-    redirect("/plans");
-  }
-
+/**
+ * Plans 목록 페이지 (Read-only Gantt View)
+ * - 모든 로그인 사용자 접근 가능
+ * - 조회만 가능, 생성/수정/삭제 불가
+ * - All Plans와 동일한 UI, 읽기 전용 모드
+ */
+export default async function PlansPage() {
   // 초기 데이터 조회 (병렬)
   const [result, workspaceMembers] = await Promise.all([
     fetchFeaturePlans(DEFAULT_WORKSPACE_ID),
@@ -41,6 +31,8 @@ export default async function PlansGanttPage() {
       workspaceId={DEFAULT_WORKSPACE_ID}
       initialPlans={initialPlans}
       members={members}
+      readOnly={true}
+      title="계획"
     />
   );
 }
