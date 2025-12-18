@@ -123,23 +123,62 @@ export function FlagDocPanel({
     // 각 Epic에 대해 Spec Ready / Design Ready 계산
     const result: ReleaseDocRow[] = [];
 
-    for (const [, group] of epicGroups) {
-      // Spec Ready: stage === '상세 기획' 이고 완료된 계획
-      const specPlan = group.bars.find(
-        (b) => b.stage === "상세 기획" && b.status === "완료"
-      );
+    // 기획 관련 stage 목록 (우선순위 순)
+    const specStages = ["상세 기획", "기획", "요구사항", "분석"];
+    // 디자인 관련 stage 목록 (우선순위 순)
+    const designStages = ["UI 디자인", "디자인", "UX", "UI"];
 
-      // Design Ready: stage === 'UI 디자인' 이고 완료된 계획
-      const designPlan = group.bars.find(
-        (b) => b.stage === "UI 디자인" && b.status === "완료"
-      );
+    for (const [, group] of epicGroups) {
+      // Spec Ready 계산
+      let specReady: string = "-";
+      // 1. '상세 기획' stage 찾기 (완료/미완료 모두)
+      let specPlan = group.bars.find((b) => b.stage === "상세 기획");
+      // 2. 없으면 다른 기획 관련 stage 찾기
+      if (!specPlan) {
+        for (const stage of specStages) {
+          specPlan = group.bars.find((b) => 
+            b.stage?.toLowerCase().includes(stage.toLowerCase())
+          );
+          if (specPlan) break;
+        }
+      }
+      if (specPlan) {
+        // 완료 상태이고 종료일이 Flag 시작일 이전이면 'READY'
+        if (specPlan.status === "완료" && specPlan.endDate < flag.startDate) {
+          specReady = "READY";
+        } else {
+          specReady = specPlan.endDate;
+        }
+      }
+
+      // Design Ready 계산
+      let designReady: string = "-";
+      // 1. 'UI 디자인' stage 찾기 (완료/미완료 모두)
+      let designPlan = group.bars.find((b) => b.stage === "UI 디자인");
+      // 2. 없으면 다른 디자인 관련 stage 찾기
+      if (!designPlan) {
+        for (const stage of designStages) {
+          designPlan = group.bars.find((b) => 
+            b.stage?.toLowerCase().includes(stage.toLowerCase())
+          );
+          if (designPlan) break;
+        }
+      }
+      if (designPlan) {
+        // 완료 상태이고 종료일이 Flag 시작일 이전이면 'READY'
+        if (designPlan.status === "완료" && designPlan.endDate < flag.startDate) {
+          designReady = "READY";
+        } else {
+          designReady = designPlan.endDate;
+        }
+      }
 
       result.push({
         planId: group.bars[0]?.clientUid ?? "",
         epic: group.epic,
         planner: group.planner,
-        specReady: specPlan?.endDate ?? "-",
-        designReady: designPlan?.endDate ?? "-",
+        specReady,
+        designReady,
       });
     }
 
