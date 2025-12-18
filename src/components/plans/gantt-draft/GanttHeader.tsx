@@ -21,7 +21,6 @@ import {
   LoadingIcon,
   UndoIcon,
   RedoIcon,
-  RefreshIcon,
   HelpIcon,
   CalendarIcon,
   ChevronDownIcon,
@@ -36,7 +35,6 @@ interface GanttHeaderProps {
   // 중앙 액션 관련
   onUndo?: () => void;
   onRedo?: () => void;
-  onRefresh?: () => void;
   onOpenCommandPalette?: () => void;
   onOpenHelp?: () => void;
   canUndo?: boolean;
@@ -65,7 +63,6 @@ export function GanttHeader({
   onDiscardChanges,
   onUndo,
   onRedo,
-  onRefresh,
   onOpenCommandPalette,
   onOpenHelp,
   canUndo = false,
@@ -248,15 +245,22 @@ export function GanttHeader({
                   <span>{lockState.lockedByName || "다른 사용자"} 작업 중</span>
                 </div>
               )}
-              {/* 새로고침 버튼 - 내가 편집 중일 때만 */}
+              {/* 연장하기 버튼 - 내가 편집 중일 때만 */}
               {isMyLock && isEditing && (
                 <button
-                  onClick={onRefresh}
-                  className="p-1.5 rounded-lg transition-all hover:bg-gray-100 flex-shrink-0"
-                  title="락 상태 새로고침"
-                  style={{ color: "#059669" }}
+                  onClick={() => {
+                    recordActivity();
+                    extendLockIfNeeded();
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all hover:bg-emerald-50 active:scale-95 flex-shrink-0"
+                  title="비활성 시간 초기화 및 락 연장"
+                  style={{ 
+                    color: "#059669",
+                    background: "rgba(16, 185, 129, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                  }}
                 >
-                  <RefreshIcon className="w-3.5 h-3.5" />
+                  연장
                 </button>
               )}
             </div>

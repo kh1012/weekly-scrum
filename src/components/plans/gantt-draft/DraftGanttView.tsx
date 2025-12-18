@@ -97,7 +97,6 @@ export function DraftGanttView({
     startEditing,
     stopEditing,
     canEdit,
-    refreshLockState,
     extendLockIfNeeded,
     recordActivity,
   } = useLock({
@@ -450,20 +449,6 @@ export function DraftGanttView({
     discardAllChanges();
   }, [discardAllChanges]);
 
-  // 새로고침 핸들러 (락 상태 동기화)
-  const handleRefresh = useCallback(async () => {
-    try {
-      await refreshLockState();
-      showToast("info", "상태 동기화 완료", "서버와 동기화되었습니다.");
-    } catch {
-      showToast(
-        "error",
-        "동기화 실패",
-        "서버와 동기화 중 오류가 발생했습니다."
-      );
-    }
-  }, [refreshLockState]);
-
   // 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -598,7 +583,6 @@ export function DraftGanttView({
         // 중앙 액션 props
         onUndo={undo}
         onRedo={redo}
-        onRefresh={handleRefresh}
         onOpenCommandPalette={() => setShowCommandPalette(true)}
         onOpenHelp={() => setShowHelp(true)}
         canUndo={canUndo}
