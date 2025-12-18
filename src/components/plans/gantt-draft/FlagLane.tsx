@@ -283,7 +283,6 @@ export function FlagLane({
         width: totalWidth,
         background:
           "linear-gradient(180deg, rgba(248, 249, 250, 0.8) 0%, rgba(243, 244, 246, 0.6) 100%)",
-        borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
         cursor: isEditing ? "crosshair" : "default",
       }}
       onClick={handleClick}
@@ -292,6 +291,11 @@ export function FlagLane({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
     >
+      {/* 하단 border - 별도 div로 처리하여 트리 패널과 높이 일치 */}
+      <div
+        className="absolute left-0 right-0 bottom-0 pointer-events-none"
+        style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
+      />
       {/* Flag bars */}
       {items.map((item) => {
         const flag = flags.find((f) => f.clientId === item.flagId);

@@ -1335,14 +1335,13 @@ export function DraftTreePanel({
       {/* Flags 섹션 - Timeline FlagLane과 동기화 */}
       <div
         ref={flagsSectionRef}
-        className="flex-shrink-0 flex items-center justify-between cursor-pointer hover:bg-red-50/50 transition-colors"
+        className="flex-shrink-0 flex items-center justify-between cursor-pointer hover:bg-red-50/50 transition-colors relative"
         style={{
           height: flagLaneHeight,
           paddingLeft: 8,
           paddingRight: 8,
           background:
             "linear-gradient(90deg, rgba(254, 242, 242, 0.5) 0%, rgba(254, 226, 226, 0.3) 100%)",
-          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
         }}
         onClick={() => {
           if (showFlagsPopover) {
@@ -1396,6 +1395,11 @@ export function DraftTreePanel({
             </span>
           ) : null;
         })()}
+        {/* 하단 border - 별도 div로 처리하여 타임라인과 높이 일치 */}
+        <div
+          className="absolute left-0 right-0 bottom-0"
+          style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
+        />
       </div>
 
       {/* Flags 팝오버 */}
