@@ -68,6 +68,17 @@ export function DraftGanttView({
   const [showHelp, setShowHelp] = useState(false);
   const [showAddRowModal, setShowAddRowModal] = useState(false);
 
+  // 모바일 감지 (768px 이하)
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileTree, setShowMobileTree] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // 저장 진행 상태 모달
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveSteps, setSaveSteps] = useState<SaveStep[]>([]);
@@ -662,22 +673,102 @@ export function DraftGanttView({
       />
 
       {/* 메인 영역 - border 없이 꽉 차게 */}
-      <div className="flex flex-1 overflow-hidden bg-white">
-        {/* 좌측 Tree */}
-        <DraftTreePanel
-          isEditing={isEditing}
-          filterOptions={{
-            projects: [...new Set(rows.map((r) => r.project))],
-            modules: [...new Set(rows.map((r) => r.module))],
-            features: [...new Set(rows.map((r) => r.feature))],
-            stages: [...new Set(bars.map((b) => b.stage))],
-          }}
-          showAddRowModal={showAddRowModal}
-          onShowAddRowModal={setShowAddRowModal}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          workspaceId={workspaceId}
-        />
+      <div className="flex flex-1 overflow-hidden bg-white relative">
+        {/* 모바일: 트리 패널 토글 버튼 */}
+        {isMobile && (
+          <button
+            onClick={() => setShowMobileTree(true)}
+            className="fixed bottom-20 left-4 z-50 flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-200 active:scale-95"
+            style={{
+              background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+              boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
+            }}
+          >
+            <svg
+              className="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h7"
+              />
+            </svg>
+          </button>
+        )}
+
+        {/* 모바일: 트리 패널 슬라이드 오버 */}
+        {isMobile && showMobileTree && (
+          <>
+            {/* 배경 오버레이 */}
+            <div
+              className="fixed inset-0 bg-black/40 z-[60] transition-opacity"
+              onClick={() => setShowMobileTree(false)}
+            />
+            {/* 슬라이드 패널 */}
+            <div
+              className="fixed inset-y-0 left-0 w-[85%] max-w-sm z-[70] bg-white shadow-2xl transform transition-transform duration-300"
+              style={{
+                boxShadow: "4px 0 24px rgba(0, 0, 0, 0.15)",
+              }}
+            >
+              {/* 닫기 버튼 */}
+              <button
+                onClick={() => setShowMobileTree(false)}
+                className="absolute top-3 right-3 p-2 rounded-lg hover:bg-gray-100 transition-colors z-10"
+              >
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+              <DraftTreePanel
+                isEditing={isEditing}
+                filterOptions={{
+                  projects: [...new Set(rows.map((r) => r.project))],
+                  modules: [...new Set(rows.map((r) => r.module))],
+                  features: [...new Set(rows.map((r) => r.feature))],
+                  stages: [...new Set(bars.map((b) => b.stage))],
+                }}
+                showAddRowModal={showAddRowModal}
+                onShowAddRowModal={setShowAddRowModal}
+                rangeStart={rangeStart}
+                rangeEnd={rangeEnd}
+                workspaceId={workspaceId}
+              />
+            </div>
+          </>
+        )}
+
+        {/* PC: 좌측 Tree (기존) */}
+        {!isMobile && (
+          <DraftTreePanel
+            isEditing={isEditing}
+            filterOptions={{
+              projects: [...new Set(rows.map((r) => r.project))],
+              modules: [...new Set(rows.map((r) => r.module))],
+              features: [...new Set(rows.map((r) => r.feature))],
+              stages: [...new Set(bars.map((b) => b.stage))],
+            }}
+            showAddRowModal={showAddRowModal}
+            onShowAddRowModal={setShowAddRowModal}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            workspaceId={workspaceId}
+          />
+        )}
 
         {/* 우측 Timeline */}
         <DraftTimeline

@@ -22,6 +22,7 @@ interface NavItem {
   description?: string;
   disabled?: boolean;
   isNew?: boolean; // New 태그 표시
+  mobileSupported?: boolean; // 모바일 지원 여부 (기본: true)
 }
 
 // Font Awesome 스타일 아이콘 컴포넌트들
@@ -109,6 +110,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/calendar",
         emoji: "🔄",
         icon: Icons.arrowsRotate,
+        mobileSupported: false,
       },
       {
         key: "plans",
@@ -161,6 +163,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "🏠",
         icon: Icons.house,
         isNew: true,
+        mobileSupported: false,
       },
       {
         key: "admin-plans",
@@ -170,6 +173,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         icon: Icons.calendarDays,
         description: "일정 계획 관리",
         isNew: true,
+        mobileSupported: false,
       },
       {
         key: "admin-snapshots",
@@ -179,6 +183,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         icon: Icons.listCheck,
         description: "Coming Soon",
         disabled: true,
+        mobileSupported: false,
       },
     ],
   },
@@ -243,6 +248,15 @@ export function SideNavigation({
 }: SideNavigationProps) {
   const isActive = useIsActive();
   const { count, isLoading } = useVisitorCount();
+
+  // 모바일 감지 (768px 이하)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // role에 따른 메뉴 구성
   const navCategories = getNavCategories(role);
@@ -424,13 +438,26 @@ export function SideNavigation({
                       ? "rgba(247, 109, 87, 0.1)"
                       : "rgba(59, 130, 246, 0.1)";
 
-                    // disabled 상태 처리
-                    if (item.disabled) {
+                    // 모바일에서 지원하지 않는 페이지 처리
+                    const isMobileUnsupported =
+                      isMobile && item.mobileSupported === false;
+
+                    // disabled 상태 처리 (기본 disabled 또는 모바일 미지원)
+                    if (item.disabled || isMobileUnsupported) {
+                      const tagText = item.disabled ? "Coming Soon" : "PC Only";
+                      const tagStyle = item.disabled
+                        ? "bg-gray-200 text-gray-500"
+                        : "bg-slate-600 text-white";
+
                       return (
                         <div
                           key={item.key}
                           className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-not-allowed opacity-50"
-                          title={item.description || "Coming Soon"}
+                          title={
+                            item.disabled
+                              ? item.description || "Coming Soon"
+                              : "PC에서만 사용 가능합니다"
+                          }
                         >
                           <span
                             className="w-7 h-7 flex items-center justify-center rounded-lg"
@@ -449,8 +476,10 @@ export function SideNavigation({
                               >
                                 {item.label}
                               </span>
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-500">
-                                Coming Soon
+                              <span
+                                className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${tagStyle}`}
+                              >
+                                {tagText}
                               </span>
                             </div>
                           </div>
