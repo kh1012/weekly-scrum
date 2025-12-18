@@ -252,12 +252,12 @@ export function GanttHeader({
                     recordActivity();
                     extendLockIfNeeded();
                   }}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all hover:bg-emerald-50 active:scale-95 flex-shrink-0"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-emerald-50 active:scale-95 flex-shrink-0"
                   title="비활성 시간 초기화 및 락 연장"
                   style={{ 
                     color: "#059669",
-                    background: "rgba(16, 185, 129, 0.08)",
-                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                    background: "rgba(16, 185, 129, 0.1)",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
                   }}
                 >
                   연장
