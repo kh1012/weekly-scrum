@@ -1034,14 +1034,12 @@ export function DraftTreePanel({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, node)}
         onDragEnd={handleDragEnd}
-        className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 ${
+        className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 px-3 ${
           isSelected ? "" : "hover:translate-x-0.5"
         } ${isDragging ? "opacity-50" : ""}`}
         style={{
           top,
           height,
-          paddingLeft: 8,
-          paddingRight: 8,
           background: isSelected
             ? "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)"
             : bgStyle,
@@ -1344,11 +1342,9 @@ export function DraftTreePanel({
       {/* Flags 섹션 - Timeline FlagLane과 동기화 */}
       <div
         ref={flagsSectionRef}
-        className="flex-shrink-0 flex items-center justify-between cursor-pointer hover:bg-red-50/50 transition-colors relative"
+        className="flex-shrink-0 flex items-center justify-between cursor-pointer hover:bg-red-50/50 transition-colors relative px-3"
         style={{
           height: flagLaneHeight,
-          paddingLeft: 8,
-          paddingRight: 8,
           background:
             "linear-gradient(90deg, rgba(254, 242, 242, 0.5) 0%, rgba(254, 226, 226, 0.3) 100%)",
         }}
