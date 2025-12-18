@@ -95,7 +95,7 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[1000] flex items-center justify-center"
       onKeyDown={handleKeyDown}
     >
       {/* Backdrop */}
@@ -192,6 +192,7 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
                   background: "white",
                   border: "1px solid rgba(0, 0, 0, 0.1)",
                   boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                  colorScheme: "light",
                 }}
                 required
               />
@@ -209,6 +210,7 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
                   background: "white",
                   border: "1px solid rgba(0, 0, 0, 0.1)",
                   boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                  colorScheme: "light",
                 }}
                 required
               />
