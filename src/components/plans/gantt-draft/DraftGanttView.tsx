@@ -218,6 +218,86 @@ export function DraftGanttView({
     []
   );
 
+  // CommandPalette 콜백들을 useCallback으로 메모이제이션
+  const handleStartEditing = useCallback(async () => {
+    const success = await startEditing();
+    if (success) {
+      showToast(
+        "success",
+        "편집 모드 시작",
+        "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
+      );
+    } else {
+      const currentLockState = useDraftStore.getState().ui.lockState;
+      if (currentLockState?.isLocked && !currentLockState?.isMyLock) {
+        showToast(
+          "warning",
+          "편집할 수 없음",
+          `현재 ${
+            currentLockState.lockedByName || "다른 사용자"
+          }님이 작업 중입니다.`
+        );
+      } else {
+        showToast(
+          "error",
+          "작업을 시작할 수 없습니다",
+          "네트워크 상태를 확인하고 다시 시도해주세요."
+        );
+      }
+    }
+    return success;
+  }, [startEditing, showToast]);
+
+  const handleStopEditing = useCallback(async () => {
+    // 현재 변경사항 개수 계산
+    const dirtyBars = getDirtyBars();
+    const deletedBars = getDeletedBars();
+    const dirtyFlags = getDirtyFlags();
+    const deletedFlags = getDeletedFlags();
+    const countToDiscard =
+      dirtyBars.length +
+      deletedBars.length +
+      dirtyFlags.length +
+      deletedFlags.length;
+
+    // 변경사항 폐기
+    discardAllChanges();
+    await stopEditing();
+
+    // 토스트 메시지 표시
+    if (countToDiscard > 0) {
+      showToast(
+        "info",
+        "작업 종료",
+        `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`
+      );
+    } else {
+      showToast(
+        "success",
+        "작업 종료",
+        "작업이 정상적으로 종료되었습니다."
+      );
+    }
+  }, [getDirtyBars, getDeletedBars, getDirtyFlags, getDeletedFlags, discardAllChanges, stopEditing, showToast]);
+
+  const handleOpenHelp = useCallback(() => {
+    setShowHelp(true);
+  }, []);
+
+  const handleAddRow = useCallback(() => {
+    setShowAddRowModal(true);
+  }, []);
+
+  const handleCustomRangeChange = useCallback((start: Date, end: Date) => {
+    setRangeMonths(0);
+    setRangeStart(start);
+    setRangeEnd(end);
+  }, []);
+
+  const handleCloseCommandPalette = useCallback(() => {
+    setShowCommandPalette(false);
+  }, []);
+
   // 커밋 핸들러 - 프로그래스 모달과 함께 Flags/Plans 순차 저장
   const handleCommit = useCallback(async () => {
     // 변경사항 확인
@@ -626,80 +706,19 @@ export function DraftGanttView({
       {/* Command Palette */}
       <CommandPalette
         isOpen={showCommandPalette}
-        onClose={() => setShowCommandPalette(false)}
-        onStartEditing={async () => {
-          const success = await startEditing();
-          if (success) {
-            showToast(
-              "success",
-              "편집 모드 시작",
-              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
-            );
-          } else {
-            const currentLockState = useDraftStore.getState().ui.lockState;
-            if (currentLockState?.isLocked && !currentLockState?.isMyLock) {
-              showToast(
-                "warning",
-                "편집할 수 없음",
-                `현재 ${
-                  currentLockState.lockedByName || "다른 사용자"
-                }님이 작업 중입니다.`
-              );
-            } else {
-              showToast(
-                "error",
-                "작업을 시작할 수 없습니다",
-                "네트워크 상태를 확인하고 다시 시도해주세요."
-              );
-            }
-          }
-          return success;
-        }}
-        onStopEditing={async () => {
-          // 현재 변경사항 개수 계산
-          const dirtyBars = getDirtyBars();
-          const deletedBars = getDeletedBars();
-          const dirtyFlags = getDirtyFlags();
-          const deletedFlags = getDeletedFlags();
-          const countToDiscard =
-            dirtyBars.length +
-            deletedBars.length +
-            dirtyFlags.length +
-            deletedFlags.length;
-
-          // 변경사항 폐기
-          discardAllChanges();
-          await stopEditing();
-
-          // 토스트 메시지 표시
-          if (countToDiscard > 0) {
-            showToast(
-              "info",
-              "작업 종료",
-              `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`
-            );
-          } else {
-            showToast(
-              "success",
-              "작업 종료",
-              "작업이 정상적으로 종료되었습니다."
-            );
-          }
-        }}
+        onClose={handleCloseCommandPalette}
+        onStartEditing={handleStartEditing}
+        onStopEditing={handleStopEditing}
         onCommit={handleCommit}
-        onOpenHelp={() => setShowHelp(true)}
-        onAddRow={() => setShowAddRowModal(true)}
+        onOpenHelp={handleOpenHelp}
+        onAddRow={handleAddRow}
         isEditing={isEditing}
         canEdit={canEdit}
         rangeMonths={rangeMonths}
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}
         onRangeMonthsChange={setRangeMonths}
-        onCustomRangeChange={(start, end) => {
-          setRangeMonths(0);
-          setRangeStart(start);
-          setRangeEnd(end);
-        }}
+        onCustomRangeChange={handleCustomRangeChange}
       />
 
       {/* Help Modal */}
