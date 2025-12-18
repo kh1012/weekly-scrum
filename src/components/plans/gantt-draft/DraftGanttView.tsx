@@ -92,6 +92,7 @@ export function DraftGanttView({
   const getDeletedFlags = useDraftStore((s) => s.getDeletedFlags);
   const clearFlagDirtyFlags = useDraftStore((s) => s.clearFlagDirtyFlags);
   const hasFlagChanges = useDraftStore((s) => s.hasFlagChanges());
+  const fetchFlags = useDraftStore((s) => s.fetchFlags);
 
   const {
     startEditing,
@@ -349,6 +350,9 @@ export function DraftGanttView({
             )
           );
           clearFlagDirtyFlags();
+          
+          // 서버에서 최신 Flag 데이터 다시 불러오기 (serverId 동기화)
+          await fetchFlags(workspaceId);
         } else {
           setSaveSteps((prev) =>
             prev.map((s) =>
@@ -442,6 +446,7 @@ export function DraftGanttView({
     rows,
     clearDirtyFlags,
     clearFlagDirtyFlags,
+    fetchFlags,
   ]);
 
   // 변경사항 폐기 핸들러 (토스트는 onStopSuccess에서 처리)

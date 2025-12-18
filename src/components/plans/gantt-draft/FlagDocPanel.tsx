@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useDraftStore } from "./store";
-import type { ReleaseDocRow, DraftFlag } from "./types";
+import type { ReleaseDocRow, DraftFlag, ReadyInfo } from "./types";
 import { FlagIcon } from "@/components/common/Icons";
 
 interface FlagDocPanelProps {
@@ -127,36 +127,36 @@ export function FlagDocPanel({
     const today = new Date().toISOString().split("T")[0];
 
     for (const [, group] of epicGroups) {
-      // Spec Ready 계산 - '상세 기획' stage만 검색
-      let specReady: string = "데이터 없음";
-      const specPlan = group.bars.find((b) => b.stage === "상세 기획");
-      if (specPlan) {
-        // 완료 상태이고 종료일이 오늘 이전이면 'READY'
-        if (specPlan.status === "완료" && specPlan.endDate <= today) {
-          specReady = "READY";
+      // Spec Ready 계산 - '상세 기획' stage 모두 검색
+      const specPlans = group.bars.filter((b) => b.stage === "상세 기획");
+      const specReadyList: ReadyInfo[] = specPlans.map((plan) => {
+        let value: string;
+        if (plan.status === "완료" && plan.endDate <= today) {
+          value = "READY";
         } else {
-          specReady = specPlan.endDate;
+          value = plan.endDate;
         }
-      }
+        return { value, title: plan.title };
+      });
 
-      // Design Ready 계산 - 'UI 디자인' stage만 검색
-      let designReady: string = "데이터 없음";
-      const designPlan = group.bars.find((b) => b.stage === "UI 디자인");
-      if (designPlan) {
-        // 완료 상태이고 종료일이 오늘 이전이면 'READY'
-        if (designPlan.status === "완료" && designPlan.endDate <= today) {
-          designReady = "READY";
+      // Design Ready 계산 - 'UI 디자인' stage 모두 검색
+      const designPlans = group.bars.filter((b) => b.stage === "UI 디자인");
+      const designReadyList: ReadyInfo[] = designPlans.map((plan) => {
+        let value: string;
+        if (plan.status === "완료" && plan.endDate <= today) {
+          value = "READY";
         } else {
-          designReady = designPlan.endDate;
+          value = plan.endDate;
         }
-      }
+        return { value, title: plan.title };
+      });
 
       result.push({
         planId: group.bars[0]?.clientUid ?? "",
         epic: group.epic,
         planner: group.planner,
-        specReady,
-        designReady,
+        specReadyList: specReadyList.length > 0 ? specReadyList : [{ value: "데이터 없음" }],
+        designReadyList: designReadyList.length > 0 ? designReadyList : [{ value: "데이터 없음" }],
       });
     }
 
@@ -287,10 +287,10 @@ export function FlagDocPanel({
                       </td>
                       <td className="py-3 px-4 text-gray-600">{row.planner}</td>
                       <td className="py-3 px-4">
-                        <DateChip value={row.specReady} />
+                        <ReadyInfoList items={row.specReadyList} />
                       </td>
                       <td className="py-3 px-4">
-                        <DateChip value={row.designReady} />
+                        <ReadyInfoList items={row.designReadyList} />
                       </td>
                     </tr>
                   ))}
@@ -318,25 +318,54 @@ export function FlagDocPanel({
 }
 
 /**
+ * Ready 정보 목록 컴포넌트 (여러 개 표시)
+ */
+function ReadyInfoList({ items }: { items: ReadyInfo[] }) {
+  if (items.length === 0) {
+    return <span className="text-gray-400 text-xs">데이터 없음</span>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      {items.map((item, idx) => (
+        <DateChip key={idx} info={item} showTitle={items.length > 1} />
+      ))}
+    </div>
+  );
+}
+
+/**
  * 날짜 칩 컴포넌트
  */
-function DateChip({ value }: { value: string }) {
+function DateChip({ info, showTitle = false }: { info: ReadyInfo; showTitle?: boolean }) {
+  const { value, title } = info;
+
   if (value === "-" || value === "데이터 없음") {
-    return <span className="text-gray-400 text-xs">{value === "-" ? "-" : "데이터 없음"}</span>;
+    return <span className="text-gray-400 text-xs">데이터 없음</span>;
   }
 
-  if (value === "READY") {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-        READY
-      </span>
-    );
-  }
+  const chipContent = (
+    <>
+      {value === "READY" ? (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+          READY
+        </span>
+      ) : (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+          {value}
+        </span>
+      )}
+      {showTitle && title && (
+        <span className="ml-1.5 text-xs text-gray-400 truncate max-w-[120px]" title={title}>
+          {title}
+        </span>
+      )}
+    </>
+  );
 
-  // 날짜 형식
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-      {value}
-    </span>
+    <div className="flex items-center gap-1">
+      {chipContent}
+    </div>
   );
 }

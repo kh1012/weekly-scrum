@@ -4,7 +4,7 @@
  */
 
 import { createClient } from "@/lib/supabase/browser";
-import type { ReleaseDocRow } from "./types";
+import type { ReleaseDocRow, ReadyInfo } from "./types";
 
 interface BuildReleaseDocArgs {
   workspaceId: string;
@@ -125,26 +125,26 @@ export async function buildReleaseDoc(
     const rows: ReleaseDocRow[] = [];
 
     for (const [, group] of epicGroups) {
-      // Spec Ready: stage === '상세 기획' 이고 완료된 계획
-      const specPlan = group.plans.find(
-        (p) =>
-          p.stage === "상세 기획" &&
-          (p.progress === 100 || p.status === "완료")
-      );
+      // Spec Ready: stage === '상세 기획'인 모든 계획
+      const specPlans = group.plans.filter((p) => p.stage === "상세 기획");
+      const specReadyList: ReadyInfo[] = specPlans.map((p) => ({
+        value: p.progress === 100 || p.status === "완료" ? "READY" : p.end_date ?? "-",
+        title: p.title,
+      }));
 
-      // Design Ready: stage === 'UI 디자인' 이고 완료된 계획
-      const designPlan = group.plans.find(
-        (p) =>
-          p.stage === "UI 디자인" &&
-          (p.progress === 100 || p.status === "완료")
-      );
+      // Design Ready: stage === 'UI 디자인'인 모든 계획
+      const designPlans = group.plans.filter((p) => p.stage === "UI 디자인");
+      const designReadyList: ReadyInfo[] = designPlans.map((p) => ({
+        value: p.progress === 100 || p.status === "완료" ? "READY" : p.end_date ?? "-",
+        title: p.title,
+      }));
 
       rows.push({
         planId: group.plans[0]?.id ?? "",
         epic: group.epic,
         planner: group.planner,
-        specReady: specPlan?.end_date ?? "-",
-        designReady: designPlan?.end_date ?? "-",
+        specReadyList: specReadyList.length > 0 ? specReadyList : [{ value: "데이터 없음" }],
+        designReadyList: designReadyList.length > 0 ? designReadyList : [{ value: "데이터 없음" }],
       });
     }
 

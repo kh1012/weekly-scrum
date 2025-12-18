@@ -239,12 +239,20 @@ export interface RenderRow extends DraftRow {
 }
 
 /**
+ * Ready 상태 정보 (Spec/Design)
+ */
+export interface ReadyInfo {
+  value: string; // 날짜 또는 "READY" 또는 "데이터 없음"
+  title?: string; // bar의 title (구분용)
+}
+
+/**
  * Release Doc 행 (Flag 클릭 시 표시되는 계획 요약)
  */
 export interface ReleaseDocRow {
   planId: string;
   epic: string; // "프로젝트 > 모듈 > 기능" or fallback title
   planner: string; // 기획자 or '-'
-  specReady: string | "READY" | "-"; // date preferred, READY if completed but date missing
-  designReady: string | "READY" | "-";
+  specReadyList: ReadyInfo[]; // 여러 개 가능
+  designReadyList: ReadyInfo[]; // 여러 개 가능
 }
