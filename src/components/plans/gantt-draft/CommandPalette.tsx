@@ -478,7 +478,6 @@ export function CommandPalette({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder="명령어 검색..."
             className="flex-1 bg-transparent outline-none text-sm"
             style={{ color: "var(--notion-text)" }}
