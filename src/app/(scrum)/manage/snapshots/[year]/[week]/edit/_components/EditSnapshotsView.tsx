@@ -18,6 +18,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import {
   formatWeekRange,
   getCurrentISOWeek,
@@ -892,9 +893,7 @@ export function EditSnapshotsView(props: EditSnapshotsViewProps) {
     <ToastProvider>
       <Suspense
         fallback={
-          <div className="flex items-center justify-center h-full">
-            로딩 중...
-          </div>
+          <LogoLoadingSpinner className="h-full" />
         }
       >
         <EditSnapshotsViewInner {...props} />

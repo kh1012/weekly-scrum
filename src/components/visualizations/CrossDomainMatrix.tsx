@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import { getCollaborationMatrix } from "@/lib/collaboration";
 import { DOMAIN_COLORS } from "@/lib/colorDefines";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 interface CrossDomainMatrixProps {
   items: ScrumItem[];
@@ -240,9 +241,7 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
         <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
           🔀 도메인 간 협업 흐름
         </h3>
-        <div className="flex items-center justify-center h-[280px] sm:h-[350px] md:h-[420px] lg:h-[480px] text-sm" style={{ color: "var(--notion-text-secondary)" }}>
-          로딩 중...
-        </div>
+        <LogoLoadingSpinner className="h-[280px] sm:h-[350px] md:h-[420px] lg:h-[480px]" />
       </div>
     );
   }

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useScrumContext } from "@/context/ScrumContext";
 import { MatrixView } from "@/components/weekly-scrum/matrix/MatrixView";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 function MatrixContent() {
   const searchParams = useSearchParams();
@@ -27,7 +28,7 @@ function MatrixContent() {
 
 export default function MatrixPage() {
   return (
-    <Suspense fallback={<div className="p-4 text-center text-[#656d76]">로딩 중...</div>}>
+    <Suspense fallback={<LogoLoadingSpinner className="py-8" />}>
       <MatrixContent />
     </Suspense>
   );

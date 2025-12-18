@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getLastVisitedPage } from "@/components/weekly-scrum/common/LayoutWrapper";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 const DEFAULT_PAGE = "/work-map";
 
@@ -23,19 +24,11 @@ export default function Home() {
   // 리다이렉트 중 로딩 표시
   if (isRedirecting) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "var(--notion-bg)" }}
-      >
-        <div className="text-center">
-          <div
-            className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"
-          />
-          <p className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
-            페이지 로딩 중...
-          </p>
-        </div>
-      </div>
+      <LogoLoadingSpinner
+        title="페이지 로딩 중..."
+        description=""
+        className="min-h-screen"
+      />
     );
   }
 

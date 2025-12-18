@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { Logo } from "@/components/weekly-scrum/common";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 /**
  * PKCE 관련 에러인지 확인하고 사용자 친화적 메시지로 변환
@@ -178,9 +179,11 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-gray-400 text-sm">로딩 중...</div>
-        </div>
+        <LogoLoadingSpinner
+          title="로딩 중..."
+          description=""
+          className="min-h-screen bg-gray-50"
+        />
       }
     >
       <LoginForm />

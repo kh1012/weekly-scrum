@@ -6,6 +6,7 @@ import Link from "next/link";
 import { updatePlanAction } from "@/lib/actions/plans";
 import { PlanForm } from "../../_components/PlanForm";
 import { createClient } from "@/lib/supabase/browser";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import type { PlanWithAssignees } from "@/lib/data/plans";
 import type { CreatePlanActionInput } from "@/lib/actions/plans";
 
@@ -74,17 +75,11 @@ export default function EditPlanPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div
-            className="inline-block w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin"
-            style={{ color: "var(--notion-text-muted)" }}
-          />
-          <p className="mt-2 text-sm" style={{ color: "var(--notion-text-muted)" }}>
-            로딩 중...
-          </p>
-        </div>
-      </div>
+      <LogoLoadingSpinner
+        title="로딩 중..."
+        description=""
+        className="py-12"
+      />
     );
   }
 
