@@ -16,7 +16,11 @@ interface HeaderProps {
   role?: WorkspaceRole;
 }
 
-export function Header({ isSidebarOpen = true, onSidebarToggle, role }: HeaderProps) {
+export function Header({
+  isSidebarOpen = true,
+  onSidebarToggle,
+  role,
+}: HeaderProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
@@ -26,7 +30,10 @@ export function Header({ isSidebarOpen = true, onSidebarToggle, role }: HeaderPr
   // 개인 대시보드 페이지인지 확인
   const isMyDashboard = pathname === "/my" || pathname === "/my/";
   // 스냅샷 관리 페이지인지 확인
-  const isManagePage = pathname === "/manage" || pathname === "/manage/" || pathname.startsWith("/manage/snapshots");
+  const isManagePage =
+    pathname === "/manage" ||
+    pathname === "/manage/" ||
+    pathname.startsWith("/manage/snapshots");
   // 캘린더 페이지인지 확인 (주차 선택기만 숨김, 검색/필터는 표시)
   const isCalendarPage = pathname === "/calendar" || pathname === "/calendar/";
   // Admin Dashboard 페이지인지 확인 (최소 모드: 뒤로가기 + 프로필만)
@@ -34,9 +41,14 @@ export function Header({ isSidebarOpen = true, onSidebarToggle, role }: HeaderPr
   // Admin 하위 페이지인지 확인 (All Snapshots, All Plans 등 - GNB 전체 기능 사용)
   const isAdminSubPage = pathname.startsWith("/admin/") && !isAdminDashboard;
   // Plans 페이지인지 확인 (자체 필터 UI 사용)
-  const isPlansPage = pathname === "/plans" || pathname === "/plans/" || pathname.startsWith("/admin/plans");
+  const isPlansPage =
+    pathname === "/plans" ||
+    pathname === "/plans/" ||
+    pathname.startsWith("/admin/plans") ||
+    pathname.startsWith("/plans/gantt");
   // 최소 GNB 모드 (사이드바 토글 + 프로필만 표시)
-  const isMinimalGnb = isMyDashboard || isManagePage || isAdminDashboard || isPlansPage;
+  const isMinimalGnb =
+    isMyDashboard || isManagePage || isAdminDashboard || isPlansPage;
   // GNB 컴포넌트 완전 숨김 페이지 (manage, admin dashboard, my dashboard, plans)
   const hideAllControls = isMinimalGnb;
   // 주차 선택기 숨김 페이지 (calendar는 자체 월 선택기 사용)
@@ -293,7 +305,10 @@ export function Header({ isSidebarOpen = true, onSidebarToggle, role }: HeaderPr
                 border: "1px solid rgba(0, 0, 0, 0.06)",
               }}
             >
-              <SideNavigation onItemClick={() => setIsMenuOpen(false)} role={role} />
+              <SideNavigation
+                onItemClick={() => setIsMenuOpen(false)}
+                role={role}
+              />
             </div>
           )}
         </div>
