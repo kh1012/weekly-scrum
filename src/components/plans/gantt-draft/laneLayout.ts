@@ -173,6 +173,7 @@ export function buildRenderRows(
 /**
  * 트리 구조를 플랫 리스트로 변환 (좌우 동기화용)
  * - expandedNodes: 펼쳐진 노드 ID Set
+ * - orderIndex 순서를 유지하여 드래그앤드롭으로 변경한 순서 반영
  */
 export function buildFlatTree(
   rows: DraftRow[],
@@ -188,9 +189,12 @@ export function buildFlatTree(
     barsByRow.set(bar.rowId, existing);
   }
 
-  // 프로젝트 > 모듈 > 기능 트리 구성
+  // orderIndex 순서대로 정렬된 rows 사용 (드래그앤드롭 순서 유지)
+  const sortedRows = [...rows].sort((a, b) => a.orderIndex - b.orderIndex);
+
+  // 프로젝트 > 모듈 > 기능 트리 구성 (삽입 순서 유지)
   const projectMap = new Map<string, Map<string, DraftRow[]>>();
-  for (const row of rows) {
+  for (const row of sortedRows) {
     if (!projectMap.has(row.project)) {
       projectMap.set(row.project, new Map());
     }
