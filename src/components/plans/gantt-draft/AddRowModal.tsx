@@ -258,10 +258,8 @@ export function AddRowModal({
                       setShowProjectDropdown(false);
                       setTimeout(() => moduleInputRef.current?.focus(), 10);
                     }}
-                    className={`w-full px-3 py-1.5 text-left text-sm transition-colors ${
-                      idx === projectIndex
-                        ? "bg-blue-500/10"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className={`w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-blue-500/10 ${
+                      idx === projectIndex ? "bg-blue-500/10" : ""
                     }`}
                     style={{ color: "var(--notion-text)" }}
                   >
@@ -336,10 +334,8 @@ export function AddRowModal({
                       setShowModuleDropdown(false);
                       setTimeout(() => featureInputRef.current?.focus(), 10);
                     }}
-                    className={`w-full px-3 py-1.5 text-left text-sm transition-colors ${
-                      idx === moduleIndex
-                        ? "bg-blue-500/10"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className={`w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-blue-500/10 ${
+                      idx === moduleIndex ? "bg-blue-500/10" : ""
                     }`}
                     style={{ color: "var(--notion-text)" }}
                   >
@@ -417,10 +413,8 @@ export function AddRowModal({
                       setFeature(f);
                       setShowFeatureDropdown(false);
                     }}
-                    className={`w-full px-3 py-1.5 text-left text-sm transition-colors ${
-                      idx === featureIndex
-                        ? "bg-blue-500/10"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className={`w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-blue-500/10 ${
+                      idx === featureIndex ? "bg-blue-500/10" : ""
                     }`}
                     style={{ color: "var(--notion-text)" }}
                   >
