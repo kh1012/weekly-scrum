@@ -1,275 +1,202 @@
 # Goal
 
-Implement "Custom Flag" feature in /admin/plans/gantt (src/components/plans/gantt-draft/) to show milestone/range events on the timeline header as a separate overlay layer (NOT plan bars).
-We DO NOT distinguish release/sprint types. It's just "Flag".
+When a user clicks a Custom Flag in the Flag tree panel, show an auto-generated "Release Doc" view.
+Spec Ready and Design Ready are NOT manually entered.
+They are automatically derived from existing feature plans based on stage completion.
 
-Flag rules:
+# Core Rule Change (IMPORTANT)
 
-- Point flag: startDate === endDate → render a vertical line at that date + title near the line
-- Range flag: startDate < endDate → render start vertical line + end vertical line + a top block between them with title inside
+We DO NOT use a separate milestone table for Spec Ready / Design Ready.
 
-Also implement lane packing so overlapping flags stack into multiple sub-lanes automatically.
+Instead:
 
-# Existing Structure
+- Spec Ready = completion date of the feature plan whose stage is '상세 기획'
+- Design Ready = completion date of the feature plan whose stage is 'UI 디자인'
 
-src/components/plans/gantt-draft/
+These are treated as the single source of truth.
 
-- DraftGanttView.tsx (layout)
-- GanttHeader.tsx
-- DraftTreePanel.tsx
-- DraftTimeline.tsx (timeline header + grid)
-- DraftBar.tsx (plan bars)
-- store.ts (zustand)
-- laneLayout.ts (existing plan lane calc)
-- types.ts
-- commitService.ts / lockService.ts / useLock.ts
-- modals + UI components exist
+# Definitions
 
-We will add:
+- Plan Type: 'feature'
+- Stage:
+  - '상세 기획' → Spec Ready source
+  - 'UI 디자인' → Design Ready source
+- Completion Date:
+  - Use plan.end_date (or equivalent finished_at if exists)
+  - Only consider plans with progress = 100% OR status = '완료' (depending on schema)
 
-- FlagLane.tsx
-- FlagBar.tsx
-- CreateFlagModal.tsx
-- EditFlagModal.tsx
-- flagService.ts
-- flagLayout.ts (NEW: lane packing utilities)
+# Existing Context
 
-# DB
+Route: /admin/plans/gantt
+Custom Flags already exist and define a release window via:
 
-Assume table public.gantt_flags already exists:
+- flag.startDate
+- flag.endDate
 
-- id uuid
-- workspace_id uuid
-- title text
-- start_date date
-- end_date date
-- color text null
-- order_index int default 0
-- created_by, created_at, updated_at
+Clicking a flag should open a document-like Release Doc view.
 
-IMPORTANT:
+# DB Assumptions
 
-- "Title-only" flag MUST be stored as start_date = end_date
-- end_date is NEVER nullable
+- plans table includes:
+  - id
+  - workspace_id
+  - type ('feature')
+  - title
+  - project / module / feature (or similar hierarchy)
+  - stage (string)
+  - start_date
+  - end_date
+  - progress or status
+- plan_assignees exists for planner lookup (optional)
+
+NO additional tables are required.
 
 # Types (types.ts)
 
 [CODE]
-export type ISODate = string; // YYYY-MM-DD
-
-export interface GanttFlag {
-id: string;
-workspaceId: string;
-title: string;
-startDate: ISODate;
-endDate: ISODate; // start === end => point flag
-color?: string | null;
-orderIndex: number;
-createdAt: string;
-updatedAt: string;
-createdBy?: string | null;
-}
-
-export interface PackedFlagLaneItem {
-flagId: string;
-laneIndex: number; // 0..N-1
-startDate: ISODate;
-endDate: ISODate;
-startX: number; // px
-width: number; // px
-isPoint: boolean;
+export interface ReleaseDocRow {
+planId: string;
+epic: string; // "프로젝트 > 모듈 > 기능" or fallback title
+planner: string; // 기획자 or '-'
+specReady: string | 'READY' | '-'; // date preferred, READY if completed but date missing
+designReady: string | 'READY' | '-';
 }
 [/CODE]
 
-# Store (store.ts) – Flag Slice
+# Data Generation Logic (STRICT)
 
-Rules:
+Given a flag with [startDate, endDate]:
 
-- Flags follow existing gantt edit/lock rule
-- Create/Update/Delete ONLY when isEditing === true AND user role is admin/leader
+## Step 1: Fetch candidate plans
+
+Fetch all feature plans overlapping the release window:
+
+- plan.type = 'feature'
+- plan.start_date <= flag.endDate
+- plan.end_date >= flag.startDate
+- workspace_id matches
+
+## Step 2: Group plans by Epic
+
+Epic key:
+
+- Prefer: project + module + feature
+- Else fallback: plan.title
+
+All plans sharing the same epic key belong to one ReleaseDocRow.
+
+## Step 3: Determine Planner
+
+- From plan_assignees:
+  - pick assignee with role in ('기획', 'planning', 'pm')
+- If multiple, pick earliest assigned or first
+- If none, '-'
+
+## Step 4: Compute Spec Ready
+
+For each epic group:
+
+- Find the plan where:
+  - stage === '상세 기획'
+  - progress === 100 OR status === '완료'
+- If found:
+  - specReady = plan.end_date (YYYY-MM-DD)
+- If stage exists but not completed:
+  - specReady = '-'
+- If no such stage plan exists:
+  - specReady = '-'
+
+## Step 5: Compute Design Ready
+
+For each epic group:
+
+- Find the plan where:
+  - stage === 'UI 디자인'
+  - progress === 100 OR status === '완료'
+- If found:
+  - designReady = plan.end_date
+- If stage exists but not completed:
+  - designReady = '-'
+- If no such stage plan exists:
+  - designReady = '-'
+
+IMPORTANT:
+
+- Do NOT infer Design Ready from development stages.
+- Do NOT invent dates.
+- Only completed stage plans produce dates.
+
+# flagDocService.ts (NEW)
+
+Responsible for building the Release Doc rows.
 
 [CODE]
-interface FlagDraft {
-start: Date | null;
-end: Date | null;
-}
-
-interface FlagState {
-flags: GanttFlag[];
-pendingFlag: FlagDraft;
-selectedFlagId: string | null;
-isFlagsLoading: boolean;
-}
-
-interface FlagActions {
-fetchFlags: (workspaceId: string) => Promise<void>;
-
-startPendingFlag: (date: Date) => void;
-endPendingFlag: (date: Date) => void;
-clearPendingFlag: () => void;
-
-selectFlag: (id: string | null) => void;
-
-createFlag: (payload: {
+export async function buildReleaseDoc(args: {
 workspaceId: string;
-title: string;
-startDate: string;
-endDate: string;
-}) => Promise<void>;
-
-updateFlag: (
-id: string,
-updates: Partial<Pick<GanttFlag, 'title' | 'startDate' | 'endDate' | 'orderIndex' | 'color'>>
-) => Promise<void>;
-
-deleteFlag: (id: string) => Promise<void>;
-}
+flagStart: string; // YYYY-MM-DD
+flagEnd: string; // YYYY-MM-DD
+}): Promise<{
+rows: ReleaseDocRow[];
+}>
 [/CODE]
 
-Implementation notes:
+Implementation outline:
 
-- fetchFlags: sort by startDate asc → orderIndex asc → title asc
-- endPendingFlag: if end < start, swap
-- after second double-click, open CreateFlagModal
-- selectedFlagId used for keyboard Delete and highlight
+1. Fetch overlapping feature plans
+2. Group by epic key
+3. For each group:
+   - derive planner
+   - derive specReady from '상세 기획' stage completion
+   - derive designReady from 'UI 디자인' stage completion
+4. Sort rows by epic name ASC
 
-# flagService.ts
+# UI: Release Doc View (FlagDocPanel)
 
-Implement Supabase CRUD:
+Layout:
 
-- listFlags(workspaceId)
-- createFlag(payload)
-- updateFlag(id, updates)
-- deleteFlag(id)
+- Title: 📍 {flag.title}
+- Meta:
+  - 디자인 공유: {flag.designShareDate ?? '-'}
+  - Start Date: {flag.startDate}
+  - End Date: {flag.endDate}
 
-Map snake_case → camelCase in service layer.
+Table columns:
 
-# Lane Packing (flagLayout.ts)
+- Epic
+- 기획자
+- Spec Ready
+- Design Ready
 
-Goal:
+Cell rendering rules:
 
-- Stack overlapping flags vertically
-- Deterministic order
-- Simplicity > perfection
+- YYYY-MM-DD → gray date chip
+- 'READY' → green READY pill (only if end_date missing but completed; optional)
+- '-' → muted dash
 
-Definitions:
+# DraftTreePanel Interaction
 
-- Interval = [startIndex, endIndex] inclusive (day units)
-- Overlap if intervals intersect
+- Clicking a Flag:
+  - selectFlag(flagId)
+  - open FlagDocPanel immediately
 
-Algorithm (greedy):
+# DraftGanttView Integration
 
-1. Convert flag dates → dayIndex relative to rangeStart
-2. Sort flags by:
-   - startDate asc
-   - endDate asc
-   - orderIndex asc
-   - id asc
-3. Maintain laneEndIndex[] (last occupied endIndex per lane)
-4. For each flag:
-   - find first lane where laneEndIndex < flag.startIndex
-   - if found → use lane
-   - else → create new lane
-   - update laneEndIndex[lane] = flag.endIndex
-
-Pixel mapping:
-
-- startX = startIndex \* dayWidth
-- endX = (endIndex + 1) \* dayWidth
-- width = endX - startX
-- point flag: width may be 0, UI should still render a clickable hitbox
-
-Expose helper:
-
-[CODE]
-export function packFlagsIntoLanes(args: {
-flags: GanttFlag[];
-rangeStart: Date;
-rangeEnd: Date;
-dayWidth: number;
-}): {
-laneCount: number;
-items: PackedFlagLaneItem[];
-}
-[/CODE]
-
-Clamping:
-
-- Clamp startIndex/endIndex to visible range for rendering
-- Use clamped indices for lane packing (acceptable tradeoff)
-
-# UI Components
-
-## FlagLane.tsx
-
-- Uses packFlagsIntoLanes (useMemo)
-- Height = laneCount \* LANE_HEIGHT (24~28px)
-- Renders FlagBar per PackedFlagLaneItem
-- Sync horizontal scroll with timeline grid
-- Handles double-click empty area for flag creation
-
-## FlagBar.tsx
-
-- Point flag: vertical line + title
-- Range flag: start/end lines + top block with title
-- Ellipsis for long titles
-- Click = select
-- Double click = edit
-- Selected state = outline or bg highlight
-
-## DraftTimeline.tsx changes
-
-Header order:
-
-1. Month header (38px)
-2. Day header (38px)
-3. FlagLane
-
-TOTAL_HEADER_HEIGHT = 38 + 38 + FlagLaneHeight
-
-Double-click behavior:
-
-- First double click → startPendingFlag
-- Second double click → endPendingFlag + CreateFlagModal
-
-Keyboard:
-
-- Delete key removes selected flag (confirm optional)
-
-## DraftTreePanel.tsx
-
-Add "Flags" section:
-
-- List flags sorted by startDate
-- Ellipsis overflow
-- Click selects flag and scrolls timeline to its startDate
-
-# Modals
-
-CreateFlagModal:
-
-- Inputs: title
-- Show start/end preview
-- Save → createFlag(startDate/endDate formatted YYYY-MM-DD)
-
-EditFlagModal:
-
-- Edit title and date range
-- Optional delete button
+- FlagDocPanel opens as:
+  - right-side drawer OR
+  - modal (reuse existing overlay pattern)
+- Must not interfere with existing editing/lock logic
 
 # Acceptance Criteria
 
-- Flags render in header overlay
-- Lane packing works for overlapping flags
-- Point and range flags both supported
-- Edit/Delete gated by role + isEditing
-- Tree ↔ timeline selection sync
-- No layout shift bugs
+- No manual input required for Spec Ready / Design Ready
+- Values are stable and reproducible from plan data
+- Updating plan completion immediately reflects in Release Doc
+- Missing stages show '-' without error
 - Build passes
 
 # Delivery Plan
 
-1. Types + service + store + read-only FlagLane/FlagBar with packing
-2. Create flow (double-click + modal)
-3. Edit/Delete + keyboard + tree sync
-4. Polish (hitbox, clamp, highlight)
+1. Implement flagDocService with stage-based computation
+2. Build FlagDocPanel UI
+3. Wire Flag tree click → doc open
+4. Polish rendering (chips, alignment)

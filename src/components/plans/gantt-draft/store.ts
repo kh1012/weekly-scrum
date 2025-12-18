@@ -16,9 +16,35 @@ import type {
   LockState,
   PlanStatus,
   DraftAssignee,
+  GanttFlag,
+  DraftFlag,
+  HighlightDateRange,
 } from "./types";
+import { listFlags } from "./flagService";
 
 const MAX_UNDO_STACK = 20;
+
+/**
+ * Flag 관련 상태 타입
+ */
+interface FlagDraft {
+  start: Date | null;
+  end: Date | null;
+}
+
+interface FlagState {
+  flags: DraftFlag[]; // DraftFlag로 변경 (dirty/deleted 플래그 포함)
+  pendingFlag: FlagDraft;
+  selectedFlagId: string | null;
+  isFlagsLoading: boolean;
+}
+
+const initialFlagState: FlagState = {
+  flags: [],
+  pendingFlag: { start: null, end: null },
+  selectedFlagId: null,
+  isFlagsLoading: false,
+};
 
 /**
  * 초기 UI 상태
@@ -41,17 +67,19 @@ const initialUIState: DraftUIState = {
   lastSyncAt: undefined,
   isEditing: false,
   expandedNodes: [],
+  highlightDateRange: null,
 };
 
 /**
- * 초기 Draft 상태
+ * 초기 Draft 상태 (Flag 포함)
  */
-const initialState: DraftState = {
+const initialState: DraftState & FlagState = {
   rows: [],
   bars: [],
   ui: initialUIState,
   undoStack: [],
   redoStack: [],
+  ...initialFlagState,
 };
 
 /**
@@ -149,6 +177,8 @@ interface DraftActions {
   setLockState: (lockState: LockState) => void;
   /** 편집 모드 설정 */
   setEditing: (isEditing: boolean) => void;
+  /** 기간 강조 표시 설정 */
+  setHighlightDateRange: (range: HighlightDateRange | null) => void;
   /** 트리 노드 토글 (펼침/접힘) */
   toggleNode: (nodeId: string) => void;
   /** 모든 노드 펼치기 */
@@ -179,9 +209,46 @@ interface DraftActions {
   hasUnsavedChanges: () => boolean;
   /** 모든 변경사항 폐기 (초기 상태로 복원) */
   discardAllChanges: () => void;
+
+  // === Flag 관련 ===
+  /** Flag 목록 조회 (서버에서 로드) */
+  fetchFlags: (workspaceId: string) => Promise<void>;
+  /** Pending flag 시작점 설정 */
+  startPendingFlag: (date: Date) => void;
+  /** Pending flag 끝점 설정 */
+  endPendingFlag: (date: Date) => void;
+  /** Pending flag 초기화 */
+  clearPendingFlag: () => void;
+  /** Flag 선택 */
+  selectFlag: (id: string | null) => void;
+  /** Flag 생성 (로컬 상태만 변경) */
+  addFlag: (payload: {
+    workspaceId: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    color?: string | null;
+  }) => DraftFlag;
+  /** Flag 수정 (로컬 상태만 변경) */
+  updateFlagLocal: (
+    clientId: string,
+    updates: Partial<Pick<DraftFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color">>
+  ) => void;
+  /** Flag 삭제 (로컬 상태만 변경, soft delete) */
+  deleteFlag: (clientId: string) => void;
+  /** dirty flags 조회 */
+  getDirtyFlags: () => DraftFlag[];
+  /** deleted flags 조회 */
+  getDeletedFlags: () => DraftFlag[];
+  /** Commit 후 flags dirty/deleted 정리 */
+  clearFlagDirtyFlags: () => void;
+  /** Flag 변경 사항 존재 여부 */
+  hasFlagChanges: () => boolean;
+  /** Flag 변경사항 폐기 */
+  discardFlagChanges: () => void;
 }
 
-type DraftStore = DraftState & DraftActions;
+type DraftStore = DraftState & DraftActions & FlagState;
 
 /**
  * Undo 액션 추가 헬퍼 (스택 제한)
@@ -755,6 +822,10 @@ export const useDraftStore = create<DraftStore>()(
         set({ ui: { ...get().ui, isEditing } });
       },
 
+      setHighlightDateRange: (range) => {
+        set({ ui: { ...get().ui, highlightDateRange: range } });
+      },
+
       // === Undo/Redo ===
       undo: () => {
         const state = get();
@@ -890,7 +961,8 @@ export const useDraftStore = create<DraftStore>()(
 
       hasUnsavedChanges: () => {
         const state = get();
-        return state.bars.some((b) => b.dirty);
+        // bars 또는 flags 중 하나라도 dirty가 있으면 true
+        return state.bars.some((b) => b.dirty) || state.flags.some((f) => f.dirty);
       },
 
       discardAllChanges: () => {
@@ -910,12 +982,229 @@ export const useDraftStore = create<DraftStore>()(
         // 새로 생성된 row도 제거
         const newRows = state.rows.filter((r) => !r.isLocal);
 
+        // Flags도 동일하게 처리
+        const newFlags = state.flags
+          .filter((f) => f.serverId !== undefined)
+          .map((f) => ({
+            ...f,
+            deleted: false,
+            dirty: false,
+          }));
+
         set({
           bars: newBars,
           rows: newRows,
+          flags: newFlags,
           undoStack: [],
           redoStack: [],
         });
+      },
+
+      // === Flag 관련 액션 구현 ===
+      fetchFlags: async (workspaceId) => {
+        set({ isFlagsLoading: true });
+        try {
+          const result = await listFlags(workspaceId);
+          if (result.success && result.flags) {
+            // GanttFlag[] → DraftFlag[] 변환
+            const now = new Date().toISOString();
+            const draftFlags: DraftFlag[] = result.flags.map((f) => ({
+              clientId: f.id, // 서버 ID를 clientId로 사용
+              serverId: f.id,
+              workspaceId: f.workspaceId,
+              title: f.title,
+              startDate: f.startDate,
+              endDate: f.endDate,
+              color: f.color,
+              orderIndex: f.orderIndex,
+              dirty: false,
+              deleted: false,
+              createdAtLocal: f.createdAt,
+              updatedAtLocal: f.updatedAt,
+            }));
+            set({ flags: draftFlags, isFlagsLoading: false });
+          } else {
+            console.error("[fetchFlags] Error:", result.error);
+            set({ isFlagsLoading: false });
+          }
+        } catch (err) {
+          console.error("[fetchFlags] Unexpected error:", err);
+          set({ isFlagsLoading: false });
+        }
+      },
+
+      startPendingFlag: (date) => {
+        set({
+          pendingFlag: { start: date, end: null },
+        });
+      },
+
+      endPendingFlag: (date) => {
+        const state = get();
+        const { start } = state.pendingFlag;
+        if (!start) {
+          set({ pendingFlag: { start: date, end: null } });
+          return;
+        }
+
+        let finalStart = start;
+        let finalEnd = date;
+        if (start > date) {
+          finalStart = date;
+          finalEnd = start;
+        }
+
+        set({
+          pendingFlag: { start: finalStart, end: finalEnd },
+        });
+      },
+
+      clearPendingFlag: () => {
+        set({
+          pendingFlag: { start: null, end: null },
+        });
+      },
+
+      selectFlag: (id) => {
+        const state = get();
+        const flag = id ? state.flags.find((f) => f.clientId === id && !f.deleted) : null;
+        
+        set({
+          selectedFlagId: id,
+          ui: {
+            ...state.ui,
+            selectedBarId: undefined,
+            highlightDateRange: flag ? {
+              startDate: flag.startDate,
+              endDate: flag.endDate,
+              type: "flag" as const,
+              color: flag.color || "#ef4444",
+            } : null,
+          },
+        });
+      },
+
+      // Flag 생성 (로컬 상태만 변경)
+      addFlag: (payload) => {
+        const state = get();
+        const now = new Date().toISOString();
+
+        // 현재 최대 orderIndex 계산
+        const maxOrderIndex = state.flags.reduce(
+          (max, f) => Math.max(max, f.orderIndex),
+          -1
+        );
+
+        const newFlag: DraftFlag = {
+          clientId: uuidv4(),
+          workspaceId: payload.workspaceId,
+          title: payload.title,
+          startDate: payload.startDate,
+          endDate: payload.endDate,
+          color: payload.color || null,
+          orderIndex: maxOrderIndex + 1,
+          dirty: true,
+          deleted: false,
+          createdAtLocal: now,
+          updatedAtLocal: now,
+        };
+
+        set({
+          flags: [...state.flags, newFlag].sort((a, b) => {
+            const startCompare = a.startDate.localeCompare(b.startDate);
+            if (startCompare !== 0) return startCompare;
+            return a.orderIndex - b.orderIndex;
+          }),
+          pendingFlag: { start: null, end: null },
+        });
+
+        return newFlag;
+      },
+
+      // Flag 수정 (로컬 상태만 변경)
+      updateFlagLocal: (clientId, updates) => {
+        const state = get();
+        const flagIndex = state.flags.findIndex((f) => f.clientId === clientId);
+        if (flagIndex === -1) return;
+
+        const updatedFlag: DraftFlag = {
+          ...state.flags[flagIndex],
+          ...updates,
+          dirty: true,
+          updatedAtLocal: new Date().toISOString(),
+        };
+
+        const newFlags = [...state.flags];
+        newFlags[flagIndex] = updatedFlag;
+
+        set({
+          flags: newFlags.sort((a, b) => {
+            const startCompare = a.startDate.localeCompare(b.startDate);
+            if (startCompare !== 0) return startCompare;
+            return a.orderIndex - b.orderIndex;
+          }),
+        });
+      },
+
+      // Flag 삭제 (soft delete)
+      deleteFlag: (clientId) => {
+        const state = get();
+        const newFlags = state.flags.map((f) =>
+          f.clientId === clientId
+            ? {
+                ...f,
+                deleted: true,
+                dirty: true,
+                updatedAtLocal: new Date().toISOString(),
+              }
+            : f
+        );
+
+        set({
+          flags: newFlags,
+          selectedFlagId:
+            state.selectedFlagId === clientId ? null : state.selectedFlagId,
+        });
+      },
+
+      // dirty flags 조회 (새로 생성되거나 수정된 것, 삭제되지 않은 것)
+      getDirtyFlags: () => get().flags.filter((f) => f.dirty && !f.deleted),
+
+      // deleted flags 조회 (삭제 표시된 것 중 serverId가 있는 것만)
+      getDeletedFlags: () => get().flags.filter((f) => f.deleted && f.serverId),
+
+      // Commit 후 flags dirty/deleted 정리
+      clearFlagDirtyFlags: () => {
+        const state = get();
+        // 삭제된 flag는 완전히 제거
+        // dirty 플래그만 false로
+        const newFlags = state.flags
+          .filter((f) => !f.deleted)
+          .map((f) => ({ ...f, dirty: false }));
+
+        set({ flags: newFlags });
+      },
+
+      // Flag 변경 사항 존재 여부
+      hasFlagChanges: () => {
+        return get().flags.some((f) => f.dirty);
+      },
+
+      // Flag 변경사항 폐기
+      discardFlagChanges: () => {
+        const state = get();
+        // 1. 새로 생성된 flag (serverId 없음)는 제거
+        // 2. 삭제 표시된 flag는 복원
+        // 3. 수정된 flag는 dirty 플래그만 제거
+        const newFlags = state.flags
+          .filter((f) => f.serverId !== undefined) // 새로 생성된 것 제거
+          .map((f) => ({
+            ...f,
+            deleted: false,
+            dirty: false,
+          }));
+
+        set({ flags: newFlags });
       },
     }),
     {
@@ -924,6 +1213,7 @@ export const useDraftStore = create<DraftStore>()(
       partialize: (state) => ({
         rows: state.rows,
         bars: state.bars,
+        flags: state.flags,
         ui: {
           zoom: state.ui.zoom,
           filters: state.ui.filters,
@@ -931,11 +1221,12 @@ export const useDraftStore = create<DraftStore>()(
         },
       }),
       merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<DraftState> | undefined;
+        const persisted = persistedState as Partial<DraftState & FlagState> | undefined;
         return {
           ...currentState,
           rows: persisted?.rows ?? currentState.rows,
           bars: persisted?.bars ?? currentState.bars,
+          flags: persisted?.flags ?? currentState.flags,
           ui: {
             ...currentState.ui,
             zoom: persisted?.ui?.zoom ?? currentState.ui.zoom,

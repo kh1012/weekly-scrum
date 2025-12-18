@@ -18,7 +18,8 @@ import { CommandPalette } from "./CommandPalette";
 import { HelpModal } from "./HelpModal";
 // FloatingDock은 GanttHeader로 통합됨
 import { Toast, ToastType } from "./Toast";
-import { commitFeaturePlans } from "./commitService";
+import { SaveProgressModal, SaveStep } from "./SaveProgressModal";
+import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
 
@@ -68,6 +69,11 @@ export function DraftGanttView({
     message?: string;
   }>({ isOpen: false, type: "success", title: "" });
 
+  // 저장 진행 상태 모달
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveSteps, setSaveSteps] = useState<SaveStep[]>([]);
+  const [saveComplete, setSaveComplete] = useState(false);
+
   // 드래그 중인 기간 정보 (FloatingDock에 표시)
   const [dragDateInfo, setDragDateInfo] = useState<{
     startDate: string;
@@ -85,8 +91,15 @@ export function DraftGanttView({
   const redo = useDraftStore((s) => s.redo);
   const bars = useDraftStore((s) => s.bars);
   const rows = useDraftStore((s) => s.rows);
+  const flags = useDraftStore((s) => s.flags);
   const isEditing = useDraftStore((s) => s.ui.isEditing);
   const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
+
+  // Flags 관련
+  const getDirtyFlags = useDraftStore((s) => s.getDirtyFlags);
+  const getDeletedFlags = useDraftStore((s) => s.getDeletedFlags);
+  const clearFlagDirtyFlags = useDraftStore((s) => s.clearFlagDirtyFlags);
+  const hasFlagChanges = useDraftStore((s) => s.hasFlagChanges());
 
   const {
     startEditing,
@@ -135,8 +148,9 @@ export function DraftGanttView({
   );
   const [rangeEnd, setRangeEnd] = useState<Date>(() => calculateRange(3).end);
 
-  // rangeMonths 변경 시 범위 업데이트
+  // rangeMonths 변경 시 범위 업데이트 (0은 커스텀 모드이므로 무시)
   useEffect(() => {
+    if (rangeMonths === 0) return; // 커스텀 모드에서는 calculateRange 호출하지 않음
     const { start, end } = calculateRange(rangeMonths);
     setRangeStart(start);
     setRangeEnd(end);
@@ -196,84 +210,174 @@ export function DraftGanttView({
     []
   );
 
-  // 커밋 핸들러
+  // 커밋 핸들러 - 프로그래스 모달과 함께 Flags/Plans 순차 저장
   const handleCommit = useCallback(async () => {
+    // 변경사항 확인
+    const dirtyBars = getDirtyBars();
+    const deletedBars = getDeletedBars();
+    const allBars = [...dirtyBars, ...deletedBars];
+
+    const dirtyFlags = getDirtyFlags();
+    const deletedFlags = getDeletedFlags();
+    const allFlags = [...dirtyFlags, ...deletedFlags];
+
+    if (allBars.length === 0 && allFlags.length === 0) {
+      showToast("info", "변경사항 없음", "저장할 변경사항이 없습니다.");
+      return;
+    }
+
+    // 저장 단계 초기화
+    const steps: SaveStep[] = [];
+
+    if (allFlags.length > 0) {
+      steps.push({
+        id: "flags",
+        label: `Flag 저장 (${allFlags.length}개)`,
+        status: "pending",
+      });
+    }
+
+    if (allBars.length > 0) {
+      steps.push({
+        id: "plans",
+        label: `기능 계획 저장 (${allBars.length}개)`,
+        status: "pending",
+      });
+    }
+
+    setSaveSteps(steps);
+    setSaveComplete(false);
+    setShowSaveModal(true);
     setIsCommitting(true);
 
     try {
-      const dirtyBars = getDirtyBars();
-      const deletedBars = getDeletedBars();
-      const allBars = [...dirtyBars, ...deletedBars];
+      // 1. Flags 저장
+      if (allFlags.length > 0) {
+        setSaveSteps((prev) =>
+          prev.map((s) =>
+            s.id === "flags" ? { ...s, status: "in_progress" as const } : s
+          )
+        );
 
-      if (allBars.length === 0) {
-        showToast("info", "변경사항 없음", "저장할 변경사항이 없습니다.");
-        setIsCommitting(false);
-        return;
+        const flagResult = await commitFlags({
+          workspaceId,
+          flags: allFlags,
+        });
+
+        if (flagResult.success) {
+          const flagCount =
+            (flagResult.createdCount || 0) +
+            (flagResult.updatedCount || 0) +
+            (flagResult.deletedCount || 0);
+
+          setSaveSteps((prev) =>
+            prev.map((s) =>
+              s.id === "flags"
+                ? { ...s, status: "success" as const, count: flagCount }
+                : s
+            )
+          );
+          clearFlagDirtyFlags();
+        } else {
+          setSaveSteps((prev) =>
+            prev.map((s) =>
+              s.id === "flags"
+                ? { ...s, status: "error" as const, error: flagResult.error }
+                : s
+            )
+          );
+        }
       }
 
-      const payload = {
-        workspaceId,
-        plans: allBars.map((bar) => {
-          const row = rows.find((r) => r.rowId === bar.rowId);
-          return {
-            clientUid: bar.clientUid,
-            serverId: bar.serverId,
-            domain: row?.domain,
-            project: row?.project || "",
-            module: row?.module || "",
-            feature: row?.feature || "",
-            title: bar.title,
-            stage: bar.stage,
-            status: bar.status,
-            start_date: bar.startDate,
-            end_date: bar.endDate,
-            assignees: bar.assignees,
-            deleted: bar.deleted || false,
-          };
-        }),
-      };
-
-      const result = await commitFeaturePlans(payload);
-
-      if (result.success) {
-        clearDirtyFlags();
-        // localStorage 캐시는 유지 (편집 모드 유지를 위해)
-
-        const count = (result.upsertedCount || 0) + (result.deletedCount || 0);
-        showToast("success", "저장 완료!", `${count}개 계획이 저장되었습니다.`);
-
-        // 편집 모드 유지 - 새로고침하지 않음
-      } else {
-        showToast(
-          "error",
-          "저장 실패",
-          result.error || "알 수 없는 오류가 발생했습니다."
+      // 2. Plans 저장
+      if (allBars.length > 0) {
+        setSaveSteps((prev) =>
+          prev.map((s) =>
+            s.id === "plans" ? { ...s, status: "in_progress" as const } : s
+          )
         );
+
+        const payload = {
+          workspaceId,
+          plans: allBars.map((bar) => {
+            const row = rows.find((r) => r.rowId === bar.rowId);
+            return {
+              clientUid: bar.clientUid,
+              serverId: bar.serverId,
+              domain: row?.domain,
+              project: row?.project || "",
+              module: row?.module || "",
+              feature: row?.feature || "",
+              title: bar.title,
+              stage: bar.stage,
+              status: bar.status,
+              start_date: bar.startDate,
+              end_date: bar.endDate,
+              assignees: bar.assignees,
+              deleted: bar.deleted || false,
+            };
+          }),
+        };
+
+        const planResult = await commitFeaturePlans(payload);
+
+        if (planResult.success) {
+          const planCount =
+            (planResult.upsertedCount || 0) + (planResult.deletedCount || 0);
+
+          setSaveSteps((prev) =>
+            prev.map((s) =>
+              s.id === "plans"
+                ? { ...s, status: "success" as const, count: planCount }
+                : s
+            )
+          );
+          clearDirtyFlags();
+        } else {
+          setSaveSteps((prev) =>
+            prev.map((s) =>
+              s.id === "plans"
+                ? { ...s, status: "error" as const, error: planResult.error }
+                : s
+            )
+          );
+        }
       }
     } catch (err) {
       console.error("[handleCommit] Error:", err);
-      showToast(
-        "error",
-        "저장 실패",
-        err instanceof Error ? err.message : "저장 중 오류가 발생했습니다."
+      // 현재 진행 중인 단계를 에러로 표시
+      setSaveSteps((prev) =>
+        prev.map((s) =>
+          s.status === "in_progress"
+            ? {
+                ...s,
+                status: "error" as const,
+                error:
+                  err instanceof Error ? err.message : "알 수 없는 오류 발생",
+              }
+            : s
+        )
       );
     } finally {
       setIsCommitting(false);
+      setSaveComplete(true);
     }
   }, [
     workspaceId,
     getDirtyBars,
     getDeletedBars,
+    getDirtyFlags,
+    getDeletedFlags,
     rows,
     clearDirtyFlags,
+    clearFlagDirtyFlags,
     showToast,
   ]);
 
-  // 변경사항 폐기 핸들러
+  // 변경사항 폐기 핸들러 (토스트는 onStopSuccess에서 처리)
   const handleDiscardChanges = useCallback(() => {
     discardAllChanges();
-    showToast("info", "변경사항 폐기됨", "모든 변경사항이 취소되었습니다.");
-  }, [discardAllChanges, showToast]);
+  }, [discardAllChanges]);
 
   // 새로고침 핸들러 (락 상태 동기화)
   const handleRefresh = useCallback(async () => {
@@ -439,6 +543,45 @@ export function DraftGanttView({
           setRangeStart(start);
           setRangeEnd(end);
         }}
+        onLockError={(type, lockedByName) => {
+          if (type === "locked_by_other") {
+            showToast(
+              "warning",
+              "편집할 수 없음",
+              `현재 ${
+                lockedByName || "다른 사용자"
+              }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
+            );
+          } else {
+            showToast(
+              "error",
+              "작업을 시작할 수 없습니다",
+              "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
+            );
+          }
+        }}
+        onStartSuccess={() => {
+          showToast(
+            "success",
+            "편집 모드 시작",
+            "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
+          );
+        }}
+        onStopSuccess={(discardedCount) => {
+          if (discardedCount > 0) {
+            showToast(
+              "info",
+              "작업 종료",
+              `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
+            );
+          } else {
+            showToast(
+              "success",
+              "작업 종료",
+              "작업이 정상적으로 종료되었습니다."
+            );
+          }
+        }}
       />
 
       {/* 메인 영역 - border 없이 꽉 차게 */}
@@ -454,6 +597,9 @@ export function DraftGanttView({
           }}
           showAddRowModal={showAddRowModal}
           onShowAddRowModal={setShowAddRowModal}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          workspaceId={workspaceId}
         />
 
         {/* 우측 Timeline */}
@@ -463,6 +609,7 @@ export function DraftGanttView({
           isEditing={isEditing}
           isAdmin={true}
           members={members}
+          workspaceId={workspaceId}
           onDragDateChange={setDragDateInfo}
           onAction={extendLockIfNeeded}
         />
@@ -472,13 +619,79 @@ export function DraftGanttView({
       <CommandPalette
         isOpen={showCommandPalette}
         onClose={() => setShowCommandPalette(false)}
-        onStartEditing={startEditing}
-        onStopEditing={stopEditing}
+        onStartEditing={async () => {
+          const success = await startEditing();
+          if (success) {
+            showToast(
+              "success",
+              "편집 모드 시작",
+              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
+            );
+          } else {
+            const currentLockState = useDraftStore.getState().ui.lockState;
+            if (currentLockState?.isLocked && !currentLockState?.isMyLock) {
+              showToast(
+                "warning",
+                "편집할 수 없음",
+                `현재 ${
+                  currentLockState.lockedByName || "다른 사용자"
+                }님이 작업 중입니다.`
+              );
+            } else {
+              showToast(
+                "error",
+                "작업을 시작할 수 없습니다",
+                "네트워크 상태를 확인하고 다시 시도해주세요."
+              );
+            }
+          }
+          return success;
+        }}
+        onStopEditing={async () => {
+          // 현재 변경사항 개수 계산
+          const dirtyBars = getDirtyBars();
+          const deletedBars = getDeletedBars();
+          const dirtyFlags = getDirtyFlags();
+          const deletedFlags = getDeletedFlags();
+          const countToDiscard =
+            dirtyBars.length +
+            deletedBars.length +
+            dirtyFlags.length +
+            deletedFlags.length;
+
+          // 변경사항 폐기
+          discardAllChanges();
+          await stopEditing();
+
+          // 토스트 메시지 표시
+          if (countToDiscard > 0) {
+            showToast(
+              "info",
+              "작업 종료",
+              `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`
+            );
+          } else {
+            showToast(
+              "success",
+              "작업 종료",
+              "작업이 정상적으로 종료되었습니다."
+            );
+          }
+        }}
         onCommit={handleCommit}
         onOpenHelp={() => setShowHelp(true)}
         onAddRow={() => setShowAddRowModal(true)}
         isEditing={isEditing}
         canEdit={canEdit}
+        rangeMonths={rangeMonths}
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        onRangeMonthsChange={setRangeMonths}
+        onCustomRangeChange={(start, end) => {
+          setRangeMonths(0);
+          setRangeStart(start);
+          setRangeEnd(end);
+        }}
       />
 
       {/* Help Modal */}
@@ -491,6 +704,14 @@ export function DraftGanttView({
         type={toast.type}
         title={toast.title}
         message={toast.message}
+      />
+
+      {/* Save Progress Modal */}
+      <SaveProgressModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        steps={saveSteps}
+        isComplete={saveComplete}
       />
     </div>
   );

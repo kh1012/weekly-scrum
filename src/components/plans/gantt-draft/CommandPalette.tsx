@@ -31,9 +31,13 @@ interface Command {
   label: string;
   shortcut?: string;
   icon: React.ReactNode;
-  action: () => void;
+  action: () => void | Promise<void>;
   disabled?: boolean;
-  category: "작업" | "편집" | "보기" | "도움말";
+  category: "작업" | "편집" | "보기" | "기간 설정" | "도움말";
+  /** true이면 action 실행 후 팔레트를 닫지 않음 */
+  keepOpen?: boolean;
+  /** true이면 로딩 스피너 표시 (async 작업) */
+  showLoading?: boolean;
 }
 
 interface CommandPaletteProps {
@@ -46,6 +50,12 @@ interface CommandPaletteProps {
   onAddRow: () => void;
   isEditing: boolean;
   canEdit: boolean;
+  /** 기간 설정 */
+  rangeMonths?: number;
+  rangeStart?: Date;
+  rangeEnd?: Date;
+  onRangeMonthsChange?: (months: number) => void;
+  onCustomRangeChange?: (start: Date, end: Date) => void;
 }
 
 export function CommandPalette({
@@ -58,12 +68,34 @@ export function CommandPalette({
   onAddRow,
   isEditing,
   canEdit,
+  rangeMonths = 3,
+  rangeStart,
+  rangeEnd,
+  onRangeMonthsChange,
+  onCustomRangeChange,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showCustomRange, setShowCustomRange] = useState(false);
+  const [loadingCommandId, setLoadingCommandId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+  
+  // 커스텀 범위 입력 상태
+  const currentYear = new Date().getFullYear();
+  const [customStartYear, setCustomStartYear] = useState(
+    rangeStart ? rangeStart.getFullYear() : currentYear
+  );
+  const [customStartMonth, setCustomStartMonth] = useState(
+    rangeStart ? rangeStart.getMonth() + 1 : new Date().getMonth() + 1
+  );
+  const [customEndYear, setCustomEndYear] = useState(
+    rangeEnd ? rangeEnd.getFullYear() : currentYear
+  );
+  const [customEndMonth, setCustomEndMonth] = useState(
+    rangeEnd ? rangeEnd.getMonth() + 1 : new Date().getMonth() + 1
+  );
 
   const isMac = useIsMac();
 
@@ -104,27 +136,36 @@ export function CommandPalette({
         label: "작업 시작",
         shortcut: "",
         icon: <PlayIcon className="w-4 h-4" />,
-        action: () => onStartEditing(),
+        action: async () => {
+          await onStartEditing();
+        },
         disabled: isEditing || !canEdit,
         category: "작업",
+        showLoading: true,
       },
       {
         id: "stop-editing",
         label: "작업 종료",
         shortcut: "",
         icon: <StopIcon className="w-4 h-4" />,
-        action: () => onStopEditing(),
+        action: async () => {
+          await onStopEditing();
+        },
         disabled: !isEditing,
         category: "작업",
+        showLoading: true,
       },
       {
         id: "save",
         label: "저장 (Commit)",
         shortcut: "⌘S",
         icon: <SaveIcon className="w-4 h-4" />,
-        action: () => onCommit(),
+        action: async () => {
+          await onCommit();
+        },
         disabled: !isEditing || !hasUnsavedChanges,
         category: "작업",
+        showLoading: true,
       },
       {
         id: "add-row",
@@ -192,6 +233,48 @@ export function CommandPalette({
         action: resetFilters,
         category: "보기",
       },
+      // 기간 설정
+      {
+        id: "range-3",
+        label: `기간: 3개월${rangeMonths === 3 ? " ✓" : ""}`,
+        shortcut: "",
+        icon: <CalendarIcon className="w-4 h-4" />,
+        action: () => onRangeMonthsChange?.(3),
+        category: "기간 설정",
+      },
+      {
+        id: "range-4",
+        label: `기간: 4개월${rangeMonths === 4 ? " ✓" : ""}`,
+        shortcut: "",
+        icon: <CalendarIcon className="w-4 h-4" />,
+        action: () => onRangeMonthsChange?.(4),
+        category: "기간 설정",
+      },
+      {
+        id: "range-5",
+        label: `기간: 5개월${rangeMonths === 5 ? " ✓" : ""}`,
+        shortcut: "",
+        icon: <CalendarIcon className="w-4 h-4" />,
+        action: () => onRangeMonthsChange?.(5),
+        category: "기간 설정",
+      },
+      {
+        id: "range-6",
+        label: `기간: 6개월${rangeMonths === 6 ? " ✓" : ""}`,
+        shortcut: "",
+        icon: <CalendarIcon className="w-4 h-4" />,
+        action: () => onRangeMonthsChange?.(6),
+        category: "기간 설정",
+      },
+      {
+        id: "range-custom",
+        label: `기간: 직접 선택${rangeMonths === 0 ? " ✓" : ""}`,
+        shortcut: "",
+        icon: <CalendarIcon className="w-4 h-4" />,
+        action: () => setShowCustomRange(true),
+        category: "기간 설정",
+        keepOpen: true,
+      },
       // 도움말
       {
         id: "help",
@@ -221,6 +304,8 @@ export function CommandPalette({
       resetFilters,
       setZoom,
       onOpenHelp,
+      rangeMonths,
+      onRangeMonthsChange,
     ]
   );
 
@@ -265,14 +350,55 @@ export function CommandPalette({
     return groups;
   }, [filteredCommands]);
 
+  // 명령 실행 함수
+  const executeCommand = useCallback(
+    async (cmd: Command) => {
+      if (cmd.disabled || loadingCommandId !== null) return;
+
+      // 로딩 표시가 필요한 명령
+      if (cmd.showLoading) {
+        setLoadingCommandId(cmd.id);
+        try {
+          await cmd.action();
+        } finally {
+          setLoadingCommandId(null);
+          if (!cmd.keepOpen) {
+            onClose();
+          }
+        }
+      } else {
+        const result = cmd.action();
+        if (!cmd.keepOpen) {
+          if (result instanceof Promise) {
+            result.finally(() => onClose());
+          } else {
+            onClose();
+          }
+        }
+      }
+    },
+    [loadingCommandId, onClose]
+  );
+
   // 열릴 때 초기화
   useEffect(() => {
     if (isOpen) {
       setQuery("");
       setSelectedIndex(0);
+      setShowCustomRange(false);
+      setLoadingCommandId(null);
+      // 커스텀 범위 값도 현재 설정으로 초기화
+      if (rangeStart) {
+        setCustomStartYear(rangeStart.getFullYear());
+        setCustomStartMonth(rangeStart.getMonth() + 1);
+      }
+      if (rangeEnd) {
+        setCustomEndYear(rangeEnd.getFullYear());
+        setCustomEndMonth(rangeEnd.getMonth() + 1);
+      }
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isOpen]);
+  }, [isOpen, rangeStart, rangeEnd]);
 
   // 키보드 네비게이션
   const handleKeyDown = useCallback(
@@ -294,10 +420,10 @@ export function CommandPalette({
         );
       } else if (e.key === "Enter") {
         e.preventDefault();
+        e.stopPropagation();
         const cmd = filteredCommands[selectedIndex];
-        if (cmd && !cmd.disabled) {
-          cmd.action();
-          onClose();
+        if (cmd && !cmd.disabled && loadingCommandId === null) {
+          executeCommand(cmd);
         }
       }
     },
@@ -354,6 +480,7 @@ export function CommandPalette({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="명령어 검색..."
             className="flex-1 bg-transparent outline-none text-sm"
             style={{ color: "var(--notion-text)" }}
@@ -369,68 +496,164 @@ export function CommandPalette({
           </span>
         </div>
 
-        {/* 커맨드 목록 */}
-        <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
-          {Object.entries(groupedCommands).map(([category, cmds]) => (
-            <div key={category}>
-              <div
-                className="px-4 py-1.5 text-xs font-medium"
+        {/* 커맨드 목록 또는 커스텀 범위 입력 */}
+        {showCustomRange ? (
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+                기간 직접 선택
+              </span>
+              <button
+                onClick={() => setShowCustomRange(false)}
+                className="text-xs px-2 py-1 rounded hover:bg-gray-100"
                 style={{ color: "var(--notion-text-muted)" }}
               >
-                {category}
+                ← 뒤로
+              </button>
+            </div>
+
+            {/* 시작월 */}
+            <div>
+              <label className="block text-xs font-medium mb-2" style={{ color: "var(--notion-text-muted)" }}>
+                시작월
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={customStartYear}
+                  onChange={(e) => setCustomStartYear(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                >
+                  {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map((y) => (
+                    <option key={y} value={y}>{y}년</option>
+                  ))}
+                </select>
+                <select
+                  value={customStartMonth}
+                  onChange={(e) => setCustomStartMonth(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={m}>{m}월</option>
+                  ))}
+                </select>
               </div>
-              {cmds.map((cmd) => {
-                const idx = flatIndex++;
-                const isSelected = idx === selectedIndex;
-
-                return (
-                  <button
-                    key={cmd.id}
-                    ref={(el) => {
-                      if (el) itemRefs.current.set(idx, el);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
-                      isSelected
-                        ? "bg-blue-500/10"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
-                    style={{ color: "var(--notion-text)" }}
-                    onClick={() => {
-                      cmd.action();
-                      onClose();
-                    }}
-                    onMouseEnter={() => setSelectedIndex(idx)}
-                  >
-                    <span style={{ color: "var(--notion-text-muted)" }}>
-                      {cmd.icon}
-                    </span>
-                    <span className="flex-1 text-sm">{cmd.label}</span>
-                    {cmd.shortcut && (
-                      <span
-                        className="text-xs px-1.5 py-0.5 rounded font-mono"
-                        style={{
-                          background: "var(--notion-bg-tertiary)",
-                          color: "var(--notion-text-muted)",
-                        }}
-                      >
-                        {formatShortcut(cmd.shortcut)}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
             </div>
-          ))}
 
-          {filteredCommands.length === 0 && (
-            <div
-              className="px-4 py-8 text-center text-sm"
-              style={{ color: "var(--notion-text-muted)" }}
+            {/* 종료월 */}
+            <div>
+              <label className="block text-xs font-medium mb-2" style={{ color: "var(--notion-text-muted)" }}>
+                종료월
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={customEndYear}
+                  onChange={(e) => setCustomEndYear(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                >
+                  {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map((y) => (
+                    <option key={y} value={y}>{y}년</option>
+                  ))}
+                </select>
+                <select
+                  value={customEndMonth}
+                  onChange={(e) => setCustomEndMonth(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={m}>{m}월</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* 적용 버튼 */}
+            <button
+              onClick={() => {
+                const start = new Date(customStartYear, customStartMonth - 1, 1);
+                const end = new Date(customEndYear, customEndMonth, 0); // 해당 월의 마지막 날
+                onCustomRangeChange?.(start, end);
+                setShowCustomRange(false);
+                onClose();
+              }}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-md"
+              style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}
             >
-              검색 결과가 없습니다
-            </div>
-          )}
-        </div>
+              ✓ 적용
+            </button>
+          </div>
+        ) : (
+          <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
+            {Object.entries(groupedCommands).map(([category, cmds]) => (
+              <div key={category}>
+                <div
+                  className="px-4 py-1.5 text-xs font-medium"
+                  style={{ color: "var(--notion-text-muted)" }}
+                >
+                  {category}
+                </div>
+                {cmds.map((cmd) => {
+                  const idx = flatIndex++;
+                  const isSelected = idx === selectedIndex;
+                  const isLoading = loadingCommandId === cmd.id;
+
+                  return (
+                    <button
+                      key={cmd.id}
+                      ref={(el) => {
+                        if (el) itemRefs.current.set(idx, el);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
+                        isSelected
+                          ? "bg-blue-500/10"
+                          : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                      } ${isLoading ? "opacity-70 cursor-wait" : ""}`}
+                      style={{ color: "var(--notion-text)" }}
+                      onClick={() => executeCommand(cmd)}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                      disabled={isLoading || loadingCommandId !== null}
+                    >
+                      <span style={{ color: "var(--notion-text-muted)" }}>
+                        {isLoading ? (
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          cmd.icon
+                        )}
+                      </span>
+                      <span className="flex-1 text-sm">{cmd.label}</span>
+                      {isLoading && (
+                        <span className="text-xs text-gray-400">처리 중...</span>
+                      )}
+                      {!isLoading && cmd.shortcut && (
+                        <span
+                          className="text-xs px-1.5 py-0.5 rounded font-mono"
+                          style={{
+                            background: "var(--notion-bg-tertiary)",
+                            color: "var(--notion-text-muted)",
+                          }}
+                        >
+                          {formatShortcut(cmd.shortcut)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+
+            {filteredCommands.length === 0 && (
+              <div
+                className="px-4 py-8 text-center text-sm"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
+                검색 결과가 없습니다
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 하단 힌트 */}
         <div

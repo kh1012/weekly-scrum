@@ -8,7 +8,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
 import { revalidatePath } from "next/cache";
-import type { CommitPayload } from "./types";
+import type { CommitPayload, DraftFlag } from "./types";
 
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 
@@ -328,6 +328,135 @@ export async function fetchFeaturePlans(
     return { success: true, plans };
   } catch (err) {
     console.error("[fetchFeaturePlans] Unexpected error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
+    };
+  }
+}
+
+/**
+ * Flag 커밋 결과 타입
+ */
+interface CommitFlagsResult {
+  success: boolean;
+  error?: string;
+  createdCount?: number;
+  updatedCount?: number;
+  deletedCount?: number;
+}
+
+/**
+ * Flags 벌크 커밋
+ * - dirty/deleted flags만 전송
+ * - clientId 기준 upsert
+ */
+export async function commitFlags(payload: {
+  workspaceId: string;
+  flags: DraftFlag[];
+}): Promise<CommitFlagsResult> {
+  try {
+    // 권한 확인
+    const hasAccess = await isAdminOrLeader();
+    if (!hasAccess) {
+      return { success: false, error: "권한이 없습니다. 관리자만 저장할 수 있습니다." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    // 데이터 검증
+    if (!payload.flags || payload.flags.length === 0) {
+      return { success: true, createdCount: 0, updatedCount: 0, deletedCount: 0 };
+    }
+
+    // 삭제 대상과 업서트 대상 분리
+    const toDelete = payload.flags.filter((f) => f.deleted && f.serverId);
+    const toCreate = payload.flags.filter((f) => !f.deleted && !f.serverId && f.dirty);
+    const toUpdate = payload.flags.filter((f) => !f.deleted && f.serverId && f.dirty);
+
+    let deletedCount = 0;
+    let createdCount = 0;
+    let updatedCount = 0;
+
+    const workspaceId = payload.workspaceId || DEFAULT_WORKSPACE_ID;
+
+    // 삭제 처리
+    for (const flag of toDelete) {
+      const { error: deleteError } = await supabase
+        .from("gantt_flags")
+        .delete()
+        .eq("id", flag.serverId);
+
+      if (deleteError) {
+        console.error("[commitFlags] Delete error:", deleteError, { flag });
+        return { success: false, error: `Flag 삭제 오류: ${flag.title}` };
+      }
+      deletedCount++;
+    }
+
+    // 생성 처리
+    for (const flag of toCreate) {
+      const { error: insertError } = await supabase
+        .from("gantt_flags")
+        .insert({
+          workspace_id: workspaceId,
+          title: flag.title,
+          start_date: flag.startDate,
+          end_date: flag.endDate,
+          color: flag.color || null,
+          order_index: flag.orderIndex,
+          created_by: user.id,
+        });
+
+      if (insertError) {
+        console.error("[commitFlags] Insert error:", insertError, { flag });
+        return { success: false, error: `Flag 생성 오류: ${flag.title}` };
+      }
+      createdCount++;
+    }
+
+    // 수정 처리
+    for (const flag of toUpdate) {
+      const { error: updateError } = await supabase
+        .from("gantt_flags")
+        .update({
+          title: flag.title,
+          start_date: flag.startDate,
+          end_date: flag.endDate,
+          color: flag.color || null,
+          order_index: flag.orderIndex,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", flag.serverId);
+
+      if (updateError) {
+        console.error("[commitFlags] Update error:", updateError, { flag });
+        return { success: false, error: `Flag 수정 오류: ${flag.title}` };
+      }
+      updatedCount++;
+    }
+
+    // 경로 재검증
+    revalidatePath("/plans");
+    revalidatePath("/plans/gantt");
+    revalidatePath("/admin/plans");
+
+    return {
+      success: true,
+      createdCount,
+      updatedCount,
+      deletedCount,
+    };
+  } catch (err) {
+    console.error("[commitFlags] Unexpected error:", err);
     return {
       success: false,
       error: err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",

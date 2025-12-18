@@ -29,13 +29,196 @@ import { AddRowModal } from "./AddRowModal";
 import {
   buildFlatTree,
   calculateNodePositions,
+  getNodeDateRange,
   ROW_HEIGHT,
   LANE_HEIGHT,
 } from "./laneLayout";
 import type { FlatTreeNode } from "./laneLayout";
+import { FLAG_LANE_HEIGHT, packFlagsIntoLanes } from "./flagLayout";
+import { FlagIcon } from "@/components/common/Icons";
+import type { DraftFlag, HighlightDateRange } from "./types";
+import { FlagDocPanel } from "./FlagDocPanel";
 
 export const TREE_WIDTH = 280;
 const HEADER_HEIGHT = 76; // 38px + 38px (검색 + 필터/버튼, p-2 패딩 포함)
+
+// Flags 팝오버 컴포넌트
+interface FlagsPopoverProps {
+  flags: DraftFlag[];
+  onClose: () => void;
+  onFlagClick: (flag: DraftFlag) => void;
+  onOpenDoc: (flag: DraftFlag) => void;
+  isEditing: boolean;
+  anchorRect: DOMRect | null;
+}
+
+function FlagsPopover({
+  flags,
+  onClose,
+  onFlagClick,
+  onOpenDoc,
+  isEditing,
+  anchorRect,
+}: FlagsPopoverProps) {
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // deleted 제외 및 날짜 순 정렬
+  const sortedFlags = flags
+    .filter((f) => !f.deleted)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  // 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    };
+
+    // 약간의 딜레이 후 이벤트 등록 (클릭으로 열릴 때 바로 닫히는 것 방지)
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
+
+  // ESC 키로 닫기
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  if (!anchorRect) return null;
+
+  return createPortal(
+    <div
+      ref={popoverRef}
+      className="fixed z-[9999] rounded-xl shadow-2xl overflow-hidden"
+      style={{
+        top: anchorRect.bottom + 8,
+        left: Math.max(16, anchorRect.left - 100), // 좌측으로 확장
+        width: Math.max(400, anchorRect.width + 200), // 최소 400px
+        maxWidth: "min(500px, calc(100vw - 32px))",
+        background: "white",
+        border: "1px solid rgba(0, 0, 0, 0.08)",
+        boxShadow:
+          "0 20px 60px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1)",
+        maxHeight: "min(400px, calc(100vh - 200px))",
+      }}
+    >
+      {/* 헤더 */}
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{
+          background: "linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%)",
+          borderBottom: "1px solid rgba(239, 68, 68, 0.2)",
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <FlagIcon className="w-4 h-4 text-red-500" />
+          <span className="text-sm font-semibold text-red-700">
+            Flags ({sortedFlags.length})
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+        >
+          <XIcon className="w-3 h-3 text-red-500" />
+        </button>
+      </div>
+
+      {/* Flag 목록 */}
+      <div className="overflow-y-auto" style={{ maxHeight: 320 }}>
+        {sortedFlags.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-gray-400">
+            {isEditing
+              ? "Flag가 없습니다. Timeline에서 더블클릭하여 추가하세요."
+              : "Flag가 없습니다."}
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {sortedFlags.map((flag) => {
+              const isPointFlag = flag.startDate === flag.endDate;
+              const flagColor = flag.color || "#ef4444";
+
+              return (
+                <div
+                  key={flag.clientId}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                >
+                  {/* 타임라인 강조 버튼 */}
+                  <button
+                    onClick={() => onFlagClick(flag)}
+                    className="flex-1 flex items-center gap-3 text-left"
+                  >
+                    {/* 색상 표시 */}
+                    <div
+                      className="w-3 h-10 rounded-full flex-shrink-0"
+                      style={{ background: flagColor }}
+                    />
+
+                    {/* 정보 */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-gray-800 truncate">
+                        {flag.title}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {isPointFlag ? (
+                          <span>{flag.startDate}</span>
+                        ) : (
+                          <span>
+                            {flag.startDate} → {flag.endDate}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 타입 뱃지 */}
+                    <span
+                      className="px-2 py-1 text-[10px] font-bold rounded flex-shrink-0"
+                      style={{
+                        background: `${flagColor}20`,
+                        color: flagColor,
+                      }}
+                    >
+                      {isPointFlag ? "포인트" : "범위"}
+                    </span>
+                  </button>
+
+                  {/* 계획 보기 버튼 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenDoc(flag);
+                    }}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-blue-100 transition-colors flex-shrink-0 border border-gray-200"
+                    title="계획 데이터 보기"
+                  >
+                    <span className="text-base">📄</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 interface DraftTreePanelProps {
   isEditing: boolean;
@@ -51,6 +234,26 @@ interface DraftTreePanelProps {
   /** AddRowModal 표시 상태 (상위에서 관리) */
   showAddRowModal?: boolean;
   onShowAddRowModal?: (show: boolean) => void;
+  /** 타임라인 표시 범위 (개수 필터링용) */
+  rangeStart?: Date;
+  rangeEnd?: Date;
+  /** 워크스페이스 ID (FlagDocPanel용) */
+  workspaceId?: string;
+}
+
+/**
+ * 두 날짜 범위가 겹치는지 확인
+ */
+function isDateRangeOverlapping(
+  start1: string,
+  end1: string,
+  rangeStart: Date,
+  rangeEnd: Date
+): boolean {
+  const s1 = new Date(start1);
+  const e1 = new Date(end1);
+  // 범위가 겹치려면: start1 <= rangeEnd AND end1 >= rangeStart
+  return s1 <= rangeEnd && e1 >= rangeStart;
 }
 
 export function DraftTreePanel({
@@ -60,7 +263,15 @@ export function DraftTreePanel({
   onScroll,
   showAddRowModal: externalShowAddRowModal,
   onShowAddRowModal,
+  rangeStart,
+  rangeEnd,
+  workspaceId,
 }: DraftTreePanelProps) {
+  // FlagDocPanel 상태
+  const [showFlagDoc, setShowFlagDoc] = useState(false);
+  const [selectedDocFlag, setSelectedDocFlag] = useState<DraftFlag | null>(
+    null
+  );
   const allRows = useDraftStore((s) => s.rows);
   const allBars = useDraftStore((s) => s.bars);
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
@@ -82,6 +293,30 @@ export function DraftTreePanel({
 
   // 외부에서 관리되지 않는 경우 로컬 상태 사용
   const [localShowAddRowModal, setLocalShowAddRowModal] = useState(false);
+
+  // Flags 관련 상태
+  const flags = useDraftStore((s) => s.flags);
+  const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
+  const selectFlag = useDraftStore((s) => s.selectFlag);
+  const [showFlagsPopover, setShowFlagsPopover] = useState(false);
+  const [flagsAnchorRect, setFlagsAnchorRect] = useState<DOMRect | null>(null);
+  const flagsSectionRef = useRef<HTMLDivElement>(null);
+
+  // Flag Lane 높이 계산 (FlagLane과 동기화)
+  const flagLaneHeight = useMemo(() => {
+    if (!rangeStart || !rangeEnd) return FLAG_LANE_HEIGHT;
+    const { laneCount } = packFlagsIntoLanes({
+      flags,
+      rangeStart,
+      rangeEnd,
+      dayWidth: 40, // 기본값 (실제 dayWidth와 동일해야 하지만 높이 계산에는 영향 없음)
+    });
+    return Math.max(1, laneCount) * FLAG_LANE_HEIGHT;
+  }, [flags, rangeStart, rangeEnd]);
+
+  // 기간 강조 관련
+  const highlightDateRange = useDraftStore((s) => s.ui.highlightDateRange);
+  const setHighlightDateRange = useDraftStore((s) => s.setHighlightDateRange);
 
   // 편집 상태
   const [editingNode, setEditingNode] = useState<{
@@ -656,15 +891,23 @@ export function DraftTreePanel({
     const hasChildren = node.type !== "feature";
     const isSelected = node.row?.rowId === selectedRowId;
 
-    // feature의 bar 개수
-    const barCount = node.bars?.length || 0;
+    // feature의 bar 개수 (범위 내 bar만 카운트)
+    const barCount = (() => {
+      if (!node.bars) return 0;
+      if (!rangeStart || !rangeEnd) return node.bars.length;
+      return node.bars.filter((bar) =>
+        isDateRangeOverlapping(bar.startDate, bar.endDate, rangeStart, rangeEnd)
+      ).length;
+    })();
 
     const handleDelete = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (!node.row) return;
 
+      // 전체 bar 개수 (삭제 확인용)
+      const totalBarCount = node.bars?.length || 0;
       const confirmed = confirm(
-        `"${node.label}" 기능과 관련된 ${barCount}개의 계획을 삭제하시겠습니까?`
+        `"${node.label}" 기능과 관련된 ${totalBarCount}개의 계획을 삭제하시겠습니까?`
       );
       if (confirmed) {
         deleteRow(node.row.rowId);
@@ -678,6 +921,37 @@ export function DraftTreePanel({
         selectRow(node.row.rowId);
       }
     };
+
+    // 강조 버튼 클릭 핸들러
+    const handleHighlightClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+
+      // 현재 강조 중인 노드를 다시 클릭하면 해제
+      if (highlightDateRange?.nodeId === node.id) {
+        setHighlightDateRange(null);
+        return;
+      }
+
+      // 노드의 기간 범위를 강조 표시
+      const dateRange = getNodeDateRange(node, filteredRows, activeBars);
+      if (dateRange) {
+        setHighlightDateRange({
+          startDate: dateRange.minStart,
+          endDate: dateRange.maxEnd,
+          type: "node",
+          color:
+            node.type === "project"
+              ? "#f59e0b"
+              : node.type === "module"
+              ? "#8b5cf6"
+              : "#10b981",
+          nodeId: node.id,
+        });
+      }
+    };
+
+    // 현재 노드가 강조 중인지 확인
+    const isHighlighted = highlightDateRange?.nodeId === node.id;
 
     const handleDoubleClick = (e: React.MouseEvent) => {
       if (!isEditing) return;
@@ -760,13 +1034,13 @@ export function DraftTreePanel({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, node)}
         onDragEnd={handleDragEnd}
-        className={`absolute left-0 right-0 flex items-center gap-1.5 group transition-all duration-150 ${
+        className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 ${
           isSelected ? "" : "hover:translate-x-0.5"
         } ${isDragging ? "opacity-50" : ""}`}
         style={{
           top,
           height,
-          paddingLeft: `${10 + node.depth * 14}px`,
+          paddingLeft: 8,
           paddingRight: 8,
           background: isSelected
             ? "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)"
@@ -781,9 +1055,63 @@ export function DraftTreePanel({
               : undefined,
         }}
       >
-        {/* 좌측 영역: 클릭 시 펼치기/접기 (feature는 확장 없음) */}
+        {/* 강조 버튼 - 고정 위치, 클릭 시 타임라인에 기간 강조 */}
+        <button
+          onClick={handleHighlightClick}
+          className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all duration-150 ${
+            isHighlighted ? "scale-105" : "hover:scale-105"
+          }`}
+          style={{
+            background: isHighlighted
+              ? node.type === "project"
+                ? "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)"
+                : node.type === "module"
+                ? "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)"
+                : "linear-gradient(135deg, #34d399 0%, #10b981 100%)"
+              : "rgba(0, 0, 0, 0.06)",
+            boxShadow: isHighlighted
+              ? `0 0 0 2px ${
+                  node.type === "project"
+                    ? "#f59e0b40"
+                    : node.type === "module"
+                    ? "#8b5cf640"
+                    : "#10b98140"
+                }`
+              : "none",
+          }}
+          title={isHighlighted ? "강조 해제" : "타임라인에 기간 강조"}
+        >
+          {node.type === "project" && (
+            <FolderIcon
+              className={`w-3 h-3 ${
+                isHighlighted ? "text-white" : "text-gray-400"
+              }`}
+            />
+          )}
+          {node.type === "module" && (
+            <CubeIcon
+              className={`w-3 h-3 ${
+                isHighlighted ? "text-white" : "text-gray-400"
+              }`}
+            />
+          )}
+          {node.type === "feature" && (
+            <CodeIcon
+              className={`w-3 h-3 ${
+                isHighlighted ? "text-white" : "text-gray-400"
+              }`}
+            />
+          )}
+        </button>
+
+        {/* 들여쓰기 공간 */}
+        {node.depth > 0 && (
+          <div style={{ width: node.depth * 14 }} className="flex-shrink-0" />
+        )}
+
+        {/* 확장/접기 화살표 */}
         <div
-          className={`flex items-center gap-1.5 flex-shrink-0 ${
+          className={`flex items-center gap-1 flex-shrink-0 ${
             hasChildren ? "cursor-pointer" : ""
           }`}
           onClick={(e) => {
@@ -793,43 +1121,17 @@ export function DraftTreePanel({
             }
           }}
         >
-          {/* 확장 아이콘 */}
           {hasChildren ? (
-            <div
-              className={`w-5 h-5 rounded-md flex items-center justify-center transition-all duration-150 `}
-            >
+            <div className="w-4 h-4 flex items-center justify-center transition-all duration-150">
               {isExpanded ? (
-                <ChevronDownIcon className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronDownIcon className="w-3 h-3 text-gray-500" />
               ) : (
-                <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronRightIcon className="w-3 h-3 text-gray-500" />
               )}
             </div>
           ) : (
-            <span className="w-5 flex-shrink-0" />
+            <span className="w-4 flex-shrink-0" />
           )}
-
-          {/* 타입 아이콘 - Airbnb 스타일 */}
-          <div
-            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
-            style={{
-              background:
-                node.type === "project"
-                  ? "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)"
-                  : node.type === "module"
-                  ? "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)"
-                  : "linear-gradient(135deg, #34d399 0%, #10b981 100%)",
-            }}
-          >
-            {node.type === "project" && (
-              <FolderIcon className="w-3 h-3 text-white" />
-            )}
-            {node.type === "module" && (
-              <CubeIcon className="w-3 h-3 text-white" />
-            )}
-            {node.type === "feature" && (
-              <CodeIcon className="w-3 h-3 text-white" />
-            )}
-          </div>
         </div>
 
         {/* 우측 영역: 라벨 - 더블 클릭으로 편집 가능 */}
@@ -1024,13 +1326,126 @@ export function DraftTreePanel({
         </div>
       </div>
 
+      {/* Flags 섹션 - Timeline FlagLane과 동기화 */}
+      <div
+        ref={flagsSectionRef}
+        className="flex-shrink-0 flex items-center justify-between cursor-pointer hover:bg-red-50/50 transition-colors"
+        style={{
+          height: flagLaneHeight,
+          paddingLeft: 8,
+          paddingRight: 8,
+          background:
+            "linear-gradient(90deg, rgba(254, 242, 242, 0.5) 0%, rgba(254, 226, 226, 0.3) 100%)",
+          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+        }}
+        onClick={() => {
+          if (showFlagsPopover) {
+            setShowFlagsPopover(false);
+            setFlagsAnchorRect(null);
+          } else {
+            if (flagsSectionRef.current) {
+              setFlagsAnchorRect(
+                flagsSectionRef.current.getBoundingClientRect()
+              );
+            }
+            setShowFlagsPopover(true);
+          }
+        }}
+      >
+        <div className="flex items-center gap-1">
+          {/* 강조 버튼 역할의 아이콘 (노드와 동일한 수직선상) */}
+          <div
+            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
+            style={{
+              background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+            }}
+          >
+            <FlagIcon className="w-3 h-3 text-white" />
+          </div>
+          {/* 화살표 자리 (노드와 정렬 맞추기) */}
+          <span className="w-4 flex-shrink-0" />
+          <span className="text-xs font-medium text-red-700">Flags</span>
+        </div>
+        {(() => {
+          // 범위 내 플래그만 필터링
+          const visibleFlags = flags.filter((f) => {
+            if (f.deleted) return false;
+            if (!rangeStart || !rangeEnd) return true;
+            return isDateRangeOverlapping(
+              f.startDate,
+              f.endDate,
+              rangeStart,
+              rangeEnd
+            );
+          });
+          return visibleFlags.length > 0 ? (
+            <span
+              className="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
+              style={{
+                background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                color: "white",
+              }}
+            >
+              {visibleFlags.length}
+            </span>
+          ) : null;
+        })()}
+      </div>
+
+      {/* Flags 팝오버 */}
+      {showFlagsPopover && (
+        <FlagsPopover
+          flags={flags.filter((f) => {
+            if (f.deleted) return false;
+            if (!rangeStart || !rangeEnd) return true;
+            return isDateRangeOverlapping(
+              f.startDate,
+              f.endDate,
+              rangeStart,
+              rangeEnd
+            );
+          })}
+          onClose={() => {
+            setShowFlagsPopover(false);
+            setFlagsAnchorRect(null);
+          }}
+          onFlagClick={(flag) => {
+            selectFlag(flag.clientId);
+            setShowFlagsPopover(false);
+            setFlagsAnchorRect(null);
+            // Flag 기간 강조 표시
+            setHighlightDateRange({
+              startDate: flag.startDate,
+              endDate: flag.endDate,
+              type: "flag",
+              color: flag.color || "#ef4444",
+              nodeId: flag.clientId,
+            });
+            // Timeline에서 해당 flag 위치로 스크롤하는 이벤트 발생
+            window.dispatchEvent(
+              new CustomEvent("gantt:scroll-to-flag", {
+                detail: { flagId: flag.clientId },
+              })
+            );
+          }}
+          onOpenDoc={(flag) => {
+            setSelectedDocFlag(flag);
+            setShowFlagDoc(true);
+            setShowFlagsPopover(false);
+            setFlagsAnchorRect(null);
+          }}
+          anchorRect={flagsAnchorRect}
+          isEditing={isEditing}
+        />
+      )}
+
       {/* 필터 팝오버 - 체크박스 형태 */}
       {showFilters && (
         <div
           ref={filterRef}
           className="absolute left-2 right-2 z-50 p-3 rounded-xl shadow-xl"
           style={{
-            top: HEADER_HEIGHT,
+            top: HEADER_HEIGHT + flagLaneHeight, // Flags 섹션 높이 포함
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
             boxShadow:
@@ -1328,6 +1743,17 @@ export function DraftTreePanel({
           </div>,
           document.body
         )}
+
+      {/* Flag Doc Panel */}
+      <FlagDocPanel
+        isOpen={showFlagDoc}
+        onClose={() => {
+          setShowFlagDoc(false);
+          setSelectedDocFlag(null);
+        }}
+        flag={selectedDocFlag}
+        workspaceId={workspaceId || ""}
+      />
     </div>
   );
 }

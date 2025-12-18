@@ -28,7 +28,12 @@ import type {
   DraftBar as DraftBarType,
   PlanStatus,
   DraftAssignee,
+  DraftFlag,
 } from "./types";
+import { FlagLane, FLAG_LANE_HEIGHT } from "./FlagLane";
+import { packFlagsIntoLanes } from "./flagLayout";
+import { CreateFlagModal } from "./CreateFlagModal";
+import { EditFlagModal } from "./EditFlagModal";
 
 const DAY_WIDTH = 40;
 const HEADER_HEIGHT = 76; // 38px + 38px (월 + 일, TreePanel 헤더와 동일)
@@ -39,6 +44,7 @@ interface DraftTimelineProps {
   isEditing: boolean;
   isAdmin?: boolean;
   members?: WorkspaceMemberOption[];
+  workspaceId?: string;
   /** 드래그 중 기간 정보 콜백 (FloatingDock 표시용) */
   onDragDateChange?: (
     info: { startDate: string; endDate: string } | null
@@ -62,11 +68,20 @@ export function DraftTimeline({
   isEditing,
   isAdmin = false,
   members = [],
+  workspaceId = "",
   onDragDateChange,
   onAction,
 }: DraftTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const flagLaneRef = useRef<HTMLDivElement>(null);
+
+  // Flag 모달 상태
+  const [showCreateFlagModal, setShowCreateFlagModal] = useState(false);
+  const [editingFlag, setEditingFlag] = useState<DraftFlag | null>(null);
+
+  // Flag 스크롤 동기화를 위한 scrollLeft 상태
+  const [headerScrollLeft, setHeaderScrollLeft] = useState(0);
   // 호버 정보 - 개별 레인에 스냅
   const [hoverInfo, setHoverInfo] = useState<{
     rowId: string;
@@ -103,6 +118,31 @@ export function DraftTimeline({
   const selectBar = useDraftStore((s) => s.selectBar);
   const deleteBar = useDraftStore((s) => s.deleteBar);
   const updateBar = useDraftStore((s) => s.updateBar);
+
+  // Flag 관련
+  const flags = useDraftStore((s) => s.flags);
+  const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
+  const selectFlag = useDraftStore((s) => s.selectFlag);
+  const deleteFlagAction = useDraftStore((s) => s.deleteFlag);
+  const fetchFlags = useDraftStore((s) => s.fetchFlags);
+  const clearPendingFlag = useDraftStore((s) => s.clearPendingFlag);
+
+  // Flag Lane 높이 계산 (FlagLane과 동기화)
+  const { laneCount: flagLaneCount, items: flagItems } = useMemo(
+    () =>
+      packFlagsIntoLanes({
+        flags,
+        rangeStart,
+        rangeEnd,
+        dayWidth: DAY_WIDTH,
+      }),
+    [flags, rangeStart, rangeEnd]
+  );
+  const flagLaneHeight = Math.max(1, flagLaneCount) * FLAG_LANE_HEIGHT;
+
+  // 기간 강조 표시
+  const highlightDateRange = useDraftStore((s) => s.ui.highlightDateRange);
+  const setHighlightDateRange = useDraftStore((s) => s.setHighlightDateRange);
 
   // Set으로 변환 (빠른 조회용)
   const expandedNodes = useMemo(
@@ -221,10 +261,24 @@ export function DraftTimeline({
     return last.top + last.height;
   }, [nodePositions]);
 
-  // 헤더 스크롤 동기화
+  // 초기 flags 로드
+  useEffect(() => {
+    if (workspaceId) {
+      fetchFlags(workspaceId);
+    }
+  }, [workspaceId, fetchFlags]);
+
+  // 헤더 스크롤 동기화 (FlagLane 포함)
   const handleScroll = useCallback(() => {
-    if (containerRef.current && headerRef.current) {
-      headerRef.current.scrollLeft = containerRef.current.scrollLeft;
+    if (containerRef.current) {
+      const scrollLeft = containerRef.current.scrollLeft;
+      if (headerRef.current) {
+        headerRef.current.scrollLeft = scrollLeft;
+      }
+      if (flagLaneRef.current) {
+        flagLaneRef.current.scrollLeft = scrollLeft;
+      }
+      setHeaderScrollLeft(scrollLeft);
     }
   }, []);
 
@@ -431,7 +485,7 @@ export function DraftTimeline({
   // 전역 키보드 이벤트 (Delete/Backspace)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isEditing || !selectedBarId) return;
+      if (!isEditing) return;
 
       // 입력 필드에서는 무시
       if (
@@ -443,16 +497,38 @@ export function DraftTimeline({
 
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
-        deleteBar(selectedBarId);
-        selectBar(undefined);
+        // Flag 선택 시 flag 삭제
+        if (selectedFlagId) {
+          deleteFlagAction(selectedFlagId);
+          selectFlag(null);
+          setHighlightDateRange(null); // 기간 강조도 함께 해제
+        }
+        // Bar 선택 시 bar 삭제
+        else if (selectedBarId) {
+          deleteBar(selectedBarId);
+          selectBar(undefined);
+        }
       } else if (e.key === "Escape") {
         selectBar(undefined);
+        selectFlag(null);
+        clearPendingFlag();
+        setHighlightDateRange(null); // 기간 강조 해제
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing, selectedBarId, deleteBar, selectBar]);
+  }, [
+    isEditing,
+    selectedBarId,
+    selectedFlagId,
+    deleteBar,
+    selectBar,
+    deleteFlagAction,
+    selectFlag,
+    clearPendingFlag,
+    setHighlightDateRange,
+  ]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -537,6 +613,28 @@ export function DraftTimeline({
         </div>
       </div>
 
+      {/* Flag Lane - 헤더 아래 오버레이 */}
+      <div
+        ref={flagLaneRef}
+        className="flex-shrink-0 overflow-x-auto scrollbar-hide"
+        style={{
+          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE/Edge
+        }}
+      >
+        <FlagLane
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          dayWidth={DAY_WIDTH}
+          totalWidth={totalWidth}
+          isEditing={isEditing}
+          scrollLeft={headerScrollLeft}
+          onOpenCreateModal={() => setShowCreateFlagModal(true)}
+          onOpenEditModal={(flag) => setEditingFlag(flag)}
+        />
+      </div>
+
       {/* 그리드 영역 - Airbnb 스타일 */}
       <div
         ref={containerRef}
@@ -552,11 +650,118 @@ export function DraftTimeline({
           handleMouseUp();
           handleCellLeave();
         }}
+        onClick={(e) => {
+          // 빈 영역 클릭 시 선택 및 강조 해제
+          if (e.target === e.currentTarget) {
+            selectBar(undefined);
+            selectFlag(null);
+            setHighlightDateRange(null);
+          }
+        }}
       >
         <div
           className="relative"
           style={{ width: totalWidth, height: totalHeight }}
         >
+          {/* 기간 강조 표시 오버레이 */}
+          {highlightDateRange &&
+            (() => {
+              const highlightStart = parseLocalDate(
+                highlightDateRange.startDate
+              );
+              const highlightEnd = parseLocalDate(highlightDateRange.endDate);
+
+              const rangeStartMidnight = new Date(
+                rangeStart.getFullYear(),
+                rangeStart.getMonth(),
+                rangeStart.getDate()
+              );
+
+              const startOffset = Math.round(
+                (highlightStart.getTime() - rangeStartMidnight.getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+              const endOffset = Math.round(
+                (highlightEnd.getTime() - rangeStartMidnight.getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+
+              // 범위 밖이면 표시하지 않음
+              if (endOffset < 0 || startOffset >= days.length) return null;
+
+              const clampedStartOffset = Math.max(0, startOffset);
+              const clampedEndOffset = Math.min(days.length - 1, endOffset);
+
+              const highlightLeft = clampedStartOffset * DAY_WIDTH;
+              const highlightWidth =
+                (clampedEndOffset - clampedStartOffset + 1) * DAY_WIDTH;
+              const highlightColor =
+                highlightDateRange.color ||
+                (highlightDateRange.type === "flag" ? "#ef4444" : "#3b82f6");
+
+              // 라벨 위치 계산
+              const isFlag = highlightDateRange.type === "flag";
+              let labelTop = 8; // 기본값
+
+              if (isFlag) {
+                // Flag 선택: 해당 FlagBar가 있는 레인 바로 아래
+                const flagItem = flagItems.find(
+                  (item) => item.flagId === highlightDateRange.nodeId
+                );
+                if (flagItem) {
+                  // 해당 레인의 하단 위치 (laneIndex는 0부터 시작)
+                  labelTop = (flagItem.laneIndex + 1) * FLAG_LANE_HEIGHT;
+                } else {
+                  // 못 찾으면 전체 FlagLane 높이 사용
+                  labelTop = flagLaneHeight;
+                }
+              } else if (highlightDateRange.nodeId) {
+                // 노드 선택: 해당 노드의 레인 상단에 표시
+                const nodePos = nodePositions.find(
+                  (p) => p.node.id === highlightDateRange.nodeId
+                );
+                if (nodePos) {
+                  labelTop = nodePos.top + 4; // 레인 상단에서 약간 아래
+                }
+              }
+
+              return (
+                <>
+                  {/* 기간 강조 배경 - z-index 낮게 */}
+                  <div
+                    className="absolute top-0 h-full pointer-events-none"
+                    style={{
+                      left: highlightLeft,
+                      width: highlightWidth,
+                      background: `linear-gradient(180deg, ${highlightColor}15 0%, ${highlightColor}08 50%, ${highlightColor}15 100%)`,
+                      borderLeft: `2px solid ${highlightColor}60`,
+                      borderRight: `2px solid ${highlightColor}60`,
+                      zIndex: 1,
+                    }}
+                  />
+                  {/* 기간 라벨 - z-index 높게 */}
+                  <div
+                    className="absolute px-2 py-1 text-[10px] font-bold whitespace-nowrap pointer-events-none"
+                    style={{
+                      left: highlightLeft + highlightWidth / 2,
+                      top: labelTop,
+                      transform: "translateX(-50%)",
+                      background: highlightColor,
+                      color: "white",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                      zIndex: 100,
+                      // Flag: 둥근 모서리 전체, 노드: 하단만 둥근 모서리
+                      borderRadius: isFlag ? "6px" : "0 0 6px 6px",
+                    }}
+                  >
+                    {highlightDateRange.startDate === highlightDateRange.endDate
+                      ? highlightDateRange.startDate
+                      : `${highlightDateRange.startDate} ~ ${highlightDateRange.endDate}`}
+                  </div>
+                </>
+              );
+            })()}
+
           {/* 그리드 라인 - Airbnb 스타일 */}
           <div className="absolute inset-0 pointer-events-none">
             {/* 수직선 (일별) */}
@@ -627,7 +832,7 @@ export function DraftTimeline({
               // 모듈 필터가 적용된 경우: 프로젝트 행 숨김
               const hasFeatureFilter = filters.features.length > 0;
               const hasModuleFilter = filters.modules.length > 0;
-              
+
               if (hasFeatureFilter) return null;
               if (hasModuleFilter && node.type === "project") return null;
 
@@ -889,6 +1094,20 @@ export function DraftTimeline({
           members={members}
         />
       )}
+
+      {/* Flag 생성 모달 */}
+      <CreateFlagModal
+        isOpen={showCreateFlagModal}
+        onClose={() => setShowCreateFlagModal(false)}
+        workspaceId={workspaceId}
+      />
+
+      {/* Flag 수정 모달 */}
+      <EditFlagModal
+        isOpen={editingFlag !== null}
+        onClose={() => setEditingFlag(null)}
+        flag={editingFlag}
+      />
     </div>
   );
 }

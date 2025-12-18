@@ -432,7 +432,7 @@ export function getNodeDateRange(
   allRows: DraftRow[],
   allBars: DraftBar[]
 ): { minStart: string; maxEnd: string } | null {
-  // 프로젝트/모듈에 해당하는 rowIds 찾기
+  // 프로젝트/모듈/기능에 해당하는 rowIds 찾기
   const matchingRowIds: string[] = [];
 
   for (const row of allRows) {
@@ -442,6 +442,12 @@ export function getNodeDateRange(
       // 모듈 ID 형식: "프로젝트::모듈"
       const [project, module] = node.id.split("::");
       if (row.project === project && row.module === module) {
+        matchingRowIds.push(row.rowId);
+      }
+    } else if (node.type === "feature") {
+      // 기능 ID 형식: "프로젝트::모듈::기능"
+      const [project, module, feature] = node.id.split("::");
+      if (row.project === project && row.module === module && row.feature === feature) {
         matchingRowIds.push(row.rowId);
       }
     }

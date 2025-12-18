@@ -92,7 +92,7 @@ export function Toast({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white">{title}</p>
           {message && (
-            <p className="text-xs text-white/80 mt-0.5">{message}</p>
+            <p className="text-xs text-white/80 mt-0.5 whitespace-pre-line">{message}</p>
           )}
         </div>
 

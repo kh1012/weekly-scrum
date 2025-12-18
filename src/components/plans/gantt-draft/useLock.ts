@@ -45,24 +45,46 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
 
   const lockManagerRef = useRef<LockManager | null>(null);
   const cleanupBeforeUnloadRef = useRef<(() => void) | null>(null);
+  // 락 획득 중인지 추적 (타이밍 이슈 방지)
+  const isAcquiringRef = useRef(false);
+  // 초기화 완료 여부
+  const isInitializedRef = useRef(false);
 
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
-  // Lock Manager 초기화
+  // refs for callbacks to avoid recreating LockManager
+  const setLockStateRef = useRef(setLockState);
+  const setEditingRef = useRef(setEditing);
+  const onLockLostRef = useRef(onLockLost);
+  
   useEffect(() => {
+    setLockStateRef.current = setLockState;
+    setEditingRef.current = setEditing;
+    onLockLostRef.current = onLockLost;
+  }, [setLockState, setEditing, onLockLost]);
+
+  // Lock Manager 초기화 (workspaceId만 의존)
+  useEffect(() => {
+    // 이미 초기화된 경우 skip
+    if (isInitializedRef.current && lockManagerRef.current) {
+      return;
+    }
+
     const handleLockStateChange = (state: LockState) => {
-      setLockState(state);
-      // 락 상태와 편집 모드 동기화
-      if (state.isMyLock) {
-        setEditing(true);
-      } else {
-        setEditing(false);
+      setLockStateRef.current(state);
+      // 락 상태와 편집 모드 동기화 (단, 락 획득 중일 때는 제외)
+      if (!isAcquiringRef.current) {
+        if (state.isMyLock) {
+          setEditingRef.current(true);
+        } else {
+          setEditingRef.current(false);
+        }
       }
     };
 
     const handleLockLost = () => {
-      setEditing(false);
-      onLockLost?.();
+      setEditingRef.current(false);
+      onLockLostRef.current?.();
     };
 
     lockManagerRef.current = new LockManager(
@@ -73,23 +95,28 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
 
     // 초기 락 상태 조회 및 편집 모드 자동 복원
     getWorkspaceLock(workspaceId).then((state) => {
-      setLockState(state);
+      setLockStateRef.current(state);
       
       // 내 락이면 자동으로 편집 모드 활성화 + heartbeat 시작
       if (state.isMyLock) {
-        setEditing(true);
+        setEditingRef.current(true);
         lockManagerRef.current?.startHeartbeatExternal();
         // beforeunload 핸들러 등록
         cleanupBeforeUnloadRef.current = setupBeforeUnloadHandler(workspaceId);
-      } else {
-        setEditing(false);
       }
+      // 초기화 시에만 isMyLock이 false이면 편집 모드 해제 (이후 재실행 시에는 해제하지 않음)
+      else if (!isInitializedRef.current) {
+        setEditingRef.current(false);
+      }
+      
+      isInitializedRef.current = true;
     });
 
     return () => {
       lockManagerRef.current?.cleanup();
+      isInitializedRef.current = false;
     };
-  }, [workspaceId, setLockState, setEditing, onLockLost]);
+  }, [workspaceId]); // 의존성을 workspaceId만으로 제한
 
   // 남은 시간 계산
   useEffect(() => {
@@ -115,15 +142,25 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
   const startEditing = useCallback(async (): Promise<boolean> => {
     if (!lockManagerRef.current) return false;
 
-    const success = await lockManagerRef.current.acquire();
+    // 락 획득 중 플래그 설정 (useEffect에서의 자동 편집 모드 해제 방지)
+    isAcquiringRef.current = true;
 
-    if (success) {
-      setEditing(true);
-      // beforeunload 핸들러 등록
-      cleanupBeforeUnloadRef.current = setupBeforeUnloadHandler(workspaceId);
+    try {
+      const success = await lockManagerRef.current.acquire();
+
+      if (success) {
+        setEditing(true);
+        // beforeunload 핸들러 등록
+        cleanupBeforeUnloadRef.current = setupBeforeUnloadHandler(workspaceId);
+      }
+
+      return success;
+    } finally {
+      // 약간의 지연 후 플래그 해제 (락 상태 동기화 완료 대기)
+      setTimeout(() => {
+        isAcquiringRef.current = false;
+      }, 500);
     }
-
-    return success;
   }, [workspaceId, setEditing]);
 
   // 편집 종료

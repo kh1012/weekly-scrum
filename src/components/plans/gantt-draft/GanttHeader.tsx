@@ -50,6 +50,12 @@ interface GanttHeaderProps {
   rangeEnd?: Date;
   /** 커스텀 범위 설정 */
   onCustomRangeChange?: (startDate: Date, endDate: Date) => void;
+  /** 락 관련 오류 콜백 */
+  onLockError?: (type: "locked_by_other" | "unknown", lockedByName?: string) => void;
+  /** 작업 시작 성공 콜백 */
+  onStartSuccess?: () => void;
+  /** 작업 종료 성공 콜백 (폐기된 변경사항 개수 전달) */
+  onStopSuccess?: (discardedCount: number) => void;
 }
 
 export function GanttHeader({
@@ -70,6 +76,9 @@ export function GanttHeader({
   rangeStart,
   rangeEnd,
   onCustomRangeChange,
+  onLockError,
+  onStartSuccess,
+  onStopSuccess,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -85,8 +94,9 @@ export function GanttHeader({
 
   const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
   const isEditing = useDraftStore((s) => s.ui.isEditing);
+  // 계획(bars) + 깃발(flags) 변경사항 개수
   const changesCount = useDraftStore(
-    (s) => s.bars.filter((b) => b.dirty).length
+    (s) => s.bars.filter((b) => b.dirty).length + s.flags.filter((f) => f.dirty).length
   );
 
   const [isStarting, setIsStarting] = useState(false);
@@ -127,15 +137,13 @@ export function GanttHeader({
     setIsStarting(true);
     try {
       const success = await startEditing();
-      if (!success) {
+      if (success) {
+        onStartSuccess?.();
+      } else {
         if (lockState.isLocked && !lockState.isMyLock) {
-          alert(
-            `현재 ${
-              lockState.lockedByName || "다른 사용자"
-            }님이 작업 중입니다.\n작업 완료 전까지 편집이 불가합니다.`
-          );
+          onLockError?.("locked_by_other", lockState.lockedByName);
         } else {
-          alert("작업을 시작할 수 없습니다.\n잠시 후 다시 시도해주세요.");
+          onLockError?.("unknown");
         }
       }
     } finally {
@@ -147,16 +155,20 @@ export function GanttHeader({
     if (hasUnsavedChanges) {
       setShowDiscardModal(true);
     } else {
-      doStopEditing();
+      doStopEditing(0); // 변경사항 없이 종료
     }
   };
 
-  const doStopEditing = async () => {
+  const doStopEditing = async (discardedCount?: number) => {
     setIsStopping(true);
     try {
+      // 폐기될 변경사항 개수 저장 (아직 폐기 전)
+      const countToDiscard = discardedCount ?? changesCount;
       // 변경사항 폐기
       onDiscardChanges?.();
       await stopEditing();
+      // 종료 성공 콜백
+      onStopSuccess?.(countToDiscard);
     } finally {
       setIsStopping(false);
     }
@@ -403,10 +415,10 @@ export function GanttHeader({
       <ConfirmDiscardModal
         isOpen={showDiscardModal}
         onClose={() => setShowDiscardModal(false)}
-        onConfirm={doStopEditing}
+        onConfirm={() => doStopEditing(changesCount)}
         onSaveAndClose={async () => {
           await onCommit();
-          await doStopEditing();
+          await doStopEditing(0); // 저장 후에는 폐기된 것 없음
         }}
         changesCount={changesCount}
       />
@@ -551,21 +563,24 @@ function RangePopover({
   const [activeTab, setActiveTab] = useState<"preset" | "custom">(
     isCustomMode ? "custom" : "preset"
   );
+  
+  // 초기값 설정 (undefined/null 체크, 0도 유효한 값으로 처리)
   const [customStartYear, setCustomStartYear] = useState(
-    rangeStart?.getFullYear() || new Date().getFullYear()
+    rangeStart ? rangeStart.getFullYear() : new Date().getFullYear()
   );
   const [customStartMonth, setCustomStartMonth] = useState(
-    (rangeStart?.getMonth() || new Date().getMonth()) + 1
+    rangeStart ? rangeStart.getMonth() + 1 : new Date().getMonth() + 1
   );
   const [customEndYear, setCustomEndYear] = useState(
-    rangeEnd?.getFullYear() || new Date().getFullYear()
+    rangeEnd ? rangeEnd.getFullYear() : new Date().getFullYear()
   );
   const [customEndMonth, setCustomEndMonth] = useState(
-    (rangeEnd?.getMonth() || new Date().getMonth()) + 1
+    rangeEnd ? rangeEnd.getMonth() + 1 : new Date().getMonth() + 1
   );
 
   const currentYear = new Date().getFullYear();
-  const yearOptions = [currentYear - 1, currentYear, currentYear + 1].map(
+  // 현재 연도 기준 -1년 ~ +2년 범위 제공
+  const yearOptions = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map(
     (y) => ({
       value: y,
       label: `${y}년`,
@@ -592,7 +607,7 @@ function RangePopover({
 
   return (
     <div
-      className="absolute top-full left-0 mt-2 rounded-xl shadow-xl z-50 overflow-hidden"
+      className="absolute top-full left-0 mt-2 rounded-xl shadow-xl z-50"
       style={{
         background: "white",
         border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -602,7 +617,7 @@ function RangePopover({
     >
       {/* 탭 헤더 */}
       <div
-        className="flex border-b"
+        className="flex border-b rounded-t-xl overflow-hidden"
         style={{ borderColor: "rgba(0, 0, 0, 0.06)" }}
       >
         <button

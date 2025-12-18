@@ -258,3 +258,8 @@ export const UserIcon = createIcon([
 export const LoadingIcon = createIcon([
   "M12 2v4m0 12v4m10-10h-4M6 12H2m15.07-5.07l-2.83 2.83M8.76 15.24l-2.83 2.83m11.31 0l-2.83-2.83M8.76 8.76L5.93 5.93",
 ]);
+
+// 플래그
+export const FlagIcon = createIcon([
+  "M3 3v18h2v-8h12l-3-4 3-4H5V3z",
+]);
