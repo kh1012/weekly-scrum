@@ -311,8 +311,8 @@ export function CommandPalette({
     ]
   );
 
-  // 수행 가능한 명령만 표시 (disabled 필터링)
-  // 작업 시작/종료는 상태에 따라 하나만 표시
+  // 모든 명령 표시 (작업 시작/종료만 상태에 따라 하나만 표시)
+  // 비활성화된 명령도 표시하되 실행 불가 처리
   const commands = useMemo(() => {
     return allCommands.filter((cmd) => {
       // 작업 시작: 편집 중이 아니면 표시
@@ -323,8 +323,8 @@ export function CommandPalette({
       if (cmd.id === "stop-editing") {
         return isEditing;
       }
-      // 나머지는 disabled가 아닌 것만 표시
-      return !cmd.disabled;
+      // 나머지는 모두 표시 (disabled 여부와 관계없이)
+      return true;
     });
   }, [allCommands, isEditing]);
 
@@ -600,6 +600,7 @@ export function CommandPalette({
                   const idx = filteredCommands.indexOf(cmd);
                   const isSelected = idx === selectedIndex;
                   const isLoading = loadingCommandId === cmd.id;
+                  const isDisabled = cmd.disabled;
 
                   return (
                     <button
@@ -610,10 +611,15 @@ export function CommandPalette({
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
                         isSelected
                           ? "bg-blue-500/10"
+                          : isDisabled
+                          ? ""
                           : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                      } ${isLoading ? "opacity-70 cursor-wait" : ""}`}
-                      style={{ color: "var(--notion-text)" }}
-                      onClick={() => executeCommand(cmd)}
+                      } ${isLoading ? "cursor-wait" : isDisabled ? "cursor-not-allowed" : ""}`}
+                      style={{ 
+                        color: "var(--notion-text)",
+                        opacity: isDisabled ? 0.4 : isLoading ? 0.7 : 1,
+                      }}
+                      onClick={() => !isDisabled && executeCommand(cmd)}
                       onMouseEnter={() => idx >= 0 && setSelectedIndex(idx)}
                       disabled={isLoading || loadingCommandId !== null}
                     >
