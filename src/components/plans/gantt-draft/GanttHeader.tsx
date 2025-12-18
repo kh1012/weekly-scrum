@@ -200,7 +200,7 @@ export function GanttHeader({
               {isMyLock && isEditing ? (
                 <div
                   className="flex flex-col justify-center"
-                  style={{ width: 160 }}
+                  style={{ width: 124 }}
                 >
                   {/* 1행: 편집 중 · 다음 갱신 */}
                   <div
