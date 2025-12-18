@@ -131,6 +131,9 @@ function createEmptyTempSnapshot(displayName: string = ""): TempSnapshot {
   };
 }
 
+// 모바일 뷰 타입
+type MobileView = "list" | "form";
+
 function EditSnapshotsViewInner({
   year,
   week,
@@ -143,6 +146,17 @@ function EditSnapshotsViewInner({
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const cardListRef = useRef<SnapshotCardListRef>(null);
+
+  // 모바일 감지 (768px 이하)
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileView, setMobileView] = useState<MobileView>("list");
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // URL에서 snapshotId와 entryIndex 읽기
   const urlSnapshotId = searchParams.get("snapshotId");
@@ -315,7 +329,11 @@ function EditSnapshotsViewInner({
   // 카드 선택
   const handleSelectCard = useCallback((tempId: string) => {
     setSelectedId(tempId);
-  }, []);
+    // 모바일에서는 폼 뷰로 전환
+    if (isMobile) {
+      setMobileView("form");
+    }
+  }, [isMobile]);
 
   // 카드 삭제
   const handleDeleteCard = useCallback(
@@ -554,14 +572,14 @@ function EditSnapshotsViewInner({
   return (
     <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* 상단 툴바 */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 md:px-4 py-2 md:py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 shrink-0">
+        <div className="flex items-center gap-2 md:gap-4">
           <button
             onClick={() => {
               navigationProgress.start();
               router.push("/manage/snapshots");
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+            className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
           >
             <svg
               className="w-4 h-4"
@@ -576,7 +594,7 @@ function EditSnapshotsViewInner({
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            <span className="text-xs font-medium">목록으로</span>
+            <span className="text-xs font-medium hidden sm:inline">목록으로</span>
           </button>
 
           <div className="h-4 w-px bg-gray-200" />
@@ -702,9 +720,9 @@ function EditSnapshotsViewInner({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* 미리보기 토글 */}
-          <label className="flex items-center gap-2 cursor-pointer select-none group">
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* 미리보기 토글 - 모바일에서 숨김 */}
+          <label className="hidden md:flex items-center gap-2 cursor-pointer select-none group">
             <div className="relative">
               <input
                 type="checkbox"
@@ -730,13 +748,13 @@ function EditSnapshotsViewInner({
             </span>
           </label>
 
-          <div className="h-6 w-px bg-gray-200" />
+          <div className="hidden md:block h-6 w-px bg-gray-200" />
 
           {/* 업데이트하기 버튼 */}
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSaving ? (
               <>
@@ -784,79 +802,142 @@ function EditSnapshotsViewInner({
       </div>
 
       {/* 메인 콘텐츠 */}
-      <div className="flex-1 flex min-h-0">
-        {/* 좌측: 카드 리스트 */}
-        <div
-          className="border-r border-gray-100 bg-white flex flex-col shrink-0"
-          style={{ width: leftPanelWidth }}
-        >
-          <SnapshotCardList
-            ref={cardListRef}
-            snapshots={tempSnapshots}
-            selectedId={selectedId}
-            onSelectCard={handleSelectCard}
-            onDeleteCard={handleDeleteCard}
-            onDuplicateCard={handleDuplicateCard}
-            onCopyJson={handleCopyCardJson}
-            onCopyPlainText={handleCopyCardPlainText}
-            onAddEmpty={handleAddEmpty}
-            onCopyAllJson={handleCopyAllJson}
-            onCopyAllPlainText={handleCopyAllPlainText}
-          />
-        </div>
-
-        <ResizeHandle onResize={handleLeftResize} />
-
-        {/* 중앙: 편집 폼 */}
-        <div
-          className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white"
-          style={{
-            width: forceThreeColumn
-              ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
-              : "100%",
-          }}
-        >
-          {selectedSnapshot ? (
-            <SnapshotEditForm
-              key={selectedSnapshot.tempId}
-              snapshot={selectedSnapshot}
-              onUpdate={(updates) =>
-                handleUpdateCard(selectedSnapshot.tempId, updates)
-              }
-              onFocusSection={setFocusedSection}
-              activeSection={
-                focusedSection as
-                  | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
-                  | null
-              }
-              compact
-              singleColumn
-              hideName
-            />
-          ) : (
-            <EmptyState onAddEmpty={handleAddEmpty} />
-          )}
-        </div>
-
-        {/* 우측: 미리보기 */}
-        {forceThreeColumn && (
-          <>
-            <ResizeHandle onResize={handleEditPreviewResize} />
-            <div className="overflow-hidden min-w-0 flex-1">
-              <PlainTextPreview
-                snapshot={selectedSnapshot}
-                onCopy={handleCopyCurrentPlainText}
-                focusedSection={
-                  focusedSection as
-                    | import("@/components/weekly-scrum/manage/PlainTextPreview").PreviewSection
-                    | null
-                }
-                onSectionClick={(section) => setFocusedSection(section)}
+      {isMobile ? (
+        /* 모바일: 단일 뷰 (리스트 또는 폼) */
+        <div className="flex-1 flex flex-col min-h-0">
+          {mobileView === "list" ? (
+            /* 모바일: 카드 리스트 */
+            <div className="flex-1 bg-white overflow-hidden">
+              <SnapshotCardList
+                ref={cardListRef}
+                snapshots={tempSnapshots}
+                selectedId={selectedId}
+                onSelectCard={handleSelectCard}
+                onDeleteCard={handleDeleteCard}
+                onDuplicateCard={handleDuplicateCard}
+                onCopyJson={handleCopyCardJson}
+                onCopyPlainText={handleCopyCardPlainText}
+                onAddEmpty={handleAddEmpty}
+                onCopyAllJson={handleCopyAllJson}
+                onCopyAllPlainText={handleCopyAllPlainText}
               />
             </div>
-          </>
-        )}
-      </div>
+          ) : (
+            /* 모바일: 편집 폼 */
+            <div className="flex-1 flex flex-col bg-white overflow-hidden">
+              {/* 뒤로가기 버튼 */}
+              <div className="shrink-0 px-4 py-3 border-b border-gray-100 bg-white">
+                <button
+                  onClick={() => setMobileView("list")}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  목록으로 돌아가기
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                {selectedSnapshot ? (
+                  <SnapshotEditForm
+                    key={selectedSnapshot.tempId}
+                    snapshot={selectedSnapshot}
+                    onUpdate={(updates) =>
+                      handleUpdateCard(selectedSnapshot.tempId, updates)
+                    }
+                    onFocusSection={setFocusedSection}
+                    activeSection={
+                      focusedSection as
+                        | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                        | null
+                    }
+                    compact
+                    singleColumn
+                    hideName
+                  />
+                ) : (
+                  <EmptyState onAddEmpty={handleAddEmpty} />
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* PC: 기존 3열 레이아웃 */
+        <div className="flex-1 flex min-h-0">
+          {/* 좌측: 카드 리스트 */}
+          <div
+            className="border-r border-gray-100 bg-white flex flex-col shrink-0"
+            style={{ width: leftPanelWidth }}
+          >
+            <SnapshotCardList
+              ref={cardListRef}
+              snapshots={tempSnapshots}
+              selectedId={selectedId}
+              onSelectCard={handleSelectCard}
+              onDeleteCard={handleDeleteCard}
+              onDuplicateCard={handleDuplicateCard}
+              onCopyJson={handleCopyCardJson}
+              onCopyPlainText={handleCopyCardPlainText}
+              onAddEmpty={handleAddEmpty}
+              onCopyAllJson={handleCopyAllJson}
+              onCopyAllPlainText={handleCopyAllPlainText}
+            />
+          </div>
+
+          <ResizeHandle onResize={handleLeftResize} />
+
+          {/* 중앙: 편집 폼 */}
+          <div
+            className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white"
+            style={{
+              width: forceThreeColumn
+                ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
+                : "100%",
+            }}
+          >
+            {selectedSnapshot ? (
+              <SnapshotEditForm
+                key={selectedSnapshot.tempId}
+                snapshot={selectedSnapshot}
+                onUpdate={(updates) =>
+                  handleUpdateCard(selectedSnapshot.tempId, updates)
+                }
+                onFocusSection={setFocusedSection}
+                activeSection={
+                  focusedSection as
+                    | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                    | null
+                }
+                compact
+                singleColumn
+                hideName
+              />
+            ) : (
+              <EmptyState onAddEmpty={handleAddEmpty} />
+            )}
+          </div>
+
+          {/* 우측: 미리보기 */}
+          {forceThreeColumn && (
+            <>
+              <ResizeHandle onResize={handleEditPreviewResize} />
+              <div className="overflow-hidden min-w-0 flex-1">
+                <PlainTextPreview
+                  snapshot={selectedSnapshot}
+                  onCopy={handleCopyCurrentPlainText}
+                  focusedSection={
+                    focusedSection as
+                      | import("@/components/weekly-scrum/manage/PlainTextPreview").PreviewSection
+                      | null
+                  }
+                  onSectionClick={(section) => setFocusedSection(section)}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

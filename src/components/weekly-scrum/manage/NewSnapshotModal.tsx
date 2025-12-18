@@ -154,7 +154,7 @@ export function NewSnapshotModal({
       />
 
       {/* 모달 콘텐츠 */}
-      <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full p-10 animate-fadeIn">
+      <div className="relative bg-white rounded-2xl md:rounded-[2rem] shadow-2xl max-w-2xl w-full p-6 md:p-10 animate-fadeIn max-h-[90vh] overflow-y-auto">
         {/* 배경 장식 */}
         <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/10 blur-3xl" />
         <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-3xl" />
@@ -180,26 +180,26 @@ export function NewSnapshotModal({
         </button>
 
         {/* 헤더 */}
-        <div className="relative text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-100 text-rose-600 text-xs font-semibold mb-4">
+        <div className="relative text-center mb-6 md:mb-10">
+          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-100 text-rose-600 text-[11px] md:text-xs font-semibold mb-3 md:mb-4">
             <span>✨</span>
             <span>새 스냅샷 작성 방법을 선택하세요</span>
           </div>
-          <p className="text-gray-500">
+          <p className="text-sm md:text-base text-gray-500">
             {year}년 W{week.toString().padStart(2, "0")} ({weekRange})
           </p>
         </div>
 
         {/* 선택 카드 */}
-        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
           {/* 데이터 불러오기 */}
           <button
             onClick={onLoadExistingData}
-            className="group relative p-7 bg-white rounded-2xl border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
+            className="group relative p-5 md:p-7 bg-white rounded-xl md:rounded-2xl border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative">
-              <div className="w-14 h-14 mb-5 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <div className="w-12 h-12 md:w-14 md:h-14 mb-4 md:mb-5 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"
@@ -243,11 +243,11 @@ export function NewSnapshotModal({
           {/* 새로 작성하기 */}
           <button
             onClick={onCreateEmpty}
-            className="group relative p-7 bg-white rounded-2xl border-2 border-gray-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
+            className="group relative p-5 md:p-7 bg-white rounded-xl md:rounded-2xl border-2 border-gray-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative">
-              <div className="w-14 h-14 mb-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <div className="w-12 h-12 md:w-14 md:h-14 mb-4 md:mb-5 rounded-xl md:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"

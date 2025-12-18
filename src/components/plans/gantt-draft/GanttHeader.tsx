@@ -97,6 +97,15 @@ export function GanttHeader({
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
 
+  // 모바일 감지 (768px 이하)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
   const isEditing = useDraftStore((s) => s.ui.isEditing);
   // 계획(bars) + 깃발(flags) 변경사항 개수
@@ -183,7 +192,11 @@ export function GanttHeader({
   return (
     <>
       <div
-        className="flex items-center justify-between px-5 py-4 border-b transition-all duration-300"
+        className={`${
+          isMobile && readOnly 
+            ? "flex flex-col items-center gap-3 px-4 py-3" 
+            : "flex items-center justify-between px-5 py-4"
+        } border-b transition-all duration-300`}
         style={{
           background: isEditing
             ? "linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)"
@@ -192,12 +205,12 @@ export function GanttHeader({
         }}
       >
         {/* 좌측: 제목 + 락 상태 */}
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
+        <div className={`flex items-center gap-4 ${isMobile && readOnly ? "justify-center" : ""}`}>
+          <div className={isMobile && readOnly ? "text-center" : ""}>
+            <h1 className={`${isMobile ? "text-lg" : "text-xl"} font-bold text-gray-900`}>
               {title || (readOnly ? "계획" : "계획 관리")}
             </h1>
-            <p className="text-sm text-gray-500">Feature 단위 일정 계획</p>
+            <p className={`${isMobile ? "text-xs" : "text-sm"} text-gray-500`}>Feature 단위 일정 계획</p>
           </div>
 
           {/* 락 상태 - 읽기 전용에서는 숨김 */}
@@ -289,7 +302,7 @@ export function GanttHeader({
         </div>
 
         {/* 중앙: 기간 설정 + 보조 액션 */}
-        <div className="flex items-center gap-3">
+        <div className={`flex items-center gap-3 ${isMobile && readOnly ? "justify-center" : ""}`}>
           {/* 기간 설정 버튼 */}
           <div className="relative" ref={rangePopoverRef}>
             <button

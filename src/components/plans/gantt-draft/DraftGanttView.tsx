@@ -674,8 +674,8 @@ export function DraftGanttView({
 
       {/* 메인 영역 - border 없이 꽉 차게 */}
       <div className="flex flex-1 overflow-hidden bg-white relative">
-        {/* 모바일: 트리 패널 토글 버튼 */}
-        {isMobile && (
+        {/* 모바일: 트리 패널 토글 버튼 (readOnly일 때는 숨김) */}
+        {isMobile && !readOnly && (
           <button
             onClick={() => setShowMobileTree(true)}
             className="fixed bottom-20 left-4 z-50 flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-200 active:scale-95"

@@ -114,7 +114,7 @@ export function WeekSelector({
   }, [isWeekOpen]);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
       {/* 연도 선택 (커스텀 드롭다운) */}
       <div className="relative" ref={yearDropdownRef}>
         <button

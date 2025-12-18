@@ -596,13 +596,15 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
             />
           </div>
 
-          {/* 메타데이터 패널 - Bottom Sheet 스타일 */}
-          <WeekMetaPanel
-            stats={weekStats}
-            isExpanded={isMetaPanelExpanded}
-            onToggle={() => setIsMetaPanelExpanded(!isMetaPanelExpanded)}
-            snapshotCount={snapshots.length}
-          />
+          {/* 메타데이터 패널 - Bottom Sheet 스타일 (모바일에서 숨김) */}
+          <div className="hidden md:block">
+            <WeekMetaPanel
+              stats={weekStats}
+              isExpanded={isMetaPanelExpanded}
+              onToggle={() => setIsMetaPanelExpanded(!isMetaPanelExpanded)}
+              snapshotCount={snapshots.length}
+            />
+          </div>
         </div>
       </div>
 
