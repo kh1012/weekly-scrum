@@ -1366,6 +1366,11 @@ export function DraftTreePanel({
           }
         }}
       >
+        {/* 상단 border - 별도 div로 처리 */}
+        <div
+          className="absolute left-0 right-0 top-0"
+          style={{ borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}
+        />
         <div className="flex items-center gap-1">
           {/* 강조 버튼 역할의 아이콘 (노드와 동일한 수직선상) */}
           <div

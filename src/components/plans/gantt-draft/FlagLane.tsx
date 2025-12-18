@@ -291,6 +291,11 @@ export function FlagLane({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
     >
+      {/* 상단 border - 별도 div로 처리 */}
+      <div
+        className="absolute left-0 right-0 top-0 pointer-events-none"
+        style={{ borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}
+      />
       {/* 하단 border - 별도 div로 처리하여 트리 패널과 높이 일치 */}
       <div
         className="absolute left-0 right-0 bottom-0 pointer-events-none"
