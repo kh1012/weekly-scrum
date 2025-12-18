@@ -86,7 +86,9 @@ export function GanttHeader({
     startEditing,
     stopEditing,
     extendLockIfNeeded,
-    remainingSeconds,
+    recordActivity,
+    nextHeartbeatSeconds,
+    inactivitySeconds,
   } = useLock({ workspaceId });
 
   const isMac = useIsMac();
@@ -208,11 +210,35 @@ export function GanttHeader({
               >
                 <LockClosedIcon className="w-3.5 h-3.5" />
                 {isMyLock ? (
-                  <span>편집 중 · {remainingSeconds}초</span>
+                  <span>
+                    편집 중 · 다음 갱신 {nextHeartbeatSeconds ?? 0}초
+                  </span>
                 ) : (
                   <span>{lockState.lockedByName || "다른 사용자"} 작업 중</span>
                 )}
               </div>
+              {/* 비활성 시간 표시 - 내가 편집 중일 때만 */}
+              {isMyLock && isEditing && inactivitySeconds !== null && (
+                <div
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium"
+                  style={{
+                    background: inactivitySeconds > 540 
+                      ? "rgba(239, 68, 68, 0.1)" 
+                      : inactivitySeconds > 300 
+                        ? "rgba(245, 158, 11, 0.1)" 
+                        : "rgba(107, 114, 128, 0.08)",
+                    color: inactivitySeconds > 540 
+                      ? "#dc2626" 
+                      : inactivitySeconds > 300 
+                        ? "#d97706" 
+                        : "#6b7280",
+                  }}
+                  title="10분간 활동이 없으면 자동으로 편집이 종료됩니다"
+                >
+                  <span>비활성 {Math.floor(inactivitySeconds / 60)}:{String(inactivitySeconds % 60).padStart(2, "0")}</span>
+                  <span className="opacity-60">/ 10:00</span>
+                </div>
+              )}
               {/* 새로고침 버튼 - 내가 편집 중일 때만 */}
               {isMyLock && isEditing && (
                 <button

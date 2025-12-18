@@ -107,8 +107,16 @@ export function DraftGanttView({
     canEdit,
     refreshLockState,
     extendLockIfNeeded,
+    recordActivity,
   } = useLock({
     workspaceId,
+    onInactivityTimeout: () => {
+      showToast(
+        "warning",
+        "비활성 타임아웃",
+        "10분간 활동이 없어 편집 모드가 자동 종료되었습니다."
+      );
+    },
   });
 
   // 날짜 범위 설정 (기본 3개월: 전월 1일 ~ 익월 말일)
