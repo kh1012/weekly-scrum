@@ -102,6 +102,7 @@ export function GanttHeader({
   const [isStopping, setIsStopping] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [showRangePopover, setShowRangePopover] = useState(false);
+  const [isExtendPressed, setIsExtendPressed] = useState(false);
   const rangePopoverRef = useRef<HTMLDivElement>(null);
 
   // 클릭 외부 감지
@@ -249,12 +250,23 @@ export function GanttHeader({
                     recordActivity();
                     extendLockIfNeeded();
                   }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-emerald-50 active:scale-95 flex-shrink-0"
+                  onMouseDown={() => setIsExtendPressed(true)}
+                  onMouseUp={() => setIsExtendPressed(false)}
+                  onMouseLeave={() => setIsExtendPressed(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-shrink-0"
                   title="비활성 시간 초기화 및 락 연장"
                   style={{ 
-                    color: "#059669",
-                    background: "rgba(16, 185, 129, 0.1)",
-                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    color: isExtendPressed ? "#fff" : "#059669",
+                    background: isExtendPressed 
+                      ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
+                      : "rgba(16, 185, 129, 0.1)",
+                    border: isExtendPressed 
+                      ? "1px solid #059669" 
+                      : "1px solid rgba(16, 185, 129, 0.3)",
+                    transform: isExtendPressed ? "scale(0.95)" : "scale(1)",
+                    boxShadow: isExtendPressed 
+                      ? "inset 0 2px 4px rgba(0, 0, 0, 0.1)" 
+                      : "none",
                   }}
                 >
                   연장
