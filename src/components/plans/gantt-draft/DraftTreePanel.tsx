@@ -1232,11 +1232,20 @@ export function DraftTreePanel({
         style={{
           height: HEADER_HEIGHT,
           background: "linear-gradient(180deg, #f8f9fa 0%, #f3f4f6 100%)",
-          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
         }}
       >
+        {/* 하단 border - 별도 div로 처리 */}
+        <div
+          className="absolute left-0 right-0 bottom-0"
+          style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
+        />
         {/* 1행: 검색창 (38px) */}
-        <div className="flex items-center px-3" style={{ height: 38 }}>
+        <div className="flex items-center px-3 relative" style={{ height: 38 }}>
+          {/* 하단 border - 별도 div로 처리 */}
+          <div
+            className="absolute left-0 right-0 bottom-0"
+            style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
+          />
           <div
             className="flex items-center gap-1.5 px-2 py-1 rounded-md flex-1 transition-all duration-150 focus-within:ring-1 focus-within:ring-blue-200"
             style={{
@@ -1266,7 +1275,7 @@ export function DraftTreePanel({
         {/* 2행: 필터, 펼치기/접기, 추가 (38px) */}
         <div
           className="flex items-center justify-between px-3"
-          style={{ height: 38, borderTop: "1px solid rgba(0, 0, 0, 0.06)" }}
+          style={{ height: 38 }}
         >
           {/* 좌측: 필터 */}
           <div className="relative">

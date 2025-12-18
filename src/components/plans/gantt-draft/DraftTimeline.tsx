@@ -539,18 +539,24 @@ export function DraftTimeline({
         style={{
           height: HEADER_HEIGHT,
           background: "linear-gradient(180deg, #f8f9fa 0%, #f3f4f6 100%)",
-          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
         }}
       >
+        {/* 하단 border - 별도 div로 처리 */}
+        <div
+          className="absolute left-0 right-0 bottom-0 z-10"
+          style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
+        />
         <div className="relative" style={{ width: totalWidth, height: "100%" }}>
           {/* 월 헤더 - Airbnb 스타일 */}
           <div
             className="absolute top-0 left-0 flex"
-            style={{
-              height: 38,
-              borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-            }}
+            style={{ height: 38 }}
           >
+            {/* 하단 border - 별도 div로 처리 */}
+            <div
+              className="absolute left-0 right-0 bottom-0"
+              style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
+            />
             {months.map((m, idx) => (
               <div
                 key={idx}
@@ -616,9 +622,8 @@ export function DraftTimeline({
       {/* Flag Lane - 헤더 아래 오버레이 */}
       <div
         ref={flagLaneRef}
-        className="flex-shrink-0 overflow-x-auto scrollbar-hide"
+        className="flex-shrink-0 overflow-x-auto scrollbar-hide relative"
         style={{
-          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
           scrollbarWidth: "none", // Firefox
           msOverflowStyle: "none", // IE/Edge
         }}
