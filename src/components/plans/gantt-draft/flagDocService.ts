@@ -79,7 +79,7 @@ export async function buildReleaseDoc(
       {
         epic: string;
         plans: PlanRecord[];
-        planner: string;
+        planners: Set<string>; // 중복 제거를 위해 Set 사용
       }
     >();
 
@@ -95,48 +95,57 @@ export async function buildReleaseDoc(
           : plan.title;
 
       if (!epicGroups.has(epicKey)) {
-        // 기획자 찾기 (role이 '기획', 'planning', 'pm' 중 하나인 담당자)
-        let planner = "-";
+        epicGroups.set(epicKey, {
+          epic: epicLabel,
+          plans: [],
+          planners: new Set<string>(),
+        });
+      }
+
+      const group = epicGroups.get(epicKey)!;
+      group.plans.push(plan);
+
+      // 기획 관련 stage에서 기획자 수집
+      const isSpecStage = plan.stage?.includes("기획") || plan.stage?.toLowerCase().includes("spec");
+      if (isSpecStage) {
         const assignees = plan.plan_assignees as Array<{
           role: string;
           users: { display_name: string } | null;
         }>;
 
         if (assignees && assignees.length > 0) {
-          const plannerAssignee = assignees.find((a) =>
-            ["기획", "planning", "pm"].includes(a.role?.toLowerCase() ?? "")
-          );
-          if (plannerAssignee?.users?.display_name) {
-            planner = plannerAssignee.users.display_name;
+          for (const a of assignees) {
+            const role = a.role?.toLowerCase() ?? "";
+            if (["기획", "planning", "pm", "planner"].includes(role) && a.users?.display_name) {
+              group.planners.add(a.users.display_name);
+            }
           }
         }
-
-        epicGroups.set(epicKey, {
-          epic: epicLabel,
-          plans: [],
-          planner,
-        });
       }
-
-      epicGroups.get(epicKey)!.plans.push(plan);
     }
 
     // Step 3: 각 Epic에 대해 Spec Ready / Design Ready 계산
     const rows: ReleaseDocRow[] = [];
 
     for (const [epicKey, group] of epicGroups) {
-      // Spec Ready: stage === '상세 기획'인 모든 계획
-      const specPlans = group.plans.filter((p) => p.stage === "상세 기획");
+      // Spec Ready: '기획' 또는 'spec'이 포함된 stage
+      const specPlans = group.plans.filter((p) => 
+        p.stage?.includes("기획") || p.stage?.toLowerCase().includes("spec")
+      );
       const specReadyList: ReadyInfo[] = specPlans.map((p) => ({
         value: p.progress === 100 || p.status === "완료" ? "READY" : p.end_date ?? "-",
         title: p.title,
+        endDate: p.end_date ?? undefined,
       }));
 
-      // Design Ready: stage === 'UI 디자인'인 모든 계획
-      const designPlans = group.plans.filter((p) => p.stage === "UI 디자인");
+      // Design Ready: '디자인' 또는 'design'이 포함된 stage
+      const designPlans = group.plans.filter((p) => 
+        p.stage?.includes("디자인") || p.stage?.toLowerCase().includes("design")
+      );
       const designReadyList: ReadyInfo[] = designPlans.map((p) => ({
         value: p.progress === 100 || p.status === "완료" ? "READY" : p.end_date ?? "-",
         title: p.title,
+        endDate: p.end_date ?? undefined,
       }));
 
       // 날짜 범위 계산
@@ -149,7 +158,7 @@ export async function buildReleaseDoc(
         planId: group.plans[0]?.id ?? "",
         rowId: epicKey,
         epic: group.epic,
-        planner: group.planner,
+        planners: Array.from(group.planners),
         specReadyList: specReadyList.length > 0 ? specReadyList : [{ value: "데이터 없음" }],
         designReadyList: designReadyList.length > 0 ? designReadyList : [{ value: "데이터 없음" }],
         minStartDate,

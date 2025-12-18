@@ -244,6 +244,7 @@ export interface RenderRow extends DraftRow {
 export interface ReadyInfo {
   value: string; // 날짜 또는 "READY" 또는 "데이터 없음"
   title?: string; // bar의 title (구분용)
+  endDate?: string; // 원본 종료일 (색상 판단용)
 }
 
 /**
@@ -253,7 +254,7 @@ export interface ReleaseDocRow {
   planId: string;
   rowId: string; // project::module::feature 형태의 rowId
   epic: string; // "프로젝트 > 모듈 > 기능" or fallback title
-  planner: string; // 기획자 or '-'
+  planners: string[]; // 기획자 목록 (여러명 가능)
   specReadyList: ReadyInfo[]; // 여러 개 가능
   designReadyList: ReadyInfo[]; // 여러 개 가능
   // 스크롤 이동용 날짜 범위

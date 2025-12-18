@@ -120,7 +120,7 @@ export function FlagDocPanel({
       {
         epic: string;
         bars: typeof overlappingBars;
-        planner: string;
+        planners: Set<string>; // 중복 제거를 위해 Set 사용
       }
     >();
 
@@ -134,23 +134,26 @@ export function FlagDocPanel({
           : bar.title;
 
       if (!epicGroups.has(epicKey)) {
-        // 기획자 찾기
-        let planner = "-";
-        const plannerAssignee = bar.assignees?.find((a) =>
-          ["기획", "planning", "pm"].includes(a.role?.toLowerCase() ?? "")
-        );
-        if (plannerAssignee?.displayName) {
-          planner = plannerAssignee.displayName;
-        }
-
         epicGroups.set(epicKey, {
           epic: epicLabel,
           bars: [],
-          planner,
+          planners: new Set<string>(),
         });
       }
 
-      epicGroups.get(epicKey)!.bars.push(bar);
+      const group = epicGroups.get(epicKey)!;
+      group.bars.push(bar);
+
+      // 모든 bars에서 기획자 수집 (상세 기획 stage의 담당자들)
+      const isSpecStage = bar.stage?.includes("기획") || bar.stage?.toLowerCase().includes("spec");
+      if (isSpecStage && bar.assignees) {
+        for (const assignee of bar.assignees) {
+          const role = assignee.role?.toLowerCase() ?? "";
+          if (["기획", "planning", "pm", "planner"].includes(role) && assignee.displayName) {
+            group.planners.add(assignee.displayName);
+          }
+        }
+      }
     }
 
     // 각 Epic에 대해 Spec Ready / Design Ready 계산
@@ -160,28 +163,32 @@ export function FlagDocPanel({
     const today = new Date().toISOString().split("T")[0];
 
     for (const [epicKey, group] of epicGroups) {
-      // Spec Ready 계산 - '상세 기획' stage 모두 검색
-      const specPlans = group.bars.filter((b) => b.stage === "상세 기획");
+      // Spec Ready 계산 - '기획' 또는 'spec'이 포함된 stage 모두 검색
+      const specPlans = group.bars.filter((b) => 
+        b.stage?.includes("기획") || b.stage?.toLowerCase().includes("spec")
+      );
       const specReadyList: ReadyInfo[] = specPlans.map((plan) => {
         let value: string;
-        if (plan.status === "완료" && plan.endDate <= today) {
+        if (plan.status === "완료") {
           value = "READY";
         } else {
           value = plan.endDate;
         }
-        return { value, title: plan.title };
+        return { value, title: plan.title, endDate: plan.endDate };
       });
 
-      // Design Ready 계산 - 'UI 디자인' stage 모두 검색
-      const designPlans = group.bars.filter((b) => b.stage === "UI 디자인");
+      // Design Ready 계산 - '디자인' 또는 'design'이 포함된 stage 모두 검색
+      const designPlans = group.bars.filter((b) => 
+        b.stage?.includes("디자인") || b.stage?.toLowerCase().includes("design")
+      );
       const designReadyList: ReadyInfo[] = designPlans.map((plan) => {
         let value: string;
-        if (plan.status === "완료" && plan.endDate <= today) {
+        if (plan.status === "완료") {
           value = "READY";
         } else {
           value = plan.endDate;
         }
-        return { value, title: plan.title };
+        return { value, title: plan.title, endDate: plan.endDate };
       });
 
       // 날짜 범위 계산 (모든 bars 중 최소 startDate, 최대 endDate)
@@ -194,7 +201,7 @@ export function FlagDocPanel({
         planId: group.bars[0]?.clientUid ?? "",
         rowId: epicKey,
         epic: group.epic,
-        planner: group.planner,
+        planners: Array.from(group.planners),
         specReadyList: specReadyList.length > 0 ? specReadyList : [{ value: "데이터 없음" }],
         designReadyList: designReadyList.length > 0 ? designReadyList : [{ value: "데이터 없음" }],
         minStartDate,
@@ -328,7 +335,9 @@ export function FlagDocPanel({
                           {row.epic}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{row.planner}</td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {row.planners.length > 0 ? row.planners.join(", ") : "-"}
+                      </td>
                       <td className="py-3 px-4">
                         <ReadyInfoList items={row.specReadyList} />
                       </td>
@@ -381,11 +390,18 @@ function ReadyInfoList({ items }: { items: ReadyInfo[] }) {
  * 날짜 칩 컴포넌트
  */
 function DateChip({ info, showTitle = false }: { info: ReadyInfo; showTitle?: boolean }) {
-  const { value, title } = info;
+  const { value, title, endDate } = info;
 
   if (value === "-" || value === "데이터 없음") {
     return <span className="text-gray-400 text-xs">데이터 없음</span>;
   }
+
+  // 오늘 날짜 계산
+  const today = new Date().toISOString().split("T")[0];
+  
+  // 날짜가 오늘 이전인지 확인 (완료된 것으로 간주)
+  const dateToCheck = endDate || value;
+  const isPastDate = value !== "READY" && dateToCheck <= today;
 
   const chipContent = (
     <>
@@ -393,7 +409,13 @@ function DateChip({ info, showTitle = false }: { info: ReadyInfo; showTitle?: bo
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
           READY
         </span>
+      ) : isPastDate ? (
+        // 오늘 이전 날짜: 초록색으로 표시 (완료됨을 나타냄)
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+          {value}
+        </span>
       ) : (
+        // 오늘 이후 날짜: 회색으로 표시 (아직 진행 중)
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
           {value}
         </span>
