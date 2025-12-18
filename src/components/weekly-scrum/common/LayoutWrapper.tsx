@@ -101,7 +101,7 @@ export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
       {/* 메인 영역 */}
       <div
         className={`transition-all duration-200 ${
-          isSidebarOpen ? "lg:ml-64" : "lg:ml-0"
+          isSidebarOpen ? "lg:ml-[300px]" : "lg:ml-0"
         }`}
       >
         <Header
