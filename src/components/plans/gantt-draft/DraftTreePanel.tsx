@@ -52,6 +52,39 @@ interface FlagsPopoverProps {
   anchorRect: DOMRect | null;
 }
 
+type FlagSortType = "name" | "date";
+
+/**
+ * 특수 이름 정렬 우선순위
+ * Release가 Sprint보다 앞서게
+ */
+function getFlagNamePriority(title: string): number {
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.startsWith("release") || lowerTitle.startsWith("릴리즈")) return 0;
+  if (lowerTitle.startsWith("sprint") || lowerTitle.startsWith("스프린트")) return 1;
+  return 2;
+}
+
+/**
+ * 이름 순 정렬 (Release > Sprint > 기타)
+ */
+function sortByName(a: DraftFlag, b: DraftFlag): number {
+  const priorityA = getFlagNamePriority(a.title);
+  const priorityB = getFlagNamePriority(b.title);
+  
+  if (priorityA !== priorityB) return priorityA - priorityB;
+  
+  // 같은 우선순위면 문자열 정렬
+  return a.title.localeCompare(b.title, "ko");
+}
+
+/**
+ * 기간 순 정렬
+ */
+function sortByDate(a: DraftFlag, b: DraftFlag): number {
+  return a.startDate.localeCompare(b.startDate);
+}
+
 function FlagsPopover({
   flags,
   onClose,
@@ -61,11 +94,26 @@ function FlagsPopover({
   anchorRect,
 }: FlagsPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
+  
+  // 필터 및 정렬 상태
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortType, setSortType] = useState<FlagSortType>("name");
 
-  // deleted 제외 및 날짜 순 정렬
-  const sortedFlags = flags
-    .filter((f) => !f.deleted)
-    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  // deleted 제외, 필터링 및 정렬
+  const sortedFlags = useMemo(() => {
+    let filtered = flags.filter((f) => !f.deleted);
+    
+    // 검색 필터
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((f) => 
+        f.title.toLowerCase().includes(query)
+      );
+    }
+    
+    // 정렬
+    return filtered.sort(sortType === "name" ? sortByName : sortByDate);
+  }, [flags, searchQuery, sortType]);
 
   // 외부 클릭 감지
   useEffect(() => {
@@ -120,24 +168,75 @@ function FlagsPopover({
     >
       {/* 헤더 */}
       <div
-        className="flex items-center justify-between px-4 py-3"
+        className="px-4 py-3"
         style={{
           background: "linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%)",
           borderBottom: "1px solid rgba(239, 68, 68, 0.2)",
         }}
       >
-        <div className="flex items-center gap-2">
-          <FlagIcon className="w-4 h-4 text-red-500" />
-          <span className="text-sm font-semibold text-red-700">
-            Flags ({sortedFlags.length})
-          </span>
+        {/* 상단: 타이틀 + 닫기 */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <FlagIcon className="w-4 h-4 text-red-500" />
+            <span className="text-sm font-semibold text-red-700">
+              Flags ({sortedFlags.length})
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+          >
+            <XIcon className="w-3 h-3 text-red-500" />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
-        >
-          <XIcon className="w-3 h-3 text-red-500" />
-        </button>
+        
+        {/* 검색 + 정렬 */}
+        <div className="flex items-center gap-2">
+          {/* 검색 입력 */}
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Flag 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm rounded-lg border border-red-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-red-300 placeholder:text-red-300"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-red-200 flex items-center justify-center hover:bg-red-300"
+              >
+                <XIcon className="w-2.5 h-2.5 text-red-600" />
+              </button>
+            )}
+          </div>
+          
+          {/* 정렬 버튼 */}
+          <div className="flex rounded-lg overflow-hidden border border-red-200">
+            <button
+              onClick={() => setSortType("name")}
+              className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                sortType === "name"
+                  ? "bg-red-500 text-white"
+                  : "bg-white text-red-500 hover:bg-red-50"
+              }`}
+              title="이름 순 (Release → Sprint → 기타)"
+            >
+              이름
+            </button>
+            <button
+              onClick={() => setSortType("date")}
+              className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                sortType === "date"
+                  ? "bg-red-500 text-white"
+                  : "bg-white text-red-500 hover:bg-red-50"
+              }`}
+              title="기간 순"
+            >
+              기간
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Flag 목록 */}
