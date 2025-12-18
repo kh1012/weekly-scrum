@@ -82,8 +82,8 @@ export function NewSnapshotModal({
         {/* 모달 콘텐츠 */}
         <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full p-10 animate-fadeIn">
           {/* 배경 장식 */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-amber-500/10 to-orange-500/10 blur-3xl" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-3xl" />
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-amber-500/10 to-orange-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-3xl pointer-events-none" />
 
           {/* 닫기 버튼 */}
           <button
@@ -176,10 +176,10 @@ export function NewSnapshotModal({
       />
 
       {/* 모달 콘텐츠 */}
-      <div className="relative bg-white rounded-2xl md:rounded-[2rem] shadow-2xl max-w-2xl w-full p-6 md:p-10 animate-fadeIn max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-2xl md:rounded-[2rem] shadow-2xl max-w-2xl w-full p-6 md:p-10 animate-fadeIn">
         {/* 배경 장식 */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/10 blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-3xl" />
+        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 blur-3xl pointer-events-none" />
 
         {/* 닫기 버튼 */}
         <button

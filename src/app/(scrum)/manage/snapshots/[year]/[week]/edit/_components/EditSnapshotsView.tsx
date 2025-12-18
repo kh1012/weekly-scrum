@@ -757,7 +757,7 @@ function EditSnapshotsViewInner({
             disabled={isSaving}
             isLoading={isSaving}
             loadingText="저장 중..."
-            variant="secondary"
+            variant="primary"
             size="md"
             icon={
               <svg
@@ -774,8 +774,6 @@ function EditSnapshotsViewInner({
                 />
               </svg>
             }
-            className="text-white bg-gray-900 hover:bg-gray-800"
-            gradient={false}
           >
             {isNewMode ? "신규 등록하기" : "업데이트하기"}
           </LoadingButton>
