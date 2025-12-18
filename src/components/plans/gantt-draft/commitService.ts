@@ -114,6 +114,7 @@ export async function commitFeaturePlans(
               status: plan.status,
               start_date: plan.start_date,
               end_date: plan.end_date,
+              order_index: plan.order_index ?? 0,
               updated_by: user.id,
               updated_at: new Date().toISOString(),
             })
@@ -161,6 +162,7 @@ export async function commitFeaturePlans(
               status: plan.status,
               start_date: plan.start_date,
               end_date: plan.end_date,
+              order_index: plan.order_index ?? 0,
               created_by: user.id,
               updated_by: user.id,
             })
@@ -233,6 +235,7 @@ export async function fetchFeaturePlans(
     startDate: string;
     endDate: string;
     domain?: string;
+    orderIndex: number; // 트리 순서
     assignees?: FetchedAssignee[];
   }>;
   error?: string;
@@ -241,7 +244,7 @@ export async function fetchFeaturePlans(
     const supabase = await createClient();
     const targetWorkspaceId = workspaceId || DEFAULT_WORKSPACE_ID;
 
-    // plans 조회
+    // plans 조회 (order_index 우선 정렬)
     const { data: plansData, error: plansError } = await supabase
       .from("plans")
       .select("*")
@@ -249,6 +252,7 @@ export async function fetchFeaturePlans(
       .eq("type", "feature")
       .not("start_date", "is", null)
       .not("end_date", "is", null)
+      .order("order_index", { ascending: true, nullsFirst: true })
       .order("start_date", { ascending: true });
 
     if (plansError) {
@@ -320,6 +324,7 @@ export async function fetchFeaturePlans(
       startDate: row.start_date,
       endDate: row.end_date,
       domain: row.domain,
+      orderIndex: row.order_index ?? 0, // 순서 인덱스 추가
       assignees: assigneesMap.get(row.id) || [],
     }));
 

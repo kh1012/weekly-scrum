@@ -41,6 +41,7 @@ interface InitialPlan {
   startDate: string;
   endDate: string;
   domain?: string;
+  orderIndex?: number; // 트리 순서
   assignees?: InitialAssignee[];
 }
 
@@ -167,13 +168,14 @@ export function DraftGanttView({
       const rowId = createRowId(plan.project, plan.module, plan.feature);
 
       if (!rowMap.has(rowId)) {
+        // 서버에서 받은 orderIndex 사용 (없으면 현재 row 수 기준)
         rowMap.set(rowId, {
           rowId,
           project: plan.project,
           module: plan.module,
           feature: plan.feature,
           domain: plan.domain,
-          orderIndex: rowMap.size,
+          orderIndex: plan.orderIndex ?? rowMap.size,
           expanded: true,
         });
       }
@@ -199,7 +201,12 @@ export function DraftGanttView({
       });
     }
 
-    hydrate(Array.from(rowMap.values()), loadedBars);
+    // orderIndex 순서대로 정렬된 rows 생성
+    const sortedRows = Array.from(rowMap.values()).sort(
+      (a, b) => a.orderIndex - b.orderIndex
+    );
+
+    hydrate(sortedRows, loadedBars);
   }, [initialPlans, hydrate]);
 
   // CommandPalette 콜백들을 useCallback으로 메모이제이션
@@ -390,6 +397,7 @@ export function DraftGanttView({
               end_date: bar.endDate,
               assignees: bar.assignees,
               deleted: bar.deleted || false,
+              order_index: row?.orderIndex ?? 0, // 트리 순서 저장
             };
           }),
         };

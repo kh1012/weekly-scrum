@@ -385,15 +385,34 @@ export const useDraftStore = create<DraftStore>()(
         const state = get();
         const prevOrder = [...state.rows];
 
+        // orderIndex가 변경된 rowId들을 추적
+        const changedRowIds = new Set<string>();
+
         const reordered = newOrder
           .map((rowId, idx) => {
             const row = state.rows.find((r) => r.rowId === rowId);
-            return row ? { ...row, orderIndex: idx } : null;
+            if (!row) return null;
+            
+            // orderIndex가 변경된 경우 추적
+            if (row.orderIndex !== idx) {
+              changedRowIds.add(rowId);
+            }
+            
+            return { ...row, orderIndex: idx };
           })
           .filter((r): r is DraftRow => r !== null);
 
+        // 순서가 변경된 row에 속한 bars를 dirty로 표시
+        const newBars = state.bars.map((bar) => {
+          if (changedRowIds.has(bar.rowId) && !bar.deleted) {
+            return { ...bar, dirty: true };
+          }
+          return bar;
+        });
+
         set({
           rows: reordered,
+          bars: newBars,
           ...pushUndo(state, {
             type: "REORDER_ROWS",
             prevOrder,

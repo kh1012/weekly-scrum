@@ -211,6 +211,7 @@ export interface CommitPayload {
     end_date: string;
     assignees: DraftAssignee[];
     deleted: boolean;
+    order_index: number; // 트리 순서 (row orderIndex 기반)
   }>;
 }
 
