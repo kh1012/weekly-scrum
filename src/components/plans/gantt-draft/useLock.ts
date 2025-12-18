@@ -56,6 +56,8 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
   const setLockStateRef = useRef(setLockState);
   const setEditingRef = useRef(setEditing);
   const onLockLostRef = useRef(onLockLost);
+  // 편집 시작 성공 후 플래그 (락 상태 변경에 의한 자동 해제 방지)
+  const hasAcquiredRef = useRef(false);
   
   useEffect(() => {
     setLockStateRef.current = setLockState;
@@ -72,17 +74,24 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
 
     const handleLockStateChange = (state: LockState) => {
       setLockStateRef.current(state);
-      // 락 상태와 편집 모드 동기화 (단, 락 획득 중일 때는 제외)
-      if (!isAcquiringRef.current) {
+      // 락 상태와 편집 모드 동기화
+      // - 락 획득 중이거나, 이미 획득한 경우에는 자동 해제 안 함
+      if (!isAcquiringRef.current && !hasAcquiredRef.current) {
         if (state.isMyLock) {
           setEditingRef.current(true);
+          hasAcquiredRef.current = true;
         } else {
           setEditingRef.current(false);
         }
       }
+      // 내 락으로 변경되면 hasAcquiredRef 설정
+      if (state.isMyLock) {
+        hasAcquiredRef.current = true;
+      }
     };
 
     const handleLockLost = () => {
+      hasAcquiredRef.current = false;
       setEditingRef.current(false);
       onLockLostRef.current?.();
     };
@@ -100,6 +109,7 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
       // 내 락이면 자동으로 편집 모드 활성화 + heartbeat 시작
       if (state.isMyLock) {
         setEditingRef.current(true);
+        hasAcquiredRef.current = true;
         lockManagerRef.current?.startHeartbeatExternal();
         // beforeunload 핸들러 등록
         cleanupBeforeUnloadRef.current = setupBeforeUnloadHandler(workspaceId);
@@ -115,6 +125,7 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
     return () => {
       lockManagerRef.current?.cleanup();
       isInitializedRef.current = false;
+      hasAcquiredRef.current = false;
     };
   }, [workspaceId]); // 의존성을 workspaceId만으로 제한
 
@@ -149,6 +160,7 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
       const success = await lockManagerRef.current.acquire();
 
       if (success) {
+        hasAcquiredRef.current = true;
         setEditing(true);
         // beforeunload 핸들러 등록
         cleanupBeforeUnloadRef.current = setupBeforeUnloadHandler(workspaceId);
@@ -167,6 +179,9 @@ export function useLock({ workspaceId, onLockLost }: UseLockOptions): UseLockRes
   const stopEditing = useCallback(async (): Promise<void> => {
     if (!lockManagerRef.current) return;
 
+    // 락 해제 전에 플래그 먼저 해제
+    hasAcquiredRef.current = false;
+    
     await lockManagerRef.current.release();
     setEditing(false);
 

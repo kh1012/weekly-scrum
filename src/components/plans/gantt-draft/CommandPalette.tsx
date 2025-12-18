@@ -139,7 +139,8 @@ export function CommandPalette({
         action: async () => {
           await onStartEditing();
         },
-        disabled: isEditing || !canEdit,
+        // 필터에서 !isEditing일 때만 표시하므로 항상 활성화
+        disabled: false,
         category: "작업",
         showLoading: true,
       },
@@ -151,7 +152,8 @@ export function CommandPalette({
         action: async () => {
           await onStopEditing();
         },
-        disabled: !isEditing,
+        // 필터에서 isEditing일 때만 표시하므로 항상 활성화
+        disabled: false,
         category: "작업",
         showLoading: true,
       },
@@ -427,7 +429,7 @@ export function CommandPalette({
         }
       }
     },
-    [filteredCommands, selectedIndex, onClose]
+    [filteredCommands, selectedIndex, onClose, loadingCommandId, executeCommand]
   );
 
   // 인덱스 리셋
