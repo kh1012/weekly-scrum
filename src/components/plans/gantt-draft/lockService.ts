@@ -9,7 +9,9 @@ import { createClient } from "@/lib/supabase/browser";
 import type { LockState } from "./types";
 
 const DEFAULT_TTL_SECONDS = 600; // 10분 TTL
-const HEARTBEAT_INTERVAL = 60000; // 1분마다 heartbeat
+const HEARTBEAT_INTERVAL = 30000; // 30초마다 heartbeat (더 자주)
+const HEARTBEAT_RETRY_COUNT = 2; // heartbeat 실패 시 재시도 횟수
+const HEARTBEAT_RETRY_DELAY = 3000; // 재시도 간격 (3초)
 
 /**
  * Lock 상태 조회
@@ -69,6 +71,27 @@ export async function tryAcquireLock(
       return { success: false, lockState: { isLocked: false } };
     }
 
+    const currentUserId = userData.user.id;
+
+    // 먼저 현재 락 상태 확인
+    const currentState = await getWorkspaceLock(workspaceId);
+    console.log("[tryAcquireLock] 현재 락 상태:", currentState);
+
+    // 이미 내 락이면 heartbeat로 갱신하고 성공 반환
+    if (currentState.isMyLock) {
+      console.log("[tryAcquireLock] 이미 내 락, heartbeat로 갱신");
+      const heartbeatResult = await heartbeatLock(workspaceId, ttlSeconds);
+      if (heartbeatResult.success) {
+        return {
+          success: true,
+          lockState: {
+            ...currentState,
+            expiresAt: heartbeatResult.expiresAt || currentState.expiresAt,
+          },
+        };
+      }
+    }
+
     const { data, error } = await supabase.rpc("try_acquire_workspace_lock", {
       p_workspace_id: workspaceId,
       p_ttl_seconds: ttlSeconds,
@@ -76,13 +99,12 @@ export async function tryAcquireLock(
 
     if (error) {
       console.error("[tryAcquireLock] RPC error:", error);
-      // 락 실패 시 현재 상태 조회
-      const currentState = await getWorkspaceLock(workspaceId);
       return { success: false, lockState: currentState };
     }
 
     // RPC가 배열로 반환하는 경우 처리
     const result = Array.isArray(data) ? data[0] : data;
+    console.log("[tryAcquireLock] RPC 결과:", result);
 
     // RPC는 ok: true/false를 반환함
     if (result?.ok) {
@@ -98,8 +120,8 @@ export async function tryAcquireLock(
       };
     }
 
-    // 락 획득 실패 - 누가 잡고 있는지 확인
-    const currentState = await getWorkspaceLock(workspaceId);
+    // 락 획득 실패 - 현재 상태 반환
+    console.warn("[tryAcquireLock] 락 획득 실패, 현재 홀더:", currentState.lockedByName);
     return { success: false, lockState: currentState };
   } catch (err) {
     console.error("[tryAcquireLock] Error:", err);
@@ -173,6 +195,29 @@ export async function releaseLock(workspaceId: string): Promise<boolean> {
 }
 
 /**
+ * 재시도 로직이 포함된 heartbeat
+ */
+async function heartbeatWithRetry(
+  workspaceId: string,
+  retryCount: number = HEARTBEAT_RETRY_COUNT
+): Promise<{ success: boolean; expiresAt?: string }> {
+  for (let attempt = 0; attempt <= retryCount; attempt++) {
+    const result = await heartbeatLock(workspaceId);
+    
+    if (result.success) {
+      return result;
+    }
+    
+    if (attempt < retryCount) {
+      console.log(`[heartbeatWithRetry] 재시도 ${attempt + 1}/${retryCount}...`);
+      await new Promise((resolve) => setTimeout(resolve, HEARTBEAT_RETRY_DELAY));
+    }
+  }
+  
+  return { success: false };
+}
+
+/**
  * Lock Manager Hook
  * - 락 획득/해제/heartbeat 관리
  * - visibility change 감지
@@ -183,6 +228,9 @@ export class LockManager {
   private onLockStateChange: (state: LockState) => void;
   private onLockLost: () => void;
   private isActive = false;
+  private visibilityHandler: (() => void) | null = null;
+  private consecutiveFailures = 0;
+  private readonly MAX_CONSECUTIVE_FAILURES = 3;
 
   constructor(
     workspaceId: string,
@@ -203,6 +251,7 @@ export class LockManager {
 
     if (result.success) {
       this.isActive = true;
+      this.consecutiveFailures = 0;
       this.startHeartbeat();
       this.setupVisibilityHandler();
       return true;
@@ -216,7 +265,9 @@ export class LockManager {
    */
   async release(): Promise<void> {
     this.stopHeartbeat();
+    this.removeVisibilityHandler();
     this.isActive = false;
+    this.consecutiveFailures = 0;
 
     await releaseLock(this.workspaceId);
     this.onLockStateChange({ isLocked: false, isMyLock: false });
@@ -244,10 +295,11 @@ export class LockManager {
       }
 
       console.log("[LockManager] Heartbeat 시도...");
-      const result = await heartbeatLock(this.workspaceId);
+      const result = await heartbeatWithRetry(this.workspaceId);
       console.log("[LockManager] Heartbeat 결과:", result);
 
       if (result.success) {
+        this.consecutiveFailures = 0;
         // 성공 시 만료 시간 업데이트 (expiresAt이 있는 경우에만)
         if (result.expiresAt) {
           this.onLockStateChange({
@@ -256,15 +308,24 @@ export class LockManager {
             expiresAt: result.expiresAt,
           });
         }
-        // expiresAt이 없어도 success면 락은 유지
         console.log("[LockManager] Heartbeat 성공, 락 유지");
       } else {
-        // 명시적으로 false인 경우에만 락 상실로 처리
-        console.warn("[LockManager] Heartbeat 실패, 락 상실");
-        this.isActive = false;
-        this.stopHeartbeat();
-        this.onLockStateChange({ isLocked: false, isMyLock: false });
-        this.onLockLost();
+        this.consecutiveFailures++;
+        console.warn(`[LockManager] Heartbeat 실패 (${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES})`);
+        
+        // 연속 실패 횟수가 임계치를 넘으면 락 상실 처리
+        if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
+          console.error("[LockManager] 연속 heartbeat 실패, 락 상실 처리 및 서버 락 해제");
+          this.isActive = false;
+          this.stopHeartbeat();
+          this.removeVisibilityHandler();
+          
+          // 서버의 락도 해제 시도 (동기화)
+          await releaseLock(this.workspaceId);
+          
+          this.onLockStateChange({ isLocked: false, isMyLock: false });
+          this.onLockLost();
+        }
       }
     }, HEARTBEAT_INTERVAL);
   }
@@ -283,14 +344,18 @@ export class LockManager {
    * Visibility change 핸들러 설정
    */
   private setupVisibilityHandler(): void {
-    const handler = async () => {
+    // 기존 핸들러 제거
+    this.removeVisibilityHandler();
+    
+    this.visibilityHandler = async () => {
       if (document.visibilityState === "visible" && this.isActive) {
         // 탭이 다시 활성화되면 heartbeat 갱신
         console.log("[LockManager] Visibility 변경, heartbeat 시도...");
-        const result = await heartbeatLock(this.workspaceId);
+        const result = await heartbeatWithRetry(this.workspaceId);
         console.log("[LockManager] Visibility heartbeat 결과:", result);
         
         if (result.success) {
+          this.consecutiveFailures = 0;
           // 성공 시 만료 시간 업데이트 (expiresAt이 있는 경우에만)
           if (result.expiresAt) {
             this.onLockStateChange({
@@ -304,13 +369,28 @@ export class LockManager {
           console.warn("[LockManager] Visibility heartbeat 실패, 락 상실");
           this.isActive = false;
           this.stopHeartbeat();
+          this.removeVisibilityHandler();
+          
+          // 서버의 락도 해제 시도 (동기화)
+          await releaseLock(this.workspaceId);
+          
           this.onLockStateChange({ isLocked: false, isMyLock: false });
           this.onLockLost();
         }
       }
     };
 
-    document.addEventListener("visibilitychange", handler);
+    document.addEventListener("visibilitychange", this.visibilityHandler);
+  }
+  
+  /**
+   * Visibility change 핸들러 제거
+   */
+  private removeVisibilityHandler(): void {
+    if (this.visibilityHandler) {
+      document.removeEventListener("visibilitychange", this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
   }
 
   /**
@@ -318,6 +398,7 @@ export class LockManager {
    */
   startHeartbeatExternal(): void {
     this.isActive = true;
+    this.consecutiveFailures = 0;
     this.startHeartbeat();
     this.setupVisibilityHandler();
   }
@@ -327,7 +408,9 @@ export class LockManager {
    */
   cleanup(): void {
     this.stopHeartbeat();
+    this.removeVisibilityHandler();
     this.isActive = false;
+    this.consecutiveFailures = 0;
   }
 
   /**
