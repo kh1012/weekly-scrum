@@ -747,16 +747,18 @@ select option {
   }
 
   @keyframes liquidGlassShimmer {
-    0%, 100% {
-      box-shadow: 
-        inset 0 1px 1px rgba(255, 255, 255, 0.4),
-        inset 0 -1px 1px rgba(0, 0, 0, 0.05),
-        0 1px 2px rgba(0, 0, 0, 0.04),
+    0%,
+    100% {
+      /* 30% 강도 - 기본 상태 */
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.03),
+        0 1px 3px var(--glow-color, rgba(59, 130, 246, 0.08)),
+        0 0 5px var(--glow-color, rgba(59, 130, 246, 0.05)),
         0 0 0 0.5px var(--border-color, rgba(59, 130, 246, 0.25));
     }
     50% {
-      box-shadow: 
-        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+      /* 100% 강도 - 최대 발광 */
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6),
         inset 0 -1px 1px rgba(0, 0, 0, 0.05),
         0 2px 8px var(--glow-color, rgba(59, 130, 246, 0.25)),
         0 0 16px var(--glow-color, rgba(59, 130, 246, 0.15)),
@@ -765,7 +767,9 @@ select option {
   }
 
   @keyframes liquidGlassSwipe {
-    0%, 40%, 100% {
+    0%,
+    40%,
+    100% {
       left: -100%;
       opacity: 0;
     }

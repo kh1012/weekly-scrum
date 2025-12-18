@@ -160,6 +160,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/admin",
         emoji: "🏠",
         icon: Icons.house,
+        isNew: true,
       },
       {
         key: "admin-plans",
@@ -168,6 +169,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "📆",
         icon: Icons.calendarDays,
         description: "일정 계획 관리",
+        isNew: true,
       },
       {
         key: "admin-snapshots",
@@ -516,7 +518,11 @@ export function SideNavigation({
                               {item.label}
                             </span>
                             {item.isNew && (
-                              <LiquidGlassTag variant="blue" shimmer>
+                              <LiquidGlassTag
+                                variant="purple"
+                                shimmer
+                                className="ml-2"
+                              >
                                 New
                               </LiquidGlassTag>
                             )}
