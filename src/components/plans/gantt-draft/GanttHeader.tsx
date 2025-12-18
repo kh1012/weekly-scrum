@@ -253,20 +253,13 @@ export function GanttHeader({
                   onMouseDown={() => setIsExtendPressed(true)}
                   onMouseUp={() => setIsExtendPressed(false)}
                   onMouseLeave={() => setIsExtendPressed(false)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-shrink-0"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-shrink-0 active:scale-95"
                   title="비활성 시간 초기화 및 락 연장"
                   style={{ 
-                    color: isExtendPressed ? "#fff" : "#059669",
-                    background: isExtendPressed 
-                      ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
-                      : "rgba(16, 185, 129, 0.1)",
-                    border: isExtendPressed 
-                      ? "1px solid #059669" 
-                      : "1px solid rgba(16, 185, 129, 0.3)",
-                    transform: isExtendPressed ? "scale(0.95)" : "scale(1)",
-                    boxShadow: isExtendPressed 
-                      ? "inset 0 2px 4px rgba(0, 0, 0, 0.1)" 
-                      : "none",
+                    color: "#059669",
+                    background: "rgba(16, 185, 129, 0.1)",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    transform: isExtendPressed ? "scale(0.92)" : "scale(1)",
                   }}
                 >
                   연장

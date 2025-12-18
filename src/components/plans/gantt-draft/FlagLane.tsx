@@ -48,9 +48,11 @@ export function FlagLane({
 
   // 호버 및 드래그 상태
   const [hoverDayIndex, setHoverDayIndex] = useState<number | null>(null);
+  const [hoverLaneIndex, setHoverLaneIndex] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [dragEnd, setDragEnd] = useState<number | null>(null);
+  const [dragLaneIndex, setDragLaneIndex] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Lane packing 계산
@@ -115,6 +117,18 @@ export function FlagLane({
     [dayWidth]
   );
 
+  // 레인 인덱스 계산 헬퍼
+  const getLaneIndexFromEvent = useCallback(
+    (e: React.MouseEvent | MouseEvent) => {
+      if (!containerRef.current) return 0;
+      const rect = containerRef.current.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const laneIdx = Math.floor(y / FLAG_LANE_HEIGHT);
+      return Math.max(0, Math.min(laneIdx, effectiveLaneCount - 1));
+    },
+    [effectiveLaneCount]
+  );
+
   // 날짜 인덱스에서 Date 객체 생성
   const getDateFromIndex = useCallback(
     (index: number) => {
@@ -140,12 +154,14 @@ export function FlagLane({
           setHoverDayIndex(null);
           return;
         }
-        // 호버 프리뷰
+        // 호버 프리뷰 - 날짜와 레인 모두 추적
         const dayIndex = getDayIndexFromEvent(e);
+        const laneIndex = getLaneIndexFromEvent(e);
         setHoverDayIndex(dayIndex);
+        setHoverLaneIndex(laneIndex);
       }
     },
-    [isEditing, isDragging, dragStart, getDayIndexFromEvent]
+    [isEditing, isDragging, dragStart, getDayIndexFromEvent, getLaneIndexFromEvent]
   );
 
   // 마우스 나감
@@ -164,12 +180,14 @@ export function FlagLane({
 
       e.preventDefault();
       const dayIndex = getDayIndexFromEvent(e);
+      const laneIndex = getLaneIndexFromEvent(e);
       setIsDragging(true);
       setDragStart(dayIndex);
       setDragEnd(dayIndex);
+      setDragLaneIndex(laneIndex);
       setHoverDayIndex(null);
     },
-    [isEditing, getDayIndexFromEvent]
+    [isEditing, getDayIndexFromEvent, getLaneIndexFromEvent]
   );
 
   // 마우스 업 (드래그 종료 -> Flag 생성)
@@ -261,18 +279,22 @@ export function FlagLane({
     const maxIndex = Math.max(dragStart, dragEnd);
     return {
       left: minIndex * dayWidth,
+      top: dragLaneIndex * FLAG_LANE_HEIGHT + 3,
       width: (maxIndex - minIndex + 1) * dayWidth,
+      height: FLAG_LANE_HEIGHT - 6,
     };
-  }, [isDragging, dragStart, dragEnd, dayWidth]);
+  }, [isDragging, dragStart, dragEnd, dragLaneIndex, dayWidth]);
 
   // 호버 프리뷰 계산
   const hoverPreview = useMemo(() => {
     if (isDragging || hoverDayIndex === null) return null;
     return {
       left: hoverDayIndex * dayWidth,
+      top: hoverLaneIndex * FLAG_LANE_HEIGHT + 3,
       width: dayWidth,
+      height: FLAG_LANE_HEIGHT - 6,
     };
-  }, [isDragging, hoverDayIndex, dayWidth]);
+  }, [isDragging, hoverDayIndex, hoverLaneIndex, dayWidth]);
 
   return (
     <div
@@ -331,9 +353,9 @@ export function FlagLane({
           className="absolute pointer-events-none transition-opacity duration-100"
           style={{
             left: hoverPreview.left,
-            top: 3,
+            top: hoverPreview.top,
             width: hoverPreview.width,
-            height: FLAG_LANE_HEIGHT - 6,
+            height: hoverPreview.height,
             background: "rgba(239, 68, 68, 0.1)",
             border: "1px dashed rgba(239, 68, 68, 0.4)",
             borderRadius: 4,
@@ -347,9 +369,9 @@ export function FlagLane({
           className="absolute pointer-events-none"
           style={{
             left: dragPreview.left,
-            top: 3,
+            top: dragPreview.top,
             width: dragPreview.width,
-            height: FLAG_LANE_HEIGHT - 6,
+            height: dragPreview.height,
             background: "rgba(239, 68, 68, 0.2)",
             border: "2px dashed #ef4444",
             borderRadius: 4,
