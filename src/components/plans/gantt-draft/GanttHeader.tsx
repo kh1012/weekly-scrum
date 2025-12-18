@@ -199,11 +199,8 @@ export function GanttHeader({
               {/* 편집 상태 영역 - 2줄, 고정폭 */}
               {isMyLock && isEditing ? (
                 <div
-                  className="flex flex-col justify-center px-3 py-1 rounded-lg"
-                  style={{
-                    width: 160,
-                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.15) 100%)",
-                  }}
+                  className="flex flex-col justify-center"
+                  style={{ width: 160 }}
                 >
                   {/* 1행: 편집 중 · 다음 갱신 */}
                   <div
