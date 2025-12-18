@@ -386,7 +386,9 @@ export function CommandPalette({
   useEffect(() => {
     if (isOpen) {
       setQuery("");
-      setSelectedIndex(0);
+      // 첫 번째 활성화된 항목으로 선택
+      const firstEnabledIndex = commands.findIndex((cmd) => !cmd.disabled);
+      setSelectedIndex(firstEnabledIndex >= 0 ? firstEnabledIndex : 0);
       setShowCustomRange(false);
       setLoadingCommandId(null);
       // 커스텀 범위 값도 현재 설정으로 초기화
@@ -400,7 +402,30 @@ export function CommandPalette({
       }
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isOpen, rangeStart, rangeEnd]);
+  }, [isOpen, rangeStart, rangeEnd, commands]);
+
+  // 다음 활성화된 항목 찾기 (disabled 스킵)
+  const findNextEnabledIndex = useCallback(
+    (currentIndex: number, direction: 1 | -1): number => {
+      const len = filteredCommands.length;
+      if (len === 0) return 0;
+
+      let nextIndex = currentIndex;
+      let attempts = 0;
+
+      do {
+        nextIndex = direction === 1
+          ? (nextIndex + 1) % len
+          : (nextIndex - 1 + len) % len;
+        attempts++;
+        // 모든 항목이 disabled면 무한 루프 방지
+        if (attempts >= len) return currentIndex;
+      } while (filteredCommands[nextIndex]?.disabled);
+
+      return nextIndex;
+    },
+    [filteredCommands]
+  );
 
   // 키보드 네비게이션
   const handleKeyDown = useCallback(
@@ -412,14 +437,10 @@ export function CommandPalette({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < filteredCommands.length - 1 ? prev + 1 : 0
-        );
+        setSelectedIndex((prev) => findNextEnabledIndex(prev, 1));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev > 0 ? prev - 1 : filteredCommands.length - 1
-        );
+        setSelectedIndex((prev) => findNextEnabledIndex(prev, -1));
       } else if (e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
@@ -429,13 +450,14 @@ export function CommandPalette({
         }
       }
     },
-    [filteredCommands, selectedIndex, onClose, loadingCommandId, executeCommand]
+    [filteredCommands, selectedIndex, onClose, loadingCommandId, executeCommand, findNextEnabledIndex]
   );
 
-  // 인덱스 리셋
+  // 인덱스 리셋 (첫 번째 활성화된 항목으로)
   useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
+    const firstEnabledIndex = filteredCommands.findIndex((cmd) => !cmd.disabled);
+    setSelectedIndex(firstEnabledIndex >= 0 ? firstEnabledIndex : 0);
+  }, [query, filteredCommands]);
 
   // 선택된 항목으로 스크롤
   useEffect(() => {
