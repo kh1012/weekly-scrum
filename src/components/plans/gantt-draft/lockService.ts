@@ -239,7 +239,14 @@ export class LockManager {
 
       const result = await heartbeatLock(this.workspaceId);
 
-      if (!result.success) {
+      if (result.success && result.expiresAt) {
+        // 성공 시 만료 시간 업데이트
+        this.onLockStateChange({
+          isLocked: true,
+          isMyLock: true,
+          expiresAt: result.expiresAt,
+        });
+      } else if (!result.success) {
         // 락 상실
         this.isActive = false;
         this.stopHeartbeat();

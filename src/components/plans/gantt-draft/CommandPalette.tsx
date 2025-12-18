@@ -311,20 +311,19 @@ export function CommandPalette({
     ]
   );
 
-  // 모든 명령 표시 (작업 시작/종료만 상태에 따라 하나만 표시)
-  // 비활성화된 명령도 표시하되 실행 불가 처리
+  // 활성화된 명령만 표시 (간단한 로직)
   const commands = useMemo(() => {
     return allCommands.filter((cmd) => {
-      // 작업 시작: 편집 중이 아니면 표시
+      // 작업 시작: 편집 중이 아닐 때만 표시
       if (cmd.id === "start-editing") {
         return !isEditing;
       }
-      // 작업 종료: 편집 중이면 표시
+      // 작업 종료: 편집 중일 때만 표시
       if (cmd.id === "stop-editing") {
         return isEditing;
       }
-      // 나머지는 모두 표시 (disabled 여부와 관계없이)
-      return true;
+      // 나머지: disabled가 아닌 것만 표시
+      return !cmd.disabled;
     });
   }, [allCommands, isEditing]);
 
@@ -386,9 +385,7 @@ export function CommandPalette({
   useEffect(() => {
     if (isOpen) {
       setQuery("");
-      // 첫 번째 활성화된 항목으로 선택
-      const firstEnabledIndex = commands.findIndex((cmd) => !cmd.disabled);
-      setSelectedIndex(firstEnabledIndex >= 0 ? firstEnabledIndex : 0);
+      setSelectedIndex(0);
       setShowCustomRange(false);
       setLoadingCommandId(null);
       // 커스텀 범위 값도 현재 설정으로 초기화
@@ -402,32 +399,9 @@ export function CommandPalette({
       }
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isOpen, rangeStart, rangeEnd, commands]);
+  }, [isOpen, rangeStart, rangeEnd]);
 
-  // 다음 활성화된 항목 찾기 (disabled 스킵)
-  const findNextEnabledIndex = useCallback(
-    (currentIndex: number, direction: 1 | -1): number => {
-      const len = filteredCommands.length;
-      if (len === 0) return 0;
-
-      let nextIndex = currentIndex;
-      let attempts = 0;
-
-      do {
-        nextIndex = direction === 1
-          ? (nextIndex + 1) % len
-          : (nextIndex - 1 + len) % len;
-        attempts++;
-        // 모든 항목이 disabled면 무한 루프 방지
-        if (attempts >= len) return currentIndex;
-      } while (filteredCommands[nextIndex]?.disabled);
-
-      return nextIndex;
-    },
-    [filteredCommands]
-  );
-
-  // 키보드 네비게이션
+  // 키보드 네비게이션 (모든 항목이 활성화 상태이므로 단순 순차 접근)
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -435,29 +409,31 @@ export function CommandPalette({
         return;
       }
 
+      const len = filteredCommands.length;
+      if (len === 0) return;
+
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) => findNextEnabledIndex(prev, 1));
+        setSelectedIndex((prev) => (prev + 1) % len);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((prev) => findNextEnabledIndex(prev, -1));
+        setSelectedIndex((prev) => (prev - 1 + len) % len);
       } else if (e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
         const cmd = filteredCommands[selectedIndex];
-        if (cmd && !cmd.disabled && loadingCommandId === null) {
+        if (cmd && loadingCommandId === null) {
           executeCommand(cmd);
         }
       }
     },
-    [filteredCommands, selectedIndex, onClose, loadingCommandId, executeCommand, findNextEnabledIndex]
+    [filteredCommands, selectedIndex, onClose, loadingCommandId, executeCommand]
   );
 
-  // 인덱스 리셋 (첫 번째 활성화된 항목으로)
+  // 검색어 변경 시 인덱스 리셋
   useEffect(() => {
-    const firstEnabledIndex = filteredCommands.findIndex((cmd) => !cmd.disabled);
-    setSelectedIndex(firstEnabledIndex >= 0 ? firstEnabledIndex : 0);
-  }, [query, filteredCommands]);
+    setSelectedIndex(0);
+  }, [query]);
 
   // 선택된 항목으로 스크롤
   useEffect(() => {
@@ -618,11 +594,10 @@ export function CommandPalette({
                   {category}
                 </div>
                 {cmds.map((cmd) => {
-                  // filteredCommands에서의 실제 인덱스 사용 (순서 일관성 보장)
+                  // filteredCommands에서의 실제 인덱스 사용
                   const idx = filteredCommands.indexOf(cmd);
                   const isSelected = idx === selectedIndex;
                   const isLoading = loadingCommandId === cmd.id;
-                  const isDisabled = cmd.disabled;
 
                   return (
                     <button
@@ -633,15 +608,10 @@ export function CommandPalette({
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
                         isSelected
                           ? "bg-blue-500/10"
-                          : isDisabled
-                          ? ""
                           : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                      } ${isLoading ? "cursor-wait" : isDisabled ? "cursor-not-allowed" : ""}`}
-                      style={{ 
-                        color: "var(--notion-text)",
-                        opacity: isDisabled ? 0.4 : isLoading ? 0.7 : 1,
-                      }}
-                      onClick={() => !isDisabled && executeCommand(cmd)}
+                      } ${isLoading ? "cursor-wait opacity-70" : ""}`}
+                      style={{ color: "var(--notion-text)" }}
+                      onClick={() => executeCommand(cmd)}
                       onMouseEnter={() => idx >= 0 && setSelectedIndex(idx)}
                       disabled={isLoading || loadingCommandId !== null}
                     >
