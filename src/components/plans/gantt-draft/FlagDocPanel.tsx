@@ -122,51 +122,29 @@ export function FlagDocPanel({
 
     // 각 Epic에 대해 Spec Ready / Design Ready 계산
     const result: ReleaseDocRow[] = [];
-
-    // 기획 관련 stage 목록 (우선순위 순)
-    const specStages = ["상세 기획", "기획", "요구사항", "분석"];
-    // 디자인 관련 stage 목록 (우선순위 순)
-    const designStages = ["UI 디자인", "디자인", "UX", "UI"];
+    
+    // 현재 시간 기준 날짜 (YYYY-MM-DD)
+    const today = new Date().toISOString().split("T")[0];
 
     for (const [, group] of epicGroups) {
-      // Spec Ready 계산
-      let specReady: string = "-";
-      // 1. '상세 기획' stage 찾기 (완료/미완료 모두)
-      let specPlan = group.bars.find((b) => b.stage === "상세 기획");
-      // 2. 없으면 다른 기획 관련 stage 찾기
-      if (!specPlan) {
-        for (const stage of specStages) {
-          specPlan = group.bars.find((b) => 
-            b.stage?.toLowerCase().includes(stage.toLowerCase())
-          );
-          if (specPlan) break;
-        }
-      }
+      // Spec Ready 계산 - '상세 기획' stage만 검색
+      let specReady: string = "데이터 없음";
+      const specPlan = group.bars.find((b) => b.stage === "상세 기획");
       if (specPlan) {
-        // 완료 상태이고 종료일이 Flag 시작일 이전이면 'READY'
-        if (specPlan.status === "완료" && specPlan.endDate < flag.startDate) {
+        // 완료 상태이고 종료일이 오늘 이전이면 'READY'
+        if (specPlan.status === "완료" && specPlan.endDate <= today) {
           specReady = "READY";
         } else {
           specReady = specPlan.endDate;
         }
       }
 
-      // Design Ready 계산
-      let designReady: string = "-";
-      // 1. 'UI 디자인' stage 찾기 (완료/미완료 모두)
-      let designPlan = group.bars.find((b) => b.stage === "UI 디자인");
-      // 2. 없으면 다른 디자인 관련 stage 찾기
-      if (!designPlan) {
-        for (const stage of designStages) {
-          designPlan = group.bars.find((b) => 
-            b.stage?.toLowerCase().includes(stage.toLowerCase())
-          );
-          if (designPlan) break;
-        }
-      }
+      // Design Ready 계산 - 'UI 디자인' stage만 검색
+      let designReady: string = "데이터 없음";
+      const designPlan = group.bars.find((b) => b.stage === "UI 디자인");
       if (designPlan) {
-        // 완료 상태이고 종료일이 Flag 시작일 이전이면 'READY'
-        if (designPlan.status === "완료" && designPlan.endDate < flag.startDate) {
+        // 완료 상태이고 종료일이 오늘 이전이면 'READY'
+        if (designPlan.status === "완료" && designPlan.endDate <= today) {
           designReady = "READY";
         } else {
           designReady = designPlan.endDate;
@@ -343,8 +321,8 @@ export function FlagDocPanel({
  * 날짜 칩 컴포넌트
  */
 function DateChip({ value }: { value: string }) {
-  if (value === "-") {
-    return <span className="text-gray-300">-</span>;
+  if (value === "-" || value === "데이터 없음") {
+    return <span className="text-gray-400 text-xs">{value === "-" ? "-" : "데이터 없음"}</span>;
   }
 
   if (value === "READY") {
