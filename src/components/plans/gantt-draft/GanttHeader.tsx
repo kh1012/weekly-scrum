@@ -32,6 +32,10 @@ interface GanttHeaderProps {
   onCommit: () => Promise<void>;
   isCommitting?: boolean;
   onDiscardChanges?: () => void;
+  /** 읽기 전용 모드 */
+  readOnly?: boolean;
+  /** 헤더 제목 */
+  title?: string;
   // 중앙 액션 관련
   onUndo?: () => void;
   onRedo?: () => void;
@@ -61,6 +65,8 @@ export function GanttHeader({
   onCommit,
   isCommitting = false,
   onDiscardChanges,
+  readOnly = false,
+  title,
   onUndo,
   onRedo,
   onOpenCommandPalette,
@@ -188,14 +194,16 @@ export function GanttHeader({
         {/* 좌측: 제목 + 락 상태 */}
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">계획 관리</h1>
+            <h1 className="text-xl font-bold text-gray-900">
+              {title || (readOnly ? "계획" : "계획 관리")}
+            </h1>
             <p className="text-sm text-gray-500">Feature 단위 일정 계획</p>
           </div>
 
-          {/* 락 상태 */}
-          <div className="h-8 w-px bg-gray-200" />
+          {/* 락 상태 - 읽기 전용에서는 숨김 */}
+          {!readOnly && <div className="h-8 w-px bg-gray-200" />}
 
-          {lockState.isLocked ? (
+          {!readOnly && lockState.isLocked ? (
             <div className="flex items-center gap-2">
               {/* 편집 상태 영역 - 2줄, 고정폭 */}
               {isMyLock && isEditing ? (
@@ -266,7 +274,7 @@ export function GanttHeader({
                 </button>
               )}
             </div>
-          ) : (
+          ) : !readOnly ? (
             <div
               className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
               style={{
@@ -277,7 +285,7 @@ export function GanttHeader({
               <LockOpenIcon className="w-3.5 h-3.5" />
               <span>편집 가능</span>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* 중앙: 기간 설정 + 보조 액션 */}
@@ -366,90 +374,94 @@ export function GanttHeader({
                 <span>K</span>
               </button>
 
-              {/* 도움말 */}
-              <HeaderButton
-                icon={<HelpIcon className="w-4 h-4" />}
-                onClick={onOpenHelp}
-                tooltip="도움말 (?)"
-              />
+              {/* 도움말 - 읽기 전용에서는 숨김 */}
+              {!readOnly && onOpenHelp && (
+                <HeaderButton
+                  icon={<HelpIcon className="w-4 h-4" />}
+                  onClick={onOpenHelp}
+                  tooltip="도움말 (?)"
+                />
+              )}
             </>
           )}
         </div>
 
-        {/* 우측: 주요 액션 버튼 */}
-        <div className="flex items-center gap-3">
-          {!isEditing ? (
-            <button
-              onClick={handleStartEditing}
-              disabled={isStarting || (lockState.isLocked && !isMyLock)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                color: "white",
-                boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
-              }}
-            >
-              {isStarting ? (
-                <LoadingIcon className="w-4 h-4 animate-spin" />
-              ) : (
-                <PlayIcon className="w-4 h-4" />
-              )}
-              {isStarting ? "시작 중..." : "작업 시작"}
-            </button>
-          ) : (
-            <>
-              {/* 저장 */}
+        {/* 우측: 주요 액션 버튼 - 읽기 전용에서는 숨김 */}
+        {!readOnly && (
+          <div className="flex items-center gap-3">
+            {!isEditing ? (
               <button
-                onClick={onCommit}
-                disabled={!hasUnsavedChanges || isCommitting}
+                onClick={handleStartEditing}
+                disabled={isStarting || (lockState.isLocked && !isMyLock)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5"
                 style={{
-                  background: hasUnsavedChanges
-                    ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                    : "#e5e7eb",
-                  color: hasUnsavedChanges ? "white" : "#9ca3af",
-                  boxShadow: hasUnsavedChanges
-                    ? "0 4px 14px rgba(16, 185, 129, 0.4)"
-                    : "none",
+                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  color: "white",
+                  boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
                 }}
               >
-                {isCommitting ? (
+                {isStarting ? (
                   <LoadingIcon className="w-4 h-4 animate-spin" />
                 ) : (
-                  <SaveIcon className="w-4 h-4" />
+                  <PlayIcon className="w-4 h-4" />
                 )}
-                {isCommitting ? "저장 중..." : "저장"}
-                {hasUnsavedChanges && !isCommitting && changesCount > 0 && (
-                  <span
-                    className="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
-                    style={{ background: "rgba(255,255,255,0.3)" }}
-                  >
-                    {changesCount}
-                  </span>
-                )}
+                {isStarting ? "시작 중..." : "작업 시작"}
               </button>
+            ) : (
+              <>
+                {/* 저장 */}
+                <button
+                  onClick={onCommit}
+                  disabled={!hasUnsavedChanges || isCommitting}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5"
+                  style={{
+                    background: hasUnsavedChanges
+                      ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                      : "#e5e7eb",
+                    color: hasUnsavedChanges ? "white" : "#9ca3af",
+                    boxShadow: hasUnsavedChanges
+                      ? "0 4px 14px rgba(16, 185, 129, 0.4)"
+                      : "none",
+                  }}
+                >
+                  {isCommitting ? (
+                    <LoadingIcon className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <SaveIcon className="w-4 h-4" />
+                  )}
+                  {isCommitting ? "저장 중..." : "저장"}
+                  {hasUnsavedChanges && !isCommitting && changesCount > 0 && (
+                    <span
+                      className="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
+                      style={{ background: "rgba(255,255,255,0.3)" }}
+                    >
+                      {changesCount}
+                    </span>
+                  )}
+                </button>
 
-              {/* 작업 종료 */}
-              <button
-                onClick={handleStopEditing}
-                disabled={isStopping}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-                style={{
-                  background: "white",
-                  color: "#374151",
-                  border: "1px solid #e5e7eb",
-                }}
-              >
-                {isStopping ? (
-                  <LoadingIcon className="w-4 h-4 animate-spin" />
-                ) : (
-                  <StopIcon className="w-4 h-4" />
-                )}
-                {isStopping ? "종료 중..." : "작업 종료"}
-              </button>
-            </>
-          )}
-        </div>
+                {/* 작업 종료 */}
+                <button
+                  onClick={handleStopEditing}
+                  disabled={isStopping}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                  style={{
+                    background: "white",
+                    color: "#374151",
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
+                  {isStopping ? (
+                    <LoadingIcon className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <StopIcon className="w-4 h-4" />
+                  )}
+                  {isStopping ? "종료 중..." : "작업 종료"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 변경사항 폐기 확인 모달 */}

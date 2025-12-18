@@ -49,12 +49,18 @@ interface DraftGanttViewProps {
   workspaceId: string;
   initialPlans?: InitialPlan[];
   members?: WorkspaceMemberOption[];
+  /** 읽기 전용 모드 (작업 시작/저장 불가) */
+  readOnly?: boolean;
+  /** 헤더 제목 */
+  title?: string;
 }
 
 export function DraftGanttView({
   workspaceId,
   initialPlans = [],
   members = [],
+  readOnly = false,
+  title,
 }: DraftGanttViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
@@ -593,11 +599,14 @@ export function DraftGanttView({
         onCommit={handleCommit}
         isCommitting={isCommitting}
         onDiscardChanges={handleDiscardChanges}
+        // 읽기 전용 모드
+        readOnly={readOnly}
+        title={title}
         // 중앙 액션 props
         onUndo={undo}
         onRedo={redo}
         onOpenCommandPalette={() => setShowCommandPalette(true)}
-        onOpenHelp={() => setShowHelp(true)}
+        onOpenHelp={readOnly ? undefined : () => setShowHelp(true)}
         canUndo={canUndo}
         canRedo={canRedo}
         dragInfo={dragDateInfo}
