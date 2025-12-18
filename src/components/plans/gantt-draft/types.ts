@@ -251,8 +251,12 @@ export interface ReadyInfo {
  */
 export interface ReleaseDocRow {
   planId: string;
+  rowId: string; // project::module::feature 형태의 rowId
   epic: string; // "프로젝트 > 모듈 > 기능" or fallback title
   planner: string; // 기획자 or '-'
   specReadyList: ReadyInfo[]; // 여러 개 가능
   designReadyList: ReadyInfo[]; // 여러 개 가능
+  // 스크롤 이동용 날짜 범위
+  minStartDate: string; // YYYY-MM-DD
+  maxEndDate: string; // YYYY-MM-DD
 }

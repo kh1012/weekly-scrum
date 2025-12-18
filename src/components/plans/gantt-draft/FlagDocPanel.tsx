@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useDraftStore } from "./store";
 import type { ReleaseDocRow, DraftFlag, ReadyInfo } from "./types";
 import { FlagIcon } from "@/components/common/Icons";
@@ -37,6 +37,39 @@ export function FlagDocPanel({
 }: FlagDocPanelProps) {
   const bars = useDraftStore((s) => s.bars);
   const rows = useDraftStore((s) => s.rows);
+  const setHighlightDateRange = useDraftStore((s) => s.setHighlightDateRange);
+
+  // Row 클릭 핸들러 - 해당 Epic으로 스크롤 이동
+  const handleRowClick = useCallback(
+    (row: ReleaseDocRow) => {
+      // 날짜 범위가 유효한 경우에만 처리
+      if (!row.minStartDate || !row.maxEndDate) return;
+
+      // 강조 표시 설정 (Epic은 feature 노드로 취급)
+      setHighlightDateRange({
+        startDate: row.minStartDate,
+        endDate: row.maxEndDate,
+        type: "node",
+        color: "#10b981", // feature 색상 (green)
+        nodeId: row.rowId,
+      });
+
+      // Timeline에서 해당 날짜 범위 중앙으로 스크롤하는 이벤트 발생
+      window.dispatchEvent(
+        new CustomEvent("gantt:scroll-to-epic", {
+          detail: {
+            rowId: row.rowId,
+            startDate: row.minStartDate,
+            endDate: row.maxEndDate,
+          },
+        })
+      );
+
+      // 모달 닫기
+      onClose();
+    },
+    [setHighlightDateRange, onClose]
+  );
 
   // Design 공유 날짜 계산 (UI 디자인 stage의 가장 빠른 시작일)
   const designShareDate = useMemo(() => {
@@ -126,7 +159,7 @@ export function FlagDocPanel({
     // 현재 시간 기준 날짜 (YYYY-MM-DD)
     const today = new Date().toISOString().split("T")[0];
 
-    for (const [, group] of epicGroups) {
+    for (const [epicKey, group] of epicGroups) {
       // Spec Ready 계산 - '상세 기획' stage 모두 검색
       const specPlans = group.bars.filter((b) => b.stage === "상세 기획");
       const specReadyList: ReadyInfo[] = specPlans.map((plan) => {
@@ -151,12 +184,21 @@ export function FlagDocPanel({
         return { value, title: plan.title };
       });
 
+      // 날짜 범위 계산 (모든 bars 중 최소 startDate, 최대 endDate)
+      const allDates = group.bars.flatMap((b) => [b.startDate, b.endDate]);
+      const sortedDates = allDates.sort((a, b) => a.localeCompare(b));
+      const minStartDate = sortedDates[0] || "";
+      const maxEndDate = sortedDates[sortedDates.length - 1] || "";
+
       result.push({
         planId: group.bars[0]?.clientUid ?? "",
+        rowId: epicKey,
         epic: group.epic,
         planner: group.planner,
         specReadyList: specReadyList.length > 0 ? specReadyList : [{ value: "데이터 없음" }],
         designReadyList: designReadyList.length > 0 ? designReadyList : [{ value: "데이터 없음" }],
+        minStartDate,
+        maxEndDate,
       });
     }
 
@@ -278,7 +320,8 @@ export function FlagDocPanel({
                   {releaseDocRows.map((row, idx) => (
                     <tr
                       key={row.planId || idx}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => handleRowClick(row)}
                     >
                       <td className="py-3 px-4">
                         <span className="font-medium text-gray-900">

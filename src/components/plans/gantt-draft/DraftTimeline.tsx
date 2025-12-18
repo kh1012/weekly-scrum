@@ -328,6 +328,51 @@ export function DraftTimeline({
       window.removeEventListener("gantt:scroll-to-today", handleScrollToToday);
   }, [scrollToToday]);
 
+  // Epic으로 스크롤하는 함수 (날짜 범위 중앙으로 수평 스크롤)
+  const scrollToDateRange = useCallback(
+    (startDateStr: string, endDateStr: string, smooth = true) => {
+      if (!containerRef.current) return;
+
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+
+      // 시작일과 종료일의 중간 날짜 계산
+      const midTime = (startDate.getTime() + endDate.getTime()) / 2;
+      const midDate = new Date(midTime);
+
+      // rangeStart 기준으로 일수 차이 계산
+      const daysDiff = Math.floor(
+        (midDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const totalDays = days.length;
+
+      // 범위 내에 있으면 스크롤
+      if (daysDiff >= 0 && daysDiff < totalDays) {
+        const scrollX =
+          daysDiff * DAY_WIDTH -
+          containerRef.current.clientWidth / 2 +
+          DAY_WIDTH / 2;
+        containerRef.current.scrollTo({
+          left: Math.max(0, scrollX),
+          behavior: smooth ? "smooth" : "instant",
+        });
+      }
+    },
+    [rangeStart, days.length]
+  );
+
+  // Epic 스크롤 이벤트 핸들러
+  useEffect(() => {
+    const handleScrollToEpic = (e: CustomEvent<{ rowId: string; startDate: string; endDate: string }>) => {
+      const { startDate, endDate } = e.detail;
+      scrollToDateRange(startDate, endDate, true);
+    };
+
+    window.addEventListener("gantt:scroll-to-epic", handleScrollToEpic as EventListener);
+    return () =>
+      window.removeEventListener("gantt:scroll-to-epic", handleScrollToEpic as EventListener);
+  }, [scrollToDateRange]);
+
   // 드래그 상태를 ref로 관리 (성능 최적화 - 렌더링 최소화)
   const dragCreateRef = useRef(dragCreate);
   dragCreateRef.current = dragCreate;

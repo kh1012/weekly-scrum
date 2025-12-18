@@ -124,7 +124,7 @@ export async function buildReleaseDoc(
     // Step 3: 각 Epic에 대해 Spec Ready / Design Ready 계산
     const rows: ReleaseDocRow[] = [];
 
-    for (const [, group] of epicGroups) {
+    for (const [epicKey, group] of epicGroups) {
       // Spec Ready: stage === '상세 기획'인 모든 계획
       const specPlans = group.plans.filter((p) => p.stage === "상세 기획");
       const specReadyList: ReadyInfo[] = specPlans.map((p) => ({
@@ -139,12 +139,21 @@ export async function buildReleaseDoc(
         title: p.title,
       }));
 
+      // 날짜 범위 계산
+      const allDates = group.plans.flatMap((p) => [p.start_date, p.end_date].filter(Boolean) as string[]);
+      const sortedDates = allDates.sort((a, b) => a.localeCompare(b));
+      const minStartDate = sortedDates[0] || "";
+      const maxEndDate = sortedDates[sortedDates.length - 1] || "";
+
       rows.push({
         planId: group.plans[0]?.id ?? "",
+        rowId: epicKey,
         epic: group.epic,
         planner: group.planner,
         specReadyList: specReadyList.length > 0 ? specReadyList : [{ value: "데이터 없음" }],
         designReadyList: designReadyList.length > 0 ? designReadyList : [{ value: "데이터 없음" }],
+        minStartDate,
+        maxEndDate,
       });
     }
 
