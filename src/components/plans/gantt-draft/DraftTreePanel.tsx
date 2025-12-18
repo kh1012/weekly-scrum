@@ -1045,16 +1045,22 @@ export function DraftTreePanel({
           background: isSelected
             ? "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)"
             : bgStyle,
-          borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
           borderTop: showDropBefore ? "2px solid #3b82f6" : undefined,
-          borderBottomColor: showDropAfter ? "#3b82f6" : undefined,
-          borderBottomWidth: showDropAfter ? 2 : 1,
           cursor:
             isEditing && (node.type === "feature" || node.type === "module")
               ? "grab"
               : undefined,
         }}
       >
+        {/* 하단 border - 별도 div로 처리하여 타임라인과 높이 일치 */}
+        <div
+          className="absolute left-0 right-0 bottom-0"
+          style={{
+            borderBottom: showDropAfter
+              ? "2px solid #3b82f6"
+              : "1px solid rgba(0, 0, 0, 0.04)",
+          }}
+        />
         {/* 강조 버튼 - 고정 위치, 클릭 시 타임라인에 기간 강조 */}
         <button
           onClick={handleHighlightClick}
