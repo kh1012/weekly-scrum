@@ -96,16 +96,52 @@ function FlagsPopover({
   const popoverRef = useRef<HTMLDivElement>(null);
   
   // 필터 및 정렬 상태
-  const [searchQuery, setSearchQuery] = useState("");
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [sortType, setSortType] = useState<FlagSortType>("name");
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 검색 debounce 처리
+  const handleSearchChange = useCallback((value: string) => {
+    setLocalSearchQuery(value);
+    setIsSearching(true);
+    
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(value);
+      setIsSearching(false);
+    }, 300);
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setLocalSearchQuery("");
+    setDebouncedSearchQuery("");
+    setIsSearching(false);
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+  }, []);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
 
   // deleted 제외, 필터링 및 정렬
   const sortedFlags = useMemo(() => {
     let filtered = flags.filter((f) => !f.deleted);
     
     // 검색 필터
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter((f) => 
         f.title.toLowerCase().includes(query)
       );
@@ -113,7 +149,7 @@ function FlagsPopover({
     
     // 정렬
     return filtered.sort(sortType === "name" ? sortByName : sortByDate);
-  }, [flags, searchQuery, sortType]);
+  }, [flags, debouncedSearchQuery, sortType]);
 
   // 외부 클릭 감지
   useEffect(() => {
@@ -197,17 +233,43 @@ function FlagsPopover({
             <input
               type="text"
               placeholder="Flag 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm rounded-lg border border-red-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-red-300 placeholder:text-red-300"
+              value={localSearchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full px-3 py-1.5 pr-8 text-sm rounded-lg border border-red-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-red-300 placeholder:text-red-300"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-red-200 flex items-center justify-center hover:bg-red-300"
-              >
-                <XIcon className="w-2.5 h-2.5 text-red-600" />
-              </button>
+            {/* 로딩 스피너 또는 클리어 버튼 */}
+            {(localSearchQuery || isSearching) && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                {isSearching ? (
+                  <svg
+                    className="animate-spin w-4 h-4 text-red-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                ) : (
+                  <button
+                    onClick={handleClearSearch}
+                    className="w-4 h-4 rounded-full bg-red-200 flex items-center justify-center hover:bg-red-300"
+                  >
+                    <XIcon className="w-2.5 h-2.5 text-red-600" />
+                  </button>
+                )}
+              </div>
             )}
           </div>
           
@@ -376,6 +438,49 @@ export function DraftTreePanel({
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
   const filters = useDraftStore((s) => s.ui.filters);
   const setSearchQuery = useDraftStore((s) => s.setSearchQuery);
+
+  // 검색 debounce 상태
+  const [localSearchValue, setLocalSearchValue] = useState(searchQuery);
+  const [isTreeSearching, setIsTreeSearching] = useState(false);
+  const treeSearchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 외부 searchQuery 변경 시 동기화
+  useEffect(() => {
+    setLocalSearchValue(searchQuery);
+  }, [searchQuery]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      if (treeSearchDebounceRef.current) {
+        clearTimeout(treeSearchDebounceRef.current);
+      }
+    };
+  }, []);
+
+  // debounce 검색 핸들러
+  const handleTreeSearchChange = useCallback((value: string) => {
+    setLocalSearchValue(value);
+    setIsTreeSearching(true);
+    
+    if (treeSearchDebounceRef.current) {
+      clearTimeout(treeSearchDebounceRef.current);
+    }
+    
+    treeSearchDebounceRef.current = setTimeout(() => {
+      setSearchQuery(value);
+      setIsTreeSearching(false);
+    }, 300);
+  }, [setSearchQuery]);
+
+  const handleTreeSearchClear = useCallback(() => {
+    setLocalSearchValue("");
+    setSearchQuery("");
+    setIsTreeSearching(false);
+    if (treeSearchDebounceRef.current) {
+      clearTimeout(treeSearchDebounceRef.current);
+    }
+  }, [setSearchQuery]);
   const setFilters = useDraftStore((s) => s.setFilters);
   const resetFilters = useDraftStore((s) => s.resetFilters);
   const selectRow = useDraftStore((s) => s.selectRow);
@@ -1353,18 +1458,44 @@ export function DraftTreePanel({
             <SearchIcon className="w-3 h-3 text-gray-400" />
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={localSearchValue}
+              onChange={(e) => handleTreeSearchChange(e.target.value)}
               placeholder="검색..."
               className="flex-1 text-[11px] bg-transparent border-none outline-none text-gray-700 placeholder:text-gray-400"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
-              >
-                <XIcon className="w-2 h-2 text-gray-400" />
-              </button>
+            {/* 로딩 스피너 또는 클리어 버튼 */}
+            {(localSearchValue || isTreeSearching) && (
+              <div className="flex items-center">
+                {isTreeSearching ? (
+                  <svg
+                    className="animate-spin w-3 h-3 text-blue-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                ) : (
+                  <button
+                    onClick={handleTreeSearchClear}
+                    className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  >
+                    <XIcon className="w-2 h-2 text-gray-400" />
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
