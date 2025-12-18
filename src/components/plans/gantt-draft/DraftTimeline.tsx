@@ -373,6 +373,18 @@ export function DraftTimeline({
       window.removeEventListener("gantt:scroll-to-epic", handleScrollToEpic as EventListener);
   }, [scrollToDateRange]);
 
+  // Flag 스크롤 이벤트 핸들러
+  useEffect(() => {
+    const handleScrollToFlag = (e: CustomEvent<{ flagId: string; startDate: string; endDate: string }>) => {
+      const { startDate, endDate } = e.detail;
+      scrollToDateRange(startDate, endDate, true);
+    };
+
+    window.addEventListener("gantt:scroll-to-flag", handleScrollToFlag as EventListener);
+    return () =>
+      window.removeEventListener("gantt:scroll-to-flag", handleScrollToFlag as EventListener);
+  }, [scrollToDateRange]);
+
   // 드래그 상태를 ref로 관리 (성능 최적화 - 렌더링 최소화)
   const dragCreateRef = useRef(dragCreate);
   dragCreateRef.current = dragCreate;

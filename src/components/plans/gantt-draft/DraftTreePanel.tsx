@@ -1444,7 +1444,11 @@ export function DraftTreePanel({
             // Timeline에서 해당 flag 위치로 스크롤하는 이벤트 발생
             window.dispatchEvent(
               new CustomEvent("gantt:scroll-to-flag", {
-                detail: { flagId: flag.clientId },
+                detail: {
+                  flagId: flag.clientId,
+                  startDate: flag.startDate,
+                  endDate: flag.endDate,
+                },
               })
             );
           }}
