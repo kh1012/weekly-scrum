@@ -15,6 +15,7 @@ import { WeekSelector } from "./WeekSelector";
 import { SnapshotList } from "./SnapshotList";
 import { WeekMetaPanel } from "./WeekMetaPanel";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
+import { LoadingButton } from "@/components/common/LoadingButton";
 import {
   getCurrentISOWeek,
   getWeekStartDateString,
@@ -275,7 +276,9 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
   }, [fetchSnapshotCounts, isStateInitialized]);
 
   // 편집하기
+  const [isNavigatingToEdit, setIsNavigatingToEdit] = useState(false);
   const handleEditWeek = () => {
+    setIsNavigatingToEdit(true);
     navigationProgress.start();
     router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/edit`);
   };
@@ -481,30 +484,41 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
 
             {/* 액션 버튼 */}
             <div className="flex items-center gap-2 md:gap-3">
-              <button
+              <LoadingButton
                 onClick={handleEditWeek}
                 disabled={snapshots.length === 0}
-                className="group flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-5 py-2 md:py-2.5 text-sm font-semibold text-blue-600 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                isLoading={isNavigatingToEdit}
+                loadingText="이동 중..."
+                variant="secondary"
+                size="md"
+                icon={
+                  <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                }
+                className="group flex-1 md:flex-none text-blue-600 bg-blue-50 border-2 border-blue-100 hover:border-blue-200 hover:bg-blue-100"
+                gradient={false}
               >
-                <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
                 <span className="hidden sm:inline">편집하기</span>
                 <span className="sm:hidden">편집</span>
-              </button>
+              </LoadingButton>
 
-              <button
+              <LoadingButton
                 onClick={() => setIsNewSnapshotModalOpen(true)}
                 disabled={snapshots.length > 0}
-                className="group flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-5 py-2 md:py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 hover:shadow-lg hover:shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                variant="primary"
+                size="md"
+                icon={
+                  <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                }
+                className="group flex-1 md:flex-none"
                 title={snapshots.length > 0 ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요." : ""}
               >
-                <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
                 <span className="hidden sm:inline">새로 작성하기</span>
                 <span className="sm:hidden">작성</span>
-              </button>
+              </LoadingButton>
             </div>
           </div>
         </div>

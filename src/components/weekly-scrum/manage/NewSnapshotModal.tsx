@@ -6,9 +6,11 @@
  * 공통 컴포넌트로 분리하여 PersonalDashboard와 SnapshotsMainView에서 재사용
  */
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatWeekRange } from "@/lib/date/isoWeek";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
+import { LoadingButton, SmallLoadingSpinner } from "@/components/common/LoadingButton";
 
 interface NewSnapshotModalProps {
   isOpen: boolean;
@@ -31,12 +33,16 @@ export function NewSnapshotModal({
   hasCurrentWeekData = false,
 }: NewSnapshotModalProps) {
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isCreatingEmpty, setIsCreatingEmpty] = useState(false);
 
   if (!isOpen) return null;
 
   const weekRange = formatWeekRange(year, week);
 
   const handleGoToManagement = () => {
+    setIsNavigating(true);
     onClose();
     // 현재 주차 정보를 localStorage에 저장하여 스냅샷 관리 페이지에서 해당 주차 선택
     try {
@@ -51,6 +57,16 @@ export function NewSnapshotModal({
     }
     navigationProgress.start();
     router.push("/manage/snapshots");
+  };
+
+  const handleLoadData = () => {
+    setIsLoadingData(true);
+    onLoadExistingData();
+  };
+
+  const handleCreateEmpty = () => {
+    setIsCreatingEmpty(true);
+    onCreateEmpty();
   };
 
   // 현재 주차에 데이터가 존재하는 경우 안내 화면 표시
@@ -120,25 +136,31 @@ export function NewSnapshotModal({
             </p>
 
             {/* 버튼 영역 */}
-            <button
+            <LoadingButton
               onClick={handleGoToManagement}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-200"
+              isLoading={isNavigating}
+              loadingText="이동 중..."
+              variant="primary"
+              size="lg"
+              fullWidth
+              icon={
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              }
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
               스냅샷 관리로 이동하기
-            </button>
+            </LoadingButton>
           </div>
         </div>
       </div>
@@ -194,28 +216,33 @@ export function NewSnapshotModal({
         <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
           {/* 데이터 불러오기 */}
           <button
-            onClick={onLoadExistingData}
-            className="group relative p-5 md:p-7 bg-white rounded-xl md:rounded-2xl border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
+            onClick={handleLoadData}
+            disabled={isLoadingData || isCreatingEmpty}
+            className="group relative p-5 md:p-7 bg-white rounded-xl md:rounded-2xl border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative">
               <div className="w-12 h-12 md:w-14 md:h-14 mb-4 md:mb-5 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
+                {isLoadingData ? (
+                  <SmallLoadingSpinner size="md" className="text-white" />
+                ) : (
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                )}
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">
-                데이터 불러오기
+                {isLoadingData ? "불러오는 중..." : "데이터 불러오기"}
               </h3>
               <p className="text-sm text-gray-500 leading-relaxed">
                 이전 주차의 데이터를 복사하여 시작합니다. 프로젝트 이력이
@@ -223,68 +250,77 @@ export function NewSnapshotModal({
               </p>
             </div>
             {/* 화살표 */}
-            <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
-              <svg
-                className="w-4 h-4 text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-          </button>
-
-          {/* 새로 작성하기 */}
-          <button
-            onClick={onCreateEmpty}
-            className="group relative p-5 md:p-7 bg-white rounded-xl md:rounded-2xl border-2 border-gray-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative">
-              <div className="w-12 h-12 md:w-14 md:h-14 mb-4 md:mb-5 rounded-xl md:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+            {!isLoadingData && (
+              <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-4 h-4 text-blue-600"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={1.5}
+                  strokeWidth={2}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M12 4v16m8-8H4"
+                    d="M9 5l7 7-7 7"
                   />
                 </svg>
               </div>
+            )}
+          </button>
+
+          {/* 새로 작성하기 */}
+          <button
+            onClick={handleCreateEmpty}
+            disabled={isLoadingData || isCreatingEmpty}
+            className="group relative p-5 md:p-7 bg-white rounded-xl md:rounded-2xl border-2 border-gray-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 text-left overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative">
+              <div className="w-12 h-12 md:w-14 md:h-14 mb-4 md:mb-5 rounded-xl md:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                {isCreatingEmpty ? (
+                  <SmallLoadingSpinner size="md" className="text-white" />
+                ) : (
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                )}
+              </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-emerald-700 transition-colors">
-                새로 작성하기
+                {isCreatingEmpty ? "생성 중..." : "새로 작성하기"}
               </h3>
               <p className="text-sm text-gray-500 leading-relaxed">
                 빈 스냅샷으로 시작합니다. 편집 화면에서 새로 입력합니다.
               </p>
             </div>
             {/* 화살표 */}
-            <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
-              <svg
-                className="w-4 h-4 text-emerald-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
+            {!isCreatingEmpty && (
+              <div className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
+                <svg
+                  className="w-4 h-4 text-emerald-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            )}
           </button>
         </div>
       </div>
