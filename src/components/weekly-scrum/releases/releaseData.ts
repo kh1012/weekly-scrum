@@ -2,6 +2,47 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.7.0",
+    date: "2025-12-18",
+    title: "Plans 읽기 전용 뷰 & Gantt 타임라인 UX 개선",
+    summary:
+      "Plans 페이지에 읽기 전용 Gantt 뷰를 추가하고, 타임라인 스크롤바 확대, 검색 debounce, FlagsPopover 정렬/필터 기능 등 사용자 경험을 전반적으로 개선했습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "Plans 페이지 읽기 전용 Gantt 뷰 추가 (편집 불가, 기간 설정 가능)",
+      },
+      {
+        type: "feat",
+        description: "FlagsPopover 검색 필터 및 정렬 기능 (이름순/기간순, Release→Sprint 우선)",
+      },
+      {
+        type: "feat",
+        description: "트리패널 및 FlagsPopover 검색에 debounce 300ms + 로딩 스피너 추가",
+      },
+      {
+        type: "feat",
+        description: "타임라인 커스텀 스크롤바 - 높이 14px로 확대, 그라데이션 스타일",
+      },
+      {
+        type: "feat",
+        description: "SNB Plans 메뉴에 유리 스타일 New 태그 + 반짝임 애니메이션",
+      },
+      {
+        type: "improve",
+        description: "CommandPalette 읽기 전용 모드에서 편집 명령 숨김",
+      },
+      {
+        type: "improve",
+        description: "/plans/gantt 페이지 GNB 최소 모드 적용 (필터/기간 숨김)",
+      },
+      {
+        type: "fix",
+        description: "CommandPalette/AddRowModal 호버 색상 키보드 선택과 통일 (연한 파란색)",
+      },
+    ],
+  },
+  {
     version: "2.6.0",
     date: "2025-12-16",
     title: "스냅샷 관리 UX 대폭 개선 & CollaboratorEditor 업그레이드",

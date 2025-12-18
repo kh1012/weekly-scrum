@@ -20,6 +20,7 @@ interface NavItem {
   icon?: React.ReactNode; // Font Awesome 스타일 SVG 아이콘
   description?: string;
   disabled?: boolean;
+  isNew?: boolean; // New 태그 표시
 }
 
 // Font Awesome 스타일 아이콘 컴포넌트들
@@ -114,6 +115,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/plans/gantt",
         emoji: "📆",
         icon: Icons.calendarDays,
+        isNew: true,
       },
       {
         key: "snapshots",
@@ -501,16 +503,23 @@ export function SideNavigation({
                           {item.icon || item.emoji}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <span
-                            className="block text-sm font-medium transition-colors duration-200"
-                            style={{
-                              color: active
-                                ? accentColor
-                                : "var(--notion-text)",
-                            }}
-                          >
-                            {item.label}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="text-sm font-medium transition-colors duration-200"
+                              style={{
+                                color: active
+                                  ? accentColor
+                                  : "var(--notion-text)",
+                              }}
+                            >
+                              {item.label}
+                            </span>
+                            {item.isNew && (
+                              <span className="new-tag-glass">
+                                New
+                              </span>
+                            )}
+                          </div>
                           {item.description && (
                             <span
                               className="block text-[10px] mt-0.5 truncate"
