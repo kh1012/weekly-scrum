@@ -27,7 +27,33 @@ export async function buildReleaseDoc(
   const supabase = createClient();
 
   try {
-    // Step 1: Flag 기간과 겹치는 feature plans 조회
+    // Step 1: Flag 기간과 겹치는 feature plans 조회 (feature 키 수집용)
+    const { data: overlappingPlans, error: overlappingError } = await supabase
+      .from("plans")
+      .select("project, module, feature")
+      .eq("workspace_id", workspaceId)
+      .eq("type", "feature")
+      .lte("start_date", flagEnd)
+      .gte("end_date", flagStart);
+
+    if (overlappingError) {
+      console.error("Failed to fetch overlapping plans:", overlappingError);
+      return { rows: [], error: overlappingError.message };
+    }
+
+    if (!overlappingPlans || overlappingPlans.length === 0) {
+      return { rows: [] };
+    }
+
+    // 겹치는 feature 키 집합
+    const featureKeys = new Set<string>();
+    for (const p of overlappingPlans) {
+      if (p.project && p.module && p.feature) {
+        featureKeys.add(`${p.project}::${p.module}::${p.feature}`);
+      }
+    }
+
+    // Step 2: 해당 feature의 모든 plans 조회 (기획이 Flag 이전에 끝나도 포함)
     const { data: plans, error: plansError } = await supabase
       .from("plans")
       .select(
@@ -54,14 +80,12 @@ export async function buildReleaseDoc(
       )
       .eq("workspace_id", workspaceId)
       .eq("type", "feature")
-      .lte("start_date", flagEnd)
-      .gte("end_date", flagStart)
       .order("project", { ascending: true })
       .order("module", { ascending: true })
       .order("feature", { ascending: true });
 
     if (plansError) {
-      console.error("Failed to fetch plans for release doc:", plansError);
+      console.error("Failed to fetch all plans for release doc:", plansError);
       return { rows: [], error: plansError.message };
     }
 
@@ -69,8 +93,21 @@ export async function buildReleaseDoc(
       return { rows: [] };
     }
 
+    // featureKeys에 해당하는 plans만 필터링
+    const relevantPlans = plans.filter((p: typeof plans[number]) => {
+      if (p.project && p.module && p.feature) {
+        const key = `${p.project}::${p.module}::${p.feature}`;
+        return featureKeys.has(key);
+      }
+      return false;
+    });
+
+    if (relevantPlans.length === 0) {
+      return { rows: [] };
+    }
+
     // Plan 타입 정의
-    type PlanRecord = (typeof plans)[number];
+    type PlanRecord = (typeof relevantPlans)[number];
 
     // Step 2: Epic 단위로 그룹화
     // Epic key: project::module::feature (또는 title fallback)
@@ -83,7 +120,7 @@ export async function buildReleaseDoc(
       }
     >();
 
-    for (const plan of plans) {
+    for (const plan of relevantPlans) {
       const epicKey =
         plan.project && plan.module && plan.feature
           ? `${plan.project}::${plan.module}::${plan.feature}`

@@ -101,30 +101,40 @@ export function FlagDocPanel({
   const releaseDocRows = useMemo<ReleaseDocRow[]>(() => {
     if (!flag) return [];
 
-    // Flag 기간과 겹치는 bars 필터링 (deleted 제외)
-    const overlappingBars = bars.filter((bar) => {
-      if (bar.deleted) return false;
-      return isDateRangeOverlapping(
-        bar.startDate,
-        bar.endDate,
-        flag.startDate,
-        flag.endDate
-      );
-    });
+    // 삭제되지 않은 bars
+    const activeBars = bars.filter((bar) => !bar.deleted);
 
-    if (overlappingBars.length === 0) return [];
+    // 1단계: Flag 기간과 겹치는 bars의 rowId 집합 수집
+    const overlappingRowIds = new Set<string>();
+    for (const bar of activeBars) {
+      if (
+        isDateRangeOverlapping(
+          bar.startDate,
+          bar.endDate,
+          flag.startDate,
+          flag.endDate
+        )
+      ) {
+        overlappingRowIds.add(bar.rowId);
+      }
+    }
+
+    if (overlappingRowIds.size === 0) return [];
+
+    // 2단계: 해당 rowId를 가진 모든 bars를 수집 (기획이 Flag 이전에 끝나도 포함)
+    const relevantBars = activeBars.filter((bar) => overlappingRowIds.has(bar.rowId));
 
     // Epic (project > module > feature) 단위로 그룹화
     const epicGroups = new Map<
       string,
       {
         epic: string;
-        bars: typeof overlappingBars;
+        bars: typeof relevantBars;
         planners: Set<string>; // 중복 제거를 위해 Set 사용
       }
     >();
 
-    for (const bar of overlappingBars) {
+    for (const bar of relevantBars) {
       // rowId에서 project::module::feature 추출
       const [project, module, feature] = bar.rowId.split("::");
       const epicKey = bar.rowId;
@@ -144,7 +154,7 @@ export function FlagDocPanel({
       const group = epicGroups.get(epicKey)!;
       group.bars.push(bar);
 
-      // 모든 bars에서 기획자 수집 (상세 기획 stage의 담당자들)
+      // 모든 bars에서 기획자 수집 (기획 관련 stage의 담당자들)
       const isSpecStage = bar.stage?.includes("기획") || bar.stage?.toLowerCase().includes("spec");
       if (isSpecStage && bar.assignees) {
         for (const assignee of bar.assignees) {
