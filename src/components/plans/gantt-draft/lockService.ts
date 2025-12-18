@@ -129,9 +129,15 @@ export async function heartbeatLock(
 
     // RPC가 배열로 반환하는 경우 처리
     const result = Array.isArray(data) ? data[0] : data;
+    
+    console.log("[heartbeatLock] Raw result:", result);
 
+    // success 필드가 명시적으로 있는지 확인
+    // result가 null/undefined이거나 success가 false인 경우에만 실패
+    const isSuccess = result?.success === true;
+    
     return {
-      success: result?.success ?? false,
+      success: isSuccess,
       expiresAt: result?.expires_at,
     };
   } catch (err) {
@@ -237,17 +243,24 @@ export class LockManager {
         return;
       }
 
+      console.log("[LockManager] Heartbeat 시도...");
       const result = await heartbeatLock(this.workspaceId);
+      console.log("[LockManager] Heartbeat 결과:", result);
 
-      if (result.success && result.expiresAt) {
-        // 성공 시 만료 시간 업데이트
-        this.onLockStateChange({
-          isLocked: true,
-          isMyLock: true,
-          expiresAt: result.expiresAt,
-        });
-      } else if (!result.success) {
-        // 락 상실
+      if (result.success) {
+        // 성공 시 만료 시간 업데이트 (expiresAt이 있는 경우에만)
+        if (result.expiresAt) {
+          this.onLockStateChange({
+            isLocked: true,
+            isMyLock: true,
+            expiresAt: result.expiresAt,
+          });
+        }
+        // expiresAt이 없어도 success면 락은 유지
+        console.log("[LockManager] Heartbeat 성공, 락 유지");
+      } else {
+        // 명시적으로 false인 경우에만 락 상실로 처리
+        console.warn("[LockManager] Heartbeat 실패, 락 상실");
         this.isActive = false;
         this.stopHeartbeat();
         this.onLockStateChange({ isLocked: false, isMyLock: false });
@@ -273,8 +286,22 @@ export class LockManager {
     const handler = async () => {
       if (document.visibilityState === "visible" && this.isActive) {
         // 탭이 다시 활성화되면 heartbeat 갱신
+        console.log("[LockManager] Visibility 변경, heartbeat 시도...");
         const result = await heartbeatLock(this.workspaceId);
-        if (!result.success) {
+        console.log("[LockManager] Visibility heartbeat 결과:", result);
+        
+        if (result.success) {
+          // 성공 시 만료 시간 업데이트 (expiresAt이 있는 경우에만)
+          if (result.expiresAt) {
+            this.onLockStateChange({
+              isLocked: true,
+              isMyLock: true,
+              expiresAt: result.expiresAt,
+            });
+          }
+          console.log("[LockManager] Visibility heartbeat 성공, 락 유지");
+        } else {
+          console.warn("[LockManager] Visibility heartbeat 실패, 락 상실");
           this.isActive = false;
           this.stopHeartbeat();
           this.onLockStateChange({ isLocked: false, isMyLock: false });
