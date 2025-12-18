@@ -700,7 +700,7 @@ export function DraftTimeline({
       {/* 그리드 영역 - Airbnb 스타일 */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-x-auto overflow-y-auto relative"
+        className="flex-1 overflow-x-auto overflow-y-auto relative timeline-scrollbar"
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           minHeight: 0,

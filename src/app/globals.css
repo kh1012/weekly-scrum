@@ -1,4 +1,4 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css");
 
 @tailwind base;
 @tailwind components;
@@ -7,11 +7,11 @@
 :root {
   /* Notion Color Palette */
   --notion-bg: #ffffff;
-  --notion-bg-secondary: #f8fafc;  /* slate-50: 노란끼 없는 순수 회색 */
-  --notion-bg-hover: #f1f5f9;      /* slate-100 */
-  --notion-bg-active: #e5e7eb;     /* gray-200: 노란끼 없는 순수 회색 */
-  --notion-sidebar-bg: #f9fafb;    /* gray-50 */
-  
+  --notion-bg-secondary: #f8fafc; /* slate-50: 노란끼 없는 순수 회색 */
+  --notion-bg-hover: #f1f5f9; /* slate-100 */
+  --notion-bg-active: #e5e7eb; /* gray-200: 노란끼 없는 순수 회색 */
+  --notion-sidebar-bg: #f9fafb; /* gray-50 */
+
   /* Airbnb-Inspired Blue Theme */
   --primary-50: #eff6ff;
   --primary-100: #dbeafe;
@@ -23,23 +23,23 @@
   --primary-700: #1d4ed8;
   --primary-800: #1e40af;
   --primary-900: #1e3a8a;
-  
+
   /* Component Background Colors */
   --gnb-filter-bg: #f8fafc;
   --gnb-filter-bg-hover: #f1f5f9;
   --gnb-filter-active: rgba(59, 130, 246, 0.08);
   --gnb-filter-active-border: rgba(59, 130, 246, 0.2);
-  
+
   /* Text Colors */
   --notion-text: #37352f;
   --notion-text-secondary: #787774;
   --notion-text-muted: #9b9a97;
   --notion-text-placeholder: #c3c2bf;
-  
+
   /* Border Colors */
   --notion-border: #e9e9e7;
   --notion-border-dark: #d3d2cf;
-  
+
   /* Accent Colors */
   --notion-blue: #3b82f6;
   --notion-blue-bg: #eff6ff;
@@ -57,12 +57,15 @@
   --notion-pink-bg: #ffe2f3;
   --notion-gray: #9b9a97;
   --notion-gray-bg: #f1f1ef;
-  
+
   /* Shadows */
-  --notion-shadow-sm: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
-  --notion-shadow-md: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
-  --notion-shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06);
-  
+  --notion-shadow-sm: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px,
+    rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
+  --notion-shadow-md: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px,
+    rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
+  --notion-shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12),
+    0 2px 10px rgba(0, 0, 0, 0.06);
+
   /* Border Radius */
   --notion-radius-sm: 3px;
   --notion-radius-md: 6px;
@@ -79,7 +82,8 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  font-family: 'Pretendard Variable', Pretendard, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-family: "Pretendard Variable", Pretendard, ui-sans-serif, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -119,6 +123,42 @@ body {
   background: var(--notion-text-muted);
   border: 3px solid transparent;
   background-clip: content-box;
+}
+
+/* 타임라인 커스텀 스크롤바 (더 큰 사이즈) */
+.timeline-scrollbar::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+  margin: 4px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 40px;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #475569 0%, #334155 100%);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.timeline-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Notion 스타일 Select */
@@ -377,8 +417,14 @@ select option {
 
   /* 기본 페이드 인 */
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .animate-fadeIn {
@@ -387,12 +433,12 @@ select option {
 
   /* Stagger 카드 등장 애니메이션 */
   @keyframes cardReveal {
-    0% { 
-      opacity: 0; 
+    0% {
+      opacity: 0;
       transform: translateY(20px) scale(0.98);
     }
-    100% { 
-      opacity: 1; 
+    100% {
+      opacity: 1;
       transform: translateY(0) scale(1);
     }
   }
@@ -403,19 +449,41 @@ select option {
   }
 
   /* Stagger delay 클래스 (CSS custom property 사용) */
-  .stagger-1 { animation-delay: 0.05s; }
-  .stagger-2 { animation-delay: 0.1s; }
-  .stagger-3 { animation-delay: 0.15s; }
-  .stagger-4 { animation-delay: 0.2s; }
-  .stagger-5 { animation-delay: 0.25s; }
-  .stagger-6 { animation-delay: 0.3s; }
-  .stagger-7 { animation-delay: 0.35s; }
-  .stagger-8 { animation-delay: 0.4s; }
+  .stagger-1 {
+    animation-delay: 0.05s;
+  }
+  .stagger-2 {
+    animation-delay: 0.1s;
+  }
+  .stagger-3 {
+    animation-delay: 0.15s;
+  }
+  .stagger-4 {
+    animation-delay: 0.2s;
+  }
+  .stagger-5 {
+    animation-delay: 0.25s;
+  }
+  .stagger-6 {
+    animation-delay: 0.3s;
+  }
+  .stagger-7 {
+    animation-delay: 0.35s;
+  }
+  .stagger-8 {
+    animation-delay: 0.4s;
+  }
 
   /* 슬라이드 인 (좌측에서) */
   @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   .animate-slide-in-left {
@@ -424,8 +492,14 @@ select option {
 
   /* 슬라이드 인 (우측에서) */
   @keyframes slideInRight {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   .animate-slide-in-right {
@@ -434,8 +508,14 @@ select option {
 
   /* 스케일 인 */
   @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   .animate-scale-in {
@@ -444,9 +524,17 @@ select option {
 
   /* Bounce 인 */
   @keyframes bounceIn {
-    0% { transform: scale(0.9); opacity: 0; }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.02);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 
   .animate-bounce-in {
@@ -455,9 +543,15 @@ select option {
 
   /* 펄스 효과 (선택된 항목) */
   @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-    70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    0% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
   }
 
   .animate-pulse-ring {
@@ -476,9 +570,7 @@ select option {
 
   .interactive-card:hover {
     transform: translateY(-4px);
-    box-shadow: 
-      0 12px 28px rgba(0, 0, 0, 0.08),
-      0 4px 10px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
   }
 
   .interactive-card:active {
@@ -493,15 +585,13 @@ select option {
 
   .selectable-card:hover {
     transform: scale(1.01);
-    box-shadow: 
-      0 8px 20px rgba(59, 130, 246, 0.1),
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1),
       0 2px 8px rgba(59, 130, 246, 0.05);
   }
 
   .selectable-card.selected {
     border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 
-      0 0 0 2px rgba(59, 130, 246, 0.2),
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2),
       0 8px 20px rgba(59, 130, 246, 0.12);
   }
 
@@ -521,8 +611,14 @@ select option {
 
   /* 툴바 탭 전환 */
   @keyframes tabSlide {
-    from { opacity: 0.5; transform: scaleX(0.8); }
-    to { opacity: 1; transform: scaleX(1); }
+    from {
+      opacity: 0.5;
+      transform: scaleX(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
   }
 
   .tab-indicator {
@@ -531,8 +627,14 @@ select option {
 
   /* 섹션 헤더 등장 */
   @keyframes sectionReveal {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .animate-section-reveal {
@@ -541,8 +643,12 @@ select option {
 
   /* 콘텐츠 영역 페이드 */
   @keyframes contentFade {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   .animate-content-fade {
@@ -555,8 +661,14 @@ select option {
 
   /* 뷰 전환 애니메이션 */
   @keyframes viewTransition {
-    0% { opacity: 0; transform: translateY(12px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .view-transition-enter {
@@ -565,12 +677,12 @@ select option {
 
   /* 리스트 아이템 등장 */
   @keyframes listItemReveal {
-    from { 
-      opacity: 0; 
+    from {
+      opacity: 0;
       transform: translateX(-10px);
     }
-    to { 
-      opacity: 1; 
+    to {
+      opacity: 1;
       transform: translateX(0);
     }
   }
@@ -582,8 +694,14 @@ select option {
 
   /* 트리 노드 확장/축소 */
   @keyframes expandNode {
-    from { opacity: 0; height: 0; }
-    to { opacity: 1; height: auto; }
+    from {
+      opacity: 0;
+      height: 0;
+    }
+    to {
+      opacity: 1;
+      height: auto;
+    }
   }
 
   /* ============================================
@@ -623,8 +741,12 @@ select option {
      ============================================ */
 
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
 
   .skeleton-shimmer {
@@ -644,9 +766,7 @@ select option {
 
   .focus-ring:focus-visible {
     outline: none;
-    box-shadow: 
-      0 0 0 2px var(--notion-bg),
-      0 0 0 4px var(--notion-blue);
+    box-shadow: 0 0 0 2px var(--notion-bg), 0 0 0 4px var(--notion-blue);
   }
 
   /* ============================================
@@ -654,12 +774,12 @@ select option {
      ============================================ */
 
   @keyframes contextMenuIn {
-    from { 
-      opacity: 0; 
+    from {
+      opacity: 0;
       transform: scale(0.95) translateY(-4px);
     }
-    to { 
-      opacity: 1; 
+    to {
+      opacity: 1;
       transform: scale(1) translateY(0);
     }
   }
@@ -673,8 +793,14 @@ select option {
      ============================================ */
 
   @keyframes tooltipIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .animate-tooltip {
@@ -691,7 +817,7 @@ select option {
 }
 
 #nprogress .bar {
-  background: #F76D57;
+  background: #f76d57;
   position: fixed;
   z-index: 9999;
   top: 0;
@@ -707,7 +833,7 @@ select option {
   right: 0px;
   width: 100px;
   height: 100%;
-  box-shadow: 0 0 10px #F76D57, 0 0 5px #F76D57;
+  box-shadow: 0 0 10px #f76d57, 0 0 5px #f76d57;
   opacity: 1;
   transform: rotate(3deg) translate(0px, -4px);
 }
@@ -717,11 +843,12 @@ select option {
    ============================================ */
 
 @keyframes editingBorderPulse {
-  0%, 100% { 
+  0%,
+  100% {
     border-color: rgb(59, 130, 246);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
   }
-  50% { 
+  50% {
     border-color: rgb(249, 115, 22);
     box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
   }
@@ -733,17 +860,22 @@ select option {
 
 /* 더 미묘한 typing 효과 */
 @keyframes typingGlow {
-  0%, 100% { 
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2),
+      inset 0 1px 2px rgba(0, 0, 0, 0.05);
   }
-  25% { 
-    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  25% {
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2),
+      inset 0 1px 2px rgba(0, 0, 0, 0.05);
   }
-  50% { 
-    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  50% {
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2),
+      inset 0 1px 2px rgba(0, 0, 0, 0.05);
   }
-  75% { 
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  75% {
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2),
+      inset 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 }
 
