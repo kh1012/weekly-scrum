@@ -8,6 +8,7 @@ import { RELEASES } from "../releases/releaseData";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import { Logo } from "./Logo";
 import { navigationProgress } from "./NavigationProgress";
+import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
 
 // localStorage 키
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
@@ -515,9 +516,9 @@ export function SideNavigation({
                               {item.label}
                             </span>
                             {item.isNew && (
-                              <span className="new-tag-glass">
+                              <LiquidGlassTag variant="blue" shimmer>
                                 New
-                              </span>
+                              </LiquidGlassTag>
                             )}
                           </div>
                           {item.description && (
