@@ -17,7 +17,7 @@ import { GanttHeader } from "./GanttHeader";
 import { CommandPalette } from "./CommandPalette";
 import { HelpModal } from "./HelpModal";
 // FloatingDock은 GanttHeader로 통합됨
-import { Toast, ToastType } from "./Toast";
+import { showToast, ToastContainer } from "./Toast";
 import { SaveProgressModal, SaveStep } from "./SaveProgressModal";
 import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
@@ -60,14 +60,6 @@ export function DraftGanttView({
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showAddRowModal, setShowAddRowModal] = useState(false);
-
-  // Toast 상태
-  const [toast, setToast] = useState<{
-    isOpen: boolean;
-    type: ToastType;
-    title: string;
-    message?: string;
-  }>({ isOpen: false, type: "success", title: "" });
 
   // 저장 진행 상태 모달
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -210,14 +202,6 @@ export function DraftGanttView({
     hydrate(Array.from(rowMap.values()), loadedBars);
   }, [initialPlans, hydrate]);
 
-  // 토스트 표시 헬퍼
-  const showToast = useCallback(
-    (type: ToastType, title: string, message?: string) => {
-      setToast({ isOpen: true, type, title, message });
-    },
-    []
-  );
-
   // CommandPalette 콜백들을 useCallback으로 메모이제이션
   const handleStartEditing = useCallback(async () => {
     const success = await startEditing();
@@ -246,7 +230,7 @@ export function DraftGanttView({
       }
     }
     return success;
-  }, [startEditing, showToast]);
+  }, [startEditing]);
 
   const handleStopEditing = useCallback(async () => {
     // 현재 변경사항 개수 계산
@@ -278,7 +262,7 @@ export function DraftGanttView({
         "작업이 정상적으로 종료되었습니다."
       );
     }
-  }, [getDirtyBars, getDeletedBars, getDirtyFlags, getDeletedFlags, discardAllChanges, stopEditing, showToast]);
+  }, [getDirtyBars, getDeletedBars, getDirtyFlags, getDeletedFlags, discardAllChanges, stopEditing]);
 
   const handleOpenHelp = useCallback(() => {
     setShowHelp(true);
@@ -459,7 +443,6 @@ export function DraftGanttView({
     rows,
     clearDirtyFlags,
     clearFlagDirtyFlags,
-    showToast,
   ]);
 
   // 변경사항 폐기 핸들러 (토스트는 onStopSuccess에서 처리)
@@ -479,7 +462,7 @@ export function DraftGanttView({
         "서버와 동기화 중 오류가 발생했습니다."
       );
     }
-  }, [refreshLockState, showToast]);
+  }, [refreshLockState]);
 
   // 키보드 단축키
   useEffect(() => {
@@ -724,14 +707,8 @@ export function DraftGanttView({
       {/* Help Modal */}
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
 
-      {/* Toast */}
-      <Toast
-        isOpen={toast.isOpen}
-        onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
-        type={toast.type}
-        title={toast.title}
-        message={toast.message}
-      />
+      {/* Toast Container (sonner) */}
+      <ToastContainer />
 
       {/* Save Progress Modal */}
       <SaveProgressModal

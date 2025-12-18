@@ -166,6 +166,8 @@ export interface DraftUIState {
   expandedNodes: string[];
   /** 타임라인에서 강조 표시할 기간 */
   highlightDateRange?: HighlightDateRange | null;
+  /** 마지막 활동 시간 (ISO 문자열) - 비활성 타임아웃 계산용 */
+  lastActivityAt?: string;
 }
 
 /**

@@ -1,25 +1,20 @@
 /**
- * Toast 알림 컴포넌트
- * - Airbnb 스타일 슬라이드 인 애니메이션
+ * Toast 알림 컴포넌트 (sonner 기반)
+ * - Airbnb 스타일 그라데이션 디자인 유지
+ * - 여러 토스트 쌓기 지원
  */
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { Toaster, toast } from "sonner";
 import { CheckIcon, XIcon, InfoIcon } from "@/components/common/Icons";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
-interface ToastProps {
-  isOpen: boolean;
-  onClose: () => void;
-  type?: ToastType;
-  title: string;
-  message?: string;
-  duration?: number;
-}
-
-const typeConfig: Record<ToastType, { icon: React.ReactNode; gradient: string; iconBg: string }> = {
+const typeConfig: Record<
+  ToastType,
+  { icon: React.ReactNode; gradient: string; iconBg: string }
+> = {
   success: {
     icon: <CheckIcon className="w-4 h-4" />,
     gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
@@ -42,72 +37,99 @@ const typeConfig: Record<ToastType, { icon: React.ReactNode; gradient: string; i
   },
 };
 
-export function Toast({
-  isOpen,
-  onClose,
-  type = "success",
+/**
+ * 커스텀 토스트 렌더러 - 기존 스타일 유지
+ */
+function CustomToast({
+  type,
   title,
   message,
-  duration = 4000,
-}: ToastProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(onClose, 300); // 애니메이션 완료 후 닫기
-      }, duration);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, duration, onClose]);
-
-  if (!isOpen && !isVisible) return null;
-
+  onDismiss,
+}: {
+  type: ToastType;
+  title: string;
+  message?: string;
+  onDismiss: () => void;
+}) {
   const config = typeConfig[type];
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
-        isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
-      }`}
+      className="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg min-w-[280px] max-w-md"
+      style={{
+        background: config.gradient,
+        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)",
+      }}
     >
+      {/* 아이콘 */}
       <div
-        className="flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg min-w-[280px] max-w-md"
-        style={{
-          background: config.gradient,
-          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)",
-        }}
+        className="flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0"
+        style={{ background: config.iconBg }}
       >
-        {/* 아이콘 */}
-        <div
-          className="flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0"
-          style={{ background: config.iconBg }}
-        >
-          <span style={{ color: "white" }}>{config.icon}</span>
-        </div>
-
-        {/* 텍스트 */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white">{title}</p>
-          {message && (
-            <p className="text-xs text-white/80 mt-0.5 whitespace-pre-line">{message}</p>
-          )}
-        </div>
-
-        {/* 닫기 버튼 */}
-        <button
-          onClick={() => {
-            setIsVisible(false);
-            setTimeout(onClose, 300);
-          }}
-          className="p-1 rounded-lg transition-colors hover:bg-white/20"
-        >
-          <XIcon className="w-4 h-4 text-white/80" />
-        </button>
+        <span style={{ color: "white" }}>{config.icon}</span>
       </div>
+
+      {/* 텍스트 */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white">{title}</p>
+        {message && (
+          <p className="text-xs text-white/80 mt-0.5 whitespace-pre-line">
+            {message}
+          </p>
+        )}
+      </div>
+
+      {/* 닫기 버튼 */}
+      <button
+        onClick={onDismiss}
+        className="p-1 rounded-lg transition-colors hover:bg-white/20"
+      >
+        <XIcon className="w-4 h-4 text-white/80" />
+      </button>
     </div>
   );
 }
 
+/**
+ * 토스트 표시 함수
+ * - DraftGanttView 등에서 직접 호출
+ */
+export function showToast(type: ToastType, title: string, message?: string) {
+  toast.custom(
+    (t) => (
+      <CustomToast
+        type={type}
+        title={title}
+        message={message}
+        onDismiss={() => toast.dismiss(t)}
+      />
+    ),
+    {
+      duration: 5000,
+      position: "bottom-right",
+    }
+  );
+}
+
+/**
+ * Toaster 컨테이너 - 레이아웃에 한 번만 배치
+ */
+export function ToastContainer() {
+  return (
+    <Toaster
+      position="bottom-right"
+      expand={true}
+      richColors={false}
+      closeButton={false}
+      toastOptions={{
+        unstyled: true,
+        classNames: {
+          toast: "!bg-transparent !border-0 !shadow-none !p-0",
+        },
+      }}
+    />
+  );
+}
+
+// 기존 호환성을 위한 export (사용하지 않지만 타입 유지)
+export { toast };

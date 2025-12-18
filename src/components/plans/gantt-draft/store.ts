@@ -68,6 +68,7 @@ const initialUIState: DraftUIState = {
   isEditing: false,
   expandedNodes: [],
   highlightDateRange: null,
+  lastActivityAt: undefined,
 };
 
 /**
@@ -179,6 +180,8 @@ interface DraftActions {
   setEditing: (isEditing: boolean) => void;
   /** 기간 강조 표시 설정 */
   setHighlightDateRange: (range: HighlightDateRange | null) => void;
+  /** 활동 기록 (비활성 타임아웃 리셋) */
+  recordActivity: () => void;
   /** 트리 노드 토글 (펼침/접힘) */
   toggleNode: (nodeId: string) => void;
   /** 모든 노드 펼치기 */
@@ -824,6 +827,10 @@ export const useDraftStore = create<DraftStore>()(
 
       setHighlightDateRange: (range) => {
         set({ ui: { ...get().ui, highlightDateRange: range } });
+      },
+
+      recordActivity: () => {
+        set({ ui: { ...get().ui, lastActivityAt: new Date().toISOString() } });
       },
 
       // === Undo/Redo ===

@@ -199,51 +199,60 @@ export function GanttHeader({
 
           {lockState.isLocked ? (
             <div className="flex items-center gap-2">
-              <div
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
-                style={{
-                  background: isMyLock
-                    ? "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.15) 100%)"
-                    : "linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.15) 100%)",
-                  color: isMyLock ? "#059669" : "#dc2626",
-                }}
-              >
-                <LockClosedIcon className="w-3.5 h-3.5" />
-                {isMyLock ? (
-                  <span>
-                    편집 중 · 다음 갱신 {nextHeartbeatSeconds ?? 0}초
-                  </span>
-                ) : (
-                  <span>{lockState.lockedByName || "다른 사용자"} 작업 중</span>
-                )}
-              </div>
-              {/* 비활성 시간 표시 - 내가 편집 중일 때만 */}
-              {isMyLock && isEditing && inactivitySeconds !== null && (
+              {/* 편집 상태 영역 - 2줄, 고정폭 */}
+              {isMyLock && isEditing ? (
                 <div
-                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium"
+                  className="flex flex-col justify-center px-3 py-1 rounded-lg"
                   style={{
-                    background: inactivitySeconds > 540 
-                      ? "rgba(239, 68, 68, 0.1)" 
-                      : inactivitySeconds > 300 
-                        ? "rgba(245, 158, 11, 0.1)" 
-                        : "rgba(107, 114, 128, 0.08)",
-                    color: inactivitySeconds > 540 
-                      ? "#dc2626" 
-                      : inactivitySeconds > 300 
-                        ? "#d97706" 
-                        : "#6b7280",
+                    width: 160,
+                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.15) 100%)",
                   }}
-                  title="10분간 활동이 없으면 자동으로 편집이 종료됩니다"
                 >
-                  <span>비활성 {Math.floor(inactivitySeconds / 60)}:{String(inactivitySeconds % 60).padStart(2, "0")}</span>
-                  <span className="opacity-60">/ 10:00</span>
+                  {/* 1행: 편집 중 · 다음 갱신 */}
+                  <div
+                    className="flex items-center gap-1.5 text-xs font-medium"
+                    style={{ color: "#059669" }}
+                  >
+                    <LockClosedIcon className="w-3 h-3 flex-shrink-0" />
+                    <span>편집 중 · 갱신 {String(nextHeartbeatSeconds ?? 0).padStart(2, "0")}초</span>
+                  </div>
+                  {/* 2행: 비활성 시간 */}
+                  <div
+                    className="flex items-center gap-1 text-[10px] font-medium mt-0.5"
+                    style={{
+                      color: inactivitySeconds !== null && inactivitySeconds > 540 
+                        ? "#dc2626" 
+                        : inactivitySeconds !== null && inactivitySeconds > 300 
+                          ? "#d97706" 
+                          : "#6b7280",
+                    }}
+                    title="10분간 활동이 없으면 자동으로 편집이 종료됩니다"
+                  >
+                    <span className="ml-[18px]">
+                      비활성 {inactivitySeconds !== null ? `${Math.floor(inactivitySeconds / 60)}:${String(inactivitySeconds % 60).padStart(2, "0")}` : "0:00"}
+                    </span>
+                    <span className="opacity-50">/ 10:00</span>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+                  style={{
+                    background: isMyLock
+                      ? "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.15) 100%)"
+                      : "linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.15) 100%)",
+                    color: isMyLock ? "#059669" : "#dc2626",
+                  }}
+                >
+                  <LockClosedIcon className="w-3.5 h-3.5" />
+                  <span>{lockState.lockedByName || "다른 사용자"} 작업 중</span>
                 </div>
               )}
               {/* 새로고침 버튼 - 내가 편집 중일 때만 */}
               {isMyLock && isEditing && (
                 <button
                   onClick={onRefresh}
-                  className="p-1.5 rounded-lg transition-all hover:bg-gray-100"
+                  className="p-1.5 rounded-lg transition-all hover:bg-gray-100 flex-shrink-0"
                   title="락 상태 새로고침"
                   style={{ color: "#059669" }}
                 >
