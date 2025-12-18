@@ -703,6 +703,7 @@ export function DraftGanttView({
         onAddRow={handleAddRow}
         isEditing={isEditing}
         canEdit={canEdit}
+        readOnly={readOnly}
         rangeMonths={rangeMonths}
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}

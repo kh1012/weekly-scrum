@@ -50,6 +50,8 @@ interface CommandPaletteProps {
   onAddRow: () => void;
   isEditing: boolean;
   canEdit: boolean;
+  /** 읽기 전용 모드 (편집 명령 숨김) */
+  readOnly?: boolean;
   /** 기간 설정 */
   rangeMonths?: number;
   rangeStart?: Date;
@@ -68,6 +70,7 @@ export function CommandPalette({
   onAddRow,
   isEditing,
   canEdit,
+  readOnly = false,
   rangeMonths = 3,
   rangeStart,
   rangeEnd,
@@ -311,9 +314,25 @@ export function CommandPalette({
     ]
   );
 
+  // 읽기 전용 모드에서 숨길 명령 ID 목록
+  const editingCommandIds = new Set([
+    "start-editing",
+    "stop-editing",
+    "save",
+    "add-row",
+    "undo",
+    "redo",
+    "delete-selected",
+    "duplicate-bar",
+  ]);
+
   // 활성화된 명령만 표시 (간단한 로직)
   const commands = useMemo(() => {
     return allCommands.filter((cmd) => {
+      // 읽기 전용 모드에서는 편집 관련 명령 숨김
+      if (readOnly && editingCommandIds.has(cmd.id)) {
+        return false;
+      }
       // 작업 시작: 편집 중이 아닐 때만 표시
       if (cmd.id === "start-editing") {
         return !isEditing;
@@ -325,7 +344,7 @@ export function CommandPalette({
       // 나머지: disabled가 아닌 것만 표시
       return !cmd.disabled;
     });
-  }, [allCommands, isEditing]);
+  }, [allCommands, isEditing, readOnly]);
 
   // 필터링된 커맨드
   const filteredCommands = useMemo(() => {
