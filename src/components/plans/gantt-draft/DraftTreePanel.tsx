@@ -35,7 +35,7 @@ import {
 } from "./laneLayout";
 import type { FlatTreeNode } from "./laneLayout";
 import { FLAG_LANE_HEIGHT, packFlagsIntoLanes } from "./flagLayout";
-import { FlagIcon } from "@/components/common/Icons";
+import { FlagIcon, DocumentIcon } from "@/components/common/Icons";
 import type { DraftFlag, HighlightDateRange } from "./types";
 import { FlagDocPanel } from "./FlagDocPanel";
 
@@ -207,7 +207,7 @@ function FlagsPopover({
                     className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-blue-100 transition-colors flex-shrink-0 border border-gray-200"
                     title="계획 데이터 보기"
                   >
-                    <span className="text-base">📄</span>
+                    <DocumentIcon className="w-4 h-4 text-blue-500" />
                   </button>
                 </div>
               );

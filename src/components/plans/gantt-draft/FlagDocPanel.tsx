@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDraftStore } from "./store";
 import type { ReleaseDocRow, DraftFlag, ReadyInfo } from "./types";
-import { FlagIcon } from "@/components/common/Icons";
+import { FlagIcon, PaletteIcon } from "@/components/common/Icons";
 
 interface FlagDocPanelProps {
   isOpen: boolean;
@@ -290,7 +290,7 @@ export function FlagDocPanel({
                   <>
                     <span className="text-gray-300">|</span>
                     <span className="flex items-center gap-1">
-                      <span className="text-purple-500">🎨</span>
+                      <PaletteIcon className="w-4 h-4 text-purple-500" />
                       <span>Design 공유: {designShareDate}</span>
                     </span>
                   </>
@@ -432,13 +432,9 @@ function ReadyInfoItem({ info }: { info: ReadyInfo }) {
     <div className="flex flex-col gap-0.5">
       {/* 날짜 태그 (위) */}
       <div>
-        {value === "READY" ? (
+        {isReady ? (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-            READY
-          </span>
-        ) : isReady ? (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-            {value}
+            Ready
           </span>
         ) : (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
