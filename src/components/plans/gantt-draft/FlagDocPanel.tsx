@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDraftStore } from "./store";
 import type { ReleaseDocRow, DraftFlag, ReadyInfo } from "./types";
 import { FlagIcon } from "@/components/common/Icons";
@@ -253,10 +253,10 @@ export function FlagDocPanel({
 
       {/* 모달 */}
       <div
-        className="relative w-full max-w-3xl mx-4 rounded-2xl shadow-2xl overflow-hidden"
+        className="relative w-full max-w-5xl mx-4 rounded-2xl shadow-2xl overflow-hidden"
         style={{
           background: "white",
-          maxHeight: "80vh",
+          maxHeight: "85vh",
         }}
       >
         {/* 헤더 */}
@@ -307,7 +307,7 @@ export function FlagDocPanel({
         </div>
 
         {/* 콘텐츠 */}
-        <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+        <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: "70vh" }}>
           {releaseDocRows.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-400 text-sm">
@@ -316,19 +316,25 @@ export function FlagDocPanel({
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "30%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "27.5%" }} />
+                  <col style={{ width: "27.5%" }} />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 bg-gray-50 rounded-tl-lg">
+                    <th className="text-left py-4 px-5 font-semibold text-gray-700 bg-gray-50 rounded-tl-lg">
                       Epic
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 bg-gray-50">
+                    <th className="text-left py-4 px-5 font-semibold text-gray-700 bg-gray-50">
                       기획자
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 bg-gray-50">
+                    <th className="text-left py-4 px-5 font-semibold text-gray-700 bg-gray-50">
                       Spec Ready
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 bg-gray-50 rounded-tr-lg">
+                    <th className="text-left py-4 px-5 font-semibold text-gray-700 bg-gray-50 rounded-tr-lg">
                       Design Ready
                     </th>
                   </tr>
@@ -337,21 +343,21 @@ export function FlagDocPanel({
                   {releaseDocRows.map((row, idx) => (
                     <tr
                       key={row.planId || idx}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer align-top"
                       onClick={() => handleRowClick(row)}
                     >
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-5">
                         <span className="font-medium text-gray-900">
                           {row.epic}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-4 px-5 text-gray-600">
                         {row.planners.length > 0 ? row.planners.join(", ") : "-"}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-5">
                         <ReadyInfoList items={row.specReadyList} />
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-5">
                         <ReadyInfoList items={row.designReadyList} />
                       </td>
                     </tr>
@@ -388,19 +394,20 @@ function ReadyInfoList({ items }: { items: ReadyInfo[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2">
       {items.map((item, idx) => (
-        <DateChip key={idx} info={item} showTitle={items.length > 1} />
+        <ReadyInfoItem key={idx} info={item} />
       ))}
     </div>
   );
 }
 
 /**
- * 날짜 칩 컴포넌트
+ * Ready 정보 항목 컴포넌트 (날짜 태그 위, 제목 아래)
  */
-function DateChip({ info, showTitle = false }: { info: ReadyInfo; showTitle?: boolean }) {
+function ReadyInfoItem({ info }: { info: ReadyInfo }) {
   const { value, title, endDate } = info;
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (value === "-" || value === "데이터 없음") {
     return <span className="text-gray-400 text-xs">데이터 없음</span>;
@@ -412,35 +419,56 @@ function DateChip({ info, showTitle = false }: { info: ReadyInfo; showTitle?: bo
   // 날짜가 오늘 이전인지 확인 (완료된 것으로 간주)
   const dateToCheck = endDate || value;
   const isPastDate = value !== "READY" && dateToCheck <= today;
+  const isReady = value === "READY" || isPastDate;
 
-  const chipContent = (
-    <>
-      {value === "READY" ? (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-          READY
-        </span>
-      ) : isPastDate ? (
-        // 오늘 이전 날짜: 초록색으로 표시 (완료됨을 나타냄)
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-          {value}
-        </span>
-      ) : (
-        // 오늘 이후 날짜: 회색으로 표시 (아직 진행 중)
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-          {value}
-        </span>
-      )}
-      {showTitle && title && (
-        <span className="ml-1.5 text-xs text-gray-400 truncate max-w-[120px]" title={title}>
-          {title}
-        </span>
-      )}
-    </>
-  );
+  // 제목 길이 제한 (30자)
+  const MAX_TITLE_LENGTH = 30;
+  const isTitleLong = title && title.length > MAX_TITLE_LENGTH;
+  const displayTitle = isTitleLong && !isExpanded 
+    ? title.slice(0, MAX_TITLE_LENGTH) + "..." 
+    : title;
 
   return (
-    <div className="flex items-center gap-1">
-      {chipContent}
+    <div className="flex flex-col gap-0.5">
+      {/* 날짜 태그 (위) */}
+      <div>
+        {value === "READY" ? (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+            READY
+          </span>
+        ) : isReady ? (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+            {value}
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+            {value}
+          </span>
+        )}
+      </div>
+      
+      {/* 제목 (아래) */}
+      {title && (
+        <div className="flex items-start gap-1">
+          <span 
+            className={`text-xs text-gray-500 ${isExpanded ? "" : "line-clamp-1"}`}
+            style={{ wordBreak: "break-word" }}
+          >
+            {displayTitle}
+          </span>
+          {isTitleLong && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="text-xs text-blue-500 hover:text-blue-700 flex-shrink-0 font-medium"
+            >
+              {isExpanded ? "접기" : "더보기"}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
