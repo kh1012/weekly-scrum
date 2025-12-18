@@ -450,8 +450,6 @@ export function CommandPalette({
 
   if (!isOpen) return null;
 
-  let flatIndex = 0;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
@@ -598,7 +596,8 @@ export function CommandPalette({
                   {category}
                 </div>
                 {cmds.map((cmd) => {
-                  const idx = flatIndex++;
+                  // filteredCommands에서의 실제 인덱스 사용 (순서 일관성 보장)
+                  const idx = filteredCommands.indexOf(cmd);
                   const isSelected = idx === selectedIndex;
                   const isLoading = loadingCommandId === cmd.id;
 
@@ -606,7 +605,7 @@ export function CommandPalette({
                     <button
                       key={cmd.id}
                       ref={(el) => {
-                        if (el) itemRefs.current.set(idx, el);
+                        if (el && idx >= 0) itemRefs.current.set(idx, el);
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
                         isSelected
@@ -615,7 +614,7 @@ export function CommandPalette({
                       } ${isLoading ? "opacity-70 cursor-wait" : ""}`}
                       style={{ color: "var(--notion-text)" }}
                       onClick={() => executeCommand(cmd)}
-                      onMouseEnter={() => setSelectedIndex(idx)}
+                      onMouseEnter={() => idx >= 0 && setSelectedIndex(idx)}
                       disabled={isLoading || loadingCommandId !== null}
                     >
                       <span style={{ color: "var(--notion-text-muted)" }}>
