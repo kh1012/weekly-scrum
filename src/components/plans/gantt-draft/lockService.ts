@@ -152,11 +152,14 @@ export async function heartbeatLock(
     // RPC가 배열로 반환하는 경우 처리
     const result = Array.isArray(data) ? data[0] : data;
     
-    console.log("[heartbeatLock] Raw result:", result);
+    // 상세 로깅 (디버깅용)
+    console.log("[heartbeatLock] Raw result:", JSON.stringify(result, null, 2));
+    console.log("[heartbeatLock] result.success:", result?.success);
+    console.log("[heartbeatLock] result.ok:", result?.ok);
+    console.log("[heartbeatLock] result.expires_at:", result?.expires_at);
 
-    // success 필드가 명시적으로 있는지 확인
-    // result가 null/undefined이거나 success가 false인 경우에만 실패
-    const isSuccess = result?.success === true;
+    // success 또는 ok 필드 확인 (RPC마다 다를 수 있음)
+    const isSuccess = result?.success === true || result?.ok === true;
     
     return {
       success: isSuccess,
