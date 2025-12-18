@@ -824,7 +824,11 @@ function EditSnapshotsViewInner({
                 handleUpdateCard(selectedSnapshot.tempId, updates)
               }
               onFocusSection={setFocusedSection}
-              activeSection={focusedSection as import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection | null}
+              activeSection={
+                focusedSection as
+                  | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                  | null
+              }
               compact
               singleColumn
               hideName
@@ -891,11 +895,7 @@ function EmptyState({ onAddEmpty }: { onAddEmpty: () => void }) {
 export function EditSnapshotsView(props: EditSnapshotsViewProps) {
   return (
     <ToastProvider>
-      <Suspense
-        fallback={
-          <LogoLoadingSpinner className="h-full" />
-        }
-      >
+      <Suspense fallback={<LogoLoadingSpinner className="h-full" />}>
         <EditSnapshotsViewInner {...props} />
       </Suspense>
     </ToastProvider>

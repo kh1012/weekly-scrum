@@ -37,7 +37,9 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
   const [mounted, setMounted] = useState(false);
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
   const [hoveredRibbon, setHoveredRibbon] = useState<FlowRibbon | null>(null);
-  const [selectedType, setSelectedType] = useState<"all" | "pair" | "pre">("all");
+  const [selectedType, setSelectedType] = useState<"all" | "pair" | "pre">(
+    "all"
+  );
 
   // Hydration 문제 방지: 클라이언트에서만 렌더링
   useEffect(() => {
@@ -61,8 +63,13 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
     }
 
     // 도메인별 통계 계산
-    const domainStats = new Map<string, { pairOut: number; pairIn: number; preOut: number; preIn: number }>();
-    domains.forEach((d) => domainStats.set(d, { pairOut: 0, pairIn: 0, preOut: 0, preIn: 0 }));
+    const domainStats = new Map<
+      string,
+      { pairOut: number; pairIn: number; preOut: number; preIn: number }
+    >();
+    domains.forEach((d) =>
+      domainStats.set(d, { pairOut: 0, pairIn: 0, preOut: 0, preIn: 0 })
+    );
 
     pairData.forEach((cell) => {
       if (cell.sourceDomain !== cell.targetDomain) {
@@ -87,7 +94,10 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
       const s = domainStats.get(d)!;
       return s.pairOut + s.pairIn + s.preOut + s.preIn;
     });
-    const grandTotal = Math.max(totals.reduce((a, b) => a + b, 0), 1);
+    const grandTotal = Math.max(
+      totals.reduce((a, b) => a + b, 0),
+      1
+    );
 
     // 각도 할당 (Gap 포함)
     const gapAngle = 0.04; // 도메인 간 간격
@@ -119,19 +129,26 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
     // Flow Ribbons 생성
     const flowRibbons: FlowRibbon[] = [];
     const domainCurrentAngle = new Map<string, number>();
-    domainArcs.forEach((arc) => domainCurrentAngle.set(arc.domain, arc.startAngle));
+    domainArcs.forEach((arc) =>
+      domainCurrentAngle.set(arc.domain, arc.startAngle)
+    );
 
     // Pair 리본
     pairData.forEach((cell) => {
-      if (cell.sourceDomain === cell.targetDomain || cell.pairCount === 0) return;
+      if (cell.sourceDomain === cell.targetDomain || cell.pairCount === 0)
+        return;
 
       const sourceArc = domainArcs.find((a) => a.domain === cell.sourceDomain)!;
       const targetArc = domainArcs.find((a) => a.domain === cell.targetDomain)!;
       const sourceTotal = sourceArc.total || 1;
       const targetTotal = targetArc.total || 1;
 
-      const sourceAngleSpan = (sourceArc.endAngle - sourceArc.startAngle) * (cell.pairCount / sourceTotal);
-      const targetAngleSpan = (targetArc.endAngle - targetArc.startAngle) * (cell.pairCount / targetTotal);
+      const sourceAngleSpan =
+        (sourceArc.endAngle - sourceArc.startAngle) *
+        (cell.pairCount / sourceTotal);
+      const targetAngleSpan =
+        (targetArc.endAngle - targetArc.startAngle) *
+        (cell.pairCount / targetTotal);
 
       const sourceStart = domainCurrentAngle.get(cell.sourceDomain)!;
       const targetStart = domainCurrentAngle.get(cell.targetDomain)!;
@@ -153,15 +170,20 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
 
     // Pre 리본
     preData.forEach((cell) => {
-      if (cell.sourceDomain === cell.targetDomain || cell.preCount === 0) return;
+      if (cell.sourceDomain === cell.targetDomain || cell.preCount === 0)
+        return;
 
       const sourceArc = domainArcs.find((a) => a.domain === cell.sourceDomain)!;
       const targetArc = domainArcs.find((a) => a.domain === cell.targetDomain)!;
       const sourceTotal = sourceArc.total || 1;
       const targetTotal = targetArc.total || 1;
 
-      const sourceAngleSpan = (sourceArc.endAngle - sourceArc.startAngle) * (cell.preCount / sourceTotal);
-      const targetAngleSpan = (targetArc.endAngle - targetArc.startAngle) * (cell.preCount / targetTotal);
+      const sourceAngleSpan =
+        (sourceArc.endAngle - sourceArc.startAngle) *
+        (cell.preCount / sourceTotal);
+      const targetAngleSpan =
+        (targetArc.endAngle - targetArc.startAngle) *
+        (cell.preCount / targetTotal);
 
       const sourceStart = domainCurrentAngle.get(cell.sourceDomain)!;
       const targetStart = domainCurrentAngle.get(cell.targetDomain)!;
@@ -190,7 +212,12 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
   }
 
   // Arc path 생성
-  const createArcPath = (startAngle: number, endAngle: number, innerRadius: number, outerRadius: number) => {
+  const createArcPath = (
+    startAngle: number,
+    endAngle: number,
+    innerRadius: number,
+    outerRadius: number
+  ) => {
     const startInnerX = Math.cos(startAngle) * innerRadius;
     const startInnerY = Math.sin(startAngle) * innerRadius;
     const endInnerX = Math.cos(endAngle) * innerRadius;
@@ -213,10 +240,22 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
 
   // Ribbon path 생성
   const createRibbonPath = (ribbon: FlowRibbon, radius: number) => {
-    const sourceStart = { x: Math.cos(ribbon.sourceStart) * radius, y: Math.sin(ribbon.sourceStart) * radius };
-    const sourceEnd = { x: Math.cos(ribbon.sourceEnd) * radius, y: Math.sin(ribbon.sourceEnd) * radius };
-    const targetStart = { x: Math.cos(ribbon.targetStart) * radius, y: Math.sin(ribbon.targetStart) * radius };
-    const targetEnd = { x: Math.cos(ribbon.targetEnd) * radius, y: Math.sin(ribbon.targetEnd) * radius };
+    const sourceStart = {
+      x: Math.cos(ribbon.sourceStart) * radius,
+      y: Math.sin(ribbon.sourceStart) * radius,
+    };
+    const sourceEnd = {
+      x: Math.cos(ribbon.sourceEnd) * radius,
+      y: Math.sin(ribbon.sourceEnd) * radius,
+    };
+    const targetStart = {
+      x: Math.cos(ribbon.targetStart) * radius,
+      y: Math.sin(ribbon.targetStart) * radius,
+    };
+    const targetEnd = {
+      x: Math.cos(ribbon.targetEnd) * radius,
+      y: Math.sin(ribbon.targetEnd) * radius,
+    };
 
     // 베지어 곡선으로 연결
     return `
@@ -238,7 +277,10 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
   if (!mounted) {
     return (
       <div className="notion-card p-3 sm:p-4">
-        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
+        <h3
+          className="text-sm font-semibold mb-3"
+          style={{ color: "var(--notion-text)" }}
+        >
           🔀 도메인 간 협업 흐름
         </h3>
         <LogoLoadingSpinner className="h-[280px] sm:h-[350px] md:h-[420px] lg:h-[480px]" />
@@ -249,10 +291,16 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
   if (domains.length === 0) {
     return (
       <div className="notion-card p-3 sm:p-4">
-        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
+        <h3
+          className="text-sm font-semibold mb-3"
+          style={{ color: "var(--notion-text)" }}
+        >
           🔀 도메인 간 협업 흐름
         </h3>
-        <div className="flex items-center justify-center h-48 text-sm" style={{ color: "var(--notion-text-secondary)" }}>
+        <div
+          className="flex items-center justify-center h-48 text-sm"
+          style={{ color: "var(--notion-text-secondary)" }}
+        >
           협업 데이터가 없습니다.
         </div>
       </div>
@@ -269,21 +317,33 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
     <div className="notion-card p-3 sm:p-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
         <div>
-          <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
+          <h3
+            className="text-sm font-semibold"
+            style={{ color: "var(--notion-text)" }}
+          >
             🔀 도메인 간 협업 흐름
           </h3>
-          <p className="text-[10px] sm:text-xs mt-0.5 sm:mt-1" style={{ color: "var(--notion-text-secondary)" }}>
+          <p
+            className="text-[10px] sm:text-xs mt-0.5 sm:mt-1"
+            style={{ color: "var(--notion-text-secondary)" }}
+          >
             도메인 간의 협업 관계를 시각화합니다
           </p>
         </div>
-        <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 rounded w-fit" style={{ background: "var(--notion-bg-secondary)" }}>
+        <div
+          className="flex items-center gap-0.5 sm:gap-1 p-0.5 rounded w-fit"
+          style={{ background: "var(--notion-bg-secondary)" }}
+        >
           {(["all", "pair", "pre"] as const).map((type) => (
             <button
               key={type}
               onClick={() => setSelectedType(type)}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded transition-all ${selectedType === type ? "font-semibold" : ""}`}
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded transition-all ${
+                selectedType === type ? "font-semibold" : ""
+              }`}
               style={{
-                background: selectedType === type ? "var(--notion-bg)" : "transparent",
+                background:
+                  selectedType === type ? "var(--notion-bg)" : "transparent",
                 color:
                   selectedType === type
                     ? type === "pair"
@@ -292,7 +352,10 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                       ? "#ef4444"
                       : "var(--notion-text)"
                     : "var(--notion-text-secondary)",
-                boxShadow: selectedType === type ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px" : "none",
+                boxShadow:
+                  selectedType === type
+                    ? "rgba(15, 15, 15, 0.1) 0px 0px 0px 1px"
+                    : "none",
               }}
             >
               {type === "all" ? "전체" : type === "pair" ? "Pair" : "Pre"}
@@ -304,7 +367,8 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
       <div
         className="relative rounded-lg overflow-hidden"
         style={{
-          background: "radial-gradient(ellipse at center, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)",
+          background:
+            "radial-gradient(ellipse at center, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)",
           border: "1px solid var(--notion-border)",
         }}
       >
@@ -330,10 +394,21 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                   key={`ribbon-${idx}`}
                   d={createRibbonPath(ribbon, ribbonRadius)}
                   fill={color}
-                  fillOpacity={isRibbonHovered ? 0.85 : hasHover ? (isHighlighted ? 0.5 : 0.03) : 0.35}
+                  fillOpacity={
+                    isRibbonHovered
+                      ? 0.85
+                      : hasHover
+                      ? isHighlighted
+                        ? 0.5
+                        : 0.03
+                      : 0.35
+                  }
                   stroke={color}
                   strokeWidth={isRibbonHovered ? 2.5 : 0}
-                  style={{ cursor: "pointer", transition: "fill-opacity 0.15s, stroke-width 0.15s" }}
+                  style={{
+                    cursor: "pointer",
+                    transition: "fill-opacity 0.15s, stroke-width 0.15s",
+                  }}
                   onMouseEnter={() => setHoveredRibbon(ribbon)}
                   onMouseLeave={() => setHoveredRibbon(null)}
                 />
@@ -342,7 +417,8 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
 
             {/* Domain Arcs */}
             {domainArcs.map((arc) => {
-              const isHighlighted = !hoveredDomain || arc.domain === hoveredDomain;
+              const isHighlighted =
+                !hoveredDomain || arc.domain === hoveredDomain;
               const hasHover = hoveredDomain || hoveredRibbon;
               const midAngle = (arc.startAngle + arc.endAngle) / 2;
               const labelRadius = outerRadius + 25;
@@ -353,12 +429,20 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                 <g key={arc.domain}>
                   {/* Arc */}
                   <path
-                    d={createArcPath(arc.startAngle, arc.endAngle, innerRadius, outerRadius)}
+                    d={createArcPath(
+                      arc.startAngle,
+                      arc.endAngle,
+                      innerRadius,
+                      outerRadius
+                    )}
                     fill={arc.color}
                     fillOpacity={hasHover ? (isHighlighted ? 1 : 0.12) : 1}
                     stroke="white"
                     strokeWidth={isHighlighted && hasHover ? 3 : 2}
-                    style={{ cursor: "pointer", transition: "fill-opacity 0.15s, stroke-width 0.15s" }}
+                    style={{
+                      cursor: "pointer",
+                      transition: "fill-opacity 0.15s, stroke-width 0.15s",
+                    }}
                     onMouseEnter={() => setHoveredDomain(arc.domain)}
                     onMouseLeave={() => setHoveredDomain(null)}
                   />
@@ -370,7 +454,13 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                     dominantBaseline="middle"
                     fontSize={isHighlighted && hasHover ? 12 : 11}
                     fontWeight={isHighlighted && hasHover ? 700 : 600}
-                    fill={hasHover ? (isHighlighted ? arc.color : "#cbd5e1") : arc.color}
+                    fill={
+                      hasHover
+                        ? isHighlighted
+                          ? arc.color
+                          : "#cbd5e1"
+                        : arc.color
+                    }
                     style={{ transition: "all 0.15s", pointerEvents: "none" }}
                   >
                     {arc.domain}
@@ -387,7 +477,10 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
               fill="#64748b"
               fontWeight={500}
             >
-              {hoveredDomain || (hoveredRibbon ? `${hoveredRibbon.source} → ${hoveredRibbon.target}` : "도메인 협업")}
+              {hoveredDomain ||
+                (hoveredRibbon
+                  ? `${hoveredRibbon.source} → ${hoveredRibbon.target}`
+                  : "도메인 협업")}
             </text>
             {(hoveredDomain || hoveredRibbon) && (
               <text
@@ -398,9 +491,14 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
                 fill="#94a3b8"
               >
                 {hoveredDomain
-                  ? `${domainArcs.find((a) => a.domain === hoveredDomain)?.total ?? 0}건`
+                  ? `${
+                      domainArcs.find((a) => a.domain === hoveredDomain)
+                        ?.total ?? 0
+                    }건`
                   : hoveredRibbon
-                  ? `${hoveredRibbon.value}건 (${hoveredRibbon.type === "pair" ? "Pair" : "Pre"})`
+                  ? `${hoveredRibbon.value}건 (${
+                      hoveredRibbon.type === "pair" ? "Pair" : "Pre"
+                    })`
                   : ""}
               </text>
             )}
@@ -421,13 +519,22 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
             <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
               <span
                 className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded"
-                style={{ background: hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444" }}
+                style={{
+                  background:
+                    hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444",
+                }}
               />
-              <span className="font-semibold" style={{ color: "var(--notion-text)" }}>
+              <span
+                className="font-semibold"
+                style={{ color: "var(--notion-text)" }}
+              >
                 {hoveredRibbon.type === "pair" ? "Pair" : "Pre"}
               </span>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2 flex-wrap" style={{ color: "var(--notion-text-secondary)" }}>
+            <div
+              className="flex items-center gap-1 sm:gap-2 flex-wrap"
+              style={{ color: "var(--notion-text-secondary)" }}
+            >
               <span
                 className="w-2 h-2 rounded-full"
                 style={{ background: getDomainColor(hoveredRibbon.source) }}
@@ -442,7 +549,9 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
             </div>
             <div
               className="mt-1 text-center font-bold"
-              style={{ color: hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444" }}
+              style={{
+                color: hoveredRibbon.type === "pair" ? "#3b82f6" : "#ef4444",
+              }}
             >
               {hoveredRibbon.value}건
             </div>
@@ -451,35 +560,54 @@ export function CrossDomainMatrix({ items }: CrossDomainMatrixProps) {
       </div>
 
       {/* 범례 */}
-      <div className="mt-3 pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" style={{ borderTop: "1px solid var(--notion-border)" }}>
+      <div
+        className="mt-3 pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+        style={{ borderTop: "1px solid var(--notion-border)" }}
+      >
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {domainArcs.map((arc) => (
             <span
               key={arc.domain}
               className="flex items-center gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded cursor-pointer transition-all"
               style={{
-                background: hoveredDomain === arc.domain ? arc.color : "var(--notion-bg-secondary)",
-                color: hoveredDomain === arc.domain ? "white" : "var(--notion-text)",
+                background:
+                  hoveredDomain === arc.domain
+                    ? arc.color
+                    : "var(--notion-bg-secondary)",
+                color:
+                  hoveredDomain === arc.domain ? "white" : "var(--notion-text)",
               }}
               onMouseEnter={() => setHoveredDomain(arc.domain)}
               onMouseLeave={() => setHoveredDomain(null)}
             >
               <span
                 className="w-2 h-2 rounded-full"
-                style={{ background: hoveredDomain === arc.domain ? "white" : arc.color }}
+                style={{
+                  background:
+                    hoveredDomain === arc.domain ? "white" : arc.color,
+                }}
               />
               {arc.domain}
               <span className="opacity-60">({arc.total})</span>
             </span>
           ))}
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px]" style={{ color: "var(--notion-text-tertiary)" }}>
+        <div
+          className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px]"
+          style={{ color: "var(--notion-text-tertiary)" }}
+        >
           <span className="flex items-center gap-1">
-            <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded" style={{ background: "rgba(59, 130, 246, 0.5)" }} />
+            <span
+              className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded"
+              style={{ background: "rgba(59, 130, 246, 0.5)" }}
+            />
             Pair
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded" style={{ background: "rgba(239, 68, 68, 0.5)" }} />
+            <span
+              className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded"
+              style={{ background: "rgba(239, 68, 68, 0.5)" }}
+            />
             Pre
           </span>
         </div>

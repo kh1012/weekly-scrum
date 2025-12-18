@@ -14,7 +14,9 @@ interface PlanFormData extends CreatePlanActionInput {
   id?: string;
 }
 
-const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID =
+  process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID ||
+  "00000000-0000-0000-0000-000000000001";
 
 /**
  * Plan 수정 페이지
@@ -75,18 +77,16 @@ export default function EditPlanPage() {
 
   if (isLoading) {
     return (
-      <LogoLoadingSpinner
-        title="로딩 중..."
-        description=""
-        className="py-12"
-      />
+      <LogoLoadingSpinner title="로딩 중..." description="" className="py-12" />
     );
   }
 
   if (!plan) {
     return (
       <div className="text-center py-12">
-        <p style={{ color: "var(--notion-text-muted)" }}>{error || "계획을 찾을 수 없습니다."}</p>
+        <p style={{ color: "var(--notion-text-muted)" }}>
+          {error || "계획을 찾을 수 없습니다."}
+        </p>
         <Link
           href="/admin/plans"
           className="inline-block mt-4 px-4 py-2 rounded-lg text-sm"
@@ -110,12 +110,25 @@ export default function EditPlanPage() {
           className="p-2 rounded-lg transition-colors hover:bg-gray-100"
           style={{ color: "var(--notion-text-muted)" }}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </Link>
         <span className="text-2xl">✏️</span>
-        <h1 className="text-xl font-semibold" style={{ color: "var(--notion-text)" }}>
+        <h1
+          className="text-xl font-semibold"
+          style={{ color: "var(--notion-text)" }}
+        >
           계획 수정
         </h1>
       </div>
