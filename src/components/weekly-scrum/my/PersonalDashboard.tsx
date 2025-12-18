@@ -73,10 +73,10 @@ export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData 
 
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      <div className="max-w-[1440px] mx-auto px-6 py-8">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8">
       {/* 헤더 - 대담한 타이포그래피 */}
-      <div className="mb-10">
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-3">
+      <div className="mb-6 md:mb-10">
+        <h1 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight mb-2 md:mb-3">
           {userName ? (
             <>
               안녕하세요,{" "}
@@ -89,7 +89,7 @@ export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData 
             "개인 대시보드"
           )}
         </h1>
-        <p className="text-lg text-gray-500 font-light">
+        <p className="text-sm md:text-lg text-gray-500 font-light">
           업무 현황을 한눈에 확인하고 관리하세요
         </p>
       </div>

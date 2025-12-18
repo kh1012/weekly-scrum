@@ -23,12 +23,12 @@ export function ReleasesView() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto px-4 md:px-0">
       {/* 헤더 */}
-      <div className="mb-8 animate-slide-in-left">
+      <div className="mb-6 md:mb-8 animate-slide-in-left">
         <div className="flex items-center gap-3 mb-3">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl"
             style={{
               background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
               boxShadow: "0 4px 14px rgba(59, 130, 246, 0.3)",
@@ -38,12 +38,12 @@ export function ReleasesView() {
           </div>
           <div>
             <h1
-              className="text-2xl font-bold tracking-tight"
+              className="text-xl md:text-2xl font-bold tracking-tight"
               style={{ color: "var(--notion-text)", letterSpacing: "-0.02em" }}
             >
               릴리즈 노트
             </h1>
-            <p className="text-sm mt-0.5" style={{ color: "var(--notion-text-muted)" }}>
+            <p className="text-xs md:text-sm mt-0.5" style={{ color: "var(--notion-text-muted)" }}>
               Weekly Scrum 서비스의 주요 업데이트 내역
             </p>
           </div>
@@ -54,7 +54,7 @@ export function ReleasesView() {
       <div className="relative">
         {/* 타임라인 선 */}
         <div
-          className="absolute left-6 top-0 bottom-0 w-px"
+          className="absolute left-4 md:left-6 top-0 bottom-0 w-px"
           style={{ background: "linear-gradient(to bottom, #3b82f6, transparent)" }}
         />
 

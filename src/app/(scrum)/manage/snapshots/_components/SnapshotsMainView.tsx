@@ -298,29 +298,29 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
   };
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
+    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
       {/* 헤더 영역 - 글래스모피즘 */}
-      <div className="shrink-0 px-6 py-5 bg-gradient-to-r from-white via-white to-slate-50/50 border-b border-gray-100">
-        <div className="flex items-center justify-between">
+      <div className="shrink-0 px-4 md:px-6 py-4 md:py-5 bg-gradient-to-r from-white via-white to-slate-50/50 border-b border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           {/* 좌측: 타이틀 */}
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">스냅샷 관리</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">스냅샷 관리</h1>
+              <p className="text-xs md:text-sm text-gray-500">
                 주차별 스냅샷 조회 및 관리
               </p>
             </div>
           </div>
 
           {/* 우측: 필터 + 액션 버튼 */}
-          <div className="flex items-center gap-3">
-            {/* 필터 드롭다운 (체크박스 형태) */}
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            {/* 필터 드롭다운 (체크박스 형태) - 모바일에서는 숨김 */}
+            <div className="hidden md:flex items-center gap-2">
               {/* 필터 초기화 (Reset) 버튼 - 항상 표시, 필터 없으면 비활성화 */}
               <button
                 onClick={clearFilters}
@@ -477,30 +477,35 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
               
             </div>
 
-            <div className="h-6 w-px bg-gray-200" />
+            <div className="hidden md:block h-6 w-px bg-gray-200" />
 
-            <button
-              onClick={handleEditWeek}
-              disabled={snapshots.length === 0}
-              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-blue-600 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              편집하기
-            </button>
+            {/* 액션 버튼 */}
+            <div className="flex items-center gap-2 md:gap-3">
+              <button
+                onClick={handleEditWeek}
+                disabled={snapshots.length === 0}
+                className="group flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-5 py-2 md:py-2.5 text-sm font-semibold text-blue-600 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span className="hidden sm:inline">편집하기</span>
+                <span className="sm:hidden">편집</span>
+              </button>
 
-            <button
-              onClick={() => setIsNewSnapshotModalOpen(true)}
-              disabled={snapshots.length > 0}
-              className="group flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 hover:shadow-lg hover:shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              title={snapshots.length > 0 ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요." : ""}
-            >
-              <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              새로 작성하기
-            </button>
+              <button
+                onClick={() => setIsNewSnapshotModalOpen(true)}
+                disabled={snapshots.length > 0}
+                className="group flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-5 py-2 md:py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 hover:shadow-lg hover:shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                title={snapshots.length > 0 ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요." : ""}
+              >
+                <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="hidden sm:inline">새로 작성하기</span>
+                <span className="sm:hidden">작성</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -508,7 +513,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
       {/* 메인 콘텐츠 영역 */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* 서브 메뉴 영역 - 글래스 효과 + z-index 설정 */}
-        <div className="shrink-0 relative z-40 flex items-center justify-between px-6 py-3 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm border-b border-gray-100">
+        <div className="shrink-0 relative z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 px-4 md:px-6 py-3 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm border-b border-gray-100">
           {/* 좌측: WeekSelector */}
           <WeekSelector
             year={selectedYear}
@@ -579,7 +584,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
         {/* 스냅샷 목록 영역 - Bottom Sheet를 위한 relative 컨테이너 */}
         <div className="flex-1 relative min-h-0 overflow-hidden">
           {/* 스냅샷 목록 */}
-          <div className="h-full overflow-y-auto p-6 pb-24 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30">
+          <div className="h-full overflow-y-auto p-4 md:p-6 pb-24 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30">
             <SnapshotList
               snapshots={filteredSnapshots}
               isLoading={isLoading}
