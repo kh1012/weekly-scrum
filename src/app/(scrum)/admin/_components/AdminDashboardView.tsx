@@ -6,7 +6,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 
 interface MemberData {
@@ -42,11 +41,11 @@ export function AdminDashboardView({
     router.push(href);
   };
 
-  // 역할별 정렬 및 색상
+  // 역할별 색상
   const roleConfig: Record<string, { label: string; color: string; bg: string }> = {
-    admin: { label: "Admin", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
-    leader: { label: "Leader", color: "#7c3aed", bg: "rgba(124, 58, 237, 0.1)" },
-    member: { label: "Member", color: "#6b7280", bg: "rgba(107, 114, 128, 0.1)" },
+    admin: { label: "A", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
+    leader: { label: "L", color: "#7c3aed", bg: "rgba(124, 58, 237, 0.1)" },
+    member: { label: "M", color: "#6b7280", bg: "rgba(107, 114, 128, 0.1)" },
   };
 
   return (
@@ -131,7 +130,7 @@ export function AdminDashboardView({
               주차별 스냅샷 현황
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              멤버별 최근 4주간 스냅샷 엔트리 작성 현황
+              멤버별 최근 6주간 스냅샷 엔트리 작성 현황
             </p>
           </div>
 
@@ -139,16 +138,13 @@ export function AdminDashboardView({
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50/80">
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     멤버
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    역할
                   </th>
                   {recentWeeks.map((w, idx) => (
                     <th
                       key={`${w.year}-${w.label}`}
-                      className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider"
+                      className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider"
                       style={{
                         color: idx === 0 ? "#3b82f6" : "#6b7280",
                         background: idx === 0 ? "rgba(59, 130, 246, 0.05)" : undefined,
@@ -166,10 +162,10 @@ export function AdminDashboardView({
               <tbody className="divide-y divide-gray-100">
                 {memberDataList.map((member) => (
                   <tr key={member.userId} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
                           style={{
                             background: `linear-gradient(135deg, ${
                               roleConfig[member.role]?.color || "#6b7280"
@@ -178,22 +174,23 @@ export function AdminDashboardView({
                         >
                           {member.displayName.charAt(0)}
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900 text-sm">{member.displayName}</div>
-                          <div className="text-xs text-gray-400">{member.email}</div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-gray-900 text-sm truncate">
+                              {member.displayName}
+                            </span>
+                            <span
+                              className="px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
+                              style={{
+                                background: roleConfig[member.role]?.bg || "rgba(107, 114, 128, 0.1)",
+                                color: roleConfig[member.role]?.color || "#6b7280",
+                              }}
+                            >
+                              {roleConfig[member.role]?.label || member.role.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span
-                        className="px-2 py-0.5 rounded-full text-xs font-medium"
-                        style={{
-                          background: roleConfig[member.role]?.bg || "rgba(107, 114, 128, 0.1)",
-                          color: roleConfig[member.role]?.color || "#6b7280",
-                        }}
-                      >
-                        {roleConfig[member.role]?.label || member.role}
-                      </span>
                     </td>
                     {recentWeeks.map((w, idx) => {
                       const weekKey = `${w.year}-${w.label}`;
@@ -204,13 +201,13 @@ export function AdminDashboardView({
                       return (
                         <td
                           key={weekKey}
-                          className="px-5 py-3 text-center"
+                          className="px-3 py-2.5 text-center"
                           style={{
                             background: isCurrentWeek ? "rgba(59, 130, 246, 0.05)" : undefined,
                           }}
                         >
                           <span
-                            className={`inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg text-sm font-semibold transition-all ${
+                            className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md text-xs font-semibold transition-all ${
                               hasEntries
                                 ? isCurrentWeek
                                   ? "bg-green-100 text-green-700 shadow-sm"
@@ -272,26 +269,6 @@ export function AdminDashboardView({
             </div>
           </button>
         </div>
-
-        {/* 관리자 안내 */}
-        <div
-          className="mt-8 p-4 rounded-xl text-sm"
-          style={{
-            background: "linear-gradient(135deg, rgba(244, 63, 94, 0.08), rgba(251, 146, 60, 0.05))",
-            border: "1px solid rgba(244, 63, 94, 0.2)",
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <span className="text-lg">🔒</span>
-            <div>
-              <p className="font-medium text-rose-700">관리자 전용 영역</p>
-              <p className="mt-1 text-rose-600/80">
-                이 영역은 admin 또는 leader 권한을 가진 사용자만 접근할 수 있습니다.
-                전체 워크스페이스 데이터를 조회하고 관리할 수 있습니다.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -350,4 +327,3 @@ function StatCard({
     </div>
   );
 }
-

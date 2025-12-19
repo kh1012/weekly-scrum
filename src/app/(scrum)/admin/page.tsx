@@ -39,8 +39,8 @@ function getRecentWeeks(count: number): { year: number; week: number; label: str
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
-  // 최근 4주차 정보
-  const recentWeeks = getRecentWeeks(4);
+  // 최근 6주차 정보
+  const recentWeeks = getRecentWeeks(6);
   const currentWeek = recentWeeks[0];
 
   // 1. 워크스페이스 멤버 조회
@@ -64,7 +64,7 @@ export default async function AdminDashboardPage() {
     (profiles || []).map((p) => [p.user_id, { display_name: p.display_name, email: p.email }])
   );
 
-  // 스냅샷 조회 (최근 4주치)
+  // 스냅샷 조회 (최근 6주치)
   const weekLabels = recentWeeks.map((w) => w.label);
   const years = [...new Set(recentWeeks.map((w) => w.year))];
 
