@@ -13,7 +13,7 @@ import { FeedbackKanbanCard } from "./FeedbackKanbanCard";
 import { CreateFeedbackModal } from "./CreateFeedbackModal";
 import { FeedbackDetailModal } from "./FeedbackDetailModal";
 import { updateFeedbackStatus } from "@/app/actions/feedback";
-import type { FeedbackWithDetails, FeedbackStatus, Release } from "@/lib/data/feedback";
+import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
 
 // 칸반 열 설정 - 카드 색상만 구분
 const KANBAN_COLUMNS: {
@@ -40,14 +40,12 @@ const KANBAN_COLUMNS: {
 
 interface FeedbackKanbanViewProps {
   feedbacks: FeedbackWithDetails[];
-  releases: Release[];
   isAdminOrLeader: boolean;
   currentUserId: string | null;
 }
 
 export function FeedbackKanbanView({
   feedbacks,
-  releases,
   isAdminOrLeader,
   currentUserId,
 }: FeedbackKanbanViewProps) {
@@ -73,8 +71,8 @@ export function FeedbackKanbanView({
     router.refresh();
   };
 
-  // 카드에서 상태 토글
-  const handleCardStatusToggle = async (feedbackId: string, newStatus: FeedbackStatus) => {
+  // 카드에서 상태 변경
+  const handleCardStatusChange = async (feedbackId: string, newStatus: FeedbackStatus) => {
     setUpdatingFeedbackId(feedbackId);
     
     await updateFeedbackStatus(feedbackId, newStatus);
@@ -195,7 +193,7 @@ export function FeedbackKanbanView({
                       isAdminOrLeader={isAdminOrLeader}
                       isUpdating={updatingFeedbackId === feedback.id}
                       onClick={() => setSelectedFeedback(feedback)}
-                      onToggleStatus={(newStatus) => handleCardStatusToggle(feedback.id, newStatus)}
+                      onStatusChange={(newStatus) => handleCardStatusChange(feedback.id, newStatus)}
                     />
                   ))
                 )}
@@ -241,7 +239,6 @@ export function FeedbackKanbanView({
           isOpen={!!selectedFeedback}
           onClose={() => setSelectedFeedback(null)}
           feedback={selectedFeedback}
-          releases={releases}
           isAdminOrLeader={isAdminOrLeader}
           currentUserId={currentUserId}
           onSuccess={handleDetailSuccess}

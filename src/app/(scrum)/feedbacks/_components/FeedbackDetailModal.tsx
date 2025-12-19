@@ -14,13 +14,12 @@ import {
   deleteFeedback,
   updateFeedbackStatus,
 } from "@/app/actions/feedback";
-import type { FeedbackWithDetails, FeedbackStatus, Release } from "@/lib/data/feedback";
+import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
 
 interface FeedbackDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   feedback: FeedbackWithDetails;
-  releases: Release[];
   isAdminOrLeader: boolean;
   currentUserId: string | null;
   onSuccess: () => void;
@@ -30,7 +29,6 @@ export function FeedbackDetailModal({
   isOpen,
   onClose,
   feedback,
-  releases,
   isAdminOrLeader,
   currentUserId,
   onSuccess,
@@ -143,10 +141,8 @@ export function FeedbackDetailModal({
     }
   };
 
-  // 상태 변경 (진행하기/다시열기)
-  const handleToggleStatus = async () => {
-    const newStatus: FeedbackStatus = currentStatus === "open" ? "in_progress" : "open";
-
+  // 상태 변경
+  const handleStatusChange = async (newStatus: FeedbackStatus) => {
     setIsStatusUpdating(true);
     setError(null);
 
@@ -162,25 +158,85 @@ export function FeedbackDetailModal({
     }
   };
 
-  // Resolve
-  const handleResolve = async (releaseId: string) => {
-    setIsStatusUpdating(true);
-    setError(null);
+  // 상태별 버튼 렌더링
+  const renderStatusButtons = () => {
+    if (!isAdminOrLeader) return null;
 
-    const result = await updateFeedbackStatus(feedback.id, "resolved", releaseId);
+    switch (currentStatus) {
+      case "open":
+        return (
+          <button
+            onClick={() => handleStatusChange("in_progress")}
+            disabled={isStatusUpdating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {isStatusUpdating ? (
+              <SmallLoadingSpinner size="xs" />
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              </svg>
+            )}
+            진행하기
+          </button>
+        );
 
-    setIsStatusUpdating(false);
+      case "in_progress":
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleStatusChange("open")}
+              disabled={isStatusUpdating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isStatusUpdating ? (
+                <SmallLoadingSpinner size="xs" />
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              )}
+              열기
+            </button>
+            <button
+              onClick={() => handleStatusChange("resolved")}
+              disabled={isStatusUpdating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-600 hover:bg-green-100 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isStatusUpdating ? (
+                <SmallLoadingSpinner size="xs" />
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              완료
+            </button>
+          </div>
+        );
 
-    if (result.success) {
-      setCurrentStatus("resolved");
-      onSuccess();
-    } else {
-      setError(result.error || "상태 변경에 실패했습니다");
+      case "resolved":
+        return (
+          <button
+            onClick={() => handleStatusChange("in_progress")}
+            disabled={isStatusUpdating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {isStatusUpdating ? (
+              <SmallLoadingSpinner size="xs" />
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            )}
+            다시 열기
+          </button>
+        );
+
+      default:
+        return null;
     }
   };
-
-  // 최근 5개 릴리즈
-  const recentReleases = releases.slice(0, 5);
 
   return (
     <div
@@ -200,47 +256,10 @@ export function FeedbackDetailModal({
         <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <FeedbackStatusBadge status={currentStatus} />
-            {currentStatus === "resolved" && feedback.release_version && (
-              <span
-                className="px-2 py-0.5 rounded-full text-xs font-medium"
-                style={{ background: "rgba(99, 102, 241, 0.1)", color: "#4f46e5" }}
-              >
-                {feedback.release_version}
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-2">
-            {/* 진행하기/다시열기 버튼 - admin/leader만, resolved가 아닐 때 */}
-            {isAdminOrLeader && currentStatus !== "resolved" && (
-              <button
-                onClick={handleToggleStatus}
-                disabled={isStatusUpdating}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 disabled:opacity-50 ${
-                  currentStatus === "open"
-                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {isStatusUpdating ? (
-                  <SmallLoadingSpinner size="xs" />
-                ) : currentStatus === "open" ? (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    진행하기
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    다시 열기
-                  </>
-                )}
-              </button>
-            )}
+            {/* 상태 변경 버튼들 */}
+            {renderStatusButtons()}
 
             {/* 닫기 버튼 */}
             <button
@@ -308,56 +327,6 @@ export function FeedbackDetailModal({
                   <span className="text-xs">{createdAt}</span>
                 </div>
               </div>
-
-              {/* Mark as Resolved - In Progress 상태일 때만 */}
-              {isAdminOrLeader && currentStatus === "in_progress" && recentReleases.length > 0 && (
-                <div className="pt-4 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    릴리즈 선택하여 해결 완료
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {recentReleases.map((release) => (
-                      <button
-                        key={release.id}
-                        type="button"
-                        onClick={() => handleResolve(release.id)}
-                        disabled={isStatusUpdating}
-                        className="flex items-center gap-2 p-2.5 rounded-lg text-left text-sm transition-all hover:shadow-md hover:bg-green-50 active:scale-[0.98] disabled:opacity-50 border border-green-200"
-                      >
-                        <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-green-100 shrink-0">
-                          <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                          </svg>
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 truncate">{release.version}</div>
-                          <div className="text-xs text-gray-500 truncate">{release.title}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Resolved 상태일 때 릴리즈 정보 */}
-              {currentStatus === "resolved" && feedback.release_version && (
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50">
-                    <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-green-100">
-                      <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </span>
-                    <div>
-                      <div className="font-medium text-gray-900">{feedback.release_version}</div>
-                      <div className="text-xs text-gray-500">{feedback.release_title || "릴리즈"}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -461,4 +430,3 @@ export function FeedbackDetailModal({
     </div>
   );
 }
-
