@@ -9,11 +9,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FeedbackStatusBadge } from "@/components/feedback/FeedbackStatusBadge";
 import { FeedbackTimeline } from "@/components/feedback/FeedbackTimeline";
-import { ResolvePanel } from "@/components/feedback/ResolvePanel";
 import { EditFeedbackModal } from "./EditFeedbackModal";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { updateFeedbackStatus } from "@/app/actions/feedback";
-import type { FeedbackWithDetails, Release } from "@/lib/data/feedback";
+import type { FeedbackWithDetails, FeedbackStatus, Release } from "@/lib/data/feedback";
 
 interface FeedbackDetailViewProps {
   feedback: FeedbackWithDetails;
@@ -45,9 +44,9 @@ export function FeedbackDetailView({
     router.push("/feedbacks");
   };
 
-  // 상태 토글: Open <-> In Progress
-  const handleToggleStatus = async () => {
-    const newStatus = currentStatus === "open" ? "in_progress" : "open";
+  // Timeline에서 상태 변경
+  const handleStatusChange = async (newStatus: FeedbackStatus) => {
+    if (newStatus === currentStatus) return;
 
     setIsStatusUpdating(true);
     setStatusError(null);
@@ -64,15 +63,30 @@ export function FeedbackDetailView({
     }
   };
 
-  const handleResolved = () => {
-    setCurrentStatus("resolved");
-    router.refresh();
+  // 릴리즈로 Resolve
+  const handleResolve = async (releaseId: string) => {
+    setIsStatusUpdating(true);
+    setStatusError(null);
+
+    const result = await updateFeedbackStatus(feedback.id, "resolved", releaseId);
+
+    setIsStatusUpdating(false);
+
+    if (result.success) {
+      setCurrentStatus("resolved");
+      router.refresh();
+    } else {
+      setStatusError(result.error || "상태 변경에 실패했습니다");
+    }
   };
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     router.refresh();
   };
+
+  // 최근 5개 릴리즈
+  const recentReleases = releases.slice(0, 5);
 
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
@@ -171,7 +185,7 @@ export function FeedbackDetailView({
             </div>
           </div>
 
-          {/* 타임라인 */}
+          {/* 타임라인 - 버튼 형태 */}
           <div
             className="rounded-xl p-6"
             style={{
@@ -181,101 +195,115 @@ export function FeedbackDetailView({
             }}
           >
             <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               Status Timeline
+              {isAdminOrLeader && currentStatus !== "resolved" && (
+                <span className="text-xs font-normal text-gray-400 ml-2">
+                  (클릭하여 상태 변경)
+                </span>
+              )}
             </h3>
-            <FeedbackTimeline currentStatus={currentStatus} />
-          </div>
+            <FeedbackTimeline
+              currentStatus={currentStatus}
+              canChangeStatus={isAdminOrLeader && currentStatus !== "resolved"}
+              onStatusChange={handleStatusChange}
+              isUpdating={isStatusUpdating}
+            />
 
-          {/* 관리 패널 (admin/leader만) */}
-          {isAdminOrLeader && currentStatus !== "resolved" && (
-            <div className="space-y-6">
-              {/* 상태 토글 버튼 */}
+            {statusError && (
               <div
-                className="rounded-xl p-6"
+                className="mt-4 px-4 py-3 rounded-lg text-sm flex items-center gap-2"
                 style={{
-                  background: "white",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  color: "#dc2626",
                 }}
               >
-                <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-                  </svg>
-                  Change Status
-                </h3>
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {statusError}
+              </div>
+            )}
+          </div>
 
-                <button
-                  onClick={handleToggleStatus}
-                  disabled={isStatusUpdating}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-                  style={{
-                    background: currentStatus === "open"
-                      ? "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)"
-                      : "linear-gradient(135deg, rgba(100, 116, 139, 0.1) 0%, rgba(100, 116, 139, 0.05) 100%)",
-                    border: `1px solid ${currentStatus === "open" ? "rgba(59, 130, 246, 0.3)" : "rgba(100, 116, 139, 0.3)"}`,
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
+          {/* Mark as Resolved - 버튼 형태 (In Progress 상태일 때만) */}
+          {isAdminOrLeader && currentStatus === "in_progress" && (
+            <div
+              className="rounded-xl p-6"
+              style={{
+                background: "linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)",
+                border: "1px solid rgba(34, 197, 94, 0.2)",
+              }}
+            >
+              <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Mark as Resolved
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                릴리즈를 선택하면 피드백이 해결 완료 상태로 변경됩니다
+              </p>
+
+              {recentReleases.length === 0 ? (
+                <div className="text-center py-6 text-gray-400">
+                  <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  <p className="text-sm">등록된 릴리즈가 없습니다</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {recentReleases.map((release) => (
+                    <button
+                      key={release.id}
+                      type="button"
+                      onClick={() => handleResolve(release.id)}
+                      disabled={isStatusUpdating}
+                      className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
-                        background: currentStatus === "open"
-                          ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
-                          : "linear-gradient(135deg, #64748b 0%, #475569 100%)",
+                        background: "white",
+                        border: "1px solid rgba(34, 197, 94, 0.3)",
                       }}
                     >
-                      {currentStatus === "open" ? (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <span
+                        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: "rgba(34, 197, 94, 0.1)" }}
+                      >
+                        <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      )}
-                    </span>
-                    <div className="text-left">
-                      <div className="text-gray-900 font-semibold">
-                        {currentStatus === "open" ? "진행 중으로 변경" : "다시 열기"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{release.version}</div>
+                        <div className="text-xs text-gray-500 truncate">{release.title}</div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {currentStatus === "open"
-                          ? "피드백 검토를 시작합니다"
-                          : "피드백을 Open 상태로 되돌립니다"}
-                      </div>
-                    </div>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-                {statusError && (
-                  <div
-                    className="mt-4 px-4 py-3 rounded-lg text-sm flex items-center gap-2"
-                    style={{
-                      background: "rgba(239, 68, 68, 0.1)",
-                      color: "#dc2626",
-                    }}
-                  >
-                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {statusError}
-                  </div>
-                )}
+          {/* Open 상태일 때 안내 */}
+          {isAdminOrLeader && currentStatus === "open" && (
+            <div
+              className="rounded-xl p-4"
+              style={{
+                background: "rgba(100, 116, 139, 0.05)",
+                border: "1px solid rgba(100, 116, 139, 0.15)",
+              }}
+            >
+              <div className="flex items-center gap-3 text-gray-500">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm">
+                  먼저 <strong>In Progress</strong>로 상태를 변경한 후 해결 완료 처리할 수 있습니다
+                </p>
               </div>
-
-              {/* Resolve Panel */}
-              <ResolvePanel
-                feedbackId={feedback.id}
-                releases={releases}
-                onResolved={handleResolved}
-              />
             </div>
           )}
 
@@ -323,4 +351,3 @@ export function FeedbackDetailView({
     </div>
   );
 }
-

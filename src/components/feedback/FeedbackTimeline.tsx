@@ -1,6 +1,6 @@
 /**
  * Feedback Timeline
- * 상태 진행 타임라인 - 모던 스테퍼 UI
+ * 상태 진행 타임라인 - 버튼 형태로 상태 변경 가능
  */
 
 "use client";
@@ -9,112 +9,114 @@ import type { FeedbackStatus } from "@/lib/data/feedback";
 
 interface FeedbackTimelineProps {
   currentStatus: FeedbackStatus;
+  /** 상태 변경 가능 여부 (admin/leader만) */
+  canChangeStatus?: boolean;
+  /** 상태 변경 콜백 */
+  onStatusChange?: (newStatus: FeedbackStatus) => void;
+  /** 상태 변경 중 */
+  isUpdating?: boolean;
 }
 
-const TIMELINE_STEPS: { status: FeedbackStatus; label: string; color: string; icon: React.ReactNode }[] = [
-  {
-    status: "open",
-    label: "Open",
-    color: "#6b7280",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-    ),
-  },
-  {
-    status: "in_progress",
-    label: "In Progress",
-    color: "#3b82f6",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    status: "resolved",
-    label: "Resolved",
-    color: "#22c55e",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
+const TIMELINE_STEPS: { status: FeedbackStatus; label: string }[] = [
+  { status: "open", label: "Open" },
+  { status: "in_progress", label: "In Progress" },
+  { status: "resolved", label: "Resolved" },
 ];
 
-export function FeedbackTimeline({ currentStatus }: FeedbackTimelineProps) {
+export function FeedbackTimeline({
+  currentStatus,
+  canChangeStatus = false,
+  onStatusChange,
+  isUpdating = false,
+}: FeedbackTimelineProps) {
   const currentIndex = TIMELINE_STEPS.findIndex(
     (step) => step.status === currentStatus
   );
 
-  return (
-    <div className="relative">
-      {/* 배경 연결선 */}
-      <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-100" />
+  const handleStepClick = (status: FeedbackStatus, index: number) => {
+    if (!canChangeStatus || !onStatusChange || isUpdating) return;
+    // resolved는 ResolvePanel에서만 변경 가능
+    if (status === "resolved") return;
+    // 이미 현재 상태면 무시
+    if (status === currentStatus) return;
+    onStatusChange(status);
+  };
 
-      {/* 진행된 연결선 */}
+  return (
+    <div className="relative py-4">
+      {/* 배경 연결선 (파란색 단색) */}
       <div
-        className="absolute top-6 left-0 h-0.5 transition-all duration-500"
+        className="absolute top-[calc(50%-4px)] left-0 right-0 h-1 rounded-full"
+        style={{ background: "#e2e8f0" }}
+      />
+
+      {/* 진행된 연결선 (파란색) */}
+      <div
+        className="absolute top-[calc(50%-4px)] left-0 h-1 rounded-full transition-all duration-500"
         style={{
           width: `${(currentIndex / (TIMELINE_STEPS.length - 1)) * 100}%`,
-          background: "linear-gradient(90deg, #6b7280 0%, #3b82f6 50%, #22c55e 100%)",
+          background: "#3b82f6",
         }}
       />
 
       {/* 스텝들 */}
-      <div className="relative flex items-start justify-between">
+      <div className="relative flex items-center justify-between">
         {TIMELINE_STEPS.map((step, index) => {
           const isActive = index === currentIndex;
           const isCompleted = index < currentIndex;
           const isPending = index > currentIndex;
+          const isClickable = canChangeStatus && step.status !== "resolved" && step.status !== currentStatus;
 
           return (
             <div key={step.status} className="flex flex-col items-center" style={{ width: "33.33%" }}>
-              {/* 아이콘 원 */}
-              <div
+              {/* 버튼/원 */}
+              <button
+                type="button"
+                onClick={() => handleStepClick(step.status, index)}
+                disabled={!isClickable || isUpdating}
                 className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                  isActive
-                    ? "shadow-lg scale-110"
-                    : isCompleted
-                    ? "shadow-md"
-                    : "shadow-sm"
-                }`}
+                  isClickable && !isUpdating
+                    ? "cursor-pointer hover:scale-110 hover:shadow-lg"
+                    : step.status === "resolved"
+                    ? "cursor-not-allowed"
+                    : "cursor-default"
+                } ${isActive ? "shadow-lg scale-110" : isCompleted ? "shadow-md" : "shadow-sm"}`}
                 style={{
                   background: isPending
                     ? "#f1f5f9"
-                    : isActive
-                    ? `linear-gradient(135deg, ${step.color} 0%, ${step.color}dd 100%)`
-                    : `${step.color}20`,
-                  border: isPending ? "2px dashed #e2e8f0" : "none",
-                  color: isPending ? "#94a3b8" : isActive ? "white" : step.color,
+                    : isActive || isCompleted
+                    ? "#3b82f6"
+                    : "#f1f5f9",
+                  border: isPending ? "2px dashed #cbd5e1" : "none",
+                  color: isPending ? "#94a3b8" : "white",
                 }}
               >
                 {isCompleted ? (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
+                ) : isActive ? (
+                  <span className="w-3 h-3 rounded-full bg-white animate-pulse" />
                 ) : (
-                  step.icon
+                  <span className="text-sm font-semibold">{index + 1}</span>
                 )}
 
                 {/* 활성 상태 펄스 애니메이션 */}
                 {isActive && (
-                  <span
-                    className="absolute inset-0 rounded-full animate-ping opacity-30"
-                    style={{ background: step.color }}
-                  />
+                  <span className="absolute inset-0 rounded-full animate-ping opacity-30 bg-blue-500" />
                 )}
-              </div>
+              </button>
 
               {/* 라벨 */}
               <div className="mt-3 text-center">
                 <span
                   className={`text-xs font-semibold transition-colors ${
-                    isPending ? "text-gray-400" : ""
+                    isClickable && !isUpdating ? "cursor-pointer hover:text-blue-600" : ""
                   }`}
-                  style={{ color: isPending ? "#94a3b8" : step.color }}
+                  style={{
+                    color: isPending ? "#94a3b8" : "#3b82f6",
+                  }}
+                  onClick={() => handleStepClick(step.status, index)}
                 >
                   {step.label}
                 </span>
@@ -122,12 +124,15 @@ export function FeedbackTimeline({ currentStatus }: FeedbackTimelineProps) {
                   <div
                     className="mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
                     style={{
-                      background: `${step.color}15`,
-                      color: step.color,
+                      background: "rgba(59, 130, 246, 0.1)",
+                      color: "#3b82f6",
                     }}
                   >
                     현재 상태
                   </div>
+                )}
+                {isClickable && !isUpdating && (
+                  <div className="mt-1 text-[10px] text-gray-400">클릭하여 변경</div>
                 )}
               </div>
             </div>

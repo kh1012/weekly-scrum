@@ -11,41 +11,28 @@ import { PlusIcon } from "@/components/common/Icons";
 import { LoadingButton } from "@/components/common/LoadingButton";
 import { FeedbackKanbanCard } from "./FeedbackKanbanCard";
 import { CreateFeedbackModal } from "./CreateFeedbackModal";
-import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
 
-// 칸반 열 설정
+// 칸반 열 설정 - 카드 색상만 구분
 const KANBAN_COLUMNS: {
   status: FeedbackStatus;
   label: string;
   color: string;
-  bgColor: string;
-  borderColor: string;
-  headerBg: string;
 }[] = [
   {
     status: "open",
     label: "Open",
-    color: "#64748b",
-    bgColor: "rgba(100, 116, 139, 0.04)",
-    borderColor: "rgba(100, 116, 139, 0.15)",
-    headerBg: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+    color: "#64748b", // 회색
   },
   {
     status: "in_progress",
     label: "In Progress",
-    color: "#3b82f6",
-    bgColor: "rgba(59, 130, 246, 0.04)",
-    borderColor: "rgba(59, 130, 246, 0.15)",
-    headerBg: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+    color: "#3b82f6", // 파랑
   },
   {
     status: "resolved",
     label: "Resolved",
-    color: "#22c55e",
-    bgColor: "rgba(34, 197, 94, 0.04)",
-    borderColor: "rgba(34, 197, 94, 0.15)",
-    headerBg: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+    color: "#22c55e", // 초록
   },
 ];
 
@@ -128,23 +115,23 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
       </div>
 
       {/* 칸반 보드 영역 - Grid 레이아웃 */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden bg-slate-100/50">
         <div className="h-full grid grid-cols-3 gap-4 p-4 md:p-6">
           {KANBAN_COLUMNS.map((col) => (
             <div
               key={col.status}
               className="flex flex-col rounded-xl overflow-hidden min-w-0"
               style={{
-                background: col.bgColor,
-                border: `1px solid ${col.borderColor}`,
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
               }}
             >
               {/* 열 헤더 */}
               <div
                 className="shrink-0 px-4 py-3 border-b flex items-center justify-between"
                 style={{
-                  background: col.headerBg,
-                  borderColor: col.borderColor,
+                  background: "white",
+                  borderColor: "#e2e8f0",
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -165,8 +152,8 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
                 </span>
               </div>
 
-              {/* 카드 목록 */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              {/* 카드 목록 - 회색 배경 */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
                 {groupedFeedbacks[col.status]?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                     <svg className="w-8 h-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -217,4 +204,3 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
     </div>
   );
 }
-
