@@ -5,8 +5,10 @@
 
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
+import { SmallLoadingSpinner } from "@/components/common/LoadingButton";
 import type { FeedbackWithDetails } from "@/lib/data/feedback";
 
 interface FeedbackKanbanCardProps {
@@ -16,6 +18,7 @@ interface FeedbackKanbanCardProps {
 
 export function FeedbackKanbanCard({ feedback, color }: FeedbackKanbanCardProps) {
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const createdAt = new Date(feedback.created_at).toLocaleDateString("ko-KR", {
     month: "short",
@@ -23,6 +26,7 @@ export function FeedbackKanbanCard({ feedback, color }: FeedbackKanbanCardProps)
   });
 
   const handleClick = () => {
+    setIsNavigating(true);
     navigationProgress.start();
     router.push(`/feedbacks/${feedback.id}`);
   };
@@ -30,7 +34,11 @@ export function FeedbackKanbanCard({ feedback, color }: FeedbackKanbanCardProps)
   return (
     <div
       onClick={handleClick}
-      className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+      className={`group cursor-pointer transition-all duration-200 ${
+        isNavigating 
+          ? "scale-[0.97] opacity-80" 
+          : "hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
+      }`}
     >
       {/* 티켓 카드 */}
       <div
@@ -59,6 +67,13 @@ export function FeedbackKanbanCard({ feedback, color }: FeedbackKanbanCardProps)
 
         {/* 콘텐츠 */}
         <div className="p-4">
+          {/* 로딩 오버레이 */}
+          {isNavigating && (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+              <SmallLoadingSpinner size="md" className="text-gray-500" />
+            </div>
+          )}
+
           {/* 제목 */}
           <h4
             className="text-sm font-semibold mb-2 line-clamp-2 transition-colors"

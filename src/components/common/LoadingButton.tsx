@@ -92,9 +92,9 @@ export function LoadingButton({
         flex items-center justify-center gap-2 rounded-xl font-semibold
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
-        ${!isDisabled && gradient && variant !== "ghost" && variant !== "secondary" ? "hover:shadow-lg hover:-translate-y-0.5" : ""}
-        ${variant === "secondary" && !isDisabled ? "hover:bg-gray-100" : ""}
-        ${variant === "ghost" && !isDisabled ? "hover:bg-gray-100" : ""}
+        ${!isDisabled && gradient && variant !== "ghost" && variant !== "secondary" ? "hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] active:shadow-md" : ""}
+        ${variant === "secondary" && !isDisabled ? "hover:bg-gray-100 active:scale-[0.97]" : ""}
+        ${variant === "ghost" && !isDisabled ? "hover:bg-gray-100 active:scale-[0.97]" : ""}
         ${sizeStyles[size]}
         ${fullWidth ? "w-full" : ""}
         ${className}

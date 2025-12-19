@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { formatWeekRange } from "@/lib/date/isoWeek";
+import { formatWeekRange, formatWeekRangeCompact } from "@/lib/date/isoWeek";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { LoadingButton } from "@/components/common/LoadingButton";
 import {
@@ -230,6 +230,14 @@ function NewSnapshotViewInner({
   const weekRange = formatWeekRange(year, week);
   const selectedSnapshot =
     tempSnapshots.find((s) => s.tempId === selectedId) || null;
+
+  // 주차 정보 (Past Week/This Week 라벨용)
+  const weekInfo = {
+    year,
+    week,
+    pastWeekLabel: `W${week.toString().padStart(2, "0")} (${formatWeekRangeCompact(year, week)})`,
+    thisWeekLabel: `W${(week + 1).toString().padStart(2, "0")} (${formatWeekRangeCompact(year, week + 1)})`,
+  };
 
   // 새로 작성하기 (빈 상태로 시작)
   const handleStartEmpty = () => {
@@ -1035,6 +1043,7 @@ function NewSnapshotViewInner({
               compact
               singleColumn
               hideName
+              weekInfo={weekInfo}
             />
           ) : (
             <EmptyState onAddEmpty={handleAddEmpty} />

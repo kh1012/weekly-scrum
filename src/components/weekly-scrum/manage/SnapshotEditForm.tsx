@@ -48,6 +48,13 @@ interface SnapshotEditFormProps {
   hideName?: boolean;
   /** 외부에서 활성화된 섹션 (미리보기 클릭 등) */
   activeSection?: FormSection | null;
+  /** 주차 정보 (Past Week/This Week 표시용) */
+  weekInfo?: {
+    year: number;
+    week: number;
+    pastWeekLabel: string;  // "W51 (25.12.08 ~ 25.12.12)"
+    thisWeekLabel: string;  // "W52 (25.12.15 ~ 25.12.19)"
+  };
 }
 
 // 공통 입력 스타일 (일반 모드) - 편집 시 애니메이션
@@ -1721,6 +1728,7 @@ export function SnapshotEditForm({
   onFocusSection,
   hideName = false,
   activeSection,
+  weekInfo,
 }: SnapshotEditFormProps) {
   const moduleOptions =
     snapshot.project && MODULE_OPTIONS[snapshot.project]
@@ -1991,8 +1999,13 @@ export function SnapshotEditForm({
           onClick={() => handleFocus("pastWeek")}
         >
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/pastweek:text-gray-600">
-              Past Week
+            <h2 className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/pastweek:text-gray-600">
+              <span>Past Week</span>
+              {weekInfo?.pastWeekLabel && (
+                <span className="font-normal normal-case text-gray-400 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
+                  {weekInfo.pastWeekLabel}
+                </span>
+              )}
             </h2>
 
             {/* This Week → Past Week 가져오기 버튼 */}
@@ -2238,8 +2251,13 @@ export function SnapshotEditForm({
           onClick={() => handleFocus("thisWeek")}
         >
           <div className="mb-3">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/thisweek:text-gray-600">
-              This Week
+            <h2 className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/thisweek:text-gray-600">
+              <span>This Week</span>
+              {weekInfo?.thisWeekLabel && (
+                <span className="font-normal normal-case text-gray-400 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
+                  {weekInfo.thisWeekLabel}
+                </span>
+              )}
             </h2>
           </div>
           <div className="border-b border-gray-100 mb-4" />

@@ -129,6 +129,20 @@ export function formatWeekRangeFull(year: number, week: number): string {
 }
 
 /**
+ * 주차의 기간을 "YY.MM.DD ~ YY.MM.DD" 형식으로 포맷합니다.
+ */
+export function formatWeekRangeCompact(year: number, week: number): string {
+  const { weekStart, weekEnd } = getWeekDateRange(year, week);
+  const formatCompact = (d: Date) => {
+    const yy = d.getFullYear().toString().slice(2);
+    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+    const dd = d.getDate().toString().padStart(2, "0");
+    return `${yy}.${mm}.${dd}`;
+  };
+  return `${formatCompact(weekStart)} ~ ${formatCompact(weekEnd)}`;
+}
+
+/**
  * week_start_date 문자열(YYYY-MM-DD)로 DB 저장용 값을 생성합니다.
  */
 export function getWeekStartDateString(year: number, week: number): string {
