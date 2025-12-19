@@ -63,15 +63,22 @@ export async function tryAcquireLock(
 ): Promise<{ success: boolean; lockState: LockState }> {
   const supabase = createClient();
 
+  console.log("🔒 [tryAcquireLock] 시작", { workspaceId, ttlSeconds });
+
   try {
     // 먼저 사용자 인증 상태 확인
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user) {
-      console.error("[tryAcquireLock] 인증 오류:", userError);
+      console.error("❌ [tryAcquireLock] 인증 오류:", userError);
       return { success: false, lockState: { isLocked: false } };
     }
 
     const currentUserId = userData.user.id;
+    const currentUserEmail = userData.user.email;
+    console.log("✅ [tryAcquireLock] 사용자 인증 완료", { 
+      userId: currentUserId, 
+      email: currentUserEmail 
+    });
 
     // 먼저 현재 락 상태 확인
     const currentState = await getWorkspaceLock(workspaceId);
@@ -92,22 +99,32 @@ export async function tryAcquireLock(
       }
     }
 
+    console.log("📡 [tryAcquireLock] RPC 호출 시작: try_acquire_workspace_lock");
     const { data, error } = await supabase.rpc("try_acquire_workspace_lock", {
       p_workspace_id: workspaceId,
       p_ttl_seconds: ttlSeconds,
     });
 
     if (error) {
-      console.error("[tryAcquireLock] RPC error:", error);
+      console.error("❌ [tryAcquireLock] RPC error:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
       return { success: false, lockState: currentState };
     }
 
     // RPC가 배열로 반환하는 경우 처리
     const result = Array.isArray(data) ? data[0] : data;
-    console.log("[tryAcquireLock] RPC 결과:", result);
+    console.log("📦 [tryAcquireLock] RPC 결과:", JSON.stringify(result, null, 2));
 
     // RPC는 ok: true/false를 반환함
     if (result?.ok) {
+      console.log("✅ [tryAcquireLock] 락 획득 성공!", {
+        holder: result.holder_display_name,
+        expiresAt: result.expires_at,
+      });
       return {
         success: true,
         lockState: {
@@ -121,10 +138,10 @@ export async function tryAcquireLock(
     }
 
     // 락 획득 실패 - 현재 상태 반환
-    console.warn("[tryAcquireLock] 락 획득 실패, 현재 홀더:", currentState.lockedByName);
+    console.warn("⚠️ [tryAcquireLock] 락 획득 실패, 현재 홀더:", currentState.lockedByName);
     return { success: false, lockState: currentState };
   } catch (err) {
-    console.error("[tryAcquireLock] Error:", err);
+    console.error("❌ [tryAcquireLock] 예외 발생:", err);
     return { success: false, lockState: { isLocked: false } };
   }
 }
