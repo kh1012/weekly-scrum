@@ -18,6 +18,22 @@ export default async function FeedbacksPage() {
   const userRole = roleResult.role || "member";
   const isAdminOrLeader = ["admin", "leader"].includes(userRole);
 
+  if (!feedbacksResult.success && feedbacksResult.error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div
+          className="rounded-xl p-6 max-w-md"
+          style={{
+            background: "white",
+            border: "1px solid rgba(239, 68, 68, 0.2)",
+          }}
+        >
+          <p className="text-red-600 text-sm">{feedbacksResult.error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}

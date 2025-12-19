@@ -15,22 +15,38 @@ import type {
 } from "@/lib/data/feedback";
 
 /**
- * 현재 사용자 권한 조회
+ * 현재 사용자 권한 및 workspace_id 조회
  */
-async function getUserRole(): Promise<string | null> {
+async function getUserInfo(): Promise<{
+  userId: string | null;
+  role: string | null;
+  workspaceId: string | null;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return { userId: null, role: null, workspaceId: null };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
+  const { data: member } = await supabase
+    .from("workspace_members")
+    .select("workspace_id, role")
+    .eq("user_id", user.id)
     .single();
 
-  return profile?.role || null;
+  return {
+    userId: user.id,
+    role: member?.role || null,
+    workspaceId: member?.workspace_id || null,
+  };
+}
+
+/**
+ * 현재 사용자 권한 조회
+ */
+async function getUserRole(): Promise<string | null> {
+  const info = await getUserInfo();
+  return info.role;
 }
 
 /**
@@ -43,7 +59,11 @@ export async function listFeedbacks(): Promise<{
 }> {
   try {
     const supabase = await createClient();
-    const role = await getUserRole();
+    const userInfo = await getUserInfo();
+
+    if (!userInfo.workspaceId) {
+      return { success: false, error: "워크스페이스 정보가 없습니다." };
+    }
 
     // feedbacks + profiles + releases 조인
     const { data, error } = await supabase
@@ -55,6 +75,7 @@ export async function listFeedbacks(): Promise<{
         release:releases(version, title)
       `
       )
+      .eq("workspace_id", userInfo.workspaceId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -64,6 +85,7 @@ export async function listFeedbacks(): Promise<{
 
     const feedbacks: FeedbackWithDetails[] = (data || []).map((item: any) => ({
       id: item.id,
+      workspace_id: item.workspace_id,
       author_user_id: item.author_user_id,
       title: item.title,
       content: item.content,
@@ -117,6 +139,7 @@ export async function getFeedback(
 
     const feedback: FeedbackWithDetails = {
       id: data.id,
+      workspace_id: data.workspace_id,
       author_user_id: data.author_user_id,
       title: data.title,
       content: data.content,
@@ -151,18 +174,21 @@ export async function createFeedback(data: {
 }> {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const userInfo = await getUserInfo();
 
-    if (!user) {
+    if (!userInfo.userId) {
       return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    if (!userInfo.workspaceId) {
+      return { success: false, error: "워크스페이스 정보가 없습니다." };
     }
 
     const { data: feedback, error } = await supabase
       .from("feedbacks")
       .insert({
-        author_user_id: user.id,
+        workspace_id: userInfo.workspaceId,
+        author_user_id: userInfo.userId,
         title: data.title || null,
         content: data.content,
       })

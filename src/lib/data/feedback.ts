@@ -15,6 +15,7 @@ export interface Release {
 
 export interface Feedback {
   id: string;
+  workspace_id: string;
   author_user_id: string;
   title?: string | null;
   content: string;
