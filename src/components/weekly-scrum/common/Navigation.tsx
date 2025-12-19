@@ -109,6 +109,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/feedbacks",
         emoji: "💬",
         icon: Icons.comments,
+        isNew: true,
       },
     ],
   },

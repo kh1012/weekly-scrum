@@ -1,11 +1,11 @@
 /**
  * Resolve Panel
- * leader/admin 전용 해결 패널 - 커스텀 드롭다운 UI
+ * leader/admin 전용 해결 패널 - 커스텀 드롭다운 UI (viewport 기반 방향)
  */
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { updateFeedbackStatus } from "@/app/actions/feedback";
 import type { Release } from "@/lib/data/feedback";
 
@@ -24,7 +24,33 @@ export function ResolvePanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownDirection, setDropdownDirection] = useState<"up" | "down">("down");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // viewport 기반 드롭다운 방향 계산
+  const calculateDirection = useCallback(() => {
+    if (!buttonRef.current) return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const dropdownHeight = Math.min(releases.length * 60 + 60, 300); // 예상 드롭다운 높이
+
+    if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+      setDropdownDirection("up");
+    } else {
+      setDropdownDirection("down");
+    }
+  }, [releases.length]);
+
+  // 드롭다운 열릴 때 방향 계산
+  useEffect(() => {
+    if (isDropdownOpen) {
+      calculateDirection();
+    }
+  }, [isDropdownOpen, calculateDirection]);
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -90,6 +116,7 @@ export function ResolvePanel({
 
           <div className="relative" ref={dropdownRef}>
             <button
+              ref={buttonRef}
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               disabled={isSubmitting}
@@ -123,12 +150,12 @@ export function ResolvePanel({
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>
                     </span>
-                    <span>Select a release</span>
+                    <span>릴리즈 선택</span>
                   </>
                 )}
               </div>
               <svg
-                className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+                className={`w-5 h-5 transition-transform ${isDropdownOpen ? (dropdownDirection === "up" ? "" : "rotate-180") : ""}`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -141,7 +168,9 @@ export function ResolvePanel({
             {/* 드롭다운 목록 */}
             {isDropdownOpen && (
               <div
-                className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50 max-h-60 overflow-y-auto"
+                className={`absolute left-0 right-0 rounded-xl overflow-hidden z-50 max-h-60 overflow-y-auto ${
+                  dropdownDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
+                }`}
                 style={{
                   background: "white",
                   border: "1px solid rgba(0, 0, 0, 0.1)",

@@ -42,7 +42,6 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/manage/snapshots/",
   "/plans/gantt",
   "/admin/plans/gantt",
-  "/feedbacks",
 ];
 
 // localStorage 키

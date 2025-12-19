@@ -209,41 +209,6 @@ export async function createFeedback(data: {
 }
 
 /**
- * 피드백 수정 (본인 또는 admin/leader)
- */
-export async function updateFeedback(
-  id: string,
-  data: {
-    title?: string;
-    content?: string;
-  }
-): Promise<{
-  success: boolean;
-  error?: string;
-}> {
-  try {
-    const supabase = await createClient();
-
-    const { error } = await supabase
-      .from("feedbacks")
-      .update(data)
-      .eq("id", id);
-
-    if (error) {
-      console.error("[updateFeedback] Error:", error);
-      return { success: false, error: "피드백 수정 실패" };
-    }
-
-    revalidatePath("/feedbacks");
-    revalidatePath(`/feedbacks/${id}`);
-    return { success: true };
-  } catch (err) {
-    console.error("[updateFeedback] Unexpected error:", err);
-    return { success: false, error: "알 수 없는 오류가 발생했습니다." };
-  }
-}
-
-/**
  * 피드백 삭제 (본인 또는 admin/leader)
  */
 export async function deleteFeedback(id: string): Promise<{
@@ -264,6 +229,62 @@ export async function deleteFeedback(id: string): Promise<{
     return { success: true };
   } catch (err) {
     console.error("[deleteFeedback] Unexpected error:", err);
+    return { success: false, error: "알 수 없는 오류가 발생했습니다." };
+  }
+}
+
+/**
+ * 피드백 수정 (본인만)
+ */
+export async function updateFeedback(
+  id: string,
+  data: { title?: string; content: string }
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const userInfo = await getUserInfo();
+    if (!userInfo.userId) {
+      return { success: false, error: "로그인이 필요합니다." };
+    }
+
+    const supabase = await createClient();
+
+    // 본인 피드백인지 확인
+    const { data: feedback } = await supabase
+      .from("feedbacks")
+      .select("author_user_id")
+      .eq("id", id)
+      .single();
+
+    if (!feedback) {
+      return { success: false, error: "피드백을 찾을 수 없습니다." };
+    }
+
+    if (feedback.author_user_id !== userInfo.userId) {
+      return { success: false, error: "본인의 피드백만 수정할 수 있습니다." };
+    }
+
+    const { error } = await supabase
+      .from("feedbacks")
+      .update({
+        title: data.title || null,
+        content: data.content,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      console.error("[updateFeedback] Error:", error);
+      return { success: false, error: error.message || "피드백 수정 실패" };
+    }
+
+    revalidatePath("/feedbacks");
+    revalidatePath(`/feedbacks/${id}`);
+    return { success: true };
+  } catch (err) {
+    console.error("[updateFeedback] Unexpected error:", err);
     return { success: false, error: "알 수 없는 오류가 발생했습니다." };
   }
 }

@@ -46,9 +46,11 @@ export function Header({
     pathname === "/plans/" ||
     pathname.startsWith("/admin/plans") ||
     pathname.startsWith("/plans/gantt");
-  // Feedbacks 페이지인지 확인
+  // Feedbacks 페이지인지 확인 (상세 페이지 포함)
   const isFeedbacksPage =
-    pathname === "/feedbacks" || pathname === "/feedbacks/";
+    pathname === "/feedbacks" ||
+    pathname === "/feedbacks/" ||
+    pathname.startsWith("/feedbacks/");
   // 최소 GNB 모드 (사이드바 토글 + 프로필만 표시)
   const isMinimalGnb =
     isMyDashboard ||
