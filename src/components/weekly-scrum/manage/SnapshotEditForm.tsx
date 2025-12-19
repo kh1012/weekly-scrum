@@ -55,6 +55,8 @@ interface SnapshotEditFormProps {
     pastWeekLabel: string; // "W51 (25.12.08 ~ 25.12.12)"
     thisWeekLabel: string; // "W52 (25.12.15 ~ 25.12.19)"
   };
+  /** 협업자 이름 옵션 (profiles 테이블에서 동적으로 로드) */
+  nameOptions?: string[];
 }
 
 // 공통 입력 스타일 (일반 모드) - 편집 시 애니메이션
@@ -1005,11 +1007,13 @@ function CollaboratorEditor({
   onChange,
   baseTabIndex,
   compact,
+  nameOptions = NAME_OPTIONS as unknown as string[],
 }: {
   collaborators: Collaborator[];
   onChange: (collaborators: Collaborator[]) => void;
   baseTabIndex: number;
   compact?: boolean;
+  nameOptions?: string[];
 }) {
   const [customModes, setCustomModes] = useState<Record<number, boolean>>({});
   const [multiModes, setMultiModes] = useState<Record<number, boolean>>({});
@@ -1179,7 +1183,7 @@ function CollaboratorEditor({
   };
 
   // 이미 추가된 협업자는 제외
-  const availableNames = NAME_OPTIONS.filter(
+  const availableNames = nameOptions.filter(
     (name) => !collaborators.some((c) => c.name === name)
   );
 
@@ -1247,13 +1251,13 @@ function CollaboratorEditor({
 
   const isCustomMode = (index: number, name: string) => {
     if (customModes[index] !== undefined) return customModes[index];
-    return name !== "" && !NAME_OPTIONS.includes(name as never);
+    return name !== "" && !nameOptions.includes(name);
   };
 
   // 해당 index 협업자에게 사용 가능한 이름 목록 (자신 제외, 다른 협업자가 사용 중인 이름 제외)
   const getAvailableNamesForIndex = (index: number) => {
     const currentName = collaborators[index]?.name;
-    return NAME_OPTIONS.filter(
+    return nameOptions.filter(
       (name) =>
         name === currentName ||
         !collaborators.some((c, i) => i !== index && c.name === name)
@@ -1729,6 +1733,7 @@ export function SnapshotEditForm({
   hideName = false,
   activeSection,
   weekInfo,
+  nameOptions = NAME_OPTIONS as unknown as string[],
 }: SnapshotEditFormProps) {
   const moduleOptions =
     snapshot.project && MODULE_OPTIONS[snapshot.project]
@@ -1945,7 +1950,7 @@ export function SnapshotEditForm({
               <MetaField
                 label="Name"
                 value={snapshot.name}
-                options={NAME_OPTIONS}
+                options={nameOptions}
                 onChange={(v) => handleMetaChange("name", v)}
                 placeholder="작성자 이름"
                 tabIndex={1}
@@ -2237,6 +2242,7 @@ export function SnapshotEditForm({
                 }
                 baseTabIndex={70}
                 compact={compact}
+                nameOptions={nameOptions}
               />
             </div>
           </div>

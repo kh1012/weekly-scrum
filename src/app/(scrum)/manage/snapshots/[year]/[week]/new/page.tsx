@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
+import { getMemberNames } from "@/lib/data/profiles";
 import { NewSnapshotView } from "./_components/NewSnapshotView";
 
 const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
@@ -37,6 +38,9 @@ export default async function NewSnapshotPage({ params }: NewPageProps) {
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "사용자";
 
+  // 워크스페이스 멤버 이름 목록 조회
+  const memberNames = await getMemberNames();
+
   return (
     <NewSnapshotView 
       year={year} 
@@ -44,6 +48,7 @@ export default async function NewSnapshotPage({ params }: NewPageProps) {
       userId={user.id}
       workspaceId={DEFAULT_WORKSPACE_ID}
       displayName={displayName}
+      memberNames={memberNames}
     />
   );
 }

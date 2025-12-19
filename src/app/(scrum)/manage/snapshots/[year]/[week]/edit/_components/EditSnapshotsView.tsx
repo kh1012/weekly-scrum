@@ -72,6 +72,7 @@ interface EditSnapshotsViewProps {
   userId: string;
   workspaceId: string;
   displayName: string;
+  memberNames?: string[];
 }
 
 // 좌측 패널 크기 제한
@@ -143,6 +144,7 @@ function EditSnapshotsViewInner({
   userId,
   workspaceId,
   displayName,
+  memberNames,
 }: EditSnapshotsViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -843,6 +845,7 @@ function EditSnapshotsViewInner({
                     singleColumn
                     hideName
                     weekInfo={weekInfo}
+                    nameOptions={memberNames}
                   />
                 ) : (
                   <EmptyState onAddEmpty={handleAddEmpty} />
@@ -902,6 +905,7 @@ function EditSnapshotsViewInner({
                 singleColumn
                 hideName
                 weekInfo={weekInfo}
+                nameOptions={memberNames}
               />
             ) : (
               <EmptyState onAddEmpty={handleAddEmpty} />
