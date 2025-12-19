@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS feedbacks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   author_user_id UUID NOT NULL
-    REFERENCES auth.users(id) ON DELETE CASCADE,
+    REFERENCES profiles(user_id) ON DELETE CASCADE,
   
   title TEXT,
   content TEXT NOT NULL,

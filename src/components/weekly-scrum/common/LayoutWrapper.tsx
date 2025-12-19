@@ -31,6 +31,7 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = [
   "/manage/snapshots/",
   "/admin/",
   "/plans/gantt",
+  "/feedbacks",
 ];
 
 // padding 없는 페이지 경로
@@ -41,6 +42,7 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/manage/snapshots/",
   "/plans/gantt",
   "/admin/plans/gantt",
+  "/feedbacks",
 ];
 
 // localStorage 키
