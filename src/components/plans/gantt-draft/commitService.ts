@@ -156,6 +156,8 @@ export async function commitFeaturePlans(
               status: plan.status,
               start_date: plan.start_date,
               end_date: plan.end_date,
+              description: plan.description || null,
+              links: plan.links || [],
               order_index: plan.order_index ?? 0,
               updated_by: user.id,
               updated_at: new Date().toISOString(),
@@ -227,6 +229,8 @@ export async function commitFeaturePlans(
               status: plan.status,
               start_date: plan.start_date,
               end_date: plan.end_date,
+              description: plan.description || null,
+              links: plan.links || [],
               order_index: plan.order_index ?? 0,
               created_by: user.id,
               updated_by: user.id,
@@ -324,6 +328,8 @@ export async function fetchFeaturePlans(
     startDate: string;
     endDate: string;
     domain?: string;
+    description?: string;
+    links?: { url: string; label?: string }[];
     orderIndex: number; // 트리 순서
     assignees?: FetchedAssignee[];
   }>;
@@ -413,6 +419,8 @@ export async function fetchFeaturePlans(
       startDate: row.start_date,
       endDate: row.end_date,
       domain: row.domain,
+      description: row.description || undefined,
+      links: row.links || undefined,
       orderIndex: row.order_index ?? 0, // 순서 인덱스 추가
       assignees: assigneesMap.get(row.id) || [],
     }));

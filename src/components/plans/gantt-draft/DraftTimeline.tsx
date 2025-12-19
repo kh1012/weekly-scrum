@@ -28,12 +28,14 @@ import type {
   DraftBar as DraftBarType,
   PlanStatus,
   DraftAssignee,
+  PlanLink,
   DraftFlag,
 } from "./types";
 import { FlagLane, FLAG_LANE_HEIGHT } from "./FlagLane";
 import { packFlagsIntoLanes } from "./flagLayout";
 import { CreateFlagModal } from "./CreateFlagModal";
 import { EditFlagModal } from "./EditFlagModal";
+import { PlanViewPopover } from "./PlanViewPopover";
 
 const DAY_WIDTH = 40;
 const HEADER_HEIGHT = 76; // 38px + 38px (월 + 일, TreePanel 헤더와 동일)
@@ -43,6 +45,7 @@ interface DraftTimelineProps {
   rangeEnd: Date;
   isEditing: boolean;
   isAdmin?: boolean;
+  readOnly?: boolean;
   members?: WorkspaceMemberOption[];
   workspaceId?: string;
   /** 드래그 중 기간 정보 콜백 (FloatingDock 표시용) */
@@ -67,6 +70,7 @@ export function DraftTimeline({
   rangeEnd,
   isEditing,
   isAdmin = false,
+  readOnly = false,
   members = [],
   workspaceId = "",
   onDragDateChange,
@@ -106,6 +110,12 @@ export function DraftTimeline({
   const [showCreateModal, setShowCreateModal] =
     useState<DragCreateState | null>(null);
   const [showEditModal, setShowEditModal] = useState<DraftBarType | null>(null);
+  
+  // readOnly 모드에서 Plan 보기 팝오버 상태
+  const [viewPopover, setViewPopover] = useState<{
+    bar: DraftBarType;
+    position: { x: number; y: number };
+  } | null>(null);
 
   const allRows = useDraftStore((s) => s.rows);
   const allBars = useDraftStore((s) => s.bars);
@@ -509,6 +519,8 @@ export function DraftTimeline({
       stage: string;
       status: PlanStatus;
       assignees: DraftAssignee[];
+      description?: string;
+      links?: PlanLink[];
     }) => {
       if (!showCreateModal) return;
 
@@ -520,6 +532,8 @@ export function DraftTimeline({
         startDate: formatDate(showCreateModal.startDate),
         endDate: formatDate(showCreateModal.endDate),
         assignees: data.assignees,
+        description: data.description,
+        links: data.links,
       });
 
       setShowCreateModal(null);
@@ -1070,7 +1084,22 @@ export function DraftTimeline({
                       isSelected={bar.clientUid === selectedBarId}
                       isEditing={isEditing}
                       onSelect={() => selectBar(bar.clientUid)}
-                      onDoubleClick={() => setShowEditModal(bar)}
+                      onDoubleClick={(e?: React.MouseEvent) => {
+                        if (readOnly) {
+                          // readOnly 모드: 팝오버 표시
+                          const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect();
+                          setViewPopover({
+                            bar,
+                            position: {
+                              x: rect ? rect.left + rect.width / 2 : e?.clientX || 0,
+                              y: rect ? rect.bottom + 8 : (e?.clientY || 0) + 8,
+                            },
+                          });
+                        } else {
+                          // 편집 모드: EditPlanModal 표시
+                          setShowEditModal(bar);
+                        }
+                      }}
                       dayWidth={DAY_WIDTH}
                       rangeStart={rangeStart}
                       onDragDateChange={onDragDateChange}
@@ -1145,6 +1174,8 @@ export function DraftTimeline({
               stage: data.stage,
               status: data.status,
               assignees: data.assignees,
+              description: data.description,
+              links: data.links,
             });
             setShowEditModal(null);
           }}
@@ -1170,6 +1201,15 @@ export function DraftTimeline({
         onClose={() => setEditingFlag(null)}
         flag={editingFlag}
       />
+
+      {/* readOnly 모드: Plan 보기 팝오버 */}
+      {viewPopover && (
+        <PlanViewPopover
+          bar={viewPopover.bar}
+          anchorPosition={viewPopover.position}
+          onClose={() => setViewPopover(null)}
+        />
+      )}
     </div>
   );
 }

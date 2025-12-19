@@ -80,6 +80,14 @@ export interface DraftAssignee {
 }
 
 /**
+ * 링크 정보
+ */
+export interface PlanLink {
+  url: string;
+  label?: string;
+}
+
+/**
  * Draft Row (좌측 트리 행)
  * - rowId = `${project}::${module}::${feature}` 형식
  */
@@ -111,6 +119,10 @@ export interface DraftBar {
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   assignees: DraftAssignee[];
+  /** 상세 설명 (선택사항) */
+  description?: string;
+  /** 관련 링크 목록 (선택사항) */
+  links?: PlanLink[];
   /** 변경됨 플래그 */
   dirty: boolean;
   /** 삭제됨 플래그 (undo 위해 유지) */
@@ -210,6 +222,10 @@ export interface CommitPayload {
     start_date: string;
     end_date: string;
     assignees: DraftAssignee[];
+    /** 상세 설명 (선택사항) */
+    description?: string;
+    /** 관련 링크 목록 (선택사항) */
+    links?: PlanLink[];
     deleted: boolean;
     order_index: number; // 트리 순서 (row orderIndex 기반)
   }>;

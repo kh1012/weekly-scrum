@@ -71,7 +71,7 @@ interface DraftBarProps {
   isSelected: boolean;
   isEditing: boolean;
   onSelect: () => void;
-  onDoubleClick?: () => void;
+  onDoubleClick?: (e?: React.MouseEvent) => void;
   dayWidth: number;
   rangeStart: Date;
   /** 드래그 중 기간 정보 콜백 */
@@ -265,15 +265,16 @@ export const DraftBar = memo(function DraftBar({
     [onSelect]
   );
 
-  // 더블클릭 핸들링 (수정 모달 열기)
+  // 더블클릭 핸들링 (수정 모달/팝오버 열기)
   const handleDoubleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (isEditing && onDoubleClick) {
-        onDoubleClick();
+      if (onDoubleClick) {
+        // isEditing 여부와 관계없이 항상 호출 (readOnly 모드에서도 팝오버 표시)
+        onDoubleClick(e);
       }
     },
-    [isEditing, onDoubleClick]
+    [onDoubleClick]
   );
 
   // 키보드 핸들링 (Delete)

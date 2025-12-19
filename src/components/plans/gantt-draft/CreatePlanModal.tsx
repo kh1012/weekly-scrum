@@ -7,8 +7,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { XIcon, CalendarIcon, UserIcon } from "@/components/common/Icons";
-import type { PlanStatus, DraftAssignee } from "./types";
+import { XIcon, CalendarIcon, UserIcon, LinkIcon, PlusIcon } from "@/components/common/Icons";
+import type { PlanStatus, DraftAssignee, PlanLink } from "./types";
 import type { AssigneeRole } from "@/lib/data/plans";
 
 const STAGES = [
@@ -44,6 +44,8 @@ interface CreatePlanModalProps {
     stage: string;
     status: PlanStatus;
     assignees: DraftAssignee[];
+    description?: string;
+    links?: PlanLink[];
   }) => void;
   defaultValues?: {
     project: string;
@@ -67,6 +69,10 @@ export function CreatePlanModal({
   const [status, setStatus] = useState<PlanStatus>("진행중");
   const [selectedAssignee, setSelectedAssignee] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<AssigneeRole>("planner");
+  const [description, setDescription] = useState("");
+  const [links, setLinks] = useState<PlanLink[]>([]);
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [newLinkLabel, setNewLinkLabel] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -77,9 +83,26 @@ export function CreatePlanModal({
       setStatus("진행중");
       setSelectedAssignee("");
       setSelectedRole("planner");
+      setDescription("");
+      setLinks([]);
+      setNewLinkUrl("");
+      setNewLinkLabel("");
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  // 링크 추가
+  const handleAddLink = () => {
+    if (!newLinkUrl.trim()) return;
+    setLinks([...links, { url: newLinkUrl.trim(), label: newLinkLabel.trim() || undefined }]);
+    setNewLinkUrl("");
+    setNewLinkLabel("");
+  };
+
+  // 링크 삭제
+  const handleRemoveLink = (index: number) => {
+    setLinks(links.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +124,8 @@ export function CreatePlanModal({
       stage,
       status,
       assignees,
+      description: description.trim() || undefined,
+      links: links.length > 0 ? links : undefined,
     });
   };
 
@@ -342,6 +367,158 @@ export function CreatePlanModal({
                 </span>
               </div>
             )}
+          </div>
+
+          {/* 구분선 */}
+          <div 
+            className="border-t pt-5"
+            style={{ borderColor: "rgba(0,0,0,0.06)" }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                선택사항
+              </span>
+              <span className="flex-1 h-px bg-gray-100" />
+            </div>
+
+            {/* 설명 */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                설명
+                <span className="ml-1.5 text-xs font-normal text-gray-400">(선택)</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="이 계획에 대한 상세 설명을 입력하세요..."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none resize-none"
+                style={{
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  color: "#1e293b",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#3b82f6";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e2e8f0";
+                  e.target.style.boxShadow = "none";
+                }}
+              />
+            </div>
+
+            {/* 링크 */}
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
+                <LinkIcon className="w-4 h-4" />
+                관련 링크
+                <span className="text-xs font-normal text-gray-400">(선택)</span>
+              </label>
+
+              {/* 기존 링크 목록 */}
+              {links.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {links.map((link, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 p-2.5 rounded-lg group"
+                      style={{ background: "#f8fafc" }}
+                    >
+                      <LinkIcon className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline truncate block"
+                        >
+                          {link.label || link.url}
+                        </a>
+                        {link.label && (
+                          <span className="text-xs text-gray-400 truncate block">
+                            {link.url}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLink(index)}
+                        className="p-1 rounded hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <XIcon className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 새 링크 추가 */}
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  value={newLinkUrl}
+                  onChange={(e) => setNewLinkUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm transition-all duration-150 outline-none"
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    color: "#1e293b",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#3b82f6";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e2e8f0";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newLinkLabel}
+                    onChange={(e) => setNewLinkLabel(e.target.value)}
+                    placeholder="링크 설명 (선택)"
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm transition-all duration-150 outline-none"
+                    style={{
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      color: "#1e293b",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "#3b82f6";
+                      e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "#e2e8f0";
+                      e.target.style.boxShadow = "none";
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddLink();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddLink}
+                    disabled={!newLinkUrl.trim()}
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    style={{
+                      background: newLinkUrl.trim() ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "#e5e7eb",
+                      color: newLinkUrl.trim() ? "white" : "#9ca3af",
+                    }}
+                  >
+                    <PlusIcon className="w-4 h-4" />
+                    추가
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 버튼 */}

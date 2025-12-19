@@ -41,6 +41,8 @@ interface InitialPlan {
   startDate: string;
   endDate: string;
   domain?: string;
+  description?: string;
+  links?: { url: string; label?: string }[];
   orderIndex?: number; // 트리 순서
   assignees?: InitialAssignee[];
 }
@@ -211,6 +213,8 @@ export function DraftGanttView({
           role: a.role as "planner" | "designer" | "fe" | "be" | "qa",
           displayName: a.displayName,
         })),
+        description: plan.description,
+        links: plan.links,
         dirty: false,
         deleted: false,
         createdAtLocal: new Date().toISOString(),
@@ -413,6 +417,8 @@ export function DraftGanttView({
               start_date: bar.startDate,
               end_date: bar.endDate,
               assignees: bar.assignees,
+              description: bar.description,
+              links: bar.links,
               deleted: bar.deleted || false,
               order_index: row?.orderIndex ?? 0, // 트리 순서 저장
             };
@@ -776,6 +782,7 @@ export function DraftGanttView({
           rangeEnd={rangeEnd}
           isEditing={isEditing}
           isAdmin={true}
+          readOnly={readOnly}
           members={members}
           workspaceId={workspaceId}
           onDragDateChange={setDragDateInfo}
