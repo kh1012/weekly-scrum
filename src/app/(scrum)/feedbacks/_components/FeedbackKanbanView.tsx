@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PlusIcon } from "@/components/common/Icons";
 import { LoadingButton } from "@/components/common/LoadingButton";
@@ -50,6 +50,7 @@ export function FeedbackKanbanView({
   currentUserId,
 }: FeedbackKanbanViewProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackWithDetails | null>(null);
   const [updatingFeedbackId, setUpdatingFeedbackId] = useState<string | null>(null);
@@ -64,22 +65,36 @@ export function FeedbackKanbanView({
 
   const handleFeedbackCreated = () => {
     setIsCreateModalOpen(false);
-    router.refresh();
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   const handleDetailSuccess = () => {
-    router.refresh();
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
-  // 카드에서 상태 변경
+  // 카드에서 상태 변경 - API 호출 후 UI 반영까지 로딩 유지
   const handleCardStatusChange = async (feedbackId: string, newStatus: FeedbackStatus) => {
     setUpdatingFeedbackId(feedbackId);
     
     await updateFeedbackStatus(feedbackId, newStatus);
     
-    setUpdatingFeedbackId(null);
-    router.refresh();
+    // startTransition으로 감싸서 UI 반영 완료까지 대기
+    startTransition(() => {
+      router.refresh();
+      // isPending이 false가 되면 updatingFeedbackId 초기화
+    });
   };
+
+  // isPending이 false로 바뀌면 로딩 상태 해제
+  useEffect(() => {
+    if (!isPending && updatingFeedbackId) {
+      setUpdatingFeedbackId(null);
+    }
+  }, [isPending, updatingFeedbackId]);
 
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">

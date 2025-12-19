@@ -8,7 +8,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FeedbackStatusBadge } from "@/components/feedback/FeedbackStatusBadge";
-import { SmallLoadingSpinner } from "@/components/common/LoadingButton";
+import { LoadingButton, SmallLoadingSpinner } from "@/components/common/LoadingButton";
 import {
   updateFeedback,
   deleteFeedback,
@@ -165,72 +165,72 @@ export function FeedbackDetailModal({
     switch (currentStatus) {
       case "open":
         return (
-          <button
+          <LoadingButton
             onClick={() => handleStatusChange("in_progress")}
-            disabled={isStatusUpdating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all active:scale-95 disabled:opacity-50"
-          >
-            {isStatusUpdating ? (
-              <SmallLoadingSpinner size="xs" />
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            isLoading={isStatusUpdating}
+            variant="primary"
+            size="sm"
+            icon={
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               </svg>
-            )}
+            }
+            className="!rounded-lg"
+          >
             진행하기
-          </button>
+          </LoadingButton>
         );
 
       case "in_progress":
         return (
           <div className="flex items-center gap-2">
-            <button
+            <LoadingButton
               onClick={() => handleStatusChange("open")}
-              disabled={isStatusUpdating}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all active:scale-95 disabled:opacity-50"
-            >
-              {isStatusUpdating ? (
-                <SmallLoadingSpinner size="xs" />
-              ) : (
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              isLoading={isStatusUpdating}
+              variant="secondary"
+              size="sm"
+              icon={
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-              )}
-              열기
-            </button>
-            <button
-              onClick={() => handleStatusChange("resolved")}
-              disabled={isStatusUpdating}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-600 hover:bg-green-100 transition-all active:scale-95 disabled:opacity-50"
+              }
+              className="!rounded-lg"
             >
-              {isStatusUpdating ? (
-                <SmallLoadingSpinner size="xs" />
-              ) : (
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              열기
+            </LoadingButton>
+            <LoadingButton
+              onClick={() => handleStatusChange("resolved")}
+              isLoading={isStatusUpdating}
+              variant="success"
+              size="sm"
+              icon={
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-              )}
+              }
+              className="!rounded-lg"
+            >
               완료
-            </button>
+            </LoadingButton>
           </div>
         );
 
       case "resolved":
         return (
-          <button
+          <LoadingButton
             onClick={() => handleStatusChange("in_progress")}
-            disabled={isStatusUpdating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all active:scale-95 disabled:opacity-50"
-          >
-            {isStatusUpdating ? (
-              <SmallLoadingSpinner size="xs" />
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            isLoading={isStatusUpdating}
+            variant="secondary"
+            size="sm"
+            icon={
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-            )}
+            }
+            className="!rounded-lg"
+          >
             다시 열기
-          </button>
+          </LoadingButton>
         );
 
       default:

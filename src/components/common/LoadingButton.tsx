@@ -15,7 +15,7 @@ interface LoadingButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** 버튼 variant */
   variant?: "primary" | "success" | "danger" | "secondary" | "ghost";
   /** 버튼 크기 */
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   /** 아이콘 (왼쪽) */
   icon?: React.ReactNode;
   /** 아이콘 (오른쪽) */
@@ -60,6 +60,7 @@ const variantStyles = {
 };
 
 const sizeStyles = {
+  xs: "px-2 py-1 text-[10px]",
   sm: "px-3 py-1.5 text-xs",
   md: "px-5 py-2.5 text-sm",
   lg: "px-6 py-3 text-base",
@@ -106,7 +107,7 @@ export function LoadingButton({
     >
       {/* 로딩 스피너 또는 아이콘 */}
       {isLoading ? (
-        <LoadingIcon className={`${size === "sm" ? "w-3 h-3" : size === "lg" ? "w-5 h-5" : "w-4 h-4"} animate-spin`} />
+        <LoadingIcon className={`${size === "xs" ? "w-2.5 h-2.5" : size === "sm" ? "w-3 h-3" : size === "lg" ? "w-5 h-5" : "w-4 h-4"} animate-spin`} />
       ) : (
         icon
       )}
