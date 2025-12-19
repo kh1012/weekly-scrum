@@ -1,126 +1,91 @@
-# Cursor V2 Prompt — Snapshot Manage: Select/Collaborators Popover Portal + Shortcut OS + Editor Width (Bugfix Only)
+너는 Airbnb 디자인 철학을 따르는
+Next.js(App Router) + Supabase 기반 제품 UI를 구현한다.
 
-## Goal
+[디자인 원칙]
 
-Fix UI bugs on **Snapshot Manage** pages:
+- Airbnb 스타일:
+  - 충분한 여백 (spacing > decoration)
+  - 부드러운 radius (rounded-xl)
+  - 미묘한 shadow (shadow-sm / shadow-md)
+  - 명확한 정보 위계 (typography scale)
+  - 상태 변화는 색이 아니라 구조로 표현
+- 컬러:
+  - 기본: neutral / slate 계열
+  - status는 badge + text 조합
+- 애니메이션:
+  - framer-motion
+  - hover / state-change에만 사용 (과하지 않게)
 
-- **New (Create)** page edit form
-- **Edit** page edit form
+[권한 모델]
 
-Scope is **bugfix + small UX correctness only** (no redesign yet).
+- member
+  - 본인 feedback CRUD
+  - status / release 필드 접근 불가
+- leader / admin
+  - 전체 feedback 조회
+  - 상태 변경 가능
+  - 해결 과정 기록 가능
 
-## Problems to fix
+[UI 구조]
 
-1. **All Select components**: when clicked, the dropdown/popup list initially appears in the wrong position and/or gets clipped.
+1. Feedback List Page
 
-   - Root cause likely: popover rendered inside scroll/overflow/transform container (no portal), causing positioning issues.
+- 카드 기반 리스트 (Airbnb listing 느낌)
+- 각 카드:
+  - title 또는 content 요약
+  - author name
+  - created_at
+  - status badge
+  - resolved 시: release version chip
+- 카드 클릭 → Detail
 
-2. **Collaborators Select**:
+2. Feedback Detail Page
 
-   - Dropdown list is clipped by parent 영역 (overflow)
-   - Needs **search** within options
-   - Must be rendered via **Portal** as well.
+- 상단: 피드백 내용 (읽기 중심)
+- 중단: 상태 타임라인
+  - Open → In Progress → Resolved
+  - 현재 상태 강조
+- 하단:
+  - member: 읽기 전용
+  - leader/admin:
+    - Status Select (dropdown)
+    - Resolve Panel (status=resolved일 때만 노출)
 
-3. Shortcut hint text:
+3. Resolve Panel (leader/admin 전용)
 
-   - Current hint uses: `Command + Option + ↓`
-   - If OS is **Windows**, display: `Ctrl + Alt + ↓`
-   - Verify whether OS-based branching already exists. If not, implement it.
-   - This is **display text** change (and ensure any keyboard handler hint matches if implemented).
+- release select (필수)
+- 해결 요약 textarea (선택)
+- "Mark as Resolved" CTA
+- 저장 시:
+  - status = resolved
+  - resolved_release_id 설정
+  - 실패 시 DB 에러 메시지 그대로 노출
 
-4. Editor area width:
-   - Initialize edit area horizontal width to **minimum** by default (min-width state).
-   - Keep user resizing ability if it already exists, but default initial state must be the minimum.
+[UX 규칙]
 
-## Constraints
+- status 변경은 즉시 반영 (optimistic UI)
+- resolved 이후:
+  - 수정 불가 (admin/leader만 가능)
+- member는 status UI 자체를 보지 못함
+- 상태 변경은 명확한 의사결정 UX (confirm modal)
 
-- Do NOT do UI redesign, typography refactor, or section layout changes. (We will discuss later.)
-- Keep existing behavior and API contracts.
-- Fix must apply to both Create and Edit pages, and any shared components.
+[컴포넌트]
 
-## Tasks (Step-by-step)
+- FeedbackCard
+- FeedbackStatusBadge
+- FeedbackTimeline
+- FeedbackForm
+- ResolvePanel
 
-### Step 0 — Identify components & usage
+[기술]
 
-- Search the codebase for all Select/Popover usage in Snapshot Manage Create/Edit forms:
-  - components like `Select`, `Popover`, `Dropdown`, `Combobox`, `Command`, `Portal`
-  - libraries: Radix UI / shadcn/ui / custom popover
-- List the exact component(s) used for:
-  - standard Select fields
-  - collaborators field
+- supabase-js
+- server actions
+- RLS 신뢰 (프론트 권한 체크 최소화)
+- role은 profiles 테이블에서 조회
 
-### Step 1 — Make ALL Select dropdowns render through Portal
+[결과물]
 
-- If using Radix/shadcn:
-  - Ensure `SelectContent` uses portal (`<SelectPrimitive.Portal>` or `Select.Portal`) and that content positioning uses Popper correctly.
-  - Ensure `sideOffset`, `collisionPadding`, `avoidCollisions`, `sticky` options are set appropriately for scroll containers.
-- If using a custom popover:
-  - Move dropdown content rendering to a Portal attached to `document.body`.
-  - Ensure anchor reference/trigger ref is used for positioning.
-  - Ensure first-open positioning is correct (no “jump” on first render).
-- Validate with:
-  - initial click opens dropdown aligned to trigger
-  - works after scrolling
-  - does not clip within overflow containers
-
-### Step 2 — Collaborators Select: searchable + portal + no clipping
-
-- Implement a searchable combobox UX for Collaborators:
-  - Input to filter options (case-insensitive)
-  - Keyboard navigation up/down + enter
-  - If existing component is already `Command`-based, wire filtering and ensure it still portals.
-- Ensure collaborators dropdown/popup list:
-  - renders in Portal
-  - has max height + internal scroll
-  - positions correctly near trigger
-  - never gets cut off by parent container overflow
-
-### Step 3 — OS-based shortcut label (Mac vs Windows)
-
-- Implement a small utility:
-  - `getOS()` returning `mac | windows | other`
-  - Prefer `navigator.userAgentData?.platform` if available, fallback to `navigator.platform` or userAgent parsing.
-- Replace the shortcut label text in the UI:
-  - Mac: `⌘ + ⌥ + ↓` (or keep `Command + Option + ↓` if the UI is text-only; but must be consistent)
-  - Windows: `Ctrl + Alt + ↓`
-- If there is an actual keybinding handler associated with this hint:
-  - Verify it matches the displayed shortcut on Windows and Mac.
-
-### Step 4 — Initialize edit area width to minimum
-
-- Locate the edit area resizable layout state (likely a splitter or CSS width state).
-- Change the default initial width to the minimum:
-  - If there is persisted width in localStorage: consider fallback priority
-    - Use persisted value if exists, else use minimum
-  - If there is no persistence: default = minimum
-- Ensure this applies in both Create and Edit pages.
-
-### Step 5 — QA checklist (must pass)
-
-- Create page:
-  - open every Select: first open position correct, not clipped
-  - Collaborators: searchable, portal, not clipped
-  - shortcut hint shows correct based on OS
-  - edit area starts at minimum width
-- Edit page: same checks
-- Regression:
-  - no console errors
-  - no hydration mismatch (if Next.js)
-  - keyboard navigation still works
-
-## Deliverables
-
-1. Code changes implementing the fixes above.
-2. A short markdown summary at repo root: `bugfix-select-portal-shortcut-width.md` including:
-   - what was changed
-   - which components were affected
-   - how to test (manual steps)
-
-## Definition of Done
-
-- Popovers never appear in the wrong place on first open
-- No dropdown clipping in any form section
-- Collaborators search works and is stable
-- Shortcut hint label matches OS
-- Edit area default width is minimum
-- Build passes + basic manual QA 완료
+- app/feedbacks/page.tsx
+- app/feedbacks/[id]/page.tsx
+- components/feedback/\*
