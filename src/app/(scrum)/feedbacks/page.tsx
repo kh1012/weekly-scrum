@@ -3,16 +3,22 @@
  * Airbnb 스타일 + 칸반 보드 레이아웃
  */
 
-import { listFeedbacks, getCurrentUserRole } from "@/app/actions/feedback";
+import { createClient } from "@/lib/supabase/server";
+import { listFeedbacks, listReleases, getCurrentUserRole } from "@/app/actions/feedback";
 import { FeedbackKanbanView } from "./_components/FeedbackKanbanView";
 
 export default async function FeedbacksPage() {
-  const [feedbacksResult, roleResult] = await Promise.all([
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const [feedbacksResult, releasesResult, roleResult] = await Promise.all([
     listFeedbacks(),
+    listReleases(),
     getCurrentUserRole(),
   ]);
 
   const feedbacks = feedbacksResult.feedbacks || [];
+  const releases = releasesResult.releases || [];
   const userRole = roleResult.role || "member";
   const isAdminOrLeader = ["admin", "leader"].includes(userRole);
 
@@ -35,7 +41,9 @@ export default async function FeedbacksPage() {
   return (
     <FeedbackKanbanView
       feedbacks={feedbacks}
+      releases={releases}
       isAdminOrLeader={isAdminOrLeader}
+      currentUserId={user?.id || null}
     />
   );
 }

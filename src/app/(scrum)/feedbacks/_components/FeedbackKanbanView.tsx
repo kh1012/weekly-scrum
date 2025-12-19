@@ -11,7 +11,9 @@ import { PlusIcon } from "@/components/common/Icons";
 import { LoadingButton } from "@/components/common/LoadingButton";
 import { FeedbackKanbanCard } from "./FeedbackKanbanCard";
 import { CreateFeedbackModal } from "./CreateFeedbackModal";
-import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
+import { FeedbackDetailModal } from "./FeedbackDetailModal";
+import { updateFeedbackStatus } from "@/app/actions/feedback";
+import type { FeedbackWithDetails, FeedbackStatus, Release } from "@/lib/data/feedback";
 
 // 칸반 열 설정 - 카드 색상만 구분
 const KANBAN_COLUMNS: {
@@ -38,12 +40,21 @@ const KANBAN_COLUMNS: {
 
 interface FeedbackKanbanViewProps {
   feedbacks: FeedbackWithDetails[];
+  releases: Release[];
   isAdminOrLeader: boolean;
+  currentUserId: string | null;
 }
 
-export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanbanViewProps) {
+export function FeedbackKanbanView({
+  feedbacks,
+  releases,
+  isAdminOrLeader,
+  currentUserId,
+}: FeedbackKanbanViewProps) {
   const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackWithDetails | null>(null);
+  const [updatingFeedbackId, setUpdatingFeedbackId] = useState<string | null>(null);
 
   // 상태별로 그룹화
   const groupedFeedbacks = useMemo(() => {
@@ -54,7 +65,21 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
   }, [feedbacks]);
 
   const handleFeedbackCreated = () => {
-    setIsModalOpen(false);
+    setIsCreateModalOpen(false);
+    router.refresh();
+  };
+
+  const handleDetailSuccess = () => {
+    router.refresh();
+  };
+
+  // 카드에서 상태 토글
+  const handleCardStatusToggle = async (feedbackId: string, newStatus: FeedbackStatus) => {
+    setUpdatingFeedbackId(feedbackId);
+    
+    await updateFeedbackStatus(feedbackId, newStatus);
+    
+    setUpdatingFeedbackId(null);
     router.refresh();
   };
 
@@ -101,7 +126,7 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
 
             {/* New Feedback 버튼 */}
             <LoadingButton
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsCreateModalOpen(true)}
               variant="primary"
               size="md"
               icon={<PlusIcon className="w-4 h-4" />}
@@ -122,7 +147,7 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
               key={col.status}
               className="flex flex-col rounded-xl overflow-hidden min-w-0"
               style={{
-                background: "#f8fafc",
+                background: "white",
                 border: "1px solid #e2e8f0",
               }}
             >
@@ -152,8 +177,8 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
                 </span>
               </div>
 
-              {/* 카드 목록 - 회색 배경 */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
+              {/* 카드 목록 - 흰색 배경 */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-white">
                 {groupedFeedbacks[col.status]?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                     <svg className="w-8 h-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -163,7 +188,15 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
                   </div>
                 ) : (
                   groupedFeedbacks[col.status]?.map((feedback) => (
-                    <FeedbackKanbanCard key={feedback.id} feedback={feedback} color={col.color} />
+                    <FeedbackKanbanCard
+                      key={feedback.id}
+                      feedback={feedback}
+                      color={col.color}
+                      isAdminOrLeader={isAdminOrLeader}
+                      isUpdating={updatingFeedbackId === feedback.id}
+                      onClick={() => setSelectedFeedback(feedback)}
+                      onToggleStatus={(newStatus) => handleCardStatusToggle(feedback.id, newStatus)}
+                    />
                   ))
                 )}
               </div>
@@ -184,7 +217,7 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
             <h3 className="text-lg font-semibold text-gray-900 mb-1">아직 피드백이 없습니다</h3>
             <p className="text-sm text-gray-500 mb-4">첫 번째 피드백을 작성해보세요</p>
             <LoadingButton
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsCreateModalOpen(true)}
               variant="primary"
               size="md"
               icon={<PlusIcon className="w-4 h-4" />}
@@ -197,10 +230,23 @@ export function FeedbackKanbanView({ feedbacks, isAdminOrLeader }: FeedbackKanba
 
       {/* 새 피드백 모달 */}
       <CreateFeedbackModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleFeedbackCreated}
       />
+
+      {/* 피드백 상세 모달 */}
+      {selectedFeedback && (
+        <FeedbackDetailModal
+          isOpen={!!selectedFeedback}
+          onClose={() => setSelectedFeedback(null)}
+          feedback={selectedFeedback}
+          releases={releases}
+          isAdminOrLeader={isAdminOrLeader}
+          currentUserId={currentUserId}
+          onSuccess={handleDetailSuccess}
+        />
+      )}
     </div>
   );
 }

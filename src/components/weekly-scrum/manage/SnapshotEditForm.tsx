@@ -52,8 +52,8 @@ interface SnapshotEditFormProps {
   weekInfo?: {
     year: number;
     week: number;
-    pastWeekLabel: string;  // "W51 (25.12.08 ~ 25.12.12)"
-    thisWeekLabel: string;  // "W52 (25.12.15 ~ 25.12.19)"
+    pastWeekLabel: string; // "W51 (25.12.08 ~ 25.12.12)"
+    thisWeekLabel: string; // "W52 (25.12.15 ~ 25.12.19)"
   };
 }
 
@@ -2002,7 +2002,7 @@ export function SnapshotEditForm({
             <h2 className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/pastweek:text-gray-600">
               <span>Past Week</span>
               {weekInfo?.pastWeekLabel && (
-                <span className="font-normal normal-case text-gray-400 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
+                <span className="font-normal normal-case text-gray-700 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
                   {weekInfo.pastWeekLabel}
                 </span>
               )}
@@ -2254,7 +2254,7 @@ export function SnapshotEditForm({
             <h2 className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/thisweek:text-gray-600">
               <span>This Week</span>
               {weekInfo?.thisWeekLabel && (
-                <span className="font-normal normal-case text-gray-400 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
+                <span className="font-normal normal-case text-gray-700 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
                   {weekInfo.thisWeekLabel}
                 </span>
               )}
