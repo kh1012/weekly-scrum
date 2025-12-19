@@ -43,19 +43,26 @@ export default async function AdminDashboardPage() {
   const recentWeeks = getRecentWeeks(4);
   const currentWeek = recentWeeks[0];
 
-  // 워크스페이스 멤버 조회 (프로필 정보 포함)
+  // 1. 워크스페이스 멤버 조회
   const { data: members } = await supabase
     .from("workspace_members")
-    .select(`
-      user_id,
-      role,
-      profiles:user_id (
-        display_name,
-        email
-      )
-    `)
+    .select("user_id, role")
     .eq("workspace_id", DEFAULT_WORKSPACE_ID)
     .order("role");
+
+  // 2. profiles 별도 조회
+  const userIds = members?.map((m) => m.user_id) || [];
+  const { data: profiles } = userIds.length > 0
+    ? await supabase
+        .from("profiles")
+        .select("user_id, display_name, email")
+        .in("user_id", userIds)
+    : { data: [] };
+
+  // profiles를 user_id로 맵핑
+  const profilesMap = new Map(
+    (profiles || []).map((p) => [p.user_id, { display_name: p.display_name, email: p.email }])
+  );
 
   // 스냅샷 조회 (최근 4주치)
   const weekLabels = recentWeeks.map((w) => w.label);
@@ -94,9 +101,8 @@ export default async function AdminDashboardPage() {
   }
 
   const memberDataList: MemberData[] = (members || []).map((m) => {
-    // profiles는 single row여도 배열로 반환될 수 있음
-    const profilesData = m.profiles as { display_name: string; email: string } | { display_name: string; email: string }[] | null;
-    const profile = Array.isArray(profilesData) ? profilesData[0] : profilesData;
+    // profiles 맵에서 조회
+    const profile = profilesMap.get(m.user_id);
 
     const weeklyEntries: Record<string, number> = {};
 
