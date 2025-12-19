@@ -63,8 +63,10 @@ export function EditPlanModal({
   const [links, setLinks] = useState<PlanLink[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkLabel, setNewLinkLabel] = useState("");
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const assigneeDropdownRef = useRef<HTMLDivElement>(null);
 
   // bar가 변경될 때 초기값 설정
   useEffect(() => {
@@ -76,6 +78,7 @@ export function EditPlanModal({
       setLinks(bar.links || []);
       setNewLinkUrl("");
       setNewLinkLabel("");
+      setIsAssigneeDropdownOpen(false);
       
       // 첫 번째 담당자 정보
       if (bar.assignees && bar.assignees.length > 0) {
@@ -89,6 +92,17 @@ export function EditPlanModal({
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen, bar]);
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target as Node)) {
+        setIsAssigneeDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // 링크 추가
   const handleAddLink = () => {
@@ -141,6 +155,8 @@ export function EditPlanModal({
     }
   };
 
+  const selectedMember = members.find((m) => m.userId === selectedAssignee);
+
   if (!isOpen || !bar) return null;
 
   return (
@@ -157,7 +173,7 @@ export function EditPlanModal({
 
       {/* 모달 - Airbnb 스타일 */}
       <div
-        className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col"
         style={{
           background: "white",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
@@ -165,7 +181,7 @@ export function EditPlanModal({
       >
         {/* 헤더 - 그라디언트 배경 */}
         <div
-          className="flex items-center justify-between px-5 py-4"
+          className="shrink-0 flex items-center justify-between px-5 py-4"
           style={{
             background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
             borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
@@ -193,7 +209,7 @@ export function EditPlanModal({
 
         {/* 기간 정보 배너 */}
         <div
-          className="px-5 py-3 flex items-center gap-2"
+          className="shrink-0 px-5 py-3 flex items-center gap-2"
           style={{
             background: "linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)",
             borderBottom: "1px solid rgba(59, 130, 246, 0.1)",
@@ -213,8 +229,8 @@ export function EditPlanModal({
           </div>
         </div>
 
-        {/* 폼 */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+        {/* 폼 - 스크롤 가능 */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* 제목 */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -272,31 +288,131 @@ export function EditPlanModal({
             </div>
           </div>
 
-          {/* 담당자 */}
+          {/* 담당자 - 커스텀 드롭다운 */}
           <div>
             <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
               <UserIcon className="w-4 h-4" />
               담당자
+              <span className="text-xs font-normal text-gray-400">(선택사항)</span>
             </label>
             <div className="space-y-3">
-              {/* 담당자 선택 */}
-              <select
-                value={selectedAssignee}
-                onChange={(e) => setSelectedAssignee(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none cursor-pointer"
-                style={{
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  color: "#1e293b",
-                }}
-              >
-                <option value="">담당자 선택 (선택사항)</option>
-                {members.map((member) => (
-                  <option key={member.userId} value={member.userId}>
-                    {member.displayName || member.email || member.userId}
-                  </option>
-                ))}
-              </select>
+              {/* 커스텀 담당자 드롭다운 */}
+              <div className="relative" ref={assigneeDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none"
+                  style={{
+                    background: selectedMember ? "rgba(59, 130, 246, 0.08)" : "#f8fafc",
+                    border: selectedMember ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid #e2e8f0",
+                    color: selectedMember ? "#1e40af" : "#64748b",
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {selectedMember ? (
+                      <>
+                        <span
+                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-bold"
+                        >
+                          {selectedMember.displayName?.charAt(0) || selectedMember.email?.charAt(0) || "?"}
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {selectedMember.displayName || selectedMember.email || selectedMember.userId}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100">
+                          <UserIcon className="w-4 h-4 text-gray-400" />
+                        </span>
+                        <span>담당자 선택</span>
+                      </>
+                    )}
+                  </div>
+                  <svg
+                    className={`w-5 h-5 transition-transform ${isAssigneeDropdownOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* 드롭다운 목록 */}
+                {isAssigneeDropdownOpen && (
+                  <div
+                    className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50 max-h-60 overflow-y-auto"
+                    style={{
+                      background: "white",
+                      border: "1px solid rgba(0, 0, 0, 0.1)",
+                      boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    {/* 선택 해제 옵션 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAssignee("");
+                        setIsAssigneeDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                        !selectedAssignee ? "bg-gray-50" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100">
+                        <XIcon className="w-4 h-4 text-gray-400" />
+                      </span>
+                      <span className="text-gray-500">선택 안함</span>
+                    </button>
+
+                    {/* 멤버 목록 */}
+                    {members.map((member) => (
+                      <button
+                        key={member.userId}
+                        type="button"
+                        onClick={() => {
+                          setSelectedAssignee(member.userId);
+                          setIsAssigneeDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                          member.userId === selectedAssignee
+                            ? "bg-blue-50"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <span
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-white"
+                          style={{
+                            background: member.userId === selectedAssignee
+                              ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+                              : "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)",
+                          }}
+                        >
+                          {member.displayName?.charAt(0) || member.email?.charAt(0) || "?"}
+                        </span>
+                        <div className="flex-1 text-left min-w-0">
+                          <div
+                            className="font-medium truncate"
+                            style={{ color: member.userId === selectedAssignee ? "#1e40af" : "#1e293b" }}
+                          >
+                            {member.displayName || member.email || member.userId}
+                          </div>
+                          {member.email && member.displayName && (
+                            <div className="text-xs text-gray-400 truncate">{member.email}</div>
+                          )}
+                        </div>
+                        {member.userId === selectedAssignee && (
+                          <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* 역할 선택 - 담당자 선택 시에만 활성화 */}
               <div className="flex gap-1.5">
@@ -340,7 +456,7 @@ export function EditPlanModal({
             </div>
             
             {/* 선택된 담당자 표시 */}
-            {selectedAssignee && (
+            {selectedAssignee && selectedMember && (
               <div 
                 className="mt-3 flex items-center gap-2 p-3 rounded-lg"
                 style={{ background: "#f8fafc" }}
@@ -354,7 +470,7 @@ export function EditPlanModal({
                   {ROLES.find((r) => r.value === selectedRole)?.label}
                 </span>
                 <span className="text-sm font-medium text-gray-800">
-                  {members.find((m) => m.userId === selectedAssignee)?.displayName}
+                  {selectedMember.displayName || selectedMember.email}
                 </span>
               </div>
             )}
@@ -538,4 +654,3 @@ export function EditPlanModal({
     </div>
   );
 }
-

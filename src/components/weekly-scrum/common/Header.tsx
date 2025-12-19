@@ -46,9 +46,16 @@ export function Header({
     pathname === "/plans/" ||
     pathname.startsWith("/admin/plans") ||
     pathname.startsWith("/plans/gantt");
+  // Feedbacks 페이지인지 확인
+  const isFeedbacksPage =
+    pathname === "/feedbacks" || pathname === "/feedbacks/";
   // 최소 GNB 모드 (사이드바 토글 + 프로필만 표시)
   const isMinimalGnb =
-    isMyDashboard || isManagePage || isAdminDashboard || isPlansPage;
+    isMyDashboard ||
+    isManagePage ||
+    isAdminDashboard ||
+    isPlansPage ||
+    isFeedbacksPage;
   // GNB 컴포넌트 완전 숨김 페이지 (manage, admin dashboard, my dashboard, plans)
   const hideAllControls = isMinimalGnb;
   // 주차 선택기 숨김 페이지 (calendar는 자체 월 선택기 사용)

@@ -1,12 +1,36 @@
 /**
  * Feedbacks List Page
- * Airbnb 스타일의 피드백 목록
+ * Airbnb 스타일 + 칸반 보드 레이아웃
  */
 
 import { listFeedbacks, getCurrentUserRole } from "@/app/actions/feedback";
 import { FeedbackCard } from "@/components/feedback/FeedbackCard";
 import Link from "next/link";
 import { PlusIcon } from "@/components/common/Icons";
+import { LoadingButton } from "@/components/common/LoadingButton";
+import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
+
+// 칸반 열 설정
+const KANBAN_COLUMNS: { status: FeedbackStatus; label: string; color: string; bgGradient: string }[] = [
+  {
+    status: "open",
+    label: "Open",
+    color: "#3b82f6",
+    bgGradient: "from-blue-50 to-blue-100/50",
+  },
+  {
+    status: "in_progress",
+    label: "In Progress",
+    color: "#f59e0b",
+    bgGradient: "from-amber-50 to-amber-100/50",
+  },
+  {
+    status: "resolved",
+    label: "Resolved",
+    color: "#22c55e",
+    bgGradient: "from-green-50 to-green-100/50",
+  },
+];
 
 export default async function FeedbacksPage() {
   const [feedbacksResult, roleResult] = await Promise.all([
@@ -18,9 +42,15 @@ export default async function FeedbacksPage() {
   const userRole = roleResult.role || "member";
   const isAdminOrLeader = ["admin", "leader"].includes(userRole);
 
+  // 상태별로 그룹화
+  const groupedFeedbacks = KANBAN_COLUMNS.reduce((acc, col) => {
+    acc[col.status] = feedbacks.filter((f) => f.status === col.status);
+    return acc;
+  }, {} as Record<FeedbackStatus, FeedbackWithDetails[]>);
+
   if (!feedbacksResult.success && feedbacksResult.error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="h-[calc(100vh-7rem)] flex items-center justify-center rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
         <div
           className="rounded-xl p-6 max-w-md"
           style={{
@@ -35,66 +65,139 @@ export default async function FeedbacksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div
-        className="sticky top-0 z-10"
-        style={{
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
+      {/* 헤더 영역 - 글래스모피즘 */}
+      <div className="shrink-0 px-4 md:px-6 py-4 md:py-5 bg-gradient-to-r from-white via-white to-slate-50/50 border-b border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* 좌측: 타이틀 */}
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 640 512">
+                <path d="M208 352c114.9 0 208-78.8 208-176S322.9 0 208 0S0 78.8 0 176c0 38.6 14.7 74.3 39.6 103.4c-3.5 9.4-8.7 17.7-14.2 24.7c-4.8 6.2-9.7 11-13.3 14.3c-1.8 1.6-3.3 2.9-4.3 3.7c-.5 .4-.9 .7-1.1 .8l-.2 .2s0 0 0 0s0 0 0 0C1 327.2-1.4 334.4 .8 340.9S9.1 352 16 352c21.8 0 43.8-5.6 62.1-12.5c9.2-3.5 17.8-7.4 25.2-11.4C134.1 343.3 169.8 352 208 352zM448 176c0 112.3-99.1 196.9-216.5 207C255.8 457.4 336.4 512 432 512c38.2 0 73.9-8.7 104.7-23.9c7.5 4 16 7.9 25.2 11.4c18.3 6.9 40.3 12.5 62.1 12.5c6.9 0 13.1-4.5 15.2-11.1c2.1-6.6-.2-13.8-5.8-17.9c0 0 0 0 0 0s0 0 0 0l-.2-.2c-.2-.2-.6-.4-1.1-.8c-1-.8-2.5-2-4.3-3.7c-3.6-3.3-8.5-8.1-13.3-14.3c-5.5-7-10.7-15.4-14.2-24.7c24.9-29 39.6-64.7 39.6-103.4c0-92.8-84.9-168.9-192.6-175.5c.4 5.1 .6 10.3 .6 15.5z" />
+              </svg>
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Feedbacks</h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Feedbacks</h1>
+              <p className="text-xs md:text-sm text-gray-500">
                 {isAdminOrLeader
                   ? "모든 피드백을 관리할 수 있습니다"
                   : "내 피드백 목록"}
               </p>
             </div>
-            <Link
-              href="/feedbacks/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-95 text-white shadow-md hover:shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-              }}
-            >
-              <PlusIcon className="w-4 h-4" />
-              New Feedback
+          </div>
+
+          {/* 우측: 통계 + 액션 버튼 */}
+          <div className="flex items-center gap-3">
+            {/* 통계 뱃지 */}
+            <div className="hidden md:flex items-center gap-2">
+              {KANBAN_COLUMNS.map((col) => (
+                <div
+                  key={col.status}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
+                  style={{
+                    background: `${col.color}15`,
+                    color: col.color,
+                  }}
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ background: col.color }} />
+                  {groupedFeedbacks[col.status]?.length || 0}
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block h-6 w-px bg-gray-200" />
+
+            {/* New Feedback 버튼 */}
+            <Link href="/feedbacks/new">
+              <LoadingButton
+                variant="primary"
+                size="md"
+                icon={<PlusIcon className="w-4 h-4" />}
+                className="group"
+              >
+                <span className="hidden sm:inline">New Feedback</span>
+                <span className="sm:hidden">새 피드백</span>
+              </LoadingButton>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {feedbacks.length === 0 ? (
-          <div
-            className="rounded-xl p-12 text-center"
-            style={{
-              background: "white",
-              border: "1px solid rgba(0, 0, 0, 0.08)",
-            }}
-          >
-            <p className="text-gray-500 text-sm">아직 피드백이 없습니다</p>
-            <Link
-              href="/feedbacks/new"
-              className="inline-block mt-4 text-blue-600 hover:underline text-sm font-medium"
+      {/* 칸반 보드 영역 */}
+      <div className="flex-1 overflow-x-auto overflow-y-hidden">
+        <div className="h-full flex gap-4 p-4 md:p-6 min-w-max">
+          {KANBAN_COLUMNS.map((col) => (
+            <div
+              key={col.status}
+              className={`flex flex-col w-80 md:w-96 shrink-0 rounded-xl overflow-hidden bg-gradient-to-b ${col.bgGradient}`}
+              style={{ border: `1px solid ${col.color}20` }}
             >
-              첫 피드백 작성하기 →
+              {/* 열 헤더 */}
+              <div
+                className="shrink-0 px-4 py-3 border-b flex items-center justify-between"
+                style={{ borderColor: `${col.color}20` }}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ background: col.color }}
+                  />
+                  <h3 className="font-semibold text-gray-900">{col.label}</h3>
+                </div>
+                <span
+                  className="px-2 py-0.5 rounded-full text-xs font-bold"
+                  style={{
+                    background: `${col.color}20`,
+                    color: col.color,
+                  }}
+                >
+                  {groupedFeedbacks[col.status]?.length || 0}
+                </span>
+              </div>
+
+              {/* 카드 목록 */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {groupedFeedbacks[col.status]?.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                    <svg className="w-8 h-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <p className="text-xs">피드백 없음</p>
+                  </div>
+                ) : (
+                  groupedFeedbacks[col.status]?.map((feedback) => (
+                    <FeedbackCard key={feedback.id} feedback={feedback} compact />
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 빈 상태 (전체 피드백이 없을 때) */}
+      {feedbacks.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">아직 피드백이 없습니다</h3>
+            <p className="text-sm text-gray-500 mb-4">첫 번째 피드백을 작성해보세요</p>
+            <Link href="/feedbacks/new">
+              <LoadingButton
+                variant="primary"
+                size="md"
+                icon={<PlusIcon className="w-4 h-4" />}
+              >
+                첫 피드백 작성하기
+              </LoadingButton>
             </Link>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {feedbacks.map((feedback) => (
-              <FeedbackCard key={feedback.id} feedback={feedback} />
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
-

@@ -5,11 +5,18 @@
 -- =========================
 -- 1. ENUM 정의
 -- =========================
-CREATE TYPE IF NOT EXISTS feedback_status AS ENUM (
-  'open',
-  'in_progress',
-  'resolved'
-);
+-- PostgreSQL은 CREATE TYPE IF NOT EXISTS를 지원하지 않으므로 
+-- DO 블록으로 조건부 생성
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'feedback_status') THEN
+    CREATE TYPE feedback_status AS ENUM (
+      'open',
+      'in_progress',
+      'resolved'
+    );
+  END IF;
+END $$;
 
 -- =========================
 -- 2. releases 테이블
