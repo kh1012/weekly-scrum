@@ -1,227 +1,247 @@
 /**
  * Feedback Kanban Card
- * 칸반 보드용 심플 카드 컴포넌트
+ * 칸반 보드용 카드 컴포넌트 - 전체 내용 표시 및 액션 버튼 통합
  */
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { LoadingButton } from "@/components/common/LoadingButton";
+import { deleteFeedback } from "@/app/actions/feedback";
 import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
 
 interface FeedbackKanbanCardProps {
   feedback: FeedbackWithDetails;
   color: string;
   isAdminOrLeader: boolean;
+  currentUserId: string | null;
   isUpdating?: boolean;
-  onClick: () => void;
   onStatusChange?: (newStatus: FeedbackStatus) => void;
+  onEditClick: () => void;
+  onDeleteSuccess: () => void;
 }
 
 export function FeedbackKanbanCard({
   feedback,
   color,
   isAdminOrLeader,
+  currentUserId,
   isUpdating = false,
-  onClick,
   onStatusChange,
+  onEditClick,
+  onDeleteSuccess,
 }: FeedbackKanbanCardProps) {
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const createdAt = new Date(feedback.created_at).toLocaleDateString("ko-KR", {
-    month: "short",
+    year: "numeric",
+    month: "long",
     day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
-  // 메뉴 외부 클릭 시 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
+  // 권한 체크
+  const isOwner = currentUserId === feedback.author_user_id;
+  const canEdit = isOwner;
+  const canDelete = isOwner || isAdminOrLeader;
 
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+  // 삭제
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const result = await deleteFeedback(feedback.id);
+    setIsDeleting(false);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMenu]);
-
-  // 상태 버튼 클릭
-  const handleStatusClick = (
-    e: React.MouseEvent,
-    newStatus: FeedbackStatus
-  ) => {
-    e.stopPropagation();
-    setShowMenu(false);
-    if (onStatusChange && !isUpdating) {
-      onStatusChange(newStatus);
+    if (result.success) {
+      onDeleteSuccess();
+    } else {
+      alert(result.error || "삭제에 실패했습니다");
     }
   };
 
-  // 메뉴 토글
-  const handleMenuToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isUpdating) {
-      setShowMenu(!showMenu);
-    }
-  };
+  // 상태별 액션 버튼
+  const renderStatusActions = () => {
+    if (!isAdminOrLeader) return null;
 
-  // 상태별 메뉴 옵션
-  const getMenuOptions = () => {
     switch (feedback.status) {
       case "open":
-        return [
-          {
-            label: "진행하기",
-            status: "in_progress" as FeedbackStatus,
-            icon: (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        return (
+          <LoadingButton
+            onClick={() => onStatusChange?.("in_progress")}
+            isLoading={isUpdating}
+            variant="primary"
+            size="xs"
+            icon={
+              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               </svg>
-            ),
-            color: "#3b82f6",
-          },
-        ];
+            }
+            className="!rounded-md !font-medium"
+          >
+            진행
+          </LoadingButton>
+        );
 
       case "in_progress":
-        return [
-          {
-            label: "열기",
-            status: "open" as FeedbackStatus,
-            icon: (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            ),
-            color: "#64748b",
-          },
-          {
-            label: "완료",
-            status: "resolved" as FeedbackStatus,
-            icon: (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ),
-            color: "#22c55e",
-          },
-        ];
+        return (
+          <div className="flex items-center gap-1">
+            <LoadingButton
+              onClick={() => onStatusChange?.("open")}
+              isLoading={isUpdating}
+              variant="secondary"
+              size="xs"
+              icon={
+                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              }
+              className="!rounded-md !font-medium"
+            >
+              열기
+            </LoadingButton>
+            <LoadingButton
+              onClick={() => onStatusChange?.("resolved")}
+              isLoading={isUpdating}
+              variant="success"
+              size="xs"
+              icon={
+                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              }
+              className="!rounded-md !font-medium"
+            >
+              완료
+            </LoadingButton>
+          </div>
+        );
 
       case "resolved":
-        return [
-          {
-            label: "다시 열기",
-            status: "in_progress" as FeedbackStatus,
-            icon: (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        return (
+          <LoadingButton
+            onClick={() => onStatusChange?.("in_progress")}
+            isLoading={isUpdating}
+            variant="secondary"
+            size="xs"
+            icon={
+              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-            ),
-            color: "#64748b",
-          },
-        ];
+            }
+            className="!rounded-md !font-medium"
+          >
+            다시 열기
+          </LoadingButton>
+        );
 
       default:
-        return [];
+        return null;
     }
   };
 
-  const menuOptions = getMenuOptions();
-
   return (
-    <div
-      onClick={onClick}
-      className="group cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] rounded-xl"
-    >
-      {/* 심플 카드 */}
-      <div
-        className="relative rounded-xl p-4 bg-white"
-        style={{
-          border: `1px solid ${color}50`,
-          boxShadow: `0 1px 3px ${color}10`,
-        }}
-      >
-        {/* 상태 옵션 메뉴 */}
-        {isAdminOrLeader && (
-          <div ref={menuRef} className="absolute top-2 right-2">
-            <button
-              onClick={handleMenuToggle}
-              disabled={isUpdating}
-              className={`p-1.5 rounded-lg transition-colors ${
-                isUpdating 
-                  ? "opacity-50 cursor-not-allowed" 
-                  : "hover:bg-gray-100 active:scale-95"
-              }`}
-            >
-              {isUpdating ? (
-                <svg className="w-4 h-4 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              )}
-            </button>
-
-            {/* 드롭다운 메뉴 */}
-            {showMenu && !isUpdating && (
-              <div 
-                className="absolute top-full right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {menuOptions.map((option) => (
-                  <button
-                    key={option.status}
-                    onClick={(e) => handleStatusClick(e, option.status)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <span style={{ color: option.color }}>{option.icon}</span>
-                    <span>{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 콘텐츠 */}
-        <div>
-          {/* 제목 */}
-          <h4 className="text-sm font-semibold text-gray-900 mb-1.5 line-clamp-2 pr-8 group-hover:text-blue-600 transition-colors">
-            {feedback.title || feedback.content.substring(0, 40) + "..."}
-          </h4>
-
-          {/* 내용 미리보기 */}
-          {feedback.title && (
-            <p className="text-xs text-gray-500 mb-3 line-clamp-2">
-              {feedback.content.substring(0, 60)}...
-            </p>
-          )}
-
-          {/* 하단: 작성자 + 날짜 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                style={{ background: color }}
-              >
-                {feedback.author_name?.charAt(0) || "?"}
-              </span>
-              <span className="text-xs text-gray-600">
-                {feedback.author_name}
-              </span>
-            </div>
-            <span className="text-[10px] text-gray-400">{createdAt}</span>
+    <div className="relative rounded-xl p-4 bg-white border border-gray-200 shadow-sm">
+      {/* 헤더: 작성자 + 날짜 */}
+      <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <span
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+            style={{ background: color }}
+          >
+            {feedback.author_name?.charAt(0) || "?"}
+          </span>
+          <div>
+            <span className="text-sm font-medium text-gray-700">{feedback.author_name}</span>
+            <span className="text-xs text-gray-400 ml-2">{createdAt}</span>
           </div>
         </div>
+
+        {/* 수정/삭제 버튼 */}
+        <div className="flex items-center gap-1">
+          {canEdit && (
+            <button
+              onClick={onEditClick}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              title="수정"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="삭제"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* 제목 */}
+      {feedback.title && (
+        <h3 className="text-base font-semibold text-gray-900 mb-2">
+          {feedback.title}
+        </h3>
+      )}
+
+      {/* 내용 전체 */}
+      <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed mb-4">
+        {feedback.content}
+      </div>
+
+      {/* 하단: 상태 액션 버튼 */}
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <div className="text-xs text-gray-500">
+          {feedback.status === "resolved" && feedback.release_version && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-50 text-green-700 font-medium">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              {feedback.release_version}
+            </span>
+          )}
+        </div>
+        {renderStatusActions()}
+      </div>
+
+      {/* 삭제 확인 오버레이 */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+          <div className="text-center px-6">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">삭제하시겠습니까?</h3>
+            <p className="text-xs text-gray-500 mb-4">이 작업은 취소할 수 없습니다.</p>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                취소
+              </button>
+              <LoadingButton
+                onClick={handleDelete}
+                isLoading={isDeleting}
+                variant="danger"
+                size="xs"
+                className="!rounded-lg"
+              >
+                삭제
+              </LoadingButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

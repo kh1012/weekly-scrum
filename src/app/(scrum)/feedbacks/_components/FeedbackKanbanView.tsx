@@ -1,6 +1,6 @@
 /**
  * Feedback Kanban View
- * 클라이언트 컴포넌트 - 칸반 보드 + 모달
+ * 클라이언트 컴포넌트 - 칸반 보드
  */
 
 "use client";
@@ -11,11 +11,11 @@ import { PlusIcon } from "@/components/common/Icons";
 import { LoadingButton } from "@/components/common/LoadingButton";
 import { FeedbackKanbanCard } from "./FeedbackKanbanCard";
 import { CreateFeedbackModal } from "./CreateFeedbackModal";
-import { FeedbackDetailModal } from "./FeedbackDetailModal";
+import { EditFeedbackModal } from "./EditFeedbackModal";
 import { updateFeedbackStatus } from "@/app/actions/feedback";
 import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
 
-// 칸반 열 설정 - 카드 색상만 구분
+// 칸반 열 설정
 const KANBAN_COLUMNS: {
   status: FeedbackStatus;
   label: string;
@@ -24,17 +24,17 @@ const KANBAN_COLUMNS: {
   {
     status: "open",
     label: "Open",
-    color: "#64748b", // 회색
+    color: "#64748b",
   },
   {
     status: "in_progress",
     label: "In Progress",
-    color: "#3b82f6", // 파랑
+    color: "#3b82f6",
   },
   {
     status: "resolved",
     label: "Resolved",
-    color: "#22c55e", // 초록
+    color: "#22c55e",
   },
 ];
 
@@ -52,7 +52,7 @@ export function FeedbackKanbanView({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackWithDetails | null>(null);
+  const [editingFeedback, setEditingFeedback] = useState<FeedbackWithDetails | null>(null);
   const [updatingFeedbackId, setUpdatingFeedbackId] = useState<string | null>(null);
 
   // 상태별로 그룹화
@@ -70,22 +70,26 @@ export function FeedbackKanbanView({
     });
   };
 
-  const handleDetailSuccess = () => {
+  const handleEditSuccess = () => {
     startTransition(() => {
       router.refresh();
     });
   };
 
-  // 카드에서 상태 변경 - API 호출 후 UI 반영까지 로딩 유지
+  const handleDeleteSuccess = () => {
+    startTransition(() => {
+      router.refresh();
+    });
+  };
+
+  // 카드에서 상태 변경
   const handleCardStatusChange = async (feedbackId: string, newStatus: FeedbackStatus) => {
     setUpdatingFeedbackId(feedbackId);
     
     await updateFeedbackStatus(feedbackId, newStatus);
     
-    // startTransition으로 감싸서 UI 반영 완료까지 대기
     startTransition(() => {
       router.refresh();
-      // isPending이 false가 되면 updatingFeedbackId 초기화
     });
   };
 
@@ -153,25 +157,15 @@ export function FeedbackKanbanView({
       </div>
 
       {/* 칸반 보드 영역 - Grid 레이아웃 */}
-      <div className="flex-1 overflow-hidden bg-slate-100/50">
+      <div className="flex-1 overflow-hidden bg-slate-50">
         <div className="h-full grid grid-cols-3 gap-4 p-4 md:p-6">
           {KANBAN_COLUMNS.map((col) => (
             <div
               key={col.status}
-              className="flex flex-col rounded-xl overflow-hidden min-w-0"
-              style={{
-                background: "white",
-                border: "1px solid #e2e8f0",
-              }}
+              className="flex flex-col rounded-xl overflow-hidden min-w-0 bg-white"
             >
               {/* 열 헤더 */}
-              <div
-                className="shrink-0 px-4 py-3 border-b flex items-center justify-between"
-                style={{
-                  background: "white",
-                  borderColor: "#e2e8f0",
-                }}
-              >
+              <div className="shrink-0 px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
                 <div className="flex items-center gap-2">
                   <span
                     className="w-3 h-3 rounded-full shadow-sm"
@@ -190,7 +184,7 @@ export function FeedbackKanbanView({
                 </span>
               </div>
 
-              {/* 카드 목록 - 흰색 배경 */}
+              {/* 카드 목록 */}
               <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-white">
                 {groupedFeedbacks[col.status]?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-gray-400">
@@ -206,9 +200,11 @@ export function FeedbackKanbanView({
                       feedback={feedback}
                       color={col.color}
                       isAdminOrLeader={isAdminOrLeader}
+                      currentUserId={currentUserId}
                       isUpdating={updatingFeedbackId === feedback.id}
-                      onClick={() => setSelectedFeedback(feedback)}
                       onStatusChange={(newStatus) => handleCardStatusChange(feedback.id, newStatus)}
+                      onEditClick={() => setEditingFeedback(feedback)}
+                      onDeleteSuccess={handleDeleteSuccess}
                     />
                   ))
                 )}
@@ -248,15 +244,13 @@ export function FeedbackKanbanView({
         onSuccess={handleFeedbackCreated}
       />
 
-      {/* 피드백 상세 모달 */}
-      {selectedFeedback && (
-        <FeedbackDetailModal
-          isOpen={!!selectedFeedback}
-          onClose={() => setSelectedFeedback(null)}
-          feedback={selectedFeedback}
-          isAdminOrLeader={isAdminOrLeader}
-          currentUserId={currentUserId}
-          onSuccess={handleDetailSuccess}
+      {/* 피드백 수정 모달 */}
+      {editingFeedback && (
+        <EditFeedbackModal
+          isOpen={!!editingFeedback}
+          onClose={() => setEditingFeedback(null)}
+          onSuccess={handleEditSuccess}
+          feedback={editingFeedback}
         />
       )}
     </div>
