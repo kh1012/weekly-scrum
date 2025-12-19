@@ -39,4 +39,3 @@ export async function getMemberNames(): Promise<string[]> {
     .map((p) => p.display_name)
     .filter((name): name is string => !!name);
 }
-
