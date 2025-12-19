@@ -32,3 +32,29 @@ export async function createClient() {
   );
 }
 
+/**
+ * Service Role 클라이언트 (RLS 우회)
+ * - Admin 작업용 (권한 검증 후 사용)
+ * - RLS 정책을 무시하고 직접 DB 접근
+ */
+export function createServiceRoleClient() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
+  }
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {
+          // Service Role에서는 쿠키 사용 안함
+        },
+      },
+    }
+  );
+}
+

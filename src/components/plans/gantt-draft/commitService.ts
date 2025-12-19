@@ -5,7 +5,7 @@
 
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
 import { revalidatePath } from "next/cache";
 import type { CommitPayload, DraftFlag } from "./types";
@@ -75,6 +75,11 @@ export async function commitFeaturePlans(
     let deletedCount = 0;
     let upsertedCount = 0;
 
+    // Service Role 클라이언트 사용 (RLS 우회)
+    // 이미 권한 검증 완료했으므로 안전함
+    console.log("🔓 [commitFeaturePlans] Service Role 클라이언트로 전환 (RLS 우회)");
+    const adminSupabase = createServiceRoleClient();
+
     // 삭제 처리
     if (toDelete.length > 0) {
       console.log("🗑️ [commitFeaturePlans] 삭제 시작:", toDelete.length, "개");
@@ -82,7 +87,7 @@ export async function commitFeaturePlans(
         // serverId가 있으면 id로 삭제, 없으면 client_uid로 삭제
         const serverId = (plan as unknown as { serverId?: string }).serverId;
         
-        let deleteQuery = supabase
+        let deleteQuery = adminSupabase
           .from("plans")
           .delete()
           .eq("workspace_id", payload.workspaceId || DEFAULT_WORKSPACE_ID);
@@ -124,7 +129,7 @@ export async function commitFeaturePlans(
         });
 
         // 기존 plan 조회 (client_uid 기준)
-        const { data: existingPlan } = await supabase
+        const { data: existingPlan } = await adminSupabase
           .from("plans")
           .select("id")
           .eq("workspace_id", workspaceId)
@@ -138,7 +143,7 @@ export async function commitFeaturePlans(
           });
 
           // Update
-          const { error: updateError } = await supabase
+          const { error: updateError } = await adminSupabase
             .from("plans")
             .update({
               type: "feature",
@@ -175,7 +180,7 @@ export async function commitFeaturePlans(
 
           // 담당자 업데이트 - 항상 기존 담당자 삭제 후 새로 추가
           console.log("👥 [commitFeaturePlans] 담당자 업데이트 시작");
-          await supabase
+          await adminSupabase
             .from("plan_assignees")
             .delete()
             .eq("plan_id", existingPlan.id);
@@ -190,7 +195,7 @@ export async function commitFeaturePlans(
             }));
 
             console.log("➕ [commitFeaturePlans] 담당자 추가:", assigneeRows.length, "명");
-            const { error: assigneeError } = await supabase.from("plan_assignees").insert(assigneeRows);
+            const { error: assigneeError } = await adminSupabase.from("plan_assignees").insert(assigneeRows);
             if (assigneeError) {
               console.error("❌ [commitFeaturePlans] 담당자 추가 오류:", {
                 error: assigneeError,
@@ -207,7 +212,7 @@ export async function commitFeaturePlans(
           });
 
           // Insert
-          const { data: newPlan, error: insertError } = await supabase
+          const { data: newPlan, error: insertError } = await adminSupabase
             .from("plans")
             .insert({
               workspace_id: workspaceId,
@@ -257,7 +262,7 @@ export async function commitFeaturePlans(
             }));
 
             console.log("➕ [commitFeaturePlans] 담당자 추가:", assigneeRows.length, "명");
-            const { error: assigneeError } = await supabase.from("plan_assignees").insert(assigneeRows);
+            const { error: assigneeError } = await adminSupabase.from("plan_assignees").insert(assigneeRows);
             if (assigneeError) {
               console.error("❌ [commitFeaturePlans] 담당자 추가 오류:", assigneeError);
             } else {
@@ -477,9 +482,13 @@ export async function commitFlags(payload: {
 
     const workspaceId = payload.workspaceId || DEFAULT_WORKSPACE_ID;
 
+    // Service Role 클라이언트 사용 (RLS 우회)
+    console.log("🔓 [commitFlags] Service Role 클라이언트로 전환 (RLS 우회)");
+    const adminSupabase = createServiceRoleClient();
+
     // 삭제 처리
     for (const flag of toDelete) {
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await adminSupabase
         .from("gantt_flags")
         .delete()
         .eq("id", flag.serverId);
@@ -493,7 +502,7 @@ export async function commitFlags(payload: {
 
     // 생성 처리
     for (const flag of toCreate) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await adminSupabase
         .from("gantt_flags")
         .insert({
           workspace_id: workspaceId,
@@ -514,7 +523,7 @@ export async function commitFlags(payload: {
 
     // 수정 처리
     for (const flag of toUpdate) {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await adminSupabase
         .from("gantt_flags")
         .update({
           title: flag.title,
