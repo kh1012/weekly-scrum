@@ -6,10 +6,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { createFeedback } from "@/app/actions/feedback";
 import { XIcon } from "@/components/common/Icons";
-import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 
 interface CreateFeedbackModalProps {
   isOpen: boolean;
@@ -18,7 +16,6 @@ interface CreateFeedbackModalProps {
 }
 
 export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedbackModalProps) {
-  const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,9 +62,7 @@ export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedba
     setIsSubmitting(false);
 
     if (result.success) {
-      navigationProgress.start();
       onSuccess();
-      router.push(`/feedbacks/${result.feedbackId}`);
     } else {
       setError(result.error || "피드백 생성에 실패했습니다");
     }
