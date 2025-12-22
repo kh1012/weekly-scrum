@@ -99,7 +99,7 @@ export function PlanViewPopover({
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 w-[360px] max-h-[400px] overflow-y-auto rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150"
+      className="fixed z-50 w-[360px] rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150 flex flex-col max-h-[400px]"
       style={{
         left: position.x,
         top: position.y,
@@ -110,7 +110,7 @@ export function PlanViewPopover({
     >
       {/* 헤더 */}
       <div
-        className="sticky top-0 z-10 flex items-center justify-between px-4 py-3"
+        className="flex-shrink-0 flex items-center justify-between px-4 py-3"
         style={{
           background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
           borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
@@ -149,7 +149,7 @@ export function PlanViewPopover({
       </div>
 
       {/* 콘텐츠 */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
         {/* 제목 */}
         <h3 className="text-lg font-semibold text-gray-900 leading-snug">
           {bar.title}
