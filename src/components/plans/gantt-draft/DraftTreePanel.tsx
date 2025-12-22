@@ -1875,7 +1875,10 @@ export function DraftTreePanel({
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           scrollbarWidth: "none", // Firefox
           msOverflowStyle: "none", // IE/Edge
-          paddingBottom: timelineScrollbarHeight > 0 ? `${timelineScrollbarHeight}px` : undefined,
+          paddingBottom:
+            timelineScrollbarHeight > 0
+              ? `${timelineScrollbarHeight}px`
+              : undefined,
         }}
         onScroll={handleScroll}
       >
