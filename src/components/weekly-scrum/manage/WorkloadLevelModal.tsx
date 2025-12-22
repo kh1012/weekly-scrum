@@ -64,8 +64,8 @@ export function WorkloadLevelModal({
   required = false,
   confirmText = "저장하기",
 }: WorkloadLevelModalProps) {
-  const weekLabel = `W${week.toString().padStart(2, "0")}`;
-  const weekRange = formatWeekRangeCompact(year, week);
+  const weekLabel = week ? `W${week.toString().padStart(2, "0")}` : "";
+  const weekRange = year && week ? formatWeekRangeCompact(year, week) : "";
   const [workloadLevel, setWorkloadLevel] = useState<WorkloadLevel | null>(initialLevel);
   const [workloadNote, setWorkloadNote] = useState(initialNote);
   const [error, setError] = useState(false);
