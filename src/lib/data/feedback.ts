@@ -20,23 +20,10 @@ export interface Feedback {
   title?: string | null;
   content: string;
   status: FeedbackStatus;
-  resolved_release_id?: string | null;
   resolution_note?: string | null;
   resolved_by_user_id?: string | null;
   created_at: string;
   updated_at: string;
-  resolved_at?: string | null;
-}
-
-export interface FeedbackComment {
-  id: string;
-  feedback_id: string;
-  author_user_id: string;
-  content: string;
-  comment_type: "comment" | "resolution" | "status_change";
-  created_at: string;
-  updated_at: string;
-  author_name?: string;
 }
 
 export interface FeedbackWithAuthor extends Feedback {
@@ -45,8 +32,6 @@ export interface FeedbackWithAuthor extends Feedback {
 }
 
 export interface FeedbackWithDetails extends FeedbackWithAuthor {
-  release_version?: string;
-  release_title?: string;
   resolved_by_name?: string;
 }
 

@@ -11,7 +11,6 @@ import type {
   FeedbackWithAuthor,
   FeedbackWithDetails,
   FeedbackStatus,
-  FeedbackComment,
   Release,
 } from "@/lib/data/feedback";
 
@@ -66,14 +65,14 @@ export async function listFeedbacks(): Promise<{
       return { success: false, error: "워크스페이스 정보가 없습니다." };
     }
 
-    // feedbacks + profiles + releases 조인
+    // feedbacks + profiles 조인
     const { data, error } = await supabase
       .from("feedbacks")
       .select(
         `
         *,
         author:profiles!feedbacks_author_user_id_fkey(display_name, email),
-        release:releases(version, title)
+        resolved_by:profiles!feedbacks_resolved_by_user_id_fkey(display_name)
       `
       )
       .eq("workspace_id", userInfo.workspaceId)
@@ -91,16 +90,13 @@ export async function listFeedbacks(): Promise<{
       title: item.title,
       content: item.content,
       status: item.status,
-      resolved_release_id: item.resolved_release_id,
       resolution_note: item.resolution_note,
       resolved_by_user_id: item.resolved_by_user_id,
       created_at: item.created_at,
       updated_at: item.updated_at,
-      resolved_at: item.resolved_at,
       author_name: item.author?.display_name || "Unknown",
       author_email: item.author?.email,
-      release_version: item.release?.version,
-      release_title: item.release?.title,
+      resolved_by_name: item.resolved_by?.display_name,
     }));
 
     return { success: true, feedbacks };
@@ -129,7 +125,7 @@ export async function getFeedback(
         `
         *,
         author:profiles!feedbacks_author_user_id_fkey(display_name, email),
-        release:releases(version, title)
+        resolved_by:profiles!feedbacks_resolved_by_user_id_fkey(display_name)
       `
       )
       .eq("id", id)
@@ -147,16 +143,13 @@ export async function getFeedback(
       title: data.title,
       content: data.content,
       status: data.status,
-      resolved_release_id: data.resolved_release_id,
       resolution_note: data.resolution_note,
       resolved_by_user_id: data.resolved_by_user_id,
       created_at: data.created_at,
       updated_at: data.updated_at,
-      resolved_at: data.resolved_at,
       author_name: data.author?.display_name || "Unknown",
       author_email: data.author?.email,
-      release_version: data.release?.version,
-      release_title: data.release?.title,
+      resolved_by_name: data.resolved_by?.display_name,
     };
 
     return { success: true, feedback };
@@ -301,7 +294,6 @@ export async function updateFeedbackStatus(
   id: string,
   status: FeedbackStatus,
   options?: {
-    resolvedReleaseId?: string;
     resolutionNote?: string;
     sendEmail?: boolean;
   }
@@ -313,6 +305,11 @@ export async function updateFeedbackStatus(
     const userInfo = await getUserInfo();
     if (!userInfo.role || !["admin", "leader"].includes(userInfo.role)) {
       return { success: false, error: "권한이 없습니다." };
+    }
+
+    // resolved 상태로 변경 시 resolution_note 필수
+    if (status === "resolved" && !options?.resolutionNote?.trim()) {
+      return { success: false, error: "해결내용을 입력해주세요." };
     }
 
     const supabase = await createClient();
@@ -330,14 +327,8 @@ export async function updateFeedbackStatus(
     // 상태 업데이트 데이터 구성
     const updateData: Record<string, unknown> = { status };
     if (status === "resolved") {
-      if (options?.resolvedReleaseId) {
-        updateData.resolved_release_id = options.resolvedReleaseId;
-      }
-      if (options?.resolutionNote) {
-        updateData.resolution_note = options.resolutionNote;
-      }
+      updateData.resolution_note = options?.resolutionNote?.trim();
       updateData.resolved_by_user_id = userInfo.userId;
-      updateData.resolved_at = new Date().toISOString();
     }
 
     // 피드백 상태 업데이트
@@ -351,16 +342,6 @@ export async function updateFeedbackStatus(
       return { success: false, error: error.message || "상태 변경 실패" };
     }
 
-    // 해결내용이 있으면 댓글로도 추가
-    if (status === "resolved" && options?.resolutionNote && userInfo.userId) {
-      await supabase.from("feedback_comments").insert({
-        feedback_id: id,
-        author_user_id: userInfo.userId,
-        content: options.resolutionNote,
-        comment_type: "resolution",
-      });
-    }
-
     // 이메일 발송 (선택적)
     if (status === "resolved" && options?.sendEmail && feedbackData?.author?.email) {
       try {
@@ -369,7 +350,6 @@ export async function updateFeedbackStatus(
           toName: feedbackData.author.display_name || "사용자",
           feedbackTitle: feedbackData.title || "피드백",
           resolutionNote: options.resolutionNote || "",
-          releaseVersion: options.resolvedReleaseId ? await getReleaseVersion(supabase, options.resolvedReleaseId) : undefined,
         });
       } catch (emailError) {
         console.error("[updateFeedbackStatus] Email error:", emailError);
@@ -387,18 +367,6 @@ export async function updateFeedbackStatus(
 }
 
 /**
- * 릴리즈 버전 조회 (내부용)
- */
-async function getReleaseVersion(supabase: any, releaseId: string): Promise<string | undefined> {
-  const { data } = await supabase
-    .from("releases")
-    .select("version")
-    .eq("id", releaseId)
-    .single();
-  return data?.version;
-}
-
-/**
  * 해결 완료 이메일 발송
  * 
  * 이메일 서비스 연동 필요 (Resend, SendGrid 등)
@@ -409,7 +377,6 @@ async function sendResolutionEmail(params: {
   toName: string;
   feedbackTitle: string;
   resolutionNote: string;
-  releaseVersion?: string;
 }): Promise<void> {
   // TODO: 이메일 서비스 연동 구현
   // Resend, SendGrid, SMTP 등 선택하여 구현

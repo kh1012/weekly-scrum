@@ -12,6 +12,7 @@ import { LoadingButton } from "@/components/common/LoadingButton";
 import { FeedbackKanbanCard } from "./FeedbackKanbanCard";
 import { CreateFeedbackModal } from "./CreateFeedbackModal";
 import { EditFeedbackModal } from "./EditFeedbackModal";
+import { ResolvePanel } from "@/components/feedback/ResolvePanel";
 import { updateFeedbackStatus } from "@/app/actions/feedback";
 import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
 
@@ -57,6 +58,10 @@ export function FeedbackKanbanView({
   const [updatingFeedbackId, setUpdatingFeedbackId] = useState<string | null>(
     null
   );
+  // Resolve 모달 상태
+  const [resolvingFeedbackId, setResolvingFeedbackId] = useState<string | null>(
+    null
+  );
 
   // 상태별로 그룹화
   const groupedFeedbacks = useMemo(() => {
@@ -90,10 +95,24 @@ export function FeedbackKanbanView({
     feedbackId: string,
     newStatus: FeedbackStatus
   ) => {
+    // resolved로 변경 시 모달 열기 (해결내용 입력 필요)
+    if (newStatus === "resolved") {
+      setResolvingFeedbackId(feedbackId);
+      return;
+    }
+
     setUpdatingFeedbackId(feedbackId);
 
     await updateFeedbackStatus(feedbackId, newStatus);
 
+    startTransition(() => {
+      router.refresh();
+    });
+  };
+
+  // Resolve 모달에서 완료 처리 성공 시
+  const handleResolveSuccess = () => {
+    setResolvingFeedbackId(null);
     startTransition(() => {
       router.refresh();
     });
@@ -297,6 +316,43 @@ export function FeedbackKanbanView({
           onSuccess={handleEditSuccess}
           feedback={editingFeedback}
         />
+      )}
+
+      {/* 피드백 완료 처리 모달 */}
+      {resolvingFeedbackId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* 배경 오버레이 */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setResolvingFeedbackId(null)}
+          />
+          
+          {/* 모달 컨텐츠 */}
+          <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* 헤더 */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                피드백 완료 처리
+              </h2>
+              <button
+                onClick={() => setResolvingFeedbackId(null)}
+                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 본문 */}
+            <div className="p-6">
+              <ResolvePanel
+                feedbackId={resolvingFeedbackId}
+                onResolved={handleResolveSuccess}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
