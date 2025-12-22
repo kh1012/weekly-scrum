@@ -172,6 +172,24 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             </p>
           </section>
 
+          {/* 타임라인 스크롤링 */}
+          <section>
+            <h3
+              className="text-base font-semibold mb-2"
+              style={{ color: "var(--notion-text)" }}
+            >
+              🖱️ 타임라인 스크롤링
+            </h3>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
+              타임라인 영역에서 <strong>휠 클릭(중간 버튼)</strong>을 누른 상태로 드래그하면
+              가로 및 세로 방향으로 자유롭게 스크롤할 수 있습니다.
+              마우스 커서가 이동 아이콘으로 변경되며, 넓은 타임라인을 편리하게 탐색할 수 있습니다.
+            </p>
+          </section>
+
           {/* FAQ */}
           <section>
             <h3
