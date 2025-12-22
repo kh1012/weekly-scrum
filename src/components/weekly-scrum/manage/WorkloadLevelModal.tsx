@@ -12,11 +12,16 @@ import type { WorkloadLevel } from "@/lib/supabase/types";
 import { WORKLOAD_LEVEL_LABELS } from "@/lib/supabase/types";
 import { LeafIcon, BoltIcon, FireIcon } from "@/components/common/Icons";
 import { LoadingButton } from "@/components/common/LoadingButton";
+import { formatWeekRangeCompact } from "@/lib/date/isoWeek";
 
 interface WorkloadLevelModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (workloadLevel: WorkloadLevel, workloadNote: string) => void;
+  /** 스냅샷 대상 연도 */
+  year: number;
+  /** 스냅샷 대상 주차 */
+  week: number;
   initialLevel?: WorkloadLevel | null;
   initialNote?: string;
   isLoading?: boolean;
@@ -51,12 +56,16 @@ export function WorkloadLevelModal({
   isOpen,
   onClose,
   onConfirm,
+  year,
+  week,
   initialLevel = null,
   initialNote = "",
   isLoading = false,
   required = false,
   confirmText = "저장하기",
 }: WorkloadLevelModalProps) {
+  const weekLabel = `W${week.toString().padStart(2, "0")}`;
+  const weekRange = formatWeekRangeCompact(year, week);
   const [workloadLevel, setWorkloadLevel] = useState<WorkloadLevel | null>(initialLevel);
   const [workloadNote, setWorkloadNote] = useState(initialNote);
   const [error, setError] = useState(false);
@@ -103,10 +112,10 @@ export function WorkloadLevelModal({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">
-                이번 주 작업 부담 수준
+                지난 주 작업 부담 수준
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                현재 작업 상태를 선택해주세요
+                {weekLabel} ({weekRange}) 기준으로 선택해주세요
               </p>
             </div>
             <button
@@ -206,24 +215,29 @@ export function WorkloadLevelModal({
           </div>
 
           {/* 안내 문구 */}
-          <p className="text-[11px] text-gray-400 flex items-start gap-1.5">
-            <svg
-              className="w-3.5 h-3.5 mt-0.5 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>
-              이 항목은 본인과 운영 판단을 담당하는 관리자에게만 공유됩니다.
-            </span>
-          </p>
+          <div className="text-[11px] text-gray-400 space-y-1.5">
+            <p className="flex items-start gap-1.5">
+              <svg
+                className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>
+                리소스 분배와 업무 집중 상태 파악을 위한 참고 자료로 활용됩니다. 솔직한 상황 공유 부탁드립니다.
+              </span>
+            </p>
+            <p className="pl-5 text-gray-300">
+              본인과 운영 담당 관리자에게만 공유됩니다.
+            </p>
+          </div>
         </div>
 
         {/* 푸터 */}

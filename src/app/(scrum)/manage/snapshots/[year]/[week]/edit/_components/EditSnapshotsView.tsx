@@ -981,6 +981,8 @@ function EditSnapshotsViewInner({
         isOpen={showWorkloadModal}
         onClose={() => setShowWorkloadModal(false)}
         onConfirm={handleSaveConfirm}
+        year={year}
+        week={week}
         initialLevel={workloadLevel}
         initialNote={workloadNote}
         isLoading={isSaving}
