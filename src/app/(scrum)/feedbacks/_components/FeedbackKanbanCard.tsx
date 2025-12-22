@@ -233,10 +233,10 @@ export function FeedbackKanbanCard({
     <div className="relative rounded-xl p-4 bg-white border border-gray-200 shadow-sm">
       {/* New 태그 (1주일 이내) */}
       {isNew() && (
-        <div className="absolute -top-1.5 -right-1.5 z-10">
-          <span className="relative flex h-6 w-12">
+        <div className="absolute top-2 right-2 z-10">
+          <span className="relative flex h-5 w-11">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-rose-400 to-orange-400 opacity-75" />
-            <span className="relative inline-flex items-center justify-center rounded-full h-6 w-12 bg-gradient-to-r from-rose-500 to-orange-500 text-[10px] font-bold text-white shadow-lg">
+            <span className="relative inline-flex items-center justify-center rounded-full h-5 w-11 bg-gradient-to-r from-rose-500 to-orange-500 text-[9px] font-bold text-white shadow-lg">
               NEW
             </span>
           </span>
