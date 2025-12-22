@@ -1084,22 +1084,22 @@ export function DraftTimeline({
                       isSelected={bar.clientUid === selectedBarId}
                       isEditing={isEditing}
                       onSelect={() => selectBar(bar.clientUid)}
-                      onDoubleClick={(e?: React.MouseEvent) => {
-                        if (readOnly) {
-                          // readOnly 모드: 팝오버 표시
-                          const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect();
-                          setViewPopover({
-                            bar,
-                            position: {
-                              x: rect ? rect.left + rect.width / 2 : e?.clientX || 0,
-                              y: rect ? rect.bottom + 8 : (e?.clientY || 0) + 8,
-                            },
-                          });
-                        } else {
-                          // 편집 모드: EditPlanModal 표시
-                          setShowEditModal(bar);
-                        }
-                      }}
+                                    onDoubleClick={(e?: React.MouseEvent) => {
+                                        // 읽기전용 모드 또는 편집 모드가 아닌 경우: 팝오버 표시
+                                        if (readOnly || !isEditing) {
+                                          const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect();
+                                          setViewPopover({
+                                            bar,
+                                            position: {
+                                              x: rect ? rect.left + rect.width / 2 : e?.clientX || 0,
+                                              y: rect ? rect.bottom + 8 : (e?.clientY || 0) + 8,
+                                            },
+                                          });
+                                        } else {
+                                          // 편집 모드: EditPlanModal 표시
+                                          setShowEditModal(bar);
+                                        }
+                                      }}
                       dayWidth={DAY_WIDTH}
                       rangeStart={rangeStart}
                       onDragDateChange={onDragDateChange}
