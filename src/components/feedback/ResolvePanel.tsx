@@ -21,6 +21,8 @@ export function ResolvePanel({
   onResolved,
 }: ResolvePanelProps) {
   const [selectedReleaseId, setSelectedReleaseId] = useState("");
+  const [resolutionNote, setResolutionNote] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -69,6 +71,11 @@ export function ResolvePanel({
       return;
     }
 
+    if (!resolutionNote.trim()) {
+      setError("해결내용을 입력해주세요");
+      return;
+    }
+
     const confirmed = confirm("이 피드백을 해결 완료로 표시하시겠습니까?");
     if (!confirmed) return;
 
@@ -78,7 +85,11 @@ export function ResolvePanel({
     const result = await updateFeedbackStatus(
       feedbackId,
       "resolved",
-      selectedReleaseId
+      {
+        resolvedReleaseId: selectedReleaseId,
+        resolutionNote: resolutionNote.trim(),
+        sendEmail,
+      }
     );
 
     setIsSubmitting(false);
@@ -108,6 +119,28 @@ export function ResolvePanel({
       </h3>
 
       <div className="space-y-4">
+        {/* 해결내용 입력 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            해결내용 <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            value={resolutionNote}
+            onChange={(e) => setResolutionNote(e.target.value)}
+            placeholder="어떻게 해결되었는지 설명해주세요..."
+            rows={3}
+            disabled={isSubmitting}
+            className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none resize-none disabled:opacity-50"
+            style={{
+              background: "white",
+              border: "1px solid #e2e8f0",
+            }}
+          />
+          <p className="mt-1 text-xs text-gray-400">
+            이 내용은 댓글로도 자동 등록됩니다.
+          </p>
+        </div>
+
         {/* 릴리즈 선택 - 커스텀 드롭다운 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -233,6 +266,36 @@ export function ResolvePanel({
           </div>
         </div>
 
+        {/* 이메일 발송 옵션 */}
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={sendEmail}
+              onChange={(e) => setSendEmail(e.target.checked)}
+              disabled={isSubmitting}
+              className="sr-only peer"
+            />
+            <div
+              className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all
+                         peer-checked:bg-green-500 peer-checked:border-green-500
+                         border-gray-300 group-hover:border-gray-400"
+            >
+              {sendEmail && (
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span className="text-sm text-gray-600">담당자에게 이메일 발송</span>
+          </div>
+        </label>
+
         {/* 에러 메시지 */}
         {error && (
           <div
@@ -252,7 +315,7 @@ export function ResolvePanel({
         {/* 버튼 */}
         <button
           onClick={handleResolve}
-          disabled={isSubmitting || !selectedReleaseId}
+          disabled={isSubmitting || !selectedReleaseId || !resolutionNote.trim()}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 disabled:hover:translate-y-0"
           style={{
             background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",

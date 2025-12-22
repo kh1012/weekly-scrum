@@ -11,6 +11,7 @@ import type {
   FeedbackWithAuthor,
   FeedbackWithDetails,
   FeedbackStatus,
+  FeedbackComment,
   Release,
 } from "@/lib/data/feedback";
 
@@ -91,6 +92,8 @@ export async function listFeedbacks(): Promise<{
       content: item.content,
       status: item.status,
       resolved_release_id: item.resolved_release_id,
+      resolution_note: item.resolution_note,
+      resolved_by_user_id: item.resolved_by_user_id,
       created_at: item.created_at,
       updated_at: item.updated_at,
       resolved_at: item.resolved_at,
@@ -145,6 +148,8 @@ export async function getFeedback(
       content: data.content,
       status: data.status,
       resolved_release_id: data.resolved_release_id,
+      resolution_note: data.resolution_note,
+      resolved_by_user_id: data.resolved_by_user_id,
       created_at: data.created_at,
       updated_at: data.updated_at,
       resolved_at: data.resolved_at,
@@ -295,24 +300,47 @@ export async function updateFeedback(
 export async function updateFeedbackStatus(
   id: string,
   status: FeedbackStatus,
-  resolvedReleaseId?: string
+  options?: {
+    resolvedReleaseId?: string;
+    resolutionNote?: string;
+    sendEmail?: boolean;
+  }
 ): Promise<{
   success: boolean;
   error?: string;
 }> {
   try {
-    const role = await getUserRole();
-    if (!role || !["admin", "leader"].includes(role)) {
+    const userInfo = await getUserInfo();
+    if (!userInfo.role || !["admin", "leader"].includes(userInfo.role)) {
       return { success: false, error: "권한이 없습니다." };
     }
 
     const supabase = await createClient();
 
-    const updateData: any = { status };
-    if (status === "resolved" && resolvedReleaseId) {
-      updateData.resolved_release_id = resolvedReleaseId;
+    // 피드백 정보 조회 (이메일 발송용)
+    const { data: feedbackData } = await supabase
+      .from("feedbacks")
+      .select(`
+        *,
+        author:profiles!feedbacks_author_user_id_fkey(display_name, email)
+      `)
+      .eq("id", id)
+      .single();
+
+    // 상태 업데이트 데이터 구성
+    const updateData: Record<string, unknown> = { status };
+    if (status === "resolved") {
+      if (options?.resolvedReleaseId) {
+        updateData.resolved_release_id = options.resolvedReleaseId;
+      }
+      if (options?.resolutionNote) {
+        updateData.resolution_note = options.resolutionNote;
+      }
+      updateData.resolved_by_user_id = userInfo.userId;
+      updateData.resolved_at = new Date().toISOString();
     }
 
+    // 피드백 상태 업데이트
     const { error } = await supabase
       .from("feedbacks")
       .update(updateData)
@@ -323,6 +351,32 @@ export async function updateFeedbackStatus(
       return { success: false, error: error.message || "상태 변경 실패" };
     }
 
+    // 해결내용이 있으면 댓글로도 추가
+    if (status === "resolved" && options?.resolutionNote && userInfo.userId) {
+      await supabase.from("feedback_comments").insert({
+        feedback_id: id,
+        author_user_id: userInfo.userId,
+        content: options.resolutionNote,
+        comment_type: "resolution",
+      });
+    }
+
+    // 이메일 발송 (선택적)
+    if (status === "resolved" && options?.sendEmail && feedbackData?.author?.email) {
+      try {
+        await sendResolutionEmail({
+          toEmail: feedbackData.author.email,
+          toName: feedbackData.author.display_name || "사용자",
+          feedbackTitle: feedbackData.title || "피드백",
+          resolutionNote: options.resolutionNote || "",
+          releaseVersion: options.resolvedReleaseId ? await getReleaseVersion(supabase, options.resolvedReleaseId) : undefined,
+        });
+      } catch (emailError) {
+        console.error("[updateFeedbackStatus] Email error:", emailError);
+        // 이메일 실패해도 상태 변경은 성공으로 처리
+      }
+    }
+
     revalidatePath("/feedbacks");
     revalidatePath(`/feedbacks/${id}`);
     return { success: true };
@@ -330,6 +384,47 @@ export async function updateFeedbackStatus(
     console.error("[updateFeedbackStatus] Unexpected error:", err);
     return { success: false, error: "알 수 없는 오류가 발생했습니다." };
   }
+}
+
+/**
+ * 릴리즈 버전 조회 (내부용)
+ */
+async function getReleaseVersion(supabase: any, releaseId: string): Promise<string | undefined> {
+  const { data } = await supabase
+    .from("releases")
+    .select("version")
+    .eq("id", releaseId)
+    .single();
+  return data?.version;
+}
+
+/**
+ * 해결 완료 이메일 발송
+ * 
+ * 이메일 서비스 연동 필요 (Resend, SendGrid 등)
+ * 현재는 로그만 출력 - 실제 연동 시 구현 필요
+ */
+async function sendResolutionEmail(params: {
+  toEmail: string;
+  toName: string;
+  feedbackTitle: string;
+  resolutionNote: string;
+  releaseVersion?: string;
+}): Promise<void> {
+  // TODO: 이메일 서비스 연동 구현
+  // Resend, SendGrid, SMTP 등 선택하여 구현
+  console.log("[sendResolutionEmail] Email would be sent to:", params.toEmail);
+  console.log("[sendResolutionEmail] Subject: 피드백이 해결되었습니다 -", params.feedbackTitle);
+  console.log("[sendResolutionEmail] Resolution Note:", params.resolutionNote);
+  
+  // 예시: Resend 사용 시
+  // const resend = new Resend(process.env.RESEND_API_KEY);
+  // await resend.emails.send({
+  //   from: 'noreply@yourdomain.com',
+  //   to: params.toEmail,
+  //   subject: `[해결됨] ${params.feedbackTitle}`,
+  //   html: `<p>${params.toName}님, 피드백이 해결되었습니다.</p><p>${params.resolutionNote}</p>`,
+  // });
 }
 
 /**
