@@ -32,12 +32,10 @@ export function isPointFlag(flag: DraftFlag): boolean {
 /**
  * Flag들을 Lane에 packing
  *
- * 알고리즘 (greedy):
- * 1. flags를 startDate asc → endDate asc → orderIndex asc → clientId asc 정렬
- * 2. 각 flag에 대해:
- *    - 첫 번째로 빈 lane 찾기 (laneEndIndex < flag.startIndex)
- *    - 없으면 새 lane 생성
- *    - laneEndIndex 업데이트
+ * 알고리즘:
+ * 1. laneHint가 있는 flags를 해당 레인에 우선 배치 (충돌 없으면)
+ * 2. 나머지 flags는 greedy로 빈 레인 탐색하여 배치
+ * 3. 겹치거나 레인 확장이 필요하면 자동으로 레인 생성
  *
  * @returns { laneCount, items }
  */
@@ -68,53 +66,61 @@ export function packFlagsIntoLanes(args: {
     rangeStart
   );
 
-  // activeFlags 정렬: orderIndex asc → clientId asc (사용자 의도 기반 순서)
-  // 기존의 startDate/endDate 기반 정렬 규칙 제거 - 사용자가 드래그로 순서 조정 가능
-  const sorted = [...activeFlags].sort((a, b) => {
-    const orderCompare = a.orderIndex - b.orderIndex;
-    if (orderCompare !== 0) return orderCompare;
+  // 각 flag의 dayIndex 미리 계산
+  type FlagWithRange = {
+    flag: DraftFlag;
+    startIndex: number;
+    endIndex: number;
+  };
 
-    return a.clientId.localeCompare(b.clientId);
-  });
+  const flagsWithRange: FlagWithRange[] = activeFlags
+    .map((flag) => {
+      let startIndex = dateToDayIndex(flag.startDate, rangeStart);
+      let endIndex = dateToDayIndex(flag.endDate, rangeStart);
 
-  // 각 레인의 마지막 점유 endIndex를 추적
-  const laneEndIndices: number[] = [];
+      // 범위 밖이면 null 반환
+      if (endIndex < 0 || startIndex > rangeEndIndex) {
+        return null;
+      }
+
+      // Clamping: 가시 범위에 맞게 조정
+      startIndex = Math.max(0, startIndex);
+      endIndex = Math.min(rangeEndIndex, endIndex);
+
+      return { flag, startIndex, endIndex };
+    })
+    .filter((f): f is FlagWithRange => f !== null);
+
+  // laneHint가 있는 flags와 없는 flags 분리
+  const hintsFlags = flagsWithRange.filter((f) => f.flag.laneHint !== undefined);
+  const noHintFlags = flagsWithRange.filter((f) => f.flag.laneHint === undefined);
+
+  // 레인별 점유 구간 추적: laneOccupancy[laneIndex] = [{start, end}, ...]
+  const laneOccupancy: Array<Array<{ start: number; end: number }>> = [];
   const items: PackedFlagLaneItem[] = [];
 
-  for (const flag of sorted) {
-    // dayIndex 계산 (clamping 포함)
-    let startIndex = dateToDayIndex(flag.startDate, rangeStart);
-    let endIndex = dateToDayIndex(flag.endDate, rangeStart);
+  // 특정 레인에 해당 구간이 비어있는지 확인
+  const isLaneFree = (laneIndex: number, startIndex: number, endIndex: number): boolean => {
+    if (!laneOccupancy[laneIndex]) return true;
+    return !laneOccupancy[laneIndex].some(
+      (occ) => !(endIndex < occ.start || startIndex > occ.end)
+    );
+  };
 
-    // 범위 밖이면 skip (완전히 범위 밖인 경우)
-    if (endIndex < 0 || startIndex > rangeEndIndex) {
-      continue;
+  // 레인에 구간 점유 등록
+  const occupyLane = (laneIndex: number, startIndex: number, endIndex: number) => {
+    if (!laneOccupancy[laneIndex]) {
+      laneOccupancy[laneIndex] = [];
     }
+    laneOccupancy[laneIndex].push({ start: startIndex, end: endIndex });
+  };
 
-    // Clamping: 가시 범위에 맞게 조정
-    startIndex = Math.max(0, startIndex);
-    endIndex = Math.min(rangeEndIndex, endIndex);
+  // flag를 items에 추가
+  const addItem = (flagWithRange: FlagWithRange, assignedLane: number) => {
+    const { flag, startIndex, endIndex } = flagWithRange;
 
-    // 빈 lane 찾기 (laneEndIndex < startIndex - 1)
-    // Point flag도 공간 필요하므로 startIndex와 같은 날에 끝나는 것은 겹침
-    let assignedLane = -1;
-    for (let lane = 0; lane < laneEndIndices.length; lane++) {
-      if (laneEndIndices[lane] < startIndex) {
-        assignedLane = lane;
-        break;
-      }
-    }
+    occupyLane(assignedLane, startIndex, endIndex);
 
-    // 새 lane 필요
-    if (assignedLane === -1) {
-      assignedLane = laneEndIndices.length;
-      laneEndIndices.push(-1); // 초기값
-    }
-
-    // laneEndIndex 업데이트
-    laneEndIndices[assignedLane] = endIndex;
-
-    // 픽셀 계산
     const startX = startIndex * dayWidth;
     const endX = (endIndex + 1) * dayWidth;
     const width = endX - startX;
@@ -129,10 +135,59 @@ export function packFlagsIntoLanes(args: {
       width,
       isPoint,
     });
+  };
+
+  // 1단계: laneHint가 있는 flags 먼저 배치
+  // laneHint 오름차순 정렬 후 배치 (낮은 레인부터)
+  const sortedHintFlags = [...hintsFlags].sort(
+    (a, b) => (a.flag.laneHint ?? 0) - (b.flag.laneHint ?? 0)
+  );
+
+  for (const flagWithRange of sortedHintFlags) {
+    const { flag, startIndex, endIndex } = flagWithRange;
+    const desiredLane = flag.laneHint ?? 0;
+
+    // 해당 레인이 비어있으면 그대로 배치
+    if (isLaneFree(desiredLane, startIndex, endIndex)) {
+      addItem(flagWithRange, desiredLane);
+    } else {
+      // 충돌 시 noHintFlags로 이동하여 greedy 배치
+      noHintFlags.push(flagWithRange);
+    }
   }
 
+  // 2단계: laneHint 없는 flags를 orderIndex 순서로 greedy 배치
+  const sortedNoHintFlags = [...noHintFlags].sort((a, b) => {
+    const orderCompare = a.flag.orderIndex - b.flag.orderIndex;
+    if (orderCompare !== 0) return orderCompare;
+    return a.flag.clientId.localeCompare(b.flag.clientId);
+  });
+
+  for (const flagWithRange of sortedNoHintFlags) {
+    const { startIndex, endIndex } = flagWithRange;
+
+    // 빈 레인 찾기 (0번부터 순차 탐색)
+    let assignedLane = -1;
+    for (let lane = 0; lane < laneOccupancy.length; lane++) {
+      if (isLaneFree(lane, startIndex, endIndex)) {
+        assignedLane = lane;
+        break;
+      }
+    }
+
+    // 모든 기존 레인이 차있으면 새 레인 생성
+    if (assignedLane === -1) {
+      assignedLane = laneOccupancy.length;
+    }
+
+    addItem(flagWithRange, assignedLane);
+  }
+
+  // 최종 레인 개수 계산
+  const maxLane = items.reduce((max, item) => Math.max(max, item.laneIndex), -1);
+
   return {
-    laneCount: laneEndIndices.length,
+    laneCount: maxLane + 1,
     items,
   };
 }

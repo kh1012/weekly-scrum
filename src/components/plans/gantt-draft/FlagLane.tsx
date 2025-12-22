@@ -71,34 +71,49 @@ export function FlagLane({
   const effectiveLaneCount = Math.max(1, laneCount);
   const totalHeight = effectiveLaneCount * FLAG_LANE_HEIGHT;
 
-  // 레인 스왑 핸들러: 해당 Flag의 orderIndex를 변경하여 다른 레인으로 이동
+  // 레인 스왑 핸들러: 해당 Flag의 laneHint를 설정하여 원하는 레인에 배치
   const handleSwapOrder = useCallback(
     (flagId: string, currentLaneIndex: number, targetLaneIndex: number) => {
       // 타겟 레인에 있는 Flag 찾기
+      const currentItem = items.find((item) => item.flagId === flagId);
       const targetItem = items.find(
-        (item) => item.laneIndex === targetLaneIndex
+        (item) => item.laneIndex === targetLaneIndex && item.flagId !== flagId
       );
       const currentFlag = flags.find((f) => f.clientId === flagId);
 
-      if (!currentFlag) return;
+      if (!currentFlag || !currentItem) return;
 
-      if (targetItem) {
-        // 타겟 레인에 Flag가 있으면 orderIndex 스왑
+      // 충돌 검사: 타겟 레인에서 현재 flag의 기간과 겹치는 다른 flag가 있는지 확인
+      const hasConflict = items.some((item) => {
+        if (item.flagId === flagId) return false;
+        if (item.laneIndex !== targetLaneIndex) return false;
+        // 기간 겹침 검사
+        const itemStart = new Date(item.startDate).getTime();
+        const itemEnd = new Date(item.endDate).getTime();
+        const currentStart = new Date(currentItem.startDate).getTime();
+        const currentEnd = new Date(currentItem.endDate).getTime();
+        return !(currentEnd < itemStart || currentStart > itemEnd);
+      });
+
+      if (hasConflict && targetItem) {
+        // 충돌이 있고 타겟 레인에 Flag가 있으면 orderIndex 스왑
         const targetFlag = flags.find((f) => f.clientId === targetItem.flagId);
         if (targetFlag) {
           const tempOrder = currentFlag.orderIndex;
+          // 둘 다 laneHint 제거하고 orderIndex만 스왑
           updateFlagLocal(currentFlag.clientId, {
             orderIndex: targetFlag.orderIndex,
+            laneHint: undefined,
           });
-          updateFlagLocal(targetFlag.clientId, { orderIndex: tempOrder });
+          updateFlagLocal(targetFlag.clientId, {
+            orderIndex: tempOrder,
+            laneHint: undefined,
+          });
         }
       } else {
-        // 타겟 레인이 비어있으면 orderIndex 조정
-        // 위로 이동 시 orderIndex 감소, 아래로 이동 시 증가
-        const delta = targetLaneIndex - currentLaneIndex;
-        const newOrderIndex = currentFlag.orderIndex + delta;
+        // 빈 레인으로 이동: laneHint 설정하여 해당 레인에 고정
         updateFlagLocal(currentFlag.clientId, {
-          orderIndex: Math.max(0, newOrderIndex),
+          laneHint: targetLaneIndex,
         });
       }
     },

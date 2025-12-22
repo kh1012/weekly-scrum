@@ -42,6 +42,8 @@ export interface DraftFlag {
   endDate: ISODate;
   color?: string | null;
   orderIndex: number;
+  /** 사용자가 명시적으로 지정한 레인 인덱스 (빈 레인 이동 시 설정) */
+  laneHint?: number;
   /** 변경됨 플래그 */
   dirty: boolean;
   /** 삭제됨 플래그 (undo 위해 유지) */

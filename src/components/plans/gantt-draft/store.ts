@@ -238,7 +238,7 @@ interface DraftActions {
   /** Flag 수정 (로컬 상태만 변경) */
   updateFlagLocal: (
     clientId: string,
-    updates: Partial<Pick<DraftFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color">>
+    updates: Partial<Pick<DraftFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color" | "laneHint">>
   ) => void;
   /** Flag 삭제 (로컬 상태만 변경, soft delete) */
   deleteFlag: (clientId: string) => void;
