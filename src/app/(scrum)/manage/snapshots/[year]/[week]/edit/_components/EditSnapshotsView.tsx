@@ -538,7 +538,8 @@ function EditSnapshotsViewInner({
 
   // 저장 (새 모드일 때는 생성, 편집 모드일 때는 업데이트)
   const handleSave = async () => {
-    if (tempSnapshots.length === 0) {
+    // 새 모드에서만 엔트리 필수 검증 (편집 모드에서는 모두 삭제도 허용)
+    if (isNewMode && tempSnapshots.length === 0) {
       showToast("저장할 항목이 없습니다.", "error");
       return;
     }
