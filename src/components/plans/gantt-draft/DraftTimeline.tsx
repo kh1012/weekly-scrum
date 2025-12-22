@@ -531,6 +531,10 @@ export function DraftTimeline({
     if (e.button !== 1 || !containerRef.current) return; // 휠 클릭(middle button)이 아니면 종료
     
     e.preventDefault();
+    
+    // 호버 프리뷰 숨기기
+    setHoverInfo(null);
+    
     setMiddleClickScroll({
       isActive: true,
       startX: e.clientX,
@@ -1054,7 +1058,8 @@ export function DraftTimeline({
                   handleMouseDown(e, row.rowId, row, laneIndex);
                 }}
                 onMouseMove={(e) => {
-                  if (isEditing && !dragCreate?.isActive) {
+                  // 편집 모드이고, 드래그 중이 아니고, 휠 클릭 스크롤 중이 아닐 때만 호버 프리뷰 표시
+                  if (isEditing && !dragCreate?.isActive && !middleClickScroll?.isActive) {
                     const rect = containerRef.current?.getBoundingClientRect();
                     const nodeRect = e.currentTarget.getBoundingClientRect();
                     if (rect) {
