@@ -153,6 +153,20 @@ export default async function AdminDashboardPage() {
     (m) => (m.weeklyEntries[currentWeekKey] || 0) > 0
   ).length;
 
+  // 이번 주 부담 수준 통계
+  const workloadStats = {
+    light: 0,
+    normal: 0,
+    burden: 0,
+  };
+  
+  memberDataList.forEach((m) => {
+    const workload = m.weeklyWorkload[currentWeekKey];
+    if (workload?.level === 'light') workloadStats.light++;
+    else if (workload?.level === 'normal') workloadStats.normal++;
+    else if (workload?.level === 'burden') workloadStats.burden++;
+  });
+
   return (
     <AdminDashboardView
       stats={{
@@ -160,6 +174,9 @@ export default async function AdminDashboardPage() {
         totalSnapshots,
         totalEntries,
         completedThisWeek,
+        workloadLight: workloadStats.light,
+        workloadNormal: workloadStats.normal,
+        workloadBurden: workloadStats.burden,
       }}
       recentWeeks={recentWeeks}
       memberDataList={memberDataList}

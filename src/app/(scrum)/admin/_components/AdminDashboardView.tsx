@@ -5,6 +5,7 @@
 
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { WORKLOAD_LEVEL_LABELS } from "@/lib/supabase/types";
@@ -31,6 +32,9 @@ interface AdminDashboardViewProps {
     totalSnapshots: number;
     totalEntries: number;
     completedThisWeek: number;
+    workloadLight: number;
+    workloadNormal: number;
+    workloadBurden: number;
   };
   recentWeeks: { year: number; week: number; label: string }[];
   memberDataList: MemberData[];
@@ -74,52 +78,92 @@ export function AdminDashboardView({
         </div>
 
         {/* 통계 카드 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            label="전체 멤버"
-            value={stats.totalMembers}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            }
-            gradientFrom="from-blue-500"
-            gradientTo="to-cyan-400"
-          />
-          <StatCard
-            label="전체 스냅샷"
-            value={stats.totalSnapshots}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            }
-            gradientFrom="from-indigo-500"
-            gradientTo="to-purple-400"
-          />
-          <StatCard
-            label="전체 엔트리"
-            value={stats.totalEntries}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            }
-            gradientFrom="from-emerald-500"
-            gradientTo="to-teal-400"
-          />
-          <StatCard
-            label="이번 주 작성 완료"
-            value={`${stats.completedThisWeek}/${stats.totalMembers}`}
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-            gradientFrom="from-rose-500"
-            gradientTo="to-pink-400"
-            highlight={stats.completedThisWeek === stats.totalMembers}
-          />
+        <div className="space-y-4 mb-8">
+          {/* 첫 번째 줄: 기본 통계 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard
+              label="전체 멤버"
+              value={stats.totalMembers}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              }
+              gradientFrom="from-blue-500"
+              gradientTo="to-cyan-400"
+            />
+            <StatCard
+              label="전체 스냅샷"
+              value={stats.totalSnapshots}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              }
+              gradientFrom="from-indigo-500"
+              gradientTo="to-purple-400"
+            />
+            <StatCard
+              label="전체 엔트리"
+              value={stats.totalEntries}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              }
+              gradientFrom="from-emerald-500"
+              gradientTo="to-teal-400"
+            />
+            <StatCard
+              label="이번 주 작성 완료"
+              value={`${stats.completedThisWeek}/${stats.totalMembers}`}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              gradientFrom="from-rose-500"
+              gradientTo="to-pink-400"
+              highlight={stats.completedThisWeek === stats.totalMembers}
+            />
+          </div>
+
+          {/* 두 번째 줄: 부담 수준 통계 */}
+          <div className="grid grid-cols-3 gap-4">
+            <StatCard
+              label="여유"
+              value={stats.workloadLight}
+              icon={
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 512 512">
+                  <path d="M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5h88c8.8 0 16 7.2 16 16s-7.2 16-16 16H288 216s0 0 0 0c-16.6 0-32.7 1.9-48.3 5.4c-25.9 5.9-49.9 16.4-71.4 30.7c0 0 0 0 0 0C38.3 298.8 0 364.9 0 440v16c0 13.3 10.7 24 24 24s24-10.7 24-24V440c0-48.7 20.7-92.5 53.8-123.2C121.6 392.3 190.3 448 272 448l1 0c132.1-.7 239-130.9 239-291.4c0-42.6-7.5-83.1-21.1-119.6c-2.6-6.9-12.7-6.6-16.2-.1C455.9 72.1 418.7 96 376 96L272 96z" />
+                </svg>
+              }
+              gradientFrom="from-emerald-500"
+              gradientTo="to-green-400"
+            />
+            <StatCard
+              label="적정"
+              value={stats.workloadNormal}
+              icon={
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 448 512">
+                  <path d="M349.4 44.6c5.9-13.7 1.5-29.7-10.6-38.5s-28.6-8-39.9 1.8l-256 224c-10 8.8-13.6 22.9-8.9 35.3S50.7 288 64 288H175.5L98.6 467.4c-5.9 13.7-1.5 29.7 10.6 38.5s28.6 8 39.9-1.8l256-224c10-8.8 13.6-22.9 8.9-35.3s-16.6-20.7-30-20.7H272.5L349.4 44.6z" />
+                </svg>
+              }
+              gradientFrom="from-blue-500"
+              gradientTo="to-sky-400"
+            />
+            <StatCard
+              label="부담"
+              value={stats.workloadBurden}
+              icon={
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 448 512">
+                  <path d="M159.3 5.4c7.8-7.3 19.9-7.2 27.7 .1c27.6 25.9 53.5 53.8 77.7 84c11-14.4 23.5-30.1 37-42.9c7.9-7.4 20.1-7.4 28 .1c34.6 33 63.9 76.6 84.5 118c20.3 40.8 33.8 82.5 33.8 111.9C448 404.2 348.2 512 224 512C98.4 512 0 404.1 0 276.5c0-38.4 17.8-85.3 45.4-131.7C73.3 97.7 112.7 48.6 159.3 5.4zM225.7 416c25.3 0 47.7-7 68.8-21c42.1-29.4 53.4-88.2 28.1-134.4c-4.5-9-16-9.6-22.5-2l-25.2 29.3c-6.6 7.6-18.5 7.4-24.7-.5c-16.5-21-46-58.5-62.8-79.8c-6.3-8-18.3-8.1-24.7-.1c-33.8 42.5-50.8 69.3-50.8 99.4C112 375.4 162.6 416 225.7 416z" />
+                </svg>
+              }
+              gradientFrom="from-red-500"
+              gradientTo="to-orange-400"
+            />
+          </div>
         </div>
 
         {/* 주차별 스냅샷 현황 테이블 */}
@@ -147,13 +191,17 @@ export function AdminDashboardView({
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50/80">
-                  <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <th 
+                    rowSpan={2}
+                    className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap border-r border-gray-200"
+                  >
                     멤버
                   </th>
                   {recentWeeks.map((w, idx) => (
                     <th
                       key={`${w.year}-${w.label}`}
-                      className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider"
+                      colSpan={2}
+                      className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-200"
                       style={{
                         color: idx === 0 ? "#3b82f6" : "#6b7280",
                         background: idx === 0 ? "rgba(59, 130, 246, 0.05)" : undefined,
@@ -167,11 +215,33 @@ export function AdminDashboardView({
                     </th>
                   ))}
                 </tr>
+                <tr className="bg-gray-50/80">
+                  {recentWeeks.map((w, idx) => (
+                    <React.Fragment key={`${w.year}-${w.label}-sub`}>
+                      <th
+                        className="px-2 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100"
+                        style={{
+                          background: idx === 0 ? "rgba(59, 130, 246, 0.03)" : undefined,
+                        }}
+                      >
+                        부담
+                      </th>
+                      <th
+                        className="px-2 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200"
+                        style={{
+                          background: idx === 0 ? "rgba(59, 130, 246, 0.03)" : undefined,
+                        }}
+                      >
+                        개수
+                      </th>
+                    </React.Fragment>
+                  ))}
+                </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {memberDataList.map((member) => (
                   <tr key={member.userId} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-3 py-2.5">
+                    <td className="px-3 py-2.5 border-r border-gray-200">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
@@ -209,30 +279,14 @@ export function AdminDashboardView({
                       const hasEntries = entryCount > 0;
 
                       return (
-                        <td
-                          key={weekKey}
-                          className="px-3 py-2.5 text-center"
-                          style={{
-                            background: isCurrentWeek ? "rgba(59, 130, 246, 0.05)" : undefined,
-                          }}
-                        >
-                          <div className="flex flex-col items-center gap-1.5">
-                            {/* 엔트리 개수 */}
-                            <span
-                              className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md text-xs font-semibold transition-all ${
-                                hasEntries
-                                  ? isCurrentWeek
-                                    ? "bg-green-100 text-green-700 shadow-sm"
-                                    : "bg-gray-100 text-gray-700"
-                                  : isCurrentWeek
-                                  ? "bg-red-50 text-red-400"
-                                  : "text-gray-300"
-                              }`}
-                            >
-                              {entryCount}
-                            </span>
-
-                            {/* 부담 수준 */}
+                        <React.Fragment key={weekKey}>
+                          {/* 부담 수준 열 */}
+                          <td
+                            className="px-2 py-2.5 text-center border-r border-gray-100"
+                            style={{
+                              background: isCurrentWeek ? "rgba(59, 130, 246, 0.03)" : undefined,
+                            }}
+                          >
                             {workload?.level ? (
                               <div
                                 className="group relative inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-help"
@@ -255,8 +309,30 @@ export function AdminDashboardView({
                             ) : (
                               <span className="text-[10px] text-gray-300">-</span>
                             )}
-                          </div>
-                        </td>
+                          </td>
+
+                          {/* 엔트리 개수 열 */}
+                          <td
+                            className="px-2 py-2.5 text-center border-r border-gray-200"
+                            style={{
+                              background: isCurrentWeek ? "rgba(59, 130, 246, 0.03)" : undefined,
+                            }}
+                          >
+                            <span
+                              className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md text-xs font-semibold transition-all ${
+                                hasEntries
+                                  ? isCurrentWeek
+                                    ? "bg-green-100 text-green-700 shadow-sm"
+                                    : "bg-gray-100 text-gray-700"
+                                  : isCurrentWeek
+                                  ? "bg-red-50 text-red-400"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              {entryCount}
+                            </span>
+                          </td>
+                        </React.Fragment>
                       );
                     })}
                   </tr>
