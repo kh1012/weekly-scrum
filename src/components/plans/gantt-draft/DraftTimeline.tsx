@@ -117,6 +117,15 @@ export function DraftTimeline({
     position: { x: number; y: number };
   } | null>(null);
 
+  // 휠 클릭 스크롤 상태
+  const [middleClickScroll, setMiddleClickScroll] = useState<{
+    isActive: boolean;
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+  } | null>(null);
+
   const allRows = useDraftStore((s) => s.rows);
   const allBars = useDraftStore((s) => s.bars);
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
@@ -473,6 +482,12 @@ export function DraftTimeline({
   );
 
   const handleMouseUp = useCallback(() => {
+    // 휠 클릭 스크롤 종료
+    if (middleClickScroll?.isActive) {
+      setMiddleClickScroll(null);
+      return;
+    }
+
     if (!dragCreate?.isActive) return;
 
     const startX = Math.min(dragCreate.startX, dragCreate.currentX);
@@ -506,7 +521,32 @@ export function DraftTimeline({
     }
 
     setDragCreate(null);
-  }, [dragCreate, rangeStart]);
+  }, [dragCreate, rangeStart, middleClickScroll]);
+
+  // 휠 클릭 스크롤 시작
+  const handleMiddleClickStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 1 || !containerRef.current) return; // 휠 클릭(middle button)이 아니면 종료
+    
+    e.preventDefault();
+    setMiddleClickScroll({
+      isActive: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollLeft: containerRef.current.scrollLeft,
+      scrollTop: containerRef.current.scrollTop,
+    });
+  }, []);
+
+  // 휠 클릭 스크롤 이동
+  const handleMiddleClickMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!middleClickScroll?.isActive || !containerRef.current) return;
+
+    const deltaX = middleClickScroll.startX - e.clientX;
+    const deltaY = middleClickScroll.startY - e.clientY;
+
+    containerRef.current.scrollLeft = middleClickScroll.scrollLeft + deltaX;
+    containerRef.current.scrollTop = middleClickScroll.scrollTop + deltaY;
+  }, [middleClickScroll]);
 
   const handleCellLeave = useCallback(() => {
     setHoverInfo(null);
@@ -718,9 +758,14 @@ export function DraftTimeline({
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           minHeight: 0,
+          cursor: middleClickScroll?.isActive ? "move" : undefined,
         }}
         onScroll={handleScroll}
-        onMouseMove={handleMouseMove}
+        onMouseDown={handleMiddleClickStart}
+        onMouseMove={(e) => {
+          handleMiddleClickMove(e);
+          handleMouseMove(e);
+        }}
         onMouseUp={handleMouseUp}
         onMouseLeave={() => {
           handleMouseUp();

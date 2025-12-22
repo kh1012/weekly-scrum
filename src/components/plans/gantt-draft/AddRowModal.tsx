@@ -93,6 +93,9 @@ export function AddRowModal({
       setProject("");
       setModule("");
       setFeature("");
+      setShowProjectDropdown(false);
+      setShowModuleDropdown(false);
+      setShowFeatureDropdown(false);
       setProjectIndex(-1);
       setModuleIndex(-1);
       setFeatureIndex(-1);
@@ -209,12 +212,17 @@ export function AddRowModal({
               value={project}
               onChange={(e) => {
                 setProject(e.target.value);
-                setShowProjectDropdown(true);
-                setProjectIndex(0);
+                if (e.target.value.trim()) {
+                  setShowProjectDropdown(true);
+                  setProjectIndex(0);
+                }
               }}
               onFocus={() => {
-                setShowProjectDropdown(true);
-                setProjectIndex(projectOptions.length > 0 ? 0 : -1);
+                // focus만으로는 드롭다운을 표시하지 않음
+                if (project.trim()) {
+                  setShowProjectDropdown(true);
+                  setProjectIndex(projectOptions.length > 0 ? 0 : -1);
+                }
               }}
               onBlur={() => setTimeout(() => setShowProjectDropdown(false), 150)}
               onKeyDown={(e) =>
@@ -285,12 +293,17 @@ export function AddRowModal({
               value={module}
               onChange={(e) => {
                 setModule(e.target.value);
-                setShowModuleDropdown(true);
-                setModuleIndex(0);
+                if (e.target.value.trim()) {
+                  setShowModuleDropdown(true);
+                  setModuleIndex(0);
+                }
               }}
               onFocus={() => {
-                setShowModuleDropdown(true);
-                setModuleIndex(moduleOptions.length > 0 ? 0 : -1);
+                // focus만으로는 드롭다운을 표시하지 않음
+                if (module.trim()) {
+                  setShowModuleDropdown(true);
+                  setModuleIndex(moduleOptions.length > 0 ? 0 : -1);
+                }
               }}
               onBlur={() => setTimeout(() => setShowModuleDropdown(false), 150)}
               onKeyDown={(e) =>
@@ -361,12 +374,17 @@ export function AddRowModal({
               value={feature}
               onChange={(e) => {
                 setFeature(e.target.value);
-                setShowFeatureDropdown(true);
-                setFeatureIndex(0);
+                if (e.target.value.trim()) {
+                  setShowFeatureDropdown(true);
+                  setFeatureIndex(0);
+                }
               }}
               onFocus={() => {
-                setShowFeatureDropdown(true);
-                setFeatureIndex(featureOptions.length > 0 ? 0 : -1);
+                // focus만으로는 드롭다운을 표시하지 않음
+                if (feature.trim()) {
+                  setShowFeatureDropdown(true);
+                  setFeatureIndex(featureOptions.length > 0 ? 0 : -1);
+                }
               }}
               onBlur={() => setTimeout(() => setShowFeatureDropdown(false), 150)}
               onKeyDown={(e) => {
