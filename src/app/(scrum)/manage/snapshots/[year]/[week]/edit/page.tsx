@@ -23,9 +23,12 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
   }
 
   const supabase = await createClient();
-  
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
   if (error || !user) {
     redirect("/login");
   }
@@ -36,22 +39,24 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
     .select("display_name")
     .eq("id", user.id)
     .single();
-  
-  const displayName = profile?.display_name?.trim() || "사용자";
+
+  const displayName = profile?.display_name?.trim() || "지정된 이름없음";
 
   const weekStartDate = getWeekStartDateString(year, week);
 
   // 해당 주차의 스냅샷 목록 조회 (workload 필드 포함)
   const { data: snapshots, error: snapshotsError } = await supabase
     .from("snapshots")
-    .select(`
+    .select(
+      `
       id,
       created_at,
       updated_at,
       workload_level,
       workload_note,
       entries:snapshot_entries(*)
-    `)
+    `
+    )
     .eq("workspace_id", DEFAULT_WORKSPACE_ID)
     .eq("author_id", user.id)
     .eq("week_start_date", weekStartDate)
@@ -78,4 +83,3 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
     />
   );
 }
-

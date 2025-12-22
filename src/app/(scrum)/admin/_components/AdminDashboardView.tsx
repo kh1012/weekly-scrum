@@ -7,6 +7,14 @@
 
 import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
+import { WORKLOAD_LEVEL_LABELS } from "@/lib/supabase/types";
+
+// 인라인 스타일용 색상 맵
+const WORKLOAD_COLOR_VALUES: Record<string, string> = {
+  light: "#10b981", // emerald-500
+  normal: "#3b82f6", // blue-500
+  burden: "#ef4444", // red-500
+};
 
 interface MemberData {
   userId: string;
@@ -14,6 +22,7 @@ interface MemberData {
   email: string;
   role: string;
   weeklyEntries: Record<string, number>;
+  weeklyWorkload: Record<string, { level: string | null; note: string | null }>;
 }
 
 interface AdminDashboardViewProps {
@@ -130,7 +139,7 @@ export function AdminDashboardView({
               주차별 스냅샷 현황
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              멤버별 최근 6주간 스냅샷 엔트리 작성 현황
+              멤버별 최근 6주간 스냅샷 엔트리 작성 현황 및 부담 수준
             </p>
           </div>
 
@@ -195,6 +204,7 @@ export function AdminDashboardView({
                     {recentWeeks.map((w, idx) => {
                       const weekKey = `${w.year}-${w.label}`;
                       const entryCount = member.weeklyEntries[weekKey] || 0;
+                      const workload = member.weeklyWorkload[weekKey];
                       const isCurrentWeek = idx === 0;
                       const hasEntries = entryCount > 0;
 
@@ -206,19 +216,46 @@ export function AdminDashboardView({
                             background: isCurrentWeek ? "rgba(59, 130, 246, 0.05)" : undefined,
                           }}
                         >
-                          <span
-                            className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md text-xs font-semibold transition-all ${
-                              hasEntries
-                                ? isCurrentWeek
-                                  ? "bg-green-100 text-green-700 shadow-sm"
-                                  : "bg-gray-100 text-gray-700"
-                                : isCurrentWeek
-                                ? "bg-red-50 text-red-400"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            {entryCount}
-                          </span>
+                          <div className="flex flex-col items-center gap-1.5">
+                            {/* 엔트리 개수 */}
+                            <span
+                              className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md text-xs font-semibold transition-all ${
+                                hasEntries
+                                  ? isCurrentWeek
+                                    ? "bg-green-100 text-green-700 shadow-sm"
+                                    : "bg-gray-100 text-gray-700"
+                                  : isCurrentWeek
+                                  ? "bg-red-50 text-red-400"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              {entryCount}
+                            </span>
+
+                            {/* 부담 수준 */}
+                            {workload?.level ? (
+                              <div
+                                className="group relative inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-help"
+                                style={{
+                                  backgroundColor: `${WORKLOAD_COLOR_VALUES[workload.level]}15`,
+                                  color: WORKLOAD_COLOR_VALUES[workload.level],
+                                  border: `1px solid ${WORKLOAD_COLOR_VALUES[workload.level]}30`,
+                                }}
+                                title={workload.note || undefined}
+                              >
+                                {WORKLOAD_LEVEL_LABELS[workload.level as keyof typeof WORKLOAD_LEVEL_LABELS]}
+                                {/* Tooltip */}
+                                {workload.note && (
+                                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                                    {workload.note}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900" />
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-gray-300">-</span>
+                            )}
+                          </div>
                         </td>
                       );
                     })}

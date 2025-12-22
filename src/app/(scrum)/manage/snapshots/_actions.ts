@@ -2,14 +2,21 @@
 
 /**
  * 스냅샷 관리 Server Actions
- * 
+ *
  * - updateSnapshotAndEntries: 기존 스냅샷 업데이트
  * - createSnapshotAndEntries: 신규 스냅샷 생성
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { getWeekStartDateString, getWeekEndDateString } from "@/lib/date/isoWeek";
-import type { PastWeekTask, Collaborator, WorkloadLevel } from "@/lib/supabase/types";
+import {
+  getWeekStartDateString,
+  getWeekEndDateString,
+} from "@/lib/date/isoWeek";
+import type {
+  PastWeekTask,
+  Collaborator,
+  WorkloadLevel,
+} from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
 
 const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
@@ -45,7 +52,10 @@ export async function updateSnapshotAndEntries(
   const supabase = await createClient();
 
   // 사용자 인증 확인
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError || !user) {
     return { success: false, error: "인증이 필요합니다." };
   }
@@ -56,8 +66,8 @@ export async function updateSnapshotAndEntries(
     .select("display_name")
     .eq("id", user.id)
     .single();
-  
-  const defaultName = profile?.display_name?.trim() || "사용자";
+
+  const defaultName = profile?.display_name?.trim() || "지정된 이름없음";
 
   // 스냅샷 소유권 확인
   const { data: snapshot, error: snapshotError } = await supabase
@@ -93,7 +103,10 @@ export async function updateSnapshotAndEntries(
     .eq("id", snapshotId);
 
   if (updateError) {
-    return { success: false, error: "스냅샷 업데이트 실패: " + updateError.message };
+    return {
+      success: false,
+      error: "스냅샷 업데이트 실패: " + updateError.message,
+    };
   }
 
   // 삭제할 엔트리 처리
@@ -104,7 +117,10 @@ export async function updateSnapshotAndEntries(
       .in("id", payload.deletedEntryIds);
 
     if (deleteError) {
-      return { success: false, error: "엔트리 삭제 실패: " + deleteError.message };
+      return {
+        success: false,
+        error: "엔트리 삭제 실패: " + deleteError.message,
+      };
     }
   }
 
@@ -138,7 +154,10 @@ export async function updateSnapshotAndEntries(
       .upsert(upsertData, { onConflict: "id" });
 
     if (upsertError) {
-      return { success: false, error: "엔트리 저장 실패: " + upsertError.message };
+      return {
+        success: false,
+        error: "엔트리 저장 실패: " + upsertError.message,
+      };
     }
   }
 
@@ -155,7 +174,10 @@ export async function updateSnapshotAndEntries(
       .eq("id", snapshotId);
 
     if (deleteSnapshotError) {
-      return { success: false, error: "스냅샷 삭제 실패: " + deleteSnapshotError.message };
+      return {
+        success: false,
+        error: "스냅샷 삭제 실패: " + deleteSnapshotError.message,
+      };
     }
 
     revalidatePath("/manage/snapshots");
@@ -183,7 +205,10 @@ export async function createSnapshotAndEntries(
   const supabase = await createClient();
 
   // 사용자 인증 확인
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError || !user) {
     return { success: false, error: "인증이 필요합니다." };
   }
@@ -194,7 +219,7 @@ export async function createSnapshotAndEntries(
     .select("display_name")
     .eq("id", user.id)
     .single();
-  
+
   const defaultName = profile?.display_name?.trim() || "사용자";
 
   const weekStartDate = getWeekStartDateString(year, week);
@@ -225,7 +250,10 @@ export async function createSnapshotAndEntries(
     .insert(snapshotInsert);
 
   if (snapshotError) {
-    return { success: false, error: "스냅샷 생성 실패: " + snapshotError.message };
+    return {
+      success: false,
+      error: "스냅샷 생성 실패: " + snapshotError.message,
+    };
   }
 
   // 엔트리 생성 (새 DB 스키마에 맞춤: risks, collaborators 별도 컬럼)
@@ -263,7 +291,10 @@ export async function createSnapshotAndEntries(
     if (entriesError) {
       // 롤백: 스냅샷 삭제
       await supabase.from("snapshots").delete().eq("id", snapshotId);
-      return { success: false, error: "엔트리 생성 실패: " + entriesError.message };
+      return {
+        success: false,
+        error: "엔트리 생성 실패: " + entriesError.message,
+      };
     }
   }
 
@@ -283,4 +314,3 @@ export async function importToNewSnapshot(
     entries: importedEntries,
   });
 }
-

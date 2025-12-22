@@ -70,7 +70,7 @@ export default async function AdminDashboardPage() {
 
   const { data: snapshots } = await supabase
     .from("snapshots")
-    .select("id, author_id, year, week")
+    .select("id, author_id, year, week, workload_level, workload_note")
     .eq("workspace_id", DEFAULT_WORKSPACE_ID)
     .in("year", years)
     .in("week", weekLabels);
@@ -98,6 +98,7 @@ export default async function AdminDashboardPage() {
     email: string;
     role: string;
     weeklyEntries: Record<string, number>; // "2024-W01" -> entry count
+    weeklyWorkload: Record<string, { level: string | null; note: string | null }>; // "2024-W01" -> workload info
   }
 
   const memberDataList: MemberData[] = (members || []).map((m) => {
@@ -105,6 +106,7 @@ export default async function AdminDashboardPage() {
     const profile = profilesMap.get(m.user_id);
 
     const weeklyEntries: Record<string, number> = {};
+    const weeklyWorkload: Record<string, { level: string | null; note: string | null }> = {};
 
     recentWeeks.forEach((w) => {
       const weekKey = `${w.year}-${w.label}`;
@@ -121,6 +123,13 @@ export default async function AdminDashboardPage() {
       });
 
       weeklyEntries[weekKey] = totalEntries;
+
+      // workload 정보 (가장 최근 스냅샷 기준)
+      const latestSnapshot = memberSnapshots[0]; // snapshots는 updated_at desc 순서가 아니므로 첫 번째 값 사용
+      weeklyWorkload[weekKey] = {
+        level: latestSnapshot?.workload_level || null,
+        note: latestSnapshot?.workload_note || null,
+      };
     });
 
     return {
@@ -129,6 +138,7 @@ export default async function AdminDashboardPage() {
       email: profile?.email || "",
       role: m.role,
       weeklyEntries,
+      weeklyWorkload,
     };
   });
 
