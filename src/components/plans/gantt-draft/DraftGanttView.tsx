@@ -101,6 +101,9 @@ export function DraftGanttView({
     endDate: string;
   } | null>(null);
 
+  // 세로 스크롤 동기화 상태
+  const [commonScrollTop, setCommonScrollTop] = useState(0);
+
   const hydrate = useDraftStore((s) => s.hydrate);
   const clearDirtyFlags = useDraftStore((s) => s.clearDirtyFlags);
   const getDirtyBars = useDraftStore((s) => s.getDirtyBars);
@@ -786,6 +789,8 @@ export function DraftGanttView({
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
             workspaceId={workspaceId}
+            scrollTop={commonScrollTop}
+            onScroll={setCommonScrollTop}
           />
         )}
 
@@ -800,6 +805,8 @@ export function DraftGanttView({
           workspaceId={workspaceId}
           onDragDateChange={setDragDateInfo}
           onAction={extendLockIfNeeded}
+          scrollTop={commonScrollTop}
+          onScrollChange={setCommonScrollTop}
         />
       </div>
 

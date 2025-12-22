@@ -836,9 +836,11 @@ export function DraftTreePanel({
   }, [onScroll]);
 
   // 외부 scrollTop 동기화
-  useMemo(() => {
+  useEffect(() => {
     if (scrollContainerRef.current && externalScrollTop !== undefined) {
-      scrollContainerRef.current.scrollTop = externalScrollTop;
+      if (scrollContainerRef.current.scrollTop !== externalScrollTop) {
+        scrollContainerRef.current.scrollTop = externalScrollTop;
+      }
     }
   }, [externalScrollTop]);
 

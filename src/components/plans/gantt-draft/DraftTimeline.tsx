@@ -54,6 +54,9 @@ interface DraftTimelineProps {
   ) => void;
   /** 액션 발생 시 락 연장 (남은 시간이 절반 이하일 때) */
   onAction?: () => void;
+  /** 외부 스크롤 동기화용 (TreePanel에서 전달) */
+  scrollTop?: number;
+  onScrollChange?: (scrollTop: number) => void;
 }
 
 interface DragCreateState {
@@ -75,6 +78,8 @@ export function DraftTimeline({
   workspaceId = "",
   onDragDateChange,
   onAction,
+  scrollTop: externalScrollTop,
+  onScrollChange,
 }: DraftTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -291,6 +296,9 @@ export function DraftTimeline({
   const handleScroll = useCallback(() => {
     if (containerRef.current) {
       const scrollLeft = containerRef.current.scrollLeft;
+      const scrollTop = containerRef.current.scrollTop;
+      
+      // 가로 스크롤 동기화
       if (headerRef.current) {
         headerRef.current.scrollLeft = scrollLeft;
       }
@@ -298,8 +306,11 @@ export function DraftTimeline({
         flagLaneRef.current.scrollLeft = scrollLeft;
       }
       setHeaderScrollLeft(scrollLeft);
+      
+      // 세로 스크롤 동기화 (TreePanel과)
+      onScrollChange?.(scrollTop);
     }
-  }, []);
+  }, [onScrollChange]);
 
   // 오늘로 스크롤하는 함수
   const scrollToToday = useCallback(
@@ -326,6 +337,15 @@ export function DraftTimeline({
     },
     [rangeStart, days.length]
   );
+
+  // 외부 scrollTop 동기화 (TreePanel에서 전달)
+  useEffect(() => {
+    if (externalScrollTop !== undefined && containerRef.current) {
+      if (containerRef.current.scrollTop !== externalScrollTop) {
+        containerRef.current.scrollTop = externalScrollTop;
+      }
+    }
+  }, [externalScrollTop]);
 
   // 초기 로드 시 오늘로 스크롤
   useEffect(() => {
