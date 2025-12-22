@@ -59,6 +59,8 @@ interface DraftGanttViewProps {
   onlyMine?: boolean;
   /** 내 것만 보기 필터 변경 핸들러 (URL 업데이트용) */
   onOnlyMineChange?: (value: boolean) => void;
+  /** 필터 로딩 중 상태 */
+  isFilterLoading?: boolean;
 }
 
 export function DraftGanttView({
@@ -69,6 +71,7 @@ export function DraftGanttView({
   title,
   onlyMine = false,
   onOnlyMineChange,
+  isFilterLoading = false,
 }: DraftGanttViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
@@ -628,6 +631,7 @@ export function DraftGanttView({
         // 내 것만 보기 필터
         onlyMine={onlyMine}
         onOnlyMineChange={onOnlyMineChange}
+        isFilterLoading={isFilterLoading}
         // 중앙 액션 props
         onUndo={undo}
         onRedo={redo}

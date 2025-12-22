@@ -40,6 +40,8 @@ interface GanttHeaderProps {
   onlyMine?: boolean;
   /** 내 것만 보기 필터 변경 핸들러 */
   onOnlyMineChange?: (value: boolean) => void;
+  /** 필터 로딩 중 상태 */
+  isFilterLoading?: boolean;
   // 중앙 액션 관련
   onUndo?: () => void;
   onRedo?: () => void;
@@ -73,6 +75,7 @@ export function GanttHeader({
   title,
   onlyMine = false,
   onOnlyMineChange,
+  isFilterLoading = false,
   onUndo,
   onRedo,
   onOpenCommandPalette,
@@ -313,15 +316,22 @@ export function GanttHeader({
           {onOnlyMineChange && (
             <>
               <label
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer hover:bg-gray-100"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  isFilterLoading ? "cursor-wait opacity-70" : "cursor-pointer hover:bg-gray-100"
+                }`}
                 title="담당자로 지정된 일정만 표시"
               >
-                <input
-                  type="checkbox"
-                  checked={onlyMine}
-                  onChange={(e) => onOnlyMineChange(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
-                />
+                {isFilterLoading ? (
+                  <LoadingIcon className="w-4 h-4 animate-spin text-blue-500" />
+                ) : (
+                  <input
+                    type="checkbox"
+                    checked={onlyMine}
+                    onChange={(e) => onOnlyMineChange(e.target.checked)}
+                    disabled={isFilterLoading}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer disabled:cursor-wait"
+                  />
+                )}
                 <span className={onlyMine ? "text-blue-600" : "text-gray-600"}>
                   내 것만
                 </span>

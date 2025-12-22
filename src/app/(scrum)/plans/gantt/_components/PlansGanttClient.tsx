@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import type { WorkspaceMemberOption } from "@/components/plans/gantt-draft/CreatePlanModal";
 
@@ -44,6 +44,7 @@ export function PlansGanttClient({
 }: PlansGanttClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const handleOnlyMineChange = useCallback(
     (value: boolean) => {
@@ -53,7 +54,9 @@ export function PlansGanttClient({
       } else {
         params.delete("onlyMine");
       }
-      router.push(`?${params.toString()}`);
+      startTransition(() => {
+        router.push(`?${params.toString()}`);
+      });
     },
     [router, searchParams]
   );
@@ -67,6 +70,7 @@ export function PlansGanttClient({
       title="계획"
       onlyMine={initialOnlyMine}
       onOnlyMineChange={handleOnlyMineChange}
+      isFilterLoading={isPending}
     />
   );
 }
