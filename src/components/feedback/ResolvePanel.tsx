@@ -34,9 +34,6 @@ export function ResolvePanel({
       return;
     }
 
-    const confirmed = confirm("이 피드백을 해결 완료로 표시하시겠습니까?");
-    if (!confirmed) return;
-
     setIsSubmitting(true);
     setError(null);
 
@@ -48,11 +45,10 @@ export function ResolvePanel({
       }
     );
 
-    setIsSubmitting(false);
-
     if (result.success) {
       onResolved();
     } else {
+      setIsSubmitting(false);
       setError(result.error || "상태 변경에 실패했습니다");
     }
   };

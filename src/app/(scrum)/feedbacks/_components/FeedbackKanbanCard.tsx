@@ -42,6 +42,47 @@ export function FeedbackKanbanCard({
     minute: "2-digit",
   });
 
+  // 처리 일시 포맷
+  const resolvedAt = feedback.updated_at
+    ? new Date(feedback.updated_at).toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
+  // 처리 기간 계산 (생성일 ~ 업데이트일)
+  const getResolutionDuration = () => {
+    if (!feedback.updated_at) return null;
+    const created = new Date(feedback.created_at).getTime();
+    const resolved = new Date(feedback.updated_at).getTime();
+    const diffMs = resolved - created;
+    
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+      const remainingHours = diffHours % 24;
+      return remainingHours > 0 
+        ? `${diffDays}일 ${remainingHours}시간` 
+        : `${diffDays}일`;
+    } else if (diffHours > 0) {
+      const remainingMinutes = diffMinutes % 60;
+      return remainingMinutes > 0 
+        ? `${diffHours}시간 ${remainingMinutes}분` 
+        : `${diffHours}시간`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes}분`;
+    } else {
+      return "즉시";
+    }
+  };
+
+  const resolutionDuration = getResolutionDuration();
+
   // 권한 체크
   const isOwner = currentUserId === feedback.author_user_id;
   const canEdit = isOwner;
@@ -280,11 +321,33 @@ export function FeedbackKanbanCard({
               <p className="text-sm text-green-700 whitespace-pre-wrap">
                 {feedback.resolution_note}
               </p>
-              {feedback.resolved_by_name && (
-                <p className="text-xs text-green-600 mt-1.5">
-                  처리자: {feedback.resolved_by_name}
-                </p>
-              )}
+              {/* 처리자 및 처리 정보 */}
+              <div className="mt-2 pt-2 border-t border-green-100 space-y-1">
+                {feedback.resolved_by_name && (
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    처리자: {feedback.resolved_by_name}
+                  </p>
+                )}
+                {resolvedAt && (
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    처리 일시: {resolvedAt}
+                  </p>
+                )}
+                {resolutionDuration && (
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    처리 기간: {resolutionDuration}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
