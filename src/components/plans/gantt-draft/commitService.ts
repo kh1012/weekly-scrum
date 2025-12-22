@@ -309,11 +309,16 @@ interface FetchedAssignee {
   displayName?: string;
 }
 
+interface FetchFeaturePlansOptions {
+  workspaceId?: string;
+  onlyMine?: boolean; // 내가 담당자로 지정된 plan만 필터링
+}
+
 /**
  * Feature Plans 조회 (hydrate용)
  */
 export async function fetchFeaturePlans(
-  workspaceId?: string
+  workspaceIdOrOptions?: string | FetchFeaturePlansOptions
 ): Promise<{
   success: boolean;
   plans?: Array<{
@@ -337,7 +342,26 @@ export async function fetchFeaturePlans(
 }> {
   try {
     const supabase = await createClient();
-    const targetWorkspaceId = workspaceId || DEFAULT_WORKSPACE_ID;
+    
+    // 호환성 유지: string이면 workspaceId로, object면 options로 처리
+    const options: FetchFeaturePlansOptions = 
+      typeof workspaceIdOrOptions === 'string' 
+        ? { workspaceId: workspaceIdOrOptions } 
+        : workspaceIdOrOptions || {};
+    
+    const targetWorkspaceId = options.workspaceId || DEFAULT_WORKSPACE_ID;
+    const onlyMine = options.onlyMine || false;
+
+    // onlyMine 필터를 위해 현재 사용자 ID 조회
+    let currentUserId: string | null = null;
+    if (onlyMine) {
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUserId = user?.id || null;
+      if (!currentUserId) {
+        console.warn("[fetchFeaturePlans] onlyMine=true but no user logged in");
+        return { success: true, plans: [] };
+      }
+    }
 
     // plans 조회 (order_index 우선 정렬)
     const { data: plansData, error: plansError } = await supabase
@@ -370,6 +394,16 @@ export async function fetchFeaturePlans(
     if (assigneesError) {
       console.error("[fetchFeaturePlans] Assignees error:", assigneesError);
       // 담당자 조회 실패해도 계획은 반환
+    }
+
+    // onlyMine 필터: 현재 사용자가 assignee인 plan_id 목록 추출
+    let filteredPlanIds: Set<string> | null = null;
+    if (onlyMine && currentUserId) {
+      filteredPlanIds = new Set(
+        (assigneesData || [])
+          .filter((a) => a.user_id === currentUserId)
+          .map((a) => a.plan_id)
+      );
     }
 
     // profiles 별도 조회
@@ -407,7 +441,12 @@ export async function fetchFeaturePlans(
       });
     }
 
-    const plans = plansData.map((row) => ({
+    // onlyMine 필터 적용: 현재 사용자가 담당자인 plan만 남김
+    const filteredPlansData = filteredPlanIds 
+      ? plansData.filter((p) => filteredPlanIds!.has(p.id))
+      : plansData;
+
+    const plans = filteredPlansData.map((row) => ({
       id: row.id,
       clientUid: row.client_uid || row.id,
       project: row.project || "",

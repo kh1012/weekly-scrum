@@ -1,8 +1,14 @@
-import { DraftGanttView } from "@/components/plans/gantt-draft";
+export const dynamic = "force-dynamic";
+
 import { fetchFeaturePlans } from "@/components/plans/gantt-draft/commitService";
 import { listWorkspaceMembers } from "@/lib/data/members";
+import { PlansGanttClient } from "./_components/PlansGanttClient";
 
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
+
+interface PageProps {
+  searchParams: Promise<{ onlyMine?: string }>;
+}
 
 /**
  * Plans 목록 페이지 (Read-only Gantt View)
@@ -10,10 +16,14 @@ const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
  * - 조회만 가능, 생성/수정/삭제 불가
  * - All Plans와 동일한 UI, 읽기 전용 모드
  */
-export default async function PlansPage() {
+export default async function PlansPage({ searchParams }: PageProps) {
+  // searchParams에서 onlyMine 파라미터 확인
+  const params = await searchParams;
+  const onlyMine = params.onlyMine === "1" || params.onlyMine === "true";
+
   // 초기 데이터 조회 (병렬)
   const [result, workspaceMembers] = await Promise.all([
-    fetchFeaturePlans(DEFAULT_WORKSPACE_ID),
+    fetchFeaturePlans({ workspaceId: DEFAULT_WORKSPACE_ID, onlyMine }),
     listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
   ]);
 
@@ -27,12 +37,11 @@ export default async function PlansPage() {
   }));
 
   return (
-    <DraftGanttView
+    <PlansGanttClient
       workspaceId={DEFAULT_WORKSPACE_ID}
       initialPlans={initialPlans}
       members={members}
-      readOnly={true}
-      title="계획"
+      initialOnlyMine={onlyMine}
     />
   );
 }

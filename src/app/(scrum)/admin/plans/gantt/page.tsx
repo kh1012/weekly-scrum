@@ -5,15 +5,19 @@
 
 export const dynamic = "force-dynamic";
 
-import { DraftGanttView } from "@/components/plans/gantt-draft";
 import { fetchFeaturePlans } from "@/components/plans/gantt-draft/commitService";
 import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
 import { listWorkspaceMembers } from "@/lib/data/members";
 import { redirect } from "next/navigation";
+import { AdminPlansGanttClient } from "./_components/AdminPlansGanttClient";
 
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 
-export default async function AdminPlansGanttPage() {
+interface PageProps {
+  searchParams: Promise<{ onlyMine?: string }>;
+}
+
+export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
   // 권한 확인
   const hasAccess = await isAdminOrLeader();
   
@@ -21,9 +25,13 @@ export default async function AdminPlansGanttPage() {
     redirect("/plans");
   }
 
+  // searchParams에서 onlyMine 파라미터 확인
+  const params = await searchParams;
+  const onlyMine = params.onlyMine === "1" || params.onlyMine === "true";
+
   // 초기 데이터 조회 (병렬)
   const [result, workspaceMembers] = await Promise.all([
-    fetchFeaturePlans(DEFAULT_WORKSPACE_ID),
+    fetchFeaturePlans({ workspaceId: DEFAULT_WORKSPACE_ID, onlyMine }),
     listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
   ]);
   
@@ -50,10 +58,11 @@ export default async function AdminPlansGanttPage() {
   });
 
   return (
-    <DraftGanttView 
-      workspaceId={DEFAULT_WORKSPACE_ID} 
+    <AdminPlansGanttClient
+      workspaceId={DEFAULT_WORKSPACE_ID}
       initialPlans={initialPlans}
       members={members}
+      initialOnlyMine={onlyMine}
     />
   );
 }

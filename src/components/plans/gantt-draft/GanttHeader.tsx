@@ -36,6 +36,10 @@ interface GanttHeaderProps {
   readOnly?: boolean;
   /** 헤더 제목 */
   title?: string;
+  /** 내 것만 보기 필터 상태 */
+  onlyMine?: boolean;
+  /** 내 것만 보기 필터 변경 핸들러 */
+  onOnlyMineChange?: (value: boolean) => void;
   // 중앙 액션 관련
   onUndo?: () => void;
   onRedo?: () => void;
@@ -67,6 +71,8 @@ export function GanttHeader({
   onDiscardChanges,
   readOnly = false,
   title,
+  onlyMine = false,
+  onOnlyMineChange,
   onUndo,
   onRedo,
   onOpenCommandPalette,
@@ -301,8 +307,29 @@ export function GanttHeader({
           ) : null}
         </div>
 
-        {/* 중앙: 기간 설정 + 보조 액션 */}
+        {/* 중앙: 필터 + 기간 설정 + 보조 액션 */}
         <div className={`flex items-center gap-3 ${isMobile && readOnly ? "justify-center" : ""}`}>
+          {/* 내 것만 보기 필터 */}
+          {onOnlyMineChange && (
+            <>
+              <label
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer hover:bg-gray-100"
+                title="담당자로 지정된 일정만 표시"
+              >
+                <input
+                  type="checkbox"
+                  checked={onlyMine}
+                  onChange={(e) => onOnlyMineChange(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                />
+                <span className={onlyMine ? "text-blue-600" : "text-gray-600"}>
+                  내 것만
+                </span>
+              </label>
+              <div className="w-px h-5 bg-gray-200" />
+            </>
+          )}
+
           {/* 기간 설정 버튼 */}
           <div className="relative" ref={rangePopoverRef}>
             <button

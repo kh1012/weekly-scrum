@@ -55,6 +55,10 @@ interface DraftGanttViewProps {
   readOnly?: boolean;
   /** 헤더 제목 */
   title?: string;
+  /** 내 것만 보기 필터 상태 */
+  onlyMine?: boolean;
+  /** 내 것만 보기 필터 변경 핸들러 (URL 업데이트용) */
+  onOnlyMineChange?: (value: boolean) => void;
 }
 
 export function DraftGanttView({
@@ -63,6 +67,8 @@ export function DraftGanttView({
   members = [],
   readOnly = false,
   title,
+  onlyMine = false,
+  onOnlyMineChange,
 }: DraftGanttViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
@@ -619,6 +625,9 @@ export function DraftGanttView({
         // 읽기 전용 모드
         readOnly={readOnly}
         title={title}
+        // 내 것만 보기 필터
+        onlyMine={onlyMine}
+        onOnlyMineChange={onOnlyMineChange}
         // 중앙 액션 props
         onUndo={undo}
         onRedo={redo}
