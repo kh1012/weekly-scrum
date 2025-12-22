@@ -1038,7 +1038,6 @@ export const useDraftStore = create<DraftStore>()(
           const result = await listFlags(workspaceId);
           if (result.success && result.flags) {
             // GanttFlag[] → DraftFlag[] 변환
-            const now = new Date().toISOString();
             const draftFlags: DraftFlag[] = result.flags.map((f) => ({
               clientId: f.id, // 서버 ID를 clientId로 사용
               serverId: f.id,
@@ -1048,6 +1047,7 @@ export const useDraftStore = create<DraftStore>()(
               endDate: f.endDate,
               color: f.color,
               orderIndex: f.orderIndex,
+              laneHint: f.laneHint ?? undefined,
               dirty: false,
               deleted: false,
               createdAtLocal: f.createdAt,

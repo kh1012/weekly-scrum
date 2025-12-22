@@ -23,6 +23,8 @@ export interface GanttFlag {
   endDate: ISODate; // start === end => point flag
   color?: string | null;
   orderIndex: number;
+  /** 사용자가 명시적으로 지정한 레인 인덱스 */
+  laneHint?: number | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: string | null;

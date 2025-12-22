@@ -519,6 +519,7 @@ export async function commitFlags(payload: {
           end_date: flag.endDate,
           color: flag.color || null,
           order_index: flag.orderIndex,
+          lane_hint: flag.laneHint ?? null,
           created_by: user.id,
         });
 
@@ -539,6 +540,7 @@ export async function commitFlags(payload: {
           end_date: flag.endDate,
           color: flag.color || null,
           order_index: flag.orderIndex,
+          lane_hint: flag.laneHint ?? null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", flag.serverId);
