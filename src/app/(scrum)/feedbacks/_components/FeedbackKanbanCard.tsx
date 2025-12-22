@@ -255,11 +255,8 @@ export function FeedbackKanbanCard({
             <span className="text-xs text-gray-400">{createdAt}</span>
             {/* 1주일 이내 N 뱃지 */}
             {isNew() && (
-              <span className="relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-rose-400 to-orange-400 opacity-75" />
-                <span className="relative inline-flex items-center justify-center w-4 h-4 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-[8px] font-bold text-white shadow-sm">
-                  N
-                </span>
+              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-[8px] font-bold text-white shadow-sm">
+                N
               </span>
             )}
           </div>
