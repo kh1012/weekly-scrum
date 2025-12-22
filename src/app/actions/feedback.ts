@@ -65,14 +65,13 @@ export async function listFeedbacks(): Promise<{
       return { success: false, error: "워크스페이스 정보가 없습니다." };
     }
 
-    // feedbacks + profiles 조인
+    // feedbacks + author 조인 (resolved_by는 FK가 없을 수 있어 별도 처리)
     const { data, error } = await supabase
       .from("feedbacks")
       .select(
         `
         *,
-        author:profiles!feedbacks_author_user_id_fkey(display_name, email),
-        resolved_by:profiles!feedbacks_resolved_by_user_id_fkey(display_name)
+        author:profiles!feedbacks_author_user_id_fkey(display_name, email)
       `
       )
       .eq("workspace_id", userInfo.workspaceId)
@@ -81,6 +80,27 @@ export async function listFeedbacks(): Promise<{
     if (error) {
       console.error("[listFeedbacks] Error:", error);
       return { success: false, error: "피드백 목록 조회 실패" };
+    }
+
+    // resolved_by_user_id가 있는 피드백의 처리자 정보 별도 조회
+    const resolvedByUserIds = [...new Set(
+      (data || [])
+        .filter((f: any) => f.resolved_by_user_id)
+        .map((f: any) => f.resolved_by_user_id)
+    )];
+
+    let resolvedByMap = new Map<string, string>();
+    if (resolvedByUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", resolvedByUserIds);
+      
+      for (const p of profiles || []) {
+        if (p.display_name) {
+          resolvedByMap.set(p.user_id, p.display_name);
+        }
+      }
     }
 
     const feedbacks: FeedbackWithDetails[] = (data || []).map((item: any) => ({
@@ -96,7 +116,9 @@ export async function listFeedbacks(): Promise<{
       updated_at: item.updated_at,
       author_name: item.author?.display_name || "Unknown",
       author_email: item.author?.email,
-      resolved_by_name: item.resolved_by?.display_name,
+      resolved_by_name: item.resolved_by_user_id 
+        ? resolvedByMap.get(item.resolved_by_user_id) 
+        : undefined,
     }));
 
     return { success: true, feedbacks };
@@ -124,8 +146,7 @@ export async function getFeedback(
       .select(
         `
         *,
-        author:profiles!feedbacks_author_user_id_fkey(display_name, email),
-        resolved_by:profiles!feedbacks_resolved_by_user_id_fkey(display_name)
+        author:profiles!feedbacks_author_user_id_fkey(display_name, email)
       `
       )
       .eq("id", id)
@@ -134,6 +155,17 @@ export async function getFeedback(
     if (error) {
       console.error("[getFeedback] Error:", error);
       return { success: false, error: "피드백 조회 실패" };
+    }
+
+    // resolved_by_user_id가 있으면 처리자 정보 별도 조회
+    let resolvedByName: string | undefined;
+    if (data.resolved_by_user_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", data.resolved_by_user_id)
+        .single();
+      resolvedByName = profile?.display_name || undefined;
     }
 
     const feedback: FeedbackWithDetails = {
@@ -149,7 +181,7 @@ export async function getFeedback(
       updated_at: data.updated_at,
       author_name: data.author?.display_name || "Unknown",
       author_email: data.author?.email,
-      resolved_by_name: data.resolved_by?.display_name,
+      resolved_by_name: resolvedByName,
     };
 
     return { success: true, feedback };
