@@ -327,7 +327,6 @@ export async function updateFeedbackStatus(
   status: FeedbackStatus,
   options?: {
     resolutionNote?: string;
-    sendEmail?: boolean;
   }
 ): Promise<{
   success: boolean;
@@ -345,16 +344,6 @@ export async function updateFeedbackStatus(
     }
 
     const supabase = await createClient();
-
-    // 피드백 정보 조회 (이메일 발송용)
-    const { data: feedbackData } = await supabase
-      .from("feedbacks")
-      .select(`
-        *,
-        author:profiles!feedbacks_author_user_id_fkey(display_name, email)
-      `)
-      .eq("id", id)
-      .single();
 
     // 상태 업데이트 데이터 구성
     const updateData: Record<string, unknown> = { status };
@@ -374,21 +363,6 @@ export async function updateFeedbackStatus(
       return { success: false, error: error.message || "상태 변경 실패" };
     }
 
-    // 이메일 발송 (선택적)
-    if (status === "resolved" && options?.sendEmail && feedbackData?.author?.email) {
-      try {
-        await sendResolutionEmail({
-          toEmail: feedbackData.author.email,
-          toName: feedbackData.author.display_name || "사용자",
-          feedbackTitle: feedbackData.title || "피드백",
-          resolutionNote: options.resolutionNote || "",
-        });
-      } catch (emailError) {
-        console.error("[updateFeedbackStatus] Email error:", emailError);
-        // 이메일 실패해도 상태 변경은 성공으로 처리
-      }
-    }
-
     revalidatePath("/feedbacks");
     revalidatePath(`/feedbacks/${id}`);
     return { success: true };
@@ -396,34 +370,6 @@ export async function updateFeedbackStatus(
     console.error("[updateFeedbackStatus] Unexpected error:", err);
     return { success: false, error: "알 수 없는 오류가 발생했습니다." };
   }
-}
-
-/**
- * 해결 완료 이메일 발송
- * 
- * 이메일 서비스 연동 필요 (Resend, SendGrid 등)
- * 현재는 로그만 출력 - 실제 연동 시 구현 필요
- */
-async function sendResolutionEmail(params: {
-  toEmail: string;
-  toName: string;
-  feedbackTitle: string;
-  resolutionNote: string;
-}): Promise<void> {
-  // TODO: 이메일 서비스 연동 구현
-  // Resend, SendGrid, SMTP 등 선택하여 구현
-  console.log("[sendResolutionEmail] Email would be sent to:", params.toEmail);
-  console.log("[sendResolutionEmail] Subject: 피드백이 해결되었습니다 -", params.feedbackTitle);
-  console.log("[sendResolutionEmail] Resolution Note:", params.resolutionNote);
-  
-  // 예시: Resend 사용 시
-  // const resend = new Resend(process.env.RESEND_API_KEY);
-  // await resend.emails.send({
-  //   from: 'noreply@yourdomain.com',
-  //   to: params.toEmail,
-  //   subject: `[해결됨] ${params.feedbackTitle}`,
-  //   html: `<p>${params.toName}님, 피드백이 해결되었습니다.</p><p>${params.resolutionNote}</p>`,
-  // });
 }
 
 /**

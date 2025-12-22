@@ -20,7 +20,6 @@ export function ResolvePanel({
   onResolved,
 }: ResolvePanelProps) {
   const [resolutionNote, setResolutionNote] = useState("");
-  const [sendEmail, setSendEmail] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +45,6 @@ export function ResolvePanel({
       "resolved",
       {
         resolutionNote: resolutionNote.trim(),
-        sendEmail,
       }
     );
 
@@ -109,36 +107,6 @@ export function ResolvePanel({
             </span>
           </div>
         </div>
-
-        {/* 이메일 발송 옵션 */}
-        <label className="flex items-center gap-3 cursor-pointer group">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={sendEmail}
-              onChange={(e) => setSendEmail(e.target.checked)}
-              disabled={isSubmitting}
-              className="sr-only peer"
-            />
-            <div
-              className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all
-                         peer-checked:bg-green-500 peer-checked:border-green-500
-                         border-gray-300 group-hover:border-gray-400"
-            >
-              {sendEmail && (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span className="text-sm text-gray-600">작성자에게 이메일 발송</span>
-          </div>
-        </label>
 
         {/* 에러 메시지 */}
         {error && (
