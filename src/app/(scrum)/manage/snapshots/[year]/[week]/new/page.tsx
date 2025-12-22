@@ -33,10 +33,10 @@ export default async function NewSnapshotPage({ params }: NewPageProps) {
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
-  const displayName = profile?.display_name || user.email?.split("@")[0] || "사용자";
+  const displayName = profile?.display_name?.trim() || "사용자";
 
   // 워크스페이스 멤버 이름 목록 조회
   const memberNames = await getMemberNames();

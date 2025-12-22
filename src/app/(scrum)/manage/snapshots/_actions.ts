@@ -57,7 +57,7 @@ export async function updateSnapshotAndEntries(
     .eq("id", user.id)
     .single();
   
-  const defaultName = profile?.display_name || user.email?.split("@")[0] || "익명";
+  const defaultName = profile?.display_name?.trim() || "사용자";
 
   // 스냅샷 소유권 확인
   const { data: snapshot, error: snapshotError } = await supabase
@@ -195,7 +195,7 @@ export async function createSnapshotAndEntries(
     .eq("id", user.id)
     .single();
   
-  const defaultName = profile?.display_name || user.email?.split("@")[0] || "익명";
+  const defaultName = profile?.display_name?.trim() || "사용자";
 
   const weekStartDate = getWeekStartDateString(year, week);
   const weekEndDate = getWeekEndDateString(year, week);

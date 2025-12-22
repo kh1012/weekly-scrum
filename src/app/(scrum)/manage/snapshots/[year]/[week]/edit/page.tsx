@@ -37,7 +37,7 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
     .eq("id", user.id)
     .single();
   
-  const displayName = profile?.display_name || user.email?.split("@")[0] || "익명";
+  const displayName = profile?.display_name?.trim() || "사용자";
 
   const weekStartDate = getWeekStartDateString(year, week);
 
