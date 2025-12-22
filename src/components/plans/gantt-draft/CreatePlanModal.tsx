@@ -73,8 +73,13 @@ export function CreatePlanModal({
   const [links, setLinks] = useState<PlanLink[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkLabel, setNewLinkLabel] = useState("");
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
+  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const assigneeDropdownRef = useRef<HTMLDivElement>(null);
+  const assigneeSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -87,9 +92,81 @@ export function CreatePlanModal({
       setLinks([]);
       setNewLinkUrl("");
       setNewLinkLabel("");
+      setIsAssigneeDropdownOpen(false);
+      setAssigneeSearchQuery("");
+      setHighlightedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target as Node)) {
+        setIsAssigneeDropdownOpen(false);
+        setAssigneeSearchQuery("");
+        setHighlightedIndex(0);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 드롭다운 열릴 때 검색창 포커스
+  useEffect(() => {
+    if (isAssigneeDropdownOpen) {
+      setTimeout(() => assigneeSearchRef.current?.focus(), 50);
+    } else {
+      setAssigneeSearchQuery("");
+      setHighlightedIndex(0);
+    }
+  }, [isAssigneeDropdownOpen]);
+
+  // 검색 쿼리로 멤버 필터링
+  const filteredMembers = members.filter((member) => {
+    if (!assigneeSearchQuery.trim()) return true;
+    const query = assigneeSearchQuery.toLowerCase();
+    const displayName = (member.displayName || "").toLowerCase();
+    const email = (member.email || "").toLowerCase();
+    return displayName.includes(query) || email.includes(query);
+  });
+
+  // 키보드 네비게이션
+  const handleAssigneeKeyDown = (e: React.KeyboardEvent) => {
+    if (!isAssigneeDropdownOpen) return;
+
+    const totalOptions = filteredMembers.length + 1; // +1 for "선택 안함"
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev + 1) % totalOptions);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev - 1 + totalOptions) % totalOptions);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex === 0) {
+          // "선택 안함"
+          setSelectedAssignee("");
+          setIsAssigneeDropdownOpen(false);
+        } else {
+          // 멤버 선택
+          const selectedMember = filteredMembers[highlightedIndex - 1];
+          if (selectedMember) {
+            setSelectedAssignee(selectedMember.userId);
+            setIsAssigneeDropdownOpen(false);
+          }
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsAssigneeDropdownOpen(false);
+        break;
+    }
+  };
 
   // 링크 추가
   const handleAddLink = () => {
@@ -280,26 +357,172 @@ export function CreatePlanModal({
             <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
               <UserIcon className="w-4 h-4" />
               담당자
+              <span className="text-xs font-normal text-gray-400">(선택사항)</span>
             </label>
             <div className="space-y-3">
-              {/* 담당자 선택 */}
-              <select
-                value={selectedAssignee}
-                onChange={(e) => setSelectedAssignee(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none cursor-pointer"
-                style={{
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  color: "#1e293b",
-                }}
-              >
-                <option value="">담당자 선택 (선택사항)</option>
-                {members.map((member) => (
-                  <option key={member.userId} value={member.userId}>
-                    {member.displayName || member.email || member.userId}
-                  </option>
-                ))}
-              </select>
+              {/* 커스텀 담당자 드롭다운 */}
+              <div className="relative" ref={assigneeDropdownRef} onKeyDown={handleAssigneeKeyDown}>
+                <button
+                  type="button"
+                  onClick={() => setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none"
+                  style={{
+                    background: selectedAssignee ? "rgba(59, 130, 246, 0.08)" : "#f8fafc",
+                    border: selectedAssignee ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid #e2e8f0",
+                    color: selectedAssignee ? "#1e40af" : "#64748b",
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {selectedAssignee ? (
+                      <>
+                        <span
+                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-bold"
+                        >
+                          {members.find((m) => m.userId === selectedAssignee)?.displayName?.charAt(0) || 
+                           members.find((m) => m.userId === selectedAssignee)?.email?.charAt(0) || "?"}
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {members.find((m) => m.userId === selectedAssignee)?.displayName || 
+                           members.find((m) => m.userId === selectedAssignee)?.email || 
+                           selectedAssignee}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100">
+                          <UserIcon className="w-4 h-4 text-gray-400" />
+                        </span>
+                        <span>담당자 선택</span>
+                      </>
+                    )}
+                  </div>
+                  <svg
+                    className={`w-5 h-5 transition-transform ${isAssigneeDropdownOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* 드롭다운 목록 */}
+                {isAssigneeDropdownOpen && (
+                  <div
+                    className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+                    style={{
+                      background: "white",
+                      border: "1px solid rgba(0, 0, 0, 0.1)",
+                      boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    {/* 검색 인풋 */}
+                    <div className="p-3 border-b border-gray-100">
+                      <input
+                        ref={assigneeSearchRef}
+                        type="text"
+                        value={assigneeSearchQuery}
+                        onChange={(e) => {
+                          setAssigneeSearchQuery(e.target.value);
+                          setHighlightedIndex(0);
+                        }}
+                        placeholder="이름 또는 이메일로 검색..."
+                        className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                        style={{
+                          background: "#f8fafc",
+                          border: "1px solid #e2e8f0",
+                          color: "#1e293b",
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = "#3b82f6";
+                          e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = "#e2e8f0";
+                          e.target.style.boxShadow = "none";
+                        }}
+                      />
+                    </div>
+
+                    {/* 옵션 목록 */}
+                    <div className="max-h-60 overflow-y-auto">
+                      {/* 선택 해제 옵션 */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedAssignee("");
+                          setIsAssigneeDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                          highlightedIndex === 0
+                            ? "bg-blue-50"
+                            : !selectedAssignee
+                            ? "bg-gray-50"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100">
+                          <XIcon className="w-4 h-4 text-gray-400" />
+                        </span>
+                        <span className="text-gray-500">선택 안함</span>
+                      </button>
+
+                      {/* 멤버 목록 */}
+                      {filteredMembers.length > 0 ? (
+                        filteredMembers.map((member, index) => (
+                          <button
+                            key={member.userId}
+                            type="button"
+                            onClick={() => {
+                              setSelectedAssignee(member.userId);
+                              setIsAssigneeDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                              highlightedIndex === index + 1
+                                ? "bg-blue-50"
+                                : member.userId === selectedAssignee
+                                ? "bg-blue-50"
+                                : "hover:bg-gray-50"
+                            }`}
+                          >
+                            <span
+                              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-white"
+                              style={{
+                                background: member.userId === selectedAssignee
+                                  ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+                                  : "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)",
+                              }}
+                            >
+                              {member.displayName?.charAt(0) || member.email?.charAt(0) || "?"}
+                            </span>
+                            <div className="flex-1 text-left min-w-0">
+                              <div
+                                className="font-medium truncate"
+                                style={{ color: member.userId === selectedAssignee ? "#1e40af" : "#1e293b" }}
+                              >
+                                {member.displayName || member.email || member.userId}
+                              </div>
+                              {member.email && member.displayName && (
+                                <div className="text-xs text-gray-400 truncate">{member.email}</div>
+                              )}
+                            </div>
+                            {member.userId === selectedAssignee && (
+                              <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center text-sm text-gray-400">
+                          검색 결과가 없습니다
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* 역할 선택 - 담당자 선택 시에만 활성화 */}
               <div className="flex gap-1.5">
