@@ -1864,9 +1864,11 @@ export function DraftTreePanel({
       {/* 트리 영역 (스크롤) - Airbnb 스타일 */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden"
+        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide"
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE/Edge
         }}
         onScroll={handleScroll}
       >
