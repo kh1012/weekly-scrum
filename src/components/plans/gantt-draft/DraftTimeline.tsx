@@ -416,6 +416,9 @@ export function DraftTimeline({
       row: DraftRow,
       laneIndex: number = 0
     ) => {
+      // 좌클릭만 허용
+      if (e.button !== 0) return;
+      
       // 편집 모드가 아니면 무시
       if (!isEditing) {
         return;
@@ -446,7 +449,7 @@ export function DraftTimeline({
         laneIndex,
       });
     },
-    [isEditing]
+    [isEditing, onAction]
   );
 
   const handleMouseMove = useCallback(

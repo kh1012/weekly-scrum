@@ -189,6 +189,9 @@ export function FlagLane({
   // 마우스 다운 (드래그 시작)
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      // 좌클릭만 허용
+      if (e.button !== 0) return;
+      
       if (!isEditing) return;
       // FlagBar 클릭은 무시
       if (e.target !== e.currentTarget) return;

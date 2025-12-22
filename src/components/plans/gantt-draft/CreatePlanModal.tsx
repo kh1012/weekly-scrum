@@ -135,7 +135,8 @@ export function CreatePlanModal({
   const handleAssigneeKeyDown = (e: React.KeyboardEvent) => {
     if (!isAssigneeDropdownOpen) return;
 
-    const totalOptions = filteredMembers.length + 1; // +1 for "선택 안함"
+    const hasSearchQuery = assigneeSearchQuery.trim().length > 0;
+    const totalOptions = hasSearchQuery ? filteredMembers.length : filteredMembers.length + 1; // 검색어 있으면 "선택 안함" 제외
 
     switch (e.key) {
       case "ArrowDown":
@@ -148,16 +149,24 @@ export function CreatePlanModal({
         break;
       case "Enter":
         e.preventDefault();
-        if (highlightedIndex === 0) {
-          // "선택 안함"
-          setSelectedAssignee("");
-          setIsAssigneeDropdownOpen(false);
-        } else {
-          // 멤버 선택
-          const selectedMember = filteredMembers[highlightedIndex - 1];
+        if (hasSearchQuery) {
+          // 검색어 있을 때: 바로 멤버 선택
+          const selectedMember = filteredMembers[highlightedIndex];
           if (selectedMember) {
             setSelectedAssignee(selectedMember.userId);
             setIsAssigneeDropdownOpen(false);
+          }
+        } else {
+          // 검색어 없을 때: 0은 "선택 안함", 1부터 멤버
+          if (highlightedIndex === 0) {
+            setSelectedAssignee("");
+            setIsAssigneeDropdownOpen(false);
+          } else {
+            const selectedMember = filteredMembers[highlightedIndex - 1];
+            if (selectedMember) {
+              setSelectedAssignee(selectedMember.userId);
+              setIsAssigneeDropdownOpen(false);
+            }
           }
         }
         break;
@@ -447,44 +456,50 @@ export function CreatePlanModal({
 
                     {/* 옵션 목록 */}
                     <div className="max-h-60 overflow-y-auto">
-                      {/* 선택 해제 옵션 */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedAssignee("");
-                          setIsAssigneeDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                          highlightedIndex === 0
-                            ? "bg-blue-50"
-                            : !selectedAssignee
-                            ? "bg-gray-50"
-                            : "hover:bg-gray-50"
-                        }`}
-                      >
-                        <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100">
-                          <XIcon className="w-4 h-4 text-gray-400" />
-                        </span>
-                        <span className="text-gray-500">선택 안함</span>
-                      </button>
+                      {/* 선택 해제 옵션 - 검색어 없을 때만 표시 */}
+                      {!assigneeSearchQuery.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedAssignee("");
+                            setIsAssigneeDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                            highlightedIndex === 0
+                              ? "bg-blue-50"
+                              : !selectedAssignee
+                              ? "bg-gray-50"
+                              : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100">
+                            <XIcon className="w-4 h-4 text-gray-400" />
+                          </span>
+                          <span className="text-gray-500">선택 안함</span>
+                        </button>
+                      )}
 
                       {/* 멤버 목록 */}
                       {filteredMembers.length > 0 ? (
-                        filteredMembers.map((member, index) => (
-                          <button
-                            key={member.userId}
-                            type="button"
-                            onClick={() => {
-                              setSelectedAssignee(member.userId);
-                              setIsAssigneeDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                              highlightedIndex === index + 1
-                                ? "bg-blue-50"
-                                : member.userId === selectedAssignee
-                                ? "bg-blue-50"
-                                : "hover:bg-gray-50"
-                            }`}
+                        filteredMembers.map((member, index) => {
+                          const hasSearchQuery = assigneeSearchQuery.trim().length > 0;
+                          const effectiveIndex = hasSearchQuery ? index : index + 1; // 검색어 있으면 0부터, 없으면 1부터
+                          
+                          return (
+                            <button
+                              key={member.userId}
+                              type="button"
+                              onClick={() => {
+                                setSelectedAssignee(member.userId);
+                                setIsAssigneeDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                                highlightedIndex === effectiveIndex
+                                  ? "bg-blue-50"
+                                  : member.userId === selectedAssignee
+                                  ? "bg-blue-50"
+                                  : "hover:bg-gray-50"
+                              }`}
                           >
                             <span
                               className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-white"
@@ -513,7 +528,8 @@ export function CreatePlanModal({
                               </svg>
                             )}
                           </button>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="px-4 py-8 text-center text-sm text-gray-400">
                           검색 결과가 없습니다
