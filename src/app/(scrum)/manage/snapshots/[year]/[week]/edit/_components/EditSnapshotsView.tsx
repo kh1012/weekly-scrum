@@ -45,7 +45,7 @@ import {
   tempSnapshotToV2Json,
   tempSnapshotToPlainText,
 } from "@/components/weekly-scrum/manage/types";
-import { WorkloadLevelInput } from "@/components/weekly-scrum/manage/WorkloadLevelInput";
+import { WorkloadLevelModal } from "@/components/weekly-scrum/manage/WorkloadLevelModal";
 import {
   updateSnapshotAndEntries,
   createSnapshotAndEntries,
@@ -217,7 +217,7 @@ function EditSnapshotsViewInner({
   const [workloadNote, setWorkloadNote] = useState(
     () => selectedSnapshotData?.workload_note || ""
   );
-  const [workloadError, setWorkloadError] = useState(false);
+  const [showWorkloadModal, setShowWorkloadModal] = useState(false);
 
   // 패널 상태
   const [leftPanelWidth, setLeftPanelWidth] = useState(
@@ -536,23 +536,22 @@ function EditSnapshotsViewInner({
     }
   };
 
-  // 저장 (새 모드일 때는 생성, 편집 모드일 때는 업데이트)
-  const handleSave = async () => {
+  // 저장 버튼 클릭 시 모달 표시
+  const handleSaveClick = () => {
     // 새 모드에서만 엔트리 필수 검증 (편집 모드에서는 모두 삭제도 허용)
     if (isNewMode && tempSnapshots.length === 0) {
       showToast("저장할 항목이 없습니다.", "error");
       return;
     }
+    setShowWorkloadModal(true);
+  };
 
-    // 새 모드에서는 workload_level 필수
-    if (isNewMode && !workloadLevel) {
-      setWorkloadError(true);
-      showToast("작업 부담 수준을 선택해주세요.", "error");
-      return;
-    }
-
-    setWorkloadError(false);
+  // 모달에서 확인 시 실제 저장
+  const handleSaveConfirm = async (level: WorkloadLevel, note: string) => {
+    setWorkloadLevel(level);
+    setWorkloadNote(note);
     setIsSaving(true);
+    
     try {
       const entries: SnapshotEntryPayload[] = tempSnapshots.map((s) => ({
         id: s.isOriginal ? s.tempId : undefined,
@@ -576,13 +575,14 @@ function EditSnapshotsViewInner({
         // 새 모드: 스냅샷 생성
         const payload: CreateSnapshotPayload = {
           entries,
-          workloadLevel,
-          workloadNote: workloadNote.trim() || null,
+          workloadLevel: level,
+          workloadNote: note.trim() || null,
         };
 
         const result = await createSnapshotAndEntries(year, week, payload);
 
         if (result.success) {
+          setShowWorkloadModal(false);
           showToast("신규 등록 완료!", "success");
           router.refresh();
         } else {
@@ -595,13 +595,14 @@ function EditSnapshotsViewInner({
         const payload: UpdateSnapshotPayload = {
           entries,
           deletedEntryIds,
-          workloadLevel,
-          workloadNote: workloadNote.trim() || null,
+          workloadLevel: level,
+          workloadNote: note.trim() || null,
         };
 
         const result = await updateSnapshotAndEntries(selectedSnapshotId, payload);
 
         if (result.success) {
+          setShowWorkloadModal(false);
           if (result.deleted) {
             // 엔트리가 모두 삭제되어 스냅샷도 삭제된 경우
             showToast("스냅샷이 삭제되었습니다.", "success");
@@ -806,7 +807,7 @@ function EditSnapshotsViewInner({
 
           {/* 업데이트하기 버튼 */}
           <LoadingButton
-            onClick={handleSave}
+            onClick={handleSaveClick}
             disabled={isSaving}
             isLoading={isSaving}
             loadingText="저장 중..."
@@ -871,42 +872,24 @@ function EditSnapshotsViewInner({
               </div>
               <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
                 {selectedSnapshot ? (
-                  <>
-                    <SnapshotEditForm
-                      key={selectedSnapshot.tempId}
-                      snapshot={selectedSnapshot}
-                      onUpdate={(updates) =>
-                        handleUpdateCard(selectedSnapshot.tempId, updates)
-                      }
-                      onFocusSection={setFocusedSection}
-                      activeSection={
-                        focusedSection as
-                          | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
-                          | null
-                      }
-                      compact
-                      singleColumn
-                      hideName
-                      weekInfo={weekInfo}
-                      nameOptions={memberNames}
-                    />
-                    {/* Workload Level 입력 (모바일) */}
-                    <div className="px-4 pb-8">
-                      <div className="border-t border-gray-100 pt-6">
-                        <WorkloadLevelInput
-                          value={workloadLevel}
-                          onChange={(level) => {
-                            setWorkloadLevel(level);
-                            if (level) setWorkloadError(false);
-                          }}
-                          note={workloadNote}
-                          onNoteChange={setWorkloadNote}
-                          required={isNewMode}
-                          error={workloadError}
-                        />
-                      </div>
-                    </div>
-                  </>
+                  <SnapshotEditForm
+                    key={selectedSnapshot.tempId}
+                    snapshot={selectedSnapshot}
+                    onUpdate={(updates) =>
+                      handleUpdateCard(selectedSnapshot.tempId, updates)
+                    }
+                    onFocusSection={setFocusedSection}
+                    activeSection={
+                      focusedSection as
+                        | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                        | null
+                    }
+                    compact
+                    singleColumn
+                    hideName
+                    weekInfo={weekInfo}
+                    nameOptions={memberNames}
+                  />
                 ) : (
                   <EmptyState onAddEmpty={handleAddEmpty} />
                 )}
@@ -948,46 +931,28 @@ function EditSnapshotsViewInner({
                 : "100%",
             }}
           >
-            {selectedSnapshot ? (
-              <>
-                <SnapshotEditForm
-                  key={selectedSnapshot.tempId}
-                  snapshot={selectedSnapshot}
-                  onUpdate={(updates) =>
-                    handleUpdateCard(selectedSnapshot.tempId, updates)
-                  }
-                  onFocusSection={setFocusedSection}
-                  activeSection={
-                    focusedSection as
-                      | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
-                      | null
-                  }
-                  compact
-                  singleColumn
-                  hideName
-                  weekInfo={weekInfo}
-                  nameOptions={memberNames}
-                />
-                {/* Workload Level 입력 (작성/편집 공통) */}
-                <div className="px-5 pb-8">
-                  <div className="border-t border-gray-100 pt-6">
-                    <WorkloadLevelInput
-                      value={workloadLevel}
-                      onChange={(level) => {
-                        setWorkloadLevel(level);
-                        if (level) setWorkloadError(false);
-                      }}
-                      note={workloadNote}
-                      onNoteChange={setWorkloadNote}
-                      required={isNewMode}
-                      error={workloadError}
-                    />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <EmptyState onAddEmpty={handleAddEmpty} />
-            )}
+          {selectedSnapshot ? (
+            <SnapshotEditForm
+              key={selectedSnapshot.tempId}
+              snapshot={selectedSnapshot}
+              onUpdate={(updates) =>
+                handleUpdateCard(selectedSnapshot.tempId, updates)
+              }
+              onFocusSection={setFocusedSection}
+              activeSection={
+                focusedSection as
+                  | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                  | null
+              }
+              compact
+              singleColumn
+              hideName
+              weekInfo={weekInfo}
+              nameOptions={memberNames}
+            />
+          ) : (
+            <EmptyState onAddEmpty={handleAddEmpty} />
+          )}
           </div>
 
           {/* 우측: 미리보기 */}
@@ -1010,6 +975,18 @@ function EditSnapshotsViewInner({
           )}
         </div>
       )}
+
+      {/* Workload Level 모달 */}
+      <WorkloadLevelModal
+        isOpen={showWorkloadModal}
+        onClose={() => setShowWorkloadModal(false)}
+        onConfirm={handleSaveConfirm}
+        initialLevel={workloadLevel}
+        initialNote={workloadNote}
+        isLoading={isSaving}
+        required={isNewMode}
+        confirmText={isNewMode ? "신규 등록하기" : "업데이트하기"}
+      />
     </div>
   );
 }

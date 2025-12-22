@@ -6,9 +6,10 @@
  * - 세그먼트 버튼 형태의 선택 UI
  */
 
-import { useCallback } from "react";
+import { useCallback, ReactNode } from "react";
 import type { WorkloadLevel } from "@/lib/supabase/types";
 import { WORKLOAD_LEVEL_LABELS } from "@/lib/supabase/types";
+import { LeafIcon, BoltIcon, FireIcon } from "@/components/common/Icons";
 
 interface WorkloadLevelInputProps {
   value: WorkloadLevel | null;
@@ -19,10 +20,10 @@ interface WorkloadLevelInputProps {
   error?: boolean;
 }
 
-const WORKLOAD_OPTIONS: { value: WorkloadLevel; icon: string; description: string }[] = [
-  { value: "light", icon: "🌿", description: "여유롭게 진행 중" },
-  { value: "normal", icon: "⚡", description: "적정 수준으로 진행 중" },
-  { value: "burden", icon: "🔥", description: "부담되는 상황" },
+const WORKLOAD_OPTIONS: { value: WorkloadLevel; icon: ReactNode; description: string }[] = [
+  { value: "light", icon: <LeafIcon size={20} />, description: "여유롭게 진행 중" },
+  { value: "normal", icon: <BoltIcon size={20} />, description: "적정 수준으로 진행 중" },
+  { value: "burden", icon: <FireIcon size={20} />, description: "부담되는 상황" },
 ];
 
 export function WorkloadLevelInput({
@@ -77,7 +78,7 @@ export function WorkloadLevelInput({
                 }
               `}
             >
-              <span className="text-xl">{option.icon}</span>
+              <span className="flex items-center justify-center">{option.icon}</span>
               <span className="text-sm font-semibold">
                 {WORKLOAD_LEVEL_LABELS[option.value]}
               </span>

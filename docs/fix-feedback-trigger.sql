@@ -3,7 +3,8 @@
 -- 문제: enforce_feedback_resolve_rules() 함수가 삭제된 컬럼(resolved_at, resolved_release_id)을 참조하여 오류 발생
 -- 에러: record "new" has no field "resolved_at"
 
--- 1. 기존 트리거 삭제 (있다면)
+-- 1. 기존 트리거 삭제 (둘 다 삭제)
+DROP TRIGGER IF EXISTS feedbacks_resolve_rules ON feedbacks;
 DROP TRIGGER IF EXISTS enforce_feedback_resolve_rules_trigger ON feedbacks;
 
 -- 2. 트리거 함수 재정의 (삭제된 컬럼 참조 제거)
@@ -27,8 +28,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 3. 트리거 재생성
-CREATE TRIGGER enforce_feedback_resolve_rules_trigger
+-- 3. 트리거 재생성 (기존 트리거 이름 유지)
+CREATE TRIGGER feedbacks_resolve_rules
   BEFORE UPDATE ON feedbacks
   FOR EACH ROW
   EXECUTE FUNCTION enforce_feedback_resolve_rules();
