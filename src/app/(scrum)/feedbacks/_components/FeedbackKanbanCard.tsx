@@ -42,6 +42,14 @@ export function FeedbackKanbanCard({
     minute: "2-digit",
   });
 
+  // 1주일 이내 생성 여부 확인
+  const isNew = () => {
+    const now = Date.now();
+    const created = new Date(feedback.created_at).getTime();
+    const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+    return diffDays <= 7;
+  };
+
   // 처리 일시 포맷
   const resolvedAt = feedback.updated_at
     ? new Date(feedback.updated_at).toLocaleDateString("ko-KR", {
@@ -223,6 +231,18 @@ export function FeedbackKanbanCard({
 
   return (
     <div className="relative rounded-xl p-4 bg-white border border-gray-200 shadow-sm">
+      {/* New 태그 (1주일 이내) */}
+      {isNew() && (
+        <div className="absolute -top-1.5 -right-1.5 z-10">
+          <span className="relative flex h-6 w-12">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-rose-400 to-orange-400 opacity-75" />
+            <span className="relative inline-flex items-center justify-center rounded-full h-6 w-12 bg-gradient-to-r from-rose-500 to-orange-500 text-[10px] font-bold text-white shadow-lg">
+              NEW
+            </span>
+          </span>
+        </div>
+      )}
+
       {/* 헤더: 작성자 + 날짜 */}
       <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
         <div className="flex items-center gap-2">

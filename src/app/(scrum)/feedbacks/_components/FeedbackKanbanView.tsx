@@ -63,10 +63,15 @@ export function FeedbackKanbanView({
     null
   );
 
-  // 상태별로 그룹화
+  // 상태별로 그룹화 및 최신순 정렬
   const groupedFeedbacks = useMemo(() => {
     return KANBAN_COLUMNS.reduce((acc, col) => {
-      acc[col.status] = feedbacks.filter((f) => f.status === col.status);
+      acc[col.status] = feedbacks
+        .filter((f) => f.status === col.status)
+        .sort((a, b) => {
+          // created_at 기준 내림차순 (최신이 위로)
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
       return acc;
     }, {} as Record<FeedbackStatus, FeedbackWithDetails[]>);
   }, [feedbacks]);
