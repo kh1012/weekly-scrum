@@ -34,13 +34,21 @@ export function FeedbackKanbanCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const createdAt = new Date(feedback.created_at).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // 날짜 축약 포맷: 25.12.19 PM07:06
+  const formatCreatedAt = () => {
+    const date = new Date(feedback.created_at);
+    const year = String(date.getFullYear()).slice(-2);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hour12 = String(hours % 12 || 12).padStart(2, '0');
+    
+    return `${year}.${month}.${day} ${ampm}${hour12}:${minutes}`;
+  };
+
+  const createdAt = formatCreatedAt();
 
   // 1주일 이내 생성 여부 확인
   const isNew = () => {
@@ -231,18 +239,6 @@ export function FeedbackKanbanCard({
 
   return (
     <div className="relative rounded-xl p-4 bg-white border border-gray-200 shadow-sm">
-      {/* New 태그 (1주일 이내) */}
-      {isNew() && (
-        <div className="absolute top-2 right-2 z-10">
-          <span className="relative flex h-5 w-11">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-rose-400 to-orange-400 opacity-75" />
-            <span className="relative inline-flex items-center justify-center rounded-full h-5 w-11 bg-gradient-to-r from-rose-500 to-orange-500 text-[9px] font-bold text-white shadow-lg">
-              NEW
-            </span>
-          </span>
-        </div>
-      )}
-
       {/* 헤더: 작성자 + 날짜 */}
       <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
@@ -252,11 +248,20 @@ export function FeedbackKanbanCard({
           >
             {feedback.author_name?.charAt(0) || "?"}
           </span>
-          <div>
+          <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium text-gray-700">
               {feedback.author_name}
             </span>
-            <span className="text-xs text-gray-400 ml-2">{createdAt}</span>
+            <span className="text-xs text-gray-400">{createdAt}</span>
+            {/* 1주일 이내 N 뱃지 */}
+            {isNew() && (
+              <span className="relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-rose-400 to-orange-400 opacity-75" />
+                <span className="relative inline-flex items-center justify-center w-4 h-4 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-[8px] font-bold text-white shadow-sm">
+                  N
+                </span>
+              </span>
+            )}
           </div>
         </div>
 
