@@ -41,7 +41,7 @@ export interface UpdateSnapshotPayload {
 export async function updateSnapshotAndEntries(
   snapshotId: string,
   payload: UpdateSnapshotPayload
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; deleted?: boolean }> {
   const supabase = await createClient();
 
   // 사용자 인증 확인
@@ -140,6 +140,26 @@ export async function updateSnapshotAndEntries(
     if (upsertError) {
       return { success: false, error: "엔트리 저장 실패: " + upsertError.message };
     }
+  }
+
+  // 엔트리가 모두 삭제된 경우 스냅샷도 함께 삭제
+  const { count: remainingCount } = await supabase
+    .from("snapshot_entries")
+    .select("id", { count: "exact", head: true })
+    .eq("snapshot_id", snapshotId);
+
+  if (remainingCount === 0) {
+    const { error: deleteSnapshotError } = await supabase
+      .from("snapshots")
+      .delete()
+      .eq("id", snapshotId);
+
+    if (deleteSnapshotError) {
+      return { success: false, error: "스냅샷 삭제 실패: " + deleteSnapshotError.message };
+    }
+
+    revalidatePath("/manage/snapshots");
+    return { success: true, deleted: true };
   }
 
   revalidatePath("/manage/snapshots");

@@ -602,8 +602,15 @@ function EditSnapshotsViewInner({
         const result = await updateSnapshotAndEntries(selectedSnapshotId, payload);
 
         if (result.success) {
-          showToast("업데이트 완료!", "success");
-          router.refresh();
+          if (result.deleted) {
+            // 엔트리가 모두 삭제되어 스냅샷도 삭제된 경우
+            showToast("스냅샷이 삭제되었습니다.", "success");
+            navigationProgress.start();
+            router.push("/manage/snapshots");
+          } else {
+            showToast("업데이트 완료!", "success");
+            router.refresh();
+          }
         } else {
           showToast(result.error || "저장 실패", "error");
         }
