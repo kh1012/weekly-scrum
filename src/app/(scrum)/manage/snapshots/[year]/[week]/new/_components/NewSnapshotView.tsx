@@ -31,9 +31,10 @@ import {
   tempSnapshotToPlainText,
   convertToTempSnapshot,
 } from "@/components/weekly-scrum/manage/types";
+import { WorkloadLevelInput } from "@/components/weekly-scrum/manage/WorkloadLevelInput";
 import { createSnapshotAndEntries } from "../../../../_actions";
-import type { SnapshotEntryPayload } from "../../../../_actions";
-import type { PastWeekTask, Collaborator } from "@/lib/supabase/types";
+import type { SnapshotEntryPayload, CreateSnapshotPayload } from "../../../../_actions";
+import type { PastWeekTask, Collaborator, WorkloadLevel } from "@/lib/supabase/types";
 
 // 기존 주차별 데이터 타입
 interface WeekData {
@@ -131,6 +132,11 @@ function NewSnapshotViewInner({
   const [myWeeklyData, setMyWeeklyData] = useState<WeekData[]>([]);
   const [isLoadingMyData, setIsLoadingMyData] = useState(false);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
+
+  // Workload 상태 (스냅샷 단위)
+  const [workloadLevel, setWorkloadLevel] = useState<WorkloadLevel | null>(null);
+  const [workloadNote, setWorkloadNote] = useState("");
+  const [workloadError, setWorkloadError] = useState(false);
 
   // 본인 주차별 데이터 불러오기
   const fetchMyEntries = useCallback(async () => {
@@ -418,6 +424,14 @@ function NewSnapshotViewInner({
       return;
     }
 
+    // 새로 작성하기에서는 workload_level 필수
+    if (!workloadLevel) {
+      setWorkloadError(true);
+      showToast("작업 부담 수준을 선택해주세요.", "error");
+      return;
+    }
+
+    setWorkloadError(false);
     setIsSaving(true);
     try {
       const entries: SnapshotEntryPayload[] = tempSnapshots.map((s) => ({
@@ -437,7 +451,13 @@ function NewSnapshotViewInner({
         })),
       }));
 
-      const result = await createSnapshotAndEntries(year, week, { entries });
+      const payload: CreateSnapshotPayload = {
+        entries,
+        workloadLevel,
+        workloadNote: workloadNote.trim() || null,
+      };
+
+      const result = await createSnapshotAndEntries(year, week, payload);
 
       if (result.success) {
         showToast("신규 등록 완료!", "success");
@@ -973,31 +993,38 @@ function NewSnapshotViewInner({
 
         <div className="flex items-center gap-3">
           {/* 신규 등록하기 버튼 */}
-          <LoadingButton
-            onClick={handleSave}
-            disabled={isSaving || tempSnapshots.length === 0}
-            isLoading={isSaving}
-            loadingText="저장 중..."
-            variant="primary"
-            size="md"
-            icon={
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            }
-          >
-            신규 등록하기
-          </LoadingButton>
+          <div className="flex items-center gap-2">
+            {!workloadLevel && tempSnapshots.length > 0 && (
+              <span className="text-xs text-amber-600">
+                작업 부담 수준 선택 필요
+              </span>
+            )}
+            <LoadingButton
+              onClick={handleSave}
+              disabled={isSaving || tempSnapshots.length === 0}
+              isLoading={isSaving}
+              loadingText="저장 중..."
+              variant="primary"
+              size="md"
+              icon={
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              }
+            >
+              신규 등록하기
+            </LoadingButton>
+          </div>
         </div>
       </div>
 
@@ -1035,20 +1062,38 @@ function NewSnapshotViewInner({
           }}
         >
           {selectedSnapshot ? (
-            <SnapshotEditForm
-              key={selectedSnapshot.tempId}
-              snapshot={selectedSnapshot}
-              onUpdate={(updates) =>
-                handleUpdateCard(selectedSnapshot.tempId, updates)
-              }
-              onFocusSection={setFocusedSection}
-              activeSection={focusedSection as import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection | null}
-              compact
-              singleColumn
-              hideName
-              weekInfo={weekInfo}
-              nameOptions={memberNames}
-            />
+            <>
+              <SnapshotEditForm
+                key={selectedSnapshot.tempId}
+                snapshot={selectedSnapshot}
+                onUpdate={(updates) =>
+                  handleUpdateCard(selectedSnapshot.tempId, updates)
+                }
+                onFocusSection={setFocusedSection}
+                activeSection={focusedSection as import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection | null}
+                compact
+                singleColumn
+                hideName
+                weekInfo={weekInfo}
+                nameOptions={memberNames}
+              />
+              {/* Workload Level 입력 (새로 작성하기에서만) */}
+              <div className="px-5 pb-8">
+                <div className="border-t border-gray-100 pt-6">
+                  <WorkloadLevelInput
+                    value={workloadLevel}
+                    onChange={(level) => {
+                      setWorkloadLevel(level);
+                      if (level) setWorkloadError(false);
+                    }}
+                    note={workloadNote}
+                    onNoteChange={setWorkloadNote}
+                    required
+                    error={workloadError}
+                  />
+                </div>
+              </div>
+            </>
           ) : (
             <EmptyState onAddEmpty={handleAddEmpty} />
           )}

@@ -21,6 +21,7 @@ import {
   getWeekStartDateString,
 } from "@/lib/date/isoWeek";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
+import type { WorkloadLevel } from "@/lib/supabase/types";
 
 interface SnapshotsMainViewProps {
   userId: string;
@@ -50,6 +51,8 @@ export interface SnapshotSummary {
   id: string;
   created_at: string;
   updated_at: string;
+  workload_level?: WorkloadLevel | null;
+  workload_note?: string | null;
   entriesCount: number;
   entries: {
     domain: string;

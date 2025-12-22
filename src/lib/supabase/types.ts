@@ -79,6 +79,9 @@ export interface Database {
           week_end_date: string | null;
           year: number | null;
           week: string | null;
+          workload_level: WorkloadLevel | null;
+          workload_note: string | null;
+          workload_updated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -91,6 +94,9 @@ export interface Database {
           week_end_date?: string | null;
           year?: number | null;
           week?: string | null;
+          workload_level?: WorkloadLevel | null;
+          workload_note?: string | null;
+          workload_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -103,6 +109,9 @@ export interface Database {
           week_end_date?: string | null;
           year?: number | null;
           week?: string | null;
+          workload_level?: WorkloadLevel | null;
+          workload_note?: string | null;
+          workload_updated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -262,9 +271,37 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Enums: {
+      snapshot_workload_level: WorkloadLevel;
+    };
   };
 }
+
+/**
+ * 작업 부담 수준 타입
+ * - light: 여유
+ * - normal: 적정
+ * - burden: 부담
+ */
+export type WorkloadLevel = "light" | "normal" | "burden";
+
+/**
+ * WorkloadLevel 한글 매핑
+ */
+export const WORKLOAD_LEVEL_LABELS: Record<WorkloadLevel, string> = {
+  light: "여유",
+  normal: "적정",
+  burden: "부담",
+};
+
+/**
+ * WorkloadLevel 색상 매핑
+ */
+export const WORKLOAD_LEVEL_COLORS: Record<WorkloadLevel, { bg: string; text: string; border: string }> = {
+  light: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  normal: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  burden: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+};
 
 // JSON 필드 타입
 export interface PastWeekTask {

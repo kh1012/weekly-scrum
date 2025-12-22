@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import type { SnapshotSummary } from "./SnapshotsMainView";
+import type { WorkloadLevel } from "@/lib/supabase/types";
+import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
 
 // Entry 타입 (개별 카드용)
 interface SnapshotEntry {
@@ -24,6 +26,9 @@ interface SnapshotEntry {
   risks?: string[];
   risk_level?: number;
   collaborators?: { name: string; relations?: string[] }[];
+  /** 스냅샷 레벨의 workload (첫 엔트리에만 표시) */
+  workload_level?: WorkloadLevel | null;
+  isFirstEntry?: boolean;
 }
 
 interface SnapshotListProps {
@@ -73,6 +78,9 @@ export function SnapshotList({
         name: c.name,
         relations: c.relations,
       })),
+      // 첫 엔트리에만 workload 표시
+      workload_level: index === 0 ? snapshot.workload_level : undefined,
+      isFirstEntry: index === 0,
     }))
   );
 
@@ -147,6 +155,23 @@ function ListView({
   );
 }
 
+// Workload 뱃지 컴포넌트
+function WorkloadBadge({ level }: { level: WorkloadLevel }) {
+  const colors = WORKLOAD_LEVEL_COLORS[level];
+  const label = WORKLOAD_LEVEL_LABELS[level];
+  
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${colors.bg} ${colors.text} border ${colors.border}`}
+    >
+      {level === "light" && "🌿"}
+      {level === "normal" && "⚡"}
+      {level === "burden" && "🔥"}
+      <span>{label}</span>
+    </span>
+  );
+}
+
 // Entry 카드 (그리드용) - 개별 엔트리 표시
 function EntryCard({
   entry,
@@ -214,6 +239,13 @@ function EntryCard({
       className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all cursor-pointer h-fit"
       onClick={() => setLocalExpanded(!localExpanded)}
     >
+      {/* Workload 뱃지 (첫 엔트리에만 표시) */}
+      {entry.isFirstEntry && entry.workload_level && (
+        <div className="px-4 pt-3 pb-0">
+          <WorkloadBadge level={entry.workload_level} />
+        </div>
+      )}
+
       {/* 헤더 - 메타 태그 세로 정렬 */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
@@ -509,6 +541,11 @@ function EntryRow({
 
   return (
     <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-gray-300 hover:shadow-md transition-all cursor-pointer group">
+      {/* Workload 뱃지 (첫 엔트리에만 표시) */}
+      {entry.isFirstEntry && entry.workload_level && (
+        <WorkloadBadge level={entry.workload_level} />
+      )}
+
       {/* 태그 일렬 표시 */}
       <div className="flex-1 flex items-center gap-1.5 flex-wrap min-w-0">
         {/* Domain */}

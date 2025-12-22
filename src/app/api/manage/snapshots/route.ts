@@ -22,13 +22,15 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // 스냅샷 목록 조회 (새 DB 스키마: risks, collaborators 별도 컬럼)
+  // 스냅샷 목록 조회 (새 DB 스키마: risks, collaborators 별도 컬럼 + workload 필드)
   const { data: snapshots, error } = await supabase
     .from("snapshots")
     .select(`
       id,
       created_at,
       updated_at,
+      workload_level,
+      workload_note,
       entries:snapshot_entries(
         id,
         name,
@@ -56,11 +58,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // 스냅샷 요약 데이터 생성 (past_week, this_week, risks, collaborators 포함)
+  // 스냅샷 요약 데이터 생성 (past_week, this_week, risks, collaborators, workload 포함)
   const snapshotSummaries = (snapshots || []).map((snapshot) => ({
     id: snapshot.id,
     created_at: snapshot.created_at,
     updated_at: snapshot.updated_at,
+    workload_level: snapshot.workload_level,
+    workload_note: snapshot.workload_note,
     entriesCount: snapshot.entries?.length || 0,
     entries: (snapshot.entries || []).map((e: Record<string, unknown>) => ({
       domain: e.domain,

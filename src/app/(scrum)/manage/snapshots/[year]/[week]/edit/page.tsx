@@ -41,13 +41,15 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
 
   const weekStartDate = getWeekStartDateString(year, week);
 
-  // 해당 주차의 스냅샷 목록 조회
+  // 해당 주차의 스냅샷 목록 조회 (workload 필드 포함)
   const { data: snapshots, error: snapshotsError } = await supabase
     .from("snapshots")
     .select(`
       id,
       created_at,
       updated_at,
+      workload_level,
+      workload_note,
       entries:snapshot_entries(*)
     `)
     .eq("workspace_id", DEFAULT_WORKSPACE_ID)

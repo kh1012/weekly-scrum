@@ -9,7 +9,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getWeekStartDateString, getWeekEndDateString } from "@/lib/date/isoWeek";
-import type { PastWeekTask, Collaborator } from "@/lib/supabase/types";
+import type { PastWeekTask, Collaborator, WorkloadLevel } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
 
 const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
@@ -31,6 +31,8 @@ export interface SnapshotEntryPayload {
 export interface UpdateSnapshotPayload {
   entries: SnapshotEntryPayload[];
   deletedEntryIds?: string[];
+  workloadLevel?: WorkloadLevel | null;
+  workloadNote?: string | null;
 }
 
 /**
@@ -73,10 +75,21 @@ export async function updateSnapshotAndEntries(
     return { success: false, error: "수정 권한이 없습니다." };
   }
 
-  // 스냅샷 updated_at 업데이트
+  // 스냅샷 updated_at 및 workload 업데이트
+  const snapshotUpdate: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  // workload 값이 전달된 경우에만 업데이트
+  if (payload.workloadLevel !== undefined) {
+    snapshotUpdate.workload_level = payload.workloadLevel;
+    snapshotUpdate.workload_note = payload.workloadNote || null;
+    snapshotUpdate.workload_updated_at = new Date().toISOString();
+  }
+
   const { error: updateError } = await supabase
     .from("snapshots")
-    .update({ updated_at: new Date().toISOString() })
+    .update(snapshotUpdate)
     .eq("id", snapshotId);
 
   if (updateError) {
@@ -135,6 +148,8 @@ export async function updateSnapshotAndEntries(
 
 export interface CreateSnapshotPayload {
   entries: SnapshotEntryPayload[];
+  workloadLevel?: WorkloadLevel | null;
+  workloadNote?: string | null;
 }
 
 /**
@@ -168,17 +183,26 @@ export async function createSnapshotAndEntries(
 
   // 스냅샷 생성
   const snapshotId = crypto.randomUUID();
+  const snapshotInsert: Record<string, unknown> = {
+    id: snapshotId,
+    workspace_id: DEFAULT_WORKSPACE_ID,
+    week_start_date: weekStartDate,
+    week_end_date: weekEndDate,
+    year: year,
+    week: weekLabel,
+    author_id: user.id,
+  };
+
+  // workload 값이 전달된 경우 추가
+  if (payload.workloadLevel) {
+    snapshotInsert.workload_level = payload.workloadLevel;
+    snapshotInsert.workload_note = payload.workloadNote || null;
+    snapshotInsert.workload_updated_at = new Date().toISOString();
+  }
+
   const { error: snapshotError } = await supabase
     .from("snapshots")
-    .insert({
-      id: snapshotId,
-      workspace_id: DEFAULT_WORKSPACE_ID,
-      week_start_date: weekStartDate,
-      week_end_date: weekEndDate,
-      year: year,
-      week: weekLabel,
-      author_id: user.id,
-    });
+    .insert(snapshotInsert);
 
   if (snapshotError) {
     return { success: false, error: "스냅샷 생성 실패: " + snapshotError.message };
