@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { useDraftStore, createRowId } from "./store";
 import { useLock } from "./useLock";
 import { DraftTreePanel } from "./DraftTreePanel";
@@ -103,6 +103,10 @@ export function DraftGanttView({
 
   // 세로 스크롤 동기화 상태
   const [commonScrollTop, setCommonScrollTop] = useState(0);
+
+  // 타임라인 스크롤바 높이 감지 (TreePanel 하단 정렬용)
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [timelineScrollbarHeight, setTimelineScrollbarHeight] = useState(0);
 
   const hydrate = useDraftStore((s) => s.hydrate);
   const clearDirtyFlags = useDraftStore((s) => s.clearDirtyFlags);
@@ -769,6 +773,7 @@ export function DraftGanttView({
                 rangeStart={rangeStart}
                 rangeEnd={rangeEnd}
                 workspaceId={workspaceId}
+                timelineScrollbarHeight={timelineScrollbarHeight}
               />
             </div>
           </>
@@ -791,6 +796,7 @@ export function DraftGanttView({
             workspaceId={workspaceId}
             scrollTop={commonScrollTop}
             onScroll={setCommonScrollTop}
+            timelineScrollbarHeight={timelineScrollbarHeight}
           />
         )}
 
@@ -807,6 +813,7 @@ export function DraftGanttView({
           onAction={extendLockIfNeeded}
           scrollTop={commonScrollTop}
           onScrollChange={setCommonScrollTop}
+          onScrollbarHeightChange={setTimelineScrollbarHeight}
         />
       </div>
 

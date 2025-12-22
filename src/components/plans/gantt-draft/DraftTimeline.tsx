@@ -57,6 +57,8 @@ interface DraftTimelineProps {
   /** 외부 스크롤 동기화용 (TreePanel에서 전달) */
   scrollTop?: number;
   onScrollChange?: (scrollTop: number) => void;
+  /** 가로 스크롤바 높이 변경 콜백 (TreePanel 하단 정렬용) */
+  onScrollbarHeightChange?: (height: number) => void;
 }
 
 interface DragCreateState {
@@ -80,6 +82,7 @@ export function DraftTimeline({
   onAction,
   scrollTop: externalScrollTop,
   onScrollChange,
+  onScrollbarHeightChange,
 }: DraftTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -346,6 +349,33 @@ export function DraftTimeline({
       }
     }
   }, [externalScrollTop]);
+
+  // 가로 스크롤바 높이 감지 및 전달
+  useEffect(() => {
+    const checkScrollbarHeight = () => {
+      if (containerRef.current && onScrollbarHeightChange) {
+        const hasHorizontalScrollbar =
+          containerRef.current.scrollWidth > containerRef.current.clientWidth;
+        const scrollbarHeight = hasHorizontalScrollbar
+          ? containerRef.current.offsetHeight - containerRef.current.clientHeight
+          : 0;
+        onScrollbarHeightChange(scrollbarHeight);
+      }
+    };
+
+    // 초기 체크
+    checkScrollbarHeight();
+
+    // 리사이즈 시 재체크
+    const resizeObserver = new ResizeObserver(checkScrollbarHeight);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [onScrollbarHeightChange]);
 
   // 초기 로드 시 오늘로 스크롤
   useEffect(() => {

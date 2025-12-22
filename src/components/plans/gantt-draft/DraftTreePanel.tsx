@@ -60,8 +60,10 @@ type FlagSortType = "name" | "date";
  */
 function getFlagNamePriority(title: string): number {
   const lowerTitle = title.toLowerCase();
-  if (lowerTitle.startsWith("release") || lowerTitle.startsWith("릴리즈")) return 0;
-  if (lowerTitle.startsWith("sprint") || lowerTitle.startsWith("스프린트")) return 1;
+  if (lowerTitle.startsWith("release") || lowerTitle.startsWith("릴리즈"))
+    return 0;
+  if (lowerTitle.startsWith("sprint") || lowerTitle.startsWith("스프린트"))
+    return 1;
   return 2;
 }
 
@@ -71,9 +73,9 @@ function getFlagNamePriority(title: string): number {
 function sortByName(a: DraftFlag, b: DraftFlag): number {
   const priorityA = getFlagNamePriority(a.title);
   const priorityB = getFlagNamePriority(b.title);
-  
+
   if (priorityA !== priorityB) return priorityA - priorityB;
-  
+
   // 같은 우선순위면 문자열 정렬
   return a.title.localeCompare(b.title, "ko");
 }
@@ -94,7 +96,7 @@ function FlagsPopover({
   anchorRect,
 }: FlagsPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
-  
+
   // 필터 및 정렬 상태
   const [localSearchQuery, setLocalSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -106,11 +108,11 @@ function FlagsPopover({
   const handleSearchChange = useCallback((value: string) => {
     setLocalSearchQuery(value);
     setIsSearching(true);
-    
+
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
     }
-    
+
     searchDebounceRef.current = setTimeout(() => {
       setDebouncedSearchQuery(value);
       setIsSearching(false);
@@ -138,15 +140,13 @@ function FlagsPopover({
   // deleted 제외, 필터링 및 정렬
   const sortedFlags = useMemo(() => {
     let filtered = flags.filter((f) => !f.deleted);
-    
+
     // 검색 필터
     if (debouncedSearchQuery.trim()) {
       const query = debouncedSearchQuery.toLowerCase();
-      filtered = filtered.filter((f) => 
-        f.title.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter((f) => f.title.toLowerCase().includes(query));
     }
-    
+
     // 정렬
     return filtered.sort(sortType === "name" ? sortByName : sortByDate);
   }, [flags, debouncedSearchQuery, sortType]);
@@ -225,7 +225,7 @@ function FlagsPopover({
             <XIcon className="w-3 h-3 text-red-500" />
           </button>
         </div>
-        
+
         {/* 검색 + 정렬 */}
         <div className="flex items-center gap-2">
           {/* 검색 입력 */}
@@ -272,7 +272,7 @@ function FlagsPopover({
               </div>
             )}
           </div>
-          
+
           {/* 정렬 버튼 */}
           <div className="flex rounded-lg overflow-hidden border border-red-200">
             <button
@@ -400,6 +400,8 @@ interface DraftTreePanelProps {
   rangeEnd?: Date;
   /** 워크스페이스 ID (FlagDocPanel용) */
   workspaceId?: string;
+  /** 타임라인 가로 스크롤바 높이 (하단 정렬용) */
+  timelineScrollbarHeight?: number;
 }
 
 /**
@@ -427,6 +429,7 @@ export function DraftTreePanel({
   rangeStart,
   rangeEnd,
   workspaceId,
+  timelineScrollbarHeight = 0,
 }: DraftTreePanelProps) {
   // FlagDocPanel 상태
   const [showFlagDoc, setShowFlagDoc] = useState(false);
@@ -459,19 +462,22 @@ export function DraftTreePanel({
   }, []);
 
   // debounce 검색 핸들러
-  const handleTreeSearchChange = useCallback((value: string) => {
-    setLocalSearchValue(value);
-    setIsTreeSearching(true);
-    
-    if (treeSearchDebounceRef.current) {
-      clearTimeout(treeSearchDebounceRef.current);
-    }
-    
-    treeSearchDebounceRef.current = setTimeout(() => {
-      setSearchQuery(value);
-      setIsTreeSearching(false);
-    }, 300);
-  }, [setSearchQuery]);
+  const handleTreeSearchChange = useCallback(
+    (value: string) => {
+      setLocalSearchValue(value);
+      setIsTreeSearching(true);
+
+      if (treeSearchDebounceRef.current) {
+        clearTimeout(treeSearchDebounceRef.current);
+      }
+
+      treeSearchDebounceRef.current = setTimeout(() => {
+        setSearchQuery(value);
+        setIsTreeSearching(false);
+      }, 300);
+    },
+    [setSearchQuery]
+  );
 
   const handleTreeSearchClear = useCallback(() => {
     setLocalSearchValue("");
@@ -1864,11 +1870,12 @@ export function DraftTreePanel({
       {/* 트리 영역 (스크롤) - Airbnb 스타일 */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide"
+        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide border border-t-[1px] border-gray-50/15"
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           scrollbarWidth: "none", // Firefox
           msOverflowStyle: "none", // IE/Edge
+          paddingBottom: timelineScrollbarHeight > 0 ? `${timelineScrollbarHeight}px` : undefined,
         }}
         onScroll={handleScroll}
       >
