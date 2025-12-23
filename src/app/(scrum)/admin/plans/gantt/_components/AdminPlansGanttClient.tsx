@@ -34,6 +34,8 @@ interface AdminPlansGanttClientProps {
   initialPlans: InitialPlan[];
   members: WorkspaceMemberOption[];
   initialOnlyMine: boolean;
+  maxUpdatedAt?: string;
+  updatedByName?: string;
 }
 
 export function AdminPlansGanttClient({
@@ -41,6 +43,8 @@ export function AdminPlansGanttClient({
   initialPlans,
   members,
   initialOnlyMine,
+  maxUpdatedAt,
+  updatedByName,
 }: AdminPlansGanttClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,6 +73,8 @@ export function AdminPlansGanttClient({
       onlyMine={initialOnlyMine}
       onOnlyMineChange={handleOnlyMineChange}
       isFilterLoading={isPending}
+      maxUpdatedAt={maxUpdatedAt}
+      updatedByName={updatedByName}
     />
   );
 }

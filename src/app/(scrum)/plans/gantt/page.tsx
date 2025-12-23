@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { fetchFeaturePlans } from "@/components/plans/gantt-draft/commitService";
+import { fetchFeaturePlans, getPlansMaxUpdatedAt } from "@/components/plans/gantt-draft/commitService";
 import { listWorkspaceMembers } from "@/lib/data/members";
 import { PlansGanttClient } from "./_components/PlansGanttClient";
 
@@ -22,12 +22,15 @@ export default async function PlansPage({ searchParams }: PageProps) {
   const onlyMine = params.onlyMine === "1" || params.onlyMine === "true";
 
   // 초기 데이터 조회 (병렬)
-  const [result, workspaceMembers] = await Promise.all([
+  const [result, workspaceMembers, maxUpdatedAtResult] = await Promise.all([
     fetchFeaturePlans({ workspaceId: DEFAULT_WORKSPACE_ID, onlyMine }),
     listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
+    getPlansMaxUpdatedAt(DEFAULT_WORKSPACE_ID),
   ]);
 
   const initialPlans = result.success ? result.plans || [] : [];
+  const maxUpdatedAt = maxUpdatedAtResult.success ? maxUpdatedAtResult.maxUpdatedAt : undefined;
+  const updatedByName = maxUpdatedAtResult.success ? maxUpdatedAtResult.updatedByName : undefined;
 
   // 멤버 목록을 클라이언트용으로 변환
   const members = workspaceMembers.map((m) => ({
@@ -42,6 +45,8 @@ export default async function PlansPage({ searchParams }: PageProps) {
       initialPlans={initialPlans}
       members={members}
       initialOnlyMine={onlyMine}
+      maxUpdatedAt={maxUpdatedAt}
+      updatedByName={updatedByName}
     />
   );
 }

@@ -64,6 +64,8 @@ interface DraftGanttViewProps {
   isFilterLoading?: boolean;
   /** Plans 최대 updated_at (마지막 업데이트 시각) */
   maxUpdatedAt?: string;
+  /** 마지막 업데이트한 사용자 이름 */
+  updatedByName?: string;
 }
 
 export function DraftGanttView({
@@ -76,6 +78,7 @@ export function DraftGanttView({
   onOnlyMineChange,
   isFilterLoading = false,
   maxUpdatedAt,
+  updatedByName,
 }: DraftGanttViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
@@ -256,7 +259,8 @@ export function DraftGanttView({
     if (maxUpdatedAt && readOnly && !hasShownToastRef.current) {
       hasShownToastRef.current = true;
       const relativeTime = formatRelativeTime(maxUpdatedAt);
-      showToast("info", "Plans updated", relativeTime);
+      const byText = updatedByName ? ` by ${updatedByName}` : "";
+      showToast("info", "Plans updated", `${relativeTime}${byText}`);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -658,6 +662,7 @@ export function DraftGanttView({
         isFilterLoading={isFilterLoading}
         // 마지막 업데이트 시각
         maxUpdatedAt={maxUpdatedAt}
+        updatedByName={updatedByName}
         // 중앙 액션 props
         onUndo={undo}
         onRedo={redo}

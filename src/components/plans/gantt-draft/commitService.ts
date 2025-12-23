@@ -315,8 +315,59 @@ interface FetchFeaturePlansOptions {
 }
 
 /**
- * Feature Plans 조회 (hydrate용)
+ * Plans의 최대 updated_at 및 업데이트한 사용자 정보 조회
  */
+export async function getPlansMaxUpdatedAt(
+  workspaceId: string
+): Promise<{
+  success: boolean;
+  maxUpdatedAt?: string;
+  updatedByName?: string;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+
+    // 가장 최근 업데이트된 plan 조회
+    const { data: planData, error: planError } = await supabase
+      .from("plans")
+      .select("updated_at, updated_by")
+      .eq("workspace_id", workspaceId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (planError) {
+      console.error("[getPlansMaxUpdatedAt] Error:", planError);
+      return { success: false, error: "데이터 조회에 실패했습니다." };
+    }
+
+    // 업데이트한 사용자의 이름 조회
+    let updatedByName: string | undefined;
+    if (planData?.updated_by) {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", planData.updated_by)
+        .single();
+
+      updatedByName = profileData?.display_name || undefined;
+    }
+
+    return { 
+      success: true, 
+      maxUpdatedAt: planData?.updated_at,
+      updatedByName,
+    };
+  } catch (err) {
+    console.error("[getPlansMaxUpdatedAt] Unexpected error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
+    };
+  }
+}
+
 export async function fetchFeaturePlans(
   workspaceIdOrOptions?: string | FetchFeaturePlansOptions
 ): Promise<{

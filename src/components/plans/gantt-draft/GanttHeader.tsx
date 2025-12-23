@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useDraftStore } from "./store";
 import { useLock } from "./useLock";
 import { useIsMac } from "./useOS";
@@ -26,6 +26,7 @@ import {
   ChevronDownIcon,
 } from "@/components/common/Icons";
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
+import { formatRelativeTime } from "@/lib/utils/relativeTime";
 
 interface GanttHeaderProps {
   workspaceId: string;
@@ -42,6 +43,10 @@ interface GanttHeaderProps {
   onOnlyMineChange?: (value: boolean) => void;
   /** 필터 로딩 중 상태 */
   isFilterLoading?: boolean;
+  /** Plans 최대 updated_at (마지막 업데이트 시각) */
+  maxUpdatedAt?: string;
+  /** 마지막 업데이트한 사용자 이름 */
+  updatedByName?: string;
   // 중앙 액션 관련
   onUndo?: () => void;
   onRedo?: () => void;
@@ -76,6 +81,8 @@ export function GanttHeader({
   onlyMine = false,
   onOnlyMineChange,
   isFilterLoading = false,
+  maxUpdatedAt,
+  updatedByName,
   onUndo,
   onRedo,
   onOpenCommandPalette,
@@ -216,10 +223,29 @@ export function GanttHeader({
         {/* 좌측: 제목 + 락 상태 */}
         <div className={`flex items-center gap-4 ${isMobile && readOnly ? "justify-center" : ""}`}>
           <div className={isMobile && readOnly ? "text-center" : ""}>
-            <h1 className={`${isMobile ? "text-lg" : "text-xl"} font-bold text-gray-900`}>
-              {title || (readOnly ? "계획" : "계획 관리")}
-            </h1>
-            <p className={`${isMobile ? "text-xs" : "text-sm"} text-gray-500`}>Feature 단위 일정 계획</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className={`${isMobile ? "text-lg" : "text-xl"} font-bold text-gray-900`}>
+                  {title || (readOnly ? "계획" : "계획 관리")}
+                </h1>
+                <p className={`${isMobile ? "text-xs" : "text-sm"} text-gray-500`}>Feature 단위 일정 계획</p>
+              </div>
+              {/* 마지막 업데이트 시각 표시 (읽기 전용 모드에서만) */}
+              {readOnly && maxUpdatedAt && (
+                <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-500 bg-gray-50">
+                  <span>Updated</span>
+                  <span className="font-semibold text-gray-700">
+                    {formatRelativeTime(maxUpdatedAt)}
+                  </span>
+                  {updatedByName && (
+                    <>
+                      <span>by</span>
+                      <span className="font-semibold text-gray-700">{updatedByName}</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 락 상태 - 읽기 전용에서는 숨김 */}
