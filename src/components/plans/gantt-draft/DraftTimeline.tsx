@@ -778,21 +778,18 @@ export function DraftTimeline({
       barsWithLane.forEach((barWithLane) => {
         const currentLane = barWithLane.lane;
 
-        // 현재 클릭한 laneIndex 이상에 있는 bars의 preferredLane을 조정
-        if (currentLane >= laneIndex) {
-          // 현재 레인이 laneIndex와 같으면 고정
-          if (currentLane === laneIndex) {
-            // preferredLane이 설정되지 않았으면 현재 레인으로 설정
-            if (barWithLane.preferredLane === undefined) {
-              updateBar(barWithLane.clientUid, {
-                preferredLane: laneIndex,
-              });
-            }
-          }
-          // 현재 레인이 newLaneIndex 이상이면 1 증가
-          else if (currentLane >= newLaneIndex) {
+        // newLaneIndex 이상의 레인: 1 증가
+        if (currentLane >= newLaneIndex) {
+          updateBar(barWithLane.clientUid, {
+            preferredLane: currentLane + 1,
+          });
+        }
+        // newLaneIndex 미만의 레인: 현재 위치 고정 (preferredLane 설정)
+        else {
+          // preferredLane이 없거나, 현재 레인과 다른 경우 현재 레인으로 고정
+          if (barWithLane.preferredLane === undefined || barWithLane.preferredLane !== currentLane) {
             updateBar(barWithLane.clientUid, {
-              preferredLane: currentLane + 1,
+              preferredLane: currentLane,
             });
           }
         }
