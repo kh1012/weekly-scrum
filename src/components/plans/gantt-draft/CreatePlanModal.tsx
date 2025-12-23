@@ -98,8 +98,7 @@ export function CreatePlanModal({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   // 섹션 접기/펼치기 상태
-  const [isRequiredExpanded, setIsRequiredExpanded] = useState(true);
-  const [isOptionalExpanded, setIsOptionalExpanded] = useState(false);
+  const [isAdditionalExpanded, setIsAdditionalExpanded] = useState(false);
 
   /**
    * 담당자 선택 핸들러: basic_role 기반 role 자동 설정
@@ -149,6 +148,7 @@ export function CreatePlanModal({
       setIsAssigneeDropdownOpen(false);
       setAssigneeSearchQuery("");
       setHighlightedIndex(0);
+      setIsAdditionalExpanded(false); // 추가 사항 섹션 접기
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
@@ -359,28 +359,17 @@ export function CreatePlanModal({
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* 필수 정보 섹션 */}
           <div className="rounded-xl border border-gray-100 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setIsRequiredExpanded(!isRequiredExpanded)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
-            >
+            <div className="px-4 py-3 bg-gray-50">
               <span className="text-sm font-semibold text-gray-700">
                 필수 정보 <span className="text-red-500">*</span>
               </span>
-              <ChevronDownIcon
-                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                  isRequiredExpanded ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {isRequiredExpanded && (
-              <div className="p-4 space-y-4 bg-white">
-                {/* 제목 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    제목
-                  </label>
+            </div>
+            <div className="p-4 space-y-4 bg-white">
+              {/* 제목 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  제목
+                </label>
             <input
               ref={inputRef}
               type="text"
@@ -434,34 +423,22 @@ export function CreatePlanModal({
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* 선택사항 섹션 */}
+        {/* 선택 사항 섹션 */}
         <div className="rounded-xl border border-gray-100 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setIsOptionalExpanded(!isOptionalExpanded)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
-          >
+          <div className="px-4 py-3 bg-gray-50">
             <span className="text-sm font-medium text-gray-500">
-              선택사항 (담당자, 설명, 링크)
+              선택 사항
             </span>
-            <ChevronDownIcon
-              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                isOptionalExpanded ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {isOptionalExpanded && (
-            <div className="p-4 space-y-4 bg-white">
-              {/* 담당자 */}
-              <div>
-                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
-                  <UserIcon className="w-4 h-4" />
-                  담당자
-                </label>
+          </div>
+          <div className="p-4 space-y-4 bg-white">
+            {/* 담당자 */}
+            <div>
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
+                <UserIcon className="w-4 h-4" />
+                담당자
+              </label>
             <div className="space-y-3">
               {/* 커스텀 담당자 드롭다운 */}
               <div className="relative" ref={assigneeDropdownRef} onKeyDown={handleAssigneeKeyDown}>
@@ -701,86 +678,39 @@ export function CreatePlanModal({
               </div>
               )}
             </div>
+          </div>
+        </div>
 
-            {/* 설명 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                설명
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="이 계획에 대한 상세 설명을 입력하세요..."
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none resize-none"
-                style={{
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  color: "#1e293b",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3b82f6";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#e2e8f0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
+        {/* 추가 사항 섹션 */}
+        <div className="rounded-xl border border-gray-100 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsAdditionalExpanded(!isAdditionalExpanded)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <span className="text-sm font-medium text-gray-500">
+              추가 사항
+            </span>
+            <ChevronDownIcon
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                isAdditionalExpanded ? "rotate-180" : ""
+              }`}
+            />
+          </button>
 
-            {/* 링크 */}
-            <div>
-              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
-                <LinkIcon className="w-4 h-4" />
-                관련 링크
-              </label>
-
-              {/* 기존 링크 목록 */}
-              {links.length > 0 && (
-                <div className="space-y-2 mb-3">
-                  {links.map((link, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 p-2.5 rounded-lg group"
-                      style={{ background: "#f8fafc" }}
-                    >
-                      <LinkIcon className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline truncate block"
-                        >
-                          {link.label || link.url}
-                        </a>
-                        {link.label && (
-                          <span className="text-xs text-gray-400 truncate block">
-                            {link.url}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveLink(index)}
-                        className="p-1 rounded hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <XIcon className="w-3.5 h-3.5 text-red-400" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 새 링크 추가 */}
-              <div className="space-y-2">
-                <input
-                  type="url"
-                  value={newLinkUrl}
-                  onChange={(e) => setNewLinkUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  className="w-full px-4 py-2.5 rounded-xl text-sm transition-all duration-150 outline-none"
+          {isAdditionalExpanded && (
+            <div className="p-4 space-y-4 bg-white">
+              {/* 설명 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="이 계획에 대한 상세 설명을 입력하세요..."
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none resize-none"
                   style={{
                     background: "#f8fafc",
                     border: "1px solid #e2e8f0",
@@ -795,13 +725,60 @@ export function CreatePlanModal({
                     e.target.style.boxShadow = "none";
                   }}
                 />
-                <div className="flex gap-2">
+              </div>
+
+              {/* 링크 */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
+                  <LinkIcon className="w-4 h-4" />
+                  관련 링크
+                </label>
+
+                {/* 기존 링크 목록 */}
+                {links.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {links.map((link, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2.5 rounded-lg group"
+                        style={{ background: "#f8fafc" }}
+                      >
+                        <LinkIcon className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline truncate block"
+                          >
+                            {link.label || link.url}
+                          </a>
+                          {link.label && (
+                            <span className="text-xs text-gray-400 truncate block">
+                              {link.url}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveLink(index)}
+                          className="p-1 rounded hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <XIcon className="w-3.5 h-3.5 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 새 링크 추가 */}
+                <div className="space-y-2">
                   <input
-                    type="text"
-                    value={newLinkLabel}
-                    onChange={(e) => setNewLinkLabel(e.target.value)}
-                    placeholder="링크 설명 (선택)"
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm transition-all duration-150 outline-none"
+                    type="url"
+                    value={newLinkUrl}
+                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm transition-all duration-150 outline-none"
                     style={{
                       background: "#f8fafc",
                       border: "1px solid #e2e8f0",
@@ -815,32 +792,53 @@ export function CreatePlanModal({
                       e.target.style.borderColor = "#e2e8f0";
                       e.target.style.boxShadow = "none";
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddLink();
-                      }
-                    }}
                   />
-                  <button
-                    type="button"
-                    onClick={handleAddLink}
-                    disabled={!newLinkUrl.trim()}
-                    className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                    style={{
-                      background: newLinkUrl.trim() ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "#e5e7eb",
-                      color: newLinkUrl.trim() ? "white" : "#9ca3af",
-                    }}
-                  >
-                    <PlusIcon className="w-4 h-4" />
-                    추가
-                  </button>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newLinkLabel}
+                      onChange={(e) => setNewLinkLabel(e.target.value)}
+                      placeholder="링크 설명 (선택)"
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm transition-all duration-150 outline-none"
+                      style={{
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        color: "#1e293b",
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = "#3b82f6";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = "#e2e8f0";
+                        e.target.style.boxShadow = "none";
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddLink();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddLink}
+                      disabled={!newLinkUrl.trim()}
+                      className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                      style={{
+                        background: newLinkUrl.trim() ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "#e5e7eb",
+                        color: newLinkUrl.trim() ? "white" : "#9ca3af",
+                      }}
+                    >
+                      <PlusIcon className="w-4 h-4" />
+                      추가
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
           {/* 버튼 */}
           <div className="flex justify-end gap-3 pt-2">
