@@ -77,6 +77,7 @@ export async function commitFeaturePlans(
 
     let deletedCount = 0;
     let upsertedCount = 0;
+    const savedItems: { title: string; action: "insert" | "update" | "delete" }[] = [];
 
     // Service Role 클라이언트 사용 (RLS 우회)
     // 이미 권한 검증 완료했으므로 안전함
@@ -126,6 +127,16 @@ export async function commitFeaturePlans(
         return { success: false, error: "삭제 중 오류가 발생했습니다." };
       }
       deletedCount = deleteResults.length;
+
+      // 삭제된 항목 정보 수집
+      savedItems.push(
+        ...deleteResults
+          .filter((r) => r.success)
+          .map((r) => ({
+            title: r.title,
+            action: "delete" as const,
+          }))
+      );
     }
 
     // 업서트 처리 (병렬)
@@ -258,6 +269,16 @@ export async function commitFeaturePlans(
         return { success: false, error: `저장 실패: ${failedTitles}` };
       }
       upsertedCount = upsertResults.length;
+
+      // 저장된 항목 정보 수집
+      savedItems.push(
+        ...upsertResults
+          .filter((r) => r.success)
+          .map((r) => ({
+            title: r.title,
+            action: r.action as "insert" | "update",
+          }))
+      );
     }
 
     console.log("✅ [commitFeaturePlans] 커밋 완료", {
@@ -274,6 +295,7 @@ export async function commitFeaturePlans(
       success: true,
       upsertedCount,
       deletedCount,
+      savedItems,
     };
   } catch (err) {
     console.error("❌ [commitFeaturePlans] 예외 발생:", err);

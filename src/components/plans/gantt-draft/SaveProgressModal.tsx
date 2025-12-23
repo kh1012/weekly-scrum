@@ -11,12 +11,22 @@ import { CheckIcon, XIcon, LoadingIcon } from "@/components/common/Icons";
 
 export type SaveStepStatus = "pending" | "in_progress" | "success" | "error";
 
+export type LogEntryType = "info" | "success" | "error" | "warning";
+
+export interface LogEntry {
+  id: string;
+  type: LogEntryType;
+  message: string;
+  timestamp: Date;
+}
+
 export interface SaveStep {
   id: string;
   label: string;
   status: SaveStepStatus;
   count?: number;
   error?: string;
+  logs?: LogEntry[];
 }
 
 interface SaveProgressModalProps {
@@ -143,81 +153,125 @@ export function SaveProgressModal({
         {/* 단계별 상태 */}
         <div className="px-6 py-4 space-y-3">
           {steps.map((step) => (
-            <div
-              key={step.id}
-              className="flex items-center gap-3 p-3 rounded-xl transition-all"
-              style={{
-                background:
-                  step.status === "error"
-                    ? "rgba(239, 68, 68, 0.08)"
-                    : step.status === "success"
-                    ? "rgba(16, 185, 129, 0.08)"
-                    : step.status === "in_progress"
-                    ? "rgba(59, 130, 246, 0.08)"
-                    : "rgba(0, 0, 0, 0.02)",
-                border:
-                  step.status === "error"
-                    ? "1px solid rgba(239, 68, 68, 0.2)"
-                    : step.status === "success"
-                    ? "1px solid rgba(16, 185, 129, 0.2)"
-                    : step.status === "in_progress"
-                    ? "1px solid rgba(59, 130, 246, 0.2)"
-                    : "1px solid rgba(0, 0, 0, 0.04)",
-              }}
-            >
-              {/* 단계 아이콘 */}
+            <div key={step.id} className="space-y-2">
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                className="flex items-center gap-3 p-3 rounded-xl transition-all"
                 style={{
                   background:
                     step.status === "error"
-                      ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+                      ? "rgba(239, 68, 68, 0.08)"
                       : step.status === "success"
-                      ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                      ? "rgba(16, 185, 129, 0.08)"
                       : step.status === "in_progress"
-                      ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
-                      : "rgba(0, 0, 0, 0.1)",
+                      ? "rgba(59, 130, 246, 0.08)"
+                      : "rgba(0, 0, 0, 0.02)",
+                  border:
+                    step.status === "error"
+                      ? "1px solid rgba(239, 68, 68, 0.2)"
+                      : step.status === "success"
+                      ? "1px solid rgba(16, 185, 129, 0.2)"
+                      : step.status === "in_progress"
+                      ? "1px solid rgba(59, 130, 246, 0.2)"
+                      : "1px solid rgba(0, 0, 0, 0.04)",
                 }}
               >
-                {step.status === "error" ? (
-                  <XIcon className="w-4 h-4 text-white" />
-                ) : step.status === "success" ? (
-                  <CheckIcon className="w-4 h-4 text-white" />
-                ) : step.status === "in_progress" ? (
-                  <LoadingIcon className="w-4 h-4 text-white animate-spin" />
-                ) : (
-                  <div className="w-2 h-2 rounded-full bg-gray-400" />
-                )}
-              </div>
-
-              {/* 단계 정보 */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-sm font-medium ${
+                {/* 단계 아이콘 */}
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background:
                       step.status === "error"
-                        ? "text-red-700"
+                        ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
                         : step.status === "success"
-                        ? "text-green-700"
+                        ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
                         : step.status === "in_progress"
-                        ? "text-blue-700"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {step.label}
-                  </span>
-                  {step.count !== undefined && step.status === "success" && (
-                    <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                      {step.count}개 저장됨
-                    </span>
+                        ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+                        : "rgba(0, 0, 0, 0.1)",
+                  }}
+                >
+                  {step.status === "error" ? (
+                    <XIcon className="w-4 h-4 text-white" />
+                  ) : step.status === "success" ? (
+                    <CheckIcon className="w-4 h-4 text-white" />
+                  ) : step.status === "in_progress" ? (
+                    <LoadingIcon className="w-4 h-4 text-white animate-spin" />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full bg-gray-400" />
                   )}
                 </div>
 
-                {/* 오류 메시지 */}
-                {step.status === "error" && step.error && (
-                  <p className="text-xs text-red-600 mt-1">{step.error}</p>
-                )}
+                {/* 단계 정보 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-sm font-medium ${
+                        step.status === "error"
+                          ? "text-red-700"
+                          : step.status === "success"
+                          ? "text-green-700"
+                          : step.status === "in_progress"
+                          ? "text-blue-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                    {step.count !== undefined && step.status === "success" && (
+                      <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                        {step.count}개 저장됨
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 오류 메시지 */}
+                  {step.status === "error" && step.error && (
+                    <p className="text-xs text-red-600 mt-1">{step.error}</p>
+                  )}
+                </div>
               </div>
+
+              {/* 로그 영역 */}
+              {step.logs && step.logs.length > 0 && (
+                <div
+                  className="ml-11 max-h-32 overflow-y-auto rounded-lg p-2 space-y-1"
+                  style={{
+                    background: "rgba(0, 0, 0, 0.03)",
+                    border: "1px solid rgba(0, 0, 0, 0.05)",
+                  }}
+                >
+                  {step.logs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex items-start gap-2 text-xs font-mono"
+                    >
+                      <span
+                        className="flex-shrink-0"
+                        style={{
+                          color:
+                            log.type === "success"
+                              ? "#10b981"
+                              : log.type === "error"
+                              ? "#ef4444"
+                              : log.type === "warning"
+                              ? "#f59e0b"
+                              : "#6b7280",
+                        }}
+                      >
+                        {log.type === "success"
+                          ? "✓"
+                          : log.type === "error"
+                          ? "✗"
+                          : log.type === "warning"
+                          ? "!"
+                          : "•"}
+                      </span>
+                      <span className="text-gray-600 break-all">
+                        {log.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

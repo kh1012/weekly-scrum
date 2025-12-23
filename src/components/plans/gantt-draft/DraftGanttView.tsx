@@ -18,7 +18,7 @@ import { CommandPalette } from "./CommandPalette";
 import { HelpModal } from "./HelpModal";
 // FloatingDock은 GanttHeader로 통합됨
 import { showToast, ToastContainer } from "./Toast";
-import { SaveProgressModal, SaveStep } from "./SaveProgressModal";
+import { SaveProgressModal, SaveStep, LogEntry } from "./SaveProgressModal";
 import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
@@ -468,10 +468,26 @@ export function DraftGanttView({
           const planCount =
             (planResult.upsertedCount || 0) + (planResult.deletedCount || 0);
 
+          // savedItems를 로그로 변환
+          const logs: LogEntry[] = (planResult.savedItems || []).map(
+            (item, idx) => ({
+              id: `plan-${idx}`,
+              type: "success" as const,
+              message: `${
+                item.action === "insert"
+                  ? "생성"
+                  : item.action === "update"
+                  ? "수정"
+                  : "삭제"
+              }: ${item.title}`,
+              timestamp: new Date(),
+            })
+          );
+
           setSaveSteps((prev) =>
             prev.map((s) =>
               s.id === "plans"
-                ? { ...s, status: "success" as const, count: planCount }
+                ? { ...s, status: "success" as const, count: planCount, logs }
                 : s
             )
           );
