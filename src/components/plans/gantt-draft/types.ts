@@ -232,6 +232,8 @@ export interface CommitPayload {
     links?: PlanLink[];
     deleted: boolean;
     order_index: number; // 트리 순서 (row orderIndex 기반)
+    /** 사용자가 수동으로 지정한 레인 인덱스 */
+    lane_hint?: number;
   }>;
 }
 

@@ -17,6 +17,7 @@ interface CommitResult {
   error?: string;
   upsertedCount?: number;
   deletedCount?: number;
+  savedItems?: { title: string; action: string }[];
 }
 
 /**
@@ -176,6 +177,7 @@ export async function commitFeaturePlans(
                 description: plan.description || null,
                 links: plan.links || [],
                 order_index: plan.order_index ?? 0,
+                lane_hint: plan.lane_hint ?? null,
                 updated_by: user.id,
                 updated_at: new Date().toISOString(),
               })
@@ -230,6 +232,7 @@ export async function commitFeaturePlans(
                 description: plan.description || null,
                 links: plan.links || [],
                 order_index: plan.order_index ?? 0,
+                lane_hint: plan.lane_hint ?? null,
                 created_by: user.id,
                 updated_by: user.id,
               })
@@ -390,6 +393,7 @@ export async function fetchFeaturePlans(
     description?: string;
     links?: { url: string; label?: string }[];
     orderIndex: number; // 트리 순서
+    laneHint?: number; // 사용자 지정 레인
     assignees?: FetchedAssignee[];
   }>;
   error?: string;
@@ -517,6 +521,7 @@ export async function fetchFeaturePlans(
       description: row.description || undefined,
       links: row.links || undefined,
       orderIndex: row.order_index ?? 0, // 순서 인덱스 추가
+      laneHint: row.lane_hint ?? undefined, // 사용자 지정 레인
       assignees: assigneesMap.get(row.id) || [],
     }));
 

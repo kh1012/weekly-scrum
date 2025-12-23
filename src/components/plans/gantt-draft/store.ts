@@ -708,6 +708,9 @@ export const useDraftStore = create<DraftStore>()(
           startDate: newStart.toISOString().split("T")[0],
           endDate: newEnd.toISOString().split("T")[0],
           assignees: [...sourceBar.assignees],
+          description: sourceBar.description,
+          links: sourceBar.links ? [...sourceBar.links] : undefined,
+          preferredLane: sourceBar.preferredLane, // 동일한 레인에 복제
           dirty: true,
           deleted: false,
           createdAtLocal: new Date().toISOString(),
@@ -776,7 +779,12 @@ export const useDraftStore = create<DraftStore>()(
         set({
           rows: newRows,
           bars: newBars,
-          ...pushUndo(state, { type: "UPDATE_BAR", prevBar, nextBar }),
+          ...pushUndo(state, {
+            type: "UPDATE_BAR",
+            barId: clientUid,
+            prevBar,
+            nextBar,
+          }),
         });
       },
 

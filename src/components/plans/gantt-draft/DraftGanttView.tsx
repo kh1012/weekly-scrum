@@ -46,6 +46,7 @@ interface InitialPlan {
   description?: string;
   links?: { url: string; label?: string }[];
   orderIndex?: number; // 트리 순서
+  laneHint?: number; // 사용자 지정 레인
   assignees?: InitialAssignee[];
 }
 
@@ -240,6 +241,7 @@ export function DraftGanttView({
         })),
         description: plan.description,
         links: plan.links,
+        preferredLane: plan.laneHint, // 서버에서 로드된 레인 힌트
         dirty: false,
         deleted: false,
         createdAtLocal: new Date().toISOString(),
@@ -441,7 +443,9 @@ export function DraftGanttView({
         const pendingLogs: LogEntry[] = allBars.map((bar, idx) => ({
           id: `plan-${idx}`,
           type: "pending" as const,
-          message: `${bar.deleted ? "삭제" : bar.serverId ? "수정" : "생성"}: ${bar.title}`,
+          message: `${bar.deleted ? "삭제" : bar.serverId ? "수정" : "생성"}: ${
+            bar.title
+          }`,
           timestamp: new Date(),
         }));
 
@@ -474,6 +478,7 @@ export function DraftGanttView({
               links: bar.links,
               deleted: bar.deleted || false,
               order_index: row?.orderIndex ?? 0, // 트리 순서 저장
+              lane_hint: bar.preferredLane, // 레인 위치 저장
             };
           }),
         };
