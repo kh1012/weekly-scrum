@@ -38,7 +38,10 @@ export async function commitFeaturePlans(
     const hasAccess = await isAdminOrLeader();
     if (!hasAccess) {
       console.error("❌ [commitFeaturePlans] 권한 없음");
-      return { success: false, error: "권한이 없습니다. 관리자만 저장할 수 있습니다." };
+      return {
+        success: false,
+        error: "권한이 없습니다. 관리자만 저장할 수 있습니다.",
+      };
     }
     console.log("✅ [commitFeaturePlans] 권한 확인 완료: admin/leader");
 
@@ -77,206 +80,184 @@ export async function commitFeaturePlans(
 
     // Service Role 클라이언트 사용 (RLS 우회)
     // 이미 권한 검증 완료했으므로 안전함
-    console.log("🔓 [commitFeaturePlans] Service Role 클라이언트로 전환 (RLS 우회)");
+    console.log(
+      "🔓 [commitFeaturePlans] Service Role 클라이언트로 전환 (RLS 우회)"
+    );
     const adminSupabase = createServiceRoleClient();
 
-    // 삭제 처리
+    // 삭제 처리 (병렬)
     if (toDelete.length > 0) {
       console.log("🗑️ [commitFeaturePlans] 삭제 시작:", toDelete.length, "개");
-      for (const plan of toDelete) {
-        // serverId가 있으면 id로 삭제, 없으면 client_uid로 삭제
-        const serverId = (plan as unknown as { serverId?: string }).serverId;
-        
-        let deleteQuery = adminSupabase
-          .from("plans")
-          .delete()
-          .eq("workspace_id", payload.workspaceId || DEFAULT_WORKSPACE_ID);
-        
-        if (serverId) {
-          // 서버 ID로 삭제 (기존 데이터)
-          deleteQuery = deleteQuery.eq("id", serverId);
-        } else {
-          // client_uid로 삭제 (새로 생성된 데이터)
-          deleteQuery = deleteQuery.eq("client_uid", plan.clientUid);
-        }
-        
-        const { error: deleteError } = await deleteQuery;
 
-        if (deleteError) {
-          console.error("❌ [commitFeaturePlans] 삭제 오류:", {
-            plan: plan.title,
-            serverId,
-            clientUid: plan.clientUid,
-            error: deleteError,
-          });
-          return { success: false, error: "삭제 중 오류가 발생했습니다." };
-        }
-        
-        console.log("✅ [commitFeaturePlans] 삭제 완료:", plan.title);
-        deletedCount++;
+      const deleteResults = await Promise.all(
+        toDelete.map(async (plan) => {
+          const serverId = (plan as unknown as { serverId?: string }).serverId;
+
+          let deleteQuery = adminSupabase
+            .from("plans")
+            .delete()
+            .eq("workspace_id", payload.workspaceId || DEFAULT_WORKSPACE_ID);
+
+          if (serverId) {
+            deleteQuery = deleteQuery.eq("id", serverId);
+          } else {
+            deleteQuery = deleteQuery.eq("client_uid", plan.clientUid);
+          }
+
+          const { error: deleteError } = await deleteQuery;
+
+          if (deleteError) {
+            console.error("❌ [commitFeaturePlans] 삭제 오류:", {
+              plan: plan.title,
+              serverId,
+              clientUid: plan.clientUid,
+              error: deleteError,
+            });
+            return { success: false, title: plan.title };
+          }
+
+          console.log("✅ [commitFeaturePlans] 삭제 완료:", plan.title);
+          return { success: true, title: plan.title };
+        })
+      );
+
+      const failedDeletes = deleteResults.filter((r) => !r.success);
+      if (failedDeletes.length > 0) {
+        return { success: false, error: "삭제 중 오류가 발생했습니다." };
       }
+      deletedCount = deleteResults.length;
     }
 
-    // 업서트 처리
+    // 업서트 처리 (병렬)
     if (toUpsert.length > 0) {
-      console.log("📝 [commitFeaturePlans] 업서트 시작:", toUpsert.length, "개");
+      console.log(
+        "📝 [commitFeaturePlans] 업서트 시작:",
+        toUpsert.length,
+        "개 (병렬 처리)"
+      );
       const workspaceId = payload.workspaceId || DEFAULT_WORKSPACE_ID;
 
-      for (const plan of toUpsert) {
-        console.log("🔍 [commitFeaturePlans] 기존 plan 확인:", {
-          clientUid: plan.clientUid,
-          title: plan.title,
-        });
-
-        // 기존 plan 조회 (client_uid 기준)
-        const { data: existingPlan } = await adminSupabase
-          .from("plans")
-          .select("id")
-          .eq("workspace_id", workspaceId)
-          .eq("client_uid", plan.clientUid)
-          .single();
-
-        if (existingPlan) {
-          console.log("🔄 [commitFeaturePlans] UPDATE 시작:", {
-            id: existingPlan.id,
-            title: plan.title,
-          });
-
-          // Update
-          const { error: updateError } = await adminSupabase
+      const upsertResults = await Promise.all(
+        toUpsert.map(async (plan) => {
+          // 기존 plan 조회 (client_uid 기준)
+          const { data: existingPlan } = await adminSupabase
             .from("plans")
-            .update({
-              type: "feature",
-              domain: plan.domain || null,
-              project: plan.project,
-              module: plan.module,
-              feature: plan.feature,
-              title: plan.title,
-              stage: plan.stage,
-              status: plan.status,
-              start_date: plan.start_date,
-              end_date: plan.end_date,
-              description: plan.description || null,
-              links: plan.links || [],
-              order_index: plan.order_index ?? 0,
-              updated_by: user.id,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", existingPlan.id);
-
-          if (updateError) {
-            console.error("❌ [commitFeaturePlans] UPDATE 오류:", {
-              id: existingPlan.id,
-              title: plan.title,
-              error: {
-                code: updateError.code,
-                message: updateError.message,
-                details: updateError.details,
-                hint: updateError.hint,
-              },
-            });
-            return { success: false, error: `업데이트 오류: ${plan.title}` };
-          }
-
-          console.log("✅ [commitFeaturePlans] UPDATE 완료:", plan.title);
-
-          // 담당자 업데이트 - 항상 기존 담당자 삭제 후 새로 추가
-          console.log("👥 [commitFeaturePlans] 담당자 업데이트 시작");
-          await adminSupabase
-            .from("plan_assignees")
-            .delete()
-            .eq("plan_id", existingPlan.id);
-
-          if (plan.assignees && plan.assignees.length > 0) {
-            // 새 담당자 추가
-            const assigneeRows = plan.assignees.map((a) => ({
-              plan_id: existingPlan.id,
-              workspace_id: workspaceId,
-              user_id: a.userId,
-              role: a.role,
-            }));
-
-            console.log("➕ [commitFeaturePlans] 담당자 추가:", assigneeRows.length, "명");
-            const { error: assigneeError } = await adminSupabase.from("plan_assignees").insert(assigneeRows);
-            if (assigneeError) {
-              console.error("❌ [commitFeaturePlans] 담당자 추가 오류:", {
-                error: assigneeError,
-                assigneeRows,
-              });
-            } else {
-              console.log("✅ [commitFeaturePlans] 담당자 추가 완료");
-            }
-          }
-        } else {
-          console.log("➕ [commitFeaturePlans] INSERT 시작:", {
-            clientUid: plan.clientUid,
-            title: plan.title,
-          });
-
-          // Insert
-          const { data: newPlan, error: insertError } = await adminSupabase
-            .from("plans")
-            .insert({
-              workspace_id: workspaceId,
-              client_uid: plan.clientUid,
-              type: "feature",
-              domain: plan.domain || null,
-              project: plan.project,
-              module: plan.module,
-              feature: plan.feature,
-              title: plan.title,
-              stage: plan.stage,
-              status: plan.status,
-              start_date: plan.start_date,
-              end_date: plan.end_date,
-              description: plan.description || null,
-              links: plan.links || [],
-              order_index: plan.order_index ?? 0,
-              created_by: user.id,
-              updated_by: user.id,
-            })
             .select("id")
+            .eq("workspace_id", workspaceId)
+            .eq("client_uid", plan.clientUid)
             .single();
 
-          if (insertError) {
-            console.error("❌ [commitFeaturePlans] INSERT 오류:", {
-              title: plan.title,
-              error: {
-                code: insertError.code,
-                message: insertError.message,
-                details: insertError.details,
-                hint: insertError.hint,
-              },
-            });
-            return { success: false, error: `생성 오류: ${plan.title}` };
-          }
+          if (existingPlan) {
+            // Update
+            const { error: updateError } = await adminSupabase
+              .from("plans")
+              .update({
+                type: "feature",
+                domain: plan.domain || null,
+                project: plan.project,
+                module: plan.module,
+                feature: plan.feature,
+                title: plan.title,
+                stage: plan.stage,
+                status: plan.status,
+                start_date: plan.start_date,
+                end_date: plan.end_date,
+                description: plan.description || null,
+                links: plan.links || [],
+                order_index: plan.order_index ?? 0,
+                updated_by: user.id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existingPlan.id);
 
-          console.log("✅ [commitFeaturePlans] INSERT 완료:", {
-            id: newPlan.id,
-            title: plan.title,
-          });
-
-          // 담당자 추가
-          if (plan.assignees && plan.assignees.length > 0 && newPlan) {
-            const assigneeRows = plan.assignees.map((a) => ({
-              plan_id: newPlan.id,
-              workspace_id: workspaceId,
-              user_id: a.userId,
-              role: a.role,
-            }));
-
-            console.log("➕ [commitFeaturePlans] 담당자 추가:", assigneeRows.length, "명");
-            const { error: assigneeError } = await adminSupabase.from("plan_assignees").insert(assigneeRows);
-            if (assigneeError) {
-              console.error("❌ [commitFeaturePlans] 담당자 추가 오류:", assigneeError);
-            } else {
-              console.log("✅ [commitFeaturePlans] 담당자 추가 완료");
+            if (updateError) {
+              console.error("❌ [commitFeaturePlans] UPDATE 오류:", {
+                id: existingPlan.id,
+                title: plan.title,
+                error: updateError.message,
+              });
+              return { success: false, title: plan.title, error: updateError.message };
             }
-          }
-        }
 
-        upsertedCount++;
+            console.log("✅ [commitFeaturePlans] UPDATE 완료:", plan.title);
+
+            // 담당자 업데이트 - 기존 삭제 후 새로 추가
+            await adminSupabase
+              .from("plan_assignees")
+              .delete()
+              .eq("plan_id", existingPlan.id);
+
+            if (plan.assignees && plan.assignees.length > 0) {
+              const assigneeRows = plan.assignees.map((a) => ({
+                plan_id: existingPlan.id,
+                workspace_id: workspaceId,
+                user_id: a.userId,
+                role: a.role,
+              }));
+
+              await adminSupabase.from("plan_assignees").insert(assigneeRows);
+            }
+
+            return { success: true, title: plan.title, action: "update" };
+          } else {
+            // Insert
+            const { data: newPlan, error: insertError } = await adminSupabase
+              .from("plans")
+              .insert({
+                workspace_id: workspaceId,
+                client_uid: plan.clientUid,
+                type: "feature",
+                domain: plan.domain || null,
+                project: plan.project,
+                module: plan.module,
+                feature: plan.feature,
+                title: plan.title,
+                stage: plan.stage,
+                status: plan.status,
+                start_date: plan.start_date,
+                end_date: plan.end_date,
+                description: plan.description || null,
+                links: plan.links || [],
+                order_index: plan.order_index ?? 0,
+                created_by: user.id,
+                updated_by: user.id,
+              })
+              .select("id")
+              .single();
+
+            if (insertError) {
+              console.error("❌ [commitFeaturePlans] INSERT 오류:", {
+                title: plan.title,
+                error: insertError.message,
+              });
+              return { success: false, title: plan.title, error: insertError.message };
+            }
+
+            console.log("✅ [commitFeaturePlans] INSERT 완료:", plan.title);
+
+            // 담당자 추가
+            if (plan.assignees && plan.assignees.length > 0 && newPlan) {
+              const assigneeRows = plan.assignees.map((a) => ({
+                plan_id: newPlan.id,
+                workspace_id: workspaceId,
+                user_id: a.userId,
+                role: a.role,
+              }));
+
+              await adminSupabase.from("plan_assignees").insert(assigneeRows);
+            }
+
+            return { success: true, title: plan.title, action: "insert" };
+          }
+        })
+      );
+
+      const failedUpserts = upsertResults.filter((r) => !r.success);
+      if (failedUpserts.length > 0) {
+        const failedTitles = failedUpserts.map((r) => r.title).join(", ");
+        return { success: false, error: `저장 실패: ${failedTitles}` };
       }
+      upsertedCount = upsertResults.length;
     }
 
     console.log("✅ [commitFeaturePlans] 커밋 완료", {
@@ -298,7 +279,8 @@ export async function commitFeaturePlans(
     console.error("❌ [commitFeaturePlans] 예외 발생:", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
+      error:
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
     };
   }
 }
@@ -317,9 +299,7 @@ interface FetchFeaturePlansOptions {
 /**
  * Plans의 최대 updated_at 및 업데이트한 사용자 정보 조회
  */
-export async function getPlansMaxUpdatedAt(
-  workspaceId: string
-): Promise<{
+export async function getPlansMaxUpdatedAt(workspaceId: string): Promise<{
   success: boolean;
   maxUpdatedAt?: string;
   updatedByName?: string;
@@ -354,8 +334,8 @@ export async function getPlansMaxUpdatedAt(
       updatedByName = profileData?.display_name || undefined;
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       maxUpdatedAt: planData?.updated_at,
       updatedByName,
     };
@@ -363,7 +343,8 @@ export async function getPlansMaxUpdatedAt(
     console.error("[getPlansMaxUpdatedAt] Unexpected error:", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
+      error:
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
     };
   }
 }
@@ -393,20 +374,22 @@ export async function fetchFeaturePlans(
 }> {
   try {
     const supabase = await createClient();
-    
+
     // 호환성 유지: string이면 workspaceId로, object면 options로 처리
-    const options: FetchFeaturePlansOptions = 
-      typeof workspaceIdOrOptions === 'string' 
-        ? { workspaceId: workspaceIdOrOptions } 
+    const options: FetchFeaturePlansOptions =
+      typeof workspaceIdOrOptions === "string"
+        ? { workspaceId: workspaceIdOrOptions }
         : workspaceIdOrOptions || {};
-    
+
     const targetWorkspaceId = options.workspaceId || DEFAULT_WORKSPACE_ID;
     const onlyMine = options.onlyMine || false;
 
     // onlyMine 필터를 위해 현재 사용자 ID 조회
     let currentUserId: string | null = null;
     if (onlyMine) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       currentUserId = user?.id || null;
       if (!currentUserId) {
         console.warn("[fetchFeaturePlans] onlyMine=true but no user logged in");
@@ -460,7 +443,7 @@ export async function fetchFeaturePlans(
     // profiles 별도 조회
     const userIds = [...new Set((assigneesData || []).map((a) => a.user_id))];
     let profilesMap = new Map<string, string>();
-    
+
     if (userIds.length > 0) {
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -493,7 +476,7 @@ export async function fetchFeaturePlans(
     }
 
     // onlyMine 필터 적용: 현재 사용자가 담당자인 plan만 남김
-    const filteredPlansData = filteredPlanIds 
+    const filteredPlansData = filteredPlanIds
       ? plansData.filter((p) => filteredPlanIds!.has(p.id))
       : plansData;
 
@@ -515,14 +498,19 @@ export async function fetchFeaturePlans(
       assignees: assigneesMap.get(row.id) || [],
     }));
 
-    console.log("[fetchFeaturePlans] Loaded", plans.length, "plans with assignees");
+    console.log(
+      "[fetchFeaturePlans] Loaded",
+      plans.length,
+      "plans with assignees"
+    );
 
     return { success: true, plans };
   } catch (err) {
     console.error("[fetchFeaturePlans] Unexpected error:", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
+      error:
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
     };
   }
 }
@@ -551,7 +539,10 @@ export async function commitFlags(payload: {
     // 권한 확인
     const hasAccess = await isAdminOrLeader();
     if (!hasAccess) {
-      return { success: false, error: "권한이 없습니다. 관리자만 저장할 수 있습니다." };
+      return {
+        success: false,
+        error: "권한이 없습니다. 관리자만 저장할 수 있습니다.",
+      };
     }
 
     const supabase = await createClient();
@@ -566,13 +557,22 @@ export async function commitFlags(payload: {
 
     // 데이터 검증
     if (!payload.flags || payload.flags.length === 0) {
-      return { success: true, createdCount: 0, updatedCount: 0, deletedCount: 0 };
+      return {
+        success: true,
+        createdCount: 0,
+        updatedCount: 0,
+        deletedCount: 0,
+      };
     }
 
     // 삭제 대상과 업서트 대상 분리
     const toDelete = payload.flags.filter((f) => f.deleted && f.serverId);
-    const toCreate = payload.flags.filter((f) => !f.deleted && !f.serverId && f.dirty);
-    const toUpdate = payload.flags.filter((f) => !f.deleted && f.serverId && f.dirty);
+    const toCreate = payload.flags.filter(
+      (f) => !f.deleted && !f.serverId && f.dirty
+    );
+    const toUpdate = payload.flags.filter(
+      (f) => !f.deleted && f.serverId && f.dirty
+    );
 
     let deletedCount = 0;
     let createdCount = 0;
@@ -657,8 +657,8 @@ export async function commitFlags(payload: {
     console.error("[commitFlags] Unexpected error:", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
+      error:
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
     };
   }
 }
-
