@@ -431,9 +431,19 @@ export function DraftGanttView({
 
       // 2. Plans 저장
       if (allBars.length > 0) {
+        // 저장할 항목들을 pending 상태로 미리 표시
+        const pendingLogs: LogEntry[] = allBars.map((bar, idx) => ({
+          id: `plan-${idx}`,
+          type: "pending" as const,
+          message: `${bar.deleted ? "삭제" : bar.serverId ? "수정" : "생성"}: ${bar.title}`,
+          timestamp: new Date(),
+        }));
+
         setSaveSteps((prev) =>
           prev.map((s) =>
-            s.id === "plans" ? { ...s, status: "in_progress" as const } : s
+            s.id === "plans"
+              ? { ...s, status: "in_progress" as const, logs: pendingLogs }
+              : s
           )
         );
 
@@ -468,8 +478,8 @@ export function DraftGanttView({
           const planCount =
             (planResult.upsertedCount || 0) + (planResult.deletedCount || 0);
 
-          // savedItems를 로그로 변환
-          const logs: LogEntry[] = (planResult.savedItems || []).map(
+          // savedItems를 로그로 변환 (순차적으로 업데이트)
+          const successLogs: LogEntry[] = (planResult.savedItems || []).map(
             (item, idx) => ({
               id: `plan-${idx}`,
               type: "success" as const,
@@ -484,10 +494,25 @@ export function DraftGanttView({
             })
           );
 
+          // 순차적으로 로그를 success로 업데이트하는 애니메이션
+          for (let i = 0; i < successLogs.length; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 30)); // 30ms 딜레이
+            setSaveSteps((prev) =>
+              prev.map((s) => {
+                if (s.id !== "plans") return s;
+                const updatedLogs = [...(s.logs || [])];
+                if (updatedLogs[i]) {
+                  updatedLogs[i] = successLogs[i];
+                }
+                return { ...s, logs: updatedLogs };
+              })
+            );
+          }
+
           setSaveSteps((prev) =>
             prev.map((s) =>
               s.id === "plans"
-                ? { ...s, status: "success" as const, count: planCount, logs }
+                ? { ...s, status: "success" as const, count: planCount }
                 : s
             )
           );

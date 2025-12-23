@@ -11,7 +11,7 @@ import { CheckIcon, XIcon, LoadingIcon } from "@/components/common/Icons";
 
 export type SaveStepStatus = "pending" | "in_progress" | "success" | "error";
 
-export type LogEntryType = "info" | "success" | "error" | "warning";
+export type LogEntryType = "info" | "success" | "error" | "warning" | "pending";
 
 export interface LogEntry {
   id: string;
@@ -233,7 +233,7 @@ export function SaveProgressModal({
               {/* 로그 영역 */}
               {step.logs && step.logs.length > 0 && (
                 <div
-                  className="ml-11 max-h-32 overflow-y-auto rounded-lg p-2 space-y-1"
+                  className="mt-2 max-h-40 overflow-y-auto rounded-lg p-3 space-y-1.5"
                   style={{
                     background: "rgba(0, 0, 0, 0.03)",
                     border: "1px solid rgba(0, 0, 0, 0.05)",
@@ -242,10 +242,14 @@ export function SaveProgressModal({
                   {step.logs.map((log) => (
                     <div
                       key={log.id}
-                      className="flex items-start gap-2 text-xs font-mono"
+                      className={`flex items-center gap-2 text-xs font-mono transition-all duration-300 ${
+                        log.type === "pending" ? "opacity-50" : "opacity-100"
+                      }`}
                     >
                       <span
-                        className="flex-shrink-0"
+                        className={`flex-shrink-0 w-4 h-4 flex items-center justify-center ${
+                          log.type === "pending" ? "animate-pulse" : ""
+                        }`}
                         style={{
                           color:
                             log.type === "success"
@@ -254,18 +258,30 @@ export function SaveProgressModal({
                               ? "#ef4444"
                               : log.type === "warning"
                               ? "#f59e0b"
+                              : log.type === "pending"
+                              ? "#9ca3af"
                               : "#6b7280",
                         }}
                       >
-                        {log.type === "success"
-                          ? "✓"
-                          : log.type === "error"
-                          ? "✗"
-                          : log.type === "warning"
-                          ? "!"
-                          : "•"}
+                        {log.type === "success" ? (
+                          "✓"
+                        ) : log.type === "error" ? (
+                          "✗"
+                        ) : log.type === "warning" ? (
+                          "!"
+                        ) : log.type === "pending" ? (
+                          <span className="w-2 h-2 rounded-full bg-current" />
+                        ) : (
+                          "•"
+                        )}
                       </span>
-                      <span className="text-gray-600 break-all">
+                      <span
+                        className={`flex-1 break-all ${
+                          log.type === "pending"
+                            ? "text-gray-400"
+                            : "text-gray-600"
+                        }`}
+                      >
                         {log.message}
                       </span>
                     </div>
