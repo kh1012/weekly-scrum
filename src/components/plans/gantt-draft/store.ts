@@ -143,6 +143,7 @@ interface DraftActions {
     description?: string;
     links?: PlanLink[];
     serverId?: string;
+    preferredLane?: number;
   }) => DraftBar;
   /** Bar 업데이트 */
   updateBar: (
@@ -579,6 +580,7 @@ export const useDraftStore = create<DraftStore>()(
           assignees: params.assignees || [],
           description: params.description,
           links: params.links,
+          preferredLane: params.preferredLane,
           dirty: true,
           deleted: false,
           createdAtLocal: now,

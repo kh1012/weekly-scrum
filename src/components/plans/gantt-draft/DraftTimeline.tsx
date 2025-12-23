@@ -68,6 +68,7 @@ interface DragCreateState {
   project: string;
   module: string;
   feature: string;
+  laneIndex: number; // 드래그 시작한 레인 인덱스
 }
 
 export function DraftTimeline({
@@ -559,6 +560,7 @@ export function DraftTimeline({
         project: dragCreate.row.project,
         module: dragCreate.row.module,
         feature: dragCreate.row.feature,
+        laneIndex: dragCreate.laneIndex,
       });
     } else {
       // 클릭인 경우: 1일짜리 기간 즉시 생성
@@ -571,6 +573,7 @@ export function DraftTimeline({
         project: dragCreate.row.project,
         module: dragCreate.row.module,
         feature: dragCreate.row.feature,
+        laneIndex: dragCreate.laneIndex,
       });
     }
 
@@ -632,6 +635,7 @@ export function DraftTimeline({
         assignees: data.assignees,
         description: data.description,
         links: data.links,
+        preferredLane: showCreateModal.laneIndex,
       });
 
       setShowCreateModal(null);

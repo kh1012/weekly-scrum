@@ -7,7 +7,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { XIcon, CalendarIcon, UserIcon, LinkIcon, PlusIcon } from "@/components/common/Icons";
+import { XIcon, CalendarIcon, UserIcon, LinkIcon, PlusIcon, ChevronDownIcon } from "@/components/common/Icons";
 import type { PlanStatus, DraftAssignee, PlanLink } from "./types";
 import type { AssigneeRole } from "@/lib/data/plans";
 
@@ -76,6 +76,10 @@ export function CreatePlanModal({
   const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
   const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+
+  // 섹션 접기/펼치기 상태
+  const [isRequiredExpanded, setIsRequiredExpanded] = useState(true);
+  const [isOptionalExpanded, setIsOptionalExpanded] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const assigneeDropdownRef = useRef<HTMLDivElement>(null);
@@ -302,12 +306,31 @@ export function CreatePlanModal({
         )}
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
-          {/* 제목 */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              제목 <span className="text-red-500">*</span>
-            </label>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+          {/* 필수 정보 섹션 */}
+          <div className="rounded-xl border border-gray-100 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsRequiredExpanded(!isRequiredExpanded)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-sm font-semibold text-gray-700">
+                필수 정보 <span className="text-red-500">*</span>
+              </span>
+              <ChevronDownIcon
+                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                  isRequiredExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isRequiredExpanded && (
+              <div className="p-4 space-y-4 bg-white">
+                {/* 제목 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    제목
+                  </label>
             <input
               ref={inputRef}
               type="text"
@@ -332,11 +355,11 @@ export function CreatePlanModal({
             />
           </div>
 
-          {/* 스테이지 */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              스테이지
-            </label>
+                {/* 스테이지 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    스테이지
+                  </label>
             <div className="flex flex-wrap gap-2">
               {STAGES.map((s) => (
                 <button
@@ -357,17 +380,38 @@ export function CreatePlanModal({
                 >
                   {s}
                 </button>
-              ))}
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* 담당자 */}
-          <div>
-            <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
-              <UserIcon className="w-4 h-4" />
-              담당자
-              <span className="text-xs font-normal text-gray-400">(선택사항)</span>
-            </label>
+        {/* 선택사항 섹션 */}
+        <div className="rounded-xl border border-gray-100 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsOptionalExpanded(!isOptionalExpanded)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <span className="text-sm font-medium text-gray-500">
+              선택사항 (담당자, 설명, 링크)
+            </span>
+            <ChevronDownIcon
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                isOptionalExpanded ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {isOptionalExpanded && (
+            <div className="p-4 space-y-4 bg-white">
+              {/* 담당자 */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
+                  <UserIcon className="w-4 h-4" />
+                  담당자
+                </label>
             <div className="space-y-3">
               {/* 커스텀 담당자 드롭다운 */}
               <div className="relative" ref={assigneeDropdownRef} onKeyDown={handleAssigneeKeyDown}>
@@ -605,26 +649,13 @@ export function CreatePlanModal({
                   }
                 </span>
               </div>
-            )}
-          </div>
-
-          {/* 구분선 */}
-          <div 
-            className="border-t pt-5"
-            style={{ borderColor: "rgba(0,0,0,0.06)" }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-                선택사항
-              </span>
-              <span className="flex-1 h-px bg-gray-100" />
+              )}
             </div>
 
             {/* 설명 */}
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 설명
-                <span className="ml-1.5 text-xs font-normal text-gray-400">(선택)</span>
               </label>
               <textarea
                 value={description}
@@ -650,10 +681,9 @@ export function CreatePlanModal({
 
             {/* 링크 */}
             <div>
-              <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
                 <LinkIcon className="w-4 h-4" />
                 관련 링크
-                <span className="text-xs font-normal text-gray-400">(선택)</span>
               </label>
 
               {/* 기존 링크 목록 */}
@@ -759,6 +789,8 @@ export function CreatePlanModal({
               </div>
             </div>
           </div>
+        )}
+      </div>
 
           {/* 버튼 */}
           <div className="flex justify-end gap-3 pt-2">
