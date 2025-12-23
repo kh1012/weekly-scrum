@@ -8,6 +8,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useDraftStore } from "./store";
 import {
   buildFlatTree,
@@ -133,6 +134,13 @@ export function DraftTimeline({
     startY: number;
     scrollLeft: number;
     scrollTop: number;
+  } | null>(null);
+
+  // 레인 컨텍스트 메뉴 상태
+  const [laneContextMenu, setLaneContextMenu] = useState<{
+    rowId: string;
+    laneIndex: number;
+    position: { x: number; y: number };
   } | null>(null);
 
   const allRows = useDraftStore((s) => s.rows);
@@ -686,6 +694,7 @@ export function DraftTimeline({
         selectFlag(null);
         clearPendingFlag();
         setHighlightDateRange(null); // 기간 강조 해제
+        setLaneContextMenu(null); // 컨텍스트 메뉴 닫기
       }
     };
 
@@ -702,6 +711,76 @@ export function DraftTimeline({
     clearPendingFlag,
     setHighlightDateRange,
   ]);
+
+  // 레인 컨텍스트 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!laneContextMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      setLaneContextMenu(null);
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      setLaneContextMenu(null);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("contextmenu", handleContextMenu);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [laneContextMenu]);
+
+  // 레인 추가 핸들러
+  const handleAddLane = useCallback(
+    (position: "above" | "below") => {
+      if (!laneContextMenu) return;
+
+      const { rowId, laneIndex } = laneContextMenu;
+      const row = rows.find((r) => r.rowId === rowId);
+      if (!row) return;
+
+      // 해당 row의 bars 가져오기
+      const rowBars = activeBars.filter((b) => b.rowId === rowId);
+
+      // 현재 레인 인덱스 기준으로 실제 레인 인덱스 계산
+      // buildRenderRows를 통해 계산된 실제 레인 인덱스를 사용해야 함
+      // 간단하게 preferredLane이 laneIndex 이상인 bars를 찾아서 증가
+      const newLaneIndex = position === "above" ? laneIndex : laneIndex + 1;
+
+      // 해당 row의 bars 중 newLaneIndex 이상의 레인을 가진 bars의 preferredLane을 1 증가
+      const barsToUpdate = rowBars.filter((bar) => {
+        // preferredLane이 newLaneIndex 이상이면 증가
+        return bar.preferredLane !== undefined && bar.preferredLane >= newLaneIndex;
+      });
+
+      // bars 업데이트
+      barsToUpdate.forEach((bar) => {
+        updateBar(bar.clientUid, {
+          preferredLane: (bar.preferredLane || 0) + 1,
+        });
+      });
+
+      // 오늘 날짜로 빈 bar 추가 (새 레인에 배치)
+      const today = new Date();
+      const todayStr = formatDate(today);
+
+      addBar({
+        rowId,
+        title: "",
+        stage: "",
+        status: "진행중",
+        startDate: todayStr,
+        endDate: todayStr,
+        preferredLane: newLaneIndex,
+      });
+
+      setLaneContextMenu(null);
+      onAction?.();
+    },
+    [laneContextMenu, rows, activeBars, updateBar, addBar, onAction]
+  );
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -1157,6 +1236,18 @@ export function DraftTimeline({
                 onMouseLeave={() => {
                   setHoverInfo(null);
                 }}
+                onContextMenu={(e) => {
+                  if (!isEditing) return;
+                  e.preventDefault();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const relativeY = e.clientY - rect.top;
+                  const laneIndex = Math.floor(relativeY / LANE_HEIGHT);
+                  setLaneContextMenu({
+                    rowId: row.rowId,
+                    laneIndex,
+                    position: { x: e.clientX, y: e.clientY },
+                  });
+                }}
               >
                 {/* Bars */}
                 {nodeBars.map((bar) => {
@@ -1373,6 +1464,36 @@ export function DraftTimeline({
           onClose={() => setViewPopover(null)}
         />
       )}
+
+      {/* 레인 컨텍스트 메뉴 */}
+      {laneContextMenu &&
+        createPortal(
+          <div
+            className="fixed z-[10000] py-1 rounded-lg shadow-lg min-w-[180px] bg-white border border-gray-200"
+            style={{
+              left: laneContextMenu.position.x,
+              top: laneContextMenu.position.y,
+              boxShadow:
+                "0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <button
+              onClick={() => handleAddLane("above")}
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <PlusIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-700">레인 추가 (위에)</span>
+            </button>
+            <button
+              onClick={() => handleAddLane("below")}
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <PlusIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-700">레인 추가 (아래에)</span>
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

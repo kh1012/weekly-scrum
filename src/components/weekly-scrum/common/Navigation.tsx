@@ -210,7 +210,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "📆",
         icon: Icons.calendarDays,
         description: "일정 계획을 관리할 수 있습니다.",
-        tag: { name: "CRUD", color: "orange" },
+        tag: { name: "CRUD", color: "blue" },
         mobileSupported: false,
       },
       {
