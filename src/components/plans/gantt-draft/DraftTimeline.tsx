@@ -59,8 +59,6 @@ interface DraftTimelineProps {
   onScrollChange?: (scrollTop: number) => void;
   /** 가로 스크롤바 높이 변경 콜백 (TreePanel 하단 정렬용) */
   onScrollbarHeightChange?: (height: number) => void;
-  /** 외부 스크롤 컨테이너 사용 (true면 내부 세로 스크롤 비활성화) */
-  useExternalScroll?: boolean;
 }
 
 interface DragCreateState {
@@ -86,7 +84,6 @@ export function DraftTimeline({
   scrollTop: externalScrollTop,
   onScrollChange,
   onScrollbarHeightChange,
-  useExternalScroll = false,
 }: DraftTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -304,6 +301,7 @@ export function DraftTimeline({
   const handleScroll = useCallback(() => {
     if (containerRef.current) {
       const scrollLeft = containerRef.current.scrollLeft;
+      const scrollTop = containerRef.current.scrollTop;
       
       // 가로 스크롤 동기화
       if (headerRef.current) {
@@ -314,13 +312,10 @@ export function DraftTimeline({
       }
       setHeaderScrollLeft(scrollLeft);
       
-      // 세로 스크롤 동기화 (TreePanel과) - 외부 스크롤 사용 시 건너뜀
-      if (!useExternalScroll) {
-        const scrollTop = containerRef.current.scrollTop;
-        onScrollChange?.(scrollTop);
-      }
+      // 세로 스크롤 동기화 (TreePanel과)
+      onScrollChange?.(scrollTop);
     }
-  }, [onScrollChange, useExternalScroll]);
+  }, [onScrollChange]);
 
   // 오늘로 스크롤하는 함수
   const scrollToToday = useCallback(
@@ -821,9 +816,7 @@ export function DraftTimeline({
       {/* 그리드 영역 - Airbnb 스타일 */}
       <div
         ref={containerRef}
-        className={`flex-1 overflow-x-auto relative timeline-scrollbar ${
-          useExternalScroll ? "overflow-y-visible" : "overflow-y-auto"
-        }`}
+        className="flex-1 overflow-x-auto overflow-y-auto relative timeline-scrollbar"
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           minHeight: 0,

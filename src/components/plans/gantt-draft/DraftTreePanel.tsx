@@ -402,8 +402,6 @@ interface DraftTreePanelProps {
   workspaceId?: string;
   /** 타임라인 가로 스크롤바 높이 (하단 정렬용) */
   timelineScrollbarHeight?: number;
-  /** 외부 스크롤 컨테이너 사용 (true면 내부 세로 스크롤 비활성화) */
-  useExternalScroll?: boolean;
 }
 
 /**
@@ -432,7 +430,6 @@ export function DraftTreePanel({
   rangeEnd,
   workspaceId,
   timelineScrollbarHeight = 0,
-  useExternalScroll = false,
 }: DraftTreePanelProps) {
   // FlagDocPanel 상태
   const [showFlagDoc, setShowFlagDoc] = useState(false);
@@ -1994,9 +1991,7 @@ export function DraftTreePanel({
       {/* 트리 영역 (스크롤) - Airbnb 스타일 */}
       <div
         ref={scrollContainerRef}
-        className={`flex-1 overflow-x-hidden scrollbar-hide border border-t-[1px] border-gray-50/15 ${
-          useExternalScroll ? "overflow-y-visible" : "overflow-y-auto"
-        }`}
+        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide border border-t-[1px] border-gray-50/15"
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           scrollbarWidth: "none", // Firefox
@@ -2006,7 +2001,7 @@ export function DraftTreePanel({
               ? `${timelineScrollbarHeight}px`
               : undefined,
         }}
-        onScroll={useExternalScroll ? undefined : handleScroll}
+        onScroll={handleScroll}
       >
         <div className="relative" style={{ height: totalHeight }}>
           {nodePositions.map((pos) => renderNode(pos))}
