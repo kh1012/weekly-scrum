@@ -354,7 +354,7 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
 
   return (
     <aside
-      className="hidden lg:flex flex-col fixed top-0 left-0 h-full w-[300px] z-30 animate-slide-in-left"
+      className="hidden lg:flex flex-col fixed top-0 left-0 h-full w-[340px] z-30 animate-slide-in-left"
       style={{
         background:
           "linear-gradient(180deg, rgba(251, 251, 250, 1) 0%, rgba(248, 248, 247, 1) 100%)",
