@@ -17,6 +17,7 @@ import {
   xToDate,
   parseLocalDate,
   getNodeDateRange,
+  assignLanesToBars,
   LANE_HEIGHT,
   ROW_HEIGHT,
 } from "./laneLayout";
@@ -120,7 +121,7 @@ export function DraftTimeline({
   const [showCreateModal, setShowCreateModal] =
     useState<DragCreateState | null>(null);
   const [showEditModal, setShowEditModal] = useState<DraftBarType | null>(null);
-  
+
   // readOnly 모드에서 Plan 보기 팝오버 상태
   const [viewPopover, setViewPopover] = useState<{
     bar: DraftBarType;
@@ -310,7 +311,7 @@ export function DraftTimeline({
     if (containerRef.current) {
       const scrollLeft = containerRef.current.scrollLeft;
       const scrollTop = containerRef.current.scrollTop;
-      
+
       // 가로 스크롤 동기화
       if (headerRef.current) {
         headerRef.current.scrollLeft = scrollLeft;
@@ -319,7 +320,7 @@ export function DraftTimeline({
         flagLaneRef.current.scrollLeft = scrollLeft;
       }
       setHeaderScrollLeft(scrollLeft);
-      
+
       // 세로 스크롤 동기화 (TreePanel과)
       onScrollChange?.(scrollTop);
     }
@@ -367,7 +368,8 @@ export function DraftTimeline({
         const hasHorizontalScrollbar =
           containerRef.current.scrollWidth > containerRef.current.clientWidth;
         const scrollbarHeight = hasHorizontalScrollbar
-          ? containerRef.current.offsetHeight - containerRef.current.clientHeight
+          ? containerRef.current.offsetHeight -
+            containerRef.current.clientHeight
           : 0;
         onScrollbarHeightChange(scrollbarHeight);
       }
@@ -442,26 +444,42 @@ export function DraftTimeline({
 
   // Epic 스크롤 이벤트 핸들러
   useEffect(() => {
-    const handleScrollToEpic = (e: CustomEvent<{ rowId: string; startDate: string; endDate: string }>) => {
+    const handleScrollToEpic = (
+      e: CustomEvent<{ rowId: string; startDate: string; endDate: string }>
+    ) => {
       const { startDate, endDate } = e.detail;
       scrollToDateRange(startDate, endDate, true);
     };
 
-    window.addEventListener("gantt:scroll-to-epic", handleScrollToEpic as EventListener);
+    window.addEventListener(
+      "gantt:scroll-to-epic",
+      handleScrollToEpic as EventListener
+    );
     return () =>
-      window.removeEventListener("gantt:scroll-to-epic", handleScrollToEpic as EventListener);
+      window.removeEventListener(
+        "gantt:scroll-to-epic",
+        handleScrollToEpic as EventListener
+      );
   }, [scrollToDateRange]);
 
   // Flag 스크롤 이벤트 핸들러
   useEffect(() => {
-    const handleScrollToFlag = (e: CustomEvent<{ flagId: string; startDate: string; endDate: string }>) => {
+    const handleScrollToFlag = (
+      e: CustomEvent<{ flagId: string; startDate: string; endDate: string }>
+    ) => {
       const { startDate, endDate } = e.detail;
       scrollToDateRange(startDate, endDate, true);
     };
 
-    window.addEventListener("gantt:scroll-to-flag", handleScrollToFlag as EventListener);
+    window.addEventListener(
+      "gantt:scroll-to-flag",
+      handleScrollToFlag as EventListener
+    );
     return () =>
-      window.removeEventListener("gantt:scroll-to-flag", handleScrollToFlag as EventListener);
+      window.removeEventListener(
+        "gantt:scroll-to-flag",
+        handleScrollToFlag as EventListener
+      );
   }, [scrollToDateRange]);
 
   // 드래그 상태를 ref로 관리 (성능 최적화 - 렌더링 최소화)
@@ -478,7 +496,7 @@ export function DraftTimeline({
     ) => {
       // 좌클릭만 허용
       if (e.button !== 0) return;
-      
+
       // 편집 모드가 아니면 무시
       if (!isEditing) {
         return;
@@ -589,33 +607,39 @@ export function DraftTimeline({
   }, [dragCreate, rangeStart, middleClickScroll]);
 
   // 휠 클릭 스크롤 시작
-  const handleMiddleClickStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 1 || !containerRef.current) return; // 휠 클릭(middle button)이 아니면 종료
-    
-    e.preventDefault();
-    
-    // 호버 프리뷰 숨기기
-    setHoverInfo(null);
-    
-    setMiddleClickScroll({
-      isActive: true,
-      startX: e.clientX,
-      startY: e.clientY,
-      scrollLeft: containerRef.current.scrollLeft,
-      scrollTop: containerRef.current.scrollTop,
-    });
-  }, []);
+  const handleMiddleClickStart = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.button !== 1 || !containerRef.current) return; // 휠 클릭(middle button)이 아니면 종료
+
+      e.preventDefault();
+
+      // 호버 프리뷰 숨기기
+      setHoverInfo(null);
+
+      setMiddleClickScroll({
+        isActive: true,
+        startX: e.clientX,
+        startY: e.clientY,
+        scrollLeft: containerRef.current.scrollLeft,
+        scrollTop: containerRef.current.scrollTop,
+      });
+    },
+    []
+  );
 
   // 휠 클릭 스크롤 이동
-  const handleMiddleClickMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!middleClickScroll?.isActive || !containerRef.current) return;
+  const handleMiddleClickMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!middleClickScroll?.isActive || !containerRef.current) return;
 
-    const deltaX = middleClickScroll.startX - e.clientX;
-    const deltaY = middleClickScroll.startY - e.clientY;
+      const deltaX = middleClickScroll.startX - e.clientX;
+      const deltaY = middleClickScroll.startY - e.clientY;
 
-    containerRef.current.scrollLeft = middleClickScroll.scrollLeft + deltaX;
-    containerRef.current.scrollTop = middleClickScroll.scrollTop + deltaY;
-  }, [middleClickScroll]);
+      containerRef.current.scrollLeft = middleClickScroll.scrollLeft + deltaX;
+      containerRef.current.scrollTop = middleClickScroll.scrollTop + deltaY;
+    },
+    [middleClickScroll]
+  );
 
   const handleCellLeave = useCallback(() => {
     setHoverInfo(null);
@@ -744,22 +768,34 @@ export function DraftTimeline({
       // 해당 row의 bars 가져오기
       const rowBars = activeBars.filter((b) => b.rowId === rowId);
 
-      // 현재 레인 인덱스 기준으로 실제 레인 인덱스 계산
-      // buildRenderRows를 통해 계산된 실제 레인 인덱스를 사용해야 함
-      // 간단하게 preferredLane이 laneIndex 이상인 bars를 찾아서 증가
+      // 현재 bars의 실제 레인 인덱스 계산 (assignLanesToBars 사용)
+      const barsWithLane = assignLanesToBars(rowBars);
+
+      // 새로운 레인 인덱스 계산
       const newLaneIndex = position === "above" ? laneIndex : laneIndex + 1;
 
-      // 해당 row의 bars 중 newLaneIndex 이상의 레인을 가진 bars의 preferredLane을 1 증가
-      const barsToUpdate = rowBars.filter((bar) => {
-        // preferredLane이 newLaneIndex 이상이면 증가
-        return bar.preferredLane !== undefined && bar.preferredLane >= newLaneIndex;
-      });
+      // 각 bar의 실제 레인 인덱스를 확인하고 preferredLane 설정
+      barsWithLane.forEach((barWithLane) => {
+        const currentLane = barWithLane.lane;
 
-      // bars 업데이트
-      barsToUpdate.forEach((bar) => {
-        updateBar(bar.clientUid, {
-          preferredLane: (bar.preferredLane || 0) + 1,
-        });
+        // 현재 클릭한 laneIndex 이상에 있는 bars의 preferredLane을 조정
+        if (currentLane >= laneIndex) {
+          // 현재 레인이 laneIndex와 같으면 고정
+          if (currentLane === laneIndex) {
+            // preferredLane이 설정되지 않았으면 현재 레인으로 설정
+            if (barWithLane.preferredLane === undefined) {
+              updateBar(barWithLane.clientUid, {
+                preferredLane: laneIndex,
+              });
+            }
+          }
+          // 현재 레인이 newLaneIndex 이상이면 1 증가
+          else if (currentLane >= newLaneIndex) {
+            updateBar(barWithLane.clientUid, {
+              preferredLane: currentLane + 1,
+            });
+          }
+        }
       });
 
       // 오늘 날짜로 빈 bar 추가 (새 레인에 배치)
@@ -800,10 +836,7 @@ export function DraftTimeline({
         />
         <div className="relative" style={{ width: totalWidth, height: "100%" }}>
           {/* 월 헤더 - Airbnb 스타일 */}
-          <div
-            className="absolute top-0 left-0 flex"
-            style={{ height: 38 }}
-          >
+          <div className="absolute top-0 left-0 flex" style={{ height: 38 }}>
             {/* 하단 border - 별도 div로 처리 */}
             <div
               className="absolute left-0 right-0 bottom-0"
@@ -1193,7 +1226,11 @@ export function DraftTimeline({
                 }}
                 onMouseMove={(e) => {
                   // 편집 모드이고, 드래그 중이 아니고, 휠 클릭 스크롤 중이 아닐 때만 호버 프리뷰 표시
-                  if (isEditing && !dragCreate?.isActive && !middleClickScroll?.isActive) {
+                  if (
+                    isEditing &&
+                    !dragCreate?.isActive &&
+                    !middleClickScroll?.isActive
+                  ) {
                     const rect = containerRef.current?.getBoundingClientRect();
                     const nodeRect = e.currentTarget.getBoundingClientRect();
                     if (rect) {
