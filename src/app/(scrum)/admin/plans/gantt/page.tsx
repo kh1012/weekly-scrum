@@ -5,7 +5,10 @@
 
 export const dynamic = "force-dynamic";
 
-import { fetchFeaturePlans, getPlansMaxUpdatedAt } from "@/components/plans/gantt-draft/commitService";
+import {
+  fetchFeaturePlans,
+  getPlansMaxUpdatedAt,
+} from "@/components/plans/gantt-draft/commitService";
 import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
 import { listWorkspaceMembers } from "@/lib/data/members";
 import { redirect } from "next/navigation";
@@ -18,28 +21,32 @@ interface PageProps {
 }
 
 export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
-  // 권한 확인
-  const hasAccess = await isAdminOrLeader();
-  
-  if (!hasAccess) {
-    redirect("/plans");
-  }
-
   // searchParams에서 onlyMine 파라미터 확인
   const params = await searchParams;
   const onlyMine = params.onlyMine === "1" || params.onlyMine === "true";
 
-  // 초기 데이터 조회 (병렬)
-  const [result, workspaceMembers, maxUpdatedAtResult] = await Promise.all([
-    fetchFeaturePlans({ workspaceId: DEFAULT_WORKSPACE_ID, onlyMine }),
-    listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
-    getPlansMaxUpdatedAt(DEFAULT_WORKSPACE_ID),
-  ]);
-  
+  // 권한 확인과 데이터 조회를 병렬로 실행
+  const [hasAccess, result, workspaceMembers, maxUpdatedAtResult] =
+    await Promise.all([
+      isAdminOrLeader(),
+      fetchFeaturePlans({ workspaceId: DEFAULT_WORKSPACE_ID, onlyMine }),
+      listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
+      getPlansMaxUpdatedAt(DEFAULT_WORKSPACE_ID),
+    ]);
+
+  // 권한 없으면 리다이렉트
+  if (!hasAccess) {
+    redirect("/plans");
+  }
+
   const initialPlans = result.success ? result.plans || [] : [];
-  const maxUpdatedAt = maxUpdatedAtResult.success ? maxUpdatedAtResult.maxUpdatedAt : undefined;
-  const updatedByName = maxUpdatedAtResult.success ? maxUpdatedAtResult.updatedByName : undefined;
-  
+  const maxUpdatedAt = maxUpdatedAtResult.success
+    ? maxUpdatedAtResult.maxUpdatedAt
+    : undefined;
+  const updatedByName = maxUpdatedAtResult.success
+    ? maxUpdatedAtResult.updatedByName
+    : undefined;
+
   // 멤버 목록을 클라이언트용으로 변환
   const members = workspaceMembers.map((m) => {
     // 표시 이름 결정: display_name > email 앞부분 > 짧은 user_id
@@ -52,7 +59,7 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
       // user_id 앞 8자리만 표시
       displayName = `사용자 ${m.user_id.slice(0, 8)}`;
     }
-    
+
     return {
       userId: m.user_id,
       displayName,
@@ -71,4 +78,3 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
     />
   );
 }
-
