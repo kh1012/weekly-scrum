@@ -111,12 +111,23 @@ export function DraftGanttView({
     endDate: string;
   } | null>(null);
 
-  // 세로 스크롤 동기화 상태
+  // 세로 스크롤 동기화 상태 (legacy - 외부 스크롤 모드에서는 사용하지 않음)
   const [commonScrollTop, setCommonScrollTop] = useState(0);
+
+  // 외부 스크롤 모드 (세로 스크롤을 외부 컨테이너에서 관리)
+  const useExternalScroll = true; // 통합 스크롤 활성화
+  const outerScrollRef = useRef<HTMLDivElement>(null);
 
   // 타임라인 스크롤바 높이 감지 (TreePanel 하단 정렬용)
   const timelineRef = useRef<HTMLDivElement>(null);
   const [timelineScrollbarHeight, setTimelineScrollbarHeight] = useState(0);
+
+  // 외부 스크롤 핸들러
+  const handleOuterScroll = useCallback(() => {
+    if (outerScrollRef.current) {
+      setCommonScrollTop(outerScrollRef.current.scrollTop);
+    }
+  }, []);
 
   const hydrate = useDraftStore((s) => s.hydrate);
   const clearDirtyFlags = useDraftStore((s) => s.clearDirtyFlags);
@@ -774,8 +785,14 @@ export function DraftGanttView({
         }}
       />
 
-      {/* 메인 영역 - border 없이 꽉 차게 */}
-      <div className="flex flex-1 overflow-hidden bg-white relative">
+      {/* 메인 영역 - 통합 스크롤 컨테이너 */}
+      <div
+        ref={outerScrollRef}
+        className={`flex flex-1 bg-white relative ${
+          useExternalScroll ? "overflow-y-auto overflow-x-hidden" : "overflow-hidden"
+        }`}
+        onScroll={useExternalScroll ? handleOuterScroll : undefined}
+      >
         {/* 모바일: 트리 패널 토글 버튼 (readOnly일 때는 숨김) */}
         {isMobile && !readOnly && (
           <button
@@ -870,9 +887,10 @@ export function DraftGanttView({
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
             workspaceId={workspaceId}
-            scrollTop={commonScrollTop}
-            onScroll={setCommonScrollTop}
+            scrollTop={useExternalScroll ? undefined : commonScrollTop}
+            onScroll={useExternalScroll ? undefined : setCommonScrollTop}
             timelineScrollbarHeight={timelineScrollbarHeight}
+            useExternalScroll={useExternalScroll}
           />
         )}
 
@@ -887,9 +905,10 @@ export function DraftGanttView({
           workspaceId={workspaceId}
           onDragDateChange={setDragDateInfo}
           onAction={extendLockIfNeeded}
-          scrollTop={commonScrollTop}
-          onScrollChange={setCommonScrollTop}
+          scrollTop={useExternalScroll ? undefined : commonScrollTop}
+          onScrollChange={useExternalScroll ? undefined : setCommonScrollTop}
           onScrollbarHeightChange={setTimelineScrollbarHeight}
+          useExternalScroll={useExternalScroll}
         />
       </div>
 
