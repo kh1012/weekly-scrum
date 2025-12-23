@@ -857,7 +857,15 @@ export function DraftTimeline({
 
     setLaneContextMenu(null);
     onAction?.();
-  }, [laneContextMenu, rows, activeBars, updateBar, rangeStart, rangeEnd, onAction]);
+  }, [
+    laneContextMenu,
+    rows,
+    activeBars,
+    updateBar,
+    rangeStart,
+    rangeEnd,
+    onAction,
+  ]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -1543,50 +1551,92 @@ export function DraftTimeline({
         />
       )}
 
-      {/* 레인 컨텍스트 메뉴 */}
+      {/* 레인 컨텍스트 메뉴 - Airbnb 스타일 */}
       {laneContextMenu &&
         createPortal(
           <div
-            className="fixed z-[10000] py-1 rounded-lg shadow-lg min-w-[180px] bg-white border border-gray-200"
+            className="fixed z-[10000] rounded-xl overflow-hidden"
             style={{
               left: laneContextMenu.position.x,
               top: laneContextMenu.position.y,
+              minWidth: 200,
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
               boxShadow:
-                "0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)",
+                "0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)",
             }}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddLane("above");
-              }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-            >
-              <PlusIcon className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">레인 추가 (위에)</span>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddLane("below");
-              }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-            >
-              <PlusIcon className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">레인 추가 (아래에)</span>
-            </button>
-            <div className="border-t border-gray-200 my-1" />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteLane();
-              }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2"
-            >
-              <TrashIcon className="w-4 h-4 text-red-500" />
-              <span className="text-red-600">레인 삭제</span>
-            </button>
+            <div className="py-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddLane("below");
+                }}
+                className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+                style={{
+                  background: "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                  <PlusIcon className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-900">
+                    레인 추가
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    아래에 새로운 레인 생성
+                  </div>
+                </div>
+              </button>
+
+              <div
+                className="mx-3 my-2"
+                style={{
+                  height: 1,
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.08) 50%, transparent 100%)",
+                }}
+              />
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteLane();
+                }}
+                className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+                style={{
+                  background: "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50 group-hover:bg-red-100 transition-colors">
+                  <TrashIcon className="w-4 h-4 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-900">
+                    레인 삭제
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    현재 레인 제거
+                  </div>
+                </div>
+              </button>
+            </div>
           </div>,
           document.body
         )}
