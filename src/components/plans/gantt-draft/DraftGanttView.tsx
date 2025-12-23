@@ -22,6 +22,7 @@ import { SaveProgressModal, SaveStep } from "./SaveProgressModal";
 import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
+import { formatRelativeTime } from "@/lib/utils/relativeTime";
 
 interface InitialAssignee {
   userId: string;
@@ -61,6 +62,8 @@ interface DraftGanttViewProps {
   onOnlyMineChange?: (value: boolean) => void;
   /** 필터 로딩 중 상태 */
   isFilterLoading?: boolean;
+  /** Plans 최대 updated_at (마지막 업데이트 시각) */
+  maxUpdatedAt?: string;
 }
 
 export function DraftGanttView({
@@ -72,6 +75,7 @@ export function DraftGanttView({
   onlyMine = false,
   onOnlyMineChange,
   isFilterLoading = false,
+  maxUpdatedAt,
 }: DraftGanttViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
@@ -246,6 +250,16 @@ export function DraftGanttView({
     hydrate(sortedRows, loadedBars);
   }, [initialPlans, hydrate]);
 
+  // 마지막 업데이트 시각 토스트 표시 (페이지 진입 시 한 번만)
+  const hasShownToastRef = useRef(false);
+  useEffect(() => {
+    if (maxUpdatedAt && readOnly && !hasShownToastRef.current) {
+      hasShownToastRef.current = true;
+      const relativeTime = formatRelativeTime(maxUpdatedAt);
+      showToast("info", "Plans updated", relativeTime);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // CommandPalette 콜백들을 useCallback으로 메모이제이션
   const handleStartEditing = useCallback(async () => {
     const success = await startEditing();
@@ -300,13 +314,16 @@ export function DraftGanttView({
         `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`
       );
     } else {
-      showToast(
-        "success",
-        "작업 종료",
-        "작업이 정상적으로 종료되었습니다."
-      );
+      showToast("success", "작업 종료", "작업이 정상적으로 종료되었습니다.");
     }
-  }, [getDirtyBars, getDeletedBars, getDirtyFlags, getDeletedFlags, discardAllChanges, stopEditing]);
+  }, [
+    getDirtyBars,
+    getDeletedBars,
+    getDirtyFlags,
+    getDeletedFlags,
+    discardAllChanges,
+    stopEditing,
+  ]);
 
   const handleOpenHelp = useCallback(() => {
     setShowHelp(true);
@@ -394,7 +411,7 @@ export function DraftGanttView({
             )
           );
           clearFlagDirtyFlags();
-          
+
           // 서버에서 최신 Flag 데이터 다시 불러오기 (serverId 동기화)
           await fetchFlags(workspaceId);
         } else {
@@ -639,6 +656,8 @@ export function DraftGanttView({
         onlyMine={onlyMine}
         onOnlyMineChange={onOnlyMineChange}
         isFilterLoading={isFilterLoading}
+        // 마지막 업데이트 시각
+        maxUpdatedAt={maxUpdatedAt}
         // 중앙 액션 props
         onUndo={undo}
         onRedo={redo}
