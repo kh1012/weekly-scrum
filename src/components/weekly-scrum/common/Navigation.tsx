@@ -14,7 +14,7 @@ import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
 
 /** 태그 색상 타입 (LiquidGlassTag variant와 동일) */
-type TagColor = "blue" | "green" | "orange" | "pink" | "purple";
+type TagColor = "blue" | "green" | "orange" | "pink" | "purple" | "gray";
 
 interface NavTag {
   name: string;
@@ -119,7 +119,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "💬",
         icon: Icons.comments,
         description: "필요면 언제든지",
-        tag: { name: "New", color: "purple" },
+        tag: { name: "HOT", color: "pink" },
       },
     ],
   },
@@ -134,7 +134,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "📆",
         icon: Icons.calendarDays,
         description: "주에 1번씩은",
-        tag: { name: "Weekly", color: "blue" },
+        tag: { name: "Daily", color: "blue" },
       },
       {
         key: "snapshots",
@@ -143,6 +143,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "📸",
         icon: Icons.cameraRetro,
         description: "스냅샷 모아보기",
+        tag: { name: "Weekly", color: "blue" },
       },
       {
         key: "work-map",
@@ -151,6 +152,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "🗺️",
         icon: Icons.mapLocation,
         description: "관계 형태로 보세요",
+        tag: { name: "Occasional", color: "blue" },
       },
     ],
   },
@@ -173,6 +175,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "✏️",
         icon: Icons.penToSquare,
         description: "내 스냅샷을 관리하세요",
+        tag: { name: "CRUD", color: "blue" },
       },
     ],
   },
@@ -188,7 +191,6 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "🏠",
         icon: Icons.house,
         description: "관리자 대시보드",
-        tag: { name: "Admin", color: "orange" },
         mobileSupported: false,
       },
       {
@@ -198,16 +200,17 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "🔄",
         icon: Icons.arrowsRotate,
         description: "주간 로그",
+        tag: { name: "record", color: "orange" },
         mobileSupported: false,
       },
       {
         key: "admin-plans",
-        label: "All Plans",
+        label: "Plans Management",
         href: "/admin/plans",
         emoji: "📆",
         icon: Icons.calendarDays,
-        description: "일정 계획 관리",
-        tag: { name: "CRUD", color: "green" },
+        description: "일정 계획을 관리할 수 있습니다.",
+        tag: { name: "CRUD", color: "orange" },
         mobileSupported: false,
       },
       {

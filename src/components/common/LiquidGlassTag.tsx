@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 interface LiquidGlassTagProps {
   children: ReactNode;
   /** 태그 색상 테마 */
-  variant?: "blue" | "green" | "orange" | "pink" | "purple";
+  variant?: "blue" | "green" | "orange" | "pink" | "purple" | "gray";
   /** 반짝임 애니메이션 활성화 */
   shimmer?: boolean;
   /** 추가 클래스명 */
@@ -47,6 +47,13 @@ const variantStyles = {
       "linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(196, 181, 253, 0.08) 50%, rgba(139, 92, 246, 0.15) 100%)",
     border: "rgba(139, 92, 246, 0.25)",
     glow: "rgba(139, 92, 246, 0.3)",
+  },
+  gray: {
+    color: "rgba(107, 114, 128, 0.95)",
+    background:
+      "linear-gradient(135deg, rgba(107, 114, 128, 0.12) 0%, rgba(156, 163, 175, 0.08) 50%, rgba(107, 114, 128, 0.15) 100%)",
+    border: "rgba(107, 114, 128, 0.25)",
+    glow: "rgba(107, 114, 128, 0.3)",
   },
 };
 
