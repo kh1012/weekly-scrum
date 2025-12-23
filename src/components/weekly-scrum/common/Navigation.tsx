@@ -13,6 +13,14 @@ import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
 // localStorage 키
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
 
+/** 태그 색상 타입 (LiquidGlassTag variant와 동일) */
+type TagColor = "blue" | "green" | "orange" | "pink" | "purple";
+
+interface NavTag {
+  name: string;
+  color: TagColor;
+}
+
 interface NavItem {
   key: string;
   label: string;
@@ -21,7 +29,7 @@ interface NavItem {
   icon?: React.ReactNode; // Font Awesome 스타일 SVG 아이콘
   description?: string;
   disabled?: boolean;
-  isNew?: boolean; // New 태그 표시
+  tag?: NavTag; // 태그 정보
   mobileSupported?: boolean; // 모바일 지원 여부 (기본: true)
 }
 
@@ -89,14 +97,15 @@ interface NavCategory {
   items: NavItem[];
   /** admin/owner만 볼 수 있는 섹션인지 */
   adminOnly?: boolean;
+  /** 카테고리 태그 정보 */
+  tag?: NavTag;
 }
 
 /**
- * SNB 메뉴 구조 (update2.md 요구사항 반영)
- * - 업무: Work Map, Flow, Snapshots, Plans (전원 조회 전용)
- * - 개인공간: Manage
- * - 관리자: Admin Dashboard, All Snapshots, All Plans (CRUD)
- * - 기타: Release Notes
+ * SNB 메뉴 구조
+ * - Works: Plans, Snapshots, Work Map
+ * - Personal Space: Dashboard, Snapshot Management
+ * - Admin Space: Dashboard (+ Weekly Log shortcut), Weekly Log, All Plans, All Snapshots
  */
 const BASE_NAV_CATEGORIES: NavCategory[] = [
   {
@@ -109,36 +118,23 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/feedbacks",
         emoji: "💬",
         icon: Icons.comments,
-        isNew: true,
+        description: "필요면 언제든지",
+        tag: { name: "New", color: "purple" },
       },
     ],
   },
   {
     key: "work",
-    label: "업무",
+    label: "Works",
     items: [
-      {
-        key: "work-map",
-        label: "Work Map",
-        href: "/work-map",
-        emoji: "🗺️",
-        icon: Icons.mapLocation,
-      },
-      {
-        key: "calendar",
-        label: "Flow",
-        href: "/calendar",
-        emoji: "🔄",
-        icon: Icons.arrowsRotate,
-        mobileSupported: false,
-      },
       {
         key: "plans",
         label: "Plans",
         href: "/plans/gantt",
         emoji: "📆",
         icon: Icons.calendarDays,
-        isNew: true,
+        description: "주에 1번씩은",
+        tag: { name: "Weekly", color: "blue" },
       },
       {
         key: "snapshots",
@@ -146,12 +142,21 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/snapshots",
         emoji: "📸",
         icon: Icons.cameraRetro,
+        description: "스냅샷 모아보기",
+      },
+      {
+        key: "work-map",
+        label: "Work Map",
+        href: "/work-map",
+        emoji: "🗺️",
+        icon: Icons.mapLocation,
+        description: "관계 형태로 보세요",
       },
     ],
   },
   {
     key: "personal",
-    label: "개인공간",
+    label: "Personal Space",
     items: [
       {
         key: "my-dashboard",
@@ -163,17 +168,17 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
       },
       {
         key: "my-snapshots",
-        label: "스냅샷 관리",
+        label: "Snapshot Management",
         href: "/manage/snapshots",
         emoji: "✏️",
         icon: Icons.penToSquare,
-        description: "내 스냅샷 관리",
+        description: "내 스냅샷을 관리하세요",
       },
     ],
   },
   {
     key: "admin",
-    label: "관리자",
+    label: "Admin Space",
     adminOnly: true,
     items: [
       {
@@ -182,7 +187,17 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/admin",
         emoji: "🏠",
         icon: Icons.house,
-        isNew: true,
+        description: "관리자 대시보드",
+        tag: { name: "Admin", color: "orange" },
+        mobileSupported: false,
+      },
+      {
+        key: "admin-calendar",
+        label: "Weekly Log",
+        href: "/calendar",
+        emoji: "🔄",
+        icon: Icons.arrowsRotate,
+        description: "주간 로그",
         mobileSupported: false,
       },
       {
@@ -192,7 +207,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "📆",
         icon: Icons.calendarDays,
         description: "일정 계획 관리",
-        isNew: true,
+        tag: { name: "CRUD", color: "green" },
         mobileSupported: false,
       },
       {
@@ -566,13 +581,13 @@ export function SideNavigation({
                             >
                               {item.label}
                             </span>
-                            {item.isNew && (
+                            {item.tag && (
                               <LiquidGlassTag
-                                variant="purple"
+                                variant={item.tag.color}
                                 shimmer
                                 className="ml-2"
                               >
-                                New
+                                {item.tag.name}
                               </LiquidGlassTag>
                             )}
                           </div>
