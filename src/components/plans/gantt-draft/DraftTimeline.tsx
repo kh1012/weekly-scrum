@@ -24,7 +24,7 @@ import {
 import { DraftBar } from "./DraftBar";
 import { CreatePlanModal, WorkspaceMemberOption } from "./CreatePlanModal";
 import { EditPlanModal } from "./EditPlanModal";
-import { PlusIcon } from "@/components/common/Icons";
+import { PlusIcon, TrashIcon } from "@/components/common/Icons";
 import type {
   DraftRow,
   DraftBar as DraftBarType,
@@ -798,25 +798,66 @@ export function DraftTimeline({
         }
       });
 
-      // 오늘 날짜로 빈 bar 추가 (새 레인에 배치)
-      const today = new Date();
-      const todayStr = formatDate(today);
-
-      addBar({
-        rowId,
-        title: "",
-        stage: "",
-        status: "진행중",
-        startDate: todayStr,
-        endDate: todayStr,
-        preferredLane: newLaneIndex,
-      });
-
       setLaneContextMenu(null);
       onAction?.();
     },
-    [laneContextMenu, rows, activeBars, updateBar, addBar, onAction]
+    [laneContextMenu, rows, activeBars, updateBar, onAction]
   );
+
+  // 레인 삭제 핸들러
+  const handleDeleteLane = useCallback(() => {
+    if (!laneContextMenu) return;
+
+    const { rowId, laneIndex } = laneContextMenu;
+    const row = rows.find((r) => r.rowId === rowId);
+    if (!row) return;
+
+    // 해당 row의 bars 가져오기
+    const rowBars = activeBars.filter((b) => b.rowId === rowId);
+
+    // 현재 bars의 실제 레인 인덱스 계산
+    const barsWithLane = assignLanesToBars(rowBars);
+
+    // 삭제할 레인에 있는 bars 확인
+    const barsInLane = barsWithLane.filter((b) => b.lane === laneIndex);
+
+    // 현재 보이는 날짜 범위에 있는 bars가 있는지 확인
+    const visibleBars = barsInLane.filter((bar) => {
+      const barStart = parseLocalDate(bar.startDate);
+      const barEnd = parseLocalDate(bar.endDate);
+      return barStart <= rangeEnd && barEnd >= rangeStart;
+    });
+
+    if (visibleBars.length > 0) {
+      const confirmDelete = window.confirm(
+        `이 레인에는 ${visibleBars.length}개의 계획이 있습니다.\n레인을 삭제하면 해당 계획들은 다른 레인으로 재배치됩니다.\n계속하시겠습니까?`
+      );
+      if (!confirmDelete) {
+        setLaneContextMenu(null);
+        return;
+      }
+    }
+
+    // 삭제할 레인의 bars의 preferredLane 제거
+    barsInLane.forEach((bar) => {
+      updateBar(bar.clientUid, {
+        preferredLane: undefined,
+      });
+    });
+
+    // laneIndex보다 큰 레인의 bars의 preferredLane을 1 감소
+    barsWithLane.forEach((barWithLane) => {
+      const currentLane = barWithLane.lane;
+      if (currentLane > laneIndex) {
+        updateBar(barWithLane.clientUid, {
+          preferredLane: currentLane - 1,
+        });
+      }
+    });
+
+    setLaneContextMenu(null);
+    onAction?.();
+  }, [laneContextMenu, rows, activeBars, updateBar, rangeStart, rangeEnd, onAction]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -1534,6 +1575,17 @@ export function DraftTimeline({
             >
               <PlusIcon className="w-4 h-4 text-gray-500" />
               <span className="text-gray-700">레인 추가 (아래에)</span>
+            </button>
+            <div className="border-t border-gray-200 my-1" />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteLane();
+              }}
+              className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2"
+            >
+              <TrashIcon className="w-4 h-4 text-red-500" />
+              <span className="text-red-600">레인 삭제</span>
             </button>
           </div>,
           document.body
