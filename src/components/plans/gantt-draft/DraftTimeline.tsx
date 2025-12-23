@@ -1476,16 +1476,23 @@ export function DraftTimeline({
               boxShadow:
                 "0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)",
             }}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => handleAddLane("above")}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddLane("above");
+              }}
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
             >
               <PlusIcon className="w-4 h-4 text-gray-500" />
               <span className="text-gray-700">레인 추가 (위에)</span>
             </button>
             <button
-              onClick={() => handleAddLane("below")}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddLane("below");
+              }}
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
             >
               <PlusIcon className="w-4 h-4 text-gray-500" />
