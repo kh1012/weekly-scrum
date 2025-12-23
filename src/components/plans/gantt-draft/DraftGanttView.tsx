@@ -9,6 +9,7 @@
 "use client";
 
 import { useEffect, useCallback, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useDraftStore, createRowId } from "./store";
 import { useLock } from "./useLock";
 import { DraftTreePanel } from "./DraftTreePanel";
@@ -80,6 +81,7 @@ export function DraftGanttView({
   maxUpdatedAt,
   updatedByName,
 }: DraftGanttViewProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -320,6 +322,9 @@ export function DraftGanttView({
     } else {
       showToast("success", "작업 종료", "작업이 정상적으로 종료되었습니다.");
     }
+
+    // 페이지 새로고침 (서버 데이터 동기화)
+    router.refresh();
   }, [
     getDirtyBars,
     getDeletedBars,
@@ -327,6 +332,7 @@ export function DraftGanttView({
     getDeletedFlags,
     discardAllChanges,
     stopEditing,
+    router,
   ]);
 
   const handleOpenHelp = useCallback(() => {
@@ -910,7 +916,13 @@ export function DraftGanttView({
       {/* Save Progress Modal */}
       <SaveProgressModal
         isOpen={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
+        onClose={() => {
+          setShowSaveModal(false);
+          // 저장 완료 후 페이지 새로고침 (서버 데이터 동기화)
+          if (saveComplete) {
+            router.refresh();
+          }
+        }}
         steps={saveSteps}
         isComplete={saveComplete}
       />
