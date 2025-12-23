@@ -145,6 +145,7 @@ export function DraftTimeline({
   const selectBar = useDraftStore((s) => s.selectBar);
   const deleteBar = useDraftStore((s) => s.deleteBar);
   const updateBar = useDraftStore((s) => s.updateBar);
+  const moveBarToRow = useDraftStore((s) => s.moveBarToRow);
 
   // Flag 관련
   const flags = useDraftStore((s) => s.flags);
@@ -1177,6 +1178,16 @@ export function DraftTimeline({
                   const left = startOffset * DAY_WIDTH;
                   const width = (endOffset - startOffset + 1) * DAY_WIDTH;
 
+                  // 현재 row의 스크롤 보정된 절대 Y offset 계산
+                  const containerTop =
+                    containerRef.current?.getBoundingClientRect().top || 0;
+                  const rowTopOffset =
+                    containerTop +
+                    HEADER_HEIGHT +
+                    flagLaneHeight +
+                    top -
+                    (containerRef.current?.scrollTop || 0);
+
                   return (
                     <DraftBar
                       key={bar.clientUid}
@@ -1187,26 +1198,76 @@ export function DraftTimeline({
                       isSelected={bar.clientUid === selectedBarId}
                       isEditing={isEditing}
                       onSelect={() => selectBar(bar.clientUid)}
-                                    onDoubleClick={(e?: React.MouseEvent) => {
-                                        // 읽기전용 모드 또는 편집 모드가 아닌 경우: 팝오버 표시
-                                        if (readOnly || !isEditing) {
-                                          const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect();
-                                          setViewPopover({
-                                            bar,
-                                            position: {
-                                              x: rect ? rect.left + rect.width / 2 : e?.clientX || 0,
-                                              y: rect ? rect.bottom + 8 : (e?.clientY || 0) + 8,
-                                            },
-                                          });
-                                        } else {
-                                          // 편집 모드: EditPlanModal 표시
-                                          setShowEditModal(bar);
-                                        }
-                                      }}
+                      onDoubleClick={(e?: React.MouseEvent) => {
+                        // 읽기전용 모드 또는 편집 모드가 아닌 경우: 팝오버 표시
+                        if (readOnly || !isEditing) {
+                          const rect = (
+                            e?.currentTarget as HTMLElement
+                          )?.getBoundingClientRect();
+                          setViewPopover({
+                            bar,
+                            position: {
+                              x: rect
+                                ? rect.left + rect.width / 2
+                                : e?.clientX || 0,
+                              y: rect ? rect.bottom + 8 : (e?.clientY || 0) + 8,
+                            },
+                          });
+                        } else {
+                          // 편집 모드: EditPlanModal 표시
+                          setShowEditModal(bar);
+                        }
+                      }}
                       dayWidth={DAY_WIDTH}
                       rangeStart={rangeStart}
                       onDragDateChange={onDragDateChange}
                       onClearHover={() => setHoverInfo(null)}
+                      rowTopOffset={rowTopOffset}
+                      onMoveComplete={(absoluteY: number) => {
+                        // 마우스 절대 Y 위치로 타겟 Row 찾기
+                        const containerRect =
+                          containerRef.current?.getBoundingClientRect();
+                        if (!containerRect) return;
+
+                        // 스크롤 보정된 상대 Y 계산
+                        const scrollTop =
+                          containerRef.current?.scrollTop || 0;
+                        const relativeY =
+                          absoluteY -
+                          containerRect.top -
+                          HEADER_HEIGHT -
+                          flagLaneHeight +
+                          scrollTop;
+
+                        // nodePositions에서 타겟 row 찾기
+                        let targetNode = null;
+                        for (const pos of nodePositions) {
+                          if (
+                            pos.node.type === "feature" &&
+                            pos.node.row &&
+                            relativeY >= pos.top &&
+                            relativeY < pos.top + pos.height
+                          ) {
+                            targetNode = pos.node;
+                            break;
+                          }
+                        }
+
+                        // 타겟이 현재 row와 다르면 이동
+                        if (
+                          targetNode &&
+                          targetNode.row &&
+                          targetNode.row.rowId !== bar.rowId
+                        ) {
+                          moveBarToRow(
+                            bar.clientUid,
+                            targetNode.row.project,
+                            targetNode.row.module,
+                            targetNode.row.feature,
+                            targetNode.row.domain
+                          );
+                        }
+                      }}
                     />
                   );
                 })}

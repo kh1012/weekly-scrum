@@ -80,6 +80,10 @@ interface DraftBarProps {
   ) => void;
   /** Bar 위에 마우스가 올라올 때 hover preview 숨김 */
   onClearHover?: () => void;
+  /** 현재 Row의 절대 Y offset (다른 Row로 이동 판단용) */
+  rowTopOffset?: number;
+  /** 드래그 완료 시 절대 Y 위치 콜백 (다른 Row 이동용) */
+  onMoveComplete?: (absoluteY: number) => void;
 }
 
 type DragMode = "move" | "resize-left" | "resize-right" | null;
@@ -129,6 +133,8 @@ export const DraftBar = memo(function DraftBar({
   rangeStart,
   onDragDateChange,
   onClearHover,
+  rowTopOffset,
+  onMoveComplete,
 }: DraftBarProps) {
   const updateBar = useDraftStore((s) => s.updateBar);
   const deleteBar = useDraftStore((s) => s.deleteBar);
@@ -211,6 +217,13 @@ export const DraftBar = memo(function DraftBar({
               dayWidth
             );
             const newPreferredLane = Math.max(0, lane + laneDelta);
+
+            // 다른 Row로 이동 체크: onMoveComplete 콜백이 있고 Y 이동이 크면
+            // 절대 Y 위치를 전달하여 DraftTimeline에서 타겟 Row 판단
+            if (onMoveComplete && rowTopOffset !== undefined) {
+              const absoluteY = upEvent.clientY;
+              onMoveComplete(absoluteY);
+            }
 
             updateBar(bar.clientUid, {
               startDate: newDates.startDate,

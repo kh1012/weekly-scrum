@@ -163,6 +163,14 @@ interface DraftActions {
   resizeBar: (clientUid: string, startDate: string, endDate: string) => void;
   /** Bar 복제 (선택된 bar 우측에 동일한 bar 생성) */
   duplicateBar: (clientUid: string) => DraftBar | null;
+  /** Bar를 다른 Row로 이동 (위계 변경) */
+  moveBarToRow: (
+    clientUid: string,
+    targetProject: string,
+    targetModule: string,
+    targetFeature: string,
+    targetDomain?: string
+  ) => void;
 
   // === UI 상태 ===
   /** Bar 선택 */
@@ -713,6 +721,63 @@ export const useDraftStore = create<DraftStore>()(
         });
 
         return newBar;
+      },
+
+      moveBarToRow: (
+        clientUid,
+        targetProject,
+        targetModule,
+        targetFeature,
+        targetDomain
+      ) => {
+        const state = get();
+        const barIndex = state.bars.findIndex((b) => b.clientUid === clientUid);
+        if (barIndex === -1) return;
+
+        const prevBar = state.bars[barIndex];
+        const newRowId = createRowId(targetProject, targetModule, targetFeature);
+
+        // 이미 같은 row면 무시
+        if (prevBar.rowId === newRowId) return;
+
+        // 타겟 row가 없으면 생성
+        let targetRowExists = state.rows.some((r) => r.rowId === newRowId);
+        let newRows = [...state.rows];
+
+        if (!targetRowExists) {
+          // 새 row 생성
+          const maxOrderIndex = Math.max(
+            0,
+            ...state.rows.map((r) => r.orderIndex)
+          );
+          const newRow: DraftRow = {
+            rowId: newRowId,
+            project: targetProject,
+            module: targetModule,
+            feature: targetFeature,
+            domain: targetDomain,
+            orderIndex: maxOrderIndex + 1,
+            isLocal: true,
+          };
+          newRows = [...newRows, newRow];
+        }
+
+        // bar의 rowId 업데이트
+        const nextBar: DraftBar = {
+          ...prevBar,
+          rowId: newRowId,
+          dirty: true,
+          updatedAtLocal: new Date().toISOString(),
+        };
+
+        const newBars = [...state.bars];
+        newBars[barIndex] = nextBar;
+
+        set({
+          rows: newRows,
+          bars: newBars,
+          ...pushUndo(state, { type: "UPDATE_BAR", prevBar, nextBar }),
+        });
       },
 
       // === UI 상태 ===
