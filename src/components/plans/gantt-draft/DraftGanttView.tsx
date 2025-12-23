@@ -326,7 +326,9 @@ export function DraftGanttView({
     }
 
     // 페이지 새로고침 (서버 데이터 동기화)
-    router.refresh();
+    // router.refresh()는 비동기이고 즉시 실행되지 않을 수 있으므로
+    // 강제로 페이지를 새로고침하여 최신 데이터를 확실히 불러옴
+    window.location.reload();
   }, [
     getDirtyBars,
     getDeletedBars,
@@ -334,7 +336,6 @@ export function DraftGanttView({
     getDeletedFlags,
     discardAllChanges,
     stopEditing,
-    router,
   ]);
 
   const handleOpenHelp = useCallback(() => {
