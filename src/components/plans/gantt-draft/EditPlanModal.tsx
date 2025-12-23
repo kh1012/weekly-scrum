@@ -30,6 +30,23 @@ const ROLES: { value: AssigneeRole; label: string; color: string }[] = [
   { value: "qa", label: "QA", color: "#8b5cf6" },
 ];
 
+/**
+ * BasicRole(profiles.basic_role) → AssigneeRole 매핑
+ */
+function mapBasicRoleToAssigneeRole(
+  basicRole: "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null | undefined
+): AssigneeRole | null {
+  if (!basicRole) return null;
+  const mapping: Record<string, AssigneeRole> = {
+    PLANNING: "planner",
+    FE: "fe",
+    BE: "be",
+    DESIGN: "designer",
+    QA: "qa",
+  };
+  return mapping[basicRole] || null;
+}
+
 interface EditPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -59,6 +76,8 @@ export function EditPlanModal({
   const [status, setStatus] = useState<PlanStatus>("진행중");
   const [selectedAssignee, setSelectedAssignee] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<AssigneeRole>("planner");
+  const [isRoleManuallyEdited, setIsRoleManuallyEdited] = useState(false);
+  const [originalAssigneeId, setOriginalAssigneeId] = useState<string>(""); // 초기 담당자 ID
   const [description, setDescription] = useState("");
   const [links, setLinks] = useState<PlanLink[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -91,9 +110,13 @@ export function EditPlanModal({
       if (bar.assignees && bar.assignees.length > 0) {
         setSelectedAssignee(bar.assignees[0].userId);
         setSelectedRole(bar.assignees[0].role);
+        setOriginalAssigneeId(bar.assignees[0].userId); // 초기 담당자 ID 저장
+        setIsRoleManuallyEdited(true); // 기존 담당자는 role 변경 금지
       } else {
         setSelectedAssignee("");
         setSelectedRole("planner");
+        setOriginalAssigneeId("");
+        setIsRoleManuallyEdited(false);
       }
       
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -132,6 +155,36 @@ export function EditPlanModal({
     return displayName.includes(query) || email.includes(query);
   });
 
+  /**
+   * 담당자 선택 핸들러: 새 담당자인 경우 basic_role 기반 role 자동 설정
+   */
+  const handleSelectAssignee = (userId: string) => {
+    setSelectedAssignee(userId);
+    
+    // 기존 담당자와 다른 사람을 선택한 경우 (새 담당자로 간주)
+    if (userId !== originalAssigneeId) {
+      setIsRoleManuallyEdited(false); // 새 담당자이므로 자동 설정 가능
+      
+      if (userId) {
+        const member = members.find((m) => m.userId === userId);
+        if (member?.basicRole) {
+          const mappedRole = mapBasicRoleToAssigneeRole(member.basicRole);
+          if (mappedRole) {
+            setSelectedRole(mappedRole);
+          }
+        }
+      }
+    }
+  };
+
+  /**
+   * Role 수동 변경 핸들러
+   */
+  const handleRoleChange = (role: AssigneeRole) => {
+    setSelectedRole(role);
+    setIsRoleManuallyEdited(true);
+  };
+
   // 키보드 네비게이션
   const handleAssigneeKeyDown = (e: React.KeyboardEvent) => {
     if (!isAssigneeDropdownOpen) return;
@@ -154,18 +207,18 @@ export function EditPlanModal({
           // 검색어 있을 때: 바로 멤버 선택
           const selectedMember = filteredMembers[highlightedIndex];
           if (selectedMember) {
-            setSelectedAssignee(selectedMember.userId);
+            handleSelectAssignee(selectedMember.userId);
             setIsAssigneeDropdownOpen(false);
           }
         } else {
           // 검색어 없을 때: 0은 "선택 안함", 1부터 멤버
           if (highlightedIndex === 0) {
-            setSelectedAssignee("");
+            handleSelectAssignee("");
             setIsAssigneeDropdownOpen(false);
           } else {
             const selectedMember = filteredMembers[highlightedIndex - 1];
             if (selectedMember) {
-              setSelectedAssignee(selectedMember.userId);
+              handleSelectAssignee(selectedMember.userId);
               setIsAssigneeDropdownOpen(false);
             }
           }
@@ -499,7 +552,7 @@ export function EditPlanModal({
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedAssignee("");
+                            handleSelectAssignee("");
                             setIsAssigneeDropdownOpen(false);
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
@@ -528,7 +581,7 @@ export function EditPlanModal({
                               key={member.userId}
                               type="button"
                               onClick={() => {
-                                setSelectedAssignee(member.userId);
+                                handleSelectAssignee(member.userId);
                                 setIsAssigneeDropdownOpen(false);
                               }}
                               className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
@@ -587,7 +640,7 @@ export function EditPlanModal({
                     <button
                       key={role.value}
                       type="button"
-                      onClick={() => !isDisabled && setSelectedRole(role.value)}
+                      onClick={() => !isDisabled && handleRoleChange(role.value)}
                       disabled={isDisabled}
                       className={`flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all duration-150 ${
                         isDisabled 

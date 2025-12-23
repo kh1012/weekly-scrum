@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
-import { fetchFeaturePlans, getPlansMaxUpdatedAt } from "@/components/plans/gantt-draft/commitService";
+import {
+  fetchFeaturePlans,
+  getPlansMaxUpdatedAt,
+} from "@/components/plans/gantt-draft/commitService";
 import { listWorkspaceMembers } from "@/lib/data/members";
 import { PlansGanttClient } from "./_components/PlansGanttClient";
 
@@ -29,14 +32,19 @@ export default async function PlansPage({ searchParams }: PageProps) {
   ]);
 
   const initialPlans = result.success ? result.plans || [] : [];
-  const maxUpdatedAt = maxUpdatedAtResult.success ? maxUpdatedAtResult.maxUpdatedAt : undefined;
-  const updatedByName = maxUpdatedAtResult.success ? maxUpdatedAtResult.updatedByName : undefined;
+  const maxUpdatedAt = maxUpdatedAtResult.success
+    ? maxUpdatedAtResult.maxUpdatedAt
+    : undefined;
+  const updatedByName = maxUpdatedAtResult.success
+    ? maxUpdatedAtResult.updatedByName
+    : undefined;
 
-  // 멤버 목록을 클라이언트용으로 변환
+  // 멤버 목록을 클라이언트용으로 변환 (basicRole 포함)
   const members = workspaceMembers.map((m) => ({
     userId: m.user_id,
     displayName: m.display_name || m.email || m.user_id,
     email: m.email || undefined,
+    basicRole: m.basic_role || undefined,
   }));
 
   return (

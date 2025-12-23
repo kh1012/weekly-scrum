@@ -129,13 +129,14 @@ export function PlanForm({
             user_id: string;
             display_name: string | null;
             email: string | null;
+            basic_role: string | null;
           }
 
-          // 2. profiles 별도 조회
+          // 2. profiles 별도 조회 (basic_role 포함)
           const userIds = (membersData as MemberRow[]).map((m) => m.user_id);
           const { data: profilesData, error: profilesError } = await supabase
             .from("profiles")
-            .select("user_id, display_name, email")
+            .select("user_id, display_name, email, basic_role")
             .in("user_id", userIds);
 
           if (profilesError) {
@@ -143,11 +144,19 @@ export function PlanForm({
           }
 
           // 3. 조합
-          const profileMap = new Map<string, { display_name: string | null; email: string | null }>();
+          const profileMap = new Map<
+            string,
+            {
+              display_name: string | null;
+              email: string | null;
+              basic_role: string | null;
+            }
+          >();
           for (const p of (profilesData || []) as ProfileRow[]) {
             profileMap.set(p.user_id, {
               display_name: p.display_name,
               email: p.email,
+              basic_role: p.basic_role,
             });
           }
 
@@ -158,6 +167,7 @@ export function PlanForm({
               display_name: profile?.display_name || null,
               email: profile?.email || null,
               role: m.role as "admin" | "leader" | "member",
+              basic_role: (profile?.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA") || null,
             };
           });
 

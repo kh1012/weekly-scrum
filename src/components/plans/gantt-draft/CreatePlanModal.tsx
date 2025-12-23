@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { XIcon, CalendarIcon, UserIcon, LinkIcon, PlusIcon, ChevronDownIcon } from "@/components/common/Icons";
 import type { PlanStatus, DraftAssignee, PlanLink } from "./types";
 import type { AssigneeRole } from "@/lib/data/plans";
@@ -30,10 +30,29 @@ const ROLES: { value: AssigneeRole; label: string; color: string }[] = [
   { value: "qa", label: "QA", color: "#8b5cf6" },
 ];
 
+/**
+ * BasicRole(profiles.basic_role) → AssigneeRole 매핑
+ */
+function mapBasicRoleToAssigneeRole(
+  basicRole: "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null | undefined
+): AssigneeRole | null {
+  if (!basicRole) return null;
+  const mapping: Record<string, AssigneeRole> = {
+    PLANNING: "planner",
+    FE: "fe",
+    BE: "be",
+    DESIGN: "designer",
+    QA: "qa",
+  };
+  return mapping[basicRole] || null;
+}
+
 export interface WorkspaceMemberOption {
   userId: string;
   displayName: string;
   email?: string;
+  /** 프로필에 설정된 기본 역할 (담당자 role 초기값으로 사용) */
+  basicRole?: "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null;
 }
 
 interface CreatePlanModalProps {
@@ -69,6 +88,7 @@ export function CreatePlanModal({
   const [status, setStatus] = useState<PlanStatus>("진행중");
   const [selectedAssignee, setSelectedAssignee] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<AssigneeRole>("planner");
+  const [isRoleManuallyEdited, setIsRoleManuallyEdited] = useState(false);
   const [description, setDescription] = useState("");
   const [links, setLinks] = useState<PlanLink[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -81,6 +101,35 @@ export function CreatePlanModal({
   const [isRequiredExpanded, setIsRequiredExpanded] = useState(true);
   const [isOptionalExpanded, setIsOptionalExpanded] = useState(false);
 
+  /**
+   * 담당자 선택 핸들러: basic_role 기반 role 자동 설정
+   */
+  const handleSelectAssignee = useCallback(
+    (userId: string) => {
+      setSelectedAssignee(userId);
+      
+      // role이 수동 변경되지 않았을 때만 자동 설정
+      if (!isRoleManuallyEdited && userId) {
+        const member = members.find((m) => m.userId === userId);
+        if (member?.basicRole) {
+          const mappedRole = mapBasicRoleToAssigneeRole(member.basicRole);
+          if (mappedRole) {
+            setSelectedRole(mappedRole);
+          }
+        }
+      }
+    },
+    [members, isRoleManuallyEdited]
+  );
+
+  /**
+   * Role 수동 변경 핸들러
+   */
+  const handleRoleChange = useCallback((role: AssigneeRole) => {
+    setSelectedRole(role);
+    setIsRoleManuallyEdited(true);
+  }, []);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const assigneeDropdownRef = useRef<HTMLDivElement>(null);
   const assigneeSearchRef = useRef<HTMLInputElement>(null);
@@ -92,6 +141,7 @@ export function CreatePlanModal({
       setStatus("진행중");
       setSelectedAssignee("");
       setSelectedRole("planner");
+      setIsRoleManuallyEdited(false); // 초기화
       setDescription("");
       setLinks([]);
       setNewLinkUrl("");
@@ -157,18 +207,18 @@ export function CreatePlanModal({
           // 검색어 있을 때: 바로 멤버 선택
           const selectedMember = filteredMembers[highlightedIndex];
           if (selectedMember) {
-            setSelectedAssignee(selectedMember.userId);
+            handleSelectAssignee(selectedMember.userId);
             setIsAssigneeDropdownOpen(false);
           }
         } else {
           // 검색어 없을 때: 0은 "선택 안함", 1부터 멤버
           if (highlightedIndex === 0) {
-            setSelectedAssignee("");
+            handleSelectAssignee("");
             setIsAssigneeDropdownOpen(false);
           } else {
             const selectedMember = filteredMembers[highlightedIndex - 1];
             if (selectedMember) {
-              setSelectedAssignee(selectedMember.userId);
+              handleSelectAssignee(selectedMember.userId);
               setIsAssigneeDropdownOpen(false);
             }
           }
@@ -505,7 +555,7 @@ export function CreatePlanModal({
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedAssignee("");
+                            handleSelectAssignee("");
                             setIsAssigneeDropdownOpen(false);
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
@@ -534,7 +584,7 @@ export function CreatePlanModal({
                               key={member.userId}
                               type="button"
                               onClick={() => {
-                                setSelectedAssignee(member.userId);
+                                handleSelectAssignee(member.userId);
                                 setIsAssigneeDropdownOpen(false);
                               }}
                               className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
@@ -593,7 +643,7 @@ export function CreatePlanModal({
                     <button
                       key={role.value}
                       type="button"
-                      onClick={() => !isDisabled && setSelectedRole(role.value)}
+                      onClick={() => !isDisabled && handleRoleChange(role.value)}
                       disabled={isDisabled}
                       className={`flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all duration-150 ${
                         isDisabled

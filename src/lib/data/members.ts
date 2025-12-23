@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 
 /**
+ * profiles.basic_role enum
+ */
+export type BasicRole = "PLANNING" | "FE" | "BE" | "DESIGN" | "QA";
+
+/**
  * 워크스페이스 멤버 정보
  */
 export interface WorkspaceMember {
@@ -8,6 +13,8 @@ export interface WorkspaceMember {
   display_name: string | null;
   email: string | null;
   role: "admin" | "leader" | "member";
+  /** 프로필에 설정된 기본 역할 (담당자 role 초기값으로 사용) */
+  basic_role: BasicRole | null;
 }
 
 /**
@@ -42,11 +49,11 @@ export async function listWorkspaceMembers({
       return [];
     }
 
-    // 2. profiles 별도 조회
+    // 2. profiles 별도 조회 (basic_role 포함)
     const userIds = members.map((m) => m.user_id);
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("user_id, display_name, email")
+      .select("user_id, display_name, email, basic_role")
       .in("user_id", userIds);
 
     if (profilesError) {
@@ -60,12 +67,17 @@ export async function listWorkspaceMembers({
     // 3. 조합
     const profileMap = new Map<
       string,
-      { display_name: string | null; email: string | null }
+      {
+        display_name: string | null;
+        email: string | null;
+        basic_role: BasicRole | null;
+      }
     >();
     for (const p of profiles || []) {
       profileMap.set(p.user_id, {
         display_name: p.display_name,
         email: p.email,
+        basic_role: p.basic_role as BasicRole | null,
       });
     }
 
@@ -79,6 +91,7 @@ export async function listWorkspaceMembers({
         display_name: displayName,
         email: email,
         role: member.role as "admin" | "leader" | "member",
+        basic_role: profile?.basic_role || null,
       };
     });
 

@@ -47,7 +47,7 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
     ? maxUpdatedAtResult.updatedByName
     : undefined;
 
-  // 멤버 목록을 클라이언트용으로 변환
+  // 멤버 목록을 클라이언트용으로 변환 (basicRole 포함)
   const members = workspaceMembers.map((m) => {
     // 표시 이름 결정: display_name > email 앞부분 > 짧은 user_id
     let displayName = m.display_name?.trim();
@@ -64,6 +64,7 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
       userId: m.user_id,
       displayName,
       email: m.email || undefined,
+      basicRole: m.basic_role || undefined,
     };
   });
 
