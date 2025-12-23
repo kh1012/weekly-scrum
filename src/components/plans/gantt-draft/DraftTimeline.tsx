@@ -1179,14 +1179,11 @@ export function DraftTimeline({
                   const width = (endOffset - startOffset + 1) * DAY_WIDTH;
 
                   // 현재 row의 스크롤 보정된 절대 Y offset 계산
+                  // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
                   const containerTop =
                     containerRef.current?.getBoundingClientRect().top || 0;
-                  const rowTopOffset =
-                    containerTop +
-                    HEADER_HEIGHT +
-                    flagLaneHeight +
-                    top -
-                    (containerRef.current?.scrollTop || 0);
+                  const scrollTop = containerRef.current?.scrollTop || 0;
+                  const rowTopOffset = containerTop + top - scrollTop;
 
                   return (
                     <DraftBar
@@ -1225,19 +1222,17 @@ export function DraftTimeline({
                       rowTopOffset={rowTopOffset}
                       onMoveComplete={(absoluteY: number) => {
                         // 마우스 절대 Y 위치로 타겟 Row 찾기
+                        // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
                         const containerRect =
                           containerRef.current?.getBoundingClientRect();
                         if (!containerRect) return;
 
                         // 스크롤 보정된 상대 Y 계산
-                        const scrollTop =
+                        // containerRect.top은 이미 헤더/플래그 아래이므로 추가 오프셋 불필요
+                        const currentScrollTop =
                           containerRef.current?.scrollTop || 0;
                         const relativeY =
-                          absoluteY -
-                          containerRect.top -
-                          HEADER_HEIGHT -
-                          flagLaneHeight +
-                          scrollTop;
+                          absoluteY - containerRect.top + currentScrollTop;
 
                         // nodePositions에서 타겟 row 찾기
                         let targetNode = null;
