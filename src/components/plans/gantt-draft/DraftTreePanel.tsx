@@ -556,11 +556,48 @@ export function DraftTreePanel({
     top: number;
     left: number;
   } | null>(null);
+  const [filterSearchQuery, setFilterSearchQuery] = useState("");
+  const [debouncedFilterSearchQuery, setDebouncedFilterSearchQuery] = useState("");
+  const [isFilterSearching, setIsFilterSearching] = useState(false);
+  const filterSearchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const expandMenuRef = useRef<HTMLDivElement>(null);
   const expandButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 필터 검색 debounce 처리
+  const handleFilterSearchChange = useCallback((value: string) => {
+    setFilterSearchQuery(value);
+    setIsFilterSearching(true);
+
+    if (filterSearchDebounceRef.current) {
+      clearTimeout(filterSearchDebounceRef.current);
+    }
+
+    filterSearchDebounceRef.current = setTimeout(() => {
+      setDebouncedFilterSearchQuery(value);
+      setIsFilterSearching(false);
+    }, 300);
+  }, []);
+
+  const handleFilterSearchClear = useCallback(() => {
+    setFilterSearchQuery("");
+    setDebouncedFilterSearchQuery("");
+    setIsFilterSearching(false);
+    if (filterSearchDebounceRef.current) {
+      clearTimeout(filterSearchDebounceRef.current);
+    }
+  }, []);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      if (filterSearchDebounceRef.current) {
+        clearTimeout(filterSearchDebounceRef.current);
+      }
+    };
+  }, []);
 
   // 필터 팝오버 외부 클릭 시 닫기
   useEffect(() => {
@@ -575,12 +612,13 @@ export function DraftTreePanel({
         !filterButtonRef.current.contains(target)
       ) {
         setShowFilters(false);
+        handleFilterSearchClear();
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showFilters]);
+  }, [showFilters, handleFilterSearchClear]);
 
   // 펼치기 메뉴 외부 클릭 시 닫기
   useEffect(() => {
@@ -768,6 +806,59 @@ export function DraftTreePanel({
     }
     return [...new Set(filteredRows.map((r) => r.feature))].sort();
   }, [allRows, filters.projects, filters.modules, allFeatures]);
+
+  // 통합 필터 항목 목록 (프로젝트, 모듈, 기능)
+  type FilterItemType = "project" | "module" | "feature";
+  type FilterItem = {
+    type: FilterItemType;
+    name: string;
+    isAvailable: boolean;
+  };
+
+  const filterItems = useMemo(() => {
+    const items: FilterItem[] = [];
+
+    // 프로젝트 항목
+    allProjects.forEach((project) => {
+      items.push({
+        type: "project",
+        name: project,
+        isAvailable: true,
+      });
+    });
+
+    // 모듈 항목
+    allModules.forEach((module) => {
+      items.push({
+        type: "module",
+        name: module,
+        isAvailable: availableModules.includes(module),
+      });
+    });
+
+    // 기능 항목
+    allFeatures.forEach((feature) => {
+      items.push({
+        type: "feature",
+        name: feature,
+        isAvailable: availableFeatures.includes(feature),
+      });
+    });
+
+    return items;
+  }, [allProjects, allModules, allFeatures, availableModules, availableFeatures]);
+
+  // 검색어로 필터링된 항목 목록 (debounced 값 사용)
+  const filteredFilterItems = useMemo(() => {
+    if (!debouncedFilterSearchQuery.trim()) {
+      return filterItems;
+    }
+
+    const query = debouncedFilterSearchQuery.toLowerCase();
+    return filterItems.filter((item) =>
+      item.name.toLowerCase().includes(query)
+    );
+  }, [filterItems, debouncedFilterSearchQuery]);
 
   const hasActiveFilters =
     searchQuery ||
@@ -1520,7 +1611,12 @@ export function DraftTreePanel({
           <div className="relative">
             <button
               ref={filterButtonRef}
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => {
+                if (!showFilters) {
+                  handleFilterSearchClear();
+                }
+                setShowFilters(!showFilters);
+              }}
               className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-all duration-150 active:scale-95 ${
                 showFilters || hasActiveFilters
                   ? "bg-blue-100 text-blue-600"
@@ -1704,21 +1800,22 @@ export function DraftTreePanel({
         />
       )}
 
-      {/* 필터 팝오버 - 체크박스 형태 */}
+      {/* 필터 팝오버 - 통합 리스트 + 검색 */}
       {showFilters && (
         <div
           ref={filterRef}
-          className="absolute left-2 right-2 z-50 p-3 rounded-xl shadow-xl"
+          className="absolute left-2 right-2 z-50 rounded-xl shadow-xl flex flex-col"
           style={{
-            top: HEADER_HEIGHT + flagLaneHeight, // Flags 섹션 높이 포함
+            top: HEADER_HEIGHT + 4, // 필터 버튼 바로 아래 (4px 간격)
             background: "white",
             border: "1px solid rgba(0, 0, 0, 0.08)",
             boxShadow:
               "0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)",
+            maxHeight: "min(400px, calc(100vh - 200px))",
           }}
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between px-3 pt-3 pb-2">
             <span className="text-xs font-semibold text-gray-700">필터</span>
             {hasActiveFilters && (
               <button
@@ -1730,143 +1827,167 @@ export function DraftTreePanel({
             )}
           </div>
 
-          {/* 프로젝트 필터 */}
-          {allProjects.length > 0 && (
-            <div className="mb-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                프로젝트
-              </div>
-              <div className="space-y-1 max-h-24 overflow-y-auto">
-                {allProjects.map((project) => (
-                  <label
-                    key={project}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.projects.includes(project)}
-                      onChange={() => toggleProjectFilter(project)}
-                      className="w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                    />
-                    <FolderIcon className="w-3 h-3 text-amber-500" />
-                    <span className="text-xs text-gray-700">{project}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 모듈 필터 */}
-          {allModules.length > 0 && (
-            <div className="mb-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                모듈
-                {filters.projects.length > 0 && (
-                  <span className="ml-1 text-gray-300 font-normal">
-                    ({availableModules.length}개 사용 가능)
-                  </span>
-                )}
-              </div>
-              <div className="space-y-1 max-h-24 overflow-y-auto">
-                {allModules.map((module) => {
-                  const isAvailable = availableModules.includes(module);
-                  return (
-                    <label
-                      key={module}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${
-                        isAvailable
-                          ? "cursor-pointer hover:bg-gray-50"
-                          : "cursor-not-allowed opacity-40"
-                      }`}
+          {/* 검색 입력 */}
+          <div className="px-3 pb-3">
+            <div
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-all duration-150 focus-within:ring-1 focus-within:ring-blue-200"
+              style={{
+                background: "#f9fafb",
+                border: "1px solid rgba(0, 0, 0, 0.06)",
+              }}
+            >
+              <SearchIcon className="w-3 h-3 text-gray-400" />
+              <input
+                type="text"
+                value={filterSearchQuery}
+                onChange={(e) => handleFilterSearchChange(e.target.value)}
+                onKeyDown={(e) => {
+                  // Cmd+A, Ctrl+A 전체 선택 허용
+                  if ((e.metaKey || e.ctrlKey) && e.key === "a") {
+                    e.stopPropagation();
+                    return;
+                  }
+                }}
+                placeholder="프로젝트, 모듈, 기능 검색..."
+                className="flex-1 text-[11px] bg-transparent border-none outline-none text-gray-700 placeholder:text-gray-400"
+              />
+              {(filterSearchQuery || isFilterSearching) && (
+                <div className="flex items-center">
+                  {isFilterSearching ? (
+                    <svg
+                      className="animate-spin w-3.5 h-3.5 text-blue-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
                     >
-                      <input
-                        type="checkbox"
-                        checked={filters.modules.includes(module)}
-                        onChange={() =>
-                          isAvailable && toggleModuleFilter(module)
-                        }
-                        disabled={!isAvailable}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 disabled:opacity-50"
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
                       />
-                      <CubeIcon
-                        className={`w-3 h-3 ${
-                          isAvailable ? "text-violet-500" : "text-gray-400"
-                        }`}
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
-                      <span
-                        className={`text-xs ${
-                          isAvailable ? "text-gray-700" : "text-gray-400"
-                        }`}
-                      >
-                        {module}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 기능 필터 */}
-          {allFeatures.length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                기능
-                {(filters.projects.length > 0 ||
-                  filters.modules.length > 0) && (
-                  <span className="ml-1 text-gray-300 font-normal">
-                    ({availableFeatures.length}개 사용 가능)
-                  </span>
-                )}
-              </div>
-              <div className="space-y-1 max-h-24 overflow-y-auto">
-                {allFeatures.map((feature) => {
-                  const isAvailable = availableFeatures.includes(feature);
-                  return (
-                    <label
-                      key={feature}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${
-                        isAvailable
-                          ? "cursor-pointer hover:bg-gray-50"
-                          : "cursor-not-allowed opacity-40"
-                      }`}
+                    </svg>
+                  ) : (
+                    <button
+                      onClick={handleFilterSearchClear}
+                      className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
                     >
-                      <input
-                        type="checkbox"
-                        checked={filters.features.includes(feature)}
-                        onChange={() =>
-                          isAvailable && toggleFeatureFilter(feature)
-                        }
-                        disabled={!isAvailable}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-50"
-                      />
+                      <XIcon className="w-2 h-2 text-gray-400" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 필터 항목 리스트 */}
+          <div className="flex-1 overflow-y-auto px-3 pb-3">
+            {filteredFilterItems.length === 0 ? (
+              <div className="text-xs text-gray-400 text-center py-4">
+                {debouncedFilterSearchQuery
+                  ? "검색 결과가 없습니다"
+                  : "필터할 항목이 없습니다"}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {filteredFilterItems.map((item) => {
+                  const isChecked =
+                    item.type === "project"
+                      ? filters.projects.includes(item.name)
+                      : item.type === "module"
+                      ? filters.modules.includes(item.name)
+                      : filters.features.includes(item.name);
+
+                  const handleToggle = () => {
+                    if (item.type === "project") {
+                      toggleProjectFilter(item.name);
+                    } else if (item.type === "module") {
+                      toggleModuleFilter(item.name);
+                    } else {
+                      toggleFeatureFilter(item.name);
+                    }
+                  };
+
+                  const getCheckboxColor = () => {
+                    if (item.type === "project") return "text-amber-600 focus:ring-amber-500";
+                    if (item.type === "module") return "text-violet-600 focus:ring-violet-500";
+                    return "text-emerald-600 focus:ring-emerald-500";
+                  };
+
+                  const getIcon = () => {
+                    if (item.type === "project") {
+                      return (
+                        <FolderIcon
+                          className={`w-3 h-3 ${
+                            item.isAvailable ? "text-amber-500" : "text-gray-400"
+                          }`}
+                        />
+                      );
+                    }
+                    if (item.type === "module") {
+                      return (
+                        <CubeIcon
+                          className={`w-3 h-3 ${
+                            item.isAvailable ? "text-violet-500" : "text-gray-400"
+                          }`}
+                        />
+                      );
+                    }
+                    return (
                       <CodeIcon
                         className={`w-3 h-3 ${
-                          isAvailable ? "text-emerald-500" : "text-gray-400"
+                          item.isAvailable ? "text-emerald-500" : "text-gray-400"
                         }`}
                       />
+                    );
+                  };
+
+                  const getTypeLabel = () => {
+                    if (item.type === "project") return "프로젝트";
+                    if (item.type === "module") return "모듈";
+                    return "기능";
+                  };
+
+                  return (
+                    <label
+                      key={`${item.type}-${item.name}`}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${
+                        item.isAvailable
+                          ? "cursor-pointer hover:bg-gray-50"
+                          : "cursor-not-allowed opacity-40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={handleToggle}
+                        disabled={!item.isAvailable}
+                        className={`w-3.5 h-3.5 rounded border-gray-300 ${getCheckboxColor()} disabled:opacity-50`}
+                      />
+                      {getIcon()}
                       <span
-                        className={`text-xs ${
-                          isAvailable ? "text-gray-700" : "text-gray-400"
+                        className={`text-xs flex-1 ${
+                          item.isAvailable ? "text-gray-700" : "text-gray-400"
                         }`}
                       >
-                        {feature}
+                        {item.name}
+                      </span>
+                      <span className="text-[10px] text-gray-400 px-1.5 py-0.5 rounded bg-gray-100">
+                        {getTypeLabel()}
                       </span>
                     </label>
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {/* 빈 상태 */}
-          {allProjects.length === 0 &&
-            allModules.length === 0 &&
-            allFeatures.length === 0 && (
-              <div className="text-xs text-gray-400 text-center py-4">
-                필터할 항목이 없습니다
-              </div>
             )}
+          </div>
         </div>
       )}
 

@@ -134,7 +134,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "📆",
         icon: Icons.calendarDays,
         description: "주에 1번씩은",
-        tag: { name: "Daily", color: "blue" },
+        tag: { name: "Daily", color: "gray" },
       },
       {
         key: "snapshots",
@@ -143,7 +143,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "📸",
         icon: Icons.cameraRetro,
         description: "스냅샷 모아보기",
-        tag: { name: "Weekly", color: "blue" },
+        tag: { name: "Weekly", color: "gray" },
       },
       {
         key: "work-map",
@@ -152,7 +152,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "🗺️",
         icon: Icons.mapLocation,
         description: "관계 형태로 보세요",
-        tag: { name: "Occasional", color: "blue" },
+        tag: { name: "Occasional", color: "gray" },
       },
     ],
   },
@@ -200,7 +200,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         emoji: "🔄",
         icon: Icons.arrowsRotate,
         description: "주간 로그",
-        tag: { name: "record", color: "orange" },
+        tag: { name: "record", color: "gray" },
         mobileSupported: false,
       },
       {
