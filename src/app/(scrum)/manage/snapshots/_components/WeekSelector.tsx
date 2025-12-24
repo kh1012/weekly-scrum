@@ -12,6 +12,9 @@ import {
   getCurrentISOWeek,
 } from "@/lib/date/isoWeek";
 
+import type { WorkloadLevel } from "@/lib/supabase/types";
+import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
+
 interface WeekSelectorProps {
   year: number;
   week: number;
@@ -21,6 +24,8 @@ interface WeekSelectorProps {
   snapshotCount?: number;
   /** 각 주차별 스냅샷 갯수 맵 (key: "년-주차", value: 갯수) */
   snapshotCountByWeek?: Map<string, number>;
+  /** 현재 주차의 워크로드 레벨 (스냅샷 단위) */
+  workloadLevel?: WorkloadLevel | null;
 }
 
 /**
@@ -33,6 +38,22 @@ function getDynamicYearOptions(): number[] {
   return [currentYear, currentYear + 1];
 }
 
+function WorkloadBadge({ level }: { level: WorkloadLevel }) {
+  const colors = WORKLOAD_LEVEL_COLORS[level];
+  const label = WORKLOAD_LEVEL_LABELS[level];
+  
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${colors.bg} ${colors.text} border ${colors.border}`}
+    >
+      {level === "light" && "🌿"}
+      {level === "normal" && "⚡"}
+      {level === "burden" && "🔥"}
+      <span>{label}</span>
+    </span>
+  );
+}
+
 export function WeekSelector({
   year,
   week,
@@ -40,6 +61,7 @@ export function WeekSelector({
   onWeekChange,
   snapshotCount,
   snapshotCountByWeek,
+  workloadLevel,
 }: WeekSelectorProps) {
   const weekOptions = getWeekOptions(year);
   const [isYearOpen, setIsYearOpen] = useState(false);
@@ -275,6 +297,11 @@ export function WeekSelector({
           </div>
         )}
       </div>
+
+      {/* 워크로드 뱃지 (우측에 표시) */}
+      {workloadLevel && (
+        <WorkloadBadge level={workloadLevel} />
+      )}
     </div>
   );
 }

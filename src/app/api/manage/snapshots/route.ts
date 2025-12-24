@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
     workload_note: snapshot.workload_note,
     entriesCount: snapshot.entries?.length || 0,
     entries: (snapshot.entries || []).map((e: Record<string, unknown>) => ({
+      id: e.id,
       domain: e.domain,
       project: e.project,
       module: e.module,

@@ -57,6 +57,7 @@ import type {
   Collaborator,
   WorkloadLevel,
 } from "@/lib/supabase/types";
+import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
 
 type SnapshotEntryRow = Database["public"]["Tables"]["snapshot_entries"]["Row"];
 
@@ -537,17 +538,36 @@ function EditSnapshotsViewInner({
   };
 
   // 저장 버튼 클릭 시 모달 표시
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
     // 새 모드에서만 엔트리 필수 검증 (편집 모드에서는 모두 삭제도 허용)
     if (isNewMode && tempSnapshots.length === 0) {
       showToast("저장할 항목이 없습니다.", "error");
       return;
     }
+    
+    // 편집 모드에서 워크로드 데이터가 이미 있으면 모달 띄우지 않고 바로 저장
+    if (!isNewMode && workloadLevel) {
+      await handleSaveConfirm(workloadLevel, workloadNote);
+      return;
+    }
+    
+    // 새 모드이거나 워크로드 데이터가 없으면 모달 표시
     setShowWorkloadModal(true);
   };
 
+  // 워크로드만 임시로 갱신하는 핸들러 (모달에서 사용)
+  const handleWorkloadUpdate = (level: WorkloadLevel | null, note: string) => {
+    setWorkloadLevel(level);
+    setWorkloadNote(note);
+  };
+
   // 모달에서 확인 시 실제 저장
-  const handleSaveConfirm = async (level: WorkloadLevel, note: string) => {
+  const handleSaveConfirm = async (level: WorkloadLevel | null, note: string) => {
+    if (!level) {
+      showToast("워크로드 레벨을 선택해주세요.", "error");
+      return;
+    }
+    
     setWorkloadLevel(level);
     setWorkloadNote(note);
     setIsSaving(true);
@@ -575,7 +595,7 @@ function EditSnapshotsViewInner({
         // 새 모드: 스냅샷 생성
         const payload: CreateSnapshotPayload = {
           entries,
-          workloadLevel: level,
+          workloadLevel: level || null,
           workloadNote: note.trim() || null,
         };
 
@@ -595,7 +615,7 @@ function EditSnapshotsViewInner({
         const payload: UpdateSnapshotPayload = {
           entries,
           deletedEntryIds,
-          workloadLevel: level,
+          workloadLevel: level || undefined,
           workloadNote: note.trim() || null,
         };
 
@@ -655,7 +675,7 @@ function EditSnapshotsViewInner({
           <div className="h-4 w-px bg-gray-200" />
 
           {/* 주차 선택 드롭다운 */}
-          <div className="relative">
+          <div className="relative flex items-center gap-2">
             <button
               ref={weekButtonRef}
               type="button"
@@ -690,10 +710,48 @@ function EditSnapshotsViewInner({
               </svg>
             </button>
 
-            {/* Portal로 렌더링 */}
-            {isWeekDropdownOpen &&
-              typeof document !== "undefined" &&
-              createPortal(
+            {/* 워크로드 태그 및 편집 아이콘 */}
+            {workloadLevel && (
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${WORKLOAD_LEVEL_COLORS[workloadLevel].bg} ${WORKLOAD_LEVEL_COLORS[workloadLevel].text} border ${WORKLOAD_LEVEL_COLORS[workloadLevel].border}`}
+                >
+                  {workloadLevel === "light" && "🌿"}
+                  {workloadLevel === "normal" && "⚡"}
+                  {workloadLevel === "burden" && "🔥"}
+                  <span>{WORKLOAD_LEVEL_LABELS[workloadLevel]}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWorkloadModal(true);
+                  }}
+                  className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  title="워크로드 편집"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Portal로 렌더링 */}
+          {isWeekDropdownOpen &&
+            typeof document !== "undefined" &&
+            createPortal(
                 <div
                   ref={weekDropdownRef}
                   className="fixed bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-80 overflow-y-auto min-w-[240px]"
@@ -747,7 +805,6 @@ function EditSnapshotsViewInner({
                 </div>,
                 document.body
               )}
-          </div>
 
           {/* 스냅샷 선택 드롭다운 */}
           {snapshots.length > 1 && selectedSnapshotId && (
@@ -834,12 +891,9 @@ function EditSnapshotsViewInner({
         </div>
       </div>
 
-      {/* 메인 콘텐츠 */}
       {isMobile ? (
-        /* 모바일: 단일 뷰 (리스트 또는 폼) */
         <div className="flex-1 flex flex-col min-h-0">
           {mobileView === "list" ? (
-            /* 모바일: 카드 리스트 */
             <div className="flex-1 bg-white overflow-hidden">
               <SnapshotCardList
                 ref={cardListRef}
@@ -856,7 +910,6 @@ function EditSnapshotsViewInner({
               />
             </div>
           ) : (
-            /* 모바일: 편집 폼 */
             <div className="flex-1 flex flex-col bg-white overflow-hidden">
               {/* 뒤로가기 버튼 */}
               <div className="shrink-0 px-4 py-3 border-b border-gray-100 bg-white">
@@ -980,14 +1033,17 @@ function EditSnapshotsViewInner({
       <WorkloadLevelModal
         isOpen={showWorkloadModal}
         onClose={() => setShowWorkloadModal(false)}
-        onConfirm={handleSaveConfirm}
+        onConfirm={(level, note) => {
+          handleWorkloadUpdate(level, note);
+          setShowWorkloadModal(false);
+        }}
         year={year}
         week={week}
         initialLevel={workloadLevel}
         initialNote={workloadNote}
-        isLoading={isSaving}
-        required={isNewMode}
-        confirmText={isNewMode ? "신규 등록하기" : "업데이트하기"}
+        isLoading={false}
+        required={false}
+        confirmText="적용"
       />
     </div>
   );

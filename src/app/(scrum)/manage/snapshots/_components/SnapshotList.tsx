@@ -5,16 +5,21 @@
  * - Pinterest 스타일 그리드 / 리스트 뷰 토글
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
+import { TrashIcon } from "@/components/common/Icons";
+import { deleteSnapshotEntryAction } from "@/app/actions/snapshots";
+import { useToast } from "@/components/weekly-scrum/manage/Toast";
 import type { SnapshotSummary } from "./SnapshotsMainView";
 import type { WorkloadLevel } from "@/lib/supabase/types";
 import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
 
 // Entry 타입 (개별 카드용)
 interface SnapshotEntry {
+  entryId: string;
   snapshotId: string;
   entryIndex: number;
   domain: string;
@@ -40,6 +45,7 @@ interface SnapshotListProps {
   week: number;
   allExpanded?: boolean;
   onToggleExpanded?: () => void;
+  onEntryDeleted?: () => void;
 }
 
 export function SnapshotList({
@@ -49,6 +55,7 @@ export function SnapshotList({
   year,
   week,
   allExpanded = false,
+  onEntryDeleted,
 }: SnapshotListProps) {
   const router = useRouter();
 
@@ -64,6 +71,7 @@ export function SnapshotList({
   // 스냅샷의 entries를 펼쳐서 개별 카드로 표시
   const allEntries: SnapshotEntry[] = snapshots.flatMap((snapshot) =>
     snapshot.entries.map((entry, index) => ({
+      entryId: entry.id,
       snapshotId: snapshot.id,
       entryIndex: index,
       domain: entry.domain,
@@ -102,9 +110,14 @@ export function SnapshotList({
           entries={allEntries}
           allExpanded={allExpanded}
           onEditCard={handleEditCard}
+          onEntryDeleted={onEntryDeleted}
         />
       ) : (
-        <ListView entries={allEntries} onEditCard={handleEditCard} />
+        <ListView 
+          entries={allEntries} 
+          onEditCard={handleEditCard}
+          onEntryDeleted={onEntryDeleted}
+        />
       )}
     </div>
   );
@@ -115,10 +128,12 @@ function GridView({
   entries,
   allExpanded,
   onEditCard,
+  onEntryDeleted,
 }: {
   entries: SnapshotEntry[];
   allExpanded: boolean;
   onEditCard: (snapshotId: string, entryIndex?: number) => void;
+  onEntryDeleted?: () => void;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -128,6 +143,7 @@ function GridView({
           entry={entry}
           forceExpanded={allExpanded}
           onEdit={() => onEditCard(entry.snapshotId, entry.entryIndex)}
+          onDelete={onEntryDeleted}
         />
       ))}
     </div>
@@ -138,9 +154,11 @@ function GridView({
 function ListView({
   entries,
   onEditCard,
+  onEntryDeleted,
 }: {
   entries: SnapshotEntry[];
   onEditCard: (snapshotId: string, entryIndex?: number) => void;
+  onEntryDeleted?: () => void;
 }) {
   return (
     <div className="space-y-2">
@@ -149,6 +167,7 @@ function ListView({
           key={`${entry.snapshotId}-${entry.entryIndex}`}
           entry={entry}
           onEdit={() => onEditCard(entry.snapshotId, entry.entryIndex)}
+          onDelete={onEntryDeleted}
         />
       ))}
     </div>
@@ -177,12 +196,24 @@ function EntryCard({
   entry,
   forceExpanded = false,
   onEdit,
+  onDelete,
 }: {
   entry: SnapshotEntry;
   forceExpanded?: boolean;
   onEdit?: () => void;
+  onDelete?: () => void;
 }) {
+  const { showToast } = useToast();
   const [localExpanded, setLocalExpanded] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const optionsMenuRef = useRef<HTMLDivElement>(null);
+  const optionsButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // forceExpanded가 false로 변경되면 localExpanded도 리셋
   useEffect(() => {
@@ -190,6 +221,25 @@ function EntryCard({
       setLocalExpanded(false);
     }
   }, [forceExpanded]);
+
+  // 옵션 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        optionsMenuRef.current &&
+        !optionsMenuRef.current.contains(event.target as Node) &&
+        optionsButtonRef.current &&
+        !optionsButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowOptionsMenu(false);
+      }
+    }
+
+    if (showOptionsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showOptionsMenu]);
 
   const isExpanded = forceExpanded || localExpanded;
 
@@ -234,20 +284,40 @@ function EntryCard({
 
   const riskStyle = getRiskLevelStyle(riskLevel);
 
+  const handleDeleteClick = () => {
+    setShowOptionsMenu(false);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    const result = await deleteSnapshotEntryAction(entry.entryId);
+    if (result.success) {
+      showToast("스냅샷 항목이 삭제되었습니다.", "success");
+      setShowDeleteModal(false);
+      onDelete?.();
+    } else {
+      showToast(result.error || "삭제에 실패했습니다.", "error");
+      setShowDeleteModal(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowOptionsMenu(false);
+    onEdit?.();
+  };
+
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all cursor-pointer h-fit"
+      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all cursor-pointer h-fit relative group"
       onClick={() => setLocalExpanded(!localExpanded)}
     >
-      {/* Workload 뱃지 (첫 엔트리에만 표시) */}
-      {entry.isFirstEntry && entry.workload_level && (
-        <div className="px-4 pt-3 pb-0">
-          <WorkloadBadge level={entry.workload_level} />
-        </div>
-      )}
-
       {/* 헤더 - 메타 태그 세로 정렬 */}
-      <div className="p-4">
+      <div className="px-4 pt-3 pb-4">
         <div className="flex items-start justify-between gap-3">
           {/* 세로 방향 메타 정보 */}
           <div className="flex-1 min-w-0 flex flex-col gap-2">
@@ -330,33 +400,7 @@ function EntryCard({
           </div>
 
           {/* 버튼 그룹 */}
-          <div className="flex items-center gap-1 shrink-0">
-            {/* 편집 버튼 */}
-            {onEdit && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit();
-                }}
-                className="p-1.5 rounded-lg transition-all duration-200 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
-                title="편집하기"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-              </button>
-            )}
-
+          <div className="flex items-center gap-1 shrink-0 relative">
             {/* 펼치기/접기 버튼 */}
             <button
               onClick={(e) => {
@@ -385,6 +429,72 @@ function EntryCard({
                 />
               </svg>
             </button>
+
+            {/* 옵션 버튼 */}
+            <button
+              ref={optionsButtonRef}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowOptionsMenu(!showOptionsMenu);
+              }}
+              className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all shrink-0"
+              title="옵션"
+              type="button"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                />
+              </svg>
+            </button>
+
+            {/* 옵션 메뉴 팝오버 */}
+            {showOptionsMenu && (
+              <div
+                ref={optionsMenuRef}
+                className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {onEdit && (
+                  <button
+                    onClick={handleEdit}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    type="button"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    <span>수정하기</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleDeleteClick}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  type="button"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  <span>삭제하기</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -517,6 +627,88 @@ function EntryCard({
           )}
         </div>
       )}
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+            style={{ background: "rgba(0, 0, 0, 0.5)" }}
+            onClick={handleDeleteCancel}
+          >
+            <div
+              className="relative w-full max-w-md rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+              style={{
+                background: "white",
+                boxShadow:
+                  "0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 헤더 */}
+              <div
+                className="px-6 py-5"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                    <TrashIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      스냅샷 항목 삭제
+                    </h3>
+                    <p className="text-sm text-white/80">
+                      이 작업은 되돌릴 수 없습니다
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 내용 */}
+              <div className="p-6">
+                <p className="text-gray-700">
+                  정말로 이 스냅샷 항목을 삭제하시겠습니까?
+                  <br />
+                  <br />
+                  삭제된 항목은 복구할 수 없습니다.
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div
+                className="flex gap-3 px-6 pb-6"
+                style={{ background: "#f9fafb" }}
+              >
+                <button
+                  onClick={handleDeleteCancel}
+                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95"
+                  style={{
+                    background: "white",
+                    border: "1px solid #e5e7eb",
+                    color: "#6b7280",
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-white transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                  }}
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -525,10 +717,69 @@ function EntryCard({
 function EntryRow({
   entry,
   onEdit,
+  onDelete,
 }: {
   entry: SnapshotEntry;
   onEdit?: () => void;
+  onDelete?: () => void;
 }) {
+  const { showToast } = useToast();
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const optionsMenuRef = useRef<HTMLDivElement>(null);
+  const optionsButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 옵션 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        optionsMenuRef.current &&
+        !optionsMenuRef.current.contains(event.target as Node) &&
+        optionsButtonRef.current &&
+        !optionsButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowOptionsMenu(false);
+      }
+    }
+
+    if (showOptionsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showOptionsMenu]);
+
+  const handleDeleteClick = () => {
+    setShowOptionsMenu(false);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    const result = await deleteSnapshotEntryAction(entry.entryId);
+    if (result.success) {
+      showToast("스냅샷 항목이 삭제되었습니다.", "success");
+      setShowDeleteModal(false);
+      onDelete?.();
+    } else {
+      showToast(result.error || "삭제에 실패했습니다.", "error");
+      setShowDeleteModal(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowOptionsMenu(false);
+    onEdit?.();
+  };
+
   // 리스크 레벨
   const riskLevel = entry.risk_level || 0;
   const getRiskStyle = (level: number) => {
@@ -540,7 +791,74 @@ function EntryRow({
   const riskStyle = getRiskStyle(riskLevel);
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-gray-300 hover:shadow-md transition-all cursor-pointer group">
+    <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-gray-300 hover:shadow-md transition-all cursor-pointer group relative">
+      {/* 옵션 버튼 - 호버 시 표시 */}
+      <div className="absolute top-2 right-2 z-10">
+        <button
+          ref={optionsButtonRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowOptionsMenu(!showOptionsMenu);
+          }}
+          className="p-1.5 rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 shrink-0"
+          title="옵션"
+          type="button"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+            />
+          </svg>
+        </button>
+
+        {/* 옵션 메뉴 팝오버 */}
+        {showOptionsMenu && (
+          <div
+            ref={optionsMenuRef}
+            className="absolute top-8 right-0 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                type="button"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <span>수정하기</span>
+              </button>
+                )}
+                <button
+                  onClick={handleDeleteClick}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  type="button"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  <span>삭제하기</span>
+                </button>
+          </div>
+        )}
+      </div>
       {/* Workload 뱃지 (첫 엔트리에만 표시) */}
       {entry.isFirstEntry && entry.workload_level && (
         <WorkloadBadge level={entry.workload_level} />
@@ -582,31 +900,6 @@ function EntryRow({
         )}
       </div>
 
-      {/* 편집 버튼 */}
-      {onEdit && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all"
-          title="편집하기"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
-        </button>
-      )}
 
       {/* 화살표 */}
       <svg
@@ -622,6 +915,88 @@ function EntryRow({
           d="M9 5l7 7-7 7"
         />
       </svg>
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && mounted &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+            style={{ background: "rgba(0, 0, 0, 0.5)" }}
+            onClick={handleDeleteCancel}
+          >
+            <div
+              className="relative w-full max-w-md rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+              style={{
+                background: "white",
+                boxShadow:
+                  "0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 헤더 */}
+              <div
+                className="px-6 py-5"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                    <TrashIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      스냅샷 항목 삭제
+                    </h3>
+                    <p className="text-sm text-white/80">
+                      이 작업은 되돌릴 수 없습니다
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 내용 */}
+              <div className="p-6">
+                <p className="text-gray-700">
+                  정말로 이 스냅샷 항목을 삭제하시겠습니까?
+                  <br />
+                  <br />
+                  삭제된 항목은 복구할 수 없습니다.
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div
+                className="flex gap-3 px-6 pb-6"
+                style={{ background: "#f9fafb" }}
+              >
+                <button
+                  onClick={handleDeleteCancel}
+                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95"
+                  style={{
+                    background: "white",
+                    border: "1px solid #e5e7eb",
+                    color: "#6b7280",
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-white transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                  }}
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ import {
   getWeekStartDateString,
 } from "@/lib/date/isoWeek";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
+import { ToastProvider } from "@/components/weekly-scrum/manage/Toast";
 import type { WorkloadLevel } from "@/lib/supabase/types";
 
 interface SnapshotsMainViewProps {
@@ -55,6 +56,7 @@ export interface SnapshotSummary {
   workload_note?: string | null;
   entriesCount: number;
   entries: {
+    id: string;
     domain: string;
     project: string;
     module: string | null;
@@ -85,7 +87,7 @@ interface SnapshotsViewState {
   viewMode: "grid" | "list";
 }
 
-export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProps) {
+function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps) {
   const router = useRouter();
   const currentWeek = getCurrentISOWeek();
   
@@ -539,6 +541,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
             onWeekChange={setSelectedWeek}
             snapshotCount={snapshots.length}
             snapshotCountByWeek={snapshotCountByWeek}
+            workloadLevel={snapshots.length > 0 ? snapshots[0].workload_level : null}
           />
           
           {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
@@ -610,6 +613,7 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
               year={selectedYear}
               week={selectedWeek}
               allExpanded={allExpanded}
+              onEntryDeleted={fetchSnapshots}
             />
           </div>
 
@@ -635,6 +639,14 @@ export function SnapshotsMainView({ userId, workspaceId }: SnapshotsMainViewProp
         onCreateEmpty={handleCreateEmpty}
       />
     </div>
+  );
+}
+
+export function SnapshotsMainView(props: SnapshotsMainViewProps) {
+  return (
+    <ToastProvider>
+      <SnapshotsMainViewInner {...props} />
+    </ToastProvider>
   );
 }
 
