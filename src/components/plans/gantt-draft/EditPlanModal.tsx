@@ -136,6 +136,22 @@ export function EditPlanModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 모달이 열려있을 때 전역 단축키 차단
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleGlobalKeyDown(e: KeyboardEvent) {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && (e.key === "s" || e.key === "k")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalKeyDown, true);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown, true);
+  }, [isOpen]);
+
   // 드롭다운 열릴 때 검색창 포커스
   useEffect(() => {
     if (isAssigneeDropdownOpen) {
@@ -244,8 +260,10 @@ export function EditPlanModal({
     setLinks(links.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     if (!title.trim()) return;
 
     // 담당자 생성
@@ -272,6 +290,14 @@ export function EditPlanModal({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       onClose();
+      return;
+    }
+    
+    // 모달이 열려있을 때 단축키 차단
+    const isMod = e.metaKey || e.ctrlKey;
+    if (isMod && (e.key === "s" || e.key === "k")) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
@@ -357,7 +383,7 @@ export function EditPlanModal({
         </div>
 
         {/* 폼 - 스크롤 가능 */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 max-h-[60vh]">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
           {/* 필수 정보 섹션 */}
           <div className="rounded-xl border border-gray-100 overflow-hidden">
             <button
@@ -832,29 +858,30 @@ export function EditPlanModal({
           </div>
         )}
       </div>
-
-          {/* 버튼 */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 active:scale-95 hover:bg-gray-100"
-              style={{ color: "#64748b" }}
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={!title.trim()}
-              className="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-              }}
-            >
-              저장
-            </button>
-          </div>
         </form>
+
+        {/* 하단 버튼 영역 - 고정 */}
+        <div className="shrink-0 flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 active:scale-95 hover:bg-gray-100"
+            style={{ color: "#64748b" }}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!title.trim()}
+            className="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
+            style={{
+              background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+            }}
+          >
+            저장
+          </button>
+        </div>
       </div>
     </div>
   );

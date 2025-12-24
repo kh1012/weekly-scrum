@@ -169,6 +169,22 @@ export function CreatePlanModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 모달이 열려있을 때 전역 단축키 차단
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleGlobalKeyDown(e: KeyboardEvent) {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && (e.key === "s" || e.key === "k")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalKeyDown, true);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown, true);
+  }, [isOpen]);
+
   // 드롭다운 열릴 때 검색창 포커스 및 위치 계산
   useEffect(() => {
     if (isAssigneeDropdownOpen) {
@@ -258,8 +274,10 @@ export function CreatePlanModal({
     setLinks(links.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     if (!title.trim()) return;
 
     // 담당자 생성
@@ -286,6 +304,14 @@ export function CreatePlanModal({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       onClose();
+      return;
+    }
+    
+    // 모달이 열려있을 때 단축키 차단
+    const isMod = e.metaKey || e.ctrlKey;
+    if (isMod && (e.key === "s" || e.key === "k")) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
@@ -305,7 +331,7 @@ export function CreatePlanModal({
 
       {/* 모달 - Airbnb 스타일 */}
       <div
-        className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col"
         style={{
           background: "white",
           boxShadow:
@@ -314,7 +340,7 @@ export function CreatePlanModal({
       >
         {/* 헤더 - 그라디언트 배경 */}
         <div
-          className="flex items-center justify-between px-5 py-4"
+          className="shrink-0 flex items-center justify-between px-5 py-4"
           style={{
             background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
             borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
@@ -334,7 +360,7 @@ export function CreatePlanModal({
         {/* 컨텍스트 정보 배너 */}
         {defaultValues && (
           <div
-            className="px-5 py-3"
+            className="shrink-0 px-5 py-3"
             style={{
               background:
                 "linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)",
@@ -370,7 +396,7 @@ export function CreatePlanModal({
         )}
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
           {/* 필수 정보 섹션 */}
           <div className="rounded-xl border border-gray-100 overflow-hidden">
             <div className="px-4 py-3 bg-gray-50">
@@ -858,29 +884,30 @@ export function CreatePlanModal({
             </div>
           )}
         </div>
-
-          {/* 버튼 */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 active:scale-95 hover:bg-gray-100"
-              style={{ color: "#64748b" }}
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={!title.trim()}
-              className="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-              }}
-            >
-              만들기
-            </button>
-          </div>
         </form>
+
+        {/* 하단 버튼 영역 - 고정 */}
+        <div className="shrink-0 flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 active:scale-95 hover:bg-gray-100"
+            style={{ color: "#64748b" }}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!title.trim()}
+            className="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
+            style={{
+              background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+            }}
+          >
+            만들기
+          </button>
+        </div>
       </div>
     </div>
   );
