@@ -104,6 +104,9 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
   // 전체 펼치기/접기 상태
   const [allExpanded, setAllExpanded] = useState(false);
   
+  // 선택 모드 상태
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  
   // localStorage에서 상태 복원
   useEffect(() => {
     try {
@@ -489,6 +492,35 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
 
             {/* 액션 버튼 */}
             <div className="flex items-center gap-2 md:gap-3">
+              {/* 선택 모드 토글 버튼 */}
+              {snapshots.length > 0 && (
+                <button
+                  onClick={() => setIsSelectMode(!isSelectMode)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    isSelectMode
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">
+                    {isSelectMode ? "선택 완료" : "선택"}
+                  </span>
+                </button>
+              )}
+
               <LoadingButton
                 onClick={handleEditWeek}
                 disabled={snapshots.length === 0}
@@ -614,6 +646,8 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
               week={selectedWeek}
               allExpanded={allExpanded}
               onEntryDeleted={fetchSnapshots}
+              isSelectMode={isSelectMode}
+              onToggleSelectMode={setIsSelectMode}
             />
           </div>
 

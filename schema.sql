@@ -1264,7 +1264,7 @@ ALTER TABLE ONLY "public"."workspace_members"
 
 
 
-CREATE POLICY "entries_delete_leader" ON "public"."snapshot_entries" FOR DELETE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
+CREATE POLICY "entries_delete_author_or_leader" ON "public"."snapshot_entries" FOR DELETE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND (("author_id" = "auth"."uid"()) OR "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"()))));
 
 
 
