@@ -9,7 +9,7 @@
 "use client";
 
 import { useEffect, useCallback, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDraftStore, createRowId } from "./store";
 import { useLock } from "./useLock";
 import { DraftTreePanel } from "./DraftTreePanel";
@@ -83,6 +83,7 @@ export function DraftGanttView({
   updatedByName,
 }: DraftGanttViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -132,6 +133,8 @@ export function DraftGanttView({
   const flags = useDraftStore((s) => s.flags);
   const isEditing = useDraftStore((s) => s.ui.isEditing);
   const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
+  const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
+  const selectFlag = useDraftStore((s) => s.selectFlag);
 
   // Flags 관련
   const getDirtyFlags = useDraftStore((s) => s.getDirtyFlags);
@@ -201,6 +204,39 @@ export function DraftGanttView({
     setRangeStart(start);
     setRangeEnd(end);
   }, [rangeMonths, calculateRange]);
+
+  // selectedFlagId 변경 시 URL 업데이트
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (selectedFlagId) {
+      params.set("flagId", selectedFlagId);
+    } else {
+      params.delete("flagId");
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [selectedFlagId, router, searchParams]);
+
+  // 초기 로드 시 URL에서 flagId 읽어오기
+  const hasInitializedFlagRef = useRef(false);
+  useEffect(() => {
+    if (hasInitializedFlagRef.current) return;
+    const urlFlagId = searchParams.get("flagId");
+    if (urlFlagId && flags.length > 0) {
+      const flagExists = flags.some((f) => f.clientId === urlFlagId && !f.deleted);
+      if (flagExists && selectedFlagId !== urlFlagId) {
+        selectFlag(urlFlagId);
+        hasInitializedFlagRef.current = true;
+      } else if (!flagExists && selectedFlagId === urlFlagId) {
+        // URL에 있지만 실제 flag가 없는 경우 선택 해제
+        selectFlag(null);
+        hasInitializedFlagRef.current = true;
+      } else if (!urlFlagId) {
+        hasInitializedFlagRef.current = true;
+      }
+    } else if (!urlFlagId) {
+      hasInitializedFlagRef.current = true;
+    }
+  }, [flags, selectedFlagId, searchParams, selectFlag]);
 
   // 초기 데이터 로드
   useEffect(() => {

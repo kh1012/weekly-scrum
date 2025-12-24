@@ -8,6 +8,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useDraftStore } from "./store";
 import {
@@ -431,6 +432,9 @@ export function DraftTreePanel({
   workspaceId,
   timelineScrollbarHeight = 0,
 }: DraftTreePanelProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   // FlagDocPanel 상태
   const [showFlagDoc, setShowFlagDoc] = useState(false);
   const [selectedDocFlag, setSelectedDocFlag] = useState<DraftFlag | null>(
@@ -473,22 +477,107 @@ export function DraftTreePanel({
 
       treeSearchDebounceRef.current = setTimeout(() => {
         setSearchQuery(value);
+        // URL 업데이트
+        const params = new URLSearchParams(searchParams.toString());
+        if (value.trim()) {
+          params.set("search", value.trim());
+        } else {
+          params.delete("search");
+        }
+        router.replace(`?${params.toString()}`, { scroll: false });
         setIsTreeSearching(false);
       }, 300);
     },
-    [setSearchQuery]
+    [setSearchQuery, router, searchParams]
   );
 
   const handleTreeSearchClear = useCallback(() => {
     setLocalSearchValue("");
     setSearchQuery("");
     setIsTreeSearching(false);
+    // URL에서 search 파라미터 제거
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("search");
+    router.replace(`?${params.toString()}`, { scroll: false });
     if (treeSearchDebounceRef.current) {
       clearTimeout(treeSearchDebounceRef.current);
     }
-  }, [setSearchQuery]);
+  }, [setSearchQuery, router, searchParams]);
   const setFilters = useDraftStore((s) => s.setFilters);
-  const resetFilters = useDraftStore((s) => s.resetFilters);
+  const resetFiltersStore = useDraftStore((s) => s.resetFilters);
+  
+  // resetFilters 래퍼: URL도 함께 초기화
+  const resetFilters = useCallback(() => {
+    resetFiltersStore();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("projects");
+    params.delete("modules");
+    params.delete("features");
+    params.delete("search");
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [resetFiltersStore, router, searchParams]);
+
+  // URL queryString 업데이트 함수
+  const updateURLFilters = useCallback((newFilters: { projects: string[]; modules: string[]; features: string[] }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // projects 파라미터 업데이트
+    if (newFilters.projects.length > 0) {
+      params.set("projects", newFilters.projects.join(","));
+    } else {
+      params.delete("projects");
+    }
+    
+    // modules 파라미터 업데이트
+    if (newFilters.modules.length > 0) {
+      params.set("modules", newFilters.modules.join(","));
+    } else {
+      params.delete("modules");
+    }
+    
+    // features 파라미터 업데이트
+    if (newFilters.features.length > 0) {
+      params.set("features", newFilters.features.join(","));
+    } else {
+      params.delete("features");
+    }
+    
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
+
+  // 초기 로드 시 URL에서 필터 및 검색어 읽어오기
+  useEffect(() => {
+    const urlProjects = searchParams.get("projects");
+    const urlModules = searchParams.get("modules");
+    const urlFeatures = searchParams.get("features");
+    const urlSearch = searchParams.get("search");
+    
+    const urlFilters = {
+      projects: urlProjects ? urlProjects.split(",").filter(Boolean) : [],
+      modules: urlModules ? urlModules.split(",").filter(Boolean) : [],
+      features: urlFeatures ? urlFeatures.split(",").filter(Boolean) : [],
+    };
+    
+    // URL에 필터가 있고 현재 필터와 다르면 적용
+    const hasURLFilters = urlProjects || urlModules || urlFeatures;
+    if (hasURLFilters) {
+      const currentFilters = filters;
+      const isDifferent = 
+        JSON.stringify(currentFilters.projects.sort()) !== JSON.stringify(urlFilters.projects.sort()) ||
+        JSON.stringify(currentFilters.modules.sort()) !== JSON.stringify(urlFilters.modules.sort()) ||
+        JSON.stringify(currentFilters.features.sort()) !== JSON.stringify(urlFilters.features.sort());
+      
+      if (isDifferent) {
+        setFilters(urlFilters);
+      }
+    }
+    
+    // URL에 검색어가 있고 현재 검색어와 다르면 적용
+    if (urlSearch !== null && urlSearch !== searchQuery) {
+      setSearchQuery(urlSearch);
+      setLocalSearchValue(urlSearch);
+    }
+  }, []); // 초기 마운트 시에만 실행
   const selectRow = useDraftStore((s) => s.selectRow);
   const selectedRowId = useDraftStore((s) => s.ui.selectedRowId);
   const deleteRow = useDraftStore((s) => s.deleteRow);
@@ -875,7 +964,9 @@ export function DraftTreePanel({
     const next = current.includes(project)
       ? current.filter((p) => p !== project)
       : [...current, project];
-    setFilters({ projects: next });
+    const newFilters = { ...filters, projects: next };
+    setFilters(newFilters);
+    updateURLFilters(newFilters);
     // 필터 적용 시 기능까지 펼치기
     expandToLevel(1);
   };
@@ -885,7 +976,9 @@ export function DraftTreePanel({
     const next = current.includes(module)
       ? current.filter((m) => m !== module)
       : [...current, module];
-    setFilters({ modules: next });
+    const newFilters = { ...filters, modules: next };
+    setFilters(newFilters);
+    updateURLFilters(newFilters);
     // 필터 적용 시 기능까지 펼치기
     expandToLevel(1);
   };
@@ -895,7 +988,9 @@ export function DraftTreePanel({
     const next = current.includes(feature)
       ? current.filter((f) => f !== feature)
       : [...current, feature];
-    setFilters({ features: next });
+    const newFilters = { ...filters, features: next };
+    setFilters(newFilters);
+    updateURLFilters(newFilters);
     // 필터 적용 시 기능까지 펼치기
     expandToLevel(1);
   };

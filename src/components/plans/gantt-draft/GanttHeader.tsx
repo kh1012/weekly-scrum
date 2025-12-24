@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useDraftStore } from "./store";
 import { useLock } from "./useLock";
 import { useIsMac } from "./useOS";
@@ -24,9 +24,11 @@ import {
   HelpIcon,
   CalendarIcon,
   ChevronDownIcon,
+  CopyIcon,
 } from "@/components/common/Icons";
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
+import { showToast } from "./Toast";
 
 interface GanttHeaderProps {
   workspaceId: string;
@@ -112,6 +114,17 @@ export function GanttHeader({
 
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
+
+  // URL 복사 핸들러
+  const handleCopyURL = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      showToast("success", "URL 복사됨", "클립보드에 복사되었습니다.");
+    } catch (err) {
+      showToast("error", "복사 실패", "URL을 복사할 수 없습니다.");
+    }
+  }, []);
 
   // 모바일 감지 (768px 이하)
   const [isMobile, setIsMobile] = useState(false);
@@ -449,6 +462,13 @@ export function GanttHeader({
                 {!isMac && <span className="opacity-50">+</span>}
                 <span>K</span>
               </button>
+
+              {/* URL 복사 버튼 */}
+              <HeaderButton
+                icon={<CopyIcon className="w-4 h-4" />}
+                onClick={handleCopyURL}
+                tooltip="URL 복사"
+              />
 
               {/* 도움말 - 읽기 전용에서는 숨김 */}
               {!readOnly && onOpenHelp && (

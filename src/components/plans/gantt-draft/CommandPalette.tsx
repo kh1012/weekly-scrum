@@ -24,7 +24,9 @@ import {
   FolderIcon,
   PlusIcon,
   CopyIcon,
+  LinkIcon,
 } from "@/components/common/Icons";
+import { showToast } from "./Toast";
 
 interface Command {
   id: string;
@@ -236,6 +238,22 @@ export function CommandPalette({
         shortcut: "",
         icon: <FilterIcon className="w-4 h-4" />,
         action: resetFilters,
+        category: "보기",
+      },
+      {
+        id: "copy-url",
+        label: "URL 복사",
+        shortcut: "",
+        icon: <LinkIcon className="w-4 h-4" />,
+        action: async () => {
+          try {
+            const url = window.location.href;
+            await navigator.clipboard.writeText(url);
+            showToast("success", "URL 복사됨", "클립보드에 복사되었습니다.");
+          } catch (err) {
+            showToast("error", "복사 실패", "URL을 복사할 수 없습니다.");
+          }
+        },
         category: "보기",
       },
       // 기간 설정
