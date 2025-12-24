@@ -2,7 +2,7 @@
 
 /**
  * 스냅샷 관리 메인 뷰
- * 
+ *
  * - 좌측/상단: 연도 + ISO 주차 선택 UI
  * - 중앙: 스냅샷 목록 (Pinterest/리스트 토글)
  * - 우측: 주차 메타데이터 요약 (접힘/더보기)
@@ -16,10 +16,7 @@ import { SnapshotList } from "./SnapshotList";
 import { WeekMetaPanel } from "./WeekMetaPanel";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { LoadingButton } from "@/components/common/LoadingButton";
-import {
-  getCurrentISOWeek,
-  getWeekStartDateString,
-} from "@/lib/date/isoWeek";
+import { getCurrentISOWeek, getWeekStartDateString } from "@/lib/date/isoWeek";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
 import { ToastProvider } from "@/components/weekly-scrum/manage/Toast";
 import type { WorkloadLevel } from "@/lib/supabase/types";
@@ -87,26 +84,29 @@ interface SnapshotsViewState {
   viewMode: "grid" | "list";
 }
 
-function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps) {
+function SnapshotsMainViewInner({
+  userId,
+  workspaceId,
+}: SnapshotsMainViewProps) {
   const router = useRouter();
   const currentWeek = getCurrentISOWeek();
-  
+
   // localStorage에서 상태 복원
   const [isStateInitialized, setIsStateInitialized] = useState(false);
-  
+
   // 주차 선택 상태
   const [selectedYear, setSelectedYear] = useState(currentWeek.year);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek.week);
-  
+
   // 뷰 모드
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  
+
   // 전체 펼치기/접기 상태
   const [allExpanded, setAllExpanded] = useState(false);
-  
+
   // 선택 모드 상태
   const [isSelectMode, setIsSelectMode] = useState(false);
-  
+
   // localStorage에서 상태 복원
   useEffect(() => {
     try {
@@ -122,7 +122,7 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
     }
     setIsStateInitialized(true);
   }, []);
-  
+
   // 상태 변경 시 localStorage에 저장
   useEffect(() => {
     if (!isStateInitialized) return;
@@ -137,28 +137,30 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
       // 무시
     }
   }, [selectedYear, selectedWeek, viewMode, isStateInitialized]);
-  
+
   // 스냅샷 목록
   const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true); // 초기 로딩 상태
-  
+
   // 주차별 스냅샷 갯수 맵 (key: "년도-주차", value: 갯수)
-  const [snapshotCountByWeek, setSnapshotCountByWeek] = useState<Map<string, number>>(new Map());
-  
+  const [snapshotCountByWeek, setSnapshotCountByWeek] = useState<
+    Map<string, number>
+  >(new Map());
+
   // 메타데이터
   const [weekStats, setWeekStats] = useState<WeekStatsData | null>(null);
   const [isMetaPanelExpanded, setIsMetaPanelExpanded] = useState(false);
-  
+
   // 필터 상태 (다중 선택)
   const [projectFilters, setProjectFilters] = useState<Set<string>>(new Set());
   const [moduleFilters, setModuleFilters] = useState<Set<string>>(new Set());
   const [featureFilters, setFeatureFilters] = useState<Set<string>>(new Set());
-  
+
   // 필터 드롭다운 상태
   const [isProjectFilterOpen, setIsProjectFilterOpen] = useState(false);
   const [isModuleFilterOpen, setIsModuleFilterOpen] = useState(false);
   const [isFeatureFilterOpen, setIsFeatureFilterOpen] = useState(false);
-  
+
   // 필터 토글 함수
   const toggleProjectFilter = (project: string) => {
     setProjectFilters((prev) => {
@@ -184,13 +186,13 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
       return next;
     });
   };
-  
+
   // 필터 옵션 추출
   const filterOptions = useMemo(() => {
     const projects = new Set<string>();
     const modules = new Set<string>();
     const features = new Set<string>();
-    
+
     snapshots.forEach((s) => {
       s.entries.forEach((e) => {
         if (e.project) projects.add(e.project);
@@ -198,32 +200,39 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
         if (e.feature) features.add(e.feature);
       });
     });
-    
+
     return {
       projects: Array.from(projects).sort(),
       modules: Array.from(modules).sort(),
       features: Array.from(features).sort(),
     };
   }, [snapshots]);
-  
+
   // 필터링된 스냅샷
   const filteredSnapshots = useMemo(() => {
     return snapshots.filter((s) => {
-      const matchesProject = projectFilters.size === 0 || s.entries.some((e) => projectFilters.has(e.project));
-      const matchesModule = moduleFilters.size === 0 || s.entries.some((e) => e.module && moduleFilters.has(e.module));
-      const matchesFeature = featureFilters.size === 0 || s.entries.some((e) => e.feature && featureFilters.has(e.feature));
+      const matchesProject =
+        projectFilters.size === 0 ||
+        s.entries.some((e) => projectFilters.has(e.project));
+      const matchesModule =
+        moduleFilters.size === 0 ||
+        s.entries.some((e) => e.module && moduleFilters.has(e.module));
+      const matchesFeature =
+        featureFilters.size === 0 ||
+        s.entries.some((e) => e.feature && featureFilters.has(e.feature));
       return matchesProject && matchesModule && matchesFeature;
     });
   }, [snapshots, projectFilters, moduleFilters, featureFilters]);
-  
+
   // 필터 초기화
   const clearFilters = () => {
     setProjectFilters(new Set());
     setModuleFilters(new Set());
     setFeatureFilters(new Set());
   };
-  
-  const totalFilterCount = projectFilters.size + moduleFilters.size + featureFilters.size;
+
+  const totalFilterCount =
+    projectFilters.size + moduleFilters.size + featureFilters.size;
   const hasActiveFilters = totalFilterCount > 0;
 
   // 초기 마운트 시 프로그래스바 완료 (이미 로드된 상태이므로)
@@ -240,7 +249,7 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
       const response = await fetch(
         `/api/manage/snapshots?workspaceId=${workspaceId}&userId=${userId}&weekStartDate=${weekStartDate}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         setSnapshots(data.snapshots || []);
@@ -266,11 +275,13 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
       const response = await fetch(
         `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}&year=${selectedYear}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         const counts = data.counts || {};
-        setSnapshotCountByWeek(new Map(Object.entries(counts).map(([k, v]) => [k, v as number])));
+        setSnapshotCountByWeek(
+          new Map(Object.entries(counts).map(([k, v]) => [k, v as number]))
+        );
       }
     } catch (error) {
       console.error("Failed to fetch snapshot counts:", error);
@@ -298,14 +309,18 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
   const handleLoadExistingData = () => {
     setIsNewSnapshotModalOpen(false);
     navigationProgress.start();
-    router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=load`);
+    router.push(
+      `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=load`
+    );
   };
 
   // 빈 스냅샷 생성 선택
   const handleCreateEmpty = () => {
     setIsNewSnapshotModalOpen(false);
     navigationProgress.start();
-    router.push(`/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=empty`);
+    router.push(
+      `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=empty`
+    );
   };
 
   return (
@@ -316,12 +331,24 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
           {/* 좌측: 타이틀 */}
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-4 h-4 md:w-5 md:h-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">스냅샷 관리</h1>
+              <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">
+                스냅샷 관리
+              </h1>
               <p className="text-xs md:text-sm text-gray-500">
                 주차별 스냅샷 조회 및 관리
               </p>
@@ -337,14 +364,24 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                 onClick={clearFilters}
                 disabled={!hasActiveFilters}
                 className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
-                  hasActiveFilters 
-                    ? "text-gray-700 bg-gray-100 hover:bg-gray-200" 
+                  hasActiveFilters
+                    ? "text-gray-700 bg-gray-100 hover:bg-gray-200"
                     : "text-gray-300 bg-gray-50 cursor-not-allowed"
                 }`}
                 title="필터 초기화"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
                 Reset
               </button>
@@ -360,7 +397,9 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                     setIsFeatureFilterOpen(false);
                   }}
                   className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
-                    projectFilters.size > 0 ? "bg-blue-50 text-blue-600 border border-blue-200" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                    projectFilters.size > 0
+                      ? "bg-blue-50 text-blue-600 border border-blue-200"
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <span>Project</span>
@@ -369,8 +408,20 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                       {projectFilters.size}
                     </span>
                   )}
-                  <svg className={`w-3 h-3 transition-transform ${isProjectFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  <svg
+                    className={`w-3 h-3 transition-transform ${
+                      isProjectFilterOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
                 {isProjectFilterOpen && (
@@ -386,16 +437,26 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                           onChange={() => toggleProjectFilter(p)}
                           className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className={projectFilters.has(p) ? "font-medium text-blue-600" : "text-gray-700"}>{p}</span>
+                        <span
+                          className={
+                            projectFilters.has(p)
+                              ? "font-medium text-blue-600"
+                              : "text-gray-700"
+                          }
+                        >
+                          {p}
+                        </span>
                       </label>
                     ))}
                     {filterOptions.projects.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-gray-400">항목 없음</div>
+                      <div className="px-3 py-2 text-xs text-gray-400">
+                        항목 없음
+                      </div>
                     )}
                   </div>
                 )}
               </div>
-              
+
               {/* 모듈 필터 */}
               <div className="relative">
                 <button
@@ -405,7 +466,9 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                     setIsFeatureFilterOpen(false);
                   }}
                   className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
-                    moduleFilters.size > 0 ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                    moduleFilters.size > 0
+                      ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <span>Module</span>
@@ -414,8 +477,20 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                       {moduleFilters.size}
                     </span>
                   )}
-                  <svg className={`w-3 h-3 transition-transform ${isModuleFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  <svg
+                    className={`w-3 h-3 transition-transform ${
+                      isModuleFilterOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
                 {isModuleFilterOpen && (
@@ -431,16 +506,26 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                           onChange={() => toggleModuleFilter(m)}
                           className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                         />
-                        <span className={moduleFilters.has(m) ? "font-medium text-emerald-600" : "text-gray-700"}>{m}</span>
+                        <span
+                          className={
+                            moduleFilters.has(m)
+                              ? "font-medium text-emerald-600"
+                              : "text-gray-700"
+                          }
+                        >
+                          {m}
+                        </span>
                       </label>
                     ))}
                     {filterOptions.modules.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-gray-400">항목 없음</div>
+                      <div className="px-3 py-2 text-xs text-gray-400">
+                        항목 없음
+                      </div>
                     )}
                   </div>
                 )}
               </div>
-              
+
               {/* 기능 필터 */}
               <div className="relative">
                 <button
@@ -450,7 +535,9 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                     setIsModuleFilterOpen(false);
                   }}
                   className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
-                    featureFilters.size > 0 ? "bg-amber-50 text-amber-600 border border-amber-200" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                    featureFilters.size > 0
+                      ? "bg-amber-50 text-amber-600 border border-amber-200"
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <span>Feature</span>
@@ -459,8 +546,20 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                       {featureFilters.size}
                     </span>
                   )}
-                  <svg className={`w-3 h-3 transition-transform ${isFeatureFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  <svg
+                    className={`w-3 h-3 transition-transform ${
+                      isFeatureFilterOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
                 {isFeatureFilterOpen && (
@@ -476,51 +575,31 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                           onChange={() => toggleFeatureFilter(f)}
                           className="w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                         />
-                        <span className={featureFilters.has(f) ? "font-medium text-amber-600" : "text-gray-700"}>{f}</span>
+                        <span
+                          className={
+                            featureFilters.has(f)
+                              ? "font-medium text-amber-600"
+                              : "text-gray-700"
+                          }
+                        >
+                          {f}
+                        </span>
                       </label>
                     ))}
                     {filterOptions.features.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-gray-400">항목 없음</div>
+                      <div className="px-3 py-2 text-xs text-gray-400">
+                        항목 없음
+                      </div>
                     )}
                   </div>
                 )}
               </div>
-              
             </div>
 
             <div className="hidden md:block h-6 w-px bg-gray-200" />
 
             {/* 액션 버튼 */}
             <div className="flex items-center gap-2 md:gap-3">
-              {/* 선택 모드 토글 버튼 */}
-              {snapshots.length > 0 && (
-                <button
-                  onClick={() => setIsSelectMode(!isSelectMode)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isSelectMode
-                      ? "bg-blue-500 text-white hover:bg-blue-600"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">
-                    {isSelectMode ? "선택 완료" : "선택"}
-                  </span>
-                </button>
-              )}
-
               <LoadingButton
                 onClick={handleEditWeek}
                 disabled={snapshots.length === 0}
@@ -529,8 +608,18 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                 variant="secondary"
                 size="md"
                 icon={
-                  <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg
+                    className="w-4 h-4 group-hover:rotate-12 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
                   </svg>
                 }
                 className="group flex-1 md:flex-none text-blue-600 bg-blue-50 border-2 border-blue-100 hover:border-blue-200 hover:bg-blue-100"
@@ -546,12 +635,26 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                 variant="primary"
                 size="md"
                 icon={
-                  <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <svg
+                    className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
                   </svg>
                 }
                 className="group flex-1 md:flex-none"
-                title={snapshots.length > 0 ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요." : ""}
+                title={
+                  snapshots.length > 0
+                    ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요."
+                    : ""
+                }
               >
                 <span className="hidden sm:inline">새로 작성하기</span>
                 <span className="sm:hidden">작성</span>
@@ -573,9 +676,11 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
             onWeekChange={setSelectedWeek}
             snapshotCount={snapshots.length}
             snapshotCountByWeek={snapshotCountByWeek}
-            workloadLevel={snapshots.length > 0 ? snapshots[0].workload_level : null}
+            workloadLevel={
+              snapshots.length > 0 ? snapshots[0].workload_level : null
+            }
           />
-          
+
           {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
           <div className="flex items-center gap-3">
             {/* 뷰 모드 토글 */}
@@ -589,8 +694,18 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                 }`}
                 title="그리드 뷰"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
                 </svg>
               </button>
               <button
@@ -602,37 +717,80 @@ function SnapshotsMainViewInner({ userId, workspaceId }: SnapshotsMainViewProps)
                 }`}
                 title="리스트 뷰"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
             </div>
-            
+
             {/* 전체 펼치기/접기 버튼 - 토글 버튼과 높이 맞춤 */}
             {filteredSnapshots.length > 0 && (
               <button
                 onClick={() => setAllExpanded(!allExpanded)}
                 className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
-                  allExpanded 
-                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200" 
+                  allExpanded
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                <svg 
-                  className={`w-3.5 h-3.5 transition-transform ${allExpanded ? "rotate-180" : ""}`} 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor" 
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    allExpanded ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                   strokeWidth={2}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
                 {allExpanded ? "전체 접기" : "전체 펼치기"}
               </button>
             )}
+
+            {/* 선택 모드 토글 버튼 */}
+            {snapshots.length > 0 && (
+              <button
+                onClick={() => setIsSelectMode(!isSelectMode)}
+                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                  isSelectMode
+                    ? "bg-blue-500 text-white hover:bg-blue-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                {isSelectMode ? "완료" : "선택"}
+              </button>
+            )}
           </div>
         </div>
-        
+
         {/* 스냅샷 목록 영역 - Bottom Sheet를 위한 relative 컨테이너 */}
         <div className="flex-1 relative min-h-0 overflow-hidden">
           {/* 스냅샷 목록 */}
@@ -683,4 +841,3 @@ export function SnapshotsMainView(props: SnapshotsMainViewProps) {
     </ToastProvider>
   );
 }
-
