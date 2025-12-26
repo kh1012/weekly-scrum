@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
 
 /**
  * 스냅샷 메타 옵션 타입
@@ -92,7 +93,7 @@ export async function getAllMetaOptions(workspaceId: string): Promise<{
 }
 
 /**
- * 메타 옵션 생성
+ * 메타 옵션 생성 (admin/leader 전용)
  */
 export async function createMetaOption(
   workspaceId: string,
@@ -102,6 +103,13 @@ export async function createMetaOption(
   description?: string,
   orderIndex?: number
 ): Promise<SnapshotMetaOption | null> {
+  // 권한 확인
+  const hasAccess = await isAdminOrLeader(workspaceId);
+  if (!hasAccess) {
+    console.error("Permission denied: Only admin or leader can create meta options");
+    return null;
+  }
+
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -127,9 +135,10 @@ export async function createMetaOption(
 }
 
 /**
- * 메타 옵션 업데이트
+ * 메타 옵션 업데이트 (admin/leader 전용)
  */
 export async function updateMetaOption(
+  workspaceId: string,
   id: string,
   updates: Partial<
     Pick<
@@ -138,6 +147,13 @@ export async function updateMetaOption(
     >
   >
 ): Promise<boolean> {
+  // 권한 확인
+  const hasAccess = await isAdminOrLeader(workspaceId);
+  if (!hasAccess) {
+    console.error("Permission denied: Only admin or leader can update meta options");
+    return false;
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -146,7 +162,8 @@ export async function updateMetaOption(
       ...updates,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("workspace_id", workspaceId);
 
   if (error) {
     console.error("Error updating meta option:", error);
@@ -157,15 +174,26 @@ export async function updateMetaOption(
 }
 
 /**
- * 메타 옵션 삭제 (비활성화)
+ * 메타 옵션 삭제 (비활성화, admin/leader 전용)
  */
-export async function deleteMetaOption(id: string): Promise<boolean> {
+export async function deleteMetaOption(
+  workspaceId: string,
+  id: string
+): Promise<boolean> {
+  // 권한 확인
+  const hasAccess = await isAdminOrLeader(workspaceId);
+  if (!hasAccess) {
+    console.error("Permission denied: Only admin or leader can delete meta options");
+    return false;
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase
     .from("snapshot_meta_options")
     .update({ is_active: false, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("workspace_id", workspaceId);
 
   if (error) {
     console.error("Error deleting meta option:", error);
