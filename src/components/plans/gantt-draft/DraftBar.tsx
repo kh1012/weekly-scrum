@@ -19,6 +19,16 @@ import type { AssigneeRole } from "@/lib/data/plans";
 const LANE_HEIGHT = 48;
 const RESIZE_HANDLE_WIDTH = 12;
 
+// 스테이지 이니셜 매핑
+function getStageInitial(stage: string): string {
+  if (stage.includes("기획")) return "P";
+  if (stage.includes("디자인")) return "D";
+  if (stage.includes("FE")) return "F";
+  if (stage.includes("BE")) return "B";
+  if (stage.includes("QA")) return "Q";
+  return stage.charAt(0); // fallback
+}
+
 // 역할별 색상 및 라벨 (배경/텍스트 쌍)
 const ROLE_CONFIG: Record<
   AssigneeRole,
@@ -383,43 +393,33 @@ export const DraftBar = memo(function DraftBar({
         className="px-2 py-0.5 flex flex-col justify-center min-w-0 gap-0.5"
         onMouseDown={(e) => handleMouseDown(e, "move")}
       >
-        {/* 1행: 좌측(역할 태그 + 담당자 이름 + 스테이지) / 우측(기간) */}
+        {/* 1행: 스테이지 + 담당자 + 기간 */}
         <div className="flex items-center justify-between gap-1 min-w-0">
-          {/* 좌측 그룹 */}
+          {/* 좌측 그룹: 스테이지 + 담당자 */}
           <div className="flex items-center gap-1 min-w-0">
-            {/* 역할 태그 (항상 표시) */}
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              {bar.assignees && bar.assignees.length > 0 ? (
-                <>
-                  {bar.assignees.slice(0, 1).map((assignee, idx) => {
-                    const config = ROLE_CONFIG[assignee.role];
-                    return (
-                      <span
-                        key={assignee.userId || idx}
-                        className="px-1.5 py-0.5 text-[9px] font-bold rounded"
-                        style={{
-                          background: config?.color || "#6b7280",
-                          color: "white",
-                        }}
-                        title={assignee.displayName || assignee.userId}
-                      >
-                        {config?.label || assignee.role}
-                      </span>
-                    );
-                  })}
-                </>
-              ) : (
-                <span
-                  className="px-1.5 py-0.5 text-[9px] font-medium rounded"
-                  style={{ background: "#e5e7eb", color: "#6b7280" }}
-                >
-                  미지정
-                </span>
-              )}
-            </div>
+            {/* 스테이지 이니셜 태그 (항상 표시) */}
+            {bar.stage ? (
+              <span
+                className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
+                style={{
+                  background: barColor.color,
+                  color: "white",
+                }}
+                title={bar.stage}
+              >
+                {getStageInitial(bar.stage)}
+              </span>
+            ) : (
+              <span
+                className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0"
+                style={{ background: "#e5e7eb", color: "#6b7280" }}
+              >
+                -
+              </span>
+            )}
 
-            {/* 담당자 이름 (너비 > 160) */}
-            {currentWidth > 160 &&
+            {/* 담당자 이름 (너비 > 40, 2칸부터) */}
+            {currentWidth > 40 &&
               bar.assignees &&
               bar.assignees.length > 0 && (
                 <span
@@ -434,24 +434,10 @@ export const DraftBar = memo(function DraftBar({
                   {bar.assignees.length > 1 && ` +${bar.assignees.length - 1}`}
                 </span>
               )}
-
-            {/* 스테이지 (너비 > 240) */}
-            {currentWidth > 240 && bar.stage && (
-              <span
-                className="px-1 py-0.5 text-[8px] font-medium rounded shrink-0"
-                style={{
-                  background: "rgba(0, 0, 0, 0.06)",
-                  color: barColor.text,
-                  opacity: 0.7,
-                }}
-              >
-                {bar.stage}
-              </span>
-            )}
           </div>
 
-          {/* 우측: 기간 표시 (너비 > 100) */}
-          {currentWidth > 100 && (
+          {/* 우측: 기간 표시 (너비 > 120, 3칸부터) */}
+          {currentWidth > 120 && (
             <span
               className="text-[9px] font-medium shrink-0"
               style={{ color: barColor.text, opacity: 0.7 }}
