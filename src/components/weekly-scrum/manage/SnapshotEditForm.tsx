@@ -55,8 +55,12 @@ interface SnapshotEditFormProps {
     pastWeekLabel: string; // "W51 (25.12.08 ~ 25.12.12)"
     thisWeekLabel: string; // "W52 (25.12.15 ~ 25.12.19)"
   };
-  /** 협업자 이름 옵션 (profiles 테이블에서 동적으로 로드) */
+  /** 메타 옵션 (DB에서 동적으로 로드) */
   nameOptions?: string[];
+  domainOptions?: string[];
+  projectOptions?: string[];
+  moduleOptions?: string[];
+  featureOptions?: string[];
 }
 
 // 공통 입력 스타일 (일반 모드) - 편집 시 애니메이션
@@ -1734,11 +1738,16 @@ export function SnapshotEditForm({
   activeSection,
   weekInfo,
   nameOptions = NAME_OPTIONS as unknown as string[],
+  domainOptions = DOMAIN_OPTIONS as unknown as string[],
+  projectOptions = PROJECT_OPTIONS as unknown as string[],
+  moduleOptions: moduleOptionsProp,
+  featureOptions = FEATURE_OPTIONS as unknown as string[],
 }: SnapshotEditFormProps) {
-  const moduleOptions =
+  const moduleOptions = moduleOptionsProp || (
     snapshot.project && MODULE_OPTIONS[snapshot.project]
       ? MODULE_OPTIONS[snapshot.project]
-      : ALL_MODULE_OPTIONS;
+      : ALL_MODULE_OPTIONS
+  ) as unknown as string[];
 
   const handleMetaChange = useCallback(
     (field: keyof TempSnapshot, value: string) => {
@@ -1960,7 +1969,7 @@ export function SnapshotEditForm({
             <MetaField
               label="Domain"
               value={snapshot.domain}
-              options={DOMAIN_OPTIONS}
+              options={domainOptions}
               onChange={(v) => handleMetaChange("domain", v)}
               tabIndex={hideName ? 1 : 2}
               compact={compact}
@@ -1968,7 +1977,7 @@ export function SnapshotEditForm({
             <MetaField
               label="Project"
               value={snapshot.project}
-              options={PROJECT_OPTIONS}
+              options={projectOptions}
               onChange={(v) => handleMetaChange("project", v)}
               tabIndex={hideName ? 2 : 3}
               compact={compact}
@@ -1985,7 +1994,7 @@ export function SnapshotEditForm({
               <MetaField
                 label="Feature"
                 value={snapshot.feature}
-                options={FEATURE_OPTIONS}
+                options={featureOptions}
                 onChange={(v) => handleMetaChange("feature", v)}
                 placeholder="기능명 (예: Rich-note)"
                 tabIndex={hideName ? 4 : 5}

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { getWeekStartDateString } from "@/lib/date/isoWeek";
 import { getMemberNames } from "@/lib/data/profiles";
+import { getAllMetaOptions } from "@/lib/data/snapshotMetaOptions";
 import { EditSnapshotsView } from "./_components/EditSnapshotsView";
 
 const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
@@ -70,6 +71,9 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
   // 워크스페이스 멤버 이름 목록 조회
   const memberNames = await getMemberNames();
 
+  // 메타 옵션 조회
+  const metaOptions = await getAllMetaOptions(DEFAULT_WORKSPACE_ID);
+
   // 스냅샷이 없어도 빈 배열로 전달 (EditSnapshotsView에서 임시 카드 초기화)
   return (
     <EditSnapshotsView
@@ -80,6 +84,10 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
       workspaceId={DEFAULT_WORKSPACE_ID}
       displayName={displayName}
       memberNames={memberNames}
+      domainOptions={metaOptions.domain}
+      projectOptions={metaOptions.project}
+      moduleOptions={metaOptions.module}
+      featureOptions={metaOptions.feature}
     />
   );
 }

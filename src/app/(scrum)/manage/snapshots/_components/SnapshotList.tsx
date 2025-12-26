@@ -321,7 +321,7 @@ export function SnapshotList({
             </div>
           </div>,
           document.body
-        )}
+      )}
     </div>
   );
 }
@@ -674,60 +674,60 @@ function EntryCard({
             {/* 선택 모드가 아닐 때만 버튼 표시 */}
             {!isSelectMode && (
               <>
-                {/* 펼치기/접기 버튼 */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLocalExpanded(!localExpanded);
-                  }}
-                  className={`p-1.5 rounded-lg transition-all duration-200 ${
-                    isExpanded
-                      ? "bg-blue-100 text-blue-600"
-                      : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                  }`}
-                >
-                  <svg
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isExpanded ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
+            {/* 펼치기/접기 버튼 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLocalExpanded(!localExpanded);
+              }}
+              className={`p-1.5 rounded-lg transition-all duration-200 ${
+                isExpanded
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              }`}
+            >
+              <svg
+                className={`w-4 h-4 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
 
-                {/* 옵션 버튼 */}
-                <button
-                  ref={optionsButtonRef}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowOptionsMenu(!showOptionsMenu);
-                  }}
-                  className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all shrink-0"
-                  title="옵션"
-                  type="button"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
+            {/* 옵션 버튼 */}
+            <button
+              ref={optionsButtonRef}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowOptionsMenu(!showOptionsMenu);
+              }}
+              className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all shrink-0"
+              title="옵션"
+              type="button"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                />
+              </svg>
+            </button>
               </>
             )}
 
@@ -983,7 +983,7 @@ function EntryCard({
             </div>
           </div>,
           document.body
-        )}
+      )}
     </div>
   );
 }
@@ -1117,7 +1117,7 @@ function EntryRow({
 
       {/* 옵션 버튼 - 선택 모드가 아닐 때만 표시 */}
       {!isSelectMode && (
-        <div className="absolute top-2 right-2 z-10">
+      <div className="absolute top-2 right-2 z-10">
         <button
           ref={optionsButtonRef}
           onClick={(e) => {

@@ -78,6 +78,10 @@ interface EditSnapshotsViewProps {
   workspaceId: string;
   displayName: string;
   memberNames?: string[];
+  domainOptions?: string[];
+  projectOptions?: string[];
+  moduleOptions?: string[];
+  featureOptions?: string[];
 }
 
 // 좌측 패널 크기 제한
@@ -150,6 +154,10 @@ function EditSnapshotsViewInner({
   workspaceId,
   displayName,
   memberNames,
+  domainOptions,
+  projectOptions,
+  moduleOptions,
+  featureOptions,
 }: EditSnapshotsViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1002,6 +1010,10 @@ function EditSnapshotsViewInner({
               hideName
               weekInfo={weekInfo}
               nameOptions={memberNames}
+              domainOptions={domainOptions}
+              projectOptions={projectOptions}
+              moduleOptions={moduleOptions}
+              featureOptions={featureOptions}
             />
           ) : (
             <EmptyState onAddEmpty={handleAddEmpty} />

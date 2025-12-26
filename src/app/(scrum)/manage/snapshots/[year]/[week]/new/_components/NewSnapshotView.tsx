@@ -68,6 +68,10 @@ interface NewSnapshotViewProps {
   displayName: string;
   /** 협업자 이름 옵션 (profiles 테이블에서 동적으로 로드) */
   memberNames?: string[];
+  domainOptions?: string[];
+  projectOptions?: string[];
+  moduleOptions?: string[];
+  featureOptions?: string[];
 }
 
 // 좌측 패널 크기 제한
@@ -82,6 +86,10 @@ function NewSnapshotViewInner({
   workspaceId,
   displayName,
   memberNames,
+  domainOptions,
+  projectOptions,
+  moduleOptions,
+  featureOptions,
 }: NewSnapshotViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1068,6 +1076,10 @@ function NewSnapshotViewInner({
               hideName
               weekInfo={weekInfo}
               nameOptions={memberNames}
+              domainOptions={domainOptions}
+              projectOptions={projectOptions}
+              moduleOptions={moduleOptions}
+              featureOptions={featureOptions}
             />
           ) : (
             <EmptyState onAddEmpty={handleAddEmpty} />
