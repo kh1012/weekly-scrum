@@ -51,14 +51,20 @@ export function Header({
     pathname === "/feedbacks" ||
     pathname === "/feedbacks/" ||
     pathname.startsWith("/feedbacks/");
+  // Meta Options 페이지인지 확인
+  const isMetaOptionsPage =
+    pathname === "/admin/meta-options" ||
+    pathname === "/admin/meta-options/" ||
+    pathname.startsWith("/admin/meta-options/");
   // 최소 GNB 모드 (사이드바 토글 + 프로필만 표시)
   const isMinimalGnb =
     isMyDashboard ||
     isManagePage ||
     isAdminDashboard ||
     isPlansPage ||
-    isFeedbacksPage;
-  // GNB 컴포넌트 완전 숨김 페이지 (manage, admin dashboard, my dashboard, plans)
+    isFeedbacksPage ||
+    isMetaOptionsPage;
+  // GNB 컴포넌트 완전 숨김 페이지 (manage, admin dashboard, my dashboard, plans, meta-options)
   const hideAllControls = isMinimalGnb;
   // 주차 선택기 숨김 페이지 (calendar는 자체 월 선택기 사용)
   const hideWeekSelector = isMinimalGnb || isCalendarPage;

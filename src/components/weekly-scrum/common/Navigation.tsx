@@ -219,7 +219,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/admin/meta-options",
         emoji: "⚙️",
         description: "스냅샷 메타 옵션 관리",
-        tag: { name: "NEW", color: "green" },
+        tag: { name: "CRUD", color: "blue" },
         mobileSupported: false,
       },
       {
