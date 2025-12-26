@@ -55,7 +55,10 @@ export function AdminDashboardView({
   };
 
   // 역할별 색상
-  const roleConfig: Record<string, { label: string; color: string; bg: string }> = {
+  const roleConfig: Record<
+    string,
+    { label: string; color: string; bg: string }
+  > = {
     admin: { label: "A", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
     leader: { label: "L", color: "#7c3aed", bg: "rgba(124, 58, 237, 0.1)" },
     member: { label: "M", color: "#6b7280", bg: "rgba(107, 114, 128, 0.1)" },
@@ -85,8 +88,18 @@ export function AdminDashboardView({
               label="전체 멤버"
               value={stats.totalMembers}
               icon={
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
                 </svg>
               }
               gradientFrom="from-blue-500"
@@ -96,8 +109,18 @@ export function AdminDashboardView({
               label="전체 스냅샷"
               value={stats.totalSnapshots}
               icon={
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               }
               gradientFrom="from-indigo-500"
@@ -107,8 +130,18 @@ export function AdminDashboardView({
               label="전체 엔트리"
               value={stats.totalEntries}
               icon={
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
               }
               gradientFrom="from-emerald-500"
@@ -118,8 +151,18 @@ export function AdminDashboardView({
               label="이번 주 작성 완료"
               value={`${stats.completedThisWeek}/${stats.totalMembers}`}
               icon={
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               }
               gradientFrom="from-rose-500"
@@ -134,7 +177,11 @@ export function AdminDashboardView({
               label="여유"
               value={stats.workloadLight}
               icon={
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 512 512">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 512 512"
+                >
                   <path d="M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5h88c8.8 0 16 7.2 16 16s-7.2 16-16 16H288 216s0 0 0 0c-16.6 0-32.7 1.9-48.3 5.4c-25.9 5.9-49.9 16.4-71.4 30.7c0 0 0 0 0 0C38.3 298.8 0 364.9 0 440v16c0 13.3 10.7 24 24 24s24-10.7 24-24V440c0-48.7 20.7-92.5 53.8-123.2C121.6 392.3 190.3 448 272 448l1 0c132.1-.7 239-130.9 239-291.4c0-42.6-7.5-83.1-21.1-119.6c-2.6-6.9-12.7-6.6-16.2-.1C455.9 72.1 418.7 96 376 96L272 96z" />
                 </svg>
               }
@@ -145,7 +192,11 @@ export function AdminDashboardView({
               label="적정"
               value={stats.workloadNormal}
               icon={
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 448 512">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 448 512"
+                >
                   <path d="M349.4 44.6c5.9-13.7 1.5-29.7-10.6-38.5s-28.6-8-39.9 1.8l-256 224c-10 8.8-13.6 22.9-8.9 35.3S50.7 288 64 288H175.5L98.6 467.4c-5.9 13.7-1.5 29.7 10.6 38.5s28.6 8 39.9-1.8l256-224c10-8.8 13.6-22.9 8.9-35.3s-16.6-20.7-30-20.7H272.5L349.4 44.6z" />
                 </svg>
               }
@@ -156,7 +207,11 @@ export function AdminDashboardView({
               label="부담"
               value={stats.workloadBurden}
               icon={
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 448 512">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 448 512"
+                >
                   <path d="M159.3 5.4c7.8-7.3 19.9-7.2 27.7 .1c27.6 25.9 53.5 53.8 77.7 84c11-14.4 23.5-30.1 37-42.9c7.9-7.4 20.1-7.4 28 .1c34.6 33 63.9 76.6 84.5 118c20.3 40.8 33.8 82.5 33.8 111.9C448 404.2 348.2 512 224 512C98.4 512 0 404.1 0 276.5c0-38.4 17.8-85.3 45.4-131.7C73.3 97.7 112.7 48.6 159.3 5.4zM225.7 416c25.3 0 47.7-7 68.8-21c42.1-29.4 53.4-88.2 28.1-134.4c-4.5-9-16-9.6-22.5-2l-25.2 29.3c-6.6 7.6-18.5 7.4-24.7-.5c-16.5-21-46-58.5-62.8-79.8c-6.3-8-18.3-8.1-24.7-.1c-33.8 42.5-50.8 69.3-50.8 99.4C112 375.4 162.6 416 225.7 416z" />
                 </svg>
               }
@@ -177,8 +232,18 @@ export function AdminDashboardView({
         >
           <div className="px-5 py-4 border-b border-gray-100">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              <svg
+                className="w-5 h-5 text-rose-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                />
               </svg>
               주차별 스냅샷 현황
             </h2>
@@ -191,7 +256,7 @@ export function AdminDashboardView({
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50/80">
-                  <th 
+                  <th
                     rowSpan={2}
                     className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap border-r border-gray-200"
                   >
@@ -204,13 +269,18 @@ export function AdminDashboardView({
                       className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-200"
                       style={{
                         color: idx === 0 ? "#3b82f6" : "#6b7280",
-                        background: idx === 0 ? "rgba(59, 130, 246, 0.05)" : undefined,
+                        background:
+                          idx === 0 ? "rgba(59, 130, 246, 0.05)" : undefined,
                       }}
                     >
                       <div>{w.label}</div>
-                      <div className="text-[10px] font-normal normal-case opacity-70">{w.year}</div>
+                      <div className="text-[10px] font-normal normal-case opacity-70">
+                        {w.year}
+                      </div>
                       {idx === 0 && (
-                        <div className="text-[10px] font-normal text-blue-500 mt-0.5">현재</div>
+                        <div className="text-[10px] font-normal text-blue-500 mt-0.5">
+                          현재
+                        </div>
                       )}
                     </th>
                   ))}
@@ -221,7 +291,8 @@ export function AdminDashboardView({
                       <th
                         className="px-2 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100"
                         style={{
-                          background: idx === 0 ? "rgba(59, 130, 246, 0.03)" : undefined,
+                          background:
+                            idx === 0 ? "rgba(59, 130, 246, 0.03)" : undefined,
                         }}
                       >
                         부담
@@ -229,7 +300,8 @@ export function AdminDashboardView({
                       <th
                         className="px-2 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200"
                         style={{
-                          background: idx === 0 ? "rgba(59, 130, 246, 0.03)" : undefined,
+                          background:
+                            idx === 0 ? "rgba(59, 130, 246, 0.03)" : undefined,
                         }}
                       >
                         개수
@@ -240,7 +312,10 @@ export function AdminDashboardView({
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {memberDataList.map((member) => (
-                  <tr key={member.userId} className="hover:bg-gray-50/50 transition-colors">
+                  <tr
+                    key={member.userId}
+                    className="hover:bg-gray-50/50 transition-colors"
+                  >
                     <td className="px-3 py-2.5 border-r border-gray-200">
                       <div className="flex items-center gap-2">
                         <div
@@ -248,7 +323,9 @@ export function AdminDashboardView({
                           style={{
                             background: `linear-gradient(135deg, ${
                               roleConfig[member.role]?.color || "#6b7280"
-                            } 0%, ${roleConfig[member.role]?.color || "#6b7280"}dd 100%)`,
+                            } 0%, ${
+                              roleConfig[member.role]?.color || "#6b7280"
+                            }dd 100%)`,
                           }}
                         >
                           {member.displayName.charAt(0)}
@@ -261,11 +338,15 @@ export function AdminDashboardView({
                             <span
                               className="px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
                               style={{
-                                background: roleConfig[member.role]?.bg || "rgba(107, 114, 128, 0.1)",
-                                color: roleConfig[member.role]?.color || "#6b7280",
+                                background:
+                                  roleConfig[member.role]?.bg ||
+                                  "rgba(107, 114, 128, 0.1)",
+                                color:
+                                  roleConfig[member.role]?.color || "#6b7280",
                               }}
                             >
-                              {roleConfig[member.role]?.label || member.role.charAt(0).toUpperCase()}
+                              {roleConfig[member.role]?.label ||
+                                member.role.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
@@ -284,20 +365,30 @@ export function AdminDashboardView({
                           <td
                             className="px-2 py-2.5 text-center border-r border-gray-100"
                             style={{
-                              background: isCurrentWeek ? "rgba(59, 130, 246, 0.03)" : undefined,
+                              background: isCurrentWeek
+                                ? "rgba(59, 130, 246, 0.03)"
+                                : undefined,
                             }}
                           >
                             {workload?.level ? (
                               <div
                                 className="group relative inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-help"
                                 style={{
-                                  backgroundColor: `${WORKLOAD_COLOR_VALUES[workload.level]}15`,
+                                  backgroundColor: `${
+                                    WORKLOAD_COLOR_VALUES[workload.level]
+                                  }15`,
                                   color: WORKLOAD_COLOR_VALUES[workload.level],
-                                  border: `1px solid ${WORKLOAD_COLOR_VALUES[workload.level]}30`,
+                                  border: `1px solid ${
+                                    WORKLOAD_COLOR_VALUES[workload.level]
+                                  }30`,
                                 }}
                                 title={workload.note || undefined}
                               >
-                                {WORKLOAD_LEVEL_LABELS[workload.level as keyof typeof WORKLOAD_LEVEL_LABELS]}
+                                {
+                                  WORKLOAD_LEVEL_LABELS[
+                                    workload.level as keyof typeof WORKLOAD_LEVEL_LABELS
+                                  ]
+                                }
                                 {/* Tooltip */}
                                 {workload.note && (
                                   <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
@@ -307,7 +398,9 @@ export function AdminDashboardView({
                                 )}
                               </div>
                             ) : (
-                              <span className="text-[10px] text-gray-300">-</span>
+                              <span className="text-[10px] text-gray-300">
+                                -
+                              </span>
                             )}
                           </td>
 
@@ -315,7 +408,9 @@ export function AdminDashboardView({
                           <td
                             className="px-2 py-2.5 text-center border-r border-gray-200"
                             style={{
-                              background: isCurrentWeek ? "rgba(59, 130, 246, 0.03)" : undefined,
+                              background: isCurrentWeek
+                                ? "rgba(59, 130, 246, 0.03)"
+                                : undefined,
                             }}
                           >
                             <span
@@ -357,11 +452,22 @@ export function AdminDashboardView({
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
                 }}
               >
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
                 </svg>
               </div>
               <div className="flex-1">
@@ -377,7 +483,11 @@ export function AdminDashboardView({
                 stroke="currentColor"
                 strokeWidth={2}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </div>
           </button>
@@ -395,12 +505,27 @@ export function AdminDashboardView({
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  background:
+                    "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                 }}
               >
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
               </div>
               <div className="flex-1">
@@ -416,7 +541,11 @@ export function AdminDashboardView({
                 stroke="currentColor"
                 strokeWidth={2}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </div>
           </button>

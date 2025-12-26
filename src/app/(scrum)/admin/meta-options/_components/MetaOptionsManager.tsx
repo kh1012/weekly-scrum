@@ -16,11 +16,8 @@ interface MetaOptionsManagerProps {
   workspaceId: string;
 }
 
-export function MetaOptionsManager({
-  workspaceId,
-}: MetaOptionsManagerProps) {
-  const [selectedCategory, setSelectedCategory] =
-    useState<Category>("project");
+export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
+  const [selectedCategory, setSelectedCategory] = useState<Category>("project");
 
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
@@ -69,4 +66,3 @@ export function MetaOptionsManager({
     </div>
   );
 }
-

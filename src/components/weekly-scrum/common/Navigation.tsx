@@ -214,6 +214,15 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         mobileSupported: false,
       },
       {
+        key: "admin-meta-options",
+        label: "Meta Options",
+        href: "/admin/meta-options",
+        emoji: "⚙️",
+        description: "스냅샷 메타 옵션 관리",
+        tag: { name: "NEW", color: "green" },
+        mobileSupported: false,
+      },
+      {
         key: "admin-snapshots",
         label: "All Snapshots",
         href: "/admin/snapshots",

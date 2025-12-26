@@ -103,9 +103,7 @@ export async function listMetaOptions(
 
   if (options?.search) {
     const searchTerm = options.search.toLowerCase();
-    query = query.or(
-      `value.ilike.%${searchTerm}%,label.ilike.%${searchTerm}%`
-    );
+    query = query.or(`value.ilike.%${searchTerm}%,label.ilike.%${searchTerm}%`);
   }
 
   query = query
@@ -232,7 +230,7 @@ export async function createMetaOption(
 
   if (error) {
     console.error("Error creating meta option:", error);
-    
+
     // Unique violation
     if (error.code === "23505") {
       return {
