@@ -74,6 +74,11 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
     setIsFormOpen(true);
   };
 
+  const getNextOrderIndex = () => {
+    if (options.length === 0) return 0;
+    return Math.max(...options.map((opt) => opt.order_index)) + 1;
+  };
+
   const handleEdit = (option: SnapshotMetaOption) => {
     setEditingOption(option);
     setIsFormOpen(true);
@@ -217,38 +222,59 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
         </div>
 
         {/* 검색 및 추가 버튼 */}
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <div className="flex-1 max-w-md">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex-1 max-w-md relative">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by value or label..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
             />
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
           </div>
           <button
             onClick={handleCreate}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="group px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center gap-2"
           >
+            <svg
+              className="w-4 h-4 transition-transform group-hover:rotate-90"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
             추가
           </button>
         </div>
 
         {/* 테이블 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {isLoading ? (
-            <div className="text-center py-12 text-gray-500">
-              로딩 중...
-            </div>
-          ) : (
-            <MetaOptionsTable
-              options={filteredOptions}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onToggleActive={handleToggleActive}
-            />
-          )}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md">
+          <MetaOptionsTable
+            options={filteredOptions}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onToggleActive={handleToggleActive}
+            isLoading={isLoading}
+          />
         </div>
       </div>
 
@@ -259,6 +285,7 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
         onSubmit={handleFormSubmit}
         category={selectedCategory}
         editingOption={editingOption}
+        defaultOrderIndex={getNextOrderIndex()}
       />
 
       {/* Delete Confirmation */}

@@ -25,6 +25,38 @@ interface MetaOptionsTableProps {
   onEdit: (option: SnapshotMetaOption) => void;
   onDelete: (option: SnapshotMetaOption) => void;
   onToggleActive: (option: SnapshotMetaOption, isActive: boolean) => void;
+  isLoading: boolean;
+}
+
+function SkeletonRow() {
+  return (
+    <tr className="border-b border-gray-100 animate-pulse">
+      <td className="py-3 px-4">
+        <div className="h-4 bg-gray-200 rounded w-24"></div>
+      </td>
+      <td className="py-3 px-4">
+        <div className="h-4 bg-gray-200 rounded w-32"></div>
+      </td>
+      <td className="py-3 px-4">
+        <div className="h-4 bg-gray-200 rounded w-48"></div>
+      </td>
+      <td className="py-3 px-4 text-center">
+        <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+      </td>
+      <td className="py-3 px-4 text-center">
+        <div className="h-6 bg-gray-200 rounded-full w-11 mx-auto"></div>
+      </td>
+      <td className="py-3 px-4">
+        <div className="h-3 bg-gray-200 rounded w-16"></div>
+      </td>
+      <td className="py-3 px-4 text-right">
+        <div className="flex items-center justify-end gap-2">
+          <div className="h-8 bg-gray-200 rounded-lg w-16"></div>
+          <div className="h-8 bg-gray-200 rounded-lg w-16"></div>
+        </div>
+      </td>
+    </tr>
+  );
 }
 
 export function MetaOptionsTable({
@@ -32,10 +64,12 @@ export function MetaOptionsTable({
   onEdit,
   onDelete,
   onToggleActive,
+  isLoading,
 }: MetaOptionsTableProps) {
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
   );
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   const toggleDescription = (id: string) => {
     setExpandedDescriptions((prev) => {
@@ -49,10 +83,77 @@ export function MetaOptionsTable({
     });
   };
 
+  const handleToggleActive = async (
+    option: SnapshotMetaOption,
+    isActive: boolean
+  ) => {
+    setProcessingIds((prev) => new Set(prev).add(option.id));
+    await onToggleActive(option, isActive);
+    setProcessingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(option.id);
+      return next;
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Value
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Label
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Description
+              </th>
+              <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Order
+              </th>
+              <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Active
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Updated
+              </th>
+              <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...Array(5)].map((_, i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   if (options.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        <p className="text-lg mb-2">등록된 옵션이 없습니다</p>
+      <div className="text-center py-16 text-gray-500">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg
+            className="w-8 h-8 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            />
+          </svg>
+        </div>
+        <p className="text-lg font-medium mb-2">등록된 옵션이 없습니다</p>
         <p className="text-sm">새로운 옵션을 추가해보세요</p>
       </div>
     );
@@ -62,32 +163,33 @@ export function MetaOptionsTable({
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-200">
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+          <tr className="border-b border-gray-200 bg-gray-50">
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Value
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Label
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Description
             </th>
-            <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Order
             </th>
-            <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Active
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Updated
             </th>
-            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Actions
             </th>
           </tr>
         </thead>
         <tbody>
-          {options.map((option) => {
+          {options.map((option, index) => {
+            const isProcessing = processingIds.has(option.id);
             const isExpanded = expandedDescriptions.has(option.id);
             const hasDescription = option.description && option.description.length > 0;
             const shouldTruncate = hasDescription && option.description!.length > 50;
@@ -95,9 +197,10 @@ export function MetaOptionsTable({
             return (
               <tr
                 key={option.id}
-                className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                className={`border-b border-gray-100 hover:bg-blue-50/30 transition-all duration-200 ${
                   !option.is_active ? "opacity-50" : ""
-                }`}
+                } ${isProcessing ? "animate-pulse" : ""}`}
+                style={{ animationDelay: `${index * 30}ms` }}
               >
                 {/* Value */}
                 <td className="py-3 px-4">
@@ -146,13 +249,16 @@ export function MetaOptionsTable({
                 {/* Active Toggle */}
                 <td className="py-3 px-4 text-center">
                   <button
-                    onClick={() => onToggleActive(option, !option.is_active)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      option.is_active ? "bg-blue-600" : "bg-gray-300"
-                    }`}
+                    onClick={() => handleToggleActive(option, !option.is_active)}
+                    disabled={isProcessing}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 shadow-inner ${
+                      option.is_active
+                        ? "bg-gradient-to-r from-blue-600 to-blue-700"
+                        : "bg-gray-300"
+                    } ${isProcessing ? "opacity-50 cursor-not-allowed" : "hover:shadow-md"}`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
                         option.is_active ? "translate-x-6" : "translate-x-1"
                       }`}
                     />
@@ -171,15 +277,45 @@ export function MetaOptionsTable({
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(option)}
-                      className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="group px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-all hover:shadow-sm active:scale-95"
                     >
-                      편집
+                      <span className="flex items-center gap-1">
+                        <svg
+                          className="w-4 h-4 transition-transform group-hover:rotate-12"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                        편집
+                      </span>
                     </button>
                     <button
                       onClick={() => onDelete(option)}
-                      className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="group px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all hover:shadow-sm active:scale-95"
                     >
-                      삭제
+                      <span className="flex items-center gap-1">
+                        <svg
+                          className="w-4 h-4 transition-transform group-hover:scale-110"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        삭제
+                      </span>
                     </button>
                   </div>
                 </td>
