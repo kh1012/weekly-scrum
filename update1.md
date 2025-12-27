@@ -1,145 +1,162 @@
--- =========================
--- 1. ENUM 정의
--- =========================
-create type if not exists feedback_status as enum (
-'open',
-'in_progress',
-'resolved'
-);
+Feature: Team Activity Feed
+Category: Works
+Menu name: Team Feed
+(Alternative acceptable names: Weekly Activity, Team Timeline)
 
--- =========================
--- 2. releases 테이블
--- =========================
-create table if not exists releases (
-id uuid primary key default gen_random_uuid(),
-version text not null,
-title text not null,
-note text,
-released_at timestamptz not null default now(),
-created_at timestamptz not null default now()
-);
+Goal
+Build a read-only team feed where users can naturally understand what each team member worked on during the latest weeks by simply scrolling.
 
--- =========================
--- 3. feedbacks 테이블
--- =========================
-create table if not exists feedbacks (
-id uuid primary key default gen_random_uuid(),
+This screen is optimized for reading, not editing or management.
 
-author_user_id uuid not null
-references auth.users(id) on delete cascade,
+Primary use case:
 
-title text,
-content text not null,
+- Team members casually checking what others worked on
+- Leaders quickly sensing weekly progress and risks without opening details
 
-status feedback_status not null default 'open',
+Core UX Principles (DO NOT VIOLATE)
 
-resolved_release_id uuid
-references releases(id) on delete set null,
+1. Scrolling = understanding
+   - Users must understand “who did what this week” without clicking anything.
+2. People first
+   - Content is grouped by person + week, not by project or entry.
+3. Text-first, cardless reading
+   - No heavy cards, no visual noise.
+   - Layout should feel like reading a structured document or feed.
+4. Stable, predictable rhythm
+   - Every feed item follows the same structure.
+5. No manual weekly summary writing
+   - Users are NOT required to write a weekly summary.
+   - The UI derives a highlight preview automatically from snapshot entries.
 
-created_at timestamptz not null default now(),
-updated_at timestamptz not null default now(),
-resolved_at timestamptz
-);
+Data Model Assumptions
 
--- =========================
--- 4. updated_at 자동 갱신
--- =========================
-create or replace function update_updated_at()
-returns trigger as $$
-begin
-new.updated_at = now();
-return new;
-end;
+- snapshot_entries
+  - Belongs to a person
+  - Has a section/type: Progress, Next, Risk
+  - Has created_at
+- Entries are grouped by ISO week
+- Multiple entries may exist per person per week
 
-$$
-language plpgsql;
+Feed Ordering
 
-drop trigger if exists feedbacks_updated_at on feedbacks;
+- Always latest first
+- Sort by the most recent snapshot activity
+- No filters in the GNB for now (intentionally hidden)
 
-create trigger feedbacks_updated_at
-before update on feedbacks
-for each row execute function update_updated_at();
+Feed Item Structure (Person + Week Block)
+Each feed item MUST contain the following sections in this order:
 
--- =========================
--- 5. resolved 상태 규칙 강제
--- =========================
-create or replace function enforce_feedback_resolve_rules()
-returns trigger as
-$$
+1. Person Header
 
-begin
-if new.status = 'resolved' then
-if new.resolved_release_id is null then
-raise exception 'resolved 상태에서는 resolved_release_id가 필수입니다';
-end if;
+- Avatar
+- Name (most prominent)
+- Role / team (secondary)
+- Week label is NOT repeated here (handled by timeline)
 
-    if old.status <> 'resolved' then
-      new.resolved_at = now();
-    end if;
+2. Weekly Highlight Preview (AUTO-EXTRACTED, 3 lines fixed)
+   This is NOT a summary written by the user.
+   It is a rule-based extraction from snapshot entries.
 
-end if;
+Extraction rules (stable & deterministic):
 
-return new;
-end;
+- If a Risk entry exists, include exactly 1 Risk line
+- Include exactly 1 Next line
+- Include exactly 1 Progress line
+- Always show exactly 3 lines
+- Order is fixed: Progress → Next → Risk
+- If no Risk exists, still show: “Risk: None”
+- Each line is a single sentence or bullet, truncated if needed
+- No icons, no badges, no colors — text only
 
-$$
-language plpgsql;
+This section must allow users to understand the week without expanding anything.
 
-drop trigger if exists feedbacks_resolve_rules on feedbacks;
+3. Snapshot Entry Drawer (+N)
 
-create trigger feedbacks_resolve_rules
-before update on feedbacks
-for each row execute function enforce_feedback_resolve_rules();
+- Show entry counts, e.g.:
+  “Entries · Progress 2 · Next 1 · Risk 1 +5”
+- Clicking +N expands the full list of snapshot entries
+- Expanded entries are displayed as continuous text sections, not cards
+- Default state: collapsed
 
--- =========================
--- 6. RLS 활성화
--- =========================
-alter table feedbacks enable row level security;
+Desktop Layout (≥1024px)
+Three-column layout
 
--- =========================
--- 7. member 정책 (본인 글만)
--- =========================
-create policy "member_select_own_feedback"
-on feedbacks
-for select
-using (auth.uid() = author_user_id);
+Left: Weekly Timeline Spine
 
-create policy "member_insert_feedback"
-on feedbacks
-for insert
-with check (auth.uid() = author_user_id);
+- Vertical line representing time
+- Week nodes (e.g. “2025 W52”)
+- Each feed item visually connects to its week node
+- The currently visible week is subtly highlighted
+- Week labels appear ONLY here (not inside feed items)
 
-create policy "member_update_own_feedback"
-on feedbacks
-for update
-using (auth.uid() = author_user_id)
-with check (auth.uid() = author_user_id);
+Center: Main Feed
 
-create policy "member_delete_own_feedback"
-on feedbacks
-for delete
-using (auth.uid() = author_user_id);
+- Full-width reading column
+- Dominant visual priority
 
--- =========================
--- 8. leader / admin 전체 권한
--- =========================
-create policy "leader_admin_full_access"
-on feedbacks
-for all
-using (
-  exists (
-    select 1
-    from profiles
-    where profiles.id = auth.uid()
-      and profiles.role in ('leader', 'admin')
-  )
-)
-with check (
-  exists (
-    select 1
-    from profiles
-    where profiles.id = auth.uid()
-      and profiles.role in ('leader', 'admin')
-  )
-);
-$$
+Right: Activity Chart (Team-level)
+Purpose: Show when the team writes snapshot entries
+
+- Bar chart showing daily snapshot entry counts
+- Default range: last 14 days
+- Data unit: snapshot_entries (not snapshots)
+- Timezone: Asia/Seoul
+- Tooltip example:
+  “Dec 27 · 18 entries · 6 authors”
+
+Optional toggle:
+
+- Daily (last 14 days) ↔ Weekday average (last 8 weeks)
+
+Tablet Layout (768–1023px)
+
+- Two columns: feed + activity chart
+- Timeline spine removed
+- Replace with sticky week headers inside the feed (e.g. “2025 W52”)
+- Maintain the same reading rhythm
+
+Mobile Layout (<768px)
+Single-column, reading-first
+
+Feed:
+
+- Only the feed is visible by default
+- Same feed item structure as desktop
+- Weekly grouping shown via sticky week headers
+
+Activity Chart:
+
+- Not visible by default
+- Show a single-line summary at the top:
+  “Avg 8 entries/day · Peak: Dec 26 (22)”
+- Tapping opens a bottom sheet with the full chart
+
+Timeline Spine:
+
+- Completely removed
+- Replaced by sticky week headers only
+
+Things That Must NOT Exist
+
+- Editable fields on this screen
+- Manual weekly summary input
+- Likes, emojis, reactions
+- Heavy card borders or backgrounds
+- Default-open drawers
+- Filters in the initial GNB
+
+Success Criteria
+After 10 seconds of scrolling, a user should be able to answer:
+
+- Who worked on what this week?
+- Who seems blocked or at risk?
+- When does the team usually write snapshots?
+
+If this is not true, the implementation is incorrect.
+
+Implementation Notes
+
+- Prefer predictable layout and typography over visual decoration
+- Use spacing and hierarchy instead of boxes
+- Optimize for fast vertical scanning
+- This screen is foundational — keep it boring and reliable
