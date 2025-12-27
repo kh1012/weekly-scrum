@@ -8,6 +8,7 @@ import { RELEASES } from "../releases/releaseData";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import { Logo } from "./Logo";
 import { navigationProgress } from "./NavigationProgress";
+import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
 
 // localStorage 키
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
@@ -61,6 +62,11 @@ const Icons = {
   listCheck: (
     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 512 512">
       <path d="M152.1 38.2c9.9 8.9 10.7 24 1.8 33.9l-72 80c-4.4 4.9-10.6 7.8-17.2 7.9s-12.9-2.4-17.6-7L7 113c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l22.1 22.1 55.1-61.2c8.9-9.9 24-10.7 33.9-1.8zm0 160c9.9 8.9 10.7 24 1.8 33.9l-72 80c-4.4 4.9-10.6 7.8-17.2 7.9s-12.9-2.4-17.6-7L7 273c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l22.1 22.1 55.1-61.2c8.9-9.9 24-10.7 33.9-1.8zM224 96c0-17.7 14.3-32 32-32l224 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-224 0c-17.7 0-32-14.3-32-32zm0 160c0-17.7 14.3-32 32-32l224 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-224 0c-17.7 0-32-14.3-32-32zM160 416c0-17.7 14.3-32 32-32l288 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-288 0c-17.7 0-32-14.3-32-32zM48 368a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" />
+    </svg>
+  ),
+  table: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 512 512">
+      <path d="M64 256l0-96 160 0 0 96L64 256zm0 64l160 0 0 96L64 416l0-96zm224 96l0-96 160 0 0 96-160 0zM448 256l-160 0 0-96 160 0 0 96zM64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32z" />
     </svg>
   ),
   scroll: (
@@ -173,7 +179,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         key: "admin-meta-options",
         label: "Meta Options",
         href: "/admin/meta-options",
-        icon: Icons.listCheck,
+        icon: Icons.table,
       },
       {
         key: "admin-snapshots",
@@ -354,17 +360,18 @@ export function SideNavigation({
                           <span>{item.label}</span>
                         </div>
                         {item.badge && (
-                          <span
-                            className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full ${
+                          <LiquidGlassTag
+                            variant={
                               item.badge === "NEW"
-                                ? "bg-[#1f883d] text-white"
+                                ? "green"
                                 : item.badge === "HOT"
-                                ? "bg-[#cf222e] text-white"
-                                : "bg-[#d0d7de] text-[#57606a]"
-                            }`}
+                                ? "pink"
+                                : "gray"
+                            }
+                            shimmer
                           >
                             {item.badge}
-                          </span>
+                          </LiquidGlassTag>
                         )}
                       </Link>
                     );

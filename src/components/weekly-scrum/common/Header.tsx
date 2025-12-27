@@ -100,7 +100,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full h-16 px-4 lg:px-6 bg-[#24292f] border-b border-[#424a53]"
+      className="sticky top-0 z-50 w-full h-16 px-4 lg:px-6 bg-[#f6f8fa] border-b border-[#d0d7de]"
     >
       <div className="flex items-center justify-between h-full max-w-full mx-auto">
         {/* 좌측: 햄버거 + 로고 + 주차 선택 */}
@@ -108,7 +108,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
           {/* 햄버거 메뉴 버튼 */}
           <button
             onClick={onMenuOpen}
-            className="flex items-center justify-center w-9 h-9 rounded-md text-white hover:bg-[#30363d] transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-md text-[#24292f] hover:bg-[#d0d7de] transition-colors"
             aria-label="메뉴 열기"
           >
             <svg
@@ -128,15 +128,15 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
 
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Logo className="w-7 h-7 text-white" />
-            <span className="hidden sm:block text-white font-semibold text-base">
+            <Logo className="w-7 h-7" />
+            <span className="hidden sm:block text-[#24292f] font-semibold text-base">
               Weekly Scrum
             </span>
           </Link>
 
           {/* 구분선 */}
           {!hideWeekSelector && (
-            <div className="hidden lg:block w-px h-6 bg-[#424a53]" />
+            <div className="hidden lg:block w-px h-6 bg-[#d0d7de]" />
           )}
 
           {/* 주차 선택기 */}
@@ -156,49 +156,15 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
             </div>
           )}
 
-          {/* 필터 */}
+          {/* 필터 - 항상 표시 */}
           {!hideFilters && (
-            <>
-              {/* 데스크톱: 필터 직접 표시 */}
-              <div className="hidden xl:block">
-                <ExpandableFilters />
-              </div>
-
-              {/* 모바일/태블릿: 필터 버튼 + 팝오버 */}
-              <div className="xl:hidden relative" ref={filterPopoverRef}>
-                <button
-                  onClick={() => setIsFilterPopoverOpen(!isFilterPopoverOpen)}
-                  className="flex items-center gap-2 px-3 h-9 rounded-md text-sm font-medium text-white hover:bg-[#30363d] transition-colors"
-                  aria-label="필터"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">필터</span>
-                </button>
-
-                {/* 필터 팝오버 */}
-                {isFilterPopoverOpen && (
-                  <div className="absolute top-full right-0 mt-2 p-3 bg-white border border-[#d0d7de] rounded-md shadow-lg z-50 animate-context-menu">
-                    <ExpandableFilters />
-                  </div>
-                )}
-              </div>
-            </>
+            <div className="flex items-center">
+              <ExpandableFilters />
+            </div>
           )}
 
           {/* 구분선 */}
-          <div className="w-px h-6 bg-[#424a53]" />
+          <div className="w-px h-6 bg-[#d0d7de]" />
 
           {/* 프로필 */}
           <UserProfile />
