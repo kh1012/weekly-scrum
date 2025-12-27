@@ -56,6 +56,11 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/admin/meta-options" ||
     pathname === "/admin/meta-options/" ||
     pathname.startsWith("/admin/meta-options/");
+  // Team Feed 페이지인지 확인
+  const isTeamFeedPage =
+    pathname === "/team-feed" ||
+    pathname === "/team-feed/" ||
+    pathname.startsWith("/team-feed/");
   
   // 최소 GNB 모드
   const isMinimalGnb =
@@ -64,7 +69,8 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     isAdminDashboard ||
     isPlansPage ||
     isFeedbacksPage ||
-    isMetaOptionsPage;
+    isMetaOptionsPage ||
+    isTeamFeedPage;
   
   // GNB 컴포넌트 완전 숨김
   const hideAllControls = isMinimalGnb;

@@ -26,6 +26,7 @@ const FULL_WIDTH_PAGES = [
   "/my",
   "/admin",
   "/plans",
+  "/team-feed",
 ];
 
 // 동적 경로 패턴 (하위 경로 모두 포함)
@@ -34,6 +35,7 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = [
   "/admin/",
   "/plans/gantt",
   "/feedbacks",
+  "/team-feed",
 ];
 
 // padding 없는 페이지 경로
@@ -45,6 +47,7 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/plans/gantt",
   "/admin/plans/gantt",
   "/admin",
+  "/team-feed",
 ];
 
 // localStorage 키
@@ -64,6 +67,7 @@ const SAVEABLE_PAGES = [
   "/my",
   "/report",
   "/releases",
+  "/team-feed",
 ];
 
 export function getLastVisitedPage(): string | null {
@@ -126,14 +130,17 @@ function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
         style={{
           borderTopRightRadius: "12px",
           borderBottomRightRadius: "12px",
-          boxShadow: "rgba(0, 0, 0, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 5px 10px, rgba(0, 0, 0, 0.08) 0px 15px 40px",
+          boxShadow:
+            "rgba(0, 0, 0, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 5px 10px, rgba(0, 0, 0, 0.08) 0px 15px 40px",
         }}
       >
         {/* 헤더 - 고정 */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-[#d0d7de] shrink-0">
           <div className="flex items-center gap-2">
             <Logo className="w-6 h-6" />
-            <span className="text-base font-semibold text-[#24292f]">Weekly Scrum</span>
+            <span className="text-base font-semibold text-[#24292f]">
+              Weekly Scrum
+            </span>
           </div>
           <button
             onClick={onClose}
