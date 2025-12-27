@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { FeedItemData, ActivityData } from "@/types/teamFeed";
 import { InfiniteFeedList } from "./InfiniteFeedList";
 import { ActivityChart } from "./ActivityChart";
-import { FeedTimeline } from "./FeedTimeline";
+import { WeeklySummary } from "./WeeklySummary";
 import { FeedSearch } from "./FeedSearch";
 
 interface TeamFeedClientProps {
@@ -13,8 +13,9 @@ interface TeamFeedClientProps {
 }
 
 /**
- * Team Feed 클라이언트 컴포넌트
- * - 검색 상태를 관리하고 Timeline과 Feed를 연동
+ * Entries 클라이언트 컴포넌트
+ * - 검색 상태 관리
+ * - Weekly Summary + Activity Chart 표시
  */
 export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClientProps) {
   const [searchInput, setSearchInput] = useState("");
@@ -66,40 +67,29 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
 
   return (
     <div className="h-full overflow-hidden bg-white">
-      {/* 데스크톱 레이아웃 (≥1024px): 3 컬럼 */}
+      {/* 데스크톱 레이아웃 (≥1024px): 2 컬럼 */}
       <div className="hidden lg:flex gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: Team Activity */}
-        <div className="w-80 flex-shrink-0 overflow-y-auto">
-          {activityData && activityData.length > 0 && (
-            <ActivityChart data={activityData} />
-          )}
-        </div>
-
-        {/* 중앙: 피드 */}
+        {/* 왼쪽: Entries */}
         <div 
           className="flex-1 overflow-y-scroll min-w-0" 
           style={{ scrollbarGutter: 'stable' }}
           data-feed-container
         >
-          <div className="mb-4 flex items-baseline justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
-              <p className="text-sm text-[#57606a]">
-                팀원들의 최근 활동을 확인하세요
-              </p>
-            </div>
-
-            {/* 검색 */}
-            <div className="w-80">
-              <FeedSearch
-                searchQuery={searchInput}
-                onSearchChange={setSearchInput}
-                isSearching={isSearching}
-                resultCount={resultCount}
-                totalCount={initialFeedItems.length}
-              />
-            </div>
+          <div className="mb-4">
+            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Entries</h1>
+            <p className="text-sm text-[#57606a]">
+              팀원들의 최근 스냅샷 엔트리를 확인하세요
+            </p>
           </div>
+
+          {/* 검색 - Full Width */}
+          <FeedSearch
+            searchQuery={searchInput}
+            onSearchChange={setSearchInput}
+            isSearching={isSearching}
+            resultCount={resultCount}
+            totalCount={initialFeedItems.length}
+          />
 
           <InfiniteFeedList 
             initialFeedItems={initialFeedItems}
@@ -108,60 +98,64 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
           />
         </div>
 
-        {/* 우측: Timeline */}
-        <div className="w-64 flex-shrink-0 overflow-y-auto">
-          <FeedTimeline
-            feedItems={initialFeedItems}
-            isSearching={isSearching}
-            hasSearchQuery={searchQuery.trim().length > 0}
-          />
-        </div>
-      </div>
+        {/* 우측: Weekly Summary + Activity */}
+        <div className="w-80 flex-shrink-0 overflow-y-auto space-y-6">
+          {/* Weekly Summary */}
+          <WeeklySummary feedItems={initialFeedItems} />
 
-      {/* 태블릿 레이아웃 (768-1023px): 2 컬럼 (Timeline 제거) */}
-      <div className="hidden md:flex lg:hidden gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: Team Activity */}
-        <div className="w-72 flex-shrink-0 overflow-y-auto">
+          {/* Activity Chart */}
           {activityData && activityData.length > 0 && (
             <ActivityChart data={activityData} />
           )}
         </div>
+      </div>
 
-        {/* 오른쪽: 피드 */}
+      {/* 태블릿 레이아웃 (768-1023px): 2 컬럼 */}
+      <div className="hidden md:flex lg:hidden gap-4 h-full overflow-hidden px-4 py-4">
+        {/* 왼쪽: Entries */}
         <div 
           className="flex-1 overflow-y-scroll min-w-0" 
           style={{ scrollbarGutter: 'stable' }}
         >
           <div className="mb-4">
-            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
+            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Entries</h1>
             <p className="text-sm text-[#57606a]">
-              팀원들의 최근 활동을 확인하세요
+              팀원들의 최근 스냅샷 엔트리를 확인하세요
             </p>
           </div>
 
-          {/* 검색 */}
-          <div className="mb-4">
-            <FeedSearch
-              searchQuery={searchInput}
-              onSearchChange={setSearchInput}
-              isSearching={isSearching}
-              resultCount={resultCount}
-              totalCount={initialFeedItems.length}
-            />
-          </div>
+          {/* 검색 - Full Width */}
+          <FeedSearch
+            searchQuery={searchInput}
+            onSearchChange={setSearchInput}
+            isSearching={isSearching}
+            resultCount={resultCount}
+            totalCount={initialFeedItems.length}
+          />
 
           <InfiniteFeedList 
             initialFeedItems={initialFeedItems}
             searchQuery={searchQuery}
             onSearchStateChange={setIsSearching}
           />
+        </div>
+
+        {/* 오른쪽: Weekly Summary + Activity */}
+        <div className="w-72 flex-shrink-0 overflow-y-auto space-y-6">
+          {/* Weekly Summary */}
+          <WeeklySummary feedItems={initialFeedItems} />
+
+          {/* Activity Chart */}
+          {activityData && activityData.length > 0 && (
+            <ActivityChart data={activityData} />
+          )}
         </div>
       </div>
 
       {/* 모바일 레이아웃 (<768px): 1컬럼 */}
       <div className="md:hidden h-full overflow-y-scroll px-4 py-4" style={{ scrollbarGutter: 'stable' }}>
         <div className="mb-4">
-          <h1 className="text-lg font-semibold text-[#24292f] mb-1">Team Feed</h1>
+          <h1 className="text-lg font-semibold text-[#24292f] mb-1">Entries</h1>
 
           {/* 활동 요약 (한 줄) */}
           {activityData && activityData.length > 0 && (
@@ -188,18 +182,16 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
           )}
         </div>
 
-        {/* 검색 */}
-        <div className="mb-4">
-          <FeedSearch
-            searchQuery={searchInput}
-            onSearchChange={setSearchInput}
-            isSearching={isSearching}
-            resultCount={resultCount}
-            totalCount={initialFeedItems.length}
-          />
-        </div>
+        {/* 검색 - Full Width */}
+        <FeedSearch
+          searchQuery={searchInput}
+          onSearchChange={setSearchInput}
+          isSearching={isSearching}
+          resultCount={resultCount}
+          totalCount={initialFeedItems.length}
+        />
 
-        {/* 피드 */}
+        {/* Entries */}
         <InfiniteFeedList 
           initialFeedItems={initialFeedItems}
           searchQuery={searchQuery}

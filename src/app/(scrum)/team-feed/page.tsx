@@ -7,10 +7,10 @@ const DEFAULT_WORKSPACE_ID =
   process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
 
 /**
- * Team Activity Feed 페이지
- * - 팀원들의 주간 활동을 스크롤로 확인
+ * Entries 페이지
+ * - 팀원들의 스냅샷 엔트리를 확인
  * - 읽기 전용, 사람 중심 피드
- * - 우측에 타임라인 UI 추가
+ * - 우측에 주차별 통계 + Activity Chart
  */
 export default async function TeamFeedPage() {
   const { feedItems, error: feedError } = await getTeamFeedData(
