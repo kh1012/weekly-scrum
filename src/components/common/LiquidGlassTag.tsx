@@ -85,8 +85,8 @@ export function LiquidGlassTag({
           color: style.color,
           // Liquid Glass 배경
           background: style.background,
-          backdropFilter: "blur(16px) saturate(180%)",
-          WebkitBackdropFilter: "blur(16px) saturate(180%)",
+          backdropFilter: "blur(16px) saturate(100%)",
+          WebkitBackdropFilter: "blur(16px) saturate(100%)",
           // 부드러운 테두리
           border: `1px solid ${style.border}`,
           borderRadius: "6px",
