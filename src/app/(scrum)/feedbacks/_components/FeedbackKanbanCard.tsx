@@ -238,7 +238,7 @@ export function FeedbackKanbanCard({
   };
 
   return (
-    <div className="relative bg-white border border-[#d0d7de] hover:border-[#0969da] transition-colors">
+    <div className="relative bg-white border border-[#d0d7de] hover:border-[#0969da] transition-colors rounded-md">
       {/* 헤더: 작성자 + 날짜 - GitHub 스타일 */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#d0d7de] bg-[#f6f8fa]">
         <div className="flex items-center gap-2 min-w-0">
@@ -328,7 +328,7 @@ export function FeedbackKanbanCard({
       {/* resolved 상태일 때 해결 내용 표시 - GitHub 스타일 */}
       {feedback.status === "resolved" && feedback.resolution_note && (
         <div className="px-3 pb-2">
-          <div className="p-2 bg-[#dafbe1] border border-[#1f883d]/20">
+          <div className="p-2 bg-[#dafbe1] border border-[#1f883d]/20 rounded-md">
             <div className="flex items-start gap-2">
               <svg
                 className="w-3.5 h-3.5 text-[#1f883d] mt-0.5 shrink-0"
@@ -388,7 +388,7 @@ export function FeedbackKanbanCard({
 
       {/* 삭제 확인 오버레이 - GitHub 스타일 */}
       {showDeleteConfirm && (
-        <div className="absolute inset-0 bg-white/98 flex items-center justify-center z-10 border border-[#d0d7de]">
+        <div className="absolute inset-0 bg-white/98 flex items-center justify-center z-10 border border-[#d0d7de] rounded-md">
           <div className="text-center px-4">
             <svg
               className="w-10 h-10 mx-auto mb-2 text-[#cf222e]"
@@ -412,7 +412,7 @@ export function FeedbackKanbanCard({
             <div className="flex items-center justify-center gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-3 py-1.5 text-xs font-medium text-[#24292f] bg-white border border-[#d0d7de] hover:bg-[#f6f8fa] transition-colors"
+                className="px-3 py-1.5 text-xs font-medium text-[#24292f] bg-white border border-[#d0d7de] hover:bg-[#f6f8fa] transition-colors rounded-md"
               >
                 취소
               </button>

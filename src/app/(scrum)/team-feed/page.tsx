@@ -40,7 +40,7 @@ export default async function TeamFeedPage() {
 
   if (feedError) {
     return (
-      <div className="h-full flex items-center justify-center bg-white border border-[#d0d7de]">
+      <div className="h-full flex items-center justify-center bg-white border border-[#d0d7de] rounded-md">
         <div className="text-center px-4">
           <h2 className="text-base font-semibold text-[#24292f] mb-2">
             데이터를 불러올 수 없습니다
@@ -53,7 +53,7 @@ export default async function TeamFeedPage() {
 
   if (feedItems.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center bg-white border border-[#d0d7de]">
+      <div className="h-full flex items-center justify-center bg-white border border-[#d0d7de] rounded-md">
         <div className="text-center px-4">
           <h2 className="text-base font-semibold text-[#24292f] mb-2">
             아직 작성된 스냅샷이 없습니다
@@ -67,7 +67,7 @@ export default async function TeamFeedPage() {
   }
 
   return (
-    <div className="h-full overflow-hidden bg-white border border-[#d0d7de]">
+    <div className="h-full overflow-hidden bg-white border border-[#d0d7de] rounded-md">
       {/* 데스크톱 레이아웃 (≥1024px): 3컬럼 */}
       <div className="hidden lg:grid lg:grid-cols-[200px_1fr_320px] gap-0 h-full overflow-hidden">
         {/* 왼쪽: 타임라인 스파인 */}

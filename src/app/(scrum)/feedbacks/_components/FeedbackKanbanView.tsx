@@ -131,9 +131,9 @@ export function FeedbackKanbanView({
   }, [isPending, updatingFeedbackId]);
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col bg-white border border-[#d0d7de]">
+    <div className="h-[calc(100vh-7rem)] flex flex-col bg-white border border-[#d0d7de] rounded-md">
       {/* 헤더 영역 - GitHub 스타일 */}
-      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
+      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de] rounded-t-md">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {/* 좌측: 타이틀 */}
           <div className="flex items-center gap-3">
@@ -182,7 +182,7 @@ export function FeedbackKanbanView({
               variant="primary"
               size="sm"
               icon={<PlusIcon className="w-3.5 h-3.5" />}
-              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded !text-xs !font-medium !px-3 !py-1.5"
+              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded-md !text-xs !font-medium !px-3 !py-1.5"
             >
               <span className="hidden sm:inline">New feedback</span>
               <span className="sm:hidden">새 피드백</span>
@@ -197,7 +197,7 @@ export function FeedbackKanbanView({
           {KANBAN_COLUMNS.map((col) => (
             <div
               key={col.status}
-              className="flex flex-col min-w-0 bg-[#f6f8fa] border border-[#d0d7de]"
+              className="flex flex-col min-w-0 bg-[#f6f8fa] border border-[#d0d7de] rounded-md"
             >
               {/* 열 헤더 - GitHub 스타일 */}
               <div className="shrink-0 px-3 py-2 bg-white border-b border-[#d0d7de] flex items-center justify-between">
@@ -211,7 +211,7 @@ export function FeedbackKanbanView({
                   </h3>
                 </div>
                 <span
-                  className="px-2 py-0.5 text-xs font-medium text-[#57606a] bg-[#f6f8fa] border border-[#d0d7de] rounded-full"
+                  className="px-2 py-0.5 text-xs font-medium text-[#57606a] bg-[#f6f8fa] border border-[#d0d7de] rounded-xl"
                 >
                   {groupedFeedbacks[col.status]?.length || 0}
                 </span>
@@ -287,7 +287,7 @@ export function FeedbackKanbanView({
               variant="primary"
               size="sm"
               icon={<PlusIcon className="w-3.5 h-3.5" />}
-              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded !text-xs !font-medium !px-3 !py-1.5"
+              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded-md !text-xs !font-medium !px-3 !py-1.5"
             >
               첫 피드백 작성하기
             </LoadingButton>
@@ -322,7 +322,7 @@ export function FeedbackKanbanView({
           />
           
           {/* 모달 컨텐츠 */}
-          <div className="relative w-full max-w-md bg-white border border-[#d0d7de]">
+          <div className="relative w-full max-w-md bg-white border border-[#d0d7de] rounded-md">
             {/* 헤더 */}
             <div className="px-4 py-3 bg-[#f6f8fa] border-b border-[#d0d7de] flex items-center justify-between">
               <h2 className="text-sm font-semibold text-[#24292f]">

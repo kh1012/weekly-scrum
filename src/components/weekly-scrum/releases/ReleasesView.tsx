@@ -107,7 +107,7 @@ function ReleaseCard({ release, isExpanded, onToggle, index }: ReleaseCardProps)
 
       {/* 카드 - GitHub 스타일 */}
       <div
-        className="bg-white border border-[#d0d7de] overflow-hidden transition-all"
+        className="bg-white border border-[#d0d7de] overflow-hidden transition-all rounded-md"
       >
         {/* 헤더 (클릭 가능) - GitHub 스타일 */}
         <button
