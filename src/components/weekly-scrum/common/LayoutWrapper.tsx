@@ -178,7 +178,7 @@ export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-[#f6f8fa]">
+    <div className="min-h-screen bg-white">
       {/* 네비게이션 프로그레스 바 */}
       <Suspense fallback={null}>
         <NavigationProgress />
