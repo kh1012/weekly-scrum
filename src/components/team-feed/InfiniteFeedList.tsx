@@ -23,9 +23,7 @@ export function InfiniteFeedList({
   searchQuery = "",
   onSearchStateChange
 }: InfiniteFeedListProps) {
-  const [displayedItems, setDisplayedItems] = useState<FeedItemData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // 검색 필터링
@@ -85,18 +83,20 @@ export function InfiniteFeedList({
     setCurrentPage(1);
   }, [searchQuery]);
 
-  // 표시할 아이템 업데이트
-  useEffect(() => {
-    const itemsToShow = filteredItems.slice(0, currentPage * ITEMS_PER_PAGE);
-    setDisplayedItems(itemsToShow);
-    setHasMore(itemsToShow.length < filteredItems.length);
+  // 표시할 아이템 계산
+  const displayedItems = useMemo(() => {
+    return filteredItems.slice(0, currentPage * ITEMS_PER_PAGE);
   }, [filteredItems, currentPage]);
+
+  // 더 불러올 아이템이 있는지 확인
+  const hasMore = useMemo(() => {
+    return displayedItems.length < filteredItems.length;
+  }, [displayedItems.length, filteredItems.length]);
 
   // 다음 페이지 로드
   const loadMore = useCallback(() => {
-    if (!hasMore) return;
     setCurrentPage((prev) => prev + 1);
-  }, [hasMore]);
+  }, []);
 
   // Intersection Observer 설정
   useEffect(() => {
