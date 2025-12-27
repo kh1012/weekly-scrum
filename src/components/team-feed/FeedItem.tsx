@@ -6,6 +6,25 @@ import type { FeedItemData, TeamFeedEntry } from "@/types/teamFeed";
 
 interface FeedItemProps {
   data: FeedItemData;
+  searchQuery?: string;
+}
+
+/**
+ * 텍스트에서 검색어를 강조 표시하는 함수
+ */
+function highlightText(text: string, query: string) {
+  if (!query.trim()) return text;
+
+  const parts = text.split(new RegExp(`(${query})`, "gi"));
+  return parts.map((part, index) =>
+    part.toLowerCase() === query.toLowerCase() ? (
+      <mark key={index} className="bg-[#fff8c5] text-[#24292f] px-0.5 rounded">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
 }
 
 /**
@@ -14,8 +33,9 @@ interface FeedItemProps {
  * - Hierarchy (모든 엔트리 태그)
  * - Progress, Next, Risk 섹션별로 묶어서 표시
  * - Expandable Details (상세 정보는 접기/펴기)
+ * - 검색어 강조 표시
  */
-export function FeedItem({ data }: FeedItemProps) {
+export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // 시간 포맷팅 함수 (예: "2 hours ago", "3 days ago")
@@ -105,7 +125,7 @@ export function FeedItem({ data }: FeedItemProps) {
                 key={entry.id}
                 className="inline-flex items-center px-2 py-1 bg-[#f6f8fa] border border-[#d0d7de] rounded-md text-xs text-[#57606a]"
               >
-                {entry.project} / {entry.module} / {entry.feature}
+                {highlightText(`${entry.project} / ${entry.module} / ${entry.feature}`, searchQuery)}
               </span>
             ))}
           </div>
@@ -119,7 +139,7 @@ export function FeedItem({ data }: FeedItemProps) {
           <ul className="space-y-1.5">
             {progressItems.map((item, idx) => (
               <li key={idx} className="text-xs text-[#57606a] leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                {item.content}
+                {highlightText(item.content, searchQuery)}
               </li>
             ))}
           </ul>
@@ -133,7 +153,7 @@ export function FeedItem({ data }: FeedItemProps) {
           <ul className="space-y-1.5">
             {nextItems.map((item, idx) => (
               <li key={idx} className="text-xs text-[#57606a] leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                {item.content}
+                {highlightText(item.content, searchQuery)}
               </li>
             ))}
           </ul>
@@ -147,7 +167,7 @@ export function FeedItem({ data }: FeedItemProps) {
           <ul className="space-y-1.5">
             {riskItems.map((item, idx) => (
               <li key={idx} className="text-xs text-[#57606a] leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                {item.content}
+                {highlightText(item.content, searchQuery)}
               </li>
             ))}
           </ul>
@@ -179,9 +199,9 @@ export function FeedItem({ data }: FeedItemProps) {
             <div key={entry.id} className="p-3 bg-[#f6f8fa] border border-[#d0d7de] rounded-md space-y-2">
               {/* Entry Header */}
               <div className="flex items-center gap-2 pb-2 border-b border-[#d0d7de]">
-                <h4 className="text-xs font-semibold text-[#24292f]">{entry.name}</h4>
+                <h4 className="text-xs font-semibold text-[#24292f]">{highlightText(entry.name, searchQuery)}</h4>
                 <span className="text-[10px] px-2 py-0.5 bg-white border border-[#d0d7de] text-[#57606a] rounded-md">
-                  {entry.project} / {entry.module}
+                  {highlightText(`${entry.project} / ${entry.module}`, searchQuery)}
                 </span>
               </div>
 
@@ -194,7 +214,7 @@ export function FeedItem({ data }: FeedItemProps) {
                   <ul className="space-y-1 text-[#57606a]">
                     {entry.thisWeek.tasks.map((task, idx) => (
                       <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                        {task}
+                        {highlightText(task, searchQuery)}
                       </li>
                     ))}
                   </ul>
@@ -208,7 +228,7 @@ export function FeedItem({ data }: FeedItemProps) {
                   <ul className="space-y-1 text-[#57606a]">
                     {entry.pastWeek.tasks.map((task, idx) => (
                       <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                        {task.title}
+                        {highlightText(task.title, searchQuery)}
                         {task.progress > 0 && (
                           <span className="ml-1 text-[11px] text-[#8c959f]">
                             ({task.progress}%)
@@ -227,7 +247,7 @@ export function FeedItem({ data }: FeedItemProps) {
                   <ul className="space-y-1 text-[#57606a]">
                     {entry.risks.map((risk, idx) => (
                       <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                        {risk}
+                        {highlightText(risk, searchQuery)}
                       </li>
                     ))}
                   </ul>
