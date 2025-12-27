@@ -69,7 +69,7 @@ export default async function TeamFeedPage() {
   return (
     <div className="h-full overflow-hidden bg-white">
       {/* 데스크톱 레이아웃 (≥1024px): GitHub 스타일 */}
-      <div className="hidden lg:grid lg:grid-cols-[240px_1fr_360px] gap-6 h-full overflow-hidden px-6 py-6">
+      <div className="hidden lg:grid lg:grid-cols-[240px_1fr_360px] gap-4 h-full overflow-hidden px-4 py-4">
         {/* 왼쪽: 타임라인 스파인 */}
         <div className="overflow-y-auto">
           <div className="bg-white border border-[#d0d7de] rounded-md p-4">

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDownIcon } from "@/components/common/Icons";
-import type { FeedItemData } from "@/types/teamFeed";
+import type { FeedItemData, TeamFeedEntry } from "@/types/teamFeed";
 
 interface FeedItemProps {
   data: FeedItemData;
@@ -11,7 +11,8 @@ interface FeedItemProps {
 /**
  * 피드 아이템 컴포넌트 - GitHub Feed 스타일
  * - Person Header (간소화, 작성시간 표시)
- * - All Entries List (한눈에 모든 활동 보기)
+ * - Hierarchy (모든 엔트리 태그)
+ * - Progress, Next, Risk 섹션별로 묶어서 표시
  * - Expandable Details (상세 정보는 접기/펴기)
  */
 export function FeedItem({ data }: FeedItemProps) {
@@ -34,48 +35,35 @@ export function FeedItem({ data }: FeedItemProps) {
     return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
   };
 
-  // 모든 엔트리의 모든 활동을 리스트로 변환
-  const allActivities = data.entries.flatMap((entry) => {
-    const activities: Array<{
-      type: "progress" | "next" | "risk";
-      entry: typeof entry;
-      content: string;
-    }> = [];
-    
-    // Progress 활동
+  // Progress, Next, Risk 항목 수집
+  const progressItems: Array<{ entry: TeamFeedEntry; content: string }> = [];
+  const nextItems: Array<{ entry: TeamFeedEntry; content: string }> = [];
+  const riskItems: Array<{ entry: TeamFeedEntry; content: string }> = [];
+
+  data.entries.forEach((entry) => {
+    // Progress
     if (entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0) {
       entry.thisWeek.tasks.forEach((task) => {
-        activities.push({
-          type: "progress" as const,
-          entry,
-          content: task,
-        });
+        progressItems.push({ entry, content: task });
       });
     }
 
-    // Next 활동
+    // Next
     if (entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0) {
       entry.pastWeek.tasks.forEach((task) => {
-        activities.push({
-          type: "next" as const,
+        nextItems.push({
           entry,
           content: `${task.title}${task.progress > 0 ? ` (${task.progress}%)` : ""}`,
         });
       });
     }
 
-    // Risk 활동
+    // Risk
     if (entry.risks.length > 0) {
       entry.risks.forEach((risk) => {
-        activities.push({
-          type: "risk" as const,
-          entry,
-          content: risk,
-        });
+        riskItems.push({ entry, content: risk });
       });
     }
-
-    return activities;
   });
 
   const progressCount = data.entries.filter(
@@ -108,40 +96,61 @@ export function FeedItem({ data }: FeedItemProps) {
         </div>
       </div>
 
-      {/* All Activities List - 한눈에 보기 */}
-      {allActivities.length > 0 && (
-        <div className="space-y-2 mb-3">
-          {allActivities.map((activity, idx) => (
-            <div key={idx} className="flex items-start gap-2 text-sm">
-              {/* Type Badge */}
+      {/* Hierarchy - 모든 엔트리 태그 */}
+      {data.entries.length > 0 && (
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-2">
+            {data.entries.map((entry) => (
               <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium shrink-0 ${
-                  activity.type === "progress"
-                    ? "bg-[#ddf4ff] text-[#0969da]"
-                    : activity.type === "next"
-                    ? "bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de]"
-                    : "bg-[#fff8c5] text-[#9a6700] border border-[#d4a72c]/20"
-                }`}
+                key={entry.id}
+                className="inline-flex items-center px-2 py-1 bg-[#f6f8fa] border border-[#d0d7de] rounded-md text-xs text-[#57606a]"
               >
-                {activity.type === "progress"
-                  ? "Progress"
-                  : activity.type === "next"
-                  ? "Next"
-                  : "Risk"}
+                {entry.project} / {entry.module} / {entry.feature}
               </span>
+            ))}
+          </div>
+        </div>
+      )}
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-[#24292f] leading-relaxed">
-                  <span className="font-medium text-[#57606a]">
-                    {activity.entry.project} / {activity.entry.module} / {activity.entry.feature}
-                  </span>
-                  {" · "}
-                  <span>{activity.content}</span>
-                </p>
-              </div>
-            </div>
-          ))}
+      {/* Progress Section */}
+      {progressItems.length > 0 && (
+        <div className="mb-3">
+          <h4 className="text-xs font-semibold text-[#24292f] mb-2">Progress</h4>
+          <ul className="space-y-1.5">
+            {progressItems.map((item, idx) => (
+              <li key={idx} className="text-xs text-[#57606a] leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                {item.content}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Next Section */}
+      {nextItems.length > 0 && (
+        <div className="mb-3">
+          <h4 className="text-xs font-semibold text-[#24292f] mb-2">Next</h4>
+          <ul className="space-y-1.5">
+            {nextItems.map((item, idx) => (
+              <li key={idx} className="text-xs text-[#57606a] leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                {item.content}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Risk Section */}
+      {riskItems.length > 0 && (
+        <div className="mb-3">
+          <h4 className="text-xs font-semibold text-[#24292f] mb-2">Risk</h4>
+          <ul className="space-y-1.5">
+            {riskItems.map((item, idx) => (
+              <li key={idx} className="text-xs text-[#57606a] leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                {item.content}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
