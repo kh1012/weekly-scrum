@@ -623,7 +623,6 @@ function SnapshotsMainViewInner({
                   </svg>
                 }
                 className="group flex-1 md:flex-none text-blue-600 bg-blue-50 border-2 border-blue-100 hover:border-blue-200 hover:bg-blue-100"
-                gradient={false}
               >
                 <span className="hidden sm:inline">편집하기</span>
                 <span className="sm:hidden">편집</span>

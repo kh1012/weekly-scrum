@@ -182,7 +182,6 @@ export function FeedbackKanbanView({
               variant="primary"
               size="sm"
               icon={<PlusIcon className="w-3.5 h-3.5" />}
-              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded-md !text-xs !font-medium !px-3 !py-1.5"
             >
               <span className="hidden sm:inline">New feedback</span>
               <span className="sm:hidden">새 피드백</span>
@@ -288,7 +287,6 @@ export function FeedbackKanbanView({
               variant="primary"
               size="sm"
               icon={<PlusIcon className="w-3.5 h-3.5" />}
-              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded-md !text-xs !font-medium !px-3 !py-1.5"
             >
               첫 피드백 작성하기
             </LoadingButton>

@@ -144,7 +144,6 @@ export function FeedbackKanbanCard({
                 />
               </svg>
             }
-            className="!bg-white !text-[#24292f] !border-[#d0d7de] hover:!bg-[#f6f8fa] hover:!border-[#0969da] !text-xs !font-medium !px-2 !py-1"
           >
             진행
           </LoadingButton>
@@ -173,7 +172,6 @@ export function FeedbackKanbanCard({
                   />
                 </svg>
               }
-              className="!bg-white !text-[#24292f] !border-[#d0d7de] hover:!bg-[#f6f8fa] hover:!border-[#0969da] !text-xs !font-medium !px-2 !py-1"
             >
               열기
             </LoadingButton>
@@ -197,7 +195,6 @@ export function FeedbackKanbanCard({
                   />
                 </svg>
               }
-              className="!bg-[#1f883d] !text-white !border-0 hover:!bg-[#1a7f37] !text-xs !font-medium !px-2 !py-1"
             >
               완료
             </LoadingButton>
@@ -226,7 +223,6 @@ export function FeedbackKanbanCard({
                 />
               </svg>
             }
-            className="!bg-white !text-[#24292f] !border-[#d0d7de] hover:!bg-[#f6f8fa] hover:!border-[#0969da] !text-xs !font-medium !px-2 !py-1"
           >
             다시 열기
           </LoadingButton>
@@ -421,7 +417,6 @@ export function FeedbackKanbanCard({
                 isLoading={isDeleting}
                 variant="danger"
                 size="xs"
-                className="!bg-[#cf222e] !text-white !border-0 hover:!bg-[#a40e26] !text-xs !font-medium !px-3 !py-1.5"
               >
                 삭제
               </LoadingButton>

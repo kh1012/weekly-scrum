@@ -1,7 +1,7 @@
 /**
  * LoadingButton - 로딩 스피너가 통합된 공통 버튼 컴포넌트
  * 
- * GanttHeader의 "작업 시작" 버튼 스타일을 기반으로 제작
+ * GitHub 스타일: 미니멀한 디자인, 그림자 제거, solid 색상
  */
 
 import React, { ButtonHTMLAttributes } from "react";
@@ -24,46 +24,22 @@ interface LoadingButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   badge?: number;
   /** 전체 너비 */
   fullWidth?: boolean;
-  /** 그라데이션 사용 여부 */
-  gradient?: boolean;
   children: React.ReactNode;
 }
 
-const variantStyles = {
-  primary: {
-    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-    color: "white",
-    boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
-    hoverShadow: "0 6px 20px rgba(59, 130, 246, 0.5)",
-  },
-  success: {
-    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    color: "white",
-    boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
-    hoverShadow: "0 6px 20px rgba(16, 185, 129, 0.5)",
-  },
-  danger: {
-    background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-    color: "white",
-    boxShadow: "0 4px 14px rgba(239, 68, 68, 0.4)",
-    hoverShadow: "0 6px 20px rgba(239, 68, 68, 0.5)",
-  },
-  secondary: {
-    background: "white",
-    color: "#374151",
-    border: "1px solid #e5e7eb",
-  },
-  ghost: {
-    background: "transparent",
-    color: "#6b7280",
-  },
+const variantClasses = {
+  primary: "bg-[#0969da] text-white border-0 hover:bg-[#0860ca]",
+  success: "bg-[#1f883d] text-white border-0 hover:bg-[#1a7f37]",
+  danger: "bg-[#cf222e] text-white border-0 hover:bg-[#a40e26]",
+  secondary: "bg-white text-[#24292f] border border-[#d0d7de] hover:bg-[#f6f8fa] hover:border-[#0969da]",
+  ghost: "bg-transparent text-[#57606a] border-0 hover:bg-[#f6f8fa]",
 };
 
 const sizeStyles = {
   xs: "px-2 py-1 text-[10px]",
   sm: "px-3 py-1.5 text-xs",
-  md: "px-5 py-2.5 text-sm",
-  lg: "px-6 py-3 text-base",
+  md: "px-4 py-2 text-sm",
+  lg: "px-5 py-2.5 text-base",
 };
 
 export function LoadingButton({
@@ -75,14 +51,11 @@ export function LoadingButton({
   iconRight,
   badge,
   fullWidth = false,
-  gradient = true,
   disabled,
   className = "",
   children,
-  style,
   ...props
 }: LoadingButtonProps) {
-  const baseStyles = variantStyles[variant];
   const isDisabled = disabled || isLoading;
 
   return (
@@ -90,20 +63,14 @@ export function LoadingButton({
       {...props}
       disabled={isDisabled}
       className={`
-        flex items-center justify-center gap-2 rounded-xl font-semibold
-        transition-all duration-200
+        flex items-center justify-center gap-2 rounded-md font-medium
+        transition-colors duration-150
         disabled:opacity-50 disabled:cursor-not-allowed
-        ${!isDisabled && gradient && variant !== "ghost" && variant !== "secondary" ? "hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] active:shadow-md" : ""}
-        ${variant === "secondary" && !isDisabled ? "hover:bg-gray-100 active:scale-[0.97]" : ""}
-        ${variant === "ghost" && !isDisabled ? "hover:bg-gray-100 active:scale-[0.97]" : ""}
+        ${variantClasses[variant]}
         ${sizeStyles[size]}
         ${fullWidth ? "w-full" : ""}
         ${className}
       `}
-      style={{
-        ...baseStyles,
-        ...style,
-      }}
     >
       {/* 로딩 스피너 또는 아이콘 */}
       {isLoading ? (
@@ -117,10 +84,7 @@ export function LoadingButton({
 
       {/* 오른쪽 아이콘 또는 Badge */}
       {!isLoading && badge !== undefined && badge > 0 && (
-        <span
-          className="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
-          style={{ background: "rgba(255,255,255,0.3)" }}
-        >
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-white/20 rounded-full">
           {badge}
         </span>
       )}
