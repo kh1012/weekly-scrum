@@ -39,7 +39,7 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = [
 ];
 
 // padding 없는 페이지 경로
-const NO_PADDING_PAGES = ["/calendar", "/my", "/feedbacks", "/team-feed"];
+const NO_PADDING_PAGES = ["/calendar", "/my", "/feedbacks"];
 
 // padding 없는 동적 경로 패턴
 const NO_PADDING_DYNAMIC_PATTERNS = [
@@ -47,7 +47,7 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/plans/gantt",
   "/admin/plans/gantt",
   "/admin",
-  "/team-feed",
+  "/feedbacks",
 ];
 
 // localStorage 키

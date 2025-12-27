@@ -177,11 +177,10 @@ export function UserProfile() {
       {isOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={popoverRef}
-          className="fixed w-80 bg-white border border-[#d0d7de] rounded-md animate-context-menu"
+          className="fixed w-80 bg-white border border-[#d0d7de] rounded-md animate-context-menu z-[40]"
           style={{
             top: popoverPosition.top,
             right: popoverPosition.right,
-            zIndex: 99999,
             boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
           }}
         >

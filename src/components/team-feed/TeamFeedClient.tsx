@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { FeedItemData, ActivityData } from "@/types/teamFeed";
+import type { FeedItemData, ActivityChartData } from "@/types/teamFeed";
 import { InfiniteFeedList } from "./InfiniteFeedList";
 import { ActivityChart } from "./ActivityChart";
 import { WeeklySummary } from "./WeeklySummary";
 import { FeedSearch } from "./FeedSearch";
+import { DailyActivity } from "./DailyActivity";
 
 interface TeamFeedClientProps {
   initialFeedItems: FeedItemData[];
-  activityData?: ActivityData[];
+  activityData?: ActivityChartData[];
 }
 
 /**
@@ -66,13 +67,25 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
   }, [initialFeedItems, searchQuery]);
 
   return (
-    <div className="h-full overflow-hidden bg-white">
-      {/* 데스크톱 레이아웃 (≥1024px): 2 컬럼 */}
-      <div className="hidden lg:flex gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: Entries */}
+    <div className="bg-white">
+      {/* 데스크톱 레이아웃 (≥1024px): 3 컬럼 */}
+      <div className="hidden lg:flex gap-0 px-4 py-6">
+        {/* 왼쪽: Weekly Summary + Activity Chart (고정 너비 + 구분선) */}
+        <div className="w-80 flex-shrink-0 pr-6 border-r border-[#d0d7de]">
+          <div className="space-y-6 sticky top-20">
+            {/* Weekly Summary */}
+            <WeeklySummary feedItems={initialFeedItems} />
+
+            {/* Activity Chart */}
+            {activityData && activityData.length > 0 && (
+              <ActivityChart data={activityData} />
+            )}
+          </div>
+        </div>
+
+        {/* 중앙: Entries (flex-1) */}
         <div 
-          className="flex-1 overflow-y-scroll min-w-0 entries-scroll" 
-          style={{ scrollbarGutter: 'stable' }}
+          className="flex-1 px-6 min-w-0"
           data-feed-container
         >
           <div className="mb-4">
@@ -98,25 +111,28 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
           />
         </div>
 
-        {/* 우측: Weekly Summary + Activity */}
-        <div className="w-80 flex-shrink-0 overflow-y-auto space-y-6">
-          {/* Weekly Summary */}
-          <WeeklySummary feedItems={initialFeedItems} />
-
-          {/* Activity Chart */}
-          {activityData && activityData.length > 0 && (
-            <ActivityChart data={activityData} />
-          )}
+        {/* 우측: Daily Activity (고정 너비) */}
+        <div className="w-64 flex-shrink-0 pl-6">
+          <div className="sticky top-20">
+            <DailyActivity feedItems={initialFeedItems} />
+          </div>
         </div>
       </div>
 
       {/* 태블릿 레이아웃 (768-1023px): 2 컬럼 */}
-      <div className="hidden md:flex lg:hidden gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: Entries */}
-        <div 
-          className="flex-1 overflow-y-scroll min-w-0 entries-scroll" 
-          style={{ scrollbarGutter: 'stable' }}
-        >
+      <div className="hidden md:flex lg:hidden gap-0 px-4 py-6">
+        {/* 왼쪽: Weekly Summary + Activity (고정 너비 + 구분선) */}
+        <div className="w-72 flex-shrink-0 pr-6 border-r border-[#d0d7de]">
+          <div className="space-y-6 sticky top-20">
+            <WeeklySummary feedItems={initialFeedItems} />
+            {activityData && activityData.length > 0 && (
+              <ActivityChart data={activityData} />
+            )}
+          </div>
+        </div>
+
+        {/* 오른쪽: Entries */}
+        <div className="flex-1 px-6 min-w-0">
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-[#24292f] mb-1">Entries</h1>
             <p className="text-sm text-[#57606a]">
@@ -124,7 +140,6 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
             </p>
           </div>
 
-          {/* 검색 - Full Width */}
           <FeedSearch
             searchQuery={searchInput}
             onSearchChange={setSearchInput}
@@ -139,21 +154,10 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
             onSearchStateChange={setIsSearching}
           />
         </div>
-
-        {/* 오른쪽: Weekly Summary + Activity */}
-        <div className="w-72 flex-shrink-0 overflow-y-auto space-y-6">
-          {/* Weekly Summary */}
-          <WeeklySummary feedItems={initialFeedItems} />
-
-          {/* Activity Chart */}
-          {activityData && activityData.length > 0 && (
-            <ActivityChart data={activityData} />
-          )}
-        </div>
       </div>
 
       {/* 모바일 레이아웃 (<768px): 1컬럼 */}
-      <div className="md:hidden h-full overflow-y-scroll px-4 py-4 entries-scroll" style={{ scrollbarGutter: 'stable' }}>
+      <div className="md:hidden px-4 py-6">
         <div className="mb-4">
           <h1 className="text-lg font-semibold text-[#24292f] mb-1">Entries</h1>
 
@@ -182,7 +186,7 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
           )}
         </div>
 
-        {/* 검색 - Full Width */}
+        {/* 검색 */}
         <FeedSearch
           searchQuery={searchInput}
           onSearchChange={setSearchInput}
