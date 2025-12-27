@@ -71,7 +71,7 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
       <div className="hidden lg:flex gap-4 h-full overflow-hidden px-4 py-4">
         {/* 왼쪽: Entries */}
         <div 
-          className="flex-1 overflow-y-scroll min-w-0" 
+          className="flex-1 overflow-y-scroll min-w-0 entries-scroll" 
           style={{ scrollbarGutter: 'stable' }}
           data-feed-container
         >
@@ -114,7 +114,7 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
       <div className="hidden md:flex lg:hidden gap-4 h-full overflow-hidden px-4 py-4">
         {/* 왼쪽: Entries */}
         <div 
-          className="flex-1 overflow-y-scroll min-w-0" 
+          className="flex-1 overflow-y-scroll min-w-0 entries-scroll" 
           style={{ scrollbarGutter: 'stable' }}
         >
           <div className="mb-4">
@@ -153,7 +153,7 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
       </div>
 
       {/* 모바일 레이아웃 (<768px): 1컬럼 */}
-      <div className="md:hidden h-full overflow-y-scroll px-4 py-4" style={{ scrollbarGutter: 'stable' }}>
+      <div className="md:hidden h-full overflow-y-scroll px-4 py-4 entries-scroll" style={{ scrollbarGutter: 'stable' }}>
         <div className="mb-4">
           <h1 className="text-lg font-semibold text-[#24292f] mb-1">Entries</h1>
 

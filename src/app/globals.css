@@ -984,3 +984,16 @@ select option {
 *:hover::-webkit-scrollbar-thumb:hover {
   background: #a8b1bb;
 }
+
+/* Entries 영역은 스크롤바 항상 표시 */
+.entries-scroll::-webkit-scrollbar-thumb {
+  background: #d0d7de;
+}
+
+.entries-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8b1bb;
+}
+
+.entries-scroll::-webkit-scrollbar-thumb:active {
+  background: #8c959f;
+}
