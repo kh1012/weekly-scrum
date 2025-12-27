@@ -22,6 +22,8 @@ interface NavItem {
   description?: string;
   disabled?: boolean;
   badge?: string;
+  /** 배지 색상 테마 (미지정시 기본값 사용) */
+  tagVariant?: "blue" | "green" | "orange" | "pink" | "purple" | "gray";
 }
 
 /** 네비게이션 카테고리 */
@@ -100,6 +102,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/feedbacks",
         icon: Icons.comments,
         badge: "HOT",
+        tagVariant: "pink",
       },
     ],
   },
@@ -113,6 +116,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/team-feed",
         icon: Icons.users,
         badge: "NEW",
+        tagVariant: "green",
       },
       {
         key: "plans",
@@ -196,7 +200,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
     items: [
       {
         key: "releases",
-        label: "릴리즈 노트",
+        label: "Release Notes",
         href: "/releases",
         icon: Icons.scroll,
       },
@@ -361,13 +365,7 @@ export function SideNavigation({
                         </div>
                         {item.badge && (
                           <LiquidGlassTag
-                            variant={
-                              item.badge === "NEW"
-                                ? "green"
-                                : item.badge === "HOT"
-                                ? "pink"
-                                : "gray"
-                            }
+                            variant={item.tagVariant || "gray"}
                             shimmer
                           >
                             {item.badge}
