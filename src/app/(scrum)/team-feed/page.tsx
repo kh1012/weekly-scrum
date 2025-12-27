@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { getTeamFeedData, getActivityChartData } from "@/lib/data/teamFeed";
-import { FeedItem } from "@/components/team-feed/FeedItem";
+import { InfiniteFeedList } from "@/components/team-feed/InfiniteFeedList";
 import { TimelineSpine } from "@/components/team-feed/TimelineSpine";
 import { ActivityChart } from "@/components/team-feed/ActivityChart";
 
@@ -79,7 +79,7 @@ export default async function TeamFeedPage() {
         </div>
 
         {/* 중앙: 피드 - flex-1로 나머지 공간 채우기 */}
-        <div className="flex-1 overflow-y-auto min-w-0">
+        <div className="flex-1 overflow-y-scroll min-w-0" style={{ scrollbarGutter: 'stable' }}>
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
             <p className="text-sm text-[#57606a]">
@@ -87,12 +87,7 @@ export default async function TeamFeedPage() {
             </p>
           </div>
 
-          {feedItems.map((item) => (
-            <FeedItem
-              key={`${item.personId}-${item.year}-${item.week}`}
-              data={item}
-            />
-          ))}
+          <InfiniteFeedList initialFeedItems={feedItems} />
         </div>
 
         {/* 오른쪽: 활동 차트 - 고정 너비 */}
@@ -106,7 +101,7 @@ export default async function TeamFeedPage() {
       {/* 태블릿 레이아웃 (768-1023px): Flex 레이아웃 */}
       <div className="hidden md:flex lg:hidden gap-4 h-full overflow-hidden px-4 py-4">
         {/* 왼쪽: 피드 - flex-1로 나머지 공간 채우기 */}
-        <div className="flex-1 overflow-y-auto min-w-0">
+        <div className="flex-1 overflow-y-scroll min-w-0" style={{ scrollbarGutter: 'stable' }}>
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
             <p className="text-sm text-[#57606a]">
@@ -114,12 +109,7 @@ export default async function TeamFeedPage() {
             </p>
           </div>
 
-          {feedItems.map((item) => (
-            <FeedItem
-              key={`${item.personId}-${item.year}-${item.week}`}
-              data={item}
-            />
-          ))}
+          <InfiniteFeedList initialFeedItems={feedItems} />
         </div>
 
         {/* 오른쪽: 활동 차트 - 고정 너비 */}
@@ -131,7 +121,7 @@ export default async function TeamFeedPage() {
       </div>
 
       {/* 모바일 레이아웃 (<768px): 1컬럼 */}
-      <div className="md:hidden h-full overflow-y-auto px-4 py-4">
+      <div className="md:hidden h-full overflow-y-scroll px-4 py-4" style={{ scrollbarGutter: 'stable' }}>
         <div className="mb-4">
           <h1 className="text-lg font-semibold text-[#24292f] mb-1">Team Feed</h1>
 
@@ -161,12 +151,7 @@ export default async function TeamFeedPage() {
         </div>
 
         {/* 피드 */}
-        {feedItems.map((item) => (
-          <FeedItem
-            key={`${item.personId}-${item.year}-${item.week}`}
-            data={item}
-          />
-        ))}
+        <InfiniteFeedList initialFeedItems={feedItems} />
       </div>
     </div>
   );
