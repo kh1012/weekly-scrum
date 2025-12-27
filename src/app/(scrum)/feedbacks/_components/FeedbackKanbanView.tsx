@@ -196,7 +196,7 @@ export function FeedbackKanbanView({
           {KANBAN_COLUMNS.map((col) => (
             <div
               key={col.status}
-              className="flex flex-col bg-[#f6f8fa] border border-[#d0d7de] rounded-md overflow-hidden"
+              className="flex flex-col bg-white border border-[#d0d7de] rounded-md overflow-hidden"
               style={{ minHeight: '400px' }}
             >
               {/* 열 헤더 - GitHub 스타일 */}
