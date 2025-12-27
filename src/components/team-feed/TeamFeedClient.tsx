@@ -18,7 +18,10 @@ interface TeamFeedClientProps {
  * - 검색 상태 관리
  * - Weekly Summary + Activity Chart 표시
  */
-export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClientProps) {
+export function TeamFeedClient({
+  initialFeedItems,
+  activityData,
+}: TeamFeedClientProps) {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -49,11 +52,19 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
           return true;
         }
 
-        if (entry.thisWeek.tasks?.some((task) => task.toLowerCase().includes(query))) {
+        if (
+          entry.thisWeek.tasks?.some((task) =>
+            task.toLowerCase().includes(query)
+          )
+        ) {
           return true;
         }
 
-        if (entry.pastWeek.tasks?.some((task) => task.title.toLowerCase().includes(query))) {
+        if (
+          entry.pastWeek.tasks?.some((task) =>
+            task.title.toLowerCase().includes(query)
+          )
+        ) {
           return true;
         }
 
@@ -84,12 +95,11 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
         </div>
 
         {/* 중앙: Entries (flex-1) */}
-        <div 
-          className="flex-1 px-6 min-w-0"
-          data-feed-container
-        >
+        <div className="flex-1 px-6 min-w-0" data-feed-container>
           <div className="mb-4">
-            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Entries</h1>
+            <h1 className="text-xl font-semibold text-[#24292f] mb-1">
+              Entries
+            </h1>
             <p className="text-sm text-[#57606a]">
               팀원들의 최근 스냅샷 엔트리를 확인하세요
             </p>
@@ -104,7 +114,7 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
             totalCount={initialFeedItems.length}
           />
 
-          <InfiniteFeedList 
+          <InfiniteFeedList
             initialFeedItems={initialFeedItems}
             searchQuery={searchQuery}
             onSearchStateChange={setIsSearching}
@@ -134,7 +144,9 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
         {/* 오른쪽: Entries */}
         <div className="flex-1 px-6 min-w-0">
           <div className="mb-4">
-            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Entries</h1>
+            <h1 className="text-xl font-semibold text-[#24292f] mb-1">
+              Entries
+            </h1>
             <p className="text-sm text-[#57606a]">
               팀원들의 최근 스냅샷 엔트리를 확인하세요
             </p>
@@ -148,7 +160,7 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
             totalCount={initialFeedItems.length}
           />
 
-          <InfiniteFeedList 
+          <InfiniteFeedList
             initialFeedItems={initialFeedItems}
             searchQuery={searchQuery}
             onSearchStateChange={setIsSearching}
@@ -196,7 +208,7 @@ export function TeamFeedClient({ initialFeedItems, activityData }: TeamFeedClien
         />
 
         {/* Entries */}
-        <InfiniteFeedList 
+        <InfiniteFeedList
           initialFeedItems={initialFeedItems}
           searchQuery={searchQuery}
           onSearchStateChange={setIsSearching}
@@ -213,4 +225,3 @@ function formatDate(dateStr: string): string {
     day: "numeric",
   }).format(date);
 }
-
