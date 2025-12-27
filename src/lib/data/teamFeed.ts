@@ -17,26 +17,28 @@ export async function getTeamFeedData(
 ): Promise<{ feedItems: FeedItemData[]; error?: string }> {
   const supabase = await createClient();
 
-  // 1. 워크스페이스 멤버 조회 (profiles 정보 포함)
+  // 1. 워크스페이스 멤버 조회
   const { data: members, error: membersError } = await supabase
     .from("workspace_members")
-    .select(
-      `
-      user_id,
-      role,
-      profiles:user_id (
-        display_name,
-        email
-      )
-    `
-    )
+    .select("user_id, role")
     .eq("workspace_id", workspaceId);
 
   if (membersError || !members) {
     return { feedItems: [], error: "멤버 정보 조회 실패" };
   }
 
-  // 2. 최근 N주의 스냅샷과 엔트리 조회
+  // 2. 프로필 정보 조회
+  const userIds = members.map((m) => m.user_id);
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("user_id, display_name, email")
+    .in("user_id", userIds);
+
+  if (profilesError || !profiles) {
+    return { feedItems: [], error: "프로필 정보 조회 실패" };
+  }
+
+  // 3. 최근 N주의 스냅샷과 엔트리 조회
   const { data: snapshots, error: snapshotsError } = await supabase
     .from("snapshots")
     .select(
@@ -73,19 +75,23 @@ export async function getTeamFeedData(
     return { feedItems: [], error: "스냅샷 조회 실패" };
   }
 
-  // 3. 멤버 정보 맵 생성
+  // 4. 멤버 정보 맵 생성 (members + profiles 결합)
+  const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
   const memberMap = new Map(
-    members.map((m) => [
-      m.user_id,
-      {
-        name: (m.profiles as any)?.display_name || "",
-        email: (m.profiles as any)?.email || "",
-        role: m.role,
-      },
-    ])
+    members.map((m) => {
+      const profile = profileMap.get(m.user_id);
+      return [
+        m.user_id,
+        {
+          name: profile?.display_name || "",
+          email: profile?.email || "",
+          role: m.role,
+        },
+      ];
+    })
   );
 
-  // 4. person + week 조합으로 그룹화
+  // 5. person + week 조합으로 그룹화
   const feedItemsMap = new Map<string, FeedItemData>();
 
   for (const snapshot of snapshots) {
@@ -149,13 +155,13 @@ export async function getTeamFeedData(
     }
   }
 
-  // 5. 각 피드 아이템의 하이라이트 추출
+  // 6. 각 피드 아이템의 하이라이트 추출
   const feedItems = Array.from(feedItemsMap.values());
   for (const item of feedItems) {
     item.highlight = extractWeeklyHighlight(item.entries);
   }
 
-  // 6. 최신 활동 순으로 정렬
+  // 7. 최신 활동 순으로 정렬
   feedItems.sort((a, b) => {
     return new Date(b.latestActivityDate).getTime() - new Date(a.latestActivityDate).getTime();
   });

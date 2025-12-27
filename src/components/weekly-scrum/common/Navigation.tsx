@@ -695,9 +695,14 @@ export function MobileNavigation({
   const mobileItems = navCategories
     .flatMap((cat) => cat.items)
     .filter((item) =>
-      ["team-feed", "work-map", "calendar", "snapshots", "plans", "manage"].includes(
-        item.key
-      )
+      [
+        "team-feed",
+        "work-map",
+        "calendar",
+        "snapshots",
+        "plans",
+        "manage",
+      ].includes(item.key)
     );
 
   return (
