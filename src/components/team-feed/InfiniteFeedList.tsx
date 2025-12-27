@@ -29,11 +29,9 @@ export function InfiniteFeedList({
   // 검색 필터링
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) {
-      onSearchStateChange?.(false);
       return initialFeedItems;
     }
 
-    onSearchStateChange?.(true);
     const query = searchQuery.toLowerCase();
 
     const filtered = initialFeedItems.filter((item) => {
@@ -71,12 +69,27 @@ export function InfiniteFeedList({
         return false;
       });
     });
-
-    // 검색 완료 후 상태 업데이트
-    setTimeout(() => onSearchStateChange?.(false), 300);
     
     return filtered;
-  }, [initialFeedItems, searchQuery, onSearchStateChange]);
+  }, [initialFeedItems, searchQuery]);
+
+  // 검색 상태 변경 알림 (useEffect로 분리)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      onSearchStateChange?.(false);
+      return;
+    }
+
+    // 검색 시작
+    onSearchStateChange?.(true);
+    
+    // 검색 완료 후 상태 업데이트
+    const timer = setTimeout(() => {
+      onSearchStateChange?.(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, onSearchStateChange]);
 
   // 검색 쿼리 변경 시 페이지 리셋
   useEffect(() => {
