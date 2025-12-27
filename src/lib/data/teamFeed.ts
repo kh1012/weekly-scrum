@@ -185,7 +185,7 @@ function extractWeeklyHighlight(entries: TeamFeedEntry[]): {
 
   // Progress: this_week tasks가 있는 첫 엔트리
   for (const entry of entries) {
-    if (entry.thisWeek.tasks.length > 0) {
+    if (entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0) {
       progress = entry.thisWeek.tasks[0];
       if (progress.length > 80) {
         progress = progress.substring(0, 80) + "...";
@@ -194,10 +194,10 @@ function extractWeeklyHighlight(entries: TeamFeedEntry[]): {
     }
   }
 
-  // Next: past_week tasks가 있는 첫 엔트리
+  // Next: past_week tasks가 있는 첫 엔트리 (객체에서 title 추출)
   for (const entry of entries) {
-    if (entry.pastWeek.tasks.length > 0) {
-      next = entry.pastWeek.tasks[0];
+    if (entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0) {
+      next = entry.pastWeek.tasks[0].title;
       if (next.length > 80) {
         next = next.substring(0, 80) + "...";
       }

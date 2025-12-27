@@ -2,6 +2,11 @@
  * Team Activity Feed 타입 정의
  */
 
+export interface PastWeekTask {
+  title: string;
+  progress: number;
+}
+
 export interface TeamFeedEntry {
   id: string;
   snapshotId: string;
@@ -15,16 +20,16 @@ export interface TeamFeedEntry {
   module: string;
   feature: string;
   pastWeek: {
-    tasks: string[];
+    tasks?: PastWeekTask[];
   };
   thisWeek: {
-    tasks: string[];
+    tasks?: string[];
   };
   risks: string[];
   riskLevel: number;
   collaborators: Array<{
-    id: string;
     name: string;
+    relation?: string;
   }>;
   createdAt: string;
   updatedAt: string;

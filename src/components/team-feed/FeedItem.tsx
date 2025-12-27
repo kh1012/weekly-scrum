@@ -18,9 +18,11 @@ export function FeedItem({ data }: FeedItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const progressCount = data.entries.filter(
-    (e) => e.thisWeek.tasks.length > 0
+    (e) => e.thisWeek.tasks && e.thisWeek.tasks.length > 0
   ).length;
-  const nextCount = data.entries.filter((e) => e.pastWeek.tasks.length > 0).length;
+  const nextCount = data.entries.filter(
+    (e) => e.pastWeek.tasks && e.pastWeek.tasks.length > 0
+  ).length;
   const riskCount = data.entries.filter((e) => e.risks.length > 0).length;
 
   return (
@@ -102,7 +104,7 @@ export function FeedItem({ data }: FeedItemProps) {
                 </div>
 
                 {/* Progress (This Week) */}
-                {entry.thisWeek.tasks.length > 0 && (
+                {entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">
                       Progress
@@ -118,13 +120,18 @@ export function FeedItem({ data }: FeedItemProps) {
                 )}
 
                 {/* Next (Past Week) */}
-                {entry.pastWeek.tasks.length > 0 && (
+                {entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Next</p>
                     <ul className="space-y-1 text-gray-600">
                       {entry.pastWeek.tasks.map((task, idx) => (
                         <li key={idx} className="text-sm leading-relaxed">
-                          • {task}
+                          • {task.title}
+                          {task.progress > 0 && (
+                            <span className="ml-2 text-xs text-gray-500">
+                              ({task.progress}%)
+                            </span>
+                          )}
                         </li>
                       ))}
                     </ul>
