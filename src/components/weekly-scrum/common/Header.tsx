@@ -66,7 +66,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/releases" ||
     pathname === "/releases/" ||
     pathname.startsWith("/releases/");
-  
+
   // 최소 GNB 모드
   const isMinimalGnb =
     isMyDashboard ||
@@ -77,7 +77,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     isMetaOptionsPage ||
     isTeamFeedPage ||
     isReleasesPage;
-  
+
   // GNB 컴포넌트 완전 숨김
   const hideAllControls = isMinimalGnb;
   // 주차 선택기 숨김
@@ -111,9 +111,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
   }, [isFilterPopoverOpen]);
 
   return (
-    <header
-      className="sticky top-0 z-[50] w-full h-16 px-4 lg:px-6 bg-[#f6f8fa] border-b border-[#d0d7de]"
-    >
+    <header className="sticky top-0 z-[40] w-full h-16 px-4 lg:px-6 bg-[#f6f8fa] border-b border-[#d0d7de]">
       <div className="flex items-center justify-between h-full max-w-full mx-auto">
         {/* 좌측: 햄버거 + 로고 + 주차 선택 */}
         <div className="flex items-center gap-3 lg:gap-4">
@@ -139,7 +137,10 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
           </button>
 
           {/* 로고 */}
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <Logo className="w-7 h-7" />
             <span className="hidden sm:block text-[#24292f] font-semibold text-base">
               Weekly Scrum
@@ -171,12 +172,12 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
           {/* 필터 - 항상 표시 */}
           {!hideFilters && (
             <div className="flex items-center">
-              <ExpandableFilters 
-                // 기본 필터 값 설정 (옵션)
-                // defaultFilters={{
-                //   members: ["김철수"],
-                //   projects: ["weekly-scrum"]
-                // }}
+              <ExpandableFilters
+              // 기본 필터 값 설정 (옵션)
+              // defaultFilters={{
+              //   members: ["김철수"],
+              //   projects: ["weekly-scrum"]
+              // }}
               />
             </div>
           )}
