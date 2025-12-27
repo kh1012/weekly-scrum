@@ -5,6 +5,7 @@ import { ReactNode, useState, useEffect, Suspense } from "react";
 import { Header } from "./Header";
 import { NavigationProgress } from "./NavigationProgress";
 import { SideNavigation } from "./Navigation";
+import { Logo } from "./Logo";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 
 interface LayoutWrapperProps {
@@ -130,7 +131,10 @@ function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
       >
         {/* 헤더 - 고정 */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-[#d0d7de] shrink-0">
-          <span className="text-lg font-semibold text-[#24292f]">메뉴</span>
+          <div className="flex items-center gap-2">
+            <Logo className="w-6 h-6" />
+            <span className="text-base font-semibold text-[#24292f]">Weekly Scrum</span>
+          </div>
           <button
             onClick={onClose}
             className="flex items-center justify-center w-8 h-8 rounded-md text-[#57606a] hover:bg-[#f6f8fa] transition-colors"

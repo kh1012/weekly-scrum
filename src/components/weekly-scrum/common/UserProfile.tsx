@@ -15,7 +15,7 @@ interface UserInfo {
 const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
 
 /**
- * 사용자 프로필 컴포넌트
+ * 사용자 프로필 컴포넌트 - GitHub 스타일
  * - GNB 우측에 표시되는 프로필 아이콘
  * - 클릭 시 Portal 팝오버로 사용자 정보 표시
  */
@@ -57,7 +57,7 @@ export function UserProfile() {
         return;
       }
 
-      // 작성한 스냅샷 개수 가져오기 (snapshots 테이블에서 workspace_id + author_id로 매칭)
+      // 작성한 스냅샷 개수 가져오기
       const { count } = await supabase
         .from("snapshots")
         .select("*", { count: "exact", head: true })
@@ -146,7 +146,7 @@ export function UserProfile() {
   // 로딩 중이거나 사용자 정보가 없으면 표시하지 않음
   if (isLoading) {
     return (
-      <div className="w-9 h-9 rounded-full animate-pulse" style={{ background: "var(--notion-bg-secondary)" }} />
+      <div className="w-8 h-8 rounded-full bg-[#d0d7de] animate-pulse" />
     );
   }
 
@@ -159,73 +159,43 @@ export function UserProfile() {
 
   return (
     <>
-      {/* 프로필 버튼 */}
+      {/* 프로필 버튼 - GitHub 스타일 */}
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 hover:scale-105"
-        style={{
-          background: isOpen
-            ? "linear-gradient(135deg, #3b82f6, #8b5cf6)"
-            : "linear-gradient(135deg, #6366f1, #8b5cf6)",
-          color: "white",
-          fontWeight: 600,
-          fontSize: "14px",
-          boxShadow: isOpen
-            ? "0 4px 12px rgba(99, 102, 241, 0.4)"
-            : "0 2px 8px rgba(99, 102, 241, 0.3)",
-        }}
+        className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm transition-colors ${
+          isOpen
+            ? "bg-[#0969da] text-white"
+            : "bg-[#0969da] text-white hover:bg-[#0860ca]"
+        }`}
         title={userInfo.displayName}
       >
         {initial}
       </button>
 
-      {/* 팝오버 - Portal로 body에 직접 렌더링 */}
+      {/* 팝오버 - Portal로 body에 직접 렌더링 - GitHub 스타일 */}
       {isOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={popoverRef}
-          className="fixed w-72 rounded-2xl overflow-hidden animate-context-menu"
+          className="fixed w-80 bg-white border border-[#d0d7de] rounded-md animate-context-menu"
           style={{
             top: popoverPosition.top,
             right: popoverPosition.right,
             zIndex: 99999,
-            background: "rgba(255, 255, 255, 0.98)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            boxShadow:
-              "0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06)",
-            border: "1px solid rgba(0, 0, 0, 0.06)",
+            boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
           }}
         >
           {/* 헤더 영역 */}
-          <div
-            className="px-4 py-4"
-            style={{
-              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08))",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold"
-                style={{
-                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                  color: "white",
-                }}
-              >
+          <div className="px-4 py-3 border-b border-[#d0d7de]">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#0969da] flex items-center justify-center text-white font-semibold text-base shrink-0">
                 {initial}
               </div>
               <div className="flex-1 min-w-0">
-                <p
-                  className="font-semibold text-sm truncate"
-                  style={{ color: "var(--notion-text)" }}
-                >
+                <p className="font-semibold text-sm text-[#24292f] truncate">
                   {userInfo.displayName}
                 </p>
-                <p
-                  className="text-xs truncate mt-0.5"
-                  style={{ color: "var(--notion-text-secondary)" }}
-                >
+                <p className="text-xs text-[#57606a] truncate mt-0.5">
                   {userInfo.email}
                 </p>
               </div>
@@ -233,15 +203,11 @@ export function UserProfile() {
           </div>
 
           {/* 통계 영역 */}
-          <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.04)" }}>
+          <div className="px-4 py-3 border-b border-[#d0d7de]">
             <div className="flex items-center gap-3">
-              <div
-                className="flex items-center justify-center w-8 h-8 rounded-lg"
-                style={{ background: "rgba(59, 130, 246, 0.1)" }}
-              >
+              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-[#ddf4ff]">
                 <svg
-                  className="w-4 h-4"
-                  style={{ color: "#3b82f6" }}
+                  className="w-4 h-4 text-[#0969da]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -255,16 +221,10 @@ export function UserProfile() {
                 </svg>
               </div>
               <div>
-                <p
-                  className="text-xs"
-                  style={{ color: "var(--notion-text-secondary)" }}
-                >
+                <p className="text-xs text-[#57606a]">
                   작성한 스냅샷
                 </p>
-                <p
-                  className="text-sm font-semibold"
-                  style={{ color: "var(--notion-text)" }}
-                >
+                <p className="text-sm font-semibold text-[#24292f]">
                   {userInfo.snapshotCount}개
                 </p>
               </div>
@@ -275,8 +235,7 @@ export function UserProfile() {
           <div className="p-2">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors hover:bg-red-50"
-              style={{ color: "#ef4444" }}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-[#cf222e] hover:bg-[#ffebe9] transition-colors"
             >
               <svg
                 className="w-4 h-4"
