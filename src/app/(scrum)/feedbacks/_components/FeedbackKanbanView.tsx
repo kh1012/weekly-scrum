@@ -131,7 +131,7 @@ export function FeedbackKanbanView({
   }, [isPending, updatingFeedbackId]);
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col bg-white border border-[#d0d7de] rounded-md">
+    <div className="flex flex-col bg-white border border-[#d0d7de] rounded-md">
       {/* 헤더 영역 - GitHub 스타일 */}
       <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de] rounded-t-md">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -192,12 +192,13 @@ export function FeedbackKanbanView({
       </div>
 
       {/* 칸반 보드 영역 - Grid 레이아웃 */}
-      <div className="flex-1 overflow-hidden bg-white">
-        <div className="h-full grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-3 p-3 md:p-4">
+      <div className="bg-white pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 p-3 md:p-4">
           {KANBAN_COLUMNS.map((col) => (
             <div
               key={col.status}
-              className="flex flex-col min-w-0 bg-[#f6f8fa] border border-[#d0d7de] rounded-md"
+              className="flex flex-col bg-[#f6f8fa] border border-[#d0d7de] rounded-md overflow-hidden"
+              style={{ minHeight: '400px' }}
             >
               {/* 열 헤더 - GitHub 스타일 */}
               <div className="shrink-0 px-3 py-2 bg-white border-b border-[#d0d7de] flex items-center justify-between">
@@ -218,7 +219,7 @@ export function FeedbackKanbanView({
               </div>
 
               {/* 카드 목록 */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-2">
+              <div className="p-2 space-y-2">
                 {groupedFeedbacks[col.status]?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-[#57606a]">
                     <svg
@@ -259,9 +260,9 @@ export function FeedbackKanbanView({
         </div>
       </div>
 
-      {/* 빈 상태 오버레이 - GitHub 스타일 */}
+      {/* 빈 상태 - GitHub 스타일 */}
       {feedbacks.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/95 z-10">
+        <div className="p-12 flex items-center justify-center bg-white">
           <div className="text-center px-4">
             <svg
               className="w-12 h-12 mx-auto mb-3 text-[#57606a] opacity-40"

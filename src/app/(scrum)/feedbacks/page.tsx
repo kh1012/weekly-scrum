@@ -22,7 +22,7 @@ export default async function FeedbacksPage() {
 
   if (!feedbacksResult.success && feedbacksResult.error) {
     return (
-      <div className="h-[calc(100vh-7rem)] flex items-center justify-center bg-white border border-[#d0d7de] rounded-md">
+      <div className="min-h-[400px] flex items-center justify-center bg-white border border-[#d0d7de] rounded-md">
         <div className="p-4 max-w-md bg-[#fff8c5] border border-[#d0d7de] rounded-md">
           <p className="text-sm text-[#24292f]">{feedbacksResult.error}</p>
         </div>

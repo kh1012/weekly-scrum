@@ -40,8 +40,8 @@ export default async function TeamFeedPage() {
 
   if (feedError) {
     return (
-      <div className="h-full flex items-center justify-center bg-white border border-[#d0d7de] rounded-md">
-        <div className="text-center px-4">
+      <div className="h-full flex items-center justify-center bg-[#f6f8fa] px-4">
+        <div className="text-center p-6 bg-white border border-[#d0d7de] rounded-md max-w-md">
           <h2 className="text-base font-semibold text-[#24292f] mb-2">
             데이터를 불러올 수 없습니다
           </h2>
@@ -53,8 +53,8 @@ export default async function TeamFeedPage() {
 
   if (feedItems.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center bg-white border border-[#d0d7de] rounded-md">
-        <div className="text-center px-4">
+      <div className="h-full flex items-center justify-center bg-[#f6f8fa] px-4">
+        <div className="text-center p-6 bg-white border border-[#d0d7de] rounded-md max-w-md">
           <h2 className="text-base font-semibold text-[#24292f] mb-2">
             아직 작성된 스냅샷이 없습니다
           </h2>
@@ -67,35 +67,36 @@ export default async function TeamFeedPage() {
   }
 
   return (
-    <div className="h-full overflow-hidden bg-white border border-[#d0d7de] rounded-md">
-      {/* 데스크톱 레이아웃 (≥1024px): 3컬럼 */}
-      <div className="hidden lg:grid lg:grid-cols-[200px_1fr_320px] gap-0 h-full overflow-hidden">
+    <div className="h-full overflow-hidden bg-[#f6f8fa]">
+      {/* 데스크톱 레이아웃 (≥1024px): GitHub 스타일 */}
+      <div className="hidden lg:grid lg:grid-cols-[240px_1fr_360px] gap-6 h-full overflow-hidden px-6 py-6">
         {/* 왼쪽: 타임라인 스파인 */}
-        <div className="overflow-y-auto border-r border-[#d0d7de] bg-[#f6f8fa]">
-          <TimelineSpine weeks={weeks} />
-        </div>
-
-        {/* 중앙: 피드 */}
         <div className="overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            <div className="mb-6 pb-4 border-b border-[#d0d7de]">
-              <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
-              <p className="text-sm text-[#57606a]">
-                팀원들의 최근 활동을 확인하세요
-              </p>
-            </div>
-
-            {feedItems.map((item) => (
-              <FeedItem
-                key={`${item.personId}-${item.year}-${item.week}`}
-                data={item}
-              />
-            ))}
+          <div className="bg-white border border-[#d0d7de] rounded-md p-4">
+            <h2 className="text-sm font-semibold text-[#24292f] mb-3">Weeks</h2>
+            <TimelineSpine weeks={weeks} />
           </div>
         </div>
 
+        {/* 중앙: 피드 - GitHub 스타일 */}
+        <div className="overflow-y-auto">
+          <div className="mb-4">
+            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
+            <p className="text-sm text-[#57606a]">
+              팀원들의 최근 활동을 확인하세요
+            </p>
+          </div>
+
+          {feedItems.map((item) => (
+            <FeedItem
+              key={`${item.personId}-${item.year}-${item.week}`}
+              data={item}
+            />
+          ))}
+        </div>
+
         {/* 오른쪽: 활동 차트 */}
-        <div className="overflow-y-auto border-l border-[#d0d7de] bg-[#f6f8fa]">
+        <div className="overflow-y-auto">
           {activityData && activityData.length > 0 && (
             <ActivityChart data={activityData} />
           )}
@@ -103,45 +104,26 @@ export default async function TeamFeedPage() {
       </div>
 
       {/* 태블릿 레이아웃 (768-1023px): 2컬럼 */}
-      <div className="hidden md:grid lg:hidden md:grid-cols-[1fr_280px] gap-0 h-full overflow-hidden">
-        {/* 왼쪽: 피드 (sticky 주차 헤더) */}
+      <div className="hidden md:grid lg:hidden md:grid-cols-[1fr_300px] gap-4 h-full overflow-hidden px-4 py-4">
+        {/* 왼쪽: 피드 */}
         <div className="overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-4 py-6">
-            <div className="mb-6 pb-4 border-b border-[#d0d7de]">
-              <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
-              <p className="text-sm text-[#57606a]">
-                팀원들의 최근 활동을 확인하세요
-              </p>
-            </div>
-
-            {weeks.map((week) => {
-              const weekItems = feedItems.filter(
-                (item) => item.year === week.year && item.week === week.week
-              );
-
-              return (
-                <div key={`${week.year}-${week.week}`} className="mb-8">
-                  {/* Sticky Week Header */}
-                  <div className="sticky top-0 bg-white z-10 py-2 mb-4 border-b border-[#d0d7de]">
-                    <h2 className="text-sm font-semibold text-[#24292f]">
-                      {week.year} {week.label}
-                    </h2>
-                  </div>
-
-                  {weekItems.map((item) => (
-                    <FeedItem
-                      key={`${item.personId}-${item.year}-${item.week}`}
-                      data={item}
-                    />
-                  ))}
-                </div>
-              );
-            })}
+          <div className="mb-4">
+            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
+            <p className="text-sm text-[#57606a]">
+              팀원들의 최근 활동을 확인하세요
+            </p>
           </div>
+
+          {feedItems.map((item) => (
+            <FeedItem
+              key={`${item.personId}-${item.year}-${item.week}`}
+              data={item}
+            />
+          ))}
         </div>
 
         {/* 오른쪽: 활동 차트 */}
-        <div className="overflow-y-auto border-l border-[#d0d7de] bg-[#f6f8fa]">
+        <div className="overflow-y-auto">
           {activityData && activityData.length > 0 && (
             <ActivityChart data={activityData} />
           )}
@@ -149,61 +131,42 @@ export default async function TeamFeedPage() {
       </div>
 
       {/* 모바일 레이아웃 (<768px): 1컬럼 */}
-      <div className="md:hidden h-full overflow-y-auto">
-        <div className="px-4 py-4">
-          <div className="mb-4 pb-3 border-b border-[#d0d7de]">
-            <h1 className="text-lg font-semibold text-[#24292f] mb-1">Team Feed</h1>
+      <div className="md:hidden h-full overflow-y-auto px-4 py-4">
+        <div className="mb-4">
+          <h1 className="text-lg font-semibold text-[#24292f] mb-1">Team Feed</h1>
 
-            {/* 활동 요약 (한 줄) */}
-            {activityData && activityData.length > 0 && (
-              <p className="text-xs text-[#57606a] mt-1">
-                Avg{" "}
-                {(
-                  activityData.reduce((sum, d) => sum + d.count, 0) /
-                  activityData.length
-                ).toFixed(1)}{" "}
-                entries/day · Peak:{" "}
-                {formatDate(
-                  activityData.reduce((prev, current) =>
-                    current.count > prev.count ? current : prev
-                  ).date
-                )}{" "}
-                (
-                {
-                  activityData.reduce((prev, current) =>
-                    current.count > prev.count ? current : prev
-                  ).count
-                }
-                )
-              </p>
-            )}
-          </div>
-
-          {/* 피드 (sticky 주차 헤더) */}
-          {weeks.map((week) => {
-            const weekItems = feedItems.filter(
-              (item) => item.year === week.year && item.week === week.week
-            );
-
-            return (
-              <div key={`${week.year}-${week.week}`} className="mb-6">
-                {/* Sticky Week Header */}
-                <div className="sticky top-0 bg-white z-10 py-2 mb-3 border-b border-[#d0d7de]">
-                  <h2 className="text-sm font-semibold text-[#24292f]">
-                    {week.year} {week.label}
-                  </h2>
-                </div>
-
-                {weekItems.map((item) => (
-                  <FeedItem
-                    key={`${item.personId}-${item.year}-${item.week}`}
-                    data={item}
-                  />
-                ))}
-              </div>
-            );
-          })}
+          {/* 활동 요약 (한 줄) */}
+          {activityData && activityData.length > 0 && (
+            <p className="text-xs text-[#57606a] mt-1">
+              Avg{" "}
+              {(
+                activityData.reduce((sum, d) => sum + d.count, 0) /
+                activityData.length
+              ).toFixed(1)}{" "}
+              entries/day · Peak:{" "}
+              {formatDate(
+                activityData.reduce((prev, current) =>
+                  current.count > prev.count ? current : prev
+                ).date
+              )}{" "}
+              (
+              {
+                activityData.reduce((prev, current) =>
+                  current.count > prev.count ? current : prev
+                ).count
+              }
+              )
+            </p>
+          )}
         </div>
+
+        {/* 피드 */}
+        {feedItems.map((item) => (
+          <FeedItem
+            key={`${item.personId}-${item.year}-${item.week}`}
+            data={item}
+          />
+        ))}
       </div>
     </div>
   );
