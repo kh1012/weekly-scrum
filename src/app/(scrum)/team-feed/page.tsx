@@ -72,8 +72,8 @@ export default async function TeamFeedPage() {
       <div className="hidden lg:flex gap-4 h-full overflow-hidden px-4 py-4">
         {/* 왼쪽: 타임라인 스파인 - 고정 너비 */}
         <div className="w-60 flex-shrink-0 overflow-y-auto">
-          <div className="bg-white border border-[#d0d7de] rounded-md p-4">
-            <h2 className="text-sm font-semibold text-[#24292f] mb-3">Weeks</h2>
+          <div className="py-2">
+            <h2 className="text-sm font-semibold text-[#24292f] mb-3 px-2">Weeks</h2>
             <TimelineSpine weeks={weeks} />
           </div>
         </div>

@@ -34,9 +34,9 @@ export function ActivityChart({ data }: ActivityChartProps) {
   );
 
   return (
-    <div className="sticky top-0 h-fit bg-white border border-[#d0d7de] rounded-md p-4">
-      <h3 className="text-sm font-semibold text-[#24292f] mb-1">Team Activity</h3>
-      <p className="text-xs text-[#57606a] mb-4">
+    <div className="sticky top-0 h-fit py-2">
+      <h3 className="text-sm font-semibold text-[#24292f] mb-1 px-2">Team Activity</h3>
+      <p className="text-xs text-[#57606a] mb-4 px-2">
         Avg {avgCount} entries/day · Peak: {formatDate(peakDay.date)} (
         {peakDay.count})
       </p>
