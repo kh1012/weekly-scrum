@@ -2,8 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { ReactNode, useState, useEffect, Suspense } from "react";
-import { Header, Sidebar } from "./Header";
+import { Header } from "./Header";
 import { NavigationProgress } from "./NavigationProgress";
+import { SideNavigation } from "./Navigation";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 
 interface LayoutWrapperProps {
@@ -73,9 +74,90 @@ export function getLastVisitedPage(): string | null {
   }
 }
 
+/**
+ * GitHub 스타일 Drawer Navigation
+ */
+interface DrawerNavigationProps {
+  isOpen: boolean;
+  onClose: () => void;
+  role?: WorkspaceRole;
+}
+
+function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
+  // ESC 키로 닫기
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // body 스크롤 방지
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+        onClick={onClose}
+        aria-label="메뉴 닫기"
+      />
+
+      {/* Drawer */}
+      <aside
+        className="fixed top-0 left-0 h-full w-[280px] sm:w-[320px] bg-white border-r border-[#d0d7de] z-50 overflow-y-auto animate-slide-in-left shadow-xl"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-[#d0d7de]">
+          <span className="text-lg font-semibold text-[#24292f]">메뉴</span>
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-8 h-8 rounded-md text-[#57606a] hover:bg-[#f6f8fa] transition-colors"
+            aria-label="메뉴 닫기"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* 네비게이션 */}
+        <div className="py-2">
+          <SideNavigation onItemClick={onClose} role={role} />
+        </div>
+      </aside>
+    </>
+  );
+}
+
 export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
   const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 현재 경로를 localStorage에 저장
   useEffect(() => {
@@ -90,29 +172,30 @@ export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
     }
   }, [pathname]);
 
+  // 페이지 변경 시 메뉴 닫기
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
   return (
-    <div className="min-h-screen" style={{ background: "var(--notion-bg)" }}>
+    <div className="min-h-screen bg-[#f6f8fa]">
       {/* 네비게이션 프로그레스 바 */}
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
 
-      {/* PC 사이드바 */}
-      <Sidebar isOpen={isSidebarOpen} role={role} />
+      {/* GNB */}
+      <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
+
+      {/* Drawer SNB */}
+      <DrawerNavigation
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        role={role}
+      />
 
       {/* 메인 영역 */}
-      <div
-        className={`transition-all duration-200 ${
-          isSidebarOpen ? "lg:ml-[340px]" : "lg:ml-0"
-        }`}
-      >
-        <Header
-          isSidebarOpen={isSidebarOpen}
-          onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          role={role}
-        />
-        {children}
-      </div>
+      <div className="w-full">{children}</div>
     </div>
   );
 }
@@ -131,12 +214,12 @@ export function MainContent({ children }: { children: ReactNode }) {
     NO_PADDING_PAGES.some((p) => pathname === p || pathname === p + "/") ||
     NO_PADDING_DYNAMIC_PATTERNS.some((pattern) => pathname.startsWith(pattern));
 
-  // GNB 높이: h-14 (3.5rem = 56px) + borderBottom 1px = 57px
+  // GNB 높이: h-16 (4rem = 64px)
   return (
     <main
       className={`mx-auto ${
         useNoPadding
-          ? "h-[calc(100vh-3.5rem-1px)] overflow-y-auto"
+          ? "h-[calc(100vh-4rem)] overflow-y-auto"
           : "px-4 py-6 sm:px-6 lg:px-8"
       } ${useFullWidth ? "max-w-full" : "max-w-6xl"}`}
     >
