@@ -20,33 +20,33 @@ export function TimelineSpine({ weeks }: TimelineSpineProps) {
   }, []);
 
   return (
-    <div className="sticky top-24 h-[calc(100vh-6rem)] flex flex-col py-8">
+    <div className="sticky top-6 h-[calc(100vh-3rem)] flex flex-col py-6 px-4">
       <div className="relative flex-1">
-        {/* 세로 라인 */}
-        <div className="absolute left-6 top-0 bottom-0 w-px bg-gray-200" />
+        {/* 세로 라인 - GitHub 스타일 */}
+        <div className="absolute left-4 top-0 bottom-0 w-px bg-[#d0d7de]" />
 
-        {/* 주차 노드 */}
-        <div className="space-y-12">
+        {/* 주차 노드 - GitHub 스타일 */}
+        <div className="space-y-8">
           {weeks.map((week, index) => (
             <div key={`${week.year}-${week.week}`} className="relative flex items-center">
               {/* 노드 */}
               <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                   index === activeWeekIndex
-                    ? "bg-blue-600 text-white shadow-lg scale-110"
-                    : "bg-white border-2 border-gray-200 text-gray-600"
+                    ? "bg-[#0969da] text-white"
+                    : "bg-white border-2 border-[#d0d7de] text-[#57606a]"
                 }`}
               >
                 <div className="text-center">
-                  <div className="text-xs font-semibold">{week.week}</div>
+                  <div className="text-[10px] font-semibold">{week.week}</div>
                 </div>
               </div>
 
               {/* 레이블 */}
-              <div className="ml-4">
+              <div className="ml-3">
                 <p
-                  className={`text-sm font-medium ${
-                    index === activeWeekIndex ? "text-gray-900" : "text-gray-500"
+                  className={`text-xs font-medium ${
+                    index === activeWeekIndex ? "text-[#24292f]" : "text-[#57606a]"
                   }`}
                 >
                   {week.year} {week.label}
