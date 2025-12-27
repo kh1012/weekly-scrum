@@ -68,18 +68,18 @@ export default async function TeamFeedPage() {
 
   return (
     <div className="h-full overflow-hidden bg-white">
-      {/* 데스크톱 레이아웃 (≥1024px): GitHub 스타일 */}
-      <div className="hidden lg:grid lg:grid-cols-[240px_1fr_360px] gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: 타임라인 스파인 */}
-        <div className="overflow-y-auto">
+      {/* 데스크톱 레이아웃 (≥1024px): Flex 레이아웃 - 전체 너비 100% */}
+      <div className="hidden lg:flex gap-4 h-full overflow-hidden px-4 py-4">
+        {/* 왼쪽: 타임라인 스파인 - 고정 너비 */}
+        <div className="w-60 flex-shrink-0 overflow-y-auto">
           <div className="bg-white border border-[#d0d7de] rounded-md p-4">
             <h2 className="text-sm font-semibold text-[#24292f] mb-3">Weeks</h2>
             <TimelineSpine weeks={weeks} />
           </div>
         </div>
 
-        {/* 중앙: 피드 - GitHub 스타일 */}
-        <div className="overflow-y-auto">
+        {/* 중앙: 피드 - flex-1로 나머지 공간 채우기 */}
+        <div className="flex-1 overflow-y-auto min-w-0">
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
             <p className="text-sm text-[#57606a]">
@@ -95,18 +95,18 @@ export default async function TeamFeedPage() {
           ))}
         </div>
 
-        {/* 오른쪽: 활동 차트 */}
-        <div className="overflow-y-auto">
+        {/* 오른쪽: 활동 차트 - 고정 너비 */}
+        <div className="w-80 flex-shrink-0 overflow-y-auto">
           {activityData && activityData.length > 0 && (
             <ActivityChart data={activityData} />
           )}
         </div>
       </div>
 
-      {/* 태블릿 레이아웃 (768-1023px): 2컬럼 */}
-      <div className="hidden md:grid lg:hidden md:grid-cols-[1fr_300px] gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: 피드 */}
-        <div className="overflow-y-auto">
+      {/* 태블릿 레이아웃 (768-1023px): Flex 레이아웃 */}
+      <div className="hidden md:flex lg:hidden gap-4 h-full overflow-hidden px-4 py-4">
+        {/* 왼쪽: 피드 - flex-1로 나머지 공간 채우기 */}
+        <div className="flex-1 overflow-y-auto min-w-0">
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
             <p className="text-sm text-[#57606a]">
@@ -122,8 +122,8 @@ export default async function TeamFeedPage() {
           ))}
         </div>
 
-        {/* 오른쪽: 활동 차트 */}
-        <div className="overflow-y-auto">
+        {/* 오른쪽: 활동 차트 - 고정 너비 */}
+        <div className="w-72 flex-shrink-0 overflow-y-auto">
           {activityData && activityData.length > 0 && (
             <ActivityChart data={activityData} />
           )}
