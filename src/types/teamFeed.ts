@@ -60,4 +60,3 @@ export interface TeamFeedData {
   feedItems: FeedItemData[];
   activityData: ActivityChartData[];
 }
-

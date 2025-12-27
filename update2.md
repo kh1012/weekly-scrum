@@ -1,91 +1,217 @@
-너는 Airbnb 디자인 철학을 따르는
-Next.js(App Router) + Supabase 기반 제품 UI를 구현한다.
+# GitHub-style UI Refactor + Responsive Migration (Menu-by-Menu)
 
-[디자인 원칙]
+You are refactoring an existing Weekly Scrum web app (Next.js + React + Tailwind).
+The goal is to redesign ONE menu/page to match a GitHub-like information-dense,
+minimal, professional UI — and make it responsive (desktop → mobile).
 
-- Airbnb 스타일:
-  - 충분한 여백 (spacing > decoration)
-  - 부드러운 radius (rounded-xl)
-  - 미묘한 shadow (shadow-sm / shadow-md)
-  - 명확한 정보 위계 (typography scale)
-  - 상태 변화는 색이 아니라 구조로 표현
-- 컬러:
-  - 기본: neutral / slate 계열
-  - status는 badge + text 조합
-- 애니메이션:
-  - framer-motion
-  - hover / state-change에만 사용 (과하지 않게)
+This is NOT a visual experiment.
+This is a systematic UI simplification + responsive migration.
 
-[권한 모델]
+---
 
-- member
-  - 본인 feedback CRUD
-  - status / release 필드 접근 불가
-- leader / admin
-  - 전체 feedback 조회
-  - 상태 변경 가능
-  - 해결 과정 기록 가능
+## Target Menu
 
-[UI 구조]
+- Menu Name: [e.g., Works > Weekly Log]
+- Route(s): [e.g., /works/weekly-log]
+- Primary user goals on this page:
+  - [read information quickly]
+  - [scan status / progress]
+  - [open details / write updates]
 
-1. Feedback List Page
+---
 
-- 카드 기반 리스트 (Airbnb listing 느낌)
-- 각 카드:
-  - title 또는 content 요약
-  - author name
-  - created_at
-  - status badge
-  - resolved 시: release version chip
-- 카드 클릭 → Detail
+## Core Design Philosophy (MUST FOLLOW)
 
-2. Feedback Detail Page
+### 1. GitHub-style Principles
 
-- 상단: 피드백 내용 (읽기 중심)
-- 중단: 상태 타임라인
-  - Open → In Progress → Resolved
-  - 현재 상태 강조
-- 하단:
-  - member: 읽기 전용
-  - leader/admin:
-    - Status Select (dropdown)
-    - Resolve Panel (status=resolved일 때만 노출)
+- Dense but readable (information > decoration)
+- Neutral, low-saturation color palette
+- Clear hierarchy via spacing, weight, and alignment — NOT color blocks
+- Borders over shadows
+- Flat UI (no card stacking unless it improves scanability)
+- Minimal animation, instant feedback
 
-3. Resolve Panel (leader/admin 전용)
+Reference mentally:
 
-- release select (필수)
-- 해결 요약 textarea (선택)
-- "Mark as Resolved" CTA
-- 저장 시:
-  - status = resolved
-  - resolved_release_id 설정
-  - 실패 시 DB 에러 메시지 그대로 노출
+- GitHub Issues / Pull Requests
+- GitHub Project board (table/list view)
+- Linear list view
 
-[UX 규칙]
+---
 
-- status 변경은 즉시 반영 (optimistic UI)
-- resolved 이후:
-  - 수정 불가 (admin/leader만 가능)
-- member는 status UI 자체를 보지 못함
-- 상태 변경은 명확한 의사결정 UX (confirm modal)
+## Global Visual System (DO NOT DEVIATE)
 
-[컴포넌트]
+### Color Palette
 
-- FeedbackCard
-- FeedbackStatusBadge
-- FeedbackTimeline
-- FeedbackForm
-- ResolvePanel
+- Background: white / very light gray (`#ffffff`, `#f6f8fa`)
+- Text primary: near-black (`#24292f`)
+- Text secondary: muted gray (`#57606a`)
+- Borders/dividers: subtle gray (`#d0d7de`)
+- Accent (links / primary action): GitHub blue (`#0969da`)
+- Status colors (use sparingly):
+  - success: muted green
+  - warning: muted yellow/orange
+  - danger: muted red
 
-[기술]
+❗ No large colored backgrounds. Color = meaning only.
 
-- supabase-js
-- server actions
-- RLS 신뢰 (프론트 권한 체크 최소화)
-- role은 profiles 테이블에서 조회
+---
 
-[결과물]
+### Typography
 
-- app/feedbacks/page.tsx
-- app/feedbacks/[id]/page.tsx
-- components/feedback/\*
+- Base font size: 14px (desktop), 13–14px (mobile)
+- Line height: relaxed but compact
+- Use font-weight for hierarchy:
+  - title: 600
+  - body: 400
+  - metadata: 400 + muted color
+- Avoid oversized headings.
+
+---
+
+### Spacing & Layout
+
+- Prefer vertical rhythm over cards
+- Use separators (`border-b`) instead of boxes
+- Horizontal padding:
+  - desktop: 24px
+  - mobile: 16px
+- Avoid deep nesting
+
+---
+
+### Components Style Rules
+
+- Buttons:
+  - default: subtle border, no fill
+  - primary: filled blue, used sparingly
+- Icons:
+  - small, muted, functional
+- Badges:
+  - outline or light fill only
+- Cards:
+  - avoid unless absolutely necessary
+  - lists > cards
+
+---
+
+## Responsive Strategy (Applied Together)
+
+### Desktop (≥1024px)
+
+- Keep dense list/table layout
+- Multi-column allowed
+- Right-side metadata allowed
+
+### Tablet (768–1023px)
+
+- Reduce columns
+- Stack secondary info below primary row
+
+### Mobile (<768px)
+
+- Single column
+- Convert tables → stacked rows
+- Inline metadata moves below title
+- Filters/actions move to:
+  - top toolbar
+  - or drawer / bottom sheet
+- No horizontal scroll unless explicitly intended
+
+---
+
+## Step 0 — UI & Layout Audit (MANDATORY)
+
+Before coding:
+
+- Identify visual noise:
+  - excessive background colors
+  - cards-within-cards
+  - heavy shadows
+  - oversized paddings
+- Identify layout issues:
+  - fixed widths
+  - multi-scroll containers
+  - mobile-unfriendly tables
+    Output:
+- What to REMOVE
+- What to SIMPLIFY
+- What to KEEP
+
+---
+
+## Step 1 — Visual Simplification First (NO RESPONSIVE YET)
+
+Do the following in order:
+
+1. Strip decorative styles (backgrounds, shadows, borders that don't convey meaning)
+2. Convert card-based UI → list-based UI where possible
+3. Normalize typography & spacing
+4. Replace color emphasis with:
+   - spacing
+   - font weight
+   - alignment
+5. Ensure page looks clean and readable on desktop
+
+Stop and verify before proceeding.
+
+---
+
+## Step 2 — Information Density Optimization
+
+- Combine related info into a single row/block
+- Move secondary info to muted inline metadata
+- Ensure a user can scan:
+  - status
+  - owner
+  - date
+  - progress
+    in under 2 seconds per item
+
+---
+
+## Step 3 — Responsive Conversion
+
+Apply responsive rules:
+
+- Use Tailwind breakpoints (`sm`, `md`, `lg`)
+- Mobile:
+  - Stack rows
+  - Hide non-essential columns
+  - Move filters/actions into drawer if needed
+- Ensure:
+  - no text overflow
+  - no clipped actions
+  - touch targets ≥ 44px
+
+---
+
+## Step 4 — Interaction Rules
+
+- No fancy animations
+- Hover only for desktop
+- Active/focus states must be clear
+- Click → immediate visual feedback
+- Loading = subtle skeleton or opacity
+
+---
+
+## Step 5 — Verification Checklist
+
+- Desktop still dense & efficient
+- Mobile usable with one hand
+- No horizontal scroll
+- Visual noise significantly reduced
+- Looks closer to GitHub than Notion
+
+---
+
+## Output Requirements
+
+- Files changed list
+- Before/After summary (what was simplified)
+- Key UI decisions & rationale
+- Manual test checklist (desktop + mobile)
+
+Start with Step 0 audit for the target menu.
+Proceed step-by-step. Do not skip steps.
