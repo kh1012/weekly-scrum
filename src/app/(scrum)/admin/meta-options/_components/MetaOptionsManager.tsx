@@ -184,23 +184,20 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
     : options;
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+    <div className="min-h-[calc(100vh-5rem)] bg-white">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8">
-        {/* 헤더 */}
-        <div className="mb-6 md:mb-10">
-          <h1 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight mb-2 md:mb-3">
-            Snapshot{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
-              Meta Options
-            </span>
+        {/* 헤더 - GitHub 스타일 */}
+        <div className="mb-6 pb-4 border-b border-[#d0d7de]">
+          <h1 className="text-xl font-semibold text-[#24292f] mb-1">
+            Snapshot Meta Options
           </h1>
-          <p className="text-sm md:text-lg text-gray-500 font-light">
+          <p className="text-sm text-[#57606a]">
             스냅샷 메타 옵션을 관리하세요
           </p>
         </div>
 
-        {/* 카테고리 탭 */}
-        <div className="mb-6 border-b border-gray-200">
+        {/* 카테고리 탭 - GitHub 스타일 */}
+        <div className="mb-6 border-b border-[#d0d7de]">
           <div className="flex gap-2 overflow-x-auto">
             {CATEGORIES.map((category) => (
               <button
@@ -211,8 +208,8 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
                 }}
                 className={`px-4 py-2 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${
                   selectedCategory === category
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-[#0969da] text-[#0969da]"
+                    : "border-transparent text-[#57606a] hover:text-[#24292f] hover:border-[#d0d7de]"
                 }`}
               >
                 {CATEGORY_LABELS[category]}
@@ -221,7 +218,7 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
           </div>
         </div>
 
-        {/* 검색 및 추가 버튼 */}
+        {/* 검색 및 추가 버튼 - GitHub 스타일 */}
         <div className="mb-6 flex items-center justify-between gap-4">
           <div className="flex-1 max-w-md relative">
             <input
@@ -229,36 +226,36 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by value or label..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-[#d0d7de] rounded-md bg-[#f6f8fa] text-[#24292f] placeholder-[#57606a] focus:bg-white focus:border-[#0969da] focus:outline-none focus:ring-2 focus:ring-[#0969da]/20 transition-colors"
             />
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57606a]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              strokeWidth={2}
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
           </div>
           <button
             onClick={handleCreate}
-            className="group px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center gap-2"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#0969da] hover:bg-[#0860ca] rounded-md transition-colors flex items-center gap-2"
           >
             <svg
-              className="w-4 h-4 transition-transform group-hover:rotate-90"
+              className="w-4 h-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              strokeWidth={2}
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
                 d="M12 4v16m8-8H4"
               />
             </svg>
@@ -266,8 +263,8 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
           </button>
         </div>
 
-        {/* 테이블 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md">
+        {/* 테이블 - GitHub 스타일 */}
+        <div className="bg-white rounded-md border border-[#d0d7de] overflow-hidden">
           <MetaOptionsTable
             options={filteredOptions}
             onEdit={handleEdit}
@@ -299,15 +296,18 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
         cancelText="취소"
       />
 
-      {/* Toast */}
+      {/* Toast - GitHub 스타일 */}
       {toast && (
         <div className="fixed bottom-4 right-4 z-50 animate-scale-in">
           <div
-            className={`px-4 py-3 rounded-lg shadow-lg ${
+            className={`px-4 py-3 rounded-md border ${
               toast.type === "success"
-                ? "bg-green-600 text-white"
-                : "bg-red-600 text-white"
+                ? "bg-[#dafbe1] text-[#1f883d] border-[#1f883d]/20"
+                : "bg-[#ffebe9] text-[#cf222e] border-[#ff8182]/20"
             }`}
+            style={{
+              boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
+            }}
           >
             {toast.message}
           </div>
