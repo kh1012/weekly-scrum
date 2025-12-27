@@ -301,7 +301,7 @@ export function SideNavigation({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Navigation Items */}
-      <nav className="flex-1 overflow-y-auto px-2 py-2">
+      <nav className="flex-1 px-2 py-2">
         {navCategories.map((category) => {
           const isCollapsed = collapsedCategories.has(category.key);
           const isAdminSection = category.adminOnly;

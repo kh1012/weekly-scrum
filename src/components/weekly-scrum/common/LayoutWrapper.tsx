@@ -111,19 +111,25 @@ function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - GitHub 스타일 */}
       <div
-        className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+        className="fixed inset-0 z-[45] animate-fade-in"
+        style={{ backgroundColor: "#c8d1da66" }}
         onClick={onClose}
         aria-label="메뉴 닫기"
       />
 
-      {/* Drawer */}
+      {/* Drawer - GitHub 스타일 */}
       <aside
-        className="fixed top-0 left-0 h-full w-[280px] sm:w-[320px] bg-white border-r border-[#d0d7de] z-50 overflow-y-auto animate-slide-in-left shadow-xl"
+        className="fixed top-0 left-0 h-full w-[280px] sm:w-[320px] bg-white z-[60] flex flex-col animate-slide-in-left"
+        style={{
+          borderTopRightRadius: "12px",
+          borderBottomRightRadius: "12px",
+          boxShadow: "rgba(0, 0, 0, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 5px 10px, rgba(0, 0, 0, 0.08) 0px 15px 40px",
+        }}
       >
-        {/* 헤더 */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-[#d0d7de]">
+        {/* 헤더 - 고정 */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-[#d0d7de] shrink-0">
           <span className="text-lg font-semibold text-[#24292f]">메뉴</span>
           <button
             onClick={onClose}
@@ -146,8 +152,8 @@ function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
           </button>
         </div>
 
-        {/* 네비게이션 */}
-        <div className="py-2">
+        {/* 네비게이션 - 스크롤 가능 영역 */}
+        <div className="flex-1 overflow-y-auto py-2">
           <SideNavigation onItemClick={onClose} role={role} />
         </div>
       </aside>

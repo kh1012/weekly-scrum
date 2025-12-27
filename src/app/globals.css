@@ -956,3 +956,31 @@ select option {
 .typing-glow {
   animation: typingGlow 3s ease-in-out infinite;
 }
+
+/* ============================================
+   Custom Scrollbar - GitHub Style
+   ============================================ */
+
+/* Webkit 브라우저 (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+
+/* 호버 시에만 스크롤바 표시 */
+*:hover::-webkit-scrollbar-thumb {
+  background: #d0d7de;
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
+  background: #a8b1bb;
+}
