@@ -49,7 +49,7 @@ export function ReleasesView() {
       <div className="relative">
         {/* 타임라인 선 */}
         <div
-          className="absolute left-3 md:left-4 top-0 bottom-0 w-px bg-[#d0d7de]"
+          className="absolute left-[18px] md:left-[22px] top-0 bottom-0 w-0.5 bg-[#d0d7de]"
         />
 
         {/* 릴리즈 목록 */}
@@ -90,11 +90,11 @@ function ReleaseCard({ release, isExpanded, onToggle, index }: ReleaseCardProps)
 
   return (
     <div
-      className="relative pl-10 md:pl-12"
+      className="relative pl-9 md:pl-11"
     >
       {/* 타임라인 노드 - GitHub 스타일 */}
       <div
-        className="absolute left-3 md:left-4 top-3 w-3 h-3 rounded-full flex items-center justify-center transition-all"
+        className="absolute left-[13px] md:left-[17px] top-3 w-3 h-3 rounded-full flex items-center justify-center transition-all"
         style={{
           background: isLatest
             ? "#0969da"
