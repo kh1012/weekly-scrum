@@ -23,43 +23,37 @@ export function ReleasesView() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 md:px-0">
-      {/* 헤더 */}
-      <div className="mb-6 md:mb-8 animate-slide-in-left">
-        <div className="flex items-center gap-3 mb-3">
-          <div
-            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl"
-            style={{
-              background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-              boxShadow: "0 4px 14px rgba(59, 130, 246, 0.3)",
-            }}
+    <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
+      {/* 헤더 - GitHub 스타일 */}
+      <div className="mb-6 pb-4 border-b border-[#d0d7de]">
+        <div className="flex items-center gap-3">
+          <svg
+            className="w-6 h-6 text-[#57606a]"
+            fill="currentColor"
+            viewBox="0 0 512 512"
           >
-            📝
-          </div>
+            <path d="M0 80l0 48c0 17.7 14.3 32 32 32l16 0 48 0 0-80c0-26.5-21.5-48-48-48S0 53.5 0 80zM112 32c10 13.4 16 30 16 48l0 304c0 35.3 28.7 64 64 64s64-28.7 64-64l0-5.3c0-32.4 26.3-58.7 58.7-58.7L480 320l0-192c0-53-43-96-96-96L112 32zM464 480c61.9 0 112-50.1 112-112c0-8.8-7.2-16-16-16l-245.3 0c-14.7 0-26.7 11.9-26.7 26.7l0 5.3c0 53-43 96-96 96l176 0 96 0z" />
+          </svg>
           <div>
-            <h1
-              className="text-xl md:text-2xl font-bold tracking-tight"
-              style={{ color: "var(--notion-text)", letterSpacing: "-0.02em" }}
-            >
+            <h1 className="text-lg font-semibold text-[#24292f]">
               릴리즈 노트
             </h1>
-            <p className="text-xs md:text-sm mt-0.5" style={{ color: "var(--notion-text-muted)" }}>
+            <p className="text-xs text-[#57606a] mt-0.5">
               Weekly Scrum 서비스의 주요 업데이트 내역
             </p>
           </div>
         </div>
       </div>
 
-      {/* 타임라인 */}
+      {/* 타임라인 - GitHub 스타일 */}
       <div className="relative">
         {/* 타임라인 선 */}
         <div
-          className="absolute left-4 md:left-6 top-0 bottom-0 w-px"
-          style={{ background: "linear-gradient(to bottom, #3b82f6, transparent)" }}
+          className="absolute left-3 md:left-4 top-0 bottom-0 w-px bg-[#d0d7de]"
         />
 
         {/* 릴리즈 목록 */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {RELEASES.map((release, index) => (
             <ReleaseCard
               key={release.version}
@@ -96,55 +90,38 @@ function ReleaseCard({ release, isExpanded, onToggle, index }: ReleaseCardProps)
 
   return (
     <div
-      className="relative pl-14 animate-slide-in-left"
-      style={{ animationDelay: `${index * 0.08}s` }}
+      className="relative pl-10 md:pl-12"
     >
-      {/* 타임라인 노드 */}
+      {/* 타임라인 노드 - GitHub 스타일 */}
       <div
-        className="absolute left-4 top-4 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300"
+        className="absolute left-3 md:left-4 top-3 w-3 h-3 rounded-full flex items-center justify-center transition-all"
         style={{
           background: isLatest
-            ? "linear-gradient(135deg, #3b82f6, #8b5cf6)"
+            ? "#0969da"
             : isExpanded
-            ? "#3b82f6"
-            : "var(--notion-bg-secondary)",
-          border: isLatest ? "none" : "2px solid var(--notion-border)",
-          boxShadow: isLatest ? "0 2px 8px rgba(59, 130, 246, 0.4)" : "none",
+            ? "#0969da"
+            : "#ffffff",
+          border: `2px solid ${isLatest ? "#0969da" : "#d0d7de"}`,
         }}
-      >
-        {isLatest && (
-          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-        )}
-      </div>
+      />
 
-      {/* 카드 */}
+      {/* 카드 - GitHub 스타일 */}
       <div
-        className="rounded-2xl overflow-hidden transition-all duration-300 interactive-card"
-        style={{
-          background: "var(--notion-bg)",
-          border: "1px solid var(--notion-border)",
-          boxShadow: isExpanded
-            ? "0 8px 30px rgba(0, 0, 0, 0.08)"
-            : "0 2px 8px rgba(0, 0, 0, 0.04)",
-        }}
+        className="bg-white border border-[#d0d7de] overflow-hidden transition-all"
       >
-        {/* 헤더 (클릭 가능) */}
+        {/* 헤더 (클릭 가능) - GitHub 스타일 */}
         <button
           onClick={onToggle}
-          className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200 text-left group"
-          style={{
-            background: isExpanded ? "rgba(59, 130, 246, 0.02)" : "transparent",
-          }}
+          className="w-full flex items-center justify-between px-4 py-3 transition-all text-left group bg-[#f6f8fa] hover:bg-[#eaeef2]"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
             {/* 버전 뱃지 */}
             <span
-              className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all duration-200"
+              className="px-2 py-0.5 text-xs font-mono font-semibold shrink-0"
               style={{
-                background: isLatest
-                  ? "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15))"
-                  : "var(--notion-bg-secondary)",
-                color: isLatest ? "#3b82f6" : "var(--notion-text-muted)",
+                background: isLatest ? "#dafbe1" : "#f6f8fa",
+                color: isLatest ? "#1f883d" : "#57606a",
+                border: `1px solid ${isLatest ? "#1f883d" : "#d0d7de"}`,
               }}
             >
               v{release.version}
@@ -152,8 +129,7 @@ function ReleaseCard({ release, isExpanded, onToggle, index }: ReleaseCardProps)
 
             {/* 제목 */}
             <span
-              className="font-semibold text-sm transition-colors duration-200"
-              style={{ color: "var(--notion-text)" }}
+              className="font-semibold text-sm text-[#24292f] truncate"
             >
               {release.title}
             </span>
@@ -161,61 +137,45 @@ function ReleaseCard({ release, isExpanded, onToggle, index }: ReleaseCardProps)
             {/* 최신 뱃지 */}
             {isLatest && (
               <span
-                className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
-                style={{
-                  background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.15))",
-                  color: "#22c55e",
-                }}
+                className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[#1f883d] text-white shrink-0"
               >
                 Latest
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             {/* 변경사항 개수 */}
             <span
-              className="text-xs px-2 py-0.5 rounded-full"
-              style={{
-                background: "var(--notion-bg-secondary)",
-                color: "var(--notion-text-muted)",
-              }}
+              className="hidden sm:inline text-xs px-2 py-0.5 bg-white border border-[#d0d7de] text-[#57606a]"
             >
               {release.changes.length}개 변경
             </span>
 
             {/* 날짜 */}
             <span
-              className="text-xs font-medium"
-              style={{ color: "var(--notion-text-muted)" }}
+              className="text-xs font-medium text-[#57606a]"
             >
               {release.date}
             </span>
 
             {/* 확장 아이콘 */}
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200"
+            <svg
+              className="w-4 h-4 transition-transform text-[#57606a]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
               style={{
-                background: isExpanded ? "rgba(59, 130, 246, 0.1)" : "var(--notion-bg-secondary)",
+                transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
               }}
             >
-              <svg
-                className="w-4 h-4 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                style={{
-                  color: isExpanded ? "#3b82f6" : "var(--notion-text-muted)",
-                  transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-                }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
         </button>
 
-        {/* 상세 내용 (애니메이션) */}
+        {/* 상세 내용 (애니메이션) - GitHub 스타일 */}
         <div
           className="overflow-hidden transition-all duration-300 ease-out"
           style={{
@@ -225,46 +185,32 @@ function ReleaseCard({ release, isExpanded, onToggle, index }: ReleaseCardProps)
         >
           <div
             ref={contentRef}
-            className="px-5 pb-5 border-t"
-            style={{ borderColor: "var(--notion-border)" }}
+            className="px-4 pb-4 border-t border-[#d0d7de]"
           >
             {/* 요약 */}
             <p
-              className="text-sm mt-4 mb-5 leading-relaxed"
-              style={{ color: "var(--notion-text-secondary)" }}
+              className="text-sm mt-3 mb-4 leading-relaxed text-[#57606a]"
             >
               {release.summary}
             </p>
 
-            {/* 변경사항 */}
-            <div className="space-y-2.5">
+            {/* 변경사항 - GitHub 스타일 */}
+            <div className="space-y-2">
               {release.changes.map((change, changeIndex) => {
                 const typeInfo = CHANGE_TYPE_LABELS[change.type];
                 return (
                   <div
                     key={changeIndex}
-                    className="flex items-start gap-3 p-3 rounded-xl transition-all duration-200 group/item"
-                    style={{
-                      background: "var(--notion-bg-secondary)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(59, 130, 246, 0.04)";
-                      e.currentTarget.style.transform = "translateX(4px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "var(--notion-bg-secondary)";
-                      e.currentTarget.style.transform = "translateX(0)";
-                    }}
+                    className="flex items-start gap-2 p-2 bg-[#f6f8fa] hover:bg-[#eaeef2] transition-colors"
                   >
                     <span
-                      className="flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide"
+                      className="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                       style={{ background: typeInfo.bg, color: typeInfo.color }}
                     >
                       {typeInfo.label}
                     </span>
                     <span
-                      className="text-sm leading-relaxed"
-                      style={{ color: "var(--notion-text)" }}
+                      className="text-sm leading-relaxed text-[#24292f]"
                     >
                       {change.description}
                     </span>
