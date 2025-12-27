@@ -192,14 +192,14 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
 
       {/* 모바일: 2행 - 주차 선택기 */}
       {!hideWeekSelector && (
-        <div className="lg:hidden px-4 py-2 border-t border-[#424a53]">
+        <div className="lg:hidden px-4 py-2 border-t border-[#d0d7de]">
           <WeekSelector isMobile />
         </div>
       )}
 
       {/* 모바일: 3행 - 필터 */}
       {!hideFilters && (
-        <div className="lg:hidden px-4 py-2 border-t border-[#424a53]">
+        <div className="lg:hidden px-4 py-2 border-t border-[#d0d7de]">
           <ExpandableFilters isMobile />
         </div>
       )}

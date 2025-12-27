@@ -148,7 +148,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         key: "my-snapshots",
         label: "Snapshot Management",
         href: "/manage/snapshots",
-        icon: Icons.penToSquare,
+        icon: Icons.cameraRetro,
       },
     ],
   },

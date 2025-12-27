@@ -35,9 +35,8 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
   const [editingOption, setEditingOption] = useState<SnapshotMetaOption | null>(
     null
   );
-  const [deletingOption, setDeletingOption] = useState<SnapshotMetaOption | null>(
-    null
-  );
+  const [deletingOption, setDeletingOption] =
+    useState<SnapshotMetaOption | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -97,13 +96,17 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
   }) => {
     try {
       if (editingOption) {
-        const result = await updateMetaOptionAction(workspaceId, editingOption.id, {
-          value: formData.value,
-          label: formData.label || undefined,
-          description: formData.description || undefined,
-          order_index: formData.order_index,
-          is_active: formData.is_active,
-        });
+        const result = await updateMetaOptionAction(
+          workspaceId,
+          editingOption.id,
+          {
+            value: formData.value,
+            label: formData.label || undefined,
+            description: formData.description || undefined,
+            order_index: formData.order_index,
+            is_active: formData.is_active,
+          }
+        );
 
         if (result.success) {
           showToast("옵션이 수정되었습니다", "success");
@@ -137,7 +140,10 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
     if (!deletingOption) return;
 
     try {
-      const result = await deleteMetaOptionAction(workspaceId, deletingOption.id);
+      const result = await deleteMetaOptionAction(
+        workspaceId,
+        deletingOption.id
+      );
 
       if (result.success) {
         showToast("옵션이 삭제되었습니다", "success");
@@ -187,7 +193,7 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
     <div className="min-h-[calc(100vh-5rem)] bg-white">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8">
         {/* 헤더 - GitHub 스타일 */}
-        <div className="mb-6 pb-4 border-b border-[#d0d7de]">
+        <div className="mb-6">
           <h1 className="text-xl font-semibold text-[#24292f] mb-1">
             Snapshot Meta Options
           </h1>

@@ -83,7 +83,7 @@ export function TeamFeedClient({
       <div className="hidden lg:flex gap-0 px-4 py-6">
         {/* 왼쪽: Weekly Summary + Activity Chart (고정 너비 + 구분선) */}
         <div className="w-80 flex-shrink-0 pr-6 border-r border-[#d0d7de]">
-          <div className="space-y-6 sticky top-20">
+          <div className="space-y-6 sticky">
             {/* Weekly Summary */}
             <WeeklySummary feedItems={initialFeedItems} />
 
@@ -123,7 +123,7 @@ export function TeamFeedClient({
 
         {/* 우측: Daily Activity (고정 너비) */}
         <div className="w-64 flex-shrink-0 pl-6">
-          <div className="sticky top-20">
+          <div className="sticky">
             <DailyActivity feedItems={initialFeedItems} />
           </div>
         </div>
@@ -133,7 +133,7 @@ export function TeamFeedClient({
       <div className="hidden md:flex lg:hidden gap-0 px-4 py-6">
         {/* 왼쪽: Weekly Summary + Activity (고정 너비 + 구분선) */}
         <div className="w-72 flex-shrink-0 pr-6 border-r border-[#d0d7de]">
-          <div className="space-y-6 sticky top-20">
+          <div className="space-y-6 sticky">
             <WeeklySummary feedItems={initialFeedItems} />
             {activityData && activityData.length > 0 && (
               <ActivityChart data={activityData} />
