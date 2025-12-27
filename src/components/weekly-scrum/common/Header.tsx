@@ -159,7 +159,13 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
           {/* 필터 - 항상 표시 */}
           {!hideFilters && (
             <div className="flex items-center">
-              <ExpandableFilters />
+              <ExpandableFilters 
+                // 기본 필터 값 설정 (옵션)
+                // defaultFilters={{
+                //   members: ["김철수"],
+                //   projects: ["weekly-scrum"]
+                // }}
+              />
             </div>
           )}
 

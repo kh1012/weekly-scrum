@@ -6,6 +6,8 @@ import type { FilterOptionState, MultiFilterState } from "@/types/scrum";
 
 interface ExpandableFiltersProps {
   isMobile?: boolean;
+  /** 기본 필터 값 설정 (컴포넌트 마운트 시 자동 적용) */
+  defaultFilters?: Partial<Omit<MultiFilterState, "search">>;
 }
 
 interface FilterSectionProps {
@@ -75,24 +77,17 @@ function FilterSection({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* 필터 버튼 - 필터 적용 시 파란색 활성화 */}
+      {/* 필터 버튼 - GitHub 스타일 */}
       <button
         ref={buttonRef}
         onClick={onToggleExpand}
-        className={`flex items-center gap-1.5 px-3 rounded-xl text-xs font-medium transition-all ${
+        className={`flex items-center gap-1.5 px-3 rounded-md text-xs font-medium transition-colors ${
           isMobile ? "h-8 text-[11px] px-2" : "h-9"
+        } ${
+          isFilterActive
+            ? "bg-[#ddf4ff] text-[#0969da] border border-[#0969da]/30"
+            : "bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
         }`}
-        style={{
-          background: isFilterActive
-            ? "var(--gnb-filter-active)"
-            : "var(--gnb-filter-bg)",
-          color: isFilterActive
-            ? "var(--primary-500)"
-            : "var(--notion-text-muted)",
-          border: isFilterActive
-            ? "1px solid var(--gnb-filter-active-border)"
-            : "1px solid transparent",
-        }}
       >
         <span>{icon}</span>
         <span className="truncate max-w-[80px]">
@@ -108,24 +103,19 @@ function FilterSection({
         </svg>
       </button>
 
-      {/* 드롭다운 패널 */}
+      {/* 드롭다운 패널 - GitHub 스타일 */}
       {isExpanded && (
         <div
-          className={`absolute top-full mt-1 w-64 max-h-80 overflow-hidden rounded-xl z-50 animate-fadeIn ${
+          className={`absolute top-full mt-1 w-64 max-h-80 overflow-hidden rounded-md bg-white border border-[#d0d7de] z-50 animate-fadeIn ${
             alignRight ? "right-0" : "left-0"
           }`}
           style={{
-            background: "var(--notion-bg)",
-            boxShadow: "var(--notion-shadow-lg)",
-            border: "1px solid var(--notion-border)",
+            boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
           }}
         >
           {/* 헤더 */}
-          <div
-            className="flex items-center justify-between px-3 py-2 border-b"
-            style={{ borderColor: "var(--notion-border)" }}
-          >
-            <span className="text-xs font-semibold" style={{ color: "var(--notion-text)" }}>
+          <div className="flex items-center justify-between px-3 py-2 bg-[#f6f8fa] border-b border-[#d0d7de]">
+            <span className="text-xs font-semibold text-[#24292f]">
               {title}
             </span>
             <div className="flex items-center gap-1">
@@ -133,15 +123,10 @@ function FilterSection({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // 모든 활성화된 옵션 선택
                   const allValues = enabledOptions.map((opt) => opt.value);
                   onSelectAll(allValues);
                 }}
-                className="px-2 py-0.5 text-[10px] rounded transition-colors"
-                style={{
-                  color: "#3b82f6",
-                  background: "rgba(59, 130, 246, 0.1)",
-                }}
+                className="px-2 py-0.5 text-[10px] rounded-md bg-[#ddf4ff] text-[#0969da] hover:bg-[#b6e3ff] transition-colors"
               >
                 전체 선택
               </button>
@@ -152,11 +137,7 @@ function FilterSection({
                     e.stopPropagation();
                     onClear();
                   }}
-                  className="px-2 py-0.5 text-[10px] rounded transition-colors"
-                  style={{
-                    color: "#ef4444",
-                    background: "rgba(239, 68, 68, 0.1)",
-                  }}
+                  className="px-2 py-0.5 text-[10px] rounded-md bg-[#ffebe9] text-[#cf222e] hover:bg-[#ffd8d5] transition-colors"
                 >
                   해제
                 </button>
@@ -167,28 +148,21 @@ function FilterSection({
           {/* 옵션 목록 */}
           <div className="max-h-60 overflow-y-auto p-2">
             {options.length === 0 ? (
-              <div
-                className="text-center py-4 text-xs"
-                style={{ color: "var(--notion-text-muted)" }}
-              >
+              <div className="text-center py-4 text-xs text-[#57606a]">
                 옵션 없음
               </div>
             ) : (
               <div className="space-y-0.5">
                 {options.map((option) => {
-                  // 선택된 값만 체크됨 (빈 배열 = 모두 해제 = 필터 없음)
                   const isSelected = selectedValues.includes(option.value);
                   const isDisabled = !option.enabled;
 
                   return (
                     <label
                       key={option.value}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors ${
-                        isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-50"
-                      }`}
-                      style={{
-                        background: isSelected && !isDisabled ? "rgba(59, 130, 246, 0.08)" : undefined,
-                      }}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+                        isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#f6f8fa]"
+                      } ${isSelected && !isDisabled ? "bg-[#ddf4ff]" : ""}`}
                     >
                       <input
                         type="checkbox"
@@ -196,31 +170,19 @@ function FilterSection({
                         disabled={isDisabled}
                         onChange={() => {
                           if (isDisabled) return;
-                          // 단순 토글 (선택/해제)
                           onToggle(option.value);
                         }}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                        className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da] focus:ring-offset-0"
                       />
-                      <span
-                        className="flex-1 text-xs truncate"
-                        style={{
-                          color: isDisabled
-                            ? "var(--notion-text-muted)"
-                            : "var(--notion-text)",
-                        }}
-                      >
+                      <span className={`flex-1 text-xs truncate ${isDisabled ? "text-[#8c959f]" : "text-[#24292f]"}`}>
                         {option.value}
                       </span>
                       <span
-                        className="text-[10px] px-1.5 py-0.5 rounded-full"
-                        style={{
-                          background: isDisabled
-                            ? "var(--notion-bg-secondary)"
-                            : "rgba(59, 130, 246, 0.1)",
-                          color: isDisabled
-                            ? "var(--notion-text-muted)"
-                            : "#3b82f6",
-                        }}
+                        className={`text-[10px] px-1.5 py-0.5 rounded-md ${
+                          isDisabled
+                            ? "bg-[#f6f8fa] text-[#8c959f]"
+                            : "bg-[#ddf4ff] text-[#0969da]"
+                        }`}
                       >
                         {option.count}
                       </span>
@@ -237,9 +199,22 @@ function FilterSection({
 }
 
 /**
- * 확장 가능한 필터 컴포넌트
+ * 확장 가능한 필터 컴포넌트 - GitHub 스타일
+ * 
+ * @example
+ * // 기본 사용
+ * <ExpandableFilters />
+ * 
+ * @example
+ * // 기본값 설정 (특정 담당자, 프로젝트가 자동 선택됨)
+ * <ExpandableFilters 
+ *   defaultFilters={{
+ *     members: ["김철수"],
+ *     projects: ["weekly-scrum"]
+ *   }}
+ * />
  */
-export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) {
+export function ExpandableFilters({ isMobile = false, defaultFilters }: ExpandableFiltersProps) {
   const {
     multiFilters,
     memberOptions,
@@ -253,6 +228,8 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
     resetMultiFilters,
     hasActiveMultiFilters,
   } = useScrumContext();
+
+  const [hasAppliedDefaults, setHasAppliedDefaults] = useState(false);
 
   // 확장된 필터 섹션 상태
   const [expandedSection, setExpandedSection] = useState<keyof Omit<MultiFilterState, "search"> | null>(null);
@@ -274,26 +251,41 @@ export function ExpandableFilters({ isMobile = false }: ExpandableFiltersProps) 
     { key: "features", title: "피쳐", icon: "✨", options: featureOptions },
   ];
 
-  // 리셋 버튼 컴포넌트
+  // 기본 필터 값 적용 (마운트 시 한 번만)
+  useEffect(() => {
+    if (!defaultFilters || hasAppliedDefaults) return;
+
+    // 옵션이 모두 로드되었는지 확인
+    const hasOptions = filterSections.every(section => section.options.length > 0);
+    if (!hasOptions) return;
+
+    // 기본값 적용
+    Object.entries(defaultFilters).forEach(([key, values]) => {
+      if (values && values.length > 0) {
+        const filterKey = key as keyof Omit<MultiFilterState, "search">;
+        setMultiFilterAll(filterKey, values);
+      }
+    });
+
+    setHasAppliedDefaults(true);
+  }, [defaultFilters, hasAppliedDefaults, filterSections, setMultiFilterAll]);
+
+  // 리셋 버튼 컴포넌트 - GitHub 스타일
   const ResetButton = ({ isMobileStyle = false }: { isMobileStyle?: boolean }) => (
     <button
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
         resetMultiFilters();
+        setHasAppliedDefaults(false); // 리셋 시 기본값 재적용 가능하도록
       }}
-      className={`flex items-center justify-center rounded-xl transition-all hover:scale-105 active:scale-95 ${
+      className={`flex items-center justify-center rounded-md transition-colors ${
         isMobileStyle ? "w-8 h-8" : "w-9 h-9"
+      } ${
+        hasActiveMultiFilters
+          ? "bg-[#ffebe9] text-[#cf222e] border border-[#ff8182] hover:bg-[#ffd8d5]"
+          : "bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
       }`}
-      style={{
-        background: hasActiveMultiFilters
-          ? "rgba(239, 68, 68, 0.1)"
-          : "var(--gnb-filter-bg)",
-        color: hasActiveMultiFilters ? "#ef4444" : "var(--notion-text-muted)",
-        border: hasActiveMultiFilters
-          ? "1px solid rgba(239, 68, 68, 0.25)"
-          : "1px solid transparent",
-      }}
       title="필터 초기화 (전체 표시)"
     >
       <svg
