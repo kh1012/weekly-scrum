@@ -1,5 +1,5 @@
 /**
- * Create Feedback Modal
+ * Create Feedback Modal - GitHub Style
  * 피드백 작성 모달 - 빠른 입력
  */
 
@@ -72,55 +72,45 @@ export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedba
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* 배경 */}
+      {/* 배경 - GitHub 스타일 */}
       <div
-        className="absolute inset-0 backdrop-blur-sm"
-        style={{ background: "rgba(0, 0, 0, 0.4)" }}
+        className="absolute inset-0"
+        style={{ background: "#c8d1da66" }}
         onClick={onClose}
       />
 
       {/* 모달 */}
       <div
-        className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg bg-white border border-[#d0d7de] rounded-md overflow-hidden animate-in zoom-in-95 duration-200"
         style={{
-          background: "white",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+          boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
         }}
       >
         {/* 헤더 */}
-        <div
-          className="flex items-center justify-between px-5 py-4"
-          style={{
-            background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-            borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-          }}
-        >
+        <div className="flex items-center justify-between px-4 py-3 bg-[#f6f8fa] border-b border-[#d0d7de]">
           <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
-            >
+            <div className="w-8 h-8 rounded-md bg-[#0969da] flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 640 512">
                 <path d="M208 352c114.9 0 208-78.8 208-176S322.9 0 208 0S0 78.8 0 176c0 38.6 14.7 74.3 39.6 103.4c-3.5 9.4-8.7 17.7-14.2 24.7c-4.8 6.2-9.7 11-13.3 14.3c-1.8 1.6-3.3 2.9-4.3 3.7c-.5 .4-.9 .7-1.1 .8l-.2 .2s0 0 0 0s0 0 0 0C1 327.2-1.4 334.4 .8 340.9S9.1 352 16 352c21.8 0 43.8-5.6 62.1-12.5c9.2-3.5 17.8-7.4 25.2-11.4C134.1 343.3 169.8 352 208 352z" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">New Feedback</h2>
+            <h2 className="text-base font-semibold text-[#24292f]">New Feedback</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-150 active:scale-95"
+            className="p-1.5 rounded-md hover:bg-[#d0d7de] transition-colors"
           >
-            <XIcon className="w-5 h-5 text-gray-400" />
+            <XIcon className="w-5 h-5 text-[#57606a]" />
           </button>
         </div>
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* 제목 */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-[#24292f] mb-2">
               제목
-              <span className="ml-1.5 text-xs font-normal text-gray-400">(선택)</span>
+              <span className="ml-1.5 text-xs font-normal text-[#57606a]">(선택)</span>
             </label>
             <input
               ref={titleInputRef}
@@ -128,20 +118,7 @@ export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedba
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="간단한 제목을 입력하세요"
-              className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none"
-              style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                color: "#1e293b",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#3b82f6";
-                e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#e2e8f0";
-                e.target.style.boxShadow = "none";
-              }}
+              className="w-full px-3 py-2 bg-[#f6f8fa] border border-[#d0d7de] rounded-md text-sm text-[#24292f] transition-colors outline-none focus:border-[#0969da] focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)]"
               disabled={isSubmitting}
               autoComplete="off"
             />
@@ -149,41 +126,22 @@ export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedba
 
           {/* 내용 */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              내용 <span className="text-red-500">*</span>
+            <label className="block text-sm font-semibold text-[#24292f] mb-2">
+              내용 <span className="text-[#cf222e]">*</span>
             </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="피드백 내용을 자세히 작성해주세요..."
               rows={5}
-              className="w-full px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none resize-none"
-              style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                color: "#1e293b",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#3b82f6";
-                e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#e2e8f0";
-                e.target.style.boxShadow = "none";
-              }}
+              className="w-full px-3 py-2 bg-[#f6f8fa] border border-[#d0d7de] rounded-md text-sm text-[#24292f] transition-colors outline-none resize-none focus:border-[#0969da] focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)]"
               disabled={isSubmitting}
             />
           </div>
 
           {/* 에러 메시지 */}
           {error && (
-            <div
-              className="px-4 py-3 rounded-lg text-sm flex items-center gap-2"
-              style={{
-                background: "rgba(239, 68, 68, 0.1)",
-                color: "#dc2626",
-              }}
-            >
+            <div className="px-3 py-2 bg-[#ffebe9] border border-[#ff8182] rounded-md text-sm text-[#cf222e] flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -192,12 +150,11 @@ export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedba
           )}
 
           {/* 버튼 */}
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 active:scale-95 hover:bg-gray-100"
-              style={{ color: "#64748b" }}
+              className="px-4 py-2 text-sm font-medium text-[#24292f] bg-[#f6f8fa] border border-[#d0d7de] rounded-md hover:bg-[#f3f4f6] transition-colors"
               disabled={isSubmitting}
             >
               취소
@@ -205,10 +162,7 @@ export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedba
             <button
               type="submit"
               disabled={isSubmitting || !content.trim()}
-              className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0969da] rounded-md hover:bg-[#0860ca] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
@@ -233,4 +187,3 @@ export function CreateFeedbackModal({ isOpen, onClose, onSuccess }: CreateFeedba
     </div>
   );
 }
-
