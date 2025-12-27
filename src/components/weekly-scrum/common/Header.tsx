@@ -100,7 +100,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-[70] w-full h-16 px-4 lg:px-6 bg-[#f6f8fa] border-b border-[#d0d7de]"
+      className="sticky top-0 z-[50] w-full h-16 px-4 lg:px-6 bg-[#f6f8fa] border-b border-[#d0d7de]"
     >
       <div className="flex items-center justify-between h-full max-w-full mx-auto">
         {/* 좌측: 햄버거 + 로고 + 주차 선택 */}

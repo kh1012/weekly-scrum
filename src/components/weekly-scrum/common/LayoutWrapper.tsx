@@ -36,7 +36,7 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = [
 ];
 
 // padding 없는 페이지 경로
-const NO_PADDING_PAGES = ["/calendar", "/my"];
+const NO_PADDING_PAGES = ["/calendar", "/my", "/feedbacks"];
 
 // padding 없는 동적 경로 패턴
 const NO_PADDING_DYNAMIC_PATTERNS = [

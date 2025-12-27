@@ -133,7 +133,7 @@ export function FeedbackKanbanView({
   return (
     <div className="flex flex-col bg-white">
       {/* 헤더 영역 - GitHub 스타일 */}
-      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
+      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-transparent border-b border-[#d0d7de]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {/* 좌측: 타이틀 */}
           <div className="flex items-center gap-3">
