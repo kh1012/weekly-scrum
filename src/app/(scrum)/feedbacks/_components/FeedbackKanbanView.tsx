@@ -192,7 +192,7 @@ export function FeedbackKanbanView({
       </div>
 
       {/* 칸반 보드 영역 - Grid 레이아웃 */}
-      <div className="bg-white pb-4">
+      <div className="bg-white pb-4 rounded-b-md">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 p-3 md:p-4">
           {KANBAN_COLUMNS.map((col) => (
             <div
