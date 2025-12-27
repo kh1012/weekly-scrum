@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { getTeamFeedData, getActivityChartData } from "@/lib/data/teamFeed";
 import { InfiniteFeedList } from "@/components/team-feed/InfiniteFeedList";
-import { TimelineSpine } from "@/components/team-feed/TimelineSpine";
 import { ActivityChart } from "@/components/team-feed/ActivityChart";
 
 const DEFAULT_WORKSPACE_ID =
@@ -23,20 +22,6 @@ export default async function TeamFeedPage() {
     14
   );
 
-  // 주차 목록 추출 (타임라인용)
-  const weeksMap = new Map<string, { year: number; week: string }>();
-  for (const item of feedItems) {
-    const key = `${item.year}-${item.week}`;
-    if (!weeksMap.has(key)) {
-      weeksMap.set(key, { year: item.year, week: item.week });
-    }
-  }
-
-  const weeks = Array.from(weeksMap.values()).map((w) => ({
-    year: w.year,
-    week: w.week,
-    label: `${w.week}`,
-  }));
 
   if (feedError) {
     return (
@@ -70,37 +55,38 @@ export default async function TeamFeedPage() {
     <div className="h-full overflow-hidden bg-white">
       {/* 데스크톱 레이아웃 (≥1024px): Flex 레이아웃 - 전체 너비 100% */}
       <div className="hidden lg:flex gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: 타임라인 스파인 - 고정 너비 */}
-        <div className="w-60 flex-shrink-0 overflow-y-auto">
-          <div className="py-2">
-            <h2 className="text-sm font-semibold text-[#24292f] mb-3 px-2">Weeks</h2>
-            <TimelineSpine weeks={weeks} />
-          </div>
-        </div>
-
-        {/* 중앙: 피드 - flex-1로 나머지 공간 채우기 */}
-        <div className="flex-1 overflow-y-scroll min-w-0" style={{ scrollbarGutter: 'stable' }}>
-          <div className="mb-4">
-            <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
-            <p className="text-sm text-[#57606a]">
-              팀원들의 최근 활동을 확인하세요
-            </p>
-          </div>
-
-          <InfiniteFeedList initialFeedItems={feedItems} />
-        </div>
-
-        {/* 오른쪽: 활동 차트 - 고정 너비 */}
+        {/* 왼쪽: Team Activity - 고정 너비 */}
         <div className="w-80 flex-shrink-0 overflow-y-auto">
           {activityData && activityData.length > 0 && (
             <ActivityChart data={activityData} />
           )}
         </div>
+
+        {/* 중앙: 피드 - flex-1로 나머지 공간 채우기 */}
+        <div className="flex-1 overflow-y-scroll min-w-0" style={{ scrollbarGutter: 'stable' }}>
+          <div className="mb-4 flex items-baseline justify-between">
+            <div>
+              <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
+              <p className="text-sm text-[#57606a]">
+                팀원들의 최근 활동을 확인하세요
+              </p>
+            </div>
+          </div>
+
+          <InfiniteFeedList initialFeedItems={feedItems} />
+        </div>
       </div>
 
       {/* 태블릿 레이아웃 (768-1023px): Flex 레이아웃 */}
       <div className="hidden md:flex lg:hidden gap-4 h-full overflow-hidden px-4 py-4">
-        {/* 왼쪽: 피드 - flex-1로 나머지 공간 채우기 */}
+        {/* 왼쪽: Team Activity - 고정 너비 */}
+        <div className="w-72 flex-shrink-0 overflow-y-auto">
+          {activityData && activityData.length > 0 && (
+            <ActivityChart data={activityData} />
+          )}
+        </div>
+
+        {/* 오른쪽: 피드 - flex-1로 나머지 공간 채우기 */}
         <div className="flex-1 overflow-y-scroll min-w-0" style={{ scrollbarGutter: 'stable' }}>
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-[#24292f] mb-1">Team Feed</h1>
@@ -110,13 +96,6 @@ export default async function TeamFeedPage() {
           </div>
 
           <InfiniteFeedList initialFeedItems={feedItems} />
-        </div>
-
-        {/* 오른쪽: 활동 차트 - 고정 너비 */}
-        <div className="w-72 flex-shrink-0 overflow-y-auto">
-          {activityData && activityData.length > 0 && (
-            <ActivityChart data={activityData} />
-          )}
         </div>
       </div>
 

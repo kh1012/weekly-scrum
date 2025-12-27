@@ -96,14 +96,17 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
 
   return (
     <article className="mb-3 p-4 bg-white border border-[#d0d7de] rounded-md hover:border-[#8c959f] transition-colors">
-      {/* Person Header - 간소화 */}
+      {/* Person Header - 간소화 + 연도/주차 태그 */}
       <div className="flex items-start gap-3 mb-3">
         <div className="w-8 h-8 rounded-full bg-[#0969da] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
           {data.personName.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 flex-wrap">
             <h3 className="text-sm font-semibold text-[#24292f]">{data.personName}</h3>
+            <span className="inline-flex items-center px-2 py-0.5 bg-[#ddf4ff] border border-[#0969da]/30 rounded-md text-xs font-medium text-[#0969da]">
+              {data.year} {data.week}
+            </span>
             <span className="text-xs text-[#57606a]">
               updated {data.entries.length} snapshot{data.entries.length > 1 ? "s" : ""}
             </span>
