@@ -22,15 +22,9 @@ export default async function FeedbacksPage() {
 
   if (!feedbacksResult.success && feedbacksResult.error) {
     return (
-      <div className="h-[calc(100vh-7rem)] flex items-center justify-center rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
-        <div
-          className="rounded-xl p-6 max-w-md"
-          style={{
-            background: "white",
-            border: "1px solid rgba(239, 68, 68, 0.2)",
-          }}
-        >
-          <p className="text-red-600 text-sm">{feedbacksResult.error}</p>
+      <div className="h-[calc(100vh-7rem)] flex items-center justify-center bg-white border border-[#d0d7de]">
+        <div className="p-4 max-w-md bg-[#fff8c5] border border-[#d0d7de]">
+          <p className="text-sm text-[#24292f]">{feedbacksResult.error}</p>
         </div>
       </div>
     );

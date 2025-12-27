@@ -131,26 +131,24 @@ export function FeedbackKanbanView({
   }, [isPending, updatingFeedbackId]);
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
-      {/* 헤더 영역 */}
-      <div className="shrink-0 px-4 md:px-6 py-4 md:py-5 bg-gradient-to-r from-white via-white to-slate-50/50 border-b border-gray-100">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="h-[calc(100vh-7rem)] flex flex-col bg-white border border-[#d0d7de]">
+      {/* 헤더 영역 - GitHub 스타일 */}
+      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {/* 좌측: 타이틀 */}
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <svg
-                className="w-4 h-4 md:w-5 md:h-5 text-white"
-                fill="currentColor"
-                viewBox="0 0 640 512"
-              >
-                <path d="M208 352c114.9 0 208-78.8 208-176S322.9 0 208 0S0 78.8 0 176c0 38.6 14.7 74.3 39.6 103.4c-3.5 9.4-8.7 17.7-14.2 24.7c-4.8 6.2-9.7 11-13.3 14.3c-1.8 1.6-3.3 2.9-4.3 3.7c-.5 .4-.9 .7-1.1 .8l-.2 .2s0 0 0 0s0 0 0 0C1 327.2-1.4 334.4 .8 340.9S9.1 352 16 352c21.8 0 43.8-5.6 62.1-12.5c9.2-3.5 17.8-7.4 25.2-11.4C134.1 343.3 169.8 352 208 352zM448 176c0 112.3-99.1 196.9-216.5 207C255.8 457.4 336.4 512 432 512c38.2 0 73.9-8.7 104.7-23.9c7.5 4 16 7.9 25.2 11.4c18.3 6.9 40.3 12.5 62.1 12.5c6.9 0 13.1-4.5 15.2-11.1c2.1-6.6-.2-13.8-5.8-17.9c0 0 0 0 0 0s0 0 0 0l-.2-.2c-.2-.2-.6-.4-1.1-.8c-1-.8-2.5-2-4.3-3.7c-3.6-3.3-8.5-8.1-13.3-14.3c-5.5-7-10.7-15.4-14.2-24.7c24.9-29 39.6-64.7 39.6-103.4c0-92.8-84.9-168.9-192.6-175.5c.4 5.1 .6 10.3 .6 15.5z" />
-              </svg>
-            </div>
+          <div className="flex items-center gap-3">
+            <svg
+              className="w-5 h-5 text-[#57606a]"
+              fill="currentColor"
+              viewBox="0 0 640 512"
+            >
+              <path d="M208 352c114.9 0 208-78.8 208-176S322.9 0 208 0S0 78.8 0 176c0 38.6 14.7 74.3 39.6 103.4c-3.5 9.4-8.7 17.7-14.2 24.7c-4.8 6.2-9.7 11-13.3 14.3c-1.8 1.6-3.3 2.9-4.3 3.7c-.5 .4-.9 .7-1.1 .8l-.2 .2s0 0 0 0s0 0 0 0C1 327.2-1.4 334.4 .8 340.9S9.1 352 16 352c21.8 0 43.8-5.6 62.1-12.5c9.2-3.5 17.8-7.4 25.2-11.4C134.1 343.3 169.8 352 208 352zM448 176c0 112.3-99.1 196.9-216.5 207C255.8 457.4 336.4 512 432 512c38.2 0 73.9-8.7 104.7-23.9c7.5 4 16 7.9 25.2 11.4c18.3 6.9 40.3 12.5 62.1 12.5c6.9 0 13.1-4.5 15.2-11.1c2.1-6.6-.2-13.8-5.8-17.9c0 0 0 0 0 0s0 0 0 0l-.2-.2c-.2-.2-.6-.4-1.1-.8c-1-.8-2.5-2-4.3-3.7c-3.6-3.3-8.5-8.1-13.3-14.3c-5.5-7-10.7-15.4-14.2-24.7c24.9-29 39.6-64.7 39.6-103.4c0-92.8-84.9-168.9-192.6-175.5c.4 5.1 .6 10.3 .6 15.5z" />
+            </svg>
             <div>
-              <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">
+              <h1 className="text-base md:text-lg font-semibold text-[#24292f]">
                 Feedbacks
               </h1>
-              <p className="text-xs md:text-sm text-gray-500">
+              <p className="text-xs text-[#57606a] mt-0.5">
                 {isAdminOrLeader
                   ? "모든 피드백을 관리할 수 있습니다"
                   : "내 피드백 목록"}
@@ -159,17 +157,13 @@ export function FeedbackKanbanView({
           </div>
 
           {/* 우측: 통계 + 액션 버튼 */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* 통계 뱃지 */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               {KANBAN_COLUMNS.map((col) => (
                 <div
                   key={col.status}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
-                  style={{
-                    background: `${col.color}15`,
-                    color: col.color,
-                  }}
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-[#57606a]"
                 >
                   <span
                     className="w-2 h-2 rounded-full"
@@ -180,17 +174,17 @@ export function FeedbackKanbanView({
               ))}
             </div>
 
-            <div className="hidden md:block h-6 w-px bg-gray-200" />
+            <div className="hidden sm:block h-5 w-px bg-[#d0d7de]" />
 
-            {/* New Feedback 버튼 */}
+            {/* New Feedback 버튼 - GitHub 스타일 */}
             <LoadingButton
               onClick={() => setIsCreateModalOpen(true)}
               variant="primary"
-              size="md"
-              icon={<PlusIcon className="w-4 h-4" />}
-              className="group"
+              size="sm"
+              icon={<PlusIcon className="w-3.5 h-3.5" />}
+              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded !text-xs !font-medium !px-3 !py-1.5"
             >
-              <span className="hidden sm:inline">New Feedback</span>
+              <span className="hidden sm:inline">New feedback</span>
               <span className="sm:hidden">새 피드백</span>
             </LoadingButton>
           </div>
@@ -198,49 +192,45 @@ export function FeedbackKanbanView({
       </div>
 
       {/* 칸반 보드 영역 - Grid 레이아웃 */}
-      <div className="flex-1 overflow-hidden bg-slate-50">
-        <div className="h-full grid grid-cols-3 gap-4 p-4 md:p-6">
+      <div className="flex-1 overflow-hidden bg-white">
+        <div className="h-full grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-3 p-3 md:p-4">
           {KANBAN_COLUMNS.map((col) => (
             <div
               key={col.status}
-              className="flex flex-col rounded-xl overflow-hidden min-w-0"
+              className="flex flex-col min-w-0 bg-[#f6f8fa] border border-[#d0d7de]"
             >
-              {/* 열 헤더 */}
-              <div className="shrink-0 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              {/* 열 헤더 - GitHub 스타일 */}
+              <div className="shrink-0 px-3 py-2 bg-white border-b border-[#d0d7de] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span
-                    className="w-3 h-3 rounded-full shadow-sm"
+                    className="w-2 h-2 rounded-full"
                     style={{ background: col.color }}
                   />
-                  <h3 className="font-semibold text-gray-900 text-sm">
+                  <h3 className="font-semibold text-[#24292f] text-sm">
                     {col.label}
                   </h3>
                 </div>
                 <span
-                  className="px-2.5 py-1 rounded-full text-xs font-bold"
-                  style={{
-                    background: `${col.color}20`,
-                    color: col.color,
-                  }}
+                  className="px-2 py-0.5 text-xs font-medium text-[#57606a] bg-[#f6f8fa] border border-[#d0d7de] rounded-full"
                 >
                   {groupedFeedbacks[col.status]?.length || 0}
                 </span>
               </div>
 
               {/* 카드 목록 */}
-              <div className="flex-1 overflow-y-auto space-y-3">
+              <div className="flex-1 overflow-y-auto p-2 space-y-2">
                 {groupedFeedbacks[col.status]?.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <div className="flex flex-col items-center justify-center py-12 text-[#57606a]">
                     <svg
-                      className="w-8 h-8 mb-2 opacity-50"
+                      className="w-6 h-6 mb-2 opacity-40"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={1.5}
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={1.5}
                         d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                       />
                     </svg>
@@ -269,36 +259,35 @@ export function FeedbackKanbanView({
         </div>
       </div>
 
-      {/* 빈 상태 오버레이 */}
+      {/* 빈 상태 오버레이 - GitHub 스타일 */}
       {feedbacks.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-indigo-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/95 z-10">
+          <div className="text-center px-4">
+            <svg
+              className="w-12 h-12 mx-auto mb-3 text-[#57606a] opacity-40"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <h3 className="text-base font-semibold text-[#24292f] mb-1">
               아직 피드백이 없습니다
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-[#57606a] mb-4">
               첫 번째 피드백을 작성해보세요
             </p>
             <LoadingButton
               onClick={() => setIsCreateModalOpen(true)}
               variant="primary"
-              size="md"
-              icon={<PlusIcon className="w-4 h-4" />}
+              size="sm"
+              icon={<PlusIcon className="w-3.5 h-3.5" />}
+              className="!bg-[#0969da] hover:!bg-[#0860ca] !text-white !border-0 !rounded !text-xs !font-medium !px-3 !py-1.5"
             >
               첫 피드백 작성하기
             </LoadingButton>
@@ -323,34 +312,34 @@ export function FeedbackKanbanView({
         />
       )}
 
-      {/* 피드백 완료 처리 모달 */}
+      {/* 피드백 완료 처리 모달 - GitHub 스타일 */}
       {resolvingFeedbackId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* 배경 오버레이 */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40"
             onClick={() => setResolvingFeedbackId(null)}
           />
           
           {/* 모달 컨텐츠 */}
-          <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-md bg-white border border-[#d0d7de]">
             {/* 헤더 */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
+            <div className="px-4 py-3 bg-[#f6f8fa] border-b border-[#d0d7de] flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#24292f]">
                 피드백 완료 처리
               </h2>
               <button
                 onClick={() => setResolvingFeedbackId(null)}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="p-1 text-[#57606a] hover:text-[#24292f] hover:bg-white transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* 본문 */}
-            <div className="p-6">
+            <div className="p-4">
               <ResolvePanel
                 feedbackId={resolvingFeedbackId}
                 onResolved={handleResolveSuccess}
