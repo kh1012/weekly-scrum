@@ -238,9 +238,9 @@ export function FeedbackKanbanCard({
   };
 
   return (
-    <div className="relative bg-white border border-[#d0d7de] hover:border-[#0969da] transition-colors rounded-md">
+    <div className="relative bg-white border border-[#d0d7de] hover:border-[#0969da] transition-colors rounded-md overflow-hidden">
       {/* 헤더: 작성자 + 날짜 - GitHub 스타일 */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#d0d7de] bg-[#f6f8fa]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[#d0d7de] bg-[#f6f8fa] rounded-t-md">
         <div className="flex items-center gap-2 min-w-0">
           <span
             className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold text-white shrink-0"
@@ -382,13 +382,13 @@ export function FeedbackKanbanCard({
       )}
 
       {/* 하단: 상태 액션 버튼 - GitHub 스타일 */}
-      <div className="flex items-center justify-end px-3 py-2 border-t border-[#d0d7de] bg-[#f6f8fa]">
+      <div className="flex items-center justify-end px-3 py-2 border-t border-[#d0d7de] bg-[#f6f8fa] rounded-b-md">
         {renderStatusActions()}
       </div>
 
       {/* 삭제 확인 오버레이 - GitHub 스타일 */}
       {showDeleteConfirm && (
-        <div className="absolute inset-0 bg-white/98 flex items-center justify-center z-10 border border-[#d0d7de] rounded-md">
+        <div className="absolute inset-0 bg-white/98 flex items-center justify-center z-10 rounded-md overflow-hidden">
           <div className="text-center px-4">
             <svg
               className="w-10 h-10 mx-auto mb-2 text-[#cf222e]"
