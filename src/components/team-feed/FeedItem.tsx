@@ -95,7 +95,10 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
   const riskCount = data.entries.filter((e) => e.risks.length > 0).length;
 
   return (
-    <article className="mb-3 p-4 bg-white border border-[#d0d7de] rounded-md hover:border-[#8c959f] transition-colors">
+    <article 
+      className="mb-3 p-4 bg-white border border-[#d0d7de] rounded-md hover:border-[#8c959f] transition-colors"
+      data-feed-week={`${data.year}-${data.week}`}
+    >
       {/* Person Header - 간소화 + 연도/주차 태그 */}
       <div className="flex items-start gap-3 mb-3">
         <div className="w-8 h-8 rounded-full bg-[#0969da] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">

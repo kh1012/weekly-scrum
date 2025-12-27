@@ -2,24 +2,27 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { FeedItem } from "./FeedItem";
-import { FeedSearch } from "./FeedSearch";
 import type { FeedItemData } from "@/types/teamFeed";
 
 interface InfiniteFeedListProps {
   initialFeedItems: FeedItemData[];
+  searchQuery?: string;
+  onSearchStateChange?: (isSearching: boolean) => void;
 }
 
 const ITEMS_PER_PAGE = 20;
 
 /**
- * 무한 스크롤 피드 리스트 컴포넌트 + 검색 기능
+ * 무한 스크롤 피드 리스트 컴포넌트
  * - 페이지당 20개씩 표시
  * - 스크롤 시 자동으로 다음 페이지 로드
- * - 검색 기능 (디바운싱, 강조 표시)
+ * - 검색 필터링 지원
  */
-export function InfiniteFeedList({ initialFeedItems }: InfiniteFeedListProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+export function InfiniteFeedList({ 
+  initialFeedItems,
+  searchQuery = "",
+  onSearchStateChange
+}: InfiniteFeedListProps) {
   const [displayedItems, setDisplayedItems] = useState<FeedItemData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -28,12 +31,14 @@ export function InfiniteFeedList({ initialFeedItems }: InfiniteFeedListProps) {
   // 검색 필터링
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) {
+      onSearchStateChange?.(false);
       return initialFeedItems;
     }
 
+    onSearchStateChange?.(true);
     const query = searchQuery.toLowerCase();
 
-    return initialFeedItems.filter((item) => {
+    const filtered = initialFeedItems.filter((item) => {
       // 이름 검색
       if (item.personName.toLowerCase().includes(query)) return true;
 
@@ -68,17 +73,17 @@ export function InfiniteFeedList({ initialFeedItems }: InfiniteFeedListProps) {
         return false;
       });
     });
-  }, [initialFeedItems, searchQuery]);
 
-  // 검색 핸들러
-  const handleSearch = useCallback((query: string) => {
-    setIsSearching(true);
-    setSearchQuery(query);
-    // 검색 시 페이지 리셋
+    // 검색 완료 후 상태 업데이트
+    setTimeout(() => onSearchStateChange?.(false), 300);
+    
+    return filtered;
+  }, [initialFeedItems, searchQuery, onSearchStateChange]);
+
+  // 검색 쿼리 변경 시 페이지 리셋
+  useEffect(() => {
     setCurrentPage(1);
-    // 약간의 딜레이 후 로딩 종료 (UX)
-    setTimeout(() => setIsSearching(false), 300);
-  }, []);
+  }, [searchQuery]);
 
   // 표시할 아이템 업데이트
   useEffect(() => {
@@ -118,14 +123,6 @@ export function InfiniteFeedList({ initialFeedItems }: InfiniteFeedListProps) {
 
   return (
     <>
-      {/* 검색 바 */}
-      <FeedSearch
-        onSearch={handleSearch}
-        totalCount={initialFeedItems.length}
-        matchCount={filteredItems.length}
-        isSearching={isSearching}
-      />
-
       {/* 피드 아이템 */}
       {displayedItems.length > 0 ? (
         displayedItems.map((item) => (

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 
 interface FeedSearchProps {
-  onSearch: (query: string) => void;
-  totalCount: number;
-  matchCount: number;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
   isSearching: boolean;
+  resultCount: number;
+  totalCount: number;
 }
 
 /**
@@ -15,21 +16,16 @@ interface FeedSearchProps {
  * - 로딩 스피너
  * - 검색 결과 카운트
  */
-export function FeedSearch({ onSearch, totalCount, matchCount, isSearching }: FeedSearchProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // 디바운싱 적용 (500ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearch(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, onSearch]);
-
+export function FeedSearch({ 
+  searchQuery, 
+  onSearchChange, 
+  isSearching, 
+  resultCount, 
+  totalCount 
+}: FeedSearchProps) {
   const handleClear = useCallback(() => {
-    setSearchQuery("");
-  }, []);
+    onSearchChange("");
+  }, [onSearchChange]);
 
   return (
     <div className="mb-4">
@@ -77,7 +73,7 @@ export function FeedSearch({ onSearch, totalCount, matchCount, isSearching }: Fe
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search in feed..."
           className="w-full pl-10 pr-20 py-2 text-sm bg-[#f6f8fa] border border-[#d0d7de] rounded-md text-[#24292f] placeholder-[#57606a] outline-none focus:border-[#0969da] focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)] transition-colors"
         />
@@ -88,7 +84,7 @@ export function FeedSearch({ onSearch, totalCount, matchCount, isSearching }: Fe
             <>
               {/* 결과 카운트 */}
               <span className="text-xs text-[#57606a] whitespace-nowrap">
-                {matchCount} / {totalCount}
+                {resultCount} / {totalCount}
               </span>
 
               {/* 클리어 버튼 */}
