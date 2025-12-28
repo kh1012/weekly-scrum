@@ -59,9 +59,9 @@ export function getRiskColor(level: RiskLevel | null): { bg: string; text: strin
       };
     default:
       return {
-        bg: "var(--notion-bg-secondary)",
-        text: "var(--notion-text-muted)",
-        border: "var(--notion-border)",
+        bg: "#f6f8fa",
+        text: "#57606a",
+        border: "#d0d7de",
       };
   }
 }
@@ -75,8 +75,7 @@ function ProgressBar({ progress }: { progress: number }) {
   return (
     <div className="flex items-center gap-2">
       <div
-        className="flex-1 h-2 rounded-full overflow-hidden"
-        style={{ background: "var(--notion-bg-secondary)" }}
+        className="flex-1 h-2 rounded-full overflow-hidden bg-[#f6f8fa]"
       >
         <div
           className="h-full rounded-full transition-all"
@@ -130,7 +129,7 @@ export function MetricsIndicator({ metrics, showDetails = false }: MetricsIndica
       <div className="flex items-center justify-between">
         <RiskIndicator level={metrics.riskLevel} />
         {showDetails && (
-          <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+          <span className="text-xs text-[#57606a]">
             {metrics.completedTaskCount}/{metrics.taskCount} tasks
           </span>
         )}

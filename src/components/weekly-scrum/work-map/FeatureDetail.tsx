@@ -21,7 +21,7 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
 
   if (items.length === 0) {
     return (
-      <div className="p-4 text-center" style={{ color: "var(--notion-text-muted)" }}>
+      <div className="p-4 text-center" style={{ color: "#57606a" }}>
         스냅샷이 없습니다.
       </div>
     );
@@ -30,11 +30,11 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
   return (
     <div className="space-y-6">
       {/* Feature 헤더 */}
-      <div className="pb-3 border-b" style={{ borderColor: "var(--notion-border)" }}>
-        <h3 className="text-lg font-semibold" style={{ color: "var(--notion-text)" }}>
+      <div className="pb-3 border-b" style={{ borderColor: "#d0d7de" }}>
+        <h3 className="text-lg font-semibold" style={{ color: "#24292f" }}>
           {featureName}
         </h3>
-        <p className="text-sm mt-1" style={{ color: "var(--notion-text-muted)" }}>
+        <p className="text-sm mt-1" style={{ color: "#57606a" }}>
           {items.length}개의 스냅샷, {new Set(items.map((i) => i.name)).size}명의 멤버
         </p>
       </div>
@@ -44,7 +44,7 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
         <div>
           <h4
             className="text-sm font-medium mb-3"
-            style={{ color: "var(--notion-text-muted)" }}
+            style={{ color: "#57606a" }}
           >
             Collaboration Network
           </h4>
@@ -56,7 +56,7 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
       <div>
         <h4
           className="text-sm font-medium mb-3"
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           Snapshots
         </h4>
@@ -67,13 +67,13 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
               onClick={() => setSelectedItem(item)}
               className="w-full text-left p-4 rounded-lg transition-all hover:ring-1"
               style={{
-                background: "var(--notion-bg-secondary)",
+                background: "#f6f8fa",
               }}
             >
               {/* 헤더 */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium" style={{ color: "var(--notion-text)" }}>
+                  <span className="font-medium" style={{ color: "#24292f" }}>
                     {item.name}
                   </span>
                   <DomainBadge domain={item.domain} />
@@ -88,7 +88,7 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
                 <div className="flex items-center gap-2 mb-1">
                   <div
                     className="flex-1 h-1.5 rounded-full overflow-hidden"
-                    style={{ background: "var(--notion-bg)" }}
+                    style={{ background: "white" }}
                   >
                     <div
                       className="h-full rounded-full"
@@ -96,23 +96,23 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
                         width: `${item.progressPercent}%`,
                         background:
                           item.progressPercent >= 80
-                            ? "var(--notion-success)"
+                            ? "#1a7f37"
                             : item.progressPercent >= 50
-                            ? "var(--notion-accent)"
-                            : "var(--notion-warning)",
+                            ? "#0969da"
+                            : "#9a6700",
                       }}
                     />
                   </div>
                   <span
                     className="text-xs font-medium w-10 text-right"
-                    style={{ color: "var(--notion-text-muted)" }}
+                    style={{ color: "#57606a" }}
                   >
                     {item.progressPercent}%
                   </span>
                 </div>
                 <p
                   className="text-sm truncate"
-                  style={{ color: "var(--notion-text-secondary)" }}
+                  style={{ color: "#57606a" }}
                 >
                   {item.progress[0]}
                 </p>
@@ -126,8 +126,8 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
                       key={i}
                       className="text-xs px-1.5 py-0.5 rounded"
                       style={{
-                        background: "var(--notion-bg)",
-                        color: "var(--notion-text-muted)",
+                        background: "white",
+                        color: "#57606a",
                       }}
                     >
                       {collab.name}
@@ -137,8 +137,8 @@ export function FeatureDetail({ featureName, items }: FeatureDetailProps) {
                     <span
                       className="text-xs px-1.5 py-0.5 rounded"
                       style={{
-                        background: "var(--notion-bg)",
-                        color: "var(--notion-text-muted)",
+                        background: "white",
+                        color: "#57606a",
                       }}
                     >
                       +{item.collaborators.length - 3}

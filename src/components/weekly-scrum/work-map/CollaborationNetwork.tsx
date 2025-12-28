@@ -301,7 +301,7 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
     return (
       <div
         className="text-center py-8 text-sm"
-        style={{ color: "var(--notion-text-muted)" }}
+        style={{ color: "#57606a" }}
       >
         협업 데이터가 없습니다.
       </div>
@@ -315,10 +315,10 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
       {/* 컨트롤 바 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+          <span className="text-sm font-medium" style={{ color: "#24292f" }}>
             Collaboration Network
           </span>
-          <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+          <span className="text-xs" style={{ color: "#57606a" }}>
             (드래그: 노드 이동, 스크롤: 확대/축소, 빈 공간 드래그: 패닝)
           </span>
         </div>
@@ -326,20 +326,20 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
           <button
             onClick={zoomOut}
             className="p-1.5 rounded hover:bg-opacity-50 transition-colors"
-            style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text)" }}
+            style={{ background: "#f6f8fa", color: "#24292f" }}
             title="축소"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
-          <span className="text-xs px-2" style={{ color: "var(--notion-text-muted)" }}>
+          <span className="text-xs px-2" style={{ color: "#57606a" }}>
             {Math.round(viewState.scale * 100)}%
           </span>
           <button
             onClick={zoomIn}
             className="p-1.5 rounded hover:bg-opacity-50 transition-colors"
-            style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text)" }}
+            style={{ background: "#f6f8fa", color: "#24292f" }}
             title="확대"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -350,7 +350,7 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
           <button
             onClick={resetView}
             className="p-1.5 rounded hover:bg-opacity-50 transition-colors ml-1"
-            style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text)" }}
+            style={{ background: "#f6f8fa", color: "#24292f" }}
             title="리셋"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -366,7 +366,7 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
         ref={containerRef}
         className="rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
         style={{
-          background: "var(--notion-bg-secondary)",
+          background: "#f6f8fa",
           height: "300px",
           touchAction: "none",
         }}
@@ -484,7 +484,7 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
       <div className="flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-6 h-0.5" style={{ background: getRelationColor("pair") }} />
-          <span style={{ color: "var(--notion-text-muted)" }}>pair (실시간 협업)</span>
+          <span style={{ color: "#57606a" }}>pair (실시간 협업)</span>
         </div>
         <div className="flex items-center gap-2">
           <div
@@ -493,7 +493,7 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
               background: `repeating-linear-gradient(90deg, ${getRelationColor("pre")} 0, ${getRelationColor("pre")} 4px, transparent 4px, transparent 8px)`,
             }}
           />
-          <span style={{ color: "var(--notion-text-muted)" }}>pre (선행 협업)</span>
+          <span style={{ color: "#57606a" }}>pre (선행 협업)</span>
         </div>
         <div className="flex items-center gap-2">
           <div
@@ -502,7 +502,7 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
               background: `repeating-linear-gradient(90deg, ${getRelationColor("post")} 0, ${getRelationColor("post")} 4px, transparent 4px, transparent 8px)`,
             }}
           />
-          <span style={{ color: "var(--notion-text-muted)" }}>post (후행 협업)</span>
+          <span style={{ color: "#57606a" }}>post (후행 협업)</span>
         </div>
       </div>
 
@@ -511,12 +511,12 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
         <div
           className="p-4 rounded-lg"
           style={{
-            background: "var(--notion-bg)",
+            background: "white",
             border: "2px solid #3b82f6",
           }}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-lg" style={{ color: "var(--notion-text)" }}>
+            <span className="font-semibold text-lg" style={{ color: "#24292f" }}>
               {selectedNode.name}
             </span>
             <span
@@ -529,7 +529,7 @@ export function CollaborationNetwork({ items, onNodeClick }: CollaborationNetwor
               {selectedNode.item.domain}
             </span>
           </div>
-          <div className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+          <div className="text-sm" style={{ color: "#57606a" }}>
             {selectedNode.item.project} / {selectedNode.item.module || "—"} / {selectedNode.item.topic}
           </div>
         </div>

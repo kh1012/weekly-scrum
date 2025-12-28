@@ -456,7 +456,7 @@ export function CollaborationNetworkV2({
     return (
       <div
         className="flex items-center justify-center h-48 text-sm"
-        style={{ color: "var(--notion-text-secondary)" }}
+        style={{ color: "#57606a" }}
       >
         협업 데이터가 없습니다.
       </div>
@@ -475,12 +475,12 @@ export function CollaborationNetworkV2({
       {/* 메타데이터 상단 바 */}
       <div
         className="flex-shrink-0 flex items-center gap-3 px-3 py-2 mb-2 rounded-lg"
-        style={{ background: "var(--notion-bg-secondary)" }}
+        style={{ background: "#f6f8fa" }}
       >
         {/* 인원 수 */}
         <div
           className="flex items-center gap-1.5 text-xs"
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <span>👥</span>
           <span className="font-medium">{metadata.nodeCount}명</span>
@@ -488,7 +488,7 @@ export function CollaborationNetworkV2({
 
         <div
           className="h-3 w-px"
-          style={{ background: "var(--notion-border)" }}
+          style={{ background: "#d0d7de" }}
         />
 
         {/* Pair 관계 */}
@@ -554,8 +554,8 @@ export function CollaborationNetworkV2({
             onClick={() => setActiveRelation(null)}
             className="ml-auto text-xs px-2 py-1 rounded transition-colors"
             style={{
-              background: "var(--notion-bg)",
-              color: "var(--notion-text-muted)",
+              background: "white",
+              color: "#57606a",
             }}
           >
             전체 보기
@@ -569,7 +569,7 @@ export function CollaborationNetworkV2({
         className="relative flex-1 rounded-lg overflow-hidden"
         style={{
           background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-          border: "1px solid var(--notion-border)",
+          border: "1px solid #d0d7de",
         }}
       >
         <svg
@@ -938,7 +938,7 @@ export function CollaborationNetworkV2({
             className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
             style={{
               background: "rgba(255,255,255,0.9)",
-              color: "var(--notion-text)",
+              color: "#24292f",
             }}
           >
             −
@@ -947,7 +947,7 @@ export function CollaborationNetworkV2({
             className="px-2 py-1 text-[10px] font-medium rounded"
             style={{
               background: "rgba(255,255,255,0.9)",
-              color: "var(--notion-text)",
+              color: "#24292f",
             }}
           >
             {Math.round(zoom * 100)}%
@@ -957,7 +957,7 @@ export function CollaborationNetworkV2({
             className="w-7 h-7 flex items-center justify-center rounded text-sm font-bold"
             style={{
               background: "rgba(255,255,255,0.9)",
-              color: "var(--notion-text)",
+              color: "#24292f",
             }}
           >
             +
@@ -967,7 +967,7 @@ export function CollaborationNetworkV2({
             className="ml-1 px-2 py-1 text-[10px] rounded"
             style={{
               background: "rgba(255,255,255,0.9)",
-              color: "var(--notion-text-secondary)",
+              color: "#57606a",
             }}
           >
             리셋
@@ -978,14 +978,14 @@ export function CollaborationNetworkV2({
       {/* 범례 */}
       <div
         className="mt-3 pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-        style={{ borderTop: "1px solid var(--notion-border)" }}
+        style={{ borderTop: "1px solid #d0d7de" }}
       >
         <div className="flex flex-wrap gap-1.5">
           {domains.map((domain) => (
             <span
               key={domain}
               className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
-              style={{ background: "var(--notion-bg-secondary)" }}
+              style={{ background: "#f6f8fa" }}
             >
               <span
                 className="w-2 h-2 rounded-full"
@@ -1091,7 +1091,7 @@ export function CollaborationNetworkV2({
                     width: "400px",
                     maxHeight: "80vh",
                     background: "rgba(255,255,255,0.98)",
-                    border: "1px solid var(--notion-border)",
+                    border: "1px solid #d0d7de",
                     boxShadow: "0 12px 32px rgba(0,0,0,0.2)",
                     zIndex: 9000 + snapshotPanels.indexOf(panel),
                   }}
@@ -1107,7 +1107,7 @@ export function CollaborationNetworkV2({
                   {/* 헤더 */}
                   <div
                     className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0 cursor-move"
-                    style={{ borderColor: "var(--notion-border)" }}
+                    style={{ borderColor: "#d0d7de" }}
                     onMouseDown={(e) => {
                       if ((e.target as HTMLElement).closest("button")) return;
                       e.preventDefault();
@@ -1175,16 +1175,16 @@ export function CollaborationNetworkV2({
                       <div className="text-left">
                         <div
                           className="font-semibold text-sm flex items-center gap-1"
-                          style={{ color: "var(--notion-text)" }}
+                          style={{ color: "#24292f" }}
                         >
                           {node.name}
-                          <span style={{ color: "var(--notion-text-muted)" }}>
+                          <span style={{ color: "#57606a" }}>
                             ›
                           </span>
                         </div>
                         <div
                           className="text-xs"
-                          style={{ color: "var(--notion-text-muted)" }}
+                          style={{ color: "#57606a" }}
                         >
                           {personSnapshots.length}개 스냅샷
                         </div>
@@ -1200,7 +1200,7 @@ export function CollaborationNetworkV2({
                           setSelectedNode(null);
                       }}
                       className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-sm"
-                      style={{ color: "var(--notion-text-muted)" }}
+                      style={{ color: "#57606a" }}
                     >
                       ✕
                     </button>
@@ -1209,7 +1209,7 @@ export function CollaborationNetworkV2({
                   {/* 필터 토글 - 항상 표시 */}
                   <div
                     className="px-4 py-2 border-b flex-shrink-0"
-                    style={{ borderColor: "var(--notion-border)" }}
+                    style={{ borderColor: "#d0d7de" }}
                   >
                     <button
                       onClick={() => {
@@ -1225,10 +1225,10 @@ export function CollaborationNetworkV2({
                       style={{
                         background: panel.showOnlyFeature
                           ? "rgba(59, 130, 246, 0.1)"
-                          : "var(--notion-bg-secondary)",
+                          : "#f6f8fa",
                         color: panel.showOnlyFeature
                           ? "#3b82f6"
-                          : "var(--notion-text-secondary)",
+                          : "#57606a",
                       }}
                     >
                       <span className="font-medium">
@@ -1238,7 +1238,7 @@ export function CollaborationNetworkV2({
                       </span>
                       <span
                         className="px-2 py-0.5 rounded text-sm font-bold"
-                        style={{ background: "var(--notion-bg)" }}
+                        style={{ background: "white" }}
                       >
                         {panel.showOnlyFeature
                           ? items.filter((i) => i.name === node.name).length
@@ -1254,7 +1254,7 @@ export function CollaborationNetworkV2({
                     {personSnapshots.length === 0 ? (
                       <div
                         className="text-center py-6 text-sm"
-                        style={{ color: "var(--notion-text-muted)" }}
+                        style={{ color: "#57606a" }}
                       >
                         스냅샷이 없습니다.
                       </div>
@@ -1272,8 +1272,8 @@ export function CollaborationNetworkV2({
                             key={idx}
                             className="rounded-lg overflow-hidden transition-all"
                             style={{
-                              background: "var(--notion-bg)",
-                              border: "1px solid var(--notion-border)",
+                              background: "white",
+                              border: "1px solid #d0d7de",
                             }}
                           >
                             <button
@@ -1294,7 +1294,7 @@ export function CollaborationNetworkV2({
                                 </span>
                                 <span
                                   className="text-sm font-medium truncate"
-                                  style={{ color: "var(--notion-text)" }}
+                                  style={{ color: "#24292f" }}
                                   title={snapshot.topic}
                                 >
                                   {snapshot.topic}
@@ -1317,7 +1317,7 @@ export function CollaborationNetworkV2({
                                   className={`transition-transform ${
                                     isExpanded ? "rotate-180" : ""
                                   }`}
-                                  style={{ color: "var(--notion-text-muted)" }}
+                                  style={{ color: "#57606a" }}
                                 >
                                   <polyline points="6 9 12 15 18 9" />
                                 </svg>
@@ -1326,11 +1326,11 @@ export function CollaborationNetworkV2({
                             {isExpanded && (
                               <div
                                 className="px-3 pb-3 pt-2 border-t"
-                                style={{ borderColor: "var(--notion-border)" }}
+                                style={{ borderColor: "#d0d7de" }}
                               >
                                 <div
                                   className="text-xs mb-2"
-                                  style={{ color: "var(--notion-text-muted)" }}
+                                  style={{ color: "#57606a" }}
                                 >
                                   📁 {snapshot.project} /{" "}
                                   {snapshot.module || "—"}
@@ -1339,7 +1339,7 @@ export function CollaborationNetworkV2({
                                   <div
                                     className="h-2 rounded-full overflow-hidden"
                                     style={{
-                                      background: "var(--notion-bg-secondary)",
+                                      background: "#f6f8fa",
                                     }}
                                   >
                                     <div
@@ -1357,7 +1357,7 @@ export function CollaborationNetworkV2({
                                       <div
                                         className="text-xs font-medium mb-1.5"
                                         style={{
-                                          color: "var(--notion-text-muted)",
+                                          color: "#57606a",
                                         }}
                                       >
                                         완료
@@ -1371,7 +1371,7 @@ export function CollaborationNetworkV2({
                                               className="text-xs flex items-start gap-1.5"
                                               style={{
                                                 color:
-                                                  "var(--notion-text-secondary)",
+                                                  "#57606a",
                                               }}
                                             >
                                               <span className="text-green-500 flex-shrink-0">
@@ -1390,7 +1390,7 @@ export function CollaborationNetworkV2({
                                     <div
                                       className="text-xs font-medium mb-1.5"
                                       style={{
-                                        color: "var(--notion-text-muted)",
+                                        color: "#57606a",
                                       }}
                                     >
                                       다음
@@ -1402,7 +1402,7 @@ export function CollaborationNetworkV2({
                                           className="text-xs flex items-start gap-1.5"
                                           style={{
                                             color:
-                                              "var(--notion-text-secondary)",
+                                              "#57606a",
                                           }}
                                         >
                                           <span className="text-blue-500 flex-shrink-0">
@@ -1442,14 +1442,14 @@ export function CollaborationNetworkV2({
                 <div
                   className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl flex flex-col animate-scale-in"
                   style={{
-                    background: "var(--notion-bg)",
+                    background: "white",
                     boxShadow: "0 25px 50px rgba(0, 0, 0, 0.25)",
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div
                     className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
-                    style={{ borderColor: "var(--notion-border)" }}
+                    style={{ borderColor: "#d0d7de" }}
                   >
                     <div className="flex items-center gap-4">
                       <div
@@ -1461,13 +1461,13 @@ export function CollaborationNetworkV2({
                       <div>
                         <div
                           className="font-bold text-lg"
-                          style={{ color: "var(--notion-text)" }}
+                          style={{ color: "#24292f" }}
                         >
                           {modalNode.name}
                         </div>
                         <div
                           className="text-sm"
-                          style={{ color: "var(--notion-text-muted)" }}
+                          style={{ color: "#57606a" }}
                         >
                           {
                             (allItems || items).filter(
@@ -1481,7 +1481,7 @@ export function CollaborationNetworkV2({
                     <button
                       onClick={() => setModalNode(null)}
                       className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-lg"
-                      style={{ color: "var(--notion-text-muted)" }}
+                      style={{ color: "#57606a" }}
                     >
                       ✕
                     </button>

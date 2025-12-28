@@ -221,7 +221,7 @@ export function DirectoryTree({
     <div className="h-full flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+        <div className="text-xs" style={{ color: "#57606a" }}>
           {totalModules} modules · {totalFeatures} features
         </div>
         <div className="flex items-center gap-1">
@@ -229,8 +229,8 @@ export function DirectoryTree({
             onClick={expandAll}
             className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-muted)",
+              background: "#f6f8fa",
+              color: "#57606a",
             }}
           >
             펼침
@@ -239,8 +239,8 @@ export function DirectoryTree({
             onClick={collapseAll}
             className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-muted)",
+              background: "#f6f8fa",
+              color: "#57606a",
             }}
           >
             접기
@@ -355,7 +355,7 @@ function ProjectItem({
           className={`transition-transform flex-shrink-0 ${
             isExpanded ? "rotate-90" : ""
           }`}
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
@@ -363,7 +363,7 @@ function ProjectItem({
         {/* 프로젝트명 */}
         <span
           className="flex-1 text-left font-semibold text-sm truncate"
-          style={{ color: "var(--notion-text)" }}
+          style={{ color: "#24292f" }}
         >
           {project.name}
         </span>
@@ -375,8 +375,8 @@ function ProjectItem({
         <span
           className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
           style={{
-            background: "var(--notion-bg)",
-            color: "var(--notion-text-muted)",
+            background: "white",
+            color: "#57606a",
           }}
         >
           {completedFeatures}/{totalFeatures}
@@ -400,8 +400,8 @@ function ProjectItem({
             }}
             className="flex-shrink-0 h-9 px-2.5 text-xs rounded-lg transition-colors"
             style={{
-              background: isProjectSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
-              color: isProjectSelected ? "#3b82f6" : "var(--notion-text-muted)",
+              background: isProjectSelected ? "rgba(59, 130, 246, 0.15)" : "#f6f8fa",
+              color: isProjectSelected ? "#3b82f6" : "#57606a",
               boxShadow: isProjectSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
             }}
             title={`${project.name} 전체 보기`}
@@ -415,7 +415,7 @@ function ProjectItem({
       {isExpanded && (
         <div
           className="ml-4 mt-2 pl-3 border-l-2"
-          style={{ borderColor: "var(--notion-border)" }}
+          style={{ borderColor: "#d0d7de" }}
         >
           {project.modules
             .filter((module) => {
@@ -513,7 +513,7 @@ function ModuleItem({
           className={`transition-transform flex-shrink-0 ${
             isExpanded ? "rotate-90" : ""
           }`}
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
@@ -521,7 +521,7 @@ function ModuleItem({
         {/* 모듈명 */}
         <span
           className="flex-1 text-left font-medium text-[13px] truncate"
-          style={{ color: "var(--notion-text)" }}
+          style={{ color: "#24292f" }}
         >
           {module.name}
         </span>
@@ -532,7 +532,7 @@ function ModuleItem({
         {/* 완료 현황 */}
         <span
           className="text-[10px] flex-shrink-0"
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           {completedFeatures}/{module.features.length}
         </span>
@@ -555,8 +555,8 @@ function ModuleItem({
             }}
             className="flex-shrink-0 h-8 px-2 text-[10px] rounded-md transition-colors"
             style={{
-              background: isModuleSelected ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
-              color: isModuleSelected ? "#3b82f6" : "var(--notion-text-muted)",
+              background: isModuleSelected ? "rgba(59, 130, 246, 0.15)" : "#f6f8fa",
+              color: isModuleSelected ? "#3b82f6" : "#57606a",
               boxShadow: isModuleSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.3)" : "none",
             }}
             title={`${module.name} 전체 보기`}
@@ -570,7 +570,7 @@ function ModuleItem({
       {isExpanded && (
         <div
           className="ml-3 mt-1 pl-3 border-l"
-          style={{ borderColor: "var(--notion-border)" }}
+          style={{ borderColor: "#d0d7de" }}
         >
           {module.features
             .filter((feature) => {
@@ -627,7 +627,7 @@ function FeatureItem({
       onClick={() => onSelect(projectName, moduleName, feature.name)}
       className="w-full flex items-center gap-2 pl-2 pr-2 py-1 rounded transition-all"
       style={{
-        background: isSelected ? "var(--notion-bg-secondary)" : "transparent",
+        background: isSelected ? "#f6f8fa" : "transparent",
         marginLeft: "-2px",
       }}
       onMouseEnter={(e) => {
@@ -637,7 +637,7 @@ function FeatureItem({
       onMouseLeave={(e) => {
         if (!isSelected)
           e.currentTarget.style.background = isSelected
-            ? "var(--notion-bg-secondary)"
+            ? "#f6f8fa"
             : "transparent";
       }}
     >
@@ -646,8 +646,8 @@ function FeatureItem({
         className="flex-1 text-left text-[12px] truncate"
         style={{
           color: isSelected
-            ? "var(--notion-text)"
-            : "var(--notion-text-secondary)",
+            ? "#24292f"
+            : "#57606a",
           fontWeight: isSelected ? 500 : 400,
         }}
       >
@@ -660,7 +660,7 @@ function FeatureItem({
       {/* 태스크 완료 현황 */}
       <span
         className="text-[10px] flex-shrink-0"
-        style={{ color: "var(--notion-text-muted)" }}
+        style={{ color: "#57606a" }}
       >
         {completedTasks}/{totalTasks}
       </span>
@@ -668,7 +668,7 @@ function FeatureItem({
       {/* 진행률 바 */}
       <div
         className="w-8 h-1 rounded-full overflow-hidden flex-shrink-0"
-        style={{ background: "var(--notion-bg-secondary)" }}
+        style={{ background: "#f6f8fa" }}
       >
         <div
           className="h-full rounded-full"
@@ -953,7 +953,7 @@ export function PersonTree({
     <div className="h-full flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+        <div className="text-xs" style={{ color: "#57606a" }}>
           {persons.length} members · {totalSnapshots} snapshots
         </div>
         <div className="flex items-center gap-1">
@@ -961,8 +961,8 @@ export function PersonTree({
             onClick={expandAll}
             className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-muted)",
+              background: "#f6f8fa",
+              color: "#57606a",
             }}
           >
             펼침
@@ -971,8 +971,8 @@ export function PersonTree({
             onClick={collapseAll}
             className="h-7 px-2.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
             style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-muted)",
+              background: "#f6f8fa",
+              color: "#57606a",
             }}
           >
             접기
@@ -1075,14 +1075,14 @@ function PersonItem({
           className={`transition-transform flex-shrink-0 ${
             isExpanded ? "rotate-90" : ""
           }`}
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
         <span
           className="flex-1 text-left font-semibold text-sm truncate"
-          style={{ color: "var(--notion-text)" }}
+          style={{ color: "#24292f" }}
         >
           {person.name}
         </span>
@@ -1092,8 +1092,8 @@ function PersonItem({
         <span
           className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
           style={{
-            background: "var(--notion-bg)",
-            color: "var(--notion-text-muted)",
+            background: "white",
+            color: "#57606a",
           }}
         >
           {person.items.length}
@@ -1111,7 +1111,7 @@ function PersonItem({
       {isExpanded && (
         <div
           className="ml-4 mt-2 pl-3 border-l-2"
-          style={{ borderColor: "var(--notion-border)" }}
+          style={{ borderColor: "#d0d7de" }}
         >
           {person.domains
             .filter((domain) => {
@@ -1206,14 +1206,14 @@ function PersonDomainItem({
           className={`transition-transform flex-shrink-0 ${
             isExpanded ? "rotate-90" : ""
           }`}
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
         <span
           className="flex-1 text-left font-medium text-[13px] truncate"
-          style={{ color: "var(--notion-text)" }}
+          style={{ color: "#24292f" }}
         >
           {domain.name}
         </span>
@@ -1222,7 +1222,7 @@ function PersonDomainItem({
 
         <span
           className="text-[10px] flex-shrink-0"
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           {domain.items.length}
         </span>
@@ -1238,7 +1238,7 @@ function PersonDomainItem({
       {isExpanded && (
         <div
           className="ml-3 mt-1 pl-3 border-l"
-          style={{ borderColor: "var(--notion-border)" }}
+          style={{ borderColor: "#d0d7de" }}
         >
           {domain.projects
             .filter((project) => {
@@ -1330,14 +1330,14 @@ function PersonProjectItem({
           className={`transition-transform flex-shrink-0 ${
             isExpanded ? "rotate-90" : ""
           }`}
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
         <span
           className="flex-1 text-left text-[12px] truncate"
-          style={{ color: "var(--notion-text-secondary)" }}
+          style={{ color: "#57606a" }}
         >
           {project.name}
         </span>
@@ -1346,7 +1346,7 @@ function PersonProjectItem({
 
         <span
           className="text-[10px] flex-shrink-0"
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           {project.items.length}
         </span>
@@ -1362,7 +1362,7 @@ function PersonProjectItem({
       {isExpanded && (
         <div
           className="ml-3 mt-1 pl-3 border-l"
-          style={{ borderColor: "var(--notion-border)" }}
+          style={{ borderColor: "#d0d7de" }}
         >
           {project.modules
             .filter((module) => {
@@ -1451,14 +1451,14 @@ function PersonModuleItem({
           className={`transition-transform flex-shrink-0 ${
             isExpanded ? "rotate-90" : ""
           }`}
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
 
         <span
           className="flex-1 text-left text-[11px] truncate"
-          style={{ color: "var(--notion-text-secondary)" }}
+          style={{ color: "#57606a" }}
         >
           {module.name}
         </span>
@@ -1467,7 +1467,7 @@ function PersonModuleItem({
 
         <span
           className="text-[10px] flex-shrink-0"
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           {module.items.length}
         </span>
@@ -1483,7 +1483,7 @@ function PersonModuleItem({
       {isExpanded && (
         <div
           className="ml-3 mt-1 pl-3 border-l"
-          style={{ borderColor: "var(--notion-border)" }}
+          style={{ borderColor: "#d0d7de" }}
         >
           {module.features
             .filter((feature) => {
@@ -1552,7 +1552,7 @@ function PersonFeatureItem({
       }
       className="w-full flex items-center gap-2 pl-2 pr-2 py-1 rounded transition-all"
       style={{
-        background: isSelected ? "var(--notion-bg-secondary)" : "transparent",
+        background: isSelected ? "#f6f8fa" : "transparent",
         marginLeft: "-2px",
       }}
       onMouseEnter={(e) => {
@@ -1562,7 +1562,7 @@ function PersonFeatureItem({
       onMouseLeave={(e) => {
         if (!isSelected)
           e.currentTarget.style.background = isSelected
-            ? "var(--notion-bg-secondary)"
+            ? "#f6f8fa"
             : "transparent";
       }}
     >
@@ -1570,8 +1570,8 @@ function PersonFeatureItem({
         className="flex-1 text-left text-[11px] truncate"
         style={{
           color: isSelected
-            ? "var(--notion-text)"
-            : "var(--notion-text-secondary)",
+            ? "#24292f"
+            : "#57606a",
           fontWeight: isSelected ? 500 : 400,
         }}
       >
@@ -1582,7 +1582,7 @@ function PersonFeatureItem({
 
       <div
         className="w-6 h-1 rounded-full overflow-hidden flex-shrink-0"
-        style={{ background: "var(--notion-bg-secondary)" }}
+        style={{ background: "#f6f8fa" }}
       >
         <div
           className="h-full rounded-full"

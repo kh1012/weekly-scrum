@@ -297,8 +297,8 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             <div
               className="flex-shrink-0 px-4 py-3 border-b"
               style={{
-                borderColor: "var(--notion-border)",
-                background: "var(--notion-bg)",
+                borderColor: "#d0d7de",
+                background: "white",
               }}
             >
               <div className="flex items-center justify-between">
@@ -308,7 +308,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   </svg>
                   <span
                     className="font-semibold"
-                    style={{ color: "var(--notion-text)" }}
+                    style={{ color: "#24292f" }}
                   >
                     Work Map
                   </span>
@@ -337,7 +337,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       color:
                         viewMode === "person"
                           ? "#3b82f6"
-                          : "var(--notion-text-muted)",
+                          : "#57606a",
                     }}
                   >
                     {viewMode === "project" ? (
@@ -359,7 +359,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       background: isOptionsOpen
                         ? "var(--gnb-filter-bg)"
                         : "transparent",
-                      color: "var(--notion-text-muted)",
+                      color: "#57606a",
                     }}
                   >
                     <svg
@@ -380,7 +380,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               </div>
               <div
                 className="text-xs mt-1"
-                style={{ color: "var(--notion-text-muted)" }}
+                style={{ color: "#57606a" }}
               >
                 {viewMode === "project"
                   ? `${projects.length} projects · ${filteredItems.length} snapshots`
@@ -392,9 +392,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 <div
                   className="absolute right-3 top-14 w-44 rounded-lg overflow-hidden z-50 animate-fadeIn"
                   style={{
-                    background: "var(--notion-bg)",
+                    background: "white",
                     boxShadow: "var(--notion-shadow-lg)",
-                    border: "1px solid var(--notion-border)",
+                    border: "1px solid #d0d7de",
                   }}
                 >
                   <div className="p-2">
@@ -410,7 +410,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       />
                       <span
                         className="text-xs"
-                        style={{ color: "var(--notion-text)" }}
+                        style={{ color: "#24292f" }}
                       >
                         완료 항목 숨김
                       </span>
@@ -423,7 +423,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             {/* 트리 컨텐츠 - 전체 화면 (스크롤 가능) */}
             <div
               className="flex-1 overflow-y-auto p-3"
-              style={{ background: "var(--notion-bg)" }}
+              style={{ background: "white" }}
             >
               {viewMode === "project" ? (
                 <DirectoryTree
@@ -461,14 +461,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             <div
               className="flex-shrink-0 px-4 py-3 border-b flex items-center gap-3"
               style={{
-                borderColor: "var(--notion-border)",
-                background: "var(--notion-bg)",
+                borderColor: "#d0d7de",
+                background: "white",
               }}
             >
               <button
                 onClick={handleBackToTree}
                 className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
-                style={{ background: "var(--notion-bg-secondary)" }}
+                style={{ background: "#f6f8fa" }}
               >
                 <svg
                   width="16"
@@ -477,7 +477,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  style={{ color: "var(--notion-text)" }}
+                  style={{ color: "#24292f" }}
                 >
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
@@ -485,7 +485,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               <div className="flex-1 min-w-0">
                 <div
                   className="text-sm font-medium truncate"
-                  style={{ color: "var(--notion-text)" }}
+                  style={{ color: "#24292f" }}
                 >
                   {viewMode === "project"
                     ? selection.feature
@@ -493,7 +493,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 </div>
                 <div
                   className="text-xs truncate"
-                  style={{ color: "var(--notion-text-muted)" }}
+                  style={{ color: "#57606a" }}
                 >
                   {viewMode === "project"
                     ? `${selection.project} / ${selection.module}`
@@ -511,18 +511,18 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     <div
                       className="rounded-xl"
                       style={{
-                        background: "var(--notion-bg)",
-                        border: "1px solid var(--notion-border)",
+                        background: "white",
+                        border: "1px solid #d0d7de",
                         height: "300px",
                       }}
                     >
                       <div
                         className="px-4 py-2 border-b"
-                        style={{ borderColor: "var(--notion-border)" }}
+                        style={{ borderColor: "#d0d7de" }}
                       >
                         <h2
                           className="font-semibold text-sm"
-                          style={{ color: "var(--notion-text)" }}
+                          style={{ color: "#24292f" }}
                         >
                           Collaboration Network
                         </h2>
@@ -548,19 +548,19 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 <div
                   className="flex-1 rounded-xl flex flex-col items-center justify-center py-12"
                   style={{
-                    background: "var(--notion-bg)",
-                    border: "1px solid var(--notion-border)",
+                    background: "white",
+                    border: "1px solid #d0d7de",
                   }}
                 >
                   <div
                     className="text-4xl mb-3 p-4 rounded-full"
-                    style={{ background: "var(--notion-bg-secondary)" }}
+                    style={{ background: "#f6f8fa" }}
                   >
                     📄
                   </div>
                   <div
                     className="text-base font-medium mb-1"
-                    style={{ color: "var(--notion-text)" }}
+                    style={{ color: "#24292f" }}
                   >
                     데이터 없음
                   </div>
@@ -584,14 +584,14 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         className="flex-shrink-0 rounded-2xl overflow-hidden flex flex-col animate-slide-in-left interactive-card"
         style={{
           width: treeWidth,
-          background: "var(--notion-bg)",
-          border: "1px solid var(--notion-border)",
+          background: "white",
+          border: "1px solid #d0d7de",
         }}
       >
         {/* 트리 헤더 */}
         <div
           className="flex-shrink-0 px-4 py-3 border-b"
-          style={{ borderColor: "var(--notion-border)" }}
+          style={{ borderColor: "#d0d7de" }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -600,7 +600,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               </svg>
               <span
                 className="font-semibold"
-                style={{ color: "var(--notion-text)" }}
+                style={{ color: "#24292f" }}
               >
                 Work Map
               </span>
@@ -633,7 +633,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     color:
                       viewMode === "project"
                         ? "#3b82f6"
-                        : "var(--notion-text-muted)",
+                        : "#57606a",
                   }}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -652,7 +652,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     color:
                       viewMode === "person"
                         ? "#3b82f6"
-                        : "var(--notion-text-muted)",
+                        : "#57606a",
                   }}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -671,7 +671,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     background: isOptionsOpen
                       ? "var(--gnb-filter-bg)"
                       : "transparent",
-                    color: "var(--notion-text-muted)",
+                    color: "#57606a",
                   }}
                   title="옵션"
                 >
@@ -695,9 +695,9 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   <div
                     className="absolute right-0 top-full mt-1 w-48 rounded-lg overflow-hidden z-50 animate-fadeIn"
                     style={{
-                      background: "var(--notion-bg)",
+                      background: "white",
                       boxShadow: "var(--notion-shadow-lg)",
-                      border: "1px solid var(--notion-border)",
+                      border: "1px solid #d0d7de",
                     }}
                   >
                     <div className="p-2">
@@ -710,7 +710,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         />
                         <span
                           className="text-xs"
-                          style={{ color: "var(--notion-text)" }}
+                          style={{ color: "#24292f" }}
                         >
                           완료 항목 숨김
                         </span>
@@ -723,7 +723,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
           </div>
           <div
             className="text-xs mt-1"
-            style={{ color: "var(--notion-text-muted)" }}
+            style={{ color: "#57606a" }}
           >
             {viewMode === "project"
               ? `${projects.length} projects · ${filteredItems.length} snapshots`
@@ -771,7 +771,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
           <div
             className="w-1 h-8 rounded-full transition-colors group-hover:bg-blue-400"
-            style={{ background: "var(--notion-border)" }}
+            style={{ background: "#d0d7de" }}
           />
         </div>
       </div>
@@ -783,13 +783,13 @@ export function WorkMapView({ items }: WorkMapViewProps) {
           <div
             className="flex-shrink-0 px-5 py-4 rounded-2xl interactive-card animate-card-reveal"
             style={{
-              background: "var(--notion-bg)",
-              border: "1px solid var(--notion-border)",
+              background: "white",
+              border: "1px solid #d0d7de",
             }}
           >
             <div
               className="flex items-center gap-2 text-sm"
-              style={{ color: "var(--notion-text-muted)" }}
+              style={{ color: "#57606a" }}
             >
               {viewMode === "project" ? (
                 <>
@@ -802,7 +802,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     }`}
                     style={{
                       color: !selection.module
-                        ? "var(--notion-text)"
+                        ? "#24292f"
                         : undefined,
                     }}
                     disabled={!selection.module}
@@ -826,7 +826,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         }`}
                         style={{
                           color: !selection.feature
-                            ? "var(--notion-text)"
+                            ? "#24292f"
                             : undefined,
                         }}
                         disabled={!selection.feature}
@@ -840,7 +840,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       <span>/</span>
                       <span
                         className="font-semibold"
-                        style={{ color: "var(--notion-text)" }}
+                        style={{ color: "#24292f" }}
                       >
                         {selection.feature}
                       </span>
@@ -849,7 +849,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   {/* 레벨 표시 */}
                   <span
                     className="ml-2 text-xs px-1.5 py-0.5 rounded"
-                    style={{ background: "var(--notion-bg-secondary)" }}
+                    style={{ background: "#f6f8fa" }}
                   >
                     {selection.feature
                       ? "Feature"
@@ -862,7 +862,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 <>
                   <span
                     className="font-semibold"
-                    style={{ color: "var(--notion-accent)" }}
+                    style={{ color: "#0969da" }}
                   >
                     {personSelection.person}
                   </span>
@@ -875,7 +875,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   <span>/</span>
                   <span
                     className="font-semibold"
-                    style={{ color: "var(--notion-text)" }}
+                    style={{ color: "#24292f" }}
                   >
                     {personSelection.feature}
                   </span>
@@ -893,18 +893,18 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 <div
                   className="rounded-2xl overflow-hidden"
                   style={{
-                    background: "var(--notion-bg)",
-                    border: "1px solid var(--notion-border)",
+                    background: "white",
+                    border: "1px solid #d0d7de",
                     height: networkHeight,
                   }}
                 >
                   <div
                     className="px-5 py-4 border-b"
-                    style={{ borderColor: "var(--notion-border)" }}
+                    style={{ borderColor: "#d0d7de" }}
                   >
                     <h2
                       className="font-semibold text-sm"
-                      style={{ color: "var(--notion-text)" }}
+                      style={{ color: "#24292f" }}
                     >
                       Collaboration Network
                     </h2>
@@ -956,7 +956,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 >
                   <div
                     className="w-12 h-1 rounded-full transition-colors group-hover:bg-blue-400"
-                    style={{ background: "var(--notion-border)" }}
+                    style={{ background: "#d0d7de" }}
                   />
                 </div>
               </div>
@@ -972,25 +972,25 @@ export function WorkMapView({ items }: WorkMapViewProps) {
           <div
             className="flex-1 rounded-xl flex flex-col items-center justify-center"
             style={{
-              background: "var(--notion-bg)",
-              border: "1px solid var(--notion-border)",
+              background: "white",
+              border: "1px solid #d0d7de",
             }}
           >
             <div
               className="text-6xl mb-4 p-6 rounded-full"
-              style={{ background: "var(--notion-bg-secondary)" }}
+              style={{ background: "#f6f8fa" }}
             >
               📄
             </div>
             <div
               className="text-lg font-medium mb-2"
-              style={{ color: "var(--notion-text)" }}
+              style={{ color: "#24292f" }}
             >
               피쳐를 선택하세요
             </div>
             <div
               className="text-sm text-center"
-              style={{ color: "var(--notion-text-muted)" }}
+              style={{ color: "#57606a" }}
             >
               좌측 트리에서 피쳐를 선택하면
               <br />

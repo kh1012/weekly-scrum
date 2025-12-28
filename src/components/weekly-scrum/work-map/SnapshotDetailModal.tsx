@@ -17,19 +17,19 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
     >
       <div
         className="w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-lg shadow-xl"
-        style={{ background: "var(--notion-bg)" }}
+        style={{ background: "white" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
         <div
           className="sticky top-0 px-4 py-3 border-b flex items-center justify-between"
           style={{
-            background: "var(--notion-bg)",
-            borderColor: "var(--notion-border)",
+            background: "white",
+            borderColor: "#d0d7de",
           }}
         >
           <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold" style={{ color: "var(--notion-text)" }}>
+            <span className="text-lg font-semibold" style={{ color: "#24292f" }}>
               {item.name}
             </span>
             <DomainBadge domain={item.domain} />
@@ -37,7 +37,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-opacity-50"
-            style={{ color: "var(--notion-text-muted)" }}
+            style={{ color: "#57606a" }}
           >
             <svg
               width="20"
@@ -58,9 +58,9 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
           {/* 경로 정보 */}
           <div
             className="px-3 py-2 rounded text-sm"
-            style={{ background: "var(--notion-bg-secondary)" }}
+            style={{ background: "#f6f8fa" }}
           >
-            <span style={{ color: "var(--notion-text-muted)" }}>
+            <span style={{ color: "#57606a" }}>
               {item.project} / {item.module || "—"} / {item.topic}
             </span>
           </div>
@@ -69,11 +69,11 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
           <div>
             <div
               className="text-xs font-medium mb-1.5"
-              style={{ color: "var(--notion-text-muted)" }}
+              style={{ color: "#57606a" }}
             >
               Plan
             </div>
-            <p className="text-sm" style={{ color: "var(--notion-text)" }}>
+            <p className="text-sm" style={{ color: "#24292f" }}>
               {item.plan}
             </p>
           </div>
@@ -82,7 +82,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
           <div>
             <div
               className="text-xs font-medium mb-1.5"
-              style={{ color: "var(--notion-text-muted)" }}
+              style={{ color: "#57606a" }}
             >
               Progress ({item.progressPercent}%)
             </div>
@@ -91,7 +91,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
                 <li
                   key={i}
                   className="text-sm list-disc"
-                  style={{ color: "var(--notion-text-secondary)" }}
+                  style={{ color: "#57606a" }}
                 >
                   {p}
                 </li>
@@ -103,7 +103,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
           <div>
             <div
               className="text-xs font-medium mb-1.5"
-              style={{ color: "var(--notion-text-muted)" }}
+              style={{ color: "#57606a" }}
             >
               Next
             </div>
@@ -112,7 +112,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
                 <li
                   key={i}
                   className="text-sm list-disc"
-                  style={{ color: "var(--notion-text-secondary)" }}
+                  style={{ color: "#57606a" }}
                 >
                   {n}
                 </li>
@@ -126,7 +126,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
               <div className="flex items-center gap-2 mb-1.5">
                 <span
                   className="text-xs font-medium"
-                  style={{ color: "var(--notion-text-muted)" }}
+                  style={{ color: "#57606a" }}
                 >
                   Risk
                 </span>
@@ -137,7 +137,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
                   <li
                     key={i}
                     className="text-sm list-disc"
-                    style={{ color: "var(--notion-danger)" }}
+                    style={{ color: "#cf222e" }}
                   >
                     {r}
                   </li>
@@ -151,7 +151,7 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
             <div>
               <div
                 className="text-xs font-medium mb-1.5"
-                style={{ color: "var(--notion-text-muted)" }}
+                style={{ color: "#57606a" }}
               >
                 Collaborators
               </div>
@@ -163,16 +163,16 @@ export function SnapshotDetailModal({ item, onClose }: SnapshotDetailModalProps)
                     style={{
                       background:
                         collab.relation === "pair"
-                          ? "var(--notion-accent-light)"
+                          ? "#ddf4ff"
                           : collab.relation === "pre"
-                          ? "var(--notion-warning-light)"
-                          : "var(--notion-success-light)",
+                          ? "#fff8c5"
+                          : "#dafbe1",
                       color:
                         collab.relation === "pair"
-                          ? "var(--notion-accent)"
+                          ? "#0969da"
                           : collab.relation === "pre"
-                          ? "var(--notion-warning)"
-                          : "var(--notion-success)",
+                          ? "#9a6700"
+                          : "#1a7f37",
                     }}
                   >
                     {collab.name} ({collab.relation})

@@ -36,7 +36,7 @@ export function FeatureDetailView({
           <button
             onClick={onBack}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-opacity-80"
-            style={{ background: "var(--notion-bg-secondary)", color: "var(--notion-text)" }}
+            style={{ background: "#f6f8fa", color: "#24292f" }}
           >
             <svg
               width="16"
@@ -50,16 +50,16 @@ export function FeatureDetailView({
             </svg>
             <span className="text-sm font-medium">Work Map</span>
           </button>
-          <span style={{ color: "var(--notion-text-muted)" }}>/</span>
-          <span className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+          <span style={{ color: "#57606a" }}>/</span>
+          <span className="text-sm" style={{ color: "#57606a" }}>
             {projectName}
           </span>
-          <span style={{ color: "var(--notion-text-muted)" }}>/</span>
-          <span className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+          <span style={{ color: "#57606a" }}>/</span>
+          <span className="text-sm" style={{ color: "#57606a" }}>
             {moduleName}
           </span>
-          <span style={{ color: "var(--notion-text-muted)" }}>/</span>
-          <span className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+          <span style={{ color: "#57606a" }}>/</span>
+          <span className="text-sm font-medium" style={{ color: "#24292f" }}>
             {feature.name}
           </span>
         </div>
@@ -67,7 +67,7 @@ export function FeatureDetailView({
         {/* Feature 제목 */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--notion-text)" }}>
+            <h1 className="text-2xl font-bold mb-2" style={{ color: "#24292f" }}>
               {feature.name}
             </h1>
             <div className="flex items-center gap-3 flex-wrap">
@@ -98,9 +98,9 @@ export function FeatureDetailView({
               {/* 멤버 수 */}
               <div
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                style={{ background: "var(--notion-bg-secondary)" }}
+                style={{ background: "#f6f8fa" }}
               >
-                <span className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+                <span className="text-sm" style={{ color: "#57606a" }}>
                   {memberCount}명 참여
                 </span>
               </div>
@@ -108,9 +108,9 @@ export function FeatureDetailView({
               {/* 스냅샷 수 */}
               <div
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                style={{ background: "var(--notion-bg-secondary)" }}
+                style={{ background: "#f6f8fa" }}
               >
-                <span className="text-sm" style={{ color: "var(--notion-text-muted)" }}>
+                <span className="text-sm" style={{ color: "#57606a" }}>
                   {feature.items.length} snapshots
                 </span>
               </div>
@@ -126,18 +126,18 @@ export function FeatureDetailView({
           <div
             className="rounded-xl overflow-hidden"
             style={{
-              background: "var(--notion-bg)",
-              border: "1px solid var(--notion-border)",
+              background: "white",
+              border: "1px solid #d0d7de",
             }}
           >
             <div
               className="px-5 py-4 border-b"
-              style={{ borderColor: "var(--notion-border)" }}
+              style={{ borderColor: "#d0d7de" }}
             >
-              <h2 className="font-semibold" style={{ color: "var(--notion-text)" }}>
+              <h2 className="font-semibold" style={{ color: "#24292f" }}>
                 Collaboration Network
               </h2>
-              <p className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
+              <p className="text-xs mt-1" style={{ color: "#57606a" }}>
                 협업 관계를 시각화합니다. 노드를 클릭하면 상세 정보를 볼 수 있습니다.
               </p>
             </div>
@@ -151,18 +151,18 @@ export function FeatureDetailView({
         <div
           className={`rounded-xl overflow-hidden ${!hasCollaborators ? "lg:col-span-2" : ""}`}
           style={{
-            background: "var(--notion-bg)",
-            border: "1px solid var(--notion-border)",
+            background: "white",
+            border: "1px solid #d0d7de",
           }}
         >
           <div
             className="px-5 py-4 border-b"
-            style={{ borderColor: "var(--notion-border)" }}
+            style={{ borderColor: "#d0d7de" }}
           >
-            <h2 className="font-semibold" style={{ color: "var(--notion-text)" }}>
+            <h2 className="font-semibold" style={{ color: "#24292f" }}>
               Snapshots
             </h2>
-            <p className="text-xs mt-1" style={{ color: "var(--notion-text-muted)" }}>
+            <p className="text-xs mt-1" style={{ color: "#57606a" }}>
               이 피쳐에 대한 모든 스냅샷 기록입니다.
             </p>
           </div>
@@ -171,12 +171,12 @@ export function FeatureDetailView({
               <div
                 key={`${item.name}-${index}`}
                 className="p-4 rounded-lg"
-                style={{ background: "var(--notion-bg-secondary)" }}
+                style={{ background: "#f6f8fa" }}
               >
                 {/* 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium" style={{ color: "var(--notion-text)" }}>
+                    <span className="font-medium" style={{ color: "#24292f" }}>
                       {item.name}
                     </span>
                     <DomainBadge domain={item.domain} />
@@ -189,14 +189,14 @@ export function FeatureDetailView({
                 {/* 진행률 바 */}
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span style={{ color: "var(--notion-text-muted)" }}>Progress</span>
+                    <span style={{ color: "#57606a" }}>Progress</span>
                     <span style={{ color: getProgressColor(item.progressPercent) }}>
                       {item.progressPercent}%
                     </span>
                   </div>
                   <div
                     className="h-1.5 rounded-full overflow-hidden"
-                    style={{ background: "var(--notion-bg)" }}
+                    style={{ background: "white" }}
                   >
                     <div
                       className="h-full rounded-full"
@@ -210,7 +210,7 @@ export function FeatureDetailView({
 
                 {/* Progress 내용 */}
                 <div className="mb-3">
-                  <div className="text-xs mb-1" style={{ color: "var(--notion-text-muted)" }}>
+                  <div className="text-xs mb-1" style={{ color: "#57606a" }}>
                     완료된 작업
                   </div>
                   <ul className="space-y-1">
@@ -218,7 +218,7 @@ export function FeatureDetailView({
                       <li
                         key={i}
                         className="text-sm flex items-start gap-2"
-                        style={{ color: "var(--notion-text-secondary)" }}
+                        style={{ color: "#57606a" }}
                       >
                         <span className="text-green-500 mt-0.5">✓</span>
                         <span>{p}</span>
@@ -227,7 +227,7 @@ export function FeatureDetailView({
                     {item.progress.length > 3 && (
                       <li
                         className="text-xs"
-                        style={{ color: "var(--notion-text-muted)" }}
+                        style={{ color: "#57606a" }}
                       >
                         +{item.progress.length - 3} more...
                       </li>
@@ -237,7 +237,7 @@ export function FeatureDetailView({
 
                 {/* Next */}
                 <div className="mb-3">
-                  <div className="text-xs mb-1" style={{ color: "var(--notion-text-muted)" }}>
+                  <div className="text-xs mb-1" style={{ color: "#57606a" }}>
                     다음 계획
                   </div>
                   <ul className="space-y-1">
@@ -245,7 +245,7 @@ export function FeatureDetailView({
                       <li
                         key={i}
                         className="text-sm flex items-start gap-2"
-                        style={{ color: "var(--notion-text-secondary)" }}
+                        style={{ color: "#57606a" }}
                       >
                         <span className="text-blue-500 mt-0.5">→</span>
                         <span>{n}</span>
@@ -256,7 +256,7 @@ export function FeatureDetailView({
 
                 {/* Collaborators */}
                 {item.collaborators && item.collaborators.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-2 border-t" style={{ borderColor: "var(--notion-border)" }}>
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t" style={{ borderColor: "#d0d7de" }}>
                     {item.collaborators.map((collab, i) => (
                       <span
                         key={i}

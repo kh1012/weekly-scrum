@@ -27,7 +27,7 @@ function SnapshotListItem({
   return (
     <div
       className="border-b last:border-b-0 transition-all duration-200"
-      style={{ borderColor: "var(--notion-border)" }}
+      style={{ borderColor: "#d0d7de" }}
     >
       {/* 접힌 상태: 주요 내용만 표시 */}
       <button
@@ -54,7 +54,7 @@ function SnapshotListItem({
           className={`flex-shrink-0 transition-transform ${
             isExpanded ? "rotate-90" : ""
           }`}
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
@@ -75,7 +75,7 @@ function SnapshotListItem({
         {/* 이름 */}
         <span
           className="flex-1 text-sm font-medium truncate"
-          style={{ color: "var(--notion-text)" }}
+          style={{ color: "#24292f" }}
           title={item.name}
         >
           {item.name}
@@ -92,7 +92,7 @@ function SnapshotListItem({
         {item.progress.length > 0 && (
           <span
             className="hidden md:block text-xs truncate max-w-[200px]"
-            style={{ color: "var(--notion-text-muted)" }}
+            style={{ color: "#57606a" }}
             title={item.progress[0]}
           >
             ✓ {item.progress[0]}
@@ -119,7 +119,7 @@ function SnapshotListItem({
           {/* 경로 정보 */}
           <div
             className="mb-3 text-xs"
-            style={{ color: "var(--notion-text-muted)" }}
+            style={{ color: "#57606a" }}
           >
             📍 {item.project} {item.module ? `/ ${item.module}` : ""} /{" "}
             {item.topic}
@@ -130,7 +130,7 @@ function SnapshotListItem({
             <div className="mb-4">
               <div
                 className="text-xs font-medium mb-2"
-                style={{ color: "var(--notion-text-muted)" }}
+                style={{ color: "#57606a" }}
               >
                 완료된 작업 ({item.progress.length})
               </div>
@@ -139,7 +139,7 @@ function SnapshotListItem({
                   <li
                     key={i}
                     className="text-sm flex items-start gap-2"
-                    style={{ color: "var(--notion-text-secondary)" }}
+                    style={{ color: "#57606a" }}
                   >
                     <span className="text-green-500 mt-0.5 flex-shrink-0">
                       ✓
@@ -156,7 +156,7 @@ function SnapshotListItem({
             <div className="mb-4">
               <div
                 className="text-xs font-medium mb-2"
-                style={{ color: "var(--notion-text-muted)" }}
+                style={{ color: "#57606a" }}
               >
                 다음 계획 ({item.next.length})
               </div>
@@ -165,7 +165,7 @@ function SnapshotListItem({
                   <li
                     key={i}
                     className="text-sm flex items-start gap-2"
-                    style={{ color: "var(--notion-text-secondary)" }}
+                    style={{ color: "#57606a" }}
                   >
                     <span className="text-blue-500 mt-0.5 flex-shrink-0">
                       →
@@ -191,7 +191,7 @@ function SnapshotListItem({
                   <li
                     key={i}
                     className="text-sm flex items-start gap-2"
-                    style={{ color: "var(--notion-text-secondary)" }}
+                    style={{ color: "#57606a" }}
                   >
                     <span className="text-red-500 mt-0.5 flex-shrink-0">•</span>
                     <span className="break-words">{r}</span>
@@ -206,7 +206,7 @@ function SnapshotListItem({
             <div>
               <div
                 className="text-xs font-medium mb-2"
-                style={{ color: "var(--notion-text-muted)" }}
+                style={{ color: "#57606a" }}
               >
                 협업자 ({item.collaborators.length})
               </div>
@@ -255,7 +255,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
     return (
       <div
         className="h-full flex items-center justify-center text-sm py-8"
-        style={{ color: "var(--notion-text-muted)" }}
+        style={{ color: "#57606a" }}
       >
         스냅샷이 없습니다.
       </div>
@@ -292,7 +292,7 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
       <div className="flex items-center justify-between mb-4 px-1">
         <div
           className="text-xs font-medium"
-          style={{ color: "var(--notion-text-muted)" }}
+          style={{ color: "#57606a" }}
         >
           {items.length}개 스냅샷
         </div>
@@ -301,8 +301,8 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
             onClick={expandAll}
             className="px-3 py-1.5 text-xs rounded-lg transition-colors hover:bg-gray-100"
             style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-muted)",
+              background: "#f6f8fa",
+              color: "#57606a",
             }}
           >
             모두 펼치기
@@ -311,8 +311,8 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
             onClick={collapseAll}
             className="px-3 py-1.5 text-xs rounded-lg transition-colors hover:bg-gray-100"
             style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-muted)",
+              background: "#f6f8fa",
+              color: "#57606a",
             }}
           >
             모두 접기
@@ -324,8 +324,8 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
       <div
         className="rounded-2xl overflow-hidden"
         style={{
-          background: "var(--notion-bg)",
-          border: "1px solid var(--notion-border)",
+          background: "white",
+          border: "1px solid #d0d7de",
         }}
       >
         {displayItems.map((item, index) => (
@@ -345,8 +345,8 @@ export function SnapshotList({ items, maxItems = 15 }: SnapshotListProps) {
             onClick={() => setShowAll(!showAll)}
             className="px-5 py-2.5 text-sm font-medium rounded-xl transition-colors hover:bg-gray-100"
             style={{
-              background: "var(--notion-bg-secondary)",
-              color: "var(--notion-text-secondary)",
+              background: "#f6f8fa",
+              color: "#57606a",
             }}
           >
             {showAll ? (
