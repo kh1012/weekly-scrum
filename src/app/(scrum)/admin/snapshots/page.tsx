@@ -47,11 +47,11 @@ export default async function AdminSnapshotsPage({ searchParams }: PageProps) {
 function LoadingSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-16 bg-gray-100 rounded-xl" />
-      <div className="h-12 bg-gray-100 rounded-xl" />
+      <div className="h-16 bg-gray-100 rounded-md" />
+      <div className="h-12 bg-gray-100 rounded-md" />
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-20 bg-gray-100 rounded-xl" />
+          <div key={i} className="h-20 bg-gray-100 rounded-md" />
         ))}
       </div>
     </div>

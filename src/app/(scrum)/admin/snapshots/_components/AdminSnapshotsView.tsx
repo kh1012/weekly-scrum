@@ -107,8 +107,7 @@ export function AdminSnapshotsView({
           <Link
             href="/admin"
             onClick={() => navigationProgress.start()}
-            className="p-2 rounded-lg transition-colors hover:bg-gray-100"
-            style={{ color: "var(--notion-text-muted)" }}
+            className="p-2 rounded-md transition-colors hover:bg-[#f6f8fa] text-[#57606a]"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -116,10 +115,10 @@ export function AdminSnapshotsView({
           </Link>
           <span className="text-2xl">📋</span>
           <div>
-            <h1 className="text-xl font-semibold" style={{ color: "var(--notion-text)" }}>
+            <h1 className="text-xl font-semibold text-[#24292f]">
               All Snapshots
             </h1>
-            <p className="text-sm mt-1" style={{ color: "var(--notion-text-muted)" }}>
+            <p className="text-sm mt-1 text-[#57606a]">
               워크스페이스 전체 스냅샷 ({snapshots.length}개)
             </p>
           </div>
@@ -130,7 +129,7 @@ export function AdminSnapshotsView({
           <button
             onClick={handleBulkDelete}
             disabled={isDeleting}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#d73a49] hover:bg-[#b03139] disabled:opacity-60 rounded-md transition-colors"
           >
             {isDeleting ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -156,16 +155,9 @@ export function AdminSnapshotsView({
 
       {/* 에러 표시 */}
       {(error || deleteError) && (
-        <div
-          className="p-4 rounded-xl text-sm"
-          style={{
-            background: "linear-gradient(135deg, rgba(247, 109, 87, 0.08), rgba(249, 235, 178, 0.05))",
-            border: "1px solid rgba(247, 109, 87, 0.2)",
-            color: "#c94a3a",
-          }}
-        >
+        <div className="p-4 rounded-md text-sm border border-[#d73a49] bg-[#ffebe9] text-[#d73a49]">
           <p className="font-medium">{deleteError ? "삭제 실패" : "데이터 조회 실패"}</p>
-          <p className="mt-1 opacity-80">{deleteError || error}</p>
+          <p className="mt-1 opacity-90">{deleteError || error}</p>
         </div>
       )}
 
@@ -173,14 +165,14 @@ export function AdminSnapshotsView({
       {snapshots.length > 0 ? (
         <div className="space-y-2">
           {/* 전체 선택 헤더 */}
-          <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 px-4 py-2 bg-[#f6f8fa] rounded-md">
             <input
               type="checkbox"
               checked={isAllSelected}
               onChange={handleSelectAll}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-[#0969da] border-[#d0d7de] rounded focus:ring-[#0969da]"
             />
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-[#57606a]">
               {selectedIds.size > 0
                 ? `${selectedIds.size}개 선택됨`
                 : "전체 선택"}
@@ -191,50 +183,41 @@ export function AdminSnapshotsView({
           {snapshots.map((snapshot) => (
             <div
               key={snapshot.id}
-              className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-200 ${
+              className={`flex items-center gap-4 p-4 rounded-md transition-all duration-200 ${
                 selectedIds.has(snapshot.id)
-                  ? "bg-blue-50 border border-blue-200"
-                  : "bg-white border border-gray-100 hover:border-gray-200"
+                  ? "bg-[#ddf4ff] border border-[#54aeff]"
+                  : "bg-white border border-[#d0d7de] hover:border-[#0969da]"
               }`}
-              style={{
-                boxShadow: selectedIds.has(snapshot.id) ? "none" : "0 1px 3px rgba(0,0,0,0.05)",
-              }}
             >
               {/* 체크박스 */}
               <input
                 type="checkbox"
                 checked={selectedIds.has(snapshot.id)}
                 onChange={() => handleSelect(snapshot.id)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 shrink-0"
+                className="w-4 h-4 text-[#0969da] border-[#d0d7de] rounded focus:ring-[#0969da] shrink-0"
               />
 
               {/* 주차 배지 */}
-              <div
-                className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-semibold shrink-0"
-                style={{
-                  background: "rgba(59, 130, 246, 0.1)",
-                  color: "#3b82f6",
-                }}
-              >
+              <div className="w-12 h-12 rounded-md flex items-center justify-center text-sm font-semibold shrink-0 bg-[#ddf4ff] text-[#0969da]">
                 {snapshot.week}
               </div>
 
               {/* 정보 */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-[#24292f]">
                     {snapshot.year}년 {snapshot.week}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#f6f8fa] text-[#57606a]">
                     {snapshot.week_start_date} ~ {snapshot.week_end_date}
                   </span>
                   {snapshot.entriesCount > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#dafbe1] text-[#1a7f37]">
                       {snapshot.entriesCount}개 엔트리
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-gray-500 mt-1">
+                <div className="text-sm text-[#57606a] mt-1">
                   작성자: {snapshot.authorName || snapshot.created_by?.slice(0, 8) || "알 수 없음"}
                 </div>
               </div>
@@ -244,7 +227,7 @@ export function AdminSnapshotsView({
                 <Link
                   href={`/admin/snapshots/${snapshot.id}`}
                   onClick={() => navigationProgress.start()}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-[#57606a] hover:text-[#24292f] hover:bg-[#f6f8fa] rounded-md transition-colors"
                   title="상세 보기"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -255,7 +238,7 @@ export function AdminSnapshotsView({
                 <Link
                   href={`/admin/snapshots/${snapshot.id}/edit`}
                   onClick={() => navigationProgress.start()}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-2 text-[#57606a] hover:text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors"
                   title="편집"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -268,10 +251,10 @@ export function AdminSnapshotsView({
         </div>
       ) : (
         !error && (
-          <div className="text-center py-16 bg-gray-50 rounded-xl">
+          <div className="text-center py-16 bg-[#f6f8fa] rounded-md">
             <span className="text-4xl">📋</span>
-            <p className="mt-4 text-lg font-medium text-gray-700">스냅샷이 없습니다</p>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-4 text-lg font-medium text-[#24292f]">스냅샷이 없습니다</p>
+            <p className="mt-2 text-sm text-[#57606a]">
               조건을 변경하거나 새 스냅샷을 생성해 주세요.
             </p>
           </div>
