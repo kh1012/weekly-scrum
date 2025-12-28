@@ -190,6 +190,12 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/admin/meta-options",
         icon: Icons.table,
       },
+      {
+        key: "admin-members",
+        label: "Members",
+        href: "/admin/members",
+        icon: Icons.users,
+      },
     ],
   },
   {
