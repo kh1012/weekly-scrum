@@ -94,7 +94,7 @@ export default async function ScrumLayout({
         weeks={mockWeeks}
         initialWeekKey={mockKey}
       >
-        <LayoutWrapper role={role}>
+        <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID}>
           <MainContent>{children}</MainContent>
         </LayoutWrapper>
       </ScrumProvider>
@@ -109,7 +109,7 @@ export default async function ScrumLayout({
       weeks={weeks}
       initialWeekKey={initialWeekKey}
     >
-      <LayoutWrapper role={role}>
+      <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID}>
         <MainContent>{children}</MainContent>
       </LayoutWrapper>
     </ScrumProvider>

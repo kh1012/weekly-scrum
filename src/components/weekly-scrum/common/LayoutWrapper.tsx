@@ -6,12 +6,15 @@ import { Header } from "./Header";
 import { NavigationProgress } from "./NavigationProgress";
 import { SideNavigation } from "./Navigation";
 import { Logo } from "./Logo";
+import { TelemetryProvider } from "@/components/telemetry/TelemetryProvider";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 
 interface LayoutWrapperProps {
   children: ReactNode;
   /** 현재 유저의 workspace role */
   role?: WorkspaceRole;
+  /** 현재 워크스페이스 ID (텔레메트리용) */
+  workspaceId?: string;
 }
 
 // max-w-full을 적용할 페이지 경로
@@ -178,7 +181,7 @@ function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
   );
 }
 
-export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
+export function LayoutWrapper({ children, role, workspaceId }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -201,25 +204,27 @@ export function LayoutWrapper({ children, role }: LayoutWrapperProps) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* 네비게이션 프로그레스 바 */}
-      <Suspense fallback={null}>
-        <NavigationProgress />
-      </Suspense>
+    <TelemetryProvider workspaceId={workspaceId || ""}>
+      <div className="min-h-screen bg-white">
+        {/* 네비게이션 프로그레스 바 */}
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
 
-      {/* GNB */}
-      <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
+        {/* GNB */}
+        <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
 
-      {/* Drawer SNB */}
-      <DrawerNavigation
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        role={role}
-      />
+        {/* Drawer SNB */}
+        <DrawerNavigation
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+          role={role}
+        />
 
-      {/* 메인 영역 */}
-      <div className="w-full">{children}</div>
-    </div>
+        {/* 메인 영역 */}
+        <div className="w-full">{children}</div>
+      </div>
+    </TelemetryProvider>
   );
 }
 
