@@ -20,9 +20,9 @@ interface ScrumListItemProps {
 }
 
 const COLLAB_COLORS: Record<string, { bg: string; text: string }> = {
-  pair: { bg: "var(--notion-blue-bg)", text: "var(--notion-blue)" },
-  pre: { bg: "var(--notion-orange-bg)", text: "var(--notion-orange)" },
-  post: { bg: "var(--notion-green-bg)", text: "var(--notion-green)" },
+  pair: { bg: "#ddf4ff", text: "#0969da" },
+  pre: { bg: "#fff8c5", text: "#9a6700" },
+  post: { bg: "#dafbe1", text: "#1a7f37" },
 };
 
 const COLLAB_LABELS: Record<string, string> = {
@@ -51,23 +51,23 @@ export function ScrumListItem({
   // 아이템 스타일 클래스 결정
   const itemClasses = [
     "notion-card",
-    "transition-all",
+    "transition-colors",
     isSelectMode ? "cursor-pointer" : "",
     isCompleted ? "opacity-60" : "",
-    isCompareSelected ? "selected ring-2 ring-blue-500" : "",
+    isCompareSelected ? "ring-2 ring-[#0969da]" : "",
   ].filter(Boolean).join(" ");
 
   return (
     <div
       className={itemClasses}
       style={{ 
-        borderColor: riskLevel >= 2 ? riskColor.border : "var(--notion-border)",
-        borderRadius: "12px",
+        borderColor: riskLevel >= 2 ? riskColor.border : "#d0d7de",
+        borderRadius: "6px",
       }}
     >
       {/* 접힌 상태: 주요 정보만 표시 */}
       <div
-        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
+        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-[#f6f8fa] transition-colors"
         onClick={() => {
           if (isSelectMode && onCompareToggle) {
             onCompareToggle(item);
@@ -83,15 +83,13 @@ export function ScrumListItem({
               type="checkbox"
               checked={isCompareSelected}
               onChange={() => onCompareToggle?.(item)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
             />
           </label>
         )}
 
         {/* 확장/축소 아이콘 */}
-        <button
-          className="flex-shrink-0 text-gray-400"
-        >
+        <button className="flex-shrink-0 text-[#57606a]">
           <svg
             className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-90" : ""}`}
             fill="none"
@@ -115,25 +113,25 @@ export function ScrumListItem({
 
         {/* 경로: 프로젝트 / 모듈 / 피쳐 */}
         <div className="flex-1 min-w-0 flex items-center gap-1.5 text-xs truncate">
-          <span className="font-medium truncate" style={{ color: "var(--notion-text-secondary)" }}>
+          <span className="font-medium truncate text-[#57606a]">
             {item.project}
           </span>
           {item.module && (
             <>
-              <span style={{ color: "var(--notion-text-muted)" }}>/</span>
-              <span className="truncate" style={{ color: "var(--notion-text-tertiary)" }}>
+              <span className="text-[#8c959f]">/</span>
+              <span className="truncate text-[#8c959f]">
                 {item.module}
               </span>
             </>
           )}
-          <span style={{ color: "var(--notion-text-muted)" }}>/</span>
-          <span className="font-semibold truncate" style={{ color: "var(--notion-text)" }}>
+          <span className="text-[#8c959f]">/</span>
+          <span className="font-semibold truncate text-[#24292f]">
             {item.topic}
           </span>
         </div>
 
         {/* 담당자 */}
-        <span className="text-xs flex-shrink-0" style={{ color: "var(--notion-text-muted)" }}>
+        <span className="text-xs flex-shrink-0 text-[#57606a]">
           {item.name}
         </span>
 
@@ -145,7 +143,7 @@ export function ScrumListItem({
 
       {/* 확장된 상태: 상세 내용 */}
       {isExpanded && (
-        <div className="px-3 pb-3 pt-0 border-t" style={{ borderColor: "var(--notion-border)" }}>
+        <div className="px-3 pb-3 pt-0 border-t border-[#d0d7de]">
           <div className="pt-3 space-y-3">
             {/* Past Week */}
             <div>
@@ -163,8 +161,8 @@ export function ScrumListItem({
                   <ContentSection label="Risk" items={item.risk} color={riskColor.text} />
                 )}
                 {isRiskUnknown && (
-                  <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
-                    <span className="font-medium" style={{ color: "var(--notion-text-tertiary)" }}>Risk: </span>
+                  <div className="text-xs text-[#57606a]">
+                    <span className="font-medium text-[#8c959f]">Risk: </span>
                     <span>미정</span>
                   </div>
                 )}
@@ -172,7 +170,7 @@ export function ScrumListItem({
                 {/* Collaborators */}
                 {item.collaborators && item.collaborators.length > 0 && (
                   <div className="flex items-center gap-1 flex-wrap">
-                    <span className="text-[10px] font-medium" style={{ color: "var(--notion-text-muted)" }}>Collaborators:</span>
+                    <span className="text-[10px] font-medium text-[#57606a]">Collaborators:</span>
                     {item.collaborators.map((collab, idx) => {
                       // relations 우선, relation은 fallback
                       const rel = collab.relations?.[0] || collab.relation || "pair";
@@ -181,8 +179,8 @@ export function ScrumListItem({
                           key={idx}
                           className="text-[10px] px-1.5 py-0.5 rounded"
                           style={{
-                            backgroundColor: COLLAB_COLORS[rel]?.bg || "var(--notion-bg-tertiary)",
-                            color: COLLAB_COLORS[rel]?.text || "var(--notion-text-secondary)",
+                            backgroundColor: COLLAB_COLORS[rel]?.bg || "#f6f8fa",
+                            color: COLLAB_COLORS[rel]?.text || "#57606a",
                           }}
                         >
                           {collab.name}
@@ -198,11 +196,11 @@ export function ScrumListItem({
             {/* This Week */}
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[10px] font-semibold" style={{ color: "var(--notion-blue)" }}>
+                <span className="text-[10px] font-semibold text-[#0969da]">
                   This Week
                 </span>
               </div>
-              <div className="space-y-1.5 pl-2" style={{ borderLeft: "2px solid var(--notion-blue)" }}>
+              <div className="space-y-1.5 pl-2 border-l-2 border-[#0969da]">
                 <ContentSection label="Tasks" items={item.next} />
               </div>
             </div>
@@ -223,11 +221,11 @@ function ContentSection({
   items: string[];
   color?: string;
 }) {
-  const textColor = color || "var(--notion-text)";
+  const textColor = color || "#24292f";
 
   if (!items || items.length === 0) {
     return (
-      <div className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+      <div className="text-xs text-[#57606a]">
         <span className="font-medium" style={{ color: textColor }}>{label}: </span>
         <span>-</span>
       </div>
@@ -236,7 +234,7 @@ function ContentSection({
 
   if (items.length === 1) {
     return (
-      <div className="text-xs" style={{ color: "var(--notion-text)" }}>
+      <div className="text-xs text-[#24292f]">
         <span className="font-medium" style={{ color: textColor }}>{label}: </span>
         <span>{items[0]}</span>
       </div>
@@ -248,7 +246,7 @@ function ContentSection({
       <span className="font-medium" style={{ color: textColor }}>{label}:</span>
       <ul className="mt-0.5 space-y-0.5 ml-3">
         {items.map((item, idx) => (
-          <li key={idx} className="flex items-start gap-1" style={{ color: "var(--notion-text)" }}>
+          <li key={idx} className="flex items-start gap-1 text-[#24292f]">
             <span className="text-[8px] mt-1" style={{ color: textColor }}>•</span>
             <span>{item}</span>
           </li>
@@ -257,4 +255,3 @@ function ContentSection({
     </div>
   );
 }
-

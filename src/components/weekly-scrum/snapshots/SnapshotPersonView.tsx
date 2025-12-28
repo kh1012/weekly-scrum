@@ -81,41 +81,25 @@ export function SnapshotPersonView({
         return (
           <div
             key={group.name}
-            className={`interactive-card rounded-2xl overflow-hidden animate-card-reveal ${getStaggerClass(
+            className={`bg-white border border-[#d0d7de] rounded-md overflow-hidden animate-card-reveal ${getStaggerClass(
               groupIndex
             )}`}
-            style={{
-              background: "var(--notion-bg)",
-              border: "1px solid var(--notion-border)",
-            }}
           >
             {/* 헤더 */}
             <button
               onClick={() => togglePerson(group.name)}
-              className="w-full flex items-center justify-between px-5 py-4 transition-all duration-200 hover:bg-gray-50/80 text-left group"
+              className="w-full flex items-center justify-between px-5 py-4 transition-colors hover:bg-[#f6f8fa] text-left group"
             >
               <div className="flex items-center gap-4">
                 {/* 아바타 */}
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold shadow-sm transition-transform duration-200 group-hover:scale-105"
-                  style={{
-                    background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-                    color: "white",
-                  }}
-                >
+                <div className="w-12 h-12 rounded-md flex items-center justify-center text-sm font-medium bg-[#0969da] text-white">
                   {group.name.slice(0, 2)}
                 </div>
                 <div className="text-left">
-                  <div
-                    className="font-semibold text-base"
-                    style={{ color: "var(--notion-text)" }}
-                  >
+                  <div className="font-semibold text-base text-[#24292f]">
                     {group.name}
                   </div>
-                  <div
-                    className="text-xs mt-0.5"
-                    style={{ color: "var(--notion-text-muted)" }}
-                  >
+                  <div className="text-xs mt-0.5 text-[#57606a]">
                     {group.items.length}개 스냅샷 · 평균 {avgProgress}%
                   </div>
                 </div>
@@ -126,45 +110,30 @@ export function SnapshotPersonView({
                   {group.domains.slice(0, 3).map((domain) => (
                     <span
                       key={domain}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
-                      style={{
-                        background: "var(--notion-bg-secondary)",
-                        color: "var(--notion-text-muted)",
-                      }}
+                      className="px-2.5 py-1 rounded text-[11px] font-medium bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de]"
                     >
                       {domain}
                     </span>
                   ))}
                   {group.domains.length > 3 && (
-                    <span
-                      className="px-2 py-1 rounded-lg text-[11px]"
-                      style={{ color: "var(--notion-text-muted)" }}
-                    >
+                    <span className="px-2 py-1 rounded text-[11px] text-[#57606a]">
                       +{group.domains.length - 3}
                     </span>
                   )}
                 </div>
                 {/* 확장 아이콘 */}
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
-                  style={{
-                    background: isExpanded
-                      ? "rgba(59, 130, 246, 0.1)"
-                      : "transparent",
-                  }}
+                  className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
+                    isExpanded ? "bg-[#ddf4ff]" : "bg-transparent"
+                  }`}
                 >
                   <svg
-                    className={`w-4 h-4 transition-transform duration-300 ${
-                      isExpanded ? "rotate-180" : ""
+                    className={`w-4 h-4 transition-transform ${
+                      isExpanded ? "rotate-180 text-[#0969da]" : "text-[#57606a]"
                     }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    style={{
-                      color: isExpanded
-                        ? "#3b82f6"
-                        : "var(--notion-text-muted)",
-                    }}
                   >
                     <path
                       strokeLinecap="round"
@@ -179,10 +148,7 @@ export function SnapshotPersonView({
 
             {/* 스냅샷 목록 */}
             {isExpanded && (
-              <div
-                className="px-5 py-5 animate-content-fade"
-                style={{ borderTop: "1px solid var(--notion-border)" }}
-              >
+              <div className="px-5 py-5 border-t border-[#d0d7de] animate-content-fade">
                 {displayMode === "card" ? (
                   <div style={cardGridStyle}>
                     {group.items.map((item, index) => (
