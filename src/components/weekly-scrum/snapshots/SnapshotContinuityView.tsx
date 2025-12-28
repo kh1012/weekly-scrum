@@ -130,77 +130,65 @@ export function SnapshotContinuityView({
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <div
-        className="flex items-center justify-between px-4 py-3 rounded-xl"
-        style={{
-          background: "var(--notion-bg)",
-          border: "1px solid var(--notion-border)",
-        }}
-      >
+      <div className="flex items-center justify-between px-4 py-3 rounded-md bg-white border border-[#d0d7de]">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-5 h-5 text-[#0969da]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          <h2 className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+          <h2 className="font-semibold text-sm text-[#24292f]">
             연속성 분석
           </h2>
-          <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+          <span className="text-xs text-[#57606a]">
             이전 thisWeek ↔ 현재 pastWeek · 현재 thisWeek ↔ 다음 pastWeek
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <StatBadge label="연결" count={stats.connected} color="#22c55e" />
-          <StatBadge label="부분" count={stats.partial} color="#f59e0b" />
-          <StatBadge label="단절" count={stats.broken} color="#ef4444" />
+          <StatBadge label="연결" count={stats.connected} color="#1a7f37" />
+          <StatBadge label="부분" count={stats.partial} color="#9a6700" />
+          <StatBadge label="단절" count={stats.broken} color="#cf222e" />
         </div>
       </div>
 
       {/* 주차 정보 */}
       <div className="flex items-center justify-center gap-4 py-2">
         <WeekBadge label="이전 주차" weekKey={prevWeekKey} />
-        <span style={{ color: "var(--notion-text-muted)" }}>→</span>
+        <span className="text-[#57606a]">→</span>
         <WeekBadge label="현재 주차" weekKey={currentWeekKey} isActive />
-        <span style={{ color: "var(--notion-text-muted)" }}>→</span>
+        <span className="text-[#57606a]">→</span>
         <WeekBadge label="다음 주차" weekKey={nextWeekKey} />
       </div>
 
       {/* 결과 테이블 */}
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{
-          background: "var(--notion-bg)",
-          border: "1px solid var(--notion-border)",
-        }}
-      >
+      <div className="rounded-md overflow-hidden bg-white border border-[#d0d7de]">
         <table className="w-full text-xs">
           <thead>
-            <tr style={{ background: "var(--notion-bg-secondary)" }}>
-              <th className="px-4 py-2 text-left font-medium" style={{ color: "var(--notion-text-muted)" }}>
+            <tr className="bg-[#f6f8fa]">
+              <th className="px-4 py-2 text-left font-medium text-[#57606a]">
                 담당자
               </th>
-              <th className="px-4 py-2 text-left font-medium" style={{ color: "var(--notion-text-muted)" }}>
+              <th className="px-4 py-2 text-left font-medium text-[#57606a]">
                 업무 흐름
               </th>
-              <th className="px-4 py-2 text-center font-medium" style={{ color: "var(--notion-text-muted)" }}>
+              <th className="px-4 py-2 text-center font-medium text-[#57606a]">
                 이전 → 현재
               </th>
-              <th className="px-4 py-2 text-center font-medium" style={{ color: "var(--notion-text-muted)" }}>
+              <th className="px-4 py-2 text-center font-medium text-[#57606a]">
                 현재 → 다음
               </th>
             </tr>
           </thead>
           <tbody>
             {continuityResults.map((result, index) => (
-              <tr key={result.key} style={{ borderTop: "1px solid var(--notion-border)" }}>
-                <td className="px-4 py-3" style={{ color: "var(--notion-text)" }}>
+              <tr key={result.key} className="border-t border-[#d0d7de]">
+                <td className="px-4 py-3 text-[#24292f]">
                   {result.person}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-medium" style={{ color: "var(--notion-text)" }}>
+                    <span className="font-medium text-[#24292f]">
                       {result.feature}
                     </span>
-                    <span className="text-[10px]" style={{ color: "var(--notion-text-muted)" }}>
+                    <span className="text-[10px] text-[#57606a]">
                       {result.domain} / {result.project}
                       {result.module && ` / ${result.module}`}
                     </span>
@@ -225,7 +213,7 @@ function StatBadge({ label, count, color }: { label: string; count: number; colo
   return (
     <div className="flex items-center gap-1.5">
       <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-      <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+      <span className="text-xs text-[#57606a]">
         {label}
       </span>
       <span className="text-xs font-medium" style={{ color }}>
@@ -246,12 +234,9 @@ function WeekBadge({
 }) {
   return (
     <div
-      className="px-3 py-1.5 rounded-lg text-xs"
-      style={{
-        background: isActive ? "rgba(59, 130, 246, 0.15)" : "var(--notion-bg-secondary)",
-        color: isActive ? "#3b82f6" : "var(--notion-text-muted)",
-        border: isActive ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid transparent",
-      }}
+      className={`px-3 py-1.5 rounded text-xs ${
+        isActive ? "bg-[#ddf4ff] text-[#0969da] border border-[#0969da]" : "bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de]"
+      }`}
     >
       <div className="font-medium">{label}</div>
       <div className="text-[10px]">{weekKey || "없음"}</div>
@@ -262,17 +247,17 @@ function WeekBadge({
 function StatusIndicator({ status, hasData }: { status: ContinuityStatus; hasData: boolean }) {
   if (!hasData) {
     return (
-      <span className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
+      <span className="text-xs text-[#57606a]">
         -
       </span>
     );
   }
 
   const config: Record<ContinuityStatus, { label: string; color: string; bg: string }> = {
-    connected: { label: "연결됨", color: "#22c55e", bg: "rgba(34, 197, 94, 0.1)" },
-    partial: { label: "부분 일치", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)" },
-    broken: { label: "단절됨", color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)" },
-    unknown: { label: "분석 불가", color: "#9ca3af", bg: "rgba(156, 163, 175, 0.1)" },
+    connected: { label: "연결됨", color: "#1a7f37", bg: "#dafbe1" },
+    partial: { label: "부분 일치", color: "#9a6700", bg: "#fff8c5" },
+    broken: { label: "단절됨", color: "#cf222e", bg: "#ffebe9" },
+    unknown: { label: "분석 불가", color: "#57606a", bg: "#f6f8fa" },
   };
 
   const { label, color, bg } = config[status];

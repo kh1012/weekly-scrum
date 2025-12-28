@@ -284,13 +284,11 @@ export function SnapshotViewer() {
       {/* 컨텍스트 메뉴 */}
       {contextMenu && (
         <div
-          className="fixed z-50 rounded-lg overflow-hidden animate-fadeIn"
+          className="fixed z-50 rounded-md overflow-hidden animate-fadeIn bg-white border border-[#d0d7de]"
           style={{
             left: contextMenu.x,
             top: contextMenu.y,
-            background: "var(--notion-bg)",
-            boxShadow: "var(--notion-shadow-lg)",
-            border: "1px solid var(--notion-border)",
+            boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
           }}
         >
           <button
@@ -298,8 +296,7 @@ export function SnapshotViewer() {
               setIsSelectMode(!isSelectMode);
               setContextMenu(null);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors"
-            style={{ color: "var(--notion-text)" }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
