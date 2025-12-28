@@ -243,6 +243,7 @@ interface DraftActions {
     startDate: string;
     endDate: string;
     color?: string | null;
+    links?: PlanLink[];
   }) => DraftFlag;
   /** Flag 수정 (로컬 상태만 변경) */
   updateFlagLocal: (
@@ -1208,6 +1209,7 @@ export const useDraftStore = create<DraftStore>()(
           startDate: payload.startDate,
           endDate: payload.endDate,
           color: payload.color || null,
+          links: payload.links,
           orderIndex: maxOrderIndex + 1,
           dirty: true,
           deleted: false,

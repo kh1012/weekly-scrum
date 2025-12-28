@@ -34,6 +34,7 @@ export function CreateFlagModal({
 }: CreateFlagModalProps) {
   const [title, setTitle] = useState("");
   const [color, setColor] = useState("#ef4444");
+  const [links, setLinks] = useState<{ url: string; label?: string }[]>([]);
 
   const pendingFlag = useDraftStore((s) => s.pendingFlag);
   const addFlag = useDraftStore((s) => s.addFlag);
@@ -45,6 +46,7 @@ export function CreateFlagModal({
     if (isOpen) {
       setTitle("");
       setColor("#ef4444");
+      setLinks([]);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
@@ -63,6 +65,11 @@ export function CreateFlagModal({
       ? formatDate(pendingFlag.end)
       : startDate;
 
+    // Links 유효성 검사: URL이 http:// 또는 https://로 시작하는지 확인
+    const validLinks = links.filter((link) => {
+      return link.url.trim() && (link.url.startsWith("http://") || link.url.startsWith("https://"));
+    });
+
     // 로컬 상태에만 추가 (저장 버튼 클릭 시 서버에 전송)
     addFlag({
       workspaceId,
@@ -70,9 +77,24 @@ export function CreateFlagModal({
       startDate,
       endDate,
       color,
+      links: validLinks.length > 0 ? validLinks : undefined,
     });
 
     handleClose();
+  };
+
+  const handleAddLink = () => {
+    setLinks([...links, { url: "" }]);
+  };
+
+  const handleRemoveLink = (index: number) => {
+    setLinks(links.filter((_, i) => i !== index));
+  };
+
+  const handleLinkChange = (index: number, field: "url" | "label", value: string) => {
+    const newLinks = [...links];
+    newLinks[index] = { ...newLinks[index], [field]: value };
+    setLinks(newLinks);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -219,6 +241,54 @@ export function CreateFlagModal({
                 />
               ))}
             </div>
+          </div>
+
+          {/* Links (관련 링크) */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-medium text-gray-600">
+                관련 링크
+              </label>
+              <button
+                type="button"
+                onClick={handleAddLink}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                + 링크 추가
+              </button>
+            </div>
+            {links.length > 0 ? (
+              <div className="space-y-2">
+                {links.map((link, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={link.url}
+                      onChange={(e) => handleLinkChange(index, "url", e.target.value)}
+                      placeholder="https://..."
+                      className="flex-1 px-3 py-2 rounded-lg text-xs border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={link.label || ""}
+                      onChange={(e) => handleLinkChange(index, "label", e.target.value)}
+                      placeholder="라벨 (선택)"
+                      className="w-24 px-3 py-2 rounded-lg text-xs border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveLink(index)}
+                      className="px-2 text-red-500 hover:text-red-600"
+                      title="삭제"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">링크가 없습니다</p>
+            )}
           </div>
 
           {/* 버튼 */}
