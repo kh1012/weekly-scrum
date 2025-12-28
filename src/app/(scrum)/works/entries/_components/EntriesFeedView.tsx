@@ -1,331 +1,275 @@
 "use client";
 
-/**
- * Entries Feed View
- * 
- * snapshot_entries 피드 + 좌측 필터 패널 + 검색 + 페이지네이션
- */
-
-import { useState, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useState, useEffect, useCallback, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
+import type { SnapshotEntryListItem } from "@/lib/data/entries";
+import type { GnbParams } from "@/lib/ui/gnbParams";
 import type { WorkspaceMember } from "@/lib/data/members";
-
-interface SnapshotEntry {
-  id: string;
-  snapshot_id: string;
-  author_id: string | null;
-  created_at: string;
-  name: string | null;
-  domain: string | null;
-  project: string | null;
-  module: string | null;
-  feature: string | null;
-  past_week_tasks: unknown;
-  this_week_tasks: unknown;
-  collaborators: unknown;
-}
+import { EntryCard } from "./EntryCard";
+import { FilterPanel } from "./FilterPanel";
 
 interface EntriesFeedViewProps {
-  entries: SnapshotEntry[];
-  profileMap: Map<string, string>;
-  members: WorkspaceMember[];
-  filters: {
-    authorId?: string;
-    startDate?: string;
-    endDate?: string;
-    hasCollaborators: boolean;
-    searchQuery?: string;
-  };
-  pagination: {
-    hasMore: boolean;
-    nextCursor: string | null;
-  };
+  initialEntries: SnapshotEntryListItem[];
+  totalCount: number;
+  nextCursor?: string | null;
   error?: string;
+  gnbParams: GnbParams;
+  workspaceMembers: WorkspaceMember[];
+  workspaceId: string;
 }
 
+/**
+ * Entries 메인 뷰 컴포넌트
+ * - 좌측 필터 패널
+ * - 검색 기능
+ * - Keyset pagination
+ */
 export function EntriesFeedView({
-  entries,
-  profileMap,
-  members,
-  filters,
-  pagination,
-  error,
+  initialEntries,
+  totalCount,
+  nextCursor: initialNextCursor,
+  error: initialError,
+  gnbParams,
+  workspaceMembers,
+  workspaceId,
 }: EntriesFeedViewProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [entries, setEntries] = useState(initialEntries);
+  const [nextCursor, setNextCursor] = useState(initialNextCursor);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState(initialError);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   
-  const [localSearchQuery, setLocalSearchQuery] = useState(filters.searchQuery || "");
-  const [showFilters, setShowFilters] = useState(true);
-  
-  // URL 업데이트 헬퍼
-  const updateFilters = useCallback((updates: Record<string, string | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
+  // 검색 상태
+  const [searchInput, setSearchInput] = useState(gnbParams.query || "");
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    setEntries(initialEntries);
+    setNextCursor(initialNextCursor);
+    setError(initialError);
+    setSearchInput(gnbParams.query || "");
+  }, [initialEntries, initialNextCursor, initialError, gnbParams.query]);
+
+  // 검색 디바운싱
+  useEffect(() => {
+    setIsSearching(true);
+    const timer = setTimeout(() => {
+      if (searchInput !== gnbParams.query) {
+        handleApplyFilters({ ...gnbParams, query: searchInput || undefined });
       }
-    });
-    
-    // 페이지네이션 커서 초기화
-    params.delete("cursor");
-    
-    navigationProgress.start();
-    router.push(`/works/entries?${params.toString()}`);
-  }, [searchParams, router]);
-  
-  // 필터 초기화
-  const handleReset = useCallback(() => {
-    setLocalSearchQuery("");
-    navigationProgress.start();
-    router.push("/works/entries");
-  }, [router]);
-  
-  // 검색 제출
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    updateFilters({ q: localSearchQuery || undefined });
-  }, [localSearchQuery, updateFilters]);
-  
-  // 다음 페이지 로드
+      setIsSearching(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const handleLoadMore = useCallback(() => {
-    if (!pagination.nextCursor) return;
-    
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("cursor", pagination.nextCursor);
-    
+    if (!nextCursor || isLoadingMore) return;
+
+    // 페이지네이션은 URL 기반으로 처리
+    const params = new URLSearchParams();
+    if (gnbParams.query) params.set("query", gnbParams.query);
+    if (gnbParams.author) params.set("author", gnbParams.author);
+    if (gnbParams.dateRangeStart) params.set("dateRangeStart", gnbParams.dateRangeStart);
+    if (gnbParams.dateRangeEnd) params.set("dateRangeEnd", gnbParams.dateRangeEnd);
+    if (gnbParams.hasCollaborators) params.set("hasCollaborators", "true");
+    params.set("cursor", nextCursor);
+
     navigationProgress.start();
-    router.push(`/works/entries?${params.toString()}`);
-  }, [pagination.nextCursor, searchParams, router]);
-  
-  // 날짜 포맷
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    startTransition(() => {
+      router.push(`/works/entries?${params.toString()}`);
     });
-  };
-  
+  }, [nextCursor, isLoadingMore, gnbParams, router]);
+
+  const handleApplyFilters = useCallback(
+    (newGnbParams: GnbParams) => {
+      const params = new URLSearchParams();
+      if (newGnbParams.query) params.set("query", newGnbParams.query);
+      if (newGnbParams.author) params.set("author", newGnbParams.author);
+      if (newGnbParams.dateRangeStart) params.set("dateRangeStart", newGnbParams.dateRangeStart);
+      if (newGnbParams.dateRangeEnd) params.set("dateRangeEnd", newGnbParams.dateRangeEnd);
+      if (newGnbParams.hasCollaborators) params.set("hasCollaborators", "true");
+
+      navigationProgress.start();
+      startTransition(() => {
+        router.push(`/works/entries?${params.toString()}`);
+      });
+      setIsFilterPanelOpen(false);
+    },
+    [router]
+  );
+
+  const handleResetFilters = useCallback(() => {
+    navigationProgress.start();
+    startTransition(() => {
+      router.push("/works/entries");
+    });
+    setIsFilterPanelOpen(false);
+    setSearchInput("");
+  }, [router]);
+
+  const activeFilterCount = [
+    gnbParams.author,
+    gnbParams.dateRangeStart,
+    gnbParams.dateRangeEnd,
+    gnbParams.hasCollaborators,
+    gnbParams.query,
+  ].filter(Boolean).length;
+
   return (
-    <div className="flex gap-6 min-h-screen bg-white">
-      {/* 좌측 필터 패널 */}
-      {showFilters && (
-        <aside className="w-64 shrink-0 border-r border-[#d0d7de] p-4 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-[#24292f]">Filters</h2>
-            <button
-              onClick={handleReset}
-              className="text-xs text-[#0969da] hover:underline"
-            >
-              Reset
-            </button>
-          </div>
-          
-          {/* Author 필터 */}
-          <div>
-            <label className="block text-xs font-medium text-[#57606a] mb-2">
-              Author
-            </label>
-            <select
-              value={filters.authorId || ""}
-              onChange={(e) => updateFilters({ author: e.target.value || undefined })}
-              className="w-full px-3 py-2 text-sm border border-[#d0d7de] rounded-md focus:border-[#0969da] focus:ring-1 focus:ring-[#0969da] outline-none"
-            >
-              <option value="">All Authors</option>
-              {members.map((member) => (
-                <option key={member.user_id} value={member.user_id}>
-                  {member.display_name || member.email || member.user_id.slice(0, 8)}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          {/* Date Range 필터 */}
-          <div>
-            <label className="block text-xs font-medium text-[#57606a] mb-2">
-              Date Range
-            </label>
-            <div className="space-y-2">
-              <input
-                type="date"
-                value={filters.startDate || ""}
-                onChange={(e) => updateFilters({ start_date: e.target.value || undefined })}
-                className="w-full px-3 py-2 text-sm border border-[#d0d7de] rounded-md focus:border-[#0969da] focus:ring-1 focus:ring-[#0969da] outline-none"
-              />
-              <input
-                type="date"
-                value={filters.endDate || ""}
-                onChange={(e) => updateFilters({ end_date: e.target.value || undefined })}
-                className="w-full px-3 py-2 text-sm border border-[#d0d7de] rounded-md focus:border-[#0969da] focus:ring-1 focus:ring-[#0969da] outline-none"
-              />
-            </div>
-          </div>
-          
-          {/* Collaborator 토글 */}
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.hasCollaborators}
-                onChange={(e) => updateFilters({ has_collaborators: e.target.checked ? "true" : undefined })}
-                className="w-4 h-4 text-[#0969da] border-[#d0d7de] rounded focus:ring-[#0969da]"
-              />
-              <span className="text-sm text-[#24292f]">Has Collaborators</span>
-            </label>
-          </div>
-        </aside>
-      )}
-      
-      {/* 메인 콘텐츠 */}
-      <main className="flex-1 p-6 space-y-6">
-        {/* 헤더 */}
+    <div className="flex flex-col lg:flex-row gap-6 h-full">
+      {/* Left Filter Panel (desktop: always visible, mobile: drawer) */}
+      <FilterPanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        currentGnbParams={gnbParams}
+        workspaceMembers={workspaceMembers}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="p-2 rounded-md transition-colors hover:bg-[#f6f8fa] text-[#57606a]"
-              title={showFilters ? "Hide Filters" : "Show Filters"}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-            </button>
             <span className="text-2xl">📝</span>
             <div>
               <h1 className="text-xl font-semibold text-[#24292f]">
-                Work Entries
+                All Entries
               </h1>
-              <p className="text-sm text-[#57606a]">
-                {entries.length} {entries.length === 1 ? "entry" : "entries"}
+              <p className="text-sm mt-1 text-[#57606a]">
+                워크스페이스 전체 엔트리 ({totalCount.toLocaleString()}개)
               </p>
             </div>
           </div>
-          
-          {/* 검색 */}
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input
-              type="text"
-              value={localSearchQuery}
-              onChange={(e) => setLocalSearchQuery(e.target.value)}
-              placeholder="Search entries..."
-              className="w-64 px-3 py-2 text-sm border border-[#d0d7de] rounded-md focus:border-[#0969da] focus:ring-1 focus:ring-[#0969da] outline-none"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-[#0969da] hover:bg-[#0860ca] rounded-md transition-colors"
-            >
-              Search
-            </button>
-          </form>
+          <button
+            onClick={() => setIsFilterPanelOpen(true)}
+            className="lg:hidden px-4 py-2 text-sm font-medium text-[#24292f] bg-[#f6f8fa] hover:bg-[#eaeef2] border border-[#d0d7de] rounded-md transition-colors"
+          >
+            필터 {activeFilterCount > 0 && `(${activeFilterCount})`}
+          </button>
         </div>
-        
-        {/* 에러 표시 */}
-        {error && (
-          <div className="p-4 rounded-md border border-[#d73a49] bg-[#ffebe9] text-[#d73a49] text-sm">
-            {error}
+
+        {/* Search Bar */}
+        <div className="relative">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57606a]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            placeholder="엔트리 검색 (이름, 설명)"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+          />
+          {(searchInput || isSearching) && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {isSearching && (
+                <div className="w-4 h-4 border-2 border-[#0969da] border-t-transparent rounded-full animate-spin" />
+              )}
+              {searchInput && !isSearching && (
+                <button
+                  onClick={() => setSearchInput("")}
+                  className="text-[#57606a] hover:text-[#24292f] transition-colors"
+                  title="초기화"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Active filters summary */}
+        {activeFilterCount > 0 && (
+          <div className="flex items-center gap-2 p-3 bg-[#ddf4ff] border border-[#0969da]/20 rounded-md">
+            <span className="text-sm text-[#0969da]">
+              {activeFilterCount}개 필터 적용중
+            </span>
+            <button
+              onClick={handleResetFilters}
+              className="ml-auto text-xs text-[#0969da] hover:underline"
+            >
+              전체 초기화
+            </button>
           </div>
         )}
-        
-        {/* 엔트리 목록 */}
+
+        {/* Error Display */}
+        {error && (
+          <div className="p-4 rounded-md text-sm border border-[#d73a49] bg-[#ffebe9] text-[#d73a49]">
+            <p className="font-medium">데이터 조회 실패</p>
+            <p className="mt-1 opacity-90">{error}</p>
+          </div>
+        )}
+
+        {/* Entries List */}
         {entries.length > 0 ? (
-          <div className="space-y-4">
-            {entries.map((entry) => {
-              const authorName = entry.author_id ? profileMap.get(entry.author_id) : null;
-              const collabs = entry.collaborators as { name: string }[] || [];
-              
-              return (
-                <div
-                  key={entry.id}
-                  className="p-4 border border-[#d0d7de] rounded-md hover:border-[#0969da] transition-colors bg-white"
+          <div className="space-y-3">
+            {entries.map((entry) => (
+              <EntryCard key={entry.id} entry={entry} />
+            ))}
+
+            {/* Load More Button */}
+            {nextCursor && (
+              <div className="flex justify-center mt-6 pt-6 border-t border-[#d0d7de]">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore || isPending}
+                  className="px-6 py-2 text-sm font-medium text-[#24292f] bg-[#f6f8fa] hover:bg-[#eaeef2] border border-[#d0d7de] rounded-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {/* 헤더 */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#0969da] flex items-center justify-center text-white text-sm font-semibold">
-                        {(entry.name || "?").charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-[#24292f]">
-                          {entry.name || "Unnamed"}
-                        </h3>
-                        <p className="text-xs text-[#57606a]">
-                          {authorName || entry.author_id?.slice(0, 8) || "Unknown"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-[#57606a]">
-                      {formatDate(entry.created_at)}
+                  {isLoadingMore || isPending ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-[#57606a] border-t-transparent rounded-full animate-spin" />
+                      불러오는 중...
                     </span>
-                  </div>
-                  
-                  {/* 메타 정보 */}
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    {entry.domain && (
-                      <span className="px-2 py-1 text-xs rounded-md bg-[#ddf4ff] text-[#0969da]">
-                        {entry.domain}
-                      </span>
-                    )}
-                    {entry.project && (
-                      <span className="px-2 py-1 text-xs rounded-md bg-[#f6f8fa] text-[#24292f]">
-                        {entry.project}
-                      </span>
-                    )}
-                    {entry.module && (
-                      <span className="px-2 py-1 text-xs rounded-md bg-[#f6f8fa] text-[#57606a]">
-                        {entry.module}
-                      </span>
-                    )}
-                    {entry.feature && (
-                      <span className="px-2 py-1 text-xs rounded-md bg-[#f6f8fa] text-[#57606a]">
-                        {entry.feature}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* 협업자 */}
-                  {collabs.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-[#57606a]">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      <span>{collabs.map(c => c.name).join(", ")}</span>
-                    </div>
+                  ) : (
+                    "더 불러오기"
                   )}
-                </div>
-              );
-            })}
+                </button>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="p-16 text-center bg-[#f6f8fa] rounded-md">
-            <span className="text-4xl">📝</span>
-            <p className="mt-4 text-lg font-medium text-[#24292f]">No entries found</p>
-            <p className="mt-2 text-sm text-[#57606a]">
-              Try adjusting your filters or search query.
-            </p>
-          </div>
+          !error && (
+            <div className="text-center py-16 bg-[#f6f8fa] rounded-md">
+              <span className="text-4xl">🤷‍♀️</span>
+              <p className="mt-4 text-lg font-medium text-[#24292f]">
+                표시할 엔트리가 없습니다
+              </p>
+              <p className="mt-2 text-sm text-[#57606a]">
+                필터를 조정하거나 검색어를 변경해 보세요.
+              </p>
+            </div>
+          )
         )}
-        
-        {/* 페이지네이션 */}
-        {pagination.hasMore && (
-          <div className="flex justify-center pt-6">
-            <button
-              onClick={handleLoadMore}
-              className="px-6 py-3 text-sm font-medium text-[#24292f] bg-white border border-[#d0d7de] hover:bg-[#f6f8fa] rounded-md transition-colors"
-            >
-              Load More
-            </button>
-          </div>
-        )}
-      </main>
+      </div>
     </div>
   );
 }
-

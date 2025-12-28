@@ -109,12 +109,18 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
     label: "Works",
     items: [
       {
-        key: "team-feed",
-        label: "Entries",
-        href: "/team-feed",
-        icon: Icons.users,
+        key: "all-entries",
+        label: "All Entries",
+        href: "/works/entries",
+        icon: Icons.listCheck,
         badge: "NEW",
         tagVariant: "green",
+      },
+      {
+        key: "team-feed",
+        label: "Team Feed",
+        href: "/team-feed",
+        icon: Icons.users,
       },
       {
         key: "plans",

@@ -14,6 +14,14 @@ export interface GnbParams {
   project?: string;
   domain?: string;
   author?: string;
+  /** entries 페이지 전용: 날짜 범위 시작 */
+  dateRangeStart?: string;
+  /** entries 페이지 전용: 날짜 범위 종료 */
+  dateRangeEnd?: string;
+  /** entries 페이지 전용: 협업자 필터 */
+  hasCollaborators?: boolean;
+  /** keyset pagination cursor */
+  cursor?: string;
 }
 
 /**
@@ -33,6 +41,10 @@ export function parseGnbParams(searchParams: URLSearchParams): GnbParams {
     project: searchParams.get("project") || undefined,
     domain: searchParams.get("domain") || undefined,
     author: searchParams.get("author") || undefined,
+    dateRangeStart: searchParams.get("dateRangeStart") || undefined,
+    dateRangeEnd: searchParams.get("dateRangeEnd") || undefined,
+    hasCollaborators: searchParams.get("hasCollaborators") === "true" ? true : undefined,
+    cursor: searchParams.get("cursor") || undefined,
   };
 }
 
@@ -51,6 +63,10 @@ export function buildGnbQuery(params: GnbParams): string {
   if (params.project) searchParams.set("project", params.project);
   if (params.domain) searchParams.set("domain", params.domain);
   if (params.author) searchParams.set("author", params.author);
+  if (params.dateRangeStart) searchParams.set("dateRangeStart", params.dateRangeStart);
+  if (params.dateRangeEnd) searchParams.set("dateRangeEnd", params.dateRangeEnd);
+  if (params.hasCollaborators) searchParams.set("hasCollaborators", "true");
+  if (params.cursor) searchParams.set("cursor", params.cursor);
   
   const queryString = searchParams.toString();
   return queryString ? `?${queryString}` : "";
@@ -69,7 +85,11 @@ export function isGnbParamsEmpty(params: GnbParams): boolean {
     !params.status &&
     !params.project &&
     !params.domain &&
-    !params.author
+    !params.author &&
+    !params.dateRangeStart &&
+    !params.dateRangeEnd &&
+    !params.hasCollaborators &&
+    !params.cursor
   );
 }
 
