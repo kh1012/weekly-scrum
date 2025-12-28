@@ -189,6 +189,12 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         icon: Icons.calendarDays,
       },
       {
+        key: "admin-menu-usage",
+        label: "Menu Usage",
+        href: "/admin/menu-usage",
+        icon: Icons.table,
+      },
+      {
         key: "admin-meta-options",
         label: "Meta Options",
         href: "/admin/meta-options",

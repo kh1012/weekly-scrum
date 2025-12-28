@@ -36,6 +36,26 @@ export function MenuUsageClient({
 }: MenuUsageClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"menu" | "page" | "user">("menu");
+  
+  // Filter states
+  const [weeks, setWeeks] = useState(initialWeeks);
+  const [menuGroup, setMenuGroup] = useState(initialMenuGroup || "");
+  const [eventType, setEventType] = useState(initialEventType || "");
+
+  const handleApplyFilters = () => {
+    const params = new URLSearchParams();
+    params.set("weeks", weeks.toString());
+    if (menuGroup) params.set("menuGroup", menuGroup);
+    if (eventType) params.set("eventType", eventType);
+    router.push(`/admin/menu-usage?${params.toString()}`);
+  };
+
+  const handleResetFilters = () => {
+    setWeeks(8);
+    setMenuGroup("");
+    setEventType("");
+    router.push("/admin/menu-usage");
+  };
 
   return (
     <div className="space-y-6">
@@ -46,6 +66,78 @@ export function MenuUsageClient({
           <p className="text-sm mt-1 text-[#57606a]">
             실시간 메뉴/페이지 사용 분석 (최근 {initialWeeks}주)
           </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="p-4 bg-[#f6f8fa] border border-[#d0d7de] rounded-md space-y-4">
+        <div className="flex flex-wrap gap-4">
+          {/* Weeks */}
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-[#24292f] mb-2">
+              주차 범위
+            </label>
+            <select
+              value={weeks}
+              onChange={(e) => setWeeks(parseInt(e.target.value, 10))}
+              className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+            >
+              <option value="4">최근 4주</option>
+              <option value="8">최근 8주</option>
+              <option value="12">최근 12주</option>
+            </select>
+          </div>
+
+          {/* Menu Group */}
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-[#24292f] mb-2">
+              메뉴 그룹
+            </label>
+            <select
+              value={menuGroup}
+              onChange={(e) => setMenuGroup(e.target.value)}
+              className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+            >
+              <option value="">전체</option>
+              <option value="community">Community</option>
+              <option value="works">Works</option>
+              <option value="personal">Personal</option>
+              <option value="admin">Admin</option>
+              <option value="etc">Etc</option>
+            </select>
+          </div>
+
+          {/* Event Type */}
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-[#24292f] mb-2">
+              이벤트 타입
+            </label>
+            <select
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value)}
+              className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+            >
+              <option value="">전체</option>
+              <option value="PAGE_VIEW">PAGE_VIEW</option>
+              <option value="MENU_CLICK">MENU_CLICK</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={handleApplyFilters}
+            className="px-4 py-2 text-sm font-medium text-white bg-[#0969da] hover:bg-[#0550ae] rounded-md transition-colors"
+          >
+            필터 적용
+          </button>
+          <button
+            onClick={handleResetFilters}
+            className="px-4 py-2 text-sm font-medium text-[#24292f] bg-white hover:bg-[#f6f8fa] border border-[#d0d7de] rounded-md transition-colors"
+          >
+            초기화
+          </button>
         </div>
       </div>
 
