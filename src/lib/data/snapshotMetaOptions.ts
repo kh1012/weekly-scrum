@@ -182,7 +182,7 @@ export async function getAllMetaOptions(workspaceId: string): Promise<{
 }
 
 /**
- * 메타 옵션 생성 (admin/leader 전용)
+ * 메타 옵션 생성 (admin/manager 전용)
  */
 export async function createMetaOption(
   workspaceId: string,
@@ -255,7 +255,7 @@ export async function createMetaOption(
 }
 
 /**
- * 메타 옵션 업데이트 (admin/leader 전용)
+ * 메타 옵션 업데이트 (admin/manager 전용)
  */
 export async function updateMetaOption(
   workspaceId: string,
@@ -327,7 +327,7 @@ export async function updateMetaOption(
 }
 
 /**
- * 메타 옵션 삭제 (실제 삭제, admin/leader 전용)
+ * 메타 옵션 삭제 (실제 삭제, admin/manager 전용)
  */
 export async function deleteMetaOption(
   workspaceId: string,
@@ -368,7 +368,7 @@ export async function deleteMetaOption(
 }
 
 /**
- * 메타 옵션 활성화 토글 (admin/leader 전용)
+ * 메타 옵션 활성화 토글 (admin/manager 전용)
  */
 export async function toggleMetaOptionActive(
   workspaceId: string,

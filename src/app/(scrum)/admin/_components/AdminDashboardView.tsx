@@ -69,7 +69,7 @@ export function AdminDashboardView({
   // 역할별 설정
   const roleConfig: Record<string, { label: string; color: string; bg: string }> = {
     admin: { label: "A", color: "#cf222e", bg: "#ffebe9" },
-    leader: { label: "L", color: "#8250df", bg: "#fbefff" },
+    manager: { label: "MG", color: "#8250df", bg: "#fbefff" },
     member: { label: "M", color: "#57606a", bg: "#f6f8fa" },
   };
 

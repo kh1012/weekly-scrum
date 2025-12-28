@@ -50,7 +50,7 @@ interface ActionResult {
 
 /**
  * Plan 생성 서버 액션 (관리자 전용)
- * - admin/leader 권한 검증
+ * - admin/manager 권한 검증
  * - created_by/updated_by 자동 세팅
  */
 export async function createPlanAction(
@@ -132,7 +132,7 @@ export async function createPlanAction(
 
 /**
  * Plan 수정 서버 액션 (관리자 전용)
- * - admin/leader 권한 검증
+ * - admin/manager 권한 검증
  * - updated_by 자동 세팅
  */
 export async function updatePlanAction(
@@ -204,7 +204,7 @@ export async function updatePlanAction(
 
 /**
  * Plan 삭제 서버 액션 (관리자 전용)
- * - admin/leader 권한 검증
+ * - admin/manager 권한 검증
  * - plan_assignees는 FK cascade로 자동 삭제
  */
 export async function deletePlanAction(planId: string): Promise<ActionResult> {

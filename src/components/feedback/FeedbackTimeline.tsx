@@ -9,7 +9,7 @@ import type { FeedbackStatus } from "@/lib/data/feedback";
 
 interface FeedbackTimelineProps {
   currentStatus: FeedbackStatus;
-  /** 상태 변경 가능 여부 (admin/leader만) */
+  /** 상태 변경 가능 여부 (admin/manager만) */
   canChangeStatus?: boolean;
   /** 상태 변경 콜백 */
   onStatusChange?: (newStatus: FeedbackStatus) => void;

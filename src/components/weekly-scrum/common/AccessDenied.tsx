@@ -19,7 +19,7 @@ interface AccessDeniedProps {
 
 /**
  * 권한 없음 표시 컴포넌트
- * - admin/leader 권한이 필요한 페이지에서 member가 접근 시 표시
+ * - admin/manager 권한이 필요한 페이지에서 member가 접근 시 표시
  */
 export function AccessDenied({
   requiredRole = "관리자 또는 리더",

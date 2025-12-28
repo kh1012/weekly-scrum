@@ -18,7 +18,7 @@ export default async function FeedbacksPage() {
 
   const feedbacks = feedbacksResult.feedbacks || [];
   const userRole = roleResult.role || "member";
-  const isAdminOrLeader = ["admin", "leader"].includes(userRole);
+  const isAdminOrLeader = ["admin", "manager"].includes(userRole);
 
   if (!feedbacksResult.success && feedbacksResult.error) {
     return (

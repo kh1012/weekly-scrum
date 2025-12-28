@@ -3,10 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Workspace Role 타입
  * - admin: 관리자 (전체 데이터 관리 권한)
- * - leader: 리더 (관리자와 동일 권한)
+ * - manager: 매니저 (관리자와 동일 권한)
  * - member: 일반 멤버
  */
-export type WorkspaceRole = "admin" | "leader" | "member" | null;
+export type WorkspaceRole = "admin" | "manager" | "member" | null;
 
 /**
  * 현재 로그인 유저의 workspace role을 조회 (Server Only)
@@ -59,7 +59,13 @@ export async function getWorkspaceRole(
       return null;
     }
 
-    return member.role as WorkspaceRole;
+    // Defensive fallback: "leader" → "manager" (stale cache 대응)
+    let role = member.role as WorkspaceRole;
+    if (role === "leader") {
+      role = "manager";
+    }
+
+    return role;
   } catch (err) {
     console.error("[getWorkspaceRole] Unexpected error:", err);
     return null;
@@ -67,18 +73,24 @@ export async function getWorkspaceRole(
 }
 
 /**
- * 현재 유저가 관리자(admin 또는 leader)인지 확인
+ * 현재 유저가 관리자(admin 또는 manager)인지 확인
  */
-export async function isAdminOrLeader(workspaceId?: string): Promise<boolean> {
+export async function isAdminOrManager(workspaceId?: string): Promise<boolean> {
   const role = await getWorkspaceRole(workspaceId);
-  return role === "admin" || role === "leader";
+  return role === "admin" || role === "manager";
 }
 
 /**
- * isAdminOrOwner는 isAdminOrLeader의 별칭 (하위 호환)
- * @deprecated isAdminOrLeader 사용 권장
+ * isAdminOrLeader는 isAdminOrManager의 별칭 (하위 호환)
+ * @deprecated isAdminOrManager 사용 권장
  */
-export const isAdminOrOwner = isAdminOrLeader;
+export const isAdminOrLeader = isAdminOrManager;
+
+/**
+ * isAdminOrOwner는 isAdminOrManager의 별칭 (하위 호환)
+ * @deprecated isAdminOrManager 사용 권장
+ */
+export const isAdminOrOwner = isAdminOrManager;
 
 /**
  * 현재 유저의 role 정보와 함께 유저 정보도 반환
@@ -130,9 +142,15 @@ export async function getWorkspaceRoleWithUser(workspaceId?: string): Promise<{
       };
     }
 
+    // Defensive fallback: "leader" → "manager" (stale cache 대응)
+    let role = member.role as WorkspaceRole;
+    if (role === "leader") {
+      role = "manager";
+    }
+
     return {
       userId: user.id,
-      role: member.role as WorkspaceRole,
+      role,
       displayName: profile?.display_name || null,
     };
   } catch (err) {

@@ -12,7 +12,7 @@ export interface WorkspaceMember {
   user_id: string;
   display_name: string | null;
   email: string | null;
-  role: "admin" | "leader" | "member";
+  role: "admin" | "manager" | "member";
   /** 프로필에 설정된 기본 역할 (담당자 role 초기값으로 사용) */
   basic_role: BasicRole | null;
 }
@@ -86,11 +86,18 @@ export async function listWorkspaceMembers({
       // 빈 문자열도 null 처리
       const displayName = profile?.display_name?.trim() || null;
       const email = profile?.email?.trim() || null;
+      
+      // Defensive fallback: "leader" → "manager"
+      let role = member.role as "admin" | "manager" | "member" | "leader";
+      if (role === "leader") {
+        role = "manager";
+      }
+      
       return {
         user_id: member.user_id,
         display_name: displayName,
         email: email,
-        role: member.role as "admin" | "leader" | "member",
+        role: role as "admin" | "manager" | "member",
         basic_role: profile?.basic_role || null,
       };
     });

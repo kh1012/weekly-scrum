@@ -44,7 +44,7 @@ export async function commitFeaturePlans(
         error: "권한이 없습니다. 관리자만 저장할 수 있습니다.",
       };
     }
-    console.log("✅ [commitFeaturePlans] 권한 확인 완료: admin/leader");
+    console.log("✅ [commitFeaturePlans] 권한 확인 완료: admin/manager");
 
     const supabase = await createClient();
     const {

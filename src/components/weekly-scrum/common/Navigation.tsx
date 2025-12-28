@@ -215,7 +215,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
  * role에 따라 메뉴 필터링
  */
 function getNavCategories(role: WorkspaceRole): NavCategory[] {
-  const isAdmin = role === "admin" || role === "leader";
+  const isAdmin = role === "admin" || role === "manager";
 
   return BASE_NAV_CATEGORIES.filter((category) => {
     if (category.adminOnly && !isAdmin) {

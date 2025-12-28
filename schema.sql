@@ -35,6 +35,18 @@ CREATE TYPE "public"."assignee_role" AS ENUM (
 ALTER TYPE "public"."assignee_role" OWNER TO "postgres";
 
 
+CREATE TYPE "public"."basic_role" AS ENUM (
+    'PLANNING',
+    'FE',
+    'BE',
+    'DESIGN',
+    'QA'
+);
+
+
+ALTER TYPE "public"."basic_role" OWNER TO "postgres";
+
+
 CREATE TYPE "public"."feedback_status" AS ENUM (
     'open',
     'in_progress',
@@ -67,7 +79,7 @@ ALTER TYPE "public"."snapshot_workload_level" OWNER TO "postgres";
 
 CREATE TYPE "public"."workspace_role" AS ENUM (
     'member',
-    'leader',
+    'manager',
     'admin'
 );
 
@@ -240,16 +252,34 @@ $$;
 ALTER FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."is_workspace_admin_or_leader"("p_workspace_id" "uuid") RETURNS boolean
-    LANGUAGE "sql" STABLE
+CREATE OR REPLACE FUNCTION "public"."is_workspace_admin"("p_workspace_id" "uuid", "p_user_id" "uuid" DEFAULT "auth"."uid"()) RETURNS boolean
+    LANGUAGE "sql" SECURITY DEFINER
     AS $$
   select exists (
     select 1
     from public.workspace_members wm
     where wm.workspace_id = p_workspace_id
-      and wm.user_id = auth.uid()
-      and wm.role in ('admin','leader')
+      and wm.user_id = p_user_id
+      and wm.role::text = 'admin'
   );
+$$;
+
+
+ALTER FUNCTION "public"."is_workspace_admin"("p_workspace_id" "uuid", "p_user_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."is_workspace_admin_or_leader"("p_workspace_id" "uuid") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+begin
+  return exists (
+    select 1
+    from public.workspace_members wm
+    where wm.workspace_id = p_workspace_id
+      and wm.user_id = auth.uid()
+      and wm.role::text in ('admin', 'manager')
+  );
+end;
 $$;
 
 
@@ -257,14 +287,17 @@ ALTER FUNCTION "public"."is_workspace_admin_or_leader"("p_workspace_id" "uuid") 
 
 
 CREATE OR REPLACE FUNCTION "public"."is_workspace_admin_or_leader"("p_workspace_id" "uuid", "p_user_id" "uuid") RETURNS boolean
-    LANGUAGE "sql" STABLE
+    LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
-  select exists (
-    select 1 from public.workspace_members wm
+begin
+  return exists (
+    select 1
+    from public.workspace_members wm
     where wm.workspace_id = p_workspace_id
       and wm.user_id = p_user_id
-      and wm.role in ('admin','leader')
+      and wm.role::text in ('admin', 'manager')
   );
+end;
 $$;
 
 
@@ -661,11 +694,16 @@ CREATE TABLE IF NOT EXISTS "public"."gantt_flags" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "lane_hint" integer,
+    "links" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
     CONSTRAINT "gantt_flags_valid_range" CHECK (("start_date" <= "end_date"))
 );
 
 
 ALTER TABLE "public"."gantt_flags" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."gantt_flags"."links" IS '관련 링크 목록. 예: [{"url":"https://...","label":"Spec"}]';
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."plan_assignees" (
@@ -702,6 +740,7 @@ CREATE TABLE IF NOT EXISTS "public"."plans" (
     "order_index" integer DEFAULT 0,
     "description" "text",
     "links" "jsonb" DEFAULT '[]'::"jsonb",
+    "lane_hint" integer,
     CONSTRAINT "plans_date_range_check" CHECK ((("start_date" IS NULL) OR ("end_date" IS NULL) OR ("start_date" <= "end_date"))),
     CONSTRAINT "plans_feature_keys_required" CHECK ((("type" <> 'feature'::"public"."plan_type") OR (("project" IS NOT NULL) AND ("module" IS NOT NULL) AND ("feature" IS NOT NULL)))),
     CONSTRAINT "plans_stage_required_for_feature" CHECK ((("type" <> 'feature'::"public"."plan_type") OR (("stage" IS NOT NULL) AND ("stage" <> ''::"text"))))
@@ -719,12 +758,17 @@ COMMENT ON COLUMN "public"."plans"."links" IS '관련 링크 목록 (선택사�
 
 
 
+COMMENT ON COLUMN "public"."plans"."lane_hint" IS '사용자가 수동으로 지정한 레인 인덱스 (0-based)';
+
+
+
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "user_id" "uuid" NOT NULL,
     "display_name" "text" NOT NULL,
     "email" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "basic_role" "public"."basic_role"
 );
 
 
@@ -831,6 +875,49 @@ COMMENT ON COLUMN "public"."snapshots"."workload_note" IS '작업 부담 관련 
 
 COMMENT ON COLUMN "public"."snapshots"."workload_updated_at" IS 'workload 값 변경 시점';
 
+
+
+CREATE OR REPLACE VIEW "public"."v_collab_edges" AS
+ SELECT "se"."workspace_id",
+    "se"."author_id" AS "from_user_id",
+    (("c"."value" ->> 'userId'::"text"))::"uuid" AS "to_user_id",
+    "count"(*) AS "collaboration_count"
+   FROM ("public"."snapshot_entries" "se"
+     CROSS JOIN LATERAL "jsonb_array_elements"("se"."collaborators") "c"("value"))
+  WHERE (("se"."author_id" IS NOT NULL) AND ("se"."collaborators" IS NOT NULL) AND ("jsonb_typeof"("se"."collaborators") = 'array'::"text") AND (("c"."value" ->> 'userId'::"text") IS NOT NULL))
+  GROUP BY "se"."workspace_id", "se"."author_id", (("c"."value" ->> 'userId'::"text"))::"uuid";
+
+
+ALTER VIEW "public"."v_collab_edges" OWNER TO "postgres";
+
+
+CREATE OR REPLACE VIEW "public"."v_flag_plan_summary" AS
+SELECT
+    NULL::"uuid" AS "workspace_id",
+    NULL::"uuid" AS "flag_id",
+    NULL::"text" AS "flag_title",
+    NULL::"date" AS "flag_start_date",
+    NULL::"date" AS "flag_end_date",
+    NULL::integer AS "flag_days",
+    NULL::bigint AS "plan_count",
+    NULL::"date" AS "min_plan_start",
+    NULL::"date" AS "max_plan_end";
+
+
+ALTER VIEW "public"."v_flag_plan_summary" OWNER TO "postgres";
+
+
+CREATE OR REPLACE VIEW "public"."v_resource_distribution" AS
+ SELECT "pa"."workspace_id",
+    "pa"."user_id",
+    "pr"."display_name",
+    "count"(DISTINCT "pa"."plan_id") AS "assigned_plan_count"
+   FROM ("public"."plan_assignees" "pa"
+     JOIN "public"."profiles" "pr" ON (("pr"."user_id" = "pa"."user_id")))
+  GROUP BY "pa"."workspace_id", "pa"."user_id", "pr"."display_name";
+
+
+ALTER VIEW "public"."v_resource_distribution" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."workspace_edit_locks" (
@@ -1014,6 +1101,10 @@ CREATE INDEX "idx_plans_workspace_updated" ON "public"."plans" USING "btree" ("w
 
 
 
+CREATE INDEX "idx_profiles_basic_role" ON "public"."profiles" USING "btree" ("basic_role");
+
+
+
 CREATE INDEX "idx_profiles_display_name" ON "public"."profiles" USING "btree" ("display_name");
 
 
@@ -1059,6 +1150,22 @@ CREATE INDEX "idx_workspace_members_workspace_role" ON "public"."workspace_membe
 
 
 CREATE UNIQUE INDEX "ux_plans_workspace_client_uid" ON "public"."plans" USING "btree" ("workspace_id", "client_uid") WHERE ("client_uid" IS NOT NULL);
+
+
+
+CREATE OR REPLACE VIEW "public"."v_flag_plan_summary" AS
+ SELECT "gf"."workspace_id",
+    "gf"."id" AS "flag_id",
+    "gf"."title" AS "flag_title",
+    "gf"."start_date" AS "flag_start_date",
+    "gf"."end_date" AS "flag_end_date",
+    (("gf"."end_date" - "gf"."start_date") + 1) AS "flag_days",
+    "count"("p"."id") AS "plan_count",
+    "min"("p"."start_date") AS "min_plan_start",
+    "max"("p"."end_date") AS "max_plan_end"
+   FROM ("public"."gantt_flags" "gf"
+     LEFT JOIN "public"."plans" "p" ON ((("p"."workspace_id" = "gf"."workspace_id") AND ("p"."start_date" IS NOT NULL) AND ("p"."end_date" IS NOT NULL) AND ("gf"."start_date" IS NOT NULL) AND ("gf"."end_date" IS NOT NULL) AND ("p"."start_date" <= "gf"."end_date") AND ("p"."end_date" >= "gf"."start_date"))))
+  GROUP BY "gf"."workspace_id", "gf"."id";
 
 
 
@@ -1264,6 +1371,10 @@ ALTER TABLE ONLY "public"."workspace_members"
 
 
 
+CREATE POLICY "entries_admin_manage" ON "public"."snapshot_entries" TO "authenticated" USING ("public"."is_workspace_admin"("workspace_id", "auth"."uid"())) WITH CHECK ("public"."is_workspace_admin"("workspace_id", "auth"."uid"()));
+
+
+
 CREATE POLICY "entries_delete_author_or_leader" ON "public"."snapshot_entries" FOR DELETE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND (("author_id" = "auth"."uid"()) OR "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"()))));
 
 
@@ -1283,42 +1394,58 @@ CREATE POLICY "entries_update_author_or_leader" ON "public"."snapshot_entries" F
 ALTER TABLE "public"."feedbacks" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "feedbacks_write_admin_or_leader" ON "public"."feedbacks" TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND (("wm"."role")::"text" = ANY (ARRAY['manager'::"text", 'admin'::"text"])))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND (("wm"."role")::"text" = ANY (ARRAY['manager'::"text", 'admin'::"text"]))))));
+
+
+
 ALTER TABLE "public"."gantt_flags" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "gantt_flags_write_admin_or_leader" ON "public"."gantt_flags" TO "authenticated" USING (("workspace_id" IN ( SELECT "wm"."workspace_id"
+   FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND (("wm"."role")::"text" = ANY (ARRAY['admin'::"text", 'manager'::"text"])))))) WITH CHECK (("workspace_id" IN ( SELECT "wm"."workspace_id"
+   FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND (("wm"."role")::"text" = ANY (ARRAY['admin'::"text", 'manager'::"text"]))))));
+
 
 
 CREATE POLICY "leader_admin_full_access" ON "public"."feedbacks" USING ((EXISTS ( SELECT 1
    FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND ("wm"."role" = ANY (ARRAY['leader'::"public"."workspace_role", 'admin'::"public"."workspace_role"])))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND ("wm"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND ("wm"."role" = ANY (ARRAY['leader'::"public"."workspace_role", 'admin'::"public"."workspace_role"]))))));
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND ("wm"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"]))))));
 
 
 
 CREATE POLICY "leader_admin_full_access_feedback" ON "public"."feedbacks" USING ((EXISTS ( SELECT 1
    FROM "public"."workspace_members"
-  WHERE (("workspace_members"."user_id" = "auth"."uid"()) AND ("workspace_members"."role" = ANY (ARRAY['leader'::"public"."workspace_role", 'admin'::"public"."workspace_role"])))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("workspace_members"."user_id" = "auth"."uid"()) AND ("workspace_members"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."workspace_members"
-  WHERE (("workspace_members"."user_id" = "auth"."uid"()) AND ("workspace_members"."role" = ANY (ARRAY['leader'::"public"."workspace_role", 'admin'::"public"."workspace_role"]))))));
+  WHERE (("workspace_members"."user_id" = "auth"."uid"()) AND ("workspace_members"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"]))))));
 
 
 
 CREATE POLICY "leaders_delete_gantt_flags" ON "public"."gantt_flags" FOR DELETE USING (("workspace_id" IN ( SELECT "wm"."workspace_id"
    FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'leader'::"public"."workspace_role"]))))));
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"]))))));
 
 
 
 CREATE POLICY "leaders_insert_gantt_flags" ON "public"."gantt_flags" FOR INSERT WITH CHECK (("workspace_id" IN ( SELECT "wm"."workspace_id"
    FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'leader'::"public"."workspace_role"]))))));
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"]))))));
 
 
 
 CREATE POLICY "leaders_update_gantt_flags" ON "public"."gantt_flags" FOR UPDATE USING (("workspace_id" IN ( SELECT "wm"."workspace_id"
    FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'leader'::"public"."workspace_role"])))))) WITH CHECK (("workspace_id" IN ( SELECT "wm"."workspace_id"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"])))))) WITH CHECK (("workspace_id" IN ( SELECT "wm"."workspace_id"
    FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'leader'::"public"."workspace_role"]))))));
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"]))))));
 
 
 
@@ -1338,7 +1465,9 @@ CREATE POLICY "member_insert_feedback" ON "public"."feedbacks" FOR INSERT WITH C
 
 
 
-CREATE POLICY "member_select_own_feedback" ON "public"."feedbacks" FOR SELECT USING (("auth"."uid"() = "author_user_id"));
+CREATE POLICY "member_select_all_feedback" ON "public"."feedbacks" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id")))));
 
 
 
@@ -1347,6 +1476,22 @@ CREATE POLICY "member_update_own_feedback" ON "public"."feedbacks" FOR UPDATE US
 
 
 CREATE POLICY "members_select_member" ON "public"."workspace_members" FOR SELECT TO "authenticated" USING ("public"."is_workspace_member"("workspace_id", "auth"."uid"()));
+
+
+
+CREATE POLICY "meta_options_delete_admin_leader" ON "public"."snapshot_meta_options" FOR DELETE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
+
+
+
+CREATE POLICY "meta_options_insert_admin_leader" ON "public"."snapshot_meta_options" FOR INSERT TO "authenticated" WITH CHECK (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
+
+
+
+CREATE POLICY "meta_options_select_members" ON "public"."snapshot_meta_options" FOR SELECT TO "authenticated" USING ("public"."is_workspace_member"("workspace_id", "auth"."uid"()));
+
+
+
+CREATE POLICY "meta_options_update_admin_leader" ON "public"."snapshot_meta_options" FOR UPDATE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"()))) WITH CHECK (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
 
 
 
@@ -1437,6 +1582,10 @@ CREATE POLICY "snapshot_weeks_select" ON "public"."snapshot_weeks" FOR SELECT TO
 ALTER TABLE "public"."snapshots" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "snapshots_admin_manage" ON "public"."snapshots" TO "authenticated" USING ("public"."is_workspace_admin"("workspace_id", "auth"."uid"())) WITH CHECK ("public"."is_workspace_admin"("workspace_id", "auth"."uid"()));
+
+
+
 CREATE POLICY "snapshots_delete_leader" ON "public"."snapshots" FOR DELETE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
 
 
@@ -1475,6 +1624,14 @@ CREATE POLICY "workspace_members_select" ON "public"."workspace_members" FOR SEL
 
 
 CREATE POLICY "workspace_members_update" ON "public"."workspace_members" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "workspace_members_write_admin_or_leader" ON "public"."workspace_members" TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND (("wm"."role")::"text" = ANY (ARRAY['manager'::"text", 'admin'::"text"])))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."user_id" = "auth"."uid"()) AND (("wm"."role")::"text" = ANY (ARRAY['manager'::"text", 'admin'::"text"]))))));
 
 
 
@@ -1522,6 +1679,12 @@ REVOKE ALL ON FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uui
 GRANT ALL ON FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."is_workspace_admin"("p_workspace_id" "uuid", "p_user_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."is_workspace_admin"("p_workspace_id" "uuid", "p_user_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."is_workspace_admin"("p_workspace_id" "uuid", "p_user_id" "uuid") TO "service_role";
 
 
 
@@ -1670,6 +1833,24 @@ GRANT ALL ON TABLE "public"."snapshot_weeks" TO "service_role";
 GRANT ALL ON TABLE "public"."snapshots" TO "anon";
 GRANT ALL ON TABLE "public"."snapshots" TO "authenticated";
 GRANT ALL ON TABLE "public"."snapshots" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."v_collab_edges" TO "anon";
+GRANT ALL ON TABLE "public"."v_collab_edges" TO "authenticated";
+GRANT ALL ON TABLE "public"."v_collab_edges" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."v_flag_plan_summary" TO "anon";
+GRANT ALL ON TABLE "public"."v_flag_plan_summary" TO "authenticated";
+GRANT ALL ON TABLE "public"."v_flag_plan_summary" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."v_resource_distribution" TO "anon";
+GRANT ALL ON TABLE "public"."v_resource_distribution" TO "authenticated";
+GRANT ALL ON TABLE "public"."v_resource_distribution" TO "service_role";
 
 
 

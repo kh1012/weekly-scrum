@@ -162,11 +162,17 @@ export function PlanForm({
 
           const memberList = (membersData as MemberRow[]).map((m) => {
             const profile = profileMap.get(m.user_id);
+            // Defensive fallback: "leader" → "manager"
+            let role = m.role as "admin" | "manager" | "member" | "leader";
+            if (role === "leader") {
+              role = "manager";
+            }
+            
             return {
               user_id: m.user_id,
               display_name: profile?.display_name || null,
               email: profile?.email || null,
-              role: m.role as "admin" | "leader" | "member",
+              role: role as "admin" | "manager" | "member",
               basic_role: (profile?.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA") || null,
             };
           });

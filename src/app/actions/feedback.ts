@@ -334,7 +334,7 @@ export async function updateFeedbackStatus(
 }> {
   try {
     const userInfo = await getUserInfo();
-    if (!userInfo.role || !["admin", "leader"].includes(userInfo.role)) {
+    if (!userInfo.role || !["admin", "manager"].includes(userInfo.role)) {
       return { success: false, error: "권한이 없습니다." };
     }
 
