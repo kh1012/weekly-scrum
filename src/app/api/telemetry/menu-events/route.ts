@@ -1,6 +1,6 @@
 /**
  * Menu/Page usage telemetry API
- * 
+ *
  * - Server-side insertion with service role key
  * - Enriches client payload with user_id, user_agent, etc.
  * - Resilient to failures (returns 200 even on error to not break UX)
@@ -29,21 +29,21 @@ function createServiceRoleClient() {
 }
 
 // Excluded emails (developers/test accounts)
-const EXCLUDED_EMAILS = [
-  "kh1012@midasit.com",
-  "zrelor@gmail.com",
-];
+const EXCLUDED_EMAILS = ["kh1012@midasit.com", "zrelor@gmail.com"];
 
 // Get current user from session
 async function getCurrentUser() {
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("sb-access-token")?.value;
-    
+
     if (!sessionCookie) return null;
 
     const supabase = createServiceRoleClient();
-    const { data: { user }, error } = await supabase.auth.getUser(sessionCookie);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(sessionCookie);
 
     if (error || !user) return null;
     return { id: user.id, email: user.email };
@@ -68,7 +68,9 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!workspace_id || !event_type || !page_path) {
       return NextResponse.json(
-        { error: "Missing required fields: workspace_id, event_type, page_path" },
+        {
+          error: "Missing required fields: workspace_id, event_type, page_path",
+        },
         { status: 400 }
       );
     }
@@ -88,20 +90,20 @@ export async function POST(request: NextRequest) {
 
     // Skip telemetry for excluded emails (developers/test accounts)
     if (user_email && EXCLUDED_EMAILS.includes(user_email.toLowerCase())) {
-      return NextResponse.json({ 
-        success: true, 
-        logged: false, 
-        reason: "excluded_user" 
+      return NextResponse.json({
+        success: true,
+        logged: false,
+        reason: "excluded_user",
       });
     }
 
     // Skip telemetry for localhost referrer (development/testing)
     const actualReferrer = referrer || request.headers.get("referer") || "";
     if (actualReferrer.includes("localhost")) {
-      return NextResponse.json({ 
-        success: true, 
-        logged: false, 
-        reason: "localhost_referrer" 
+      return NextResponse.json({
+        success: true,
+        logged: false,
+        reason: "localhost_referrer",
       });
     }
 
@@ -152,7 +154,11 @@ function extractDevice(userAgent: string | null | undefined): string | null {
 
   const ua = userAgent.toLowerCase();
 
-  if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone")) {
+  if (
+    ua.includes("mobile") ||
+    ua.includes("android") ||
+    ua.includes("iphone")
+  ) {
     return "mobile";
   }
   if (ua.includes("tablet") || ua.includes("ipad")) {
@@ -160,4 +166,3 @@ function extractDevice(userAgent: string | null | undefined): string | null {
   }
   return "desktop";
 }
-
