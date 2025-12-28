@@ -36,7 +36,7 @@ const LinkIcon = () => (
   </svg>
 );
 
-// 뷰 모드 배열을 컴포넌트 외부에 정의하여 참조 안정성 확보
+// 뷰 모드 배열
 const VIEW_MODES: Array<{ key: SnapshotViewMode; label: string; icon: React.ReactNode }> = [
   { key: "all", label: "전체 보기", icon: <AllIcon /> },
   { key: "person", label: "사람별 보기", icon: <PersonIcon /> },
@@ -82,25 +82,19 @@ export function SnapshotToolbar({
 
   return (
     <div className="flex flex-wrap items-center gap-4 animate-slide-in-left">
-      {/* 뷰 모드 탭 - 슬라이딩 인디케이터 */}
+      {/* 뷰 모드 탭 */}
       <div 
         ref={tabsRef}
-        className="relative flex items-center gap-1 p-1.5 rounded-xl"
-        style={{ 
-          background: "var(--notion-bg-secondary)",
-          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
-        }}
+        className="relative flex items-center gap-1 p-1 bg-[#f6f8fa] rounded-md border border-[#d0d7de]"
       >
         {/* 슬라이딩 인디케이터 */}
         <div
-          className="absolute rounded-lg tab-indicator"
+          className="absolute bg-white border border-[#d0d7de] rounded tab-indicator"
           style={{
             left: indicatorStyle.left,
             width: indicatorStyle.width,
-            top: 6,
-            bottom: 6,
-            background: "white",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+            top: 4,
+            bottom: 4,
           }}
         />
         
@@ -108,10 +102,9 @@ export function SnapshotToolbar({
           <button
             key={mode.key}
             onClick={() => onViewModeChange(mode.key)}
-            className="relative z-10 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 interactive-btn"
-            style={{
-              color: viewMode === mode.key ? "#3b82f6" : "var(--notion-text-muted)",
-            }}
+            className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors ${
+              viewMode === mode.key ? "text-[#0969da]" : "text-[#57606a]"
+            }`}
           >
             {mode.icon}
             <span>{mode.label}</span>
@@ -124,34 +117,19 @@ export function SnapshotToolbar({
         {/* 비교 기능 */}
         {compareCount > 0 && (
           <div className="flex items-center gap-2 animate-bounce-in">
-            <span 
-              className="text-xs font-medium px-2 py-1 rounded-lg"
-              style={{ 
-                color: "#3b82f6",
-                background: "rgba(59, 130, 246, 0.08)",
-              }}
-            >
+            <span className="text-xs font-medium px-2 py-1 rounded bg-[#ddf4ff] text-[#0969da] border border-[#54aeff]">
               {compareCount}개 선택
             </span>
             <button
               onClick={onClearCompare}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all interactive-btn"
-              style={{
-                background: "var(--notion-bg-secondary)",
-                color: "var(--notion-text-muted)",
-              }}
+              className="px-3 py-1.5 rounded text-xs font-medium bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6] transition-colors"
             >
               취소
             </button>
             {compareCount >= 2 && (
               <button
                 onClick={onOpenCompare}
-                className="px-4 py-2 rounded-xl text-xs font-semibold transition-all interactive-btn"
-                style={{
-                  background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-                  color: "white",
-                  boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)",
-                }}
+                className="px-4 py-2 rounded-md text-xs font-medium bg-[#0969da] text-white hover:bg-[#0860ca] transition-colors"
               >
                 🔍 비교하기
               </button>
@@ -159,18 +137,14 @@ export function SnapshotToolbar({
           </div>
         )}
 
-        {/* 선택 모드 토글 - 다른 버튼과 높이 맞춤 */}
+        {/* 선택 모드 토글 */}
         <button
           onClick={onToggleSelectMode}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all interactive-btn h-[42px]"
-          style={{
-            background: isSelectMode 
-              ? "linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.1))" 
-              : "var(--notion-bg-secondary)",
-            color: isSelectMode ? "#3b82f6" : "var(--notion-text-muted)",
-            border: isSelectMode ? "1px solid rgba(59, 130, 246, 0.25)" : "1px solid transparent",
-            boxShadow: isSelectMode ? "0 2px 8px rgba(59, 130, 246, 0.1)" : "none",
-          }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors h-[42px] ${
+            isSelectMode 
+              ? "bg-[#ddf4ff] text-[#0969da] border border-[#0969da]" 
+              : "bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
+          }`}
           title="선택 모드 (카드를 클릭하여 선택)"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,21 +154,12 @@ export function SnapshotToolbar({
         </button>
 
         {/* 카드/리스트 토글 */}
-        <div 
-          className="flex items-center gap-1 p-1.5 rounded-xl" 
-          style={{ 
-            background: "var(--notion-bg-secondary)",
-            boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
-          }}
-        >
+        <div className="flex items-center border border-[#d0d7de] rounded-md overflow-hidden">
           <button
             onClick={() => onDisplayModeChange("card")}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all interactive-btn"
-            style={{
-              background: displayMode === "card" ? "white" : "transparent",
-              color: displayMode === "card" ? "#3b82f6" : "var(--notion-text-muted)",
-              boxShadow: displayMode === "card" ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-            }}
+            className={`flex items-center justify-center w-9 h-9 transition-colors ${
+              displayMode === "card" ? "bg-[#0969da] text-white" : "bg-white text-[#57606a] hover:bg-[#f6f8fa]"
+            }`}
             title="카드 보기"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,12 +171,9 @@ export function SnapshotToolbar({
           </button>
           <button
             onClick={() => onDisplayModeChange("list")}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all interactive-btn"
-            style={{
-              background: displayMode === "list" ? "white" : "transparent",
-              color: displayMode === "list" ? "#3b82f6" : "var(--notion-text-muted)",
-              boxShadow: displayMode === "list" ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-            }}
+            className={`flex items-center justify-center w-9 h-9 transition-colors border-l border-[#d0d7de] ${
+              displayMode === "list" ? "bg-[#0969da] text-white" : "bg-white text-[#57606a] hover:bg-[#f6f8fa]"
+            }`}
             title="리스트 보기"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

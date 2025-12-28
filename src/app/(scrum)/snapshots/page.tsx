@@ -16,7 +16,7 @@ export default function SnapshotsPage() {
   }
 
   return (
-    <div className="-mx-4 -my-6 sm:-mx-6 lg:-mx-8 px-4 py-6 sm:px-6 lg:px-8 min-h-screen bg-gray-50/80">
+    <div className="-mx-4 -my-6 sm:-mx-6 lg:-mx-8 px-4 py-6 sm:px-6 lg:px-8 min-h-screen bg-white">
       <SnapshotViewer />
     </div>
   );

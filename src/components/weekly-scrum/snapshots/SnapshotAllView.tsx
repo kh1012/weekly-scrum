@@ -90,15 +90,10 @@ export function SnapshotAllView({ items, displayMode, compareState, onCompareTog
       {completedItems.length > 0 && (
         <section className="animate-section-reveal" style={{ animationDelay: "0.15s" }}>
           <div 
-            className="flex items-center gap-2 mb-4 pt-6 pb-2" 
-            style={{ borderTop: "1px solid var(--notion-border)" }}
+            className="flex items-center gap-2 mb-4 pt-6 pb-2 border-t border-[#d0d7de]"
           >
             <span 
-              className="text-xs font-medium px-3 py-1 rounded-full"
-              style={{ 
-                color: "var(--notion-text-muted)",
-                background: "var(--notion-bg-secondary)",
-              }}
+              className="text-xs font-medium px-3 py-1 rounded bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de]"
             >
               완료됨 · {completedItems.length}
             </span>
