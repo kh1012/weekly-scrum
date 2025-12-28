@@ -1,29 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import type { GnbParams } from "@/lib/ui/gnbParams";
 import type { WorkspaceMember } from "@/lib/data/members";
+import { MultiSelectDropdown } from "@/components/common/MultiSelectDropdown";
 
 interface TeamFeedFilterPanelProps {
   isOpen: boolean;
   onClose: () => void;
   currentGnbParams: GnbParams;
   workspaceMembers: WorkspaceMember[];
+  projectOptions: string[];
+  moduleOptions: string[];
+  featureOptions: string[];
   onApplyFilters: (params: GnbParams) => void;
   onResetFilters: () => void;
 }
 
 /**
  * Team Feed 좌측 필터 패널 (GitHub 스타일)
- * - Author 필터
+ * - Author 필터 (Portal 기반 드롭다운)
  * - Date range 필터
  * - Collaborator toggle
+ * - Project/Module/Feature 필터 (체크박스 기반 다중 선택)
  */
 export function TeamFeedFilterPanel({
   isOpen,
   onClose,
   currentGnbParams,
   workspaceMembers,
+  projectOptions,
+  moduleOptions,
+  featureOptions,
   onApplyFilters,
   onResetFilters,
 }: TeamFeedFilterPanelProps) {
@@ -39,13 +48,104 @@ export function TeamFeedFilterPanel({
   const [hasCollaborators, setHasCollaborators] = useState<boolean>(
     currentGnbParams.hasCollaborators || false
   );
+  const [selectedProjects, setSelectedProjects] = useState<string[]>(
+    currentGnbParams.projects || []
+  );
+  const [selectedModules, setSelectedModules] = useState<string[]>(
+    currentGnbParams.modules || []
+  );
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>(
+    currentGnbParams.features || []
+  );
+
+  // Author 드롭다운 상태
+  const [isAuthorOpen, setIsAuthorOpen] = useState(false);
+  const [authorSearch, setAuthorSearch] = useState("");
+  const authorButtonRef = useRef<HTMLButtonElement>(null);
+  const authorDropdownRef = useRef<HTMLDivElement>(null);
+  const [authorDropdownStyle, setAuthorDropdownStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     setSelectedAuthor(currentGnbParams.author);
     setDateRangeStart(currentGnbParams.dateRangeStart);
     setDateRangeEnd(currentGnbParams.dateRangeEnd);
     setHasCollaborators(currentGnbParams.hasCollaborators || false);
+    setSelectedProjects(currentGnbParams.projects || []);
+    setSelectedModules(currentGnbParams.modules || []);
+    setSelectedFeatures(currentGnbParams.features || []);
   }, [currentGnbParams]);
+
+  // Author 드롭다운 외부 클릭
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        authorDropdownRef.current &&
+        !authorDropdownRef.current.contains(e.target as Node) &&
+        authorButtonRef.current &&
+        !authorButtonRef.current.contains(e.target as Node)
+      ) {
+        setIsAuthorOpen(false);
+        setAuthorSearch("");
+      }
+    };
+    if (isAuthorOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isAuthorOpen]);
+
+  // Author 드롭다운 위치 계산
+  const calculateAuthorDropdownPosition = useCallback(() => {
+    if (authorButtonRef.current) {
+      const rect = authorButtonRef.current.getBoundingClientRect();
+      const dropdownHeight = 280;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+
+      setAuthorDropdownStyle({
+        position: "fixed",
+        ...(showAbove
+          ? { bottom: window.innerHeight - rect.top + 4 }
+          : { top: rect.bottom + 4 }),
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, []);
+
+  const openAuthorDropdown = useCallback(() => {
+    calculateAuthorDropdownPosition();
+    setIsAuthorOpen(true);
+  }, [calculateAuthorDropdownPosition]);
+
+  const closeAuthorDropdown = useCallback(() => {
+    setIsAuthorOpen(false);
+    setAuthorSearch("");
+  }, []);
+
+  // 스크롤/리사이즈 시 위치 재계산
+  useEffect(() => {
+    if (isAuthorOpen) {
+      const handleScrollOrResize = () => calculateAuthorDropdownPosition();
+      window.addEventListener("scroll", handleScrollOrResize, true);
+      window.addEventListener("resize", handleScrollOrResize);
+      return () => {
+        window.removeEventListener("scroll", handleScrollOrResize, true);
+        window.removeEventListener("resize", handleScrollOrResize);
+      };
+    }
+  }, [isAuthorOpen, calculateAuthorDropdownPosition]);
+
+  const filteredMembers = workspaceMembers.filter((member) =>
+    (member.display_name || "").toLowerCase().includes(authorSearch.toLowerCase())
+  );
+
+  const handleAuthorSelect = (userId: string) => {
+    setSelectedAuthor(userId === selectedAuthor ? undefined : userId);
+    closeAuthorDropdown();
+  };
 
   const handleApply = () => {
     onApplyFilters({
@@ -54,6 +154,9 @@ export function TeamFeedFilterPanel({
       dateRangeStart,
       dateRangeEnd,
       hasCollaborators: hasCollaborators || undefined,
+      projects: selectedProjects.length > 0 ? selectedProjects : undefined,
+      modules: selectedModules.length > 0 ? selectedModules : undefined,
+      features: selectedFeatures.length > 0 ? selectedFeatures : undefined,
     });
   };
 
@@ -62,6 +165,9 @@ export function TeamFeedFilterPanel({
     setDateRangeStart(undefined);
     setDateRangeEnd(undefined);
     setHasCollaborators(false);
+    setSelectedProjects([]);
+    setSelectedModules([]);
+    setSelectedFeatures([]);
     onResetFilters();
   };
 
@@ -70,7 +176,14 @@ export function TeamFeedFilterPanel({
     dateRangeStart,
     dateRangeEnd,
     hasCollaborators,
+    selectedProjects.length > 0,
+    selectedModules.length > 0,
+    selectedFeatures.length > 0,
   ].filter(Boolean).length;
+
+  const selectedMemberName = selectedAuthor
+    ? workspaceMembers.find((m) => m.user_id === selectedAuthor)?.display_name
+    : undefined;
 
   return (
     <>
@@ -119,23 +232,146 @@ export function TeamFeedFilterPanel({
             </div>
           )}
 
-          {/* Author filter */}
+          {/* Author filter (Portal 기반) */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-[#24292f]">
               작성자
             </label>
-            <select
-              value={selectedAuthor || ""}
-              onChange={(e) => setSelectedAuthor(e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] bg-white focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+            <button
+              ref={authorButtonRef}
+              type="button"
+              onClick={() =>
+                isAuthorOpen ? closeAuthorDropdown() : openAuthorDropdown()
+              }
+              className={`w-full text-left flex items-center justify-between border border-[#d0d7de] rounded-md px-3 py-2 text-sm bg-white transition-all duration-200 ${
+                isAuthorOpen
+                  ? "ring-2 ring-[#0969da] border-[#0969da]"
+                  : "hover:border-[#8c959f]"
+              }`}
             >
-              <option value="">전체</option>
-              {workspaceMembers.map((member) => (
-                <option key={member.user_id} value={member.user_id}>
-                  {member.display_name}
-                </option>
-              ))}
-            </select>
+              <span
+                className={
+                  selectedMemberName ? "text-[#24292f]" : "text-[#57606a]"
+                }
+              >
+                {selectedMemberName || "전체"}
+              </span>
+              <svg
+                className={`w-4 h-4 transition-transform text-[#57606a] ${
+                  isAuthorOpen ? "rotate-180" : ""
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Author 드롭다운 (Portal) */}
+            {isAuthorOpen &&
+              createPortal(
+                <div
+                  ref={authorDropdownRef}
+                  className="rounded-md shadow-lg border border-[#d0d7de] bg-white overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+                  style={authorDropdownStyle}
+                >
+                  {/* 검색 입력 */}
+                  <div className="p-2 border-b border-[#d0d7de]">
+                    <input
+                      type="text"
+                      value={authorSearch}
+                      onChange={(e) => setAuthorSearch(e.target.value)}
+                      placeholder="검색..."
+                      className="w-full px-3 py-1.5 text-xs border border-[#d0d7de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* 옵션 목록 */}
+                  <div className="max-h-48 overflow-y-auto">
+                    {/* 전체 옵션 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAuthor(undefined);
+                        closeAuthorDropdown();
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
+                        !selectedAuthor
+                          ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+                          : "text-[#24292f] hover:bg-[#f6f8fa]"
+                      }`}
+                    >
+                      {!selectedAuthor && (
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                      <span className={!selectedAuthor ? "" : "ml-5.5"}>
+                        전체
+                      </span>
+                    </button>
+
+                    {filteredMembers.length > 0 ? (
+                      filteredMembers.map((member) => {
+                        const isSelected = selectedAuthor === member.user_id;
+                        return (
+                          <button
+                            key={member.user_id}
+                            type="button"
+                            onClick={() => handleAuthorSelect(member.user_id)}
+                            className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
+                              isSelected
+                                ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+                                : "text-[#24292f] hover:bg-[#f6f8fa]"
+                            }`}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                            <span className={isSelected ? "" : "ml-5.5"}>
+                              {member.display_name}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="px-4 py-3 text-xs text-center text-[#57606a]">
+                        검색 결과 없음
+                      </div>
+                    )}
+                  </div>
+                </div>,
+                document.body
+              )}
           </div>
 
           {/* Date range filter */}
@@ -174,6 +410,39 @@ export function TeamFeedFilterPanel({
             </label>
           </div>
 
+          {/* Project filter */}
+          {projectOptions.length > 0 && (
+            <MultiSelectDropdown
+              label="프로젝트"
+              value={selectedProjects}
+              options={projectOptions}
+              onChange={setSelectedProjects}
+              placeholder="전체"
+            />
+          )}
+
+          {/* Module filter */}
+          {moduleOptions.length > 0 && (
+            <MultiSelectDropdown
+              label="모듈"
+              value={selectedModules}
+              options={moduleOptions}
+              onChange={setSelectedModules}
+              placeholder="전체"
+            />
+          )}
+
+          {/* Feature filter */}
+          {featureOptions.length > 0 && (
+            <MultiSelectDropdown
+              label="기능"
+              value={selectedFeatures}
+              options={featureOptions}
+              onChange={setSelectedFeatures}
+              placeholder="전체"
+            />
+          )}
+
           {/* Buttons */}
           <div className="space-y-2 pt-4 border-t border-[#d0d7de]">
             <button
@@ -194,4 +463,3 @@ export function TeamFeedFilterPanel({
     </>
   );
 }
-

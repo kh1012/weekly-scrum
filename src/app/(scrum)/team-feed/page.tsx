@@ -36,7 +36,7 @@ export default async function TeamFeedPage({ searchParams }: PageProps) {
     listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
   ]);
 
-  const { feedItems, error: feedError } = feedResult;
+  const { feedItems, projectOptions, moduleOptions, featureOptions, error: feedError } = feedResult;
 
 
   if (feedError) {
@@ -58,6 +58,9 @@ export default async function TeamFeedPage({ searchParams }: PageProps) {
         initialFeedItems={feedItems}
         gnbParams={gnbParams}
         workspaceMembers={membersResult || []}
+        projectOptions={projectOptions || []}
+        moduleOptions={moduleOptions || []}
+        featureOptions={featureOptions || []}
       />
     </Suspense>
   );

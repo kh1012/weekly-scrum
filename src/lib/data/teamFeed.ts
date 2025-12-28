@@ -15,12 +15,19 @@ const DEFAULT_WORKSPACE_ID =
  * - Date range 필터
  * - Collaborator toggle
  * - Search (name, project, module, feature)
+ * - Project/Module/Feature 필터 (다중 선택)
  */
 export async function getTeamFeedData(
   workspaceId: string = DEFAULT_WORKSPACE_ID,
   weeksLimit: number = 8,
   gnbParams?: GnbParams
-): Promise<{ feedItems: FeedItemData[]; error?: string }> {
+): Promise<{ 
+  feedItems: FeedItemData[]; 
+  projectOptions: string[];
+  moduleOptions: string[];
+  featureOptions: string[];
+  error?: string 
+}> {
   const supabase = await createClient();
 
   // 1. 워크스페이스 멤버 조회
@@ -30,7 +37,13 @@ export async function getTeamFeedData(
     .eq("workspace_id", workspaceId);
 
   if (membersError || !members) {
-    return { feedItems: [], error: "멤버 정보 조회 실패" };
+    return { 
+      feedItems: [], 
+      projectOptions: [],
+      moduleOptions: [],
+      featureOptions: [],
+      error: "멤버 정보 조회 실패" 
+    };
   }
 
   // 2. 프로필 정보 조회
@@ -41,7 +54,13 @@ export async function getTeamFeedData(
     .in("user_id", userIds);
 
   if (profilesError || !profiles) {
-    return { feedItems: [], error: "프로필 정보 조회 실패" };
+    return { 
+      feedItems: [], 
+      projectOptions: [],
+      moduleOptions: [],
+      featureOptions: [],
+      error: "프로필 정보 조회 실패" 
+    };
   }
 
   // 3. 최근 N주의 스냅샷과 엔트리 조회 (필터링 적용)
@@ -97,7 +116,13 @@ export async function getTeamFeedData(
   const { data: snapshots, error: snapshotsError } = await query;
 
   if (snapshotsError || !snapshots) {
-    return { feedItems: [], error: "스냅샷 조회 실패" };
+    return { 
+      feedItems: [], 
+      projectOptions: [],
+      moduleOptions: [],
+      featureOptions: [],
+      error: "스냅샷 조회 실패" 
+    };
   }
 
   // 4. 멤버 정보 맵 생성 (members + profiles 결합)
@@ -186,7 +211,24 @@ export async function getTeamFeedData(
     item.highlight = extractWeeklyHighlight(item.entries);
   }
 
-  // 7. 클라이언트 측 필터링 (Collaborator toggle, Search)
+  // 7. 프로젝트/모듈/기능 옵션 추출 (전체 엔트리 기준)
+  const projectSet = new Set<string>();
+  const moduleSet = new Set<string>();
+  const featureSet = new Set<string>();
+
+  for (const item of feedItems) {
+    for (const entry of item.entries) {
+      if (entry.project) projectSet.add(entry.project);
+      if (entry.module) moduleSet.add(entry.module);
+      if (entry.feature) featureSet.add(entry.feature);
+    }
+  }
+
+  const projectOptions = Array.from(projectSet).sort();
+  const moduleOptions = Array.from(moduleSet).sort();
+  const featureOptions = Array.from(featureSet).sort();
+
+  // 8. 클라이언트 측 필터링 (Collaborator toggle, Search, Project/Module/Feature)
   let filteredItems = feedItems;
 
   // Collaborator toggle
@@ -213,12 +255,38 @@ export async function getTeamFeedData(
     );
   }
 
-  // 8. 최신 활동 순으로 정렬
+  // Project 필터
+  if (gnbParams?.projects && gnbParams.projects.length > 0) {
+    filteredItems = filteredItems.filter((item) =>
+      item.entries.some((entry) => gnbParams.projects!.includes(entry.project))
+    );
+  }
+
+  // Module 필터
+  if (gnbParams?.modules && gnbParams.modules.length > 0) {
+    filteredItems = filteredItems.filter((item) =>
+      item.entries.some((entry) => gnbParams.modules!.includes(entry.module || ""))
+    );
+  }
+
+  // Feature 필터
+  if (gnbParams?.features && gnbParams.features.length > 0) {
+    filteredItems = filteredItems.filter((item) =>
+      item.entries.some((entry) => gnbParams.features!.includes(entry.feature || ""))
+    );
+  }
+
+  // 9. 최신 활동 순으로 정렬
   filteredItems.sort((a, b) => {
     return new Date(b.latestActivityDate).getTime() - new Date(a.latestActivityDate).getTime();
   });
 
-  return { feedItems: filteredItems };
+  return { 
+    feedItems: filteredItems,
+    projectOptions,
+    moduleOptions,
+    featureOptions,
+  };
 }
 
 /**

@@ -22,6 +22,12 @@ export interface GnbParams {
   hasCollaborators?: boolean;
   /** keyset pagination cursor */
   cursor?: string;
+  /** team-feed 전용: 프로젝트 필터 (다중 선택) */
+  projects?: string[];
+  /** team-feed 전용: 모듈 필터 (다중 선택) */
+  modules?: string[];
+  /** team-feed 전용: 기능 필터 (다중 선택) */
+  features?: string[];
 }
 
 /**
@@ -30,6 +36,11 @@ export interface GnbParams {
 export function parseGnbParams(searchParams: URLSearchParams): GnbParams {
   const year = searchParams.get("year");
   const week = searchParams.get("week");
+  
+  // 다중 선택 파라미터 파싱 (comma-separated)
+  const projectsParam = searchParams.get("projects");
+  const modulesParam = searchParams.get("modules");
+  const featuresParam = searchParams.get("features");
   
   return {
     year: year ? parseInt(year, 10) : undefined,
@@ -45,6 +56,9 @@ export function parseGnbParams(searchParams: URLSearchParams): GnbParams {
     dateRangeEnd: searchParams.get("dateRangeEnd") || undefined,
     hasCollaborators: searchParams.get("hasCollaborators") === "true" ? true : undefined,
     cursor: searchParams.get("cursor") || undefined,
+    projects: projectsParam ? projectsParam.split(",").filter(Boolean) : undefined,
+    modules: modulesParam ? modulesParam.split(",").filter(Boolean) : undefined,
+    features: featuresParam ? featuresParam.split(",").filter(Boolean) : undefined,
   };
 }
 
@@ -67,6 +81,9 @@ export function buildGnbQuery(params: GnbParams): string {
   if (params.dateRangeEnd) searchParams.set("dateRangeEnd", params.dateRangeEnd);
   if (params.hasCollaborators) searchParams.set("hasCollaborators", "true");
   if (params.cursor) searchParams.set("cursor", params.cursor);
+  if (params.projects && params.projects.length > 0) searchParams.set("projects", params.projects.join(","));
+  if (params.modules && params.modules.length > 0) searchParams.set("modules", params.modules.join(","));
+  if (params.features && params.features.length > 0) searchParams.set("features", params.features.join(","));
   
   const queryString = searchParams.toString();
   return queryString ? `?${queryString}` : "";
@@ -89,7 +106,10 @@ export function isGnbParamsEmpty(params: GnbParams): boolean {
     !params.dateRangeStart &&
     !params.dateRangeEnd &&
     !params.hasCollaborators &&
-    !params.cursor
+    !params.cursor &&
+    (!params.projects || params.projects.length === 0) &&
+    (!params.modules || params.modules.length === 0) &&
+    (!params.features || params.features.length === 0)
   );
 }
 

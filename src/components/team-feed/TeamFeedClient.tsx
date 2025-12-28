@@ -14,17 +14,24 @@ interface TeamFeedClientProps {
   initialFeedItems: FeedItemData[];
   gnbParams: GnbParams;
   workspaceMembers: WorkspaceMember[];
+  projectOptions: string[];
+  moduleOptions: string[];
+  featureOptions: string[];
 }
 
 /**
  * Team Feed 클라이언트 컴포넌트
  * - 좌측 필터 패널
  * - 검색 기능
+ * - 프로젝트/모듈/기능 필터
  */
 export function TeamFeedClient({
   initialFeedItems,
   gnbParams,
   workspaceMembers,
+  projectOptions,
+  moduleOptions,
+  featureOptions,
 }: TeamFeedClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -59,6 +66,15 @@ export function TeamFeedClient({
       if (newGnbParams.dateRangeStart) params.set("dateRangeStart", newGnbParams.dateRangeStart);
       if (newGnbParams.dateRangeEnd) params.set("dateRangeEnd", newGnbParams.dateRangeEnd);
       if (newGnbParams.hasCollaborators) params.set("hasCollaborators", "true");
+      if (newGnbParams.projects && newGnbParams.projects.length > 0) {
+        params.set("projects", newGnbParams.projects.join(","));
+      }
+      if (newGnbParams.modules && newGnbParams.modules.length > 0) {
+        params.set("modules", newGnbParams.modules.join(","));
+      }
+      if (newGnbParams.features && newGnbParams.features.length > 0) {
+        params.set("features", newGnbParams.features.join(","));
+      }
 
       navigationProgress.start();
       startTransition(() => {
@@ -84,6 +100,9 @@ export function TeamFeedClient({
     gnbParams.dateRangeEnd,
     gnbParams.hasCollaborators,
     gnbParams.query,
+    gnbParams.projects && gnbParams.projects.length > 0,
+    gnbParams.modules && gnbParams.modules.length > 0,
+    gnbParams.features && gnbParams.features.length > 0,
   ].filter(Boolean).length;
 
   return (
@@ -94,6 +113,9 @@ export function TeamFeedClient({
         onClose={() => setIsFilterPanelOpen(false)}
         currentGnbParams={gnbParams}
         workspaceMembers={workspaceMembers}
+        projectOptions={projectOptions}
+        moduleOptions={moduleOptions}
+        featureOptions={featureOptions}
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
       />
