@@ -28,6 +28,12 @@ function createServiceRoleClient() {
   });
 }
 
+// Excluded emails (developers/test accounts)
+const EXCLUDED_EMAILS = [
+  "kh1012@midasit.com",
+  "zrelor@gmail.com",
+];
+
 // Get current user from session
 async function getCurrentUser() {
   try {
@@ -40,7 +46,7 @@ async function getCurrentUser() {
     const { data: { user }, error } = await supabase.auth.getUser(sessionCookie);
 
     if (error || !user) return null;
-    return user.id;
+    return { id: user.id, email: user.email };
   } catch {
     return null;
   }
@@ -75,8 +81,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user_id from session
-    const user_id = await getCurrentUser();
+    // Get user from session
+    const currentUser = await getCurrentUser();
+    const user_id = currentUser?.id || null;
+    const user_email = currentUser?.email || null;
+
+    // Skip telemetry for excluded emails (developers/test accounts)
+    if (user_email && EXCLUDED_EMAILS.includes(user_email.toLowerCase())) {
+      return NextResponse.json({ 
+        success: true, 
+        logged: false, 
+        reason: "excluded_user" 
+      });
+    }
 
     // Extract user_agent and device
     const user_agent = request.headers.get("user-agent") || undefined;
