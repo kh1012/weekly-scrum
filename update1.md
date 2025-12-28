@@ -1,283 +1,126 @@
 You are working on a Next.js (App Router) + Supabase project.
 
-DATABASE STATUS (IMPORTANT — DO NOT CHANGE):
-The following database changes are ALREADY APPLIED and MUST NOT be modified:
+DB STATUS (already applied):
 
-1. workspace_role enum:
+- A new table exists: public.menu_events
+- RLS enabled
+- Views exist:
+  - public.v_menu_usage_weekly
+  - public.v_page_usage_weekly
+  - public.v_user_menu_usage_weekly
+- DO NOT change DB schema or SQL in this task.
 
-   - "leader" has been renamed to "manager"
-   - Valid roles: admin / manager / member
+GOAL:
+Implement menu/page usage logging and an admin dashboard to support decisions:
+"upgrade / keep / deprecate" for SNB menus based on real usage.
 
-2. Helper functions exist:
+IMPORTANT DESIGN DECISIONS:
 
-   - public.is_workspace_admin_or_leader(workspace_id) → admin | manager
-   - public.is_workspace_admin(workspace_id [, user_id]) → admin only
+- Logging must be reliable and not spammy:
 
-3. RLS policies already applied:
+  - Dedupe identical page_path events within a short window (e.g. 5–10 seconds)
+  - Only log after route change is complete
+  - Make it resilient to failures (do not break UX)
 
-   - Admin-only manage policies for:
-     - public.snapshots
-     - public.snapshot_entries
-   - Manager/Admin write access for:
-     - workspace_members
-     - gantt_flags
-     - feedbacks (if table exists)
+- Prefer server-side insertion with service role key (recommended) to avoid exposing insert abuse:
+  - Create an API route: /api/telemetry/menu-events
+  - Server uses SUPABASE_SERVICE_ROLE_KEY to insert into public.menu_events
+  - Client calls the API with minimal payload
+  - Server enriches: user_id, user_agent, referrer, device, session_id if needed
 
-4. gantt_flags table:
+SNB MENU MAPPING (use this mapping in code):
+community:
 
-   - Column exists: links jsonb NOT NULL DEFAULT []
+- feedbacks -> menu_group="community", menu_key="feedbacks"
+  works:
+- entries -> menu_group="works", menu_key="entries"
+- plans -> menu_group="works", menu_key="plans"
+- snapshots -> menu_group="works", menu_key="snapshots"
+- work map -> menu_group="works", menu_key="work-map"
+  personal space:
+- dashboard -> menu_group="personal", menu_key="dashboard"
+- snapshots management -> menu_group="personal", menu_key="snapshots-management"
+  admin space:
+- dashboard -> menu_group="admin", menu_key="dashboard"
+- weekly log -> menu_group="admin", menu_key="weekly-log"
+- plans management -> menu_group="admin", menu_key="plans-management"
+- meta options -> menu_group="admin", menu_key="meta-options"
+  etc:
+- release notes -> menu_group="etc", menu_key="release-notes"
 
-5. Views (column sets are FIXED — do not assume anything else):
+Implementation: derive menu_group/menu_key from the current pathname.
+If a path does not match, set menu_group/menu_key to null and still log PAGE_VIEW.
 
-   - public.v_flag_plan_summary:
-     columns:
-     workspace_id
-     flag_id
-     flag_title
-     flag_start_date
-     flag_end_date
-     flag_days
-     plan_count
-     min_plan_start
-     max_plan_end
+EVENTS TO LOG:
 
-   - public.v_resource_distribution:
-     columns:
-     workspace_id
-     user_id
-     display_name
-     assigned_plan_count
+1. PAGE_VIEW
+   - on route change to a new pathname
+2. MENU_CLICK
+   - when a user clicks SNB item (before navigation or after, but dedupe)
 
-   - public.v_collab_edges:
-     columns:
-     workspace_id
-     from_user_id
-     to_user_id
-     collaboration_count
+FIELDS TO WRITE (minimum):
 
-6. Indexes already exist:
-   - snapshot_entries(workspace_id, created_at desc)
-   - snapshot_entries(workspace_id, author_id)
-   - snapshots(workspace_id, updated_at desc)
+- workspace_id (required)
+- user_id (server-side if possible)
+- event_type
+- menu_group, menu_key
+- page_path
+- referrer (optional)
+- device (optional)
+- session_id (optional)
+- occurred_at (let DB default unless you need explicit)
 
-ABSOLUTE RULES:
+WORKSPACE SCOPE:
 
-- ❌ Do NOT modify DB schema, views, functions, enums, or policies.
-- ❌ Do NOT add migrations or SQL.
-- ❌ Do NOT assume additional columns exist.
-- ✅ Use only confirmed tables/columns/views listed above.
-- ✅ Incremental commits are mandatory.
+- Use the currently selected/active workspace_id from your app state.
+- If workspace_id is not known, do not log.
 
----
+ADMIN DASHBOARD:
 
-## IMPLEMENTATION GOALS (ALL REQUIRED)
-
-### 1) Role system cleanup (leader → manager)
-
-- Sweep the codebase and replace all UI labels, types, and logic:
-  - "leader" → "manager"
-- Authorization semantics:
-  - admin → full access (admin pages, delete, manage)
-  - manager → elevated access (existing leader permissions)
-  - member → standard access
-- If legacy data is encountered:
-  - Normalize at boundary ONLY ONCE:
-    if (role === "leader") role = "manager"
-- After this step, there should be NO permission logic relying on the string "leader".
-
----
-
-### 2) Admin-only Snapshots Management Page
-
-- Route: /admin/snapshots
-- Access:
-  - Admin-only (use role + DB enforcement, not UI-only guards)
-- Data source:
-  - public.snapshots
-  - public.snapshot_entries (for counts)
-- UI requirements:
-  - List snapshots for current workspace:
-    - created_at
-    - updated_at
-    - author_id (display user if available)
-    - entry count (snapshot_entries grouped by snapshot)
-  - Admin-only delete action:
-    - Confirmation modal
-    - Graceful handling of RLS errors
-    - Refresh list on success
-
----
-
-### 3) Custom Flag Links (DB-backed)
-
-- Data source:
-  - gantt_flags.links (jsonb array)
-  - Type: Array<{ url: string; label?: string }>
-- Flag create/edit modal:
-  - Add/remove multiple links
-  - URL validation: must start with http:// or https://
-- Flag display:
-  - Compact inline rendering (chips or small list)
-- No schema assumptions beyond `links`.
-
----
-
-### 4) Admin Insights Dashboard (Read-only)
-
-- Route: /admin/insights
+- Create /admin/menu-usage (or /admin/analytics)
 - Admin-only access
-- Use ONLY existing DB views:
+- Render GitHub-like dense tables:
+  A) Weekly menu usage (from v_menu_usage_weekly)
 
-A) Flag summary
+  - week_start_seoul
+  - menu_group / menu_key
+  - event_type
+  - event_count
+  - unique_users
+  - Default: last 8 weeks, ordered desc
+    B) Weekly page usage (from v_page_usage_weekly)
+  - week_start_seoul
+  - page_path
+  - event_count
+  - unique_users
+    C) “Who uses what” (from v_user_menu_usage_weekly)
+  - week_start_seoul
+  - user (name if available, else uuid)
+  - menu_key
+  - event_count
 
-- Source: public.v_flag_plan_summary
-- Show:
-  - flag_title
-  - flag_start_date ~ flag_end_date
-  - flag_days
-  - plan_count
+- Add simple controls:
+  - week range (last 4/8/12 weeks)
+  - filter by menu_group
+  - event_type filter (PAGE_VIEW / MENU_CLICK)
 
-B) Resource distribution
+ENGINEERING CONSTRAINTS:
 
-- Source: public.v_resource_distribution
-- Show:
-  - display_name
-  - assigned_plan_count
+- Incremental commits.
+- Before each commit, run:
+  1. typecheck/build
+  2. manual smoke: route changes log events, admin dashboard loads
+  3. verify no sensitive keys leaked to client (service role must be server-only)
 
-C) Collaboration network (table view)
+RECOMMENDED COMMIT PLAN:
+Commit 1) API route /api/telemetry/menu-events using service role
+Commit 2) Client logger (route change) + dedupe + session_id
+Commit 3) SNB click logging
+Commit 4) Admin page /admin/menu-usage reading 3 views + tables
+Commit 5) Filters (weeks/menu_group/event_type) + polish
 
-- Source: public.v_collab_edges
-- Show:
-  - from_user_id
-  - to_user_id
-  - collaboration_count
-- Sort by collaboration_count desc
-- If user display info exists elsewhere, join carefully.
-  If not, render truncated UUID.
+DELIVERABLE:
 
-- UI style:
-  - Dense, GitHub-like tables
-  - Read-only (NO mutations)
-
----
-
-### 5) Entries Page: Left Filter Panel + Search + Pagination
-
-Target page:
-
-- /works/entries (or the existing entries feed route)
-
-IMPORTANT:
-
-- Project/module/feature columns do NOT exist.
-- Entries are backed by snapshot_entries.
-
-Filters to implement (ONLY THESE):
-
-- Author filter:
-  - snapshot_entries.author_id
-- Date range filter:
-  - snapshot_entries.created_at
-- Collaborator toggle:
-  - collaborators IS NOT NULL
-  - jsonb array length > 0
-- Workspace scoping is mandatory.
-
-Search:
-
-- If any filter is active:
-  - Search within filtered result set
-- If no filter is active:
-  - Search across the full dataset
-- If no text fields exist:
-  - Either disable search or search by author_id / id
-  - Do NOT invent fields
-
-Pagination:
-
-- Keyset pagination preferred:
-  - Order by created_at desc
-- Use stable cursors
-- Avoid duplicates or gaps
-
----
-
-## ENGINEERING CONSTRAINTS
-
-- Minimal refactors only.
-- Reuse existing components, hooks, stores, and Supabase client.
-- Follow existing project patterns.
-
----
-
-## MANDATORY VERIFICATION BEFORE EACH COMMIT (>= 3)
-
-1. Ripgrep checks:
-
-   - rg -n "leader"
-     → Must NOT appear in permission logic or UI labels.
-
-2. Build / type safety:
-
-   - pnpm typecheck OR pnpm build (project standard)
-
-3. Manual smoke tests:
-   - member:
-     - cannot access /admin/\*
-   - manager:
-     - cannot access admin pages
-     - can access manager-allowed features
-   - admin:
-     - can access /admin/snapshots
-     - can delete snapshots
-     - can access /admin/insights
-   - /works/entries:
-     - filters work
-     - pagination stable
-     - no crashes
-
----
-
-## RECOMMENDED COMMIT PLAN
-
-Commit 1:
-
-- Role rename sweep (leader → manager)
-- Permission logic normalization
-
-Commit 2:
-
-- /admin/snapshots scaffold
-- Admin-only guard
-- Snapshot list
-
-Commit 3:
-
-- Snapshot delete flow
-- Entry count aggregation
-- Error handling
-
-Commit 4:
-
-- gantt_flags.links end-to-end
-- Modal UI + display
-
-Commit 5:
-
-- /admin/insights
-- 3 tables from DB views
-
-Commit 6:
-
-- /works/entries
-- Left filter panel
-- Search behavior
-- Pagination
-
----
-
-## DELIVERABLE
-
-- List of files changed per commit
-- Manual verification checklist results
-- Confirmation that NO DB changes were made
+- Changed files per commit
+- Manual verification checklist
+- Confirm service role key is not exposed to client
