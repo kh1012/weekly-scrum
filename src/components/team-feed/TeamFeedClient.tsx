@@ -76,7 +76,6 @@ export function TeamFeedClient({
         params.set("features", newGnbParams.features.join(","));
       }
 
-      navigationProgress.start();
       startTransition(() => {
         router.push(`/team-feed?${params.toString()}`);
       });
@@ -86,7 +85,6 @@ export function TeamFeedClient({
   );
 
   const handleResetFilters = useCallback(() => {
-    navigationProgress.start();
     startTransition(() => {
       router.push("/team-feed");
     });

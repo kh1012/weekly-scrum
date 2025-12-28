@@ -77,8 +77,8 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
   });
 
   return (
-    <div className="space-y-4">
-      <div className="mb-4">
+    <div className="space-y-3">
+      <div>
         <h2 className="text-sm font-semibold text-[#24292f] mb-1">
           Recent Activity
         </h2>
