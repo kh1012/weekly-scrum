@@ -1,26 +1,42 @@
 export const dynamic = "force-dynamic";
 
-import { getTeamFeedData, getActivityChartData } from "@/lib/data/teamFeed";
+import { Suspense } from "react";
+import { getTeamFeedData } from "@/lib/data/teamFeed";
+import { listWorkspaceMembers } from "@/lib/data/members";
 import { TeamFeedClient } from "@/components/team-feed/TeamFeedClient";
+import { parseGnbParams } from "@/lib/ui/gnbParams";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 const DEFAULT_WORKSPACE_ID =
   process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
 
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
 /**
- * Entries 페이지
+ * Team Feed 페이지
  * - 팀원들의 스냅샷 엔트리를 확인
  * - 읽기 전용, 사람 중심 피드
- * - 우측에 주차별 통계 + Activity Chart
+ * - 좌측 필터 패널 (Author, Date range, Collaborator toggle)
+ * - 검색 기능
  */
-export default async function TeamFeedPage() {
-  const { feedItems, error: feedError } = await getTeamFeedData(
-    DEFAULT_WORKSPACE_ID,
-    8
-  );
-  const { activityData, error: activityError } = await getActivityChartData(
-    DEFAULT_WORKSPACE_ID,
-    14
-  );
+export default async function TeamFeedPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const params = new URLSearchParams();
+  Object.entries(resolvedSearchParams).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      params.set(key, value);
+    }
+  });
+  const gnbParams = parseGnbParams(params);
+
+  const [feedResult, membersResult] = await Promise.all([
+    getTeamFeedData(DEFAULT_WORKSPACE_ID, 8, gnbParams),
+    listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
+  ]);
+
+  const { feedItems, error: feedError } = feedResult;
 
 
   if (feedError) {
@@ -36,21 +52,25 @@ export default async function TeamFeedPage() {
     );
   }
 
-  if (feedItems.length === 0) {
-    return (
-      <div className="h-full flex items-center justify-center bg-white px-4">
-        <div className="text-center p-6 bg-white border border-[#d0d7de] rounded-md max-w-md">
-          <h2 className="text-base font-semibold text-[#24292f] mb-2">
-            아직 작성된 스냅샷이 없습니다
-          </h2>
-          <p className="text-sm text-[#57606a]">
-            팀원들이 스냅샷을 작성하면 여기에 표시됩니다.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <TeamFeedClient
+        initialFeedItems={feedItems}
+        gnbParams={gnbParams}
+        workspaceMembers={membersResult || []}
+      />
+    </Suspense>
+  );
+}
 
-  return <TeamFeedClient initialFeedItems={feedItems} activityData={activityData} />;
+function LoadingSkeleton() {
+  return (
+    <div className="h-full flex items-center justify-center">
+      <LogoLoadingSpinner
+        title="팀 피드를 불러오는 중입니다"
+        description="잠시만 기다려주세요."
+      />
+    </div>
+  );
 }
 

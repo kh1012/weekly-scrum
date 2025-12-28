@@ -1,227 +1,208 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import type { FeedItemData, ActivityChartData } from "@/types/teamFeed";
+import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import type { FeedItemData } from "@/types/teamFeed";
+import type { GnbParams } from "@/lib/ui/gnbParams";
+import type { WorkspaceMember } from "@/lib/data/members";
 import { InfiniteFeedList } from "./InfiniteFeedList";
-import { ActivityChart } from "./ActivityChart";
-import { WeeklySummary } from "./WeeklySummary";
-import { FeedSearch } from "./FeedSearch";
-import { DailyActivity } from "./DailyActivity";
+import { TeamFeedFilterPanel } from "./TeamFeedFilterPanel";
+import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 
 interface TeamFeedClientProps {
   initialFeedItems: FeedItemData[];
-  activityData?: ActivityChartData[];
+  gnbParams: GnbParams;
+  workspaceMembers: WorkspaceMember[];
 }
 
 /**
- * Entries 클라이언트 컴포넌트
- * - 검색 상태 관리
- * - Weekly Summary + Activity Chart 표시
+ * Team Feed 클라이언트 컴포넌트
+ * - 좌측 필터 패널
+ * - 검색 기능
  */
 export function TeamFeedClient({
   initialFeedItems,
-  activityData,
+  gnbParams,
+  workspaceMembers,
 }: TeamFeedClientProps) {
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  
+  // 검색 상태
+  const [searchInput, setSearchInput] = useState(gnbParams.query || "");
   const [isSearching, setIsSearching] = useState(false);
 
-  // 디바운싱 적용 (500ms)
   useEffect(() => {
+    setSearchInput(gnbParams.query || "");
+  }, [gnbParams.query]);
+
+  // 검색 디바운싱
+  useEffect(() => {
+    setIsSearching(true);
     const timer = setTimeout(() => {
-      setSearchQuery(searchInput);
+      if (searchInput !== gnbParams.query) {
+        handleApplyFilters({ ...gnbParams, query: searchInput || undefined });
+      }
+      setIsSearching(false);
     }, 500);
 
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // 검색 결과 카운트 계산
-  const resultCount = useMemo(() => {
-    if (!searchQuery.trim()) return initialFeedItems.length;
+  const handleApplyFilters = useCallback(
+    (newGnbParams: GnbParams) => {
+      const params = new URLSearchParams();
+      if (newGnbParams.query) params.set("query", newGnbParams.query);
+      if (newGnbParams.author) params.set("author", newGnbParams.author);
+      if (newGnbParams.dateRangeStart) params.set("dateRangeStart", newGnbParams.dateRangeStart);
+      if (newGnbParams.dateRangeEnd) params.set("dateRangeEnd", newGnbParams.dateRangeEnd);
+      if (newGnbParams.hasCollaborators) params.set("hasCollaborators", "true");
 
-    const query = searchQuery.toLowerCase();
-    return initialFeedItems.filter((item) => {
-      if (item.personName.toLowerCase().includes(query)) return true;
-
-      return item.entries.some((entry) => {
-        if (
-          entry.project.toLowerCase().includes(query) ||
-          entry.module.toLowerCase().includes(query) ||
-          entry.feature.toLowerCase().includes(query)
-        ) {
-          return true;
-        }
-
-        if (
-          entry.thisWeek.tasks?.some((task) =>
-            task.toLowerCase().includes(query)
-          )
-        ) {
-          return true;
-        }
-
-        if (
-          entry.pastWeek.tasks?.some((task) =>
-            task.title.toLowerCase().includes(query)
-          )
-        ) {
-          return true;
-        }
-
-        if (entry.risks.some((risk) => risk.toLowerCase().includes(query))) {
-          return true;
-        }
-
-        return false;
+      navigationProgress.start();
+      startTransition(() => {
+        router.push(`/team-feed?${params.toString()}`);
       });
-    }).length;
-  }, [initialFeedItems, searchQuery]);
+      setIsFilterPanelOpen(false);
+    },
+    [router]
+  );
+
+  const handleResetFilters = useCallback(() => {
+    navigationProgress.start();
+    startTransition(() => {
+      router.push("/team-feed");
+    });
+    setIsFilterPanelOpen(false);
+    setSearchInput("");
+  }, [router]);
+
+  const activeFilterCount = [
+    gnbParams.author,
+    gnbParams.dateRangeStart,
+    gnbParams.dateRangeEnd,
+    gnbParams.hasCollaborators,
+    gnbParams.query,
+  ].filter(Boolean).length;
 
   return (
-    <div className="bg-white">
-      {/* 데스크톱 레이아웃 (≥1024px): 3 컬럼 */}
-      <div className="hidden lg:flex gap-0 px-4 py-6">
-        {/* 왼쪽: Weekly Summary + Activity Chart (고정 너비 + 구분선) */}
-        <div className="w-80 flex-shrink-0 pr-6 border-r border-[#d0d7de]">
-          <div className="space-y-6 sticky">
-            {/* Weekly Summary */}
-            <WeeklySummary feedItems={initialFeedItems} />
+    <div className="flex flex-col lg:flex-row gap-6 h-full bg-white">
+      {/* Left Filter Panel (desktop: always visible, mobile: drawer) */}
+      <TeamFeedFilterPanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        currentGnbParams={gnbParams}
+        workspaceMembers={workspaceMembers}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
 
-            {/* Activity Chart */}
-            {activityData && activityData.length > 0 && (
-              <ActivityChart data={activityData} />
-            )}
-          </div>
-        </div>
-
-        {/* 중앙: Entries (flex-1) */}
-        <div className="flex-1 px-6 min-w-0" data-feed-container>
-          <div className="mb-4">
-            <h1 className="text-xl font-semibold text-[#24292f] mb-1">
-              Entries
+      {/* Main Content */}
+      <div className="flex-1 min-w-0 px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-semibold text-[#24292f]">
+              Team Feed
             </h1>
-            <p className="text-sm text-[#57606a]">
-              팀원들의 최근 스냅샷 엔트리를 확인하세요
+            <p className="text-sm mt-1 text-[#57606a]">
+              팀원들의 최근 스냅샷 엔트리 ({initialFeedItems.length}개)
             </p>
           </div>
-
-          {/* 검색 - Full Width */}
-          <FeedSearch
-            searchQuery={searchInput}
-            onSearchChange={setSearchInput}
-            isSearching={isSearching}
-            resultCount={resultCount}
-            totalCount={initialFeedItems.length}
-          />
-
-          <InfiniteFeedList
-            initialFeedItems={initialFeedItems}
-            searchQuery={searchQuery}
-            onSearchStateChange={setIsSearching}
-          />
+          <button
+            onClick={() => setIsFilterPanelOpen(true)}
+            className="lg:hidden px-4 py-2 text-sm font-medium text-[#24292f] bg-[#f6f8fa] hover:bg-[#eaeef2] border border-[#d0d7de] rounded-md transition-colors"
+          >
+            필터 {activeFilterCount > 0 && `(${activeFilterCount})`}
+          </button>
         </div>
 
-        {/* 우측: Daily Activity (고정 너비) */}
-        <div className="w-64 flex-shrink-0 pl-6">
-          <div className="sticky">
-            <DailyActivity feedItems={initialFeedItems} />
-          </div>
-        </div>
-      </div>
-
-      {/* 태블릿 레이아웃 (768-1023px): 2 컬럼 */}
-      <div className="hidden md:flex lg:hidden gap-0 px-4 py-6">
-        {/* 왼쪽: Weekly Summary + Activity (고정 너비 + 구분선) */}
-        <div className="w-72 flex-shrink-0 pr-6 border-r border-[#d0d7de]">
-          <div className="space-y-6 sticky">
-            <WeeklySummary feedItems={initialFeedItems} />
-            {activityData && activityData.length > 0 && (
-              <ActivityChart data={activityData} />
-            )}
-          </div>
-        </div>
-
-        {/* 오른쪽: Entries */}
-        <div className="flex-1 px-6 min-w-0">
-          <div className="mb-4">
-            <h1 className="text-xl font-semibold text-[#24292f] mb-1">
-              Entries
-            </h1>
-            <p className="text-sm text-[#57606a]">
-              팀원들의 최근 스냅샷 엔트리를 확인하세요
-            </p>
-          </div>
-
-          <FeedSearch
-            searchQuery={searchInput}
-            onSearchChange={setSearchInput}
-            isSearching={isSearching}
-            resultCount={resultCount}
-            totalCount={initialFeedItems.length}
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57606a]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            placeholder="엔트리 검색 (이름, 프로젝트, 모듈, 기능)"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
           />
-
-          <InfiniteFeedList
-            initialFeedItems={initialFeedItems}
-            searchQuery={searchQuery}
-            onSearchStateChange={setIsSearching}
-          />
-        </div>
-      </div>
-
-      {/* 모바일 레이아웃 (<768px): 1컬럼 */}
-      <div className="md:hidden px-4 py-6">
-        <div className="mb-4">
-          <h1 className="text-lg font-semibold text-[#24292f] mb-1">Entries</h1>
-
-          {/* 활동 요약 (한 줄) */}
-          {activityData && activityData.length > 0 && (
-            <p className="text-xs text-[#57606a] mt-1">
-              Avg{" "}
-              {(
-                activityData.reduce((sum, d) => sum + d.count, 0) /
-                activityData.length
-              ).toFixed(1)}{" "}
-              entries/day · Peak:{" "}
-              {formatDate(
-                activityData.reduce((prev, current) =>
-                  current.count > prev.count ? current : prev
-                ).date
-              )}{" "}
-              (
-              {
-                activityData.reduce((prev, current) =>
-                  current.count > prev.count ? current : prev
-                ).count
-              }
-              )
-            </p>
+          {(searchInput || isSearching) && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {isSearching && (
+                <div className="w-4 h-4 border-2 border-[#0969da] border-t-transparent rounded-full animate-spin" />
+              )}
+              {searchInput && !isSearching && (
+                <button
+                  onClick={() => setSearchInput("")}
+                  className="text-[#57606a] hover:text-[#24292f] transition-colors"
+                  title="초기화"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           )}
         </div>
 
-        {/* 검색 */}
-        <FeedSearch
-          searchQuery={searchInput}
-          onSearchChange={setSearchInput}
-          isSearching={isSearching}
-          resultCount={resultCount}
-          totalCount={initialFeedItems.length}
-        />
+        {/* Active filters summary */}
+        {activeFilterCount > 0 && (
+          <div className="flex items-center gap-2 p-3 mb-4 bg-[#ddf4ff] border border-[#0969da]/20 rounded-md">
+            <span className="text-sm text-[#0969da]">
+              {activeFilterCount}개 필터 적용중
+            </span>
+            <button
+              onClick={handleResetFilters}
+              className="ml-auto text-xs text-[#0969da] hover:underline"
+            >
+              전체 초기화
+            </button>
+          </div>
+        )}
 
-        {/* Entries */}
-        <InfiniteFeedList
-          initialFeedItems={initialFeedItems}
-          searchQuery={searchQuery}
-          onSearchStateChange={setIsSearching}
-        />
+        {/* Entries List */}
+        {initialFeedItems.length > 0 ? (
+          <InfiniteFeedList
+            initialFeedItems={initialFeedItems}
+            searchQuery={gnbParams.query || ""}
+            onSearchStateChange={setIsSearching}
+          />
+        ) : (
+          <div className="text-center py-16 bg-[#f6f8fa] rounded-md">
+            <span className="text-4xl">🤷‍♀️</span>
+            <p className="mt-4 text-lg font-medium text-[#24292f]">
+              표시할 엔트리가 없습니다
+            </p>
+            <p className="mt-2 text-sm text-[#57606a]">
+              필터를 조정하거나 검색어를 변경해 보세요.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
-}
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "short",
-    day: "numeric",
-  }).format(date);
 }

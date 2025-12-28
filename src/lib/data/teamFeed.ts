@@ -4,16 +4,22 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { TeamFeedEntry, FeedItemData, ActivityChartData } from "@/types/teamFeed";
+import type { GnbParams } from "@/lib/ui/gnbParams";
 
 const DEFAULT_WORKSPACE_ID =
   process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
 
 /**
  * 최근 N주의 모든 snapshot entries를 조회하여 person + week별로 그룹화
+ * - Author 필터
+ * - Date range 필터
+ * - Collaborator toggle
+ * - Search (name, project, module, feature)
  */
 export async function getTeamFeedData(
   workspaceId: string = DEFAULT_WORKSPACE_ID,
-  weeksLimit: number = 8
+  weeksLimit: number = 8,
+  gnbParams?: GnbParams
 ): Promise<{ feedItems: FeedItemData[]; error?: string }> {
   const supabase = await createClient();
 
@@ -38,8 +44,8 @@ export async function getTeamFeedData(
     return { feedItems: [], error: "프로필 정보 조회 실패" };
   }
 
-  // 3. 최근 N주의 스냅샷과 엔트리 조회
-  const { data: snapshots, error: snapshotsError } = await supabase
+  // 3. 최근 N주의 스냅샷과 엔트리 조회 (필터링 적용)
+  let query = supabase
     .from("snapshots")
     .select(
       `
@@ -67,9 +73,28 @@ export async function getTeamFeedData(
       )
     `
     )
-    .eq("workspace_id", workspaceId)
+    .eq("workspace_id", workspaceId);
+
+  // Author 필터
+  if (gnbParams?.author) {
+    query = query.eq("author_id", gnbParams.author);
+  }
+
+  // Date range 필터
+  if (gnbParams?.dateRangeStart) {
+    query = query.gte("created_at", gnbParams.dateRangeStart);
+  }
+  if (gnbParams?.dateRangeEnd) {
+    const endDate = new Date(gnbParams.dateRangeEnd);
+    endDate.setDate(endDate.getDate() + 1);
+    query = query.lt("created_at", endDate.toISOString());
+  }
+
+  query = query
     .order("week_start_date", { ascending: false })
     .limit(weeksLimit * members.length); // 멤버 수 * 주차 수
+
+  const { data: snapshots, error: snapshotsError } = await query;
 
   if (snapshotsError || !snapshots) {
     return { feedItems: [], error: "스냅샷 조회 실패" };
@@ -161,12 +186,39 @@ export async function getTeamFeedData(
     item.highlight = extractWeeklyHighlight(item.entries);
   }
 
-  // 7. 최신 활동 순으로 정렬
-  feedItems.sort((a, b) => {
+  // 7. 클라이언트 측 필터링 (Collaborator toggle, Search)
+  let filteredItems = feedItems;
+
+  // Collaborator toggle
+  if (gnbParams?.hasCollaborators) {
+    filteredItems = filteredItems.filter((item) =>
+      item.entries.some(
+        (entry) =>
+          entry.collaborators && Array.isArray(entry.collaborators) && entry.collaborators.length > 0
+      )
+    );
+  }
+
+  // Search (name, project, module, feature)
+  if (gnbParams?.query) {
+    const searchTerm = gnbParams.query.toLowerCase();
+    filteredItems = filteredItems.filter((item) =>
+      item.entries.some(
+        (entry) =>
+          entry.name?.toLowerCase().includes(searchTerm) ||
+          entry.project?.toLowerCase().includes(searchTerm) ||
+          entry.module?.toLowerCase().includes(searchTerm) ||
+          entry.feature?.toLowerCase().includes(searchTerm)
+      )
+    );
+  }
+
+  // 8. 최신 활동 순으로 정렬
+  filteredItems.sort((a, b) => {
     return new Date(b.latestActivityDate).getTime() - new Date(a.latestActivityDate).getTime();
   });
 
-  return { feedItems };
+  return { feedItems: filteredItems };
 }
 
 /**
