@@ -160,7 +160,7 @@ export function AdminDashboardView({
                       </th>
                     ))}
                   </tr>
-                  <tr className="bg-[#f6f8fa]">
+                  <tr className="bg-[#f6f8fa] border-b border-[#d0d7de]">
                     {recentWeeks.map((w, idx) => (
                       <React.Fragment key={`${w.year}-${w.label}-sub`}>
                         <th

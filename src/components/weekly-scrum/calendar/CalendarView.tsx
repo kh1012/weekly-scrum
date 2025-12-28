@@ -179,7 +179,7 @@ export function CalendarView({
   }, [weeks, selectedWeek]);
 
   return (
-    <div className="h-full flex flex-col bg-white p-4 md:p-6">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-white p-4 md:p-6">
       {/* 상단 토글 - 캘린더/히트맵 선택 */}
       <div className="shrink-0 mb-4 flex items-center justify-center">
         <TabToggle
