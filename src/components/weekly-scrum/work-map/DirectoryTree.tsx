@@ -338,7 +338,7 @@ function ProjectItem({
             boxShadow: isProjectSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.2)" : "none",
           }}
           onMouseEnter={(e) => {
-            if (!isProjectSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
+            if (!isProjectSelected) e.currentTarget.style.background = "#f6f8fa";
           }}
           onMouseLeave={(e) => {
             if (!isProjectSelected) e.currentTarget.style.background = isProjectSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
@@ -496,7 +496,7 @@ function ModuleItem({
             boxShadow: isModuleSelected ? "inset 0 0 0 1px rgba(59, 130, 246, 0.2)" : "none",
           }}
           onMouseEnter={(e) => {
-            if (!isModuleSelected) e.currentTarget.style.background = "var(--notion-bg-hover)";
+            if (!isModuleSelected) e.currentTarget.style.background = "#f6f8fa";
           }}
           onMouseLeave={(e) => {
             if (!isModuleSelected) e.currentTarget.style.background = isModuleSelected ? "rgba(59, 130, 246, 0.1)" : "transparent";
@@ -632,7 +632,7 @@ function FeatureItem({
       }}
       onMouseEnter={(e) => {
         if (!isSelected)
-          e.currentTarget.style.background = "var(--notion-bg-hover)";
+          e.currentTarget.style.background = "#f6f8fa";
       }}
       onMouseLeave={(e) => {
         if (!isSelected)
@@ -1061,7 +1061,7 @@ function PersonItem({
         className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all"
         style={{ background: "transparent" }}
         onMouseEnter={(e) =>
-          (e.currentTarget.style.background = "var(--notion-bg-hover)")
+          (e.currentTarget.style.background = "#f6f8fa")
         }
         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
@@ -1192,7 +1192,7 @@ function PersonDomainItem({
         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-all"
         style={{ background: "transparent" }}
         onMouseEnter={(e) =>
-          (e.currentTarget.style.background = "var(--notion-bg-hover)")
+          (e.currentTarget.style.background = "#f6f8fa")
         }
         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
@@ -1316,7 +1316,7 @@ function PersonProjectItem({
         className="w-full flex items-center gap-2 px-2 py-1 rounded-md transition-all"
         style={{ background: "transparent" }}
         onMouseEnter={(e) =>
-          (e.currentTarget.style.background = "var(--notion-bg-hover)")
+          (e.currentTarget.style.background = "#f6f8fa")
         }
         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
@@ -1437,7 +1437,7 @@ function PersonModuleItem({
         className="w-full flex items-center gap-2 px-2 py-1 rounded-md transition-all"
         style={{ background: "transparent" }}
         onMouseEnter={(e) =>
-          (e.currentTarget.style.background = "var(--notion-bg-hover)")
+          (e.currentTarget.style.background = "#f6f8fa")
         }
         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
@@ -1557,7 +1557,7 @@ function PersonFeatureItem({
       }}
       onMouseEnter={(e) => {
         if (!isSelected)
-          e.currentTarget.style.background = "var(--notion-bg-hover)";
+          e.currentTarget.style.background = "#f6f8fa";
       }}
       onMouseLeave={(e) => {
         if (!isSelected)

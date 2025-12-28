@@ -393,7 +393,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   className="absolute right-3 top-14 w-44 rounded-lg overflow-hidden z-50 animate-fadeIn"
                   style={{
                     background: "white",
-                    boxShadow: "var(--notion-shadow-lg)",
+                    boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
                     border: "1px solid #d0d7de",
                   }}
                 >
@@ -696,7 +696,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     className="absolute right-0 top-full mt-1 w-48 rounded-lg overflow-hidden z-50 animate-fadeIn"
                     style={{
                       background: "white",
-                      boxShadow: "var(--notion-shadow-lg)",
+                      boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
                       border: "1px solid #d0d7de",
                     }}
                   >

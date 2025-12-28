@@ -997,7 +997,7 @@ export function CollaborationNetworkV2({
         </div>
         <div
           className="flex items-center gap-3 text-[10px]"
-          style={{ color: "var(--notion-text-tertiary)" }}
+          style={{ color: "#8c959f" }}
         >
           {/* Pair: 파란색 점선 */}
           <span className="flex items-center gap-1">
