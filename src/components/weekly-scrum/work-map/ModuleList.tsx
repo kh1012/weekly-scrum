@@ -17,7 +17,7 @@ export function ModuleList({
 }: ModuleListProps) {
   if (modules.length === 0) {
     return (
-      <div className="p-4 text-center" style={{ color: "var(--notion-text-muted)" }}>
+      <div className="p-4 text-center text-[#57606a]">
         모듈이 없습니다.
       </div>
     );
@@ -36,24 +36,20 @@ export function ModuleList({
           <button
             key={module.name}
             onClick={() => onSelectModule(module.name)}
-            className={`w-full text-left px-3 py-3 rounded-lg transition-all ${
-              isSelected ? "" : "hover:scale-[1.02]"
+            className={`w-full text-left px-3 py-3 rounded-md transition-colors ${
+              isSelected ? "bg-[#ddf4ff]" : "bg-[#f6f8fa] hover:bg-[#f3f4f6]"
             }`}
             style={{
-              background: isSelected
-                ? "var(--notion-bg-active)"
-                : "var(--notion-bg-secondary)",
-              boxShadow: isSelected
-                ? `inset 0 0 0 2px ${progressColor}`
-                : "none",
+              boxShadow: isSelected ? `inset 0 0 0 2px ${progressColor}` : "none",
               borderLeft: `4px solid ${progressColor}`,
             }}
           >
             {/* 헤더 */}
             <div className="flex items-center justify-between mb-2">
               <span
-                className="font-semibold"
-                style={{ color: isSelected ? "var(--notion-text)" : "var(--notion-text-secondary)" }}
+                className={`font-semibold ${
+                  isSelected ? "text-[#24292f]" : "text-[#57606a]"
+                }`}
               >
                 {module.name}
               </span>
@@ -70,7 +66,7 @@ export function ModuleList({
 
             {/* 메타 정보 */}
             <div className="flex items-center justify-between text-xs mb-2">
-              <span style={{ color: "var(--notion-text-muted)" }}>
+              <span className="text-[#57606a]">
                 {featureCount} features
               </span>
               <span
@@ -86,10 +82,7 @@ export function ModuleList({
             </div>
 
             {/* 진행률 바 */}
-            <div
-              className="h-1.5 rounded-full overflow-hidden"
-              style={{ background: "var(--notion-bg)" }}
-            >
+            <div className="h-1.5 rounded-full overflow-hidden bg-white">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
