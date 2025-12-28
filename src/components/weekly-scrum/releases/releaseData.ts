@@ -2,6 +2,55 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.8.0",
+    date: "2025-12-29",
+    title: "워크스페이스 멤버 관리 & 텔레메트리 시스템",
+    summary:
+      "Admin Space에 워크스페이스 멤버 관리 기능과 메뉴 사용 분석 시스템을 추가했습니다. 관리자는 멤버 권한을 관리하고, 실제 사용 데이터를 기반으로 메뉴 개선 결정을 내릴 수 있습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "워크스페이스 멤버 관리 페이지 - 멤버 목록 조회, 권한 변경, 표시 이름 수정, 멤버 삭제",
+      },
+      {
+        type: "feat",
+        description: "메뉴 사용 분석 대시보드 - 주차별 메뉴/페이지 사용 통계, 사용자별 활동 추적",
+      },
+      {
+        type: "feat",
+        description: "텔레메트리 시스템 - 페이지 뷰 및 메뉴 클릭 이벤트 자동 수집 (개발자 계정 제외)",
+      },
+      {
+        type: "feat",
+        description: "커스텀 드롭다운 UI 전역 적용 - 모든 Select 요소를 Portal 기반 드롭다운으로 교체",
+      },
+      {
+        type: "feat",
+        description: "Admin Space 메뉴 아이콘 개선 - 중복 제거 및 NEW 뱃지 추가 (Menu Usage, Members)",
+      },
+      {
+        type: "improve",
+        description: "Service Role 사용으로 멤버 권한 편집 문제 해결 - RLS 정책 우회",
+      },
+      {
+        type: "improve",
+        description: "스냅샷 뒤로가기 버튼 개선 - 명확한 '스냅샷 목록으로' 텍스트 및 실제 라우팅",
+      },
+      {
+        type: "improve",
+        description: "엔트리가 0개인 주차 자동 필터링 - 불필요한 UI 요소 제거",
+      },
+      {
+        type: "improve",
+        description: "localhost referrer 텔레메트리 제외 - 개발 환경 데이터 오염 방지",
+      },
+      {
+        type: "style",
+        description: "Admin Space 아이콘 통일 - chartBar(통계), cog(설정), clipboardList(계획) 추가",
+      },
+    ],
+  },
+  {
     version: "2.7.0",
     date: "2025-12-18",
     title: "Plans 읽기 전용 뷰 & Gantt 타임라인 UX 개선",
