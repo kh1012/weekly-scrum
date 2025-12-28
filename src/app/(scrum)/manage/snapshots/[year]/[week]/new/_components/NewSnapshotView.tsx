@@ -669,7 +669,10 @@ function NewSnapshotViewInner({
         <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setMode("entry")}
+              onClick={() => {
+                navigationProgress.start();
+                router.push("/manage/snapshots");
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
             >
               <svg
@@ -685,7 +688,7 @@ function NewSnapshotViewInner({
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
-              뒤로가기
+              스냅샷 목록으로
             </button>
 
             <div className="h-4 w-px bg-gray-200" />

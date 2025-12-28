@@ -98,12 +98,14 @@ export async function GET(request: NextRequest) {
     weeklyData[weekKey].entries.push(...(snapshot.entries || []));
   });
 
-  // 배열로 변환
-  const weeks = Object.entries(weeklyData).map(([key, data]) => ({
-    key,
-    ...data,
-    entriesCount: data.entries.length,
-  }));
+  // 배열로 변환 (엔트리가 0개인 주차는 제외)
+  const weeks = Object.entries(weeklyData)
+    .map(([key, data]) => ({
+      key,
+      ...data,
+      entriesCount: data.entries.length,
+    }))
+    .filter((week) => week.entriesCount > 0);
 
   return NextResponse.json({ weeks });
 }
