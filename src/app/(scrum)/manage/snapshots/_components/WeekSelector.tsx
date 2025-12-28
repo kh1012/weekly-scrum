@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 연도 + ISO 주차 선택 UI (커스텀 드롭다운)
+ * 연도 + ISO 주차 선택 UI (커스텀 드롭다운) - GitHub 스타일
  */
 
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -44,7 +44,7 @@ function WorkloadBadge({ level }: { level: WorkloadLevel }) {
   
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${colors.bg} ${colors.text} border ${colors.border}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded ${colors.bg} ${colors.text} border ${colors.border}`}
     >
       {level === "light" && "🌿"}
       {level === "normal" && "⚡"}
@@ -145,16 +145,16 @@ export function WeekSelector({
             setIsYearOpen(!isYearOpen);
             setIsWeekOpen(false);
           }}
-          className="flex items-center gap-2 h-9 rounded-lg px-3 text-sm font-medium bg-gray-50 transition-colors hover:bg-gray-100"
+          className="flex items-center gap-2 h-8 rounded-md px-3 text-sm font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de] transition-colors hover:bg-[#d0d7de]"
         >
           <span>{year}년</span>
           {currentWeekInfo.year === year && (
-            <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] bg-[#ddf4ff] text-[#0969da] px-1.5 py-0.5 rounded border border-[#0969da]">
               현재
             </span>
           )}
           <svg
-            className={`w-4 h-4 text-gray-400 transition-transform ${
+            className={`w-3.5 h-3.5 text-[#57606a] transition-transform ${
               isYearOpen ? "rotate-180" : ""
             }`}
             fill="none"
@@ -172,7 +172,7 @@ export function WeekSelector({
 
         {/* 연도 드롭다운 리스트 */}
         {isYearOpen && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto min-w-[120px]">
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[120px]">
             {yearOptions.map((y) => {
               const isCurrentYear = currentWeekInfo.year === y;
               return (
@@ -190,13 +190,13 @@ export function WeekSelector({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
                     y === year
-                      ? "bg-gray-100 font-medium"
-                      : "hover:bg-gray-50"
-                  } ${isCurrentYear ? "text-blue-600" : "text-gray-700"}`}
+                      ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+                      : "text-[#24292f] hover:bg-[#f6f8fa]"
+                  }`}
                 >
                   <span className="font-medium">{y}년</span>
                   {isCurrentYear && (
-                    <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] bg-[#ddf4ff] text-[#0969da] px-1.5 py-0.5 rounded border border-[#0969da]">
                       현재
                     </span>
                   )}
@@ -215,19 +215,19 @@ export function WeekSelector({
             setIsWeekOpen(!isWeekOpen);
             setIsYearOpen(false);
           }}
-          className="flex items-center gap-2 h-9 rounded-lg px-3 text-sm font-medium bg-gray-50 transition-colors hover:bg-gray-100"
+          className="flex items-center gap-2 h-8 rounded-md px-3 text-sm font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de] transition-colors hover:bg-[#d0d7de]"
         >
           <span>{selectedWeekInfo?.label}</span>
-          <span className="text-gray-500 text-xs">
+          <span className="text-[#57606a] text-xs">
             {selectedWeekInfo?.range}
           </span>
           {selectedWeekInfo?.isCurrentWeek && (
-            <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] bg-[#ddf4ff] text-[#0969da] px-1.5 py-0.5 rounded border border-[#0969da]">
               현재
             </span>
           )}
           <svg
-            className={`w-4 h-4 text-gray-400 transition-transform ${
+            className={`w-3.5 h-3.5 text-[#57606a] transition-transform ${
               isWeekOpen ? "rotate-180" : ""
             }`}
             fill="none"
@@ -245,9 +245,9 @@ export function WeekSelector({
 
         {/* 주차 드롭다운 리스트 */}
         {isWeekOpen && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-80 overflow-y-auto min-w-[280px]">
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-80 overflow-y-auto min-w-[280px]">
             {weekOptionsWithRange.map((w) => {
-              // 주차별 스냅샷 갯수 조회 (snapshotCountByWeek 우선, 없으면 현재 선택 주차면 snapshotCount 사용)
+              // 주차별 스냅샷 갯수 조회
               const weekKey = `${year}-${w.week}`;
               let count = 0;
               if (snapshotCountByWeek) {
@@ -268,29 +268,29 @@ export function WeekSelector({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
                     w.week === week
-                      ? "bg-gray-100 font-medium"
-                      : "hover:bg-gray-50"
-                  } ${w.isCurrentWeek ? "text-blue-600" : "text-gray-700"}`}
+                      ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+                      : "text-[#24292f] hover:bg-[#f6f8fa]"
+                  }`}
                 >
                   <div className="flex items-center gap-2">
-                    {/* 스냅샷 갯수를 주차 라벨 좌측에 항상 표시 (0이면 회색 점) */}
+                    {/* 스냅샷 갯수 표시 */}
                     {hasSnapshots ? (
-                      <span className="w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full flex items-center justify-center font-medium">
+                      <span className="w-5 h-5 text-[10px] bg-[#0969da] text-white rounded-full flex items-center justify-center font-medium">
                         {count}
                       </span>
                     ) : (
                       <span className="w-5 h-5 flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#d0d7de]" />
                       </span>
                     )}
                     <span className="font-medium">{w.label}</span>
                     {w.isCurrentWeek && (
-                      <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] bg-[#ddf4ff] text-[#0969da] px-1.5 py-0.5 rounded border border-[#0969da]">
                         현재
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400">{w.range}</span>
+                  <span className="text-xs text-[#57606a]">{w.range}</span>
                 </button>
               );
             })}
@@ -298,11 +298,10 @@ export function WeekSelector({
         )}
       </div>
 
-      {/* 워크로드 뱃지 (우측에 표시) */}
+      {/* 워크로드 뱃지 */}
       {workloadLevel && (
         <WorkloadBadge level={workloadLevel} />
       )}
     </div>
   );
 }
-

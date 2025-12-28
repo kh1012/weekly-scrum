@@ -3,7 +3,7 @@
 /**
  * 주차 메타데이터 요약 패널
  * - 기본: 하단에 Mini Bar로 표시
- * - 확장 시: 중앙 하단에서 scale 애니메이션으로 확장 (Airbnb 스타일)
+ * - 확장 시: 중앙 하단에서 확장 (GitHub 스타일)
  */
 
 import { useEffect, useState } from "react";
@@ -65,19 +65,19 @@ export function WeekMetaPanel({
       {!isExpanded && (
         <button
           onClick={onToggle}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-5 py-3 bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-4 py-2.5 bg-white rounded-md border border-[#d0d7de] hover:border-[#0969da] transition-colors group"
         >
           {/* 스냅샷 수 */}
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-gray-900">{snapshotCount}</span>
-            <span className="text-xs text-gray-500">스냅샷</span>
+            <span className="text-base font-semibold text-[#24292f]">{snapshotCount}</span>
+            <span className="text-xs text-[#57606a]">스냅샷</span>
           </div>
           
-          <div className="w-px h-4 bg-gray-200" />
+          <div className="w-px h-4 bg-[#d0d7de]" />
           
           {/* 프로젝트/모듈/기능 수 */}
           {stats && (
-            <div className="flex items-center gap-3 text-xs text-gray-600">
+            <div className="flex items-center gap-3 text-xs text-[#57606a]">
               <span>{stats.projectCount} 프로젝트</span>
               <span>{stats.moduleCount} 모듈</span>
               <span>{stats.featureCount} 기능</span>
@@ -86,40 +86,40 @@ export function WeekMetaPanel({
           
           {stats?.avgProgress !== null && stats?.avgProgress !== undefined && (
             <>
-              <div className="w-px h-4 bg-gray-200" />
+              <div className="w-px h-4 bg-[#d0d7de]" />
               
               {/* 진행률 */}
               <div className="flex items-center gap-1.5">
-                <div className="w-14 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="w-14 h-1.5 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
+                    className="h-full bg-[#1a7f37] rounded-full"
                     style={{ width: `${stats.avgProgress}%` }}
                   />
                 </div>
-                <span className="text-xs font-medium text-emerald-600">{stats.avgProgress}%</span>
+                <span className="text-xs font-medium text-[#1a7f37]">{stats.avgProgress}%</span>
               </div>
             </>
           )}
           
           {/* 확장 아이콘 */}
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-7 h-7 rounded bg-[#f6f8fa] flex items-center justify-center group-hover:bg-[#d0d7de] transition-colors">
+            <svg className="w-3.5 h-3.5 text-[#57606a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
             </svg>
           </div>
         </button>
       )}
 
-      {/* 확장된 패널 - 중앙에서 위로 올라오는 애니메이션 */}
+      {/* 확장된 패널 */}
       {shouldRender && (
         <>
-          {/* 클릭 영역 (투명, 백드롭 없음) */}
+          {/* 백드롭 */}
           <div 
-            className="fixed inset-0 z-[60]"
+            className="fixed inset-0 z-[60] bg-[#c8d1da66]"
             onClick={onToggle}
           />
           
-          {/* 패널 - 선택 위치 기준 중앙에서 위로 애니메이션 */}
+          {/* 패널 */}
           <div 
             className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-[70] w-[90%] max-w-xl transition-all duration-300 ease-out ${
               isAnimating 
@@ -130,52 +130,54 @@ export function WeekMetaPanel({
               transformOrigin: "center bottom",
             }}
           >
-            <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-md border border-[#d0d7de] overflow-hidden">
               {/* 헤더 */}
-              <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-gray-100">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                    <span className="text-lg">📊</span>
+              <div className="flex items-center justify-between px-4 py-3 bg-[#f6f8fa] border-b border-[#d0d7de]">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded bg-[#ddf4ff] flex items-center justify-center">
+                    <svg className="w-4 h-4 text-[#0969da]" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M1.5 3a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5zM1 7.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5z" />
+                    </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">주차 요약</h3>
-                    <p className="text-xs text-gray-500">스냅샷 {snapshotCount}개의 통계</p>
+                    <h3 className="text-sm font-semibold text-[#24292f]">주차 요약</h3>
+                    <p className="text-xs text-[#57606a]">스냅샷 {snapshotCount}개의 통계</p>
                   </div>
                 </div>
                 <button
                   onClick={onToggle}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  className="p-1.5 rounded hover:bg-[#d0d7de] transition-colors"
                 >
-                  <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-[#57606a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
               {/* 콘텐츠 */}
-              <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
+              <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
                 {stats ? (
                   <>
                     {/* 메인 통계 그리드 */}
-                    <div className="grid grid-cols-4 gap-3">
-                      <StatCard label="스냅샷" value={snapshotCount} color="blue" icon="📝" />
-                      <StatCard label="프로젝트" value={stats.projectCount} color="purple" icon="📁" />
-                      <StatCard label="모듈" value={stats.moduleCount} color="emerald" icon="📦" />
-                      <StatCard label="기능" value={stats.featureCount} color="amber" icon="✨" />
+                    <div className="grid grid-cols-4 gap-2">
+                      <StatCard label="스냅샷" value={snapshotCount} />
+                      <StatCard label="프로젝트" value={stats.projectCount} />
+                      <StatCard label="모듈" value={stats.moduleCount} />
+                      <StatCard label="기능" value={stats.featureCount} />
                     </div>
 
                     {/* 평균 진행률 */}
-                    <div className="p-5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-semibold text-emerald-800">평균 진행률</span>
-                        <span className="text-2xl font-black text-emerald-600">
+                    <div className="p-4 bg-[#ddf4ff] rounded-md border border-[#54aeff]">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-[#0969da]">평균 진행률</span>
+                        <span className="text-xl font-semibold text-[#0969da]">
                           {stats.avgProgress !== null ? `${stats.avgProgress}%` : "-"}
                         </span>
                       </div>
                       {stats.avgProgress !== null && (
-                        <div className="w-full h-3 bg-emerald-100 rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-[#54aeff]">
                           <div
-                            className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-500"
+                            className="h-full bg-[#0969da] rounded-full transition-all duration-500"
                             style={{ width: `${stats.avgProgress}%` }}
                           />
                         </div>
@@ -184,25 +186,24 @@ export function WeekMetaPanel({
 
                     {/* 도메인 분포 */}
                     {Object.keys(stats.domainDistribution).length > 0 && (
-                      <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                          <span>🏷️</span>
+                      <div className="p-4 bg-white rounded-md border border-[#d0d7de]">
+                        <h4 className="text-sm font-medium text-[#24292f] mb-3">
                           도메인 분포
                         </h4>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                           {Object.entries(stats.domainDistribution).map(([domain, count]) => {
                             const total = stats.totalEntries || Object.values(stats.domainDistribution).reduce((a, b) => a + b, 0);
                             const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                             return (
-                              <div key={domain} className="flex items-center gap-3">
-                                <span className="text-sm font-medium text-gray-700 w-24 truncate">{domain}</span>
-                                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div key={domain} className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-[#24292f] w-20 truncate">{domain}</span>
+                                <div className="flex-1 h-2 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
                                   <div
-                                    className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full transition-all"
+                                    className="h-full bg-[#0969da] rounded-full transition-all"
                                     style={{ width: `${percentage}%` }}
                                   />
                                 </div>
-                                <span className="text-xs text-gray-500 w-16 text-right">{count}건 ({percentage}%)</span>
+                                <span className="text-xs text-[#57606a] w-14 text-right">{count}건 ({percentage}%)</span>
                               </div>
                             );
                           })}
@@ -211,12 +212,14 @@ export function WeekMetaPanel({
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-10">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                      <span className="text-2xl">📊</span>
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded bg-[#f6f8fa] flex items-center justify-center">
+                      <svg className="w-6 h-6 text-[#57606a]" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M1.5 3a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5zM1 7.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5z" />
+                      </svg>
                     </div>
-                    <p className="text-sm text-gray-500">스냅샷 {snapshotCount}개</p>
-                    <p className="text-xs text-gray-400 mt-1">통계 데이터가 없습니다</p>
+                    <p className="text-sm text-[#57606a]">스냅샷 {snapshotCount}개</p>
+                    <p className="text-xs text-[#8c959f] mt-1">통계 데이터가 없습니다</p>
                   </div>
                 )}
               </div>
@@ -232,26 +235,14 @@ export function WeekMetaPanel({
 function StatCard({
   label,
   value,
-  color,
-  icon,
 }: {
   label: string;
   value: number;
-  color: "blue" | "purple" | "emerald" | "amber";
-  icon?: string;
 }) {
-  const colorClasses = {
-    blue: "bg-blue-50 text-blue-700 border-blue-100",
-    purple: "bg-purple-50 text-purple-700 border-purple-100",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
-  };
-
   return (
-    <div className={`p-4 rounded-xl border ${colorClasses[color]} text-center transition-transform hover:scale-105`}>
-      {icon && <span className="text-xl mb-1 block">{icon}</span>}
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-xs opacity-75 mt-0.5">{label}</div>
+    <div className="p-3 rounded-md border border-[#d0d7de] bg-[#f6f8fa] text-center hover:border-[#0969da] transition-colors">
+      <div className="text-lg font-semibold text-[#24292f]">{value}</div>
+      <div className="text-xs text-[#57606a] mt-0.5">{label}</div>
     </div>
   );
 }
