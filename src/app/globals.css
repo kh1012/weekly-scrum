@@ -972,17 +972,16 @@ select option {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: #d0d7de;
   border-radius: 4px;
 }
 
-/* 호버 시에만 스크롤바 표시 */
-*:hover::-webkit-scrollbar-thumb {
-  background: #d0d7de;
+::-webkit-scrollbar-thumb:hover {
+  background: #a8b1bb;
 }
 
-*:hover::-webkit-scrollbar-thumb:hover {
-  background: #a8b1bb;
+::-webkit-scrollbar-thumb:active {
+  background: #8c959f;
 }
 
 /* Entries 영역은 스크롤바 항상 표시 */
