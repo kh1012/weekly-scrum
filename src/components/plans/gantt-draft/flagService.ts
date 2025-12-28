@@ -17,6 +17,12 @@ const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
  * snake_case → camelCase 매핑
  */
 function mapFlagFromDb(row: Record<string, unknown>): GanttFlag {
+  // links는 jsonb 배열이므로 안전하게 파싱
+  let links: { url: string; label?: string }[] = [];
+  if (row.links && Array.isArray(row.links)) {
+    links = row.links as { url: string; label?: string }[];
+  }
+  
   return {
     id: row.id as string,
     workspaceId: row.workspace_id as string,
@@ -26,6 +32,7 @@ function mapFlagFromDb(row: Record<string, unknown>): GanttFlag {
     color: row.color as string | null,
     orderIndex: (row.order_index as number) || 0,
     laneHint: row.lane_hint as number | null | undefined,
+    links: links.length > 0 ? links : undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     createdBy: row.created_by as string | null,
