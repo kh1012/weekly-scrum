@@ -206,14 +206,14 @@ export function LayoutWrapper({ children, role, workspaceId }: LayoutWrapperProp
 
   return (
     <TelemetryProvider workspaceId={workspaceId || ""}>
-      <div className="min-h-screen bg-white">
-        {/* 네비게이션 프로그레스 바 */}
-        <Suspense fallback={null}>
-          <NavigationProgress />
-        </Suspense>
+    <div className="min-h-screen bg-white">
+      {/* 네비게이션 프로그레스 바 */}
+      <Suspense fallback={null}>
+        <NavigationProgress />
+      </Suspense>
 
-        {/* GNB */}
-        <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
+      {/* GNB */}
+      <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
 
       {/* Drawer SNB */}
       <DrawerNavigation
@@ -223,9 +223,9 @@ export function LayoutWrapper({ children, role, workspaceId }: LayoutWrapperProp
         workspaceId={workspaceId}
       />
 
-        {/* 메인 영역 */}
-        <div className="w-full">{children}</div>
-      </div>
+      {/* 메인 영역 */}
+      <div className="w-full">{children}</div>
+    </div>
     </TelemetryProvider>
   );
 }

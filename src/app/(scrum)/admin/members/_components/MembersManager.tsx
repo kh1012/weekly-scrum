@@ -180,7 +180,7 @@ export function MembersManager({
                     권한
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#57606a] uppercase tracking-wider">
-                    User ID
+                    가입일
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-[#57606a] uppercase tracking-wider">
                     액션
@@ -242,8 +242,10 @@ export function MembersManager({
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-[#57606a] font-mono">
-                          {member.user_id.substring(0, 8)}...
+                        <span className="text-sm text-[#57606a]">
+                          {new Date(member.joined_at).toLocaleDateString(
+                            "ko-KR"
+                          )}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">

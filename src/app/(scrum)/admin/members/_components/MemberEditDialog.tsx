@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useId } from "react";
+import { createPortal } from "react-dom";
 import type { WorkspaceMember } from "@/lib/data/workspaceMembers";
 
 interface MemberEditDialogProps {
@@ -25,13 +26,39 @@ export function MemberEditDialog({
   const [role, setRole] = useState(member.role);
   const [displayName, setDisplayName] = useState(member.display_name || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const roleButtonRef = useRef<HTMLButtonElement>(null);
+  const roleDropdownId = useId();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       setRole(member.role);
       setDisplayName(member.display_name || "");
+      setIsRoleDropdownOpen(false);
     }
   }, [isOpen, member]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!isRoleDropdownOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (roleButtonRef.current && !roleButtonRef.current.contains(e.target as Node)) {
+        const dropdown = document.getElementById(`dropdown-${roleDropdownId}`);
+        if (dropdown && !dropdown.contains(e.target as Node)) {
+          setIsRoleDropdownOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isRoleDropdownOpen, roleDropdownId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +75,41 @@ export function MemberEditDialog({
   };
 
   if (!isOpen) return null;
+
+  const selectedRole = ROLE_OPTIONS.find((opt) => opt.value === role);
+
+  // Role dropdown content (portal)
+  const roleDropdownContent = isRoleDropdownOpen && roleButtonRef.current ? (
+    <div
+      id={`dropdown-${roleDropdownId}`}
+      style={{
+        position: "fixed",
+        top: `${roleButtonRef.current.getBoundingClientRect().bottom + 4}px`,
+        left: `${roleButtonRef.current.getBoundingClientRect().left}px`,
+        width: `${roleButtonRef.current.getBoundingClientRect().width}px`,
+        zIndex: 9999,
+      }}
+      className="bg-white border border-[#d0d7de] rounded-md shadow-lg max-h-60 overflow-y-auto"
+    >
+      {ROLE_OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => {
+            setRole(option.value);
+            setIsRoleDropdownOpen(false);
+          }}
+          className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+            option.value === role
+              ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+              : "text-[#24292f] hover:bg-[#f6f8fa]"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -102,18 +164,29 @@ export function MemberEditDialog({
             <label className="block text-sm font-medium text-[#24292f] mb-2">
               권한 *
             </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] bg-white focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+            <button
+              type="button"
+              ref={roleButtonRef}
+              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+              className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm bg-white text-left focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da] flex items-center justify-between"
             >
-              {ROLE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <span className="text-[#24292f]">{selectedRole?.label || "선택"}</span>
+              <svg
+                className={`w-4 h-4 text-[#57606a] transition-transform ${
+                  isRoleDropdownOpen ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
             <p className="text-xs text-[#57606a] mt-1">
               Admin: 모든 권한 / Manager: 관리 권한 / Member: 일반 사용자
             </p>
@@ -156,6 +229,9 @@ export function MemberEditDialog({
           </button>
         </div>
       </div>
+
+      {/* Role Dropdown Portal */}
+      {mounted && createPortal(roleDropdownContent, document.body)}
     </div>
   );
 }

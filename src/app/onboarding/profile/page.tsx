@@ -60,7 +60,7 @@ export default function OnboardingProfilePage() {
         router.refresh();
         return;
       }
-      
+
       // RLS 권한 에러가 아닌데 프로필이 없으면 생성 진행
       if (checkError && checkError.code === '42501') {
         console.error("[Profile] RLS permission error, cannot check profile:", checkError);

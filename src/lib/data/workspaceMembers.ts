@@ -13,6 +13,7 @@ export interface WorkspaceMember {
   role: string;
   email: string | null;
   display_name: string | null;
+  joined_at: string;
 }
 
 /**
@@ -26,9 +27,10 @@ export async function listWorkspaceMembers(
   // 1. workspace_members 조회
   const { data: members, error: membersError } = await supabase
     .from("workspace_members")
-    .select("user_id, workspace_id, role")
+    .select("user_id, workspace_id, role, joined_at")
     .eq("workspace_id", workspaceId)
-    .order("role");
+    .order("role")
+    .order("joined_at", { ascending: false });
 
   if (membersError) {
     console.error("[WorkspaceMembers] List error:", membersError);
@@ -64,6 +66,7 @@ export async function listWorkspaceMembers(
       role: member.role,
       email: profile?.email || null,
       display_name: profile?.display_name || null,
+      joined_at: member.joined_at,
     };
   });
 }

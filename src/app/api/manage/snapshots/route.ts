@@ -63,25 +63,25 @@ export async function GET(request: NextRequest) {
   const snapshotSummaries = (snapshots || [])
     .filter((snapshot) => snapshot.entries && snapshot.entries.length > 0)
     .map((snapshot) => ({
-      id: snapshot.id,
-      created_at: snapshot.created_at,
-      updated_at: snapshot.updated_at,
-      workload_level: snapshot.workload_level,
-      workload_note: snapshot.workload_note,
-      entriesCount: snapshot.entries?.length || 0,
-      entries: (snapshot.entries || []).map((e: Record<string, unknown>) => ({
-        id: e.id,
-        domain: e.domain,
-        project: e.project,
-        module: e.module,
-        feature: e.feature,
-        past_week: e.past_week,
-        this_week: e.this_week,
-        risks: e.risks,
-        risk_level: e.risk_level,
-        collaborators: e.collaborators,
-      })),
-    }));
+    id: snapshot.id,
+    created_at: snapshot.created_at,
+    updated_at: snapshot.updated_at,
+    workload_level: snapshot.workload_level,
+    workload_note: snapshot.workload_note,
+    entriesCount: snapshot.entries?.length || 0,
+    entries: (snapshot.entries || []).map((e: Record<string, unknown>) => ({
+      id: e.id,
+      domain: e.domain,
+      project: e.project,
+      module: e.module,
+      feature: e.feature,
+      past_week: e.past_week,
+      this_week: e.this_week,
+      risks: e.risks,
+      risk_level: e.risk_level,
+      collaborators: e.collaborators,
+    })),
+  }));
 
   // 모든 엔트리를 모아서 통계 계산 (DB 형식 그대로 전달)
   const allEntries = (snapshots || []).flatMap((s) => s.entries || []);
