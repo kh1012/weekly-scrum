@@ -95,9 +95,10 @@ interface DrawerNavigationProps {
   isOpen: boolean;
   onClose: () => void;
   role?: WorkspaceRole;
+  workspaceId?: string;
 }
 
-function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
+function DrawerNavigation({ isOpen, onClose, role, workspaceId }: DrawerNavigationProps) {
   // ESC 키로 닫기
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -174,7 +175,7 @@ function DrawerNavigation({ isOpen, onClose, role }: DrawerNavigationProps) {
 
         {/* 네비게이션 - 스크롤 가능 영역 */}
         <div className="flex-1 overflow-y-auto py-2">
-          <SideNavigation onItemClick={onClose} role={role} />
+          <SideNavigation onItemClick={onClose} role={role} workspaceId={workspaceId} />
         </div>
       </aside>
     </>
@@ -214,12 +215,13 @@ export function LayoutWrapper({ children, role, workspaceId }: LayoutWrapperProp
         {/* GNB */}
         <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
 
-        {/* Drawer SNB */}
-        <DrawerNavigation
-          isOpen={isMenuOpen}
-          onClose={() => setIsMenuOpen(false)}
-          role={role}
-        />
+      {/* Drawer SNB */}
+      <DrawerNavigation
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        role={role}
+        workspaceId={workspaceId}
+      />
 
         {/* 메인 영역 */}
         <div className="w-full">{children}</div>

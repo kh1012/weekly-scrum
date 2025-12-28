@@ -9,6 +9,7 @@ import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import { Logo } from "./Logo";
 import { navigationProgress } from "./NavigationProgress";
 import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
+import { logMenuClick } from "@/lib/telemetry/menuEvents";
 
 // localStorage 키
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
@@ -248,11 +249,13 @@ function useIsActive() {
 interface SideNavigationProps {
   onItemClick?: () => void;
   role?: WorkspaceRole;
+  workspaceId?: string;
 }
 
 export function SideNavigation({
   onItemClick,
   role = "member",
+  workspaceId = "",
 }: SideNavigationProps) {
   const isActive = useIsActive();
   const { count, isLoading } = useVisitorCount();
@@ -350,6 +353,15 @@ export function SideNavigation({
                         onClick={() => {
                           if (isDisabled) return;
                           if (!active) navigationProgress.start();
+                          // Log menu click
+                          if (workspaceId && category.key && item.key) {
+                            logMenuClick(
+                              workspaceId,
+                              item.href,
+                              category.key,
+                              item.key
+                            );
+                          }
                           onItemClick?.();
                         }}
                         className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${
