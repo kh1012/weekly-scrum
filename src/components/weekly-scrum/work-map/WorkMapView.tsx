@@ -509,7 +509,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   {/* 협업 네트워크 (모바일) */}
                   {hasCollaborators && (
                     <div
-                      className="rounded-xl"
+                      className="rounded-md"
                       style={{
                         background: "white",
                         border: "1px solid #d0d7de",
@@ -546,7 +546,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 </>
               ) : (
                 <div
-                  className="flex-1 rounded-xl flex flex-col items-center justify-center py-12"
+                  className="flex-1 rounded-md flex flex-col items-center justify-center py-12"
                   style={{
                     background: "white",
                     border: "1px solid #d0d7de",
@@ -581,7 +581,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     >
       {/* 좌측: 디렉토리 트리 */}
       <div
-        className="flex-shrink-0 rounded-2xl overflow-hidden flex flex-col animate-slide-in-left interactive-card"
+        className="flex-shrink-0 rounded-md overflow-hidden flex flex-col animate-slide-in-left interactive-card"
         style={{
           width: treeWidth,
           background: "white",
@@ -781,7 +781,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         {/* 선택된 정보 헤더 */}
         {activeFeatureItems.length > 0 && (
           <div
-            className="flex-shrink-0 px-5 py-4 rounded-2xl interactive-card animate-card-reveal"
+            className="flex-shrink-0 px-5 py-4 rounded-md interactive-card animate-card-reveal"
             style={{
               background: "white",
               border: "1px solid #d0d7de",
@@ -891,7 +891,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             {hasCollaborators && (
               <div className="flex-shrink-0 flex flex-col">
                 <div
-                  className="rounded-2xl overflow-hidden"
+                  className="rounded-md overflow-hidden"
                   style={{
                     background: "white",
                     border: "1px solid #d0d7de",
@@ -970,7 +970,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         ) : (
           /* 빈 상태 */
           <div
-            className="flex-1 rounded-xl flex flex-col items-center justify-center"
+            className="flex-1 rounded-md flex flex-col items-center justify-center"
             style={{
               background: "white",
               border: "1px solid #d0d7de",

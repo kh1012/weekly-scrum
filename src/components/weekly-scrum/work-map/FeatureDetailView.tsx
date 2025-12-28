@@ -124,7 +124,7 @@ export function FeatureDetailView({
         {/* 협업 네트워크 */}
         {hasCollaborators && (
           <div
-            className="rounded-xl overflow-hidden"
+            className="rounded-md overflow-hidden"
             style={{
               background: "white",
               border: "1px solid #d0d7de",
@@ -149,7 +149,7 @@ export function FeatureDetailView({
 
         {/* 스냅샷 목록 */}
         <div
-          className={`rounded-xl overflow-hidden ${!hasCollaborators ? "lg:col-span-2" : ""}`}
+          className={`rounded-md overflow-hidden ${!hasCollaborators ? "lg:col-span-2" : ""}`}
           style={{
             background: "white",
             border: "1px solid #d0d7de",

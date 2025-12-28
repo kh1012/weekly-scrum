@@ -568,7 +568,7 @@ export function CollaborationNetworkV2({
         ref={containerRef}
         className="relative flex-1 rounded-lg overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+          background: "white",
           border: "1px solid #d0d7de",
         }}
       >
@@ -1084,7 +1084,7 @@ export function CollaborationNetworkV2({
               return (
                 <div
                   key={panel.nodeId}
-                  className="fixed rounded-xl flex flex-col select-none overflow-y-auto"
+                  className="fixed rounded-md flex flex-col select-none overflow-y-auto"
                   style={{
                     left: panel.x,
                     top: panel.y,
@@ -1440,7 +1440,7 @@ export function CollaborationNetworkV2({
                 onClick={() => setModalNode(null)}
               >
                 <div
-                  className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl flex flex-col animate-scale-in"
+                  className="relative w-full max-w-2xl max-h-[80vh] rounded-md flex flex-col animate-scale-in"
                   style={{
                     background: "white",
                     boxShadow: "0 25px 50px rgba(0, 0, 0, 0.25)",
