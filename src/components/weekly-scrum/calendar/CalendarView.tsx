@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Calendar View - 메인 컴포넌트 (Airbnb 스타일)
+ * Calendar View - 메인 컴포넌트 (GitHub 스타일)
  *
  * 주 단위 스냅샷 데이터를 달력 형태로 재구성해서
  * 프로젝트/멤버 집중도를 시각화
@@ -21,8 +21,8 @@ import { YearlyHeatmap } from "./YearlyHeatmap";
 
 type ViewTab = "calendar" | "heatmap";
 
-// 슬라이딩 토글 컴포넌트
-function SlidingToggle<T extends string>({
+// GitHub 스타일 토글 컴포넌트
+function TabToggle<T extends string>({
   options,
   value,
   onChange,
@@ -31,29 +31,17 @@ function SlidingToggle<T extends string>({
   value: T;
   onChange: (value: T) => void;
 }) {
-  const selectedIndex = options.findIndex((opt) => opt.value === value);
-
   return (
-    <div className="relative flex items-center p-1 bg-gray-100/80 rounded-2xl">
-      {/* 슬라이딩 배경 */}
-      <div
-        className="absolute top-1 bottom-1 bg-white rounded-xl shadow-md transition-all duration-300 ease-out"
-        style={{
-          width: `calc(${100 / options.length}% - 4px)`,
-          left: `calc(${(selectedIndex * 100) / options.length}% + 2px)`,
-        }}
-      />
-      {/* 버튼들 */}
-      {options.map((opt) => (
+    <div className="inline-flex items-center border border-[#d0d7de] rounded-md overflow-hidden">
+      {options.map((opt, idx) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`relative z-10 px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors duration-300 ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             value === opt.value
-              ? "text-gray-900"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-          style={{ width: `${100 / options.length}%` }}
+              ? "bg-[#0969da] text-white"
+              : "bg-white text-[#24292f] hover:bg-[#f6f8fa]"
+          } ${idx > 0 ? "border-l border-[#d0d7de]" : ""}`}
         >
           {opt.label}
         </button>
@@ -191,37 +179,36 @@ export function CalendarView({
   }, [weeks, selectedWeek]);
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-50/50 p-6">
+    <div className="h-full flex flex-col bg-white p-4 md:p-6">
       {/* 상단 토글 - 캘린더/히트맵 선택 */}
       <div className="shrink-0 mb-4 flex items-center justify-center">
-        <SlidingToggle
+        <TabToggle
           options={[
-            { value: "calendar" as ViewTab, label: "📅 주간 캘린더" },
-            { value: "heatmap" as ViewTab, label: "🔥 연간 히트맵" },
+            { value: "calendar" as ViewTab, label: "주간 캘린더" },
+            { value: "heatmap" as ViewTab, label: "연간 히트맵" },
           ]}
           value={viewTab}
           onChange={setViewTab}
         />
       </div>
 
-      {/* 본문 - 외곽 border로 감싸기 */}
-      <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      {/* 본문 */}
+      <div className="flex-1 min-h-0 rounded-md border border-[#d0d7de] bg-white overflow-hidden">
         {viewTab === "calendar" ? (
           <>
             {/* 캘린더 헤더 */}
-            <div className="shrink-0 px-6 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
+            <div className="shrink-0 px-4 md:px-6 py-3 border-b border-[#d0d7de] bg-[#f6f8fa]">
               <div className="flex items-center justify-between">
                 {/* 기간 필터 - 커스텀 드롭다운 */}
                 <div className="relative" ref={periodDropdownRef}>
                   <button
                     onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all border ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border ${
                       selectedMonth !== "all"
-                        ? "bg-blue-50 text-blue-600 border-blue-200"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-transparent"
+                        ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
+                        : "bg-white text-[#24292f] hover:bg-[#f6f8fa] border-[#d0d7de]"
                     }`}
                   >
-                    <span>📅</span>
                     <span>
                       {selectedMonth === "all"
                         ? "전체 기간"
@@ -229,7 +216,7 @@ export function CalendarView({
                             ?.label || selectedMonth}
                     </span>
                     <svg
-                      className={`w-4 h-4 transition-transform ${
+                      className={`w-3.5 h-3.5 transition-transform ${
                         isPeriodDropdownOpen ? "rotate-180" : ""
                       }`}
                       fill="none"
@@ -247,17 +234,17 @@ export function CalendarView({
 
                   {/* 드롭다운 패널 */}
                   {isPeriodDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden animate-fadeIn">
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md border border-[#d0d7de] z-50 overflow-hidden">
                       {/* 전체 기간 */}
                       <button
                         onClick={() => {
                           handleMonthChange("all");
                           setIsPeriodDropdownOpen(false);
                         }}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
                           selectedMonth === "all"
-                            ? "bg-blue-50 text-blue-600 font-semibold"
-                            : "text-gray-700 hover:bg-gray-50"
+                            ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+                            : "text-[#24292f] hover:bg-[#f6f8fa]"
                         }`}
                       >
                         {selectedMonth === "all" && (
@@ -279,7 +266,7 @@ export function CalendarView({
                       </button>
 
                       {/* 구분선 */}
-                      <div className="h-px bg-gray-100" />
+                      <div className="h-px bg-[#d0d7de]" />
 
                       {/* 월별 목록 */}
                       <div className="max-h-60 overflow-y-auto">
@@ -292,8 +279,8 @@ export function CalendarView({
                             }}
                             className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
                               selectedMonth === m.value
-                                ? "bg-blue-50 text-blue-600 font-semibold"
-                                : "text-gray-700 hover:bg-gray-50"
+                                ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+                                : "text-[#24292f] hover:bg-[#f6f8fa]"
                             }`}
                           >
                             {selectedMonth === m.value && (
@@ -324,14 +311,14 @@ export function CalendarView({
                 </div>
 
                 {/* 요약 정보 */}
-                <div className="flex items-center gap-3">
-                  <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-                    <span className="font-semibold text-gray-700">{weeks.length}</span> 주
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-[#57606a] bg-[#f6f8fa] px-2.5 py-1 rounded border border-[#d0d7de]">
+                    <span className="font-medium text-[#24292f]">{weeks.length}</span> 주
                   </div>
                   {filteredItems && filteredItems.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+                    <div className="flex items-center gap-1.5 text-xs text-[#0969da] bg-[#ddf4ff] px-2.5 py-1 rounded border border-[#0969da]">
                       <svg
-                        className="w-3.5 h-3.5"
+                        className="w-3 h-3"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -353,7 +340,7 @@ export function CalendarView({
             {/* 캘린더 본문 */}
             <div className="flex-1 flex min-h-0">
               {/* 좌측: Calendar Grid */}
-              <div className="flex-1 overflow-auto p-5">
+              <div className="flex-1 overflow-auto p-4">
                 <CalendarGrid
                   weeks={weeks}
                   mode={mode}
@@ -365,10 +352,10 @@ export function CalendarView({
               </div>
 
               {/* 우측: Meta Panel */}
-              <div className="w-[380px] border-l border-gray-100 bg-gray-50/50 overflow-auto">
+              <div className="w-[380px] border-l border-[#d0d7de] bg-[#f6f8fa] overflow-auto">
                 {/* 모드 토글 - 4개 탭 */}
-                <div className="p-4 border-b border-gray-100 bg-white">
-                  <div className="grid grid-cols-4 gap-1 p-1 bg-gray-100/80 rounded-xl">
+                <div className="p-3 border-b border-[#d0d7de] bg-white">
+                  <div className="grid grid-cols-4 gap-1">
                     {(
                       [
                         { value: "project", label: "프로젝트" },
@@ -380,10 +367,10 @@ export function CalendarView({
                       <button
                         key={opt.value}
                         onClick={() => handleModeChange(opt.value)}
-                        className={`px-2 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                        className={`px-2 py-1.5 text-xs font-medium rounded transition-colors ${
                           mode === opt.value
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-500 hover:text-gray-700"
+                            ? "bg-[#0969da] text-white"
+                            : "bg-[#f6f8fa] text-[#57606a] hover:bg-[#d0d7de]"
                         }`}
                       >
                         {opt.label}
