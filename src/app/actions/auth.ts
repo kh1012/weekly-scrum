@@ -36,12 +36,22 @@ export async function ensureUserMembership(): Promise<{
     );
   }
 
-  // 프로필 존재 여부 확인
-  const { data: profile } = await supabase
+  // 프로필 존재 여부 확인 (.maybeSingle() 사용)
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("user_id")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("[ensureUserMembership] Profile check error:", profileError);
+  }
+
+  console.log("[ensureUserMembership] Profile check result:", {
+    userId: user.id,
+    hasProfile: !!profile,
+    profileError: profileError?.message,
+  });
 
   return {
     success: membershipResult.success,

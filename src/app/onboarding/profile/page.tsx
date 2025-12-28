@@ -47,30 +47,64 @@ export default function OnboardingProfilePage() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      console.log("[Profile Check]", { existingProfile, checkError });
+      console.log("[Profile Check]", { 
+        existingProfile, 
+        checkError: checkError?.message,
+        checkErrorCode: checkError?.code 
+      });
 
       if (existingProfile) {
         // 이미 프로필이 있음 - 메인으로 이동
+        console.log("[Profile] Already exists, redirecting to main");
         router.push("/");
         router.refresh();
         return;
       }
+      
+      // RLS 권한 에러가 아닌데 프로필이 없으면 생성 진행
+      if (checkError && checkError.code === '42501') {
+        console.error("[Profile] RLS permission error, cannot check profile:", checkError);
+        setError("프로필 확인 중 권한 오류가 발생했습니다. 다시 로그인해주세요.");
+        setIsLoading(false);
+        return;
+      }
 
+      console.log("[Profile] Creating new profile...");
       const { error: insertError } = await supabase.from("profiles").insert({
         user_id: user.id,
         display_name: trimmedName,
         email: user.email || "",
       });
 
-      console.log("[Profile Insert]", { insertError, code: insertError?.code, message: insertError?.message, details: insertError?.details });
+      console.log("[Profile Insert]", { 
+        insertError: insertError ? {
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+        } : null 
+      });
 
       if (insertError) {
         console.error("Profile insert error:", insertError);
+        
+        // 23505: unique violation (이미 존재)
         if (insertError.code === "23505") {
-          setError("이미 프로필이 등록되어 있습니다.");
-        } else {
-          setError(`프로필 저장에 실패했습니다: ${insertError.message || "알 수 없는 오류"}`);
+          console.log("[Profile] Duplicate detected, redirecting to main");
+          router.push("/");
+          router.refresh();
+          return;
         }
+        
+        // 42501: RLS permission denied
+        if (insertError.code === "42501") {
+          setError("프로필 생성 권한이 없습니다. 관리자에게 문의하세요.");
+        } else if (insertError.message) {
+          setError(`프로필 저장에 실패했습니다: ${insertError.message}`);
+        } else {
+          setError("프로필 저장에 실패했습니다. 다시 시도해주세요.");
+        }
+        
         setIsLoading(false);
         return;
       }

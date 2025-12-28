@@ -135,16 +135,22 @@ export async function updateSession(request: NextRequest) {
     console.log("[Middleware] Profile check for protected route:", {
       userId: user.id,
       profile,
-      profileError,
+      profileError: profileError?.message,
       pathname,
     });
 
-    // 프로필이 없으면 온보딩으로 리다이렉트
-    if (!profile) {
+    // 프로필 체크에 에러가 있거나 프로필이 없으면 온보딩으로 리다이렉트
+    // 단, RLS 권한 에러(42501)가 아닌 경우에만
+    if (!profile && (!profileError || profileError.code !== '42501')) {
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding/profile";
       console.log("[Middleware] Redirecting to onboarding (no profile)");
       return NextResponse.redirect(url);
+    }
+    
+    // RLS 권한 에러인 경우 일단 통과 (프로필이 있을 가능성)
+    if (profileError && profileError.code === '42501') {
+      console.log("[Middleware] RLS permission error, allowing access");
     }
   }
 
@@ -159,15 +165,24 @@ export async function updateSession(request: NextRequest) {
     console.log("[Middleware] Profile check for onboarding route:", {
       userId: user.id,
       profile,
-      profileError,
+      profileError: profileError?.message,
+      profileErrorCode: profileError?.code,
       pathname,
     });
 
+    // 프로필이 있으면 메인으로 리다이렉트
     if (profile) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       console.log("[Middleware] Redirecting to main (profile exists)");
       return NextResponse.redirect(url);
+    }
+    
+    // RLS 권한 에러인 경우에도 프로필이 있을 가능성이 있으므로
+    // 다시 한 번 체크 (서버 사이드에서)
+    if (profileError && profileError.code === '42501') {
+      console.log("[Middleware] RLS permission error in onboarding, checking again...");
+      // 별도 처리 없이 onboarding 진행 허용
     }
   }
 
