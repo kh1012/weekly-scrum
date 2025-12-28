@@ -9,7 +9,7 @@
  * C) User menu usage (by user + menu_key)
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import type {
@@ -218,6 +218,7 @@ function CustomDropdown({ value, onChange, options }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [mounted, setMounted] = useState(false);
+  const buttonId = useId();
 
   useEffect(() => {
     setMounted(true);
@@ -229,7 +230,7 @@ function CustomDropdown({ value, onChange, options }: CustomDropdownProps) {
 
     const handleClickOutside = (e: MouseEvent) => {
       if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
-        const dropdown = document.getElementById(`dropdown-${buttonRef.current.id}`);
+        const dropdown = document.getElementById(`dropdown-${buttonId}`);
         if (dropdown && !dropdown.contains(e.target as Node)) {
           setIsOpen(false);
         }
@@ -238,10 +239,9 @@ function CustomDropdown({ value, onChange, options }: CustomDropdownProps) {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+  }, [isOpen, buttonId]);
 
   const selectedOption = options.find((opt) => opt.value === value);
-  const buttonId = `dropdown-btn-${Math.random().toString(36).substr(2, 9)}`;
 
   const dropdownContent = isOpen && mounted && buttonRef.current ? (
     <div

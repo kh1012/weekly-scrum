@@ -66,6 +66,10 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/releases" ||
     pathname === "/releases/" ||
     pathname.startsWith("/releases/");
+  const isAdminPage =
+    pathname === "/admin" ||
+    pathname === "/admin/" ||
+    pathname.startsWith("/admin/");
 
   // 최소 GNB 모드
   const isMinimalGnb =
@@ -76,7 +80,8 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     isFeedbacksPage ||
     isMetaOptionsPage ||
     isTeamFeedPage ||
-    isReleasesPage;
+    isReleasesPage ||
+    isAdminPage;
 
   // GNB 컴포넌트 완전 숨김
   const hideAllControls = isMinimalGnb;
