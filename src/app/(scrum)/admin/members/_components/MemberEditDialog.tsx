@@ -48,7 +48,10 @@ export function MemberEditDialog({
     if (!isRoleDropdownOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (roleButtonRef.current && !roleButtonRef.current.contains(e.target as Node)) {
+      if (
+        roleButtonRef.current &&
+        !roleButtonRef.current.contains(e.target as Node)
+      ) {
         const dropdown = document.getElementById(`dropdown-${roleDropdownId}`);
         if (dropdown && !dropdown.contains(e.target as Node)) {
           setIsRoleDropdownOpen(false);
@@ -79,37 +82,38 @@ export function MemberEditDialog({
   const selectedRole = ROLE_OPTIONS.find((opt) => opt.value === role);
 
   // Role dropdown content (portal)
-  const roleDropdownContent = isRoleDropdownOpen && roleButtonRef.current ? (
-    <div
-      id={`dropdown-${roleDropdownId}`}
-      style={{
-        position: "fixed",
-        top: `${roleButtonRef.current.getBoundingClientRect().bottom + 4}px`,
-        left: `${roleButtonRef.current.getBoundingClientRect().left}px`,
-        width: `${roleButtonRef.current.getBoundingClientRect().width}px`,
-        zIndex: 9999,
-      }}
-      className="bg-white border border-[#d0d7de] rounded-md shadow-lg max-h-60 overflow-y-auto"
-    >
-      {ROLE_OPTIONS.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          onClick={() => {
-            setRole(option.value);
-            setIsRoleDropdownOpen(false);
-          }}
-          className={`w-full px-3 py-2 text-left text-sm transition-colors ${
-            option.value === role
-              ? "bg-[#ddf4ff] text-[#0969da] font-medium"
-              : "text-[#24292f] hover:bg-[#f6f8fa]"
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  ) : null;
+  const roleDropdownContent =
+    isRoleDropdownOpen && roleButtonRef.current ? (
+      <div
+        id={`dropdown-${roleDropdownId}`}
+        style={{
+          position: "fixed",
+          top: `${roleButtonRef.current.getBoundingClientRect().bottom + 4}px`,
+          left: `${roleButtonRef.current.getBoundingClientRect().left}px`,
+          width: `${roleButtonRef.current.getBoundingClientRect().width}px`,
+          zIndex: 9999,
+        }}
+        className="bg-white border border-[#d0d7de] rounded-md shadow-lg max-h-60 overflow-y-auto"
+      >
+        {ROLE_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => {
+              setRole(option.value);
+              setIsRoleDropdownOpen(false);
+            }}
+            className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+              option.value === role
+                ? "bg-[#ddf4ff] text-[#0969da] font-medium"
+                : "text-[#24292f] hover:bg-[#f6f8fa]"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    ) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -123,7 +127,9 @@ export function MemberEditDialog({
       <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all animate-scale-in">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#d0d7de]">
-          <h2 className="text-xl font-semibold text-[#24292f]">멤버 정보 수정</h2>
+          <h2 className="text-xl font-semibold text-[#24292f]">
+            멤버 정보 수정
+          </h2>
           <p className="text-sm text-[#57606a] mt-1">
             멤버의 권한과 표시 이름을 수정합니다
           </p>
@@ -170,7 +176,9 @@ export function MemberEditDialog({
               onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
               className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm bg-white text-left focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da] flex items-center justify-between"
             >
-              <span className="text-[#24292f]">{selectedRole?.label || "선택"}</span>
+              <span className="text-[#24292f]">
+                {selectedRole?.label || "선택"}
+              </span>
               <svg
                 className={`w-4 h-4 text-[#57606a] transition-transform ${
                   isRoleDropdownOpen ? "rotate-180" : ""
@@ -235,4 +243,3 @@ export function MemberEditDialog({
     </div>
   );
 }
-

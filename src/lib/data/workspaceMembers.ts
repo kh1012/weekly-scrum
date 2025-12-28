@@ -6,6 +6,28 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@supabase/supabase-js";
+
+/**
+ * Service role client (bypasses RLS)
+ * Admin/Manager가 다른 멤버의 role을 업데이트할 때 사용
+ */
+function createServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error("Missing Supabase service role credentials");
+  }
+
+  return createServerClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
 
 export interface WorkspaceMember {
   user_id: string;
@@ -73,13 +95,15 @@ export async function listWorkspaceMembers(
 
 /**
  * 멤버 role 업데이트
+ * Service role을 사용하여 RLS 우회 (Admin/Manager 권한 체크는 액션에서 수행)
  */
 export async function updateMemberRole(
   workspaceId: string,
   userId: string,
   role: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
+  // Service role client 사용 (RLS 우회)
+  const supabase = createServiceRoleClient();
 
   const { error } = await supabase
     .from("workspace_members")
