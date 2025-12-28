@@ -630,7 +630,7 @@ function SnapshotsMainViewInner({
 
               <LoadingButton
                 onClick={() => setIsNewSnapshotModalOpen(true)}
-                disabled={snapshots.length > 0}
+                disabled={snapshots.some((s) => s.entriesCount > 0)}
                 variant="primary"
                 size="md"
                 icon={
@@ -650,8 +650,8 @@ function SnapshotsMainViewInner({
                 }
                 className="flex-1 md:flex-none"
                 title={
-                  snapshots.length > 0
-                    ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요."
+                  snapshots.some((s) => s.entriesCount > 0)
+                    ? "이미 엔트리가 있는 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요."
                     : ""
                 }
               >
