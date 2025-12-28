@@ -197,7 +197,7 @@ export function TeamFeedFilterPanel({
 
       {/* Filter panel */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#d0d7de] overflow-y-auto transition-transform lg:translate-x-0 lg:h-full ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#d0d7de] overflow-y-auto transition-transform lg:translate-x-0 h-screen ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
