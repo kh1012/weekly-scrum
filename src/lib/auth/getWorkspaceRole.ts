@@ -60,12 +60,12 @@ export async function getWorkspaceRole(
     }
 
     // Defensive fallback: "leader" → "manager" (stale cache 대응)
-    let role = member.role as WorkspaceRole;
+    let role = member.role as WorkspaceRole | "leader";
     if (role === "leader") {
       role = "manager";
     }
 
-    return role;
+    return role as WorkspaceRole;
   } catch (err) {
     console.error("[getWorkspaceRole] Unexpected error:", err);
     return null;
@@ -143,14 +143,14 @@ export async function getWorkspaceRoleWithUser(workspaceId?: string): Promise<{
     }
 
     // Defensive fallback: "leader" → "manager" (stale cache 대응)
-    let role = member.role as WorkspaceRole;
+    let role = member.role as WorkspaceRole | "leader";
     if (role === "leader") {
       role = "manager";
     }
 
     return {
       userId: user.id,
-      role,
+      role: role as WorkspaceRole,
       displayName: profile?.display_name || null,
     };
   } catch (err) {

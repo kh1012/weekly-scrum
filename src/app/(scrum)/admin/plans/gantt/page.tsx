@@ -1,6 +1,6 @@
 /**
  * /admin/plans/gantt - Admin Gantt Editor
- * Feature 타입 Plan 편집용 (관리자/리더 전용)
+ * Feature 타입 Plan 편집용 (관리자/매니저 전용)
  */
 
 export const dynamic = "force-dynamic";

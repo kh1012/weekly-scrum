@@ -22,7 +22,7 @@ interface AccessDeniedProps {
  * - admin/manager 권한이 필요한 페이지에서 member가 접근 시 표시
  */
 export function AccessDenied({
-  requiredRole = "관리자 또는 리더",
+  requiredRole = "관리자 또는 매니저",
   backHref = "/",
   backLabel = "홈으로 돌아가기",
 }: AccessDeniedProps) {

@@ -41,13 +41,13 @@ const KANBAN_COLUMNS: {
 
 interface FeedbackKanbanViewProps {
   feedbacks: FeedbackWithDetails[];
-  isAdminOrLeader: boolean;
+  isAdminOrManager: boolean;
   currentUserId: string | null;
 }
 
 export function FeedbackKanbanView({
   feedbacks,
-  isAdminOrLeader,
+  isAdminOrManager,
   currentUserId,
 }: FeedbackKanbanViewProps) {
   const router = useRouter();
@@ -149,7 +149,7 @@ export function FeedbackKanbanView({
                 Feedbacks
               </h1>
               <p className="text-xs text-[#57606a] mt-0.5">
-                {isAdminOrLeader
+                {isAdminOrManager
                   ? "모든 피드백을 관리할 수 있습니다"
                   : "내 피드백 목록"}
               </p>
@@ -242,7 +242,7 @@ export function FeedbackKanbanView({
                       key={feedback.id}
                       feedback={feedback}
                       color={col.color}
-                      isAdminOrLeader={isAdminOrLeader}
+                      isAdminOrManager={isAdminOrManager}
                       currentUserId={currentUserId}
                       isUpdating={updatingFeedbackId === feedback.id}
                       onStatusChange={(newStatus) =>

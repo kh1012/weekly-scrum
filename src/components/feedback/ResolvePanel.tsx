@@ -1,6 +1,6 @@
 /**
  * Resolve Panel
- * leader/admin 전용 해결 패널 - 해결내용 입력 UI
+ * manager/admin 전용 해결 패널 - 해결내용 입력 UI
  */
 
 "use client";

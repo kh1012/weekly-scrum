@@ -18,7 +18,7 @@ export default async function FeedbacksPage() {
 
   const feedbacks = feedbacksResult.feedbacks || [];
   const userRole = roleResult.role || "member";
-  const isAdminOrLeader = ["admin", "manager"].includes(userRole);
+  const isAdminOrManager = ["admin", "manager"].includes(userRole);
 
   if (!feedbacksResult.success && feedbacksResult.error) {
     return (
@@ -33,7 +33,7 @@ export default async function FeedbacksPage() {
   return (
     <FeedbackKanbanView
       feedbacks={feedbacks}
-      isAdminOrLeader={isAdminOrLeader}
+      isAdminOrManager={isAdminOrManager}
       currentUserId={user?.id || null}
     />
   );

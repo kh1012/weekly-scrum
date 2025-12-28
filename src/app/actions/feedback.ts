@@ -239,7 +239,7 @@ export async function createFeedback(data: {
 }
 
 /**
- * 피드백 삭제 (본인 또는 admin/leader)
+ * 피드백 삭제 (본인 또는 admin/manager)
  */
 export async function deleteFeedback(id: string): Promise<{
   success: boolean;
@@ -320,7 +320,7 @@ export async function updateFeedback(
 }
 
 /**
- * 피드백 상태 변경 (admin/leader만)
+ * 피드백 상태 변경 (admin/manager만)
  */
 export async function updateFeedbackStatus(
   id: string,

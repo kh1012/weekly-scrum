@@ -13,7 +13,7 @@ import type { FeedbackWithDetails, FeedbackStatus } from "@/lib/data/feedback";
 interface FeedbackKanbanCardProps {
   feedback: FeedbackWithDetails;
   color: string;
-  isAdminOrLeader: boolean;
+  isAdminOrManager: boolean;
   currentUserId: string | null;
   isUpdating?: boolean;
   onStatusChange?: (newStatus: FeedbackStatus) => void;
@@ -24,7 +24,7 @@ interface FeedbackKanbanCardProps {
 export function FeedbackKanbanCard({
   feedback,
   color,
-  isAdminOrLeader,
+  isAdminOrManager,
   currentUserId,
   isUpdating = false,
   onStatusChange,
@@ -102,7 +102,7 @@ export function FeedbackKanbanCard({
   // 권한 체크
   const isOwner = currentUserId === feedback.author_user_id;
   const canEdit = isOwner;
-  const canDelete = isOwner || isAdminOrLeader;
+  const canDelete = isOwner || isAdminOrManager;
 
   // 삭제
   const handleDelete = async () => {
@@ -119,7 +119,7 @@ export function FeedbackKanbanCard({
 
   // 상태별 액션 버튼 - GitHub 스타일
   const renderStatusActions = () => {
-    if (!isAdminOrLeader) return null;
+    if (!isAdminOrManager) return null;
 
     switch (feedback.status) {
       case "open":
