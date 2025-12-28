@@ -95,6 +95,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Skip telemetry for localhost referrer (development/testing)
+    const actualReferrer = referrer || request.headers.get("referer") || "";
+    if (actualReferrer.includes("localhost")) {
+      return NextResponse.json({ 
+        success: true, 
+        logged: false, 
+        reason: "localhost_referrer" 
+      });
+    }
+
     // Extract user_agent and device
     const user_agent = request.headers.get("user-agent") || undefined;
     const device = extractDevice(user_agent);
@@ -107,7 +117,7 @@ export async function POST(request: NextRequest) {
       menu_group: menu_group || null,
       menu_key: menu_key || null,
       page_path,
-      referrer: referrer || request.headers.get("referer") || null,
+      referrer: actualReferrer || null,
       device,
       session_id: session_id || null,
       user_agent,

@@ -24,39 +24,51 @@ export async function listWorkspaceMembers(
 ): Promise<WorkspaceMember[]> {
   const supabase = await createClient();
 
-  // workspace_members와 profiles를 조인하여 조회
-  const { data, error } = await supabase
+  // 1. workspace_members 조회
+  const { data: members, error: membersError } = await supabase
     .from("workspace_members")
-    .select(
-      `
-      user_id,
-      workspace_id,
-      role,
-      joined_at,
-      profiles:user_id (
-        email,
-        display_name
-      )
-    `
-    )
+    .select("user_id, workspace_id, role, joined_at")
     .eq("workspace_id", workspaceId)
     .order("role")
     .order("joined_at", { ascending: false });
 
-  if (error) {
-    console.error("[WorkspaceMembers] List error:", error);
-    throw new Error(error.message);
+  if (membersError) {
+    console.error("[WorkspaceMembers] List error:", membersError);
+    throw new Error(membersError.message);
   }
 
-  // profiles 데이터를 평탄화
-  return (data || []).map((member: any) => ({
-    user_id: member.user_id,
-    workspace_id: member.workspace_id,
-    role: member.role,
-    email: member.profiles?.email || null,
-    display_name: member.profiles?.display_name || null,
-    joined_at: member.joined_at,
-  }));
+  if (!members || members.length === 0) {
+    return [];
+  }
+
+  // 2. 각 멤버의 user_id로 profiles 조회
+  const userIds = members.map((m) => m.user_id);
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("user_id, email, display_name")
+    .in("user_id", userIds);
+
+  if (profilesError) {
+    console.error("[WorkspaceMembers] Profiles error:", profilesError);
+    // profiles 조회 실패 시에도 멤버 정보는 반환 (email, display_name만 null)
+  }
+
+  // 3. 데이터 병합
+  const profileMap = new Map(
+    (profiles || []).map((p) => [p.user_id, p])
+  );
+
+  return members.map((member) => {
+    const profile = profileMap.get(member.user_id);
+    return {
+      user_id: member.user_id,
+      workspace_id: member.workspace_id,
+      role: member.role,
+      email: profile?.email || null,
+      display_name: profile?.display_name || null,
+      joined_at: member.joined_at,
+    };
+  });
 }
 
 /**
