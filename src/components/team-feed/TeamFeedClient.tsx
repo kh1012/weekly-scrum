@@ -7,6 +7,7 @@ import type { GnbParams } from "@/lib/ui/gnbParams";
 import type { WorkspaceMember } from "@/lib/data/members";
 import { InfiniteFeedList } from "./InfiniteFeedList";
 import { TeamFeedFilterPanel } from "./TeamFeedFilterPanel";
+import { DailyActivity } from "./DailyActivity";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 
 interface TeamFeedClientProps {
@@ -86,7 +87,7 @@ export function TeamFeedClient({
   ].filter(Boolean).length;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full bg-white">
+    <div className="flex h-full bg-white">
       {/* Left Filter Panel (desktop: always visible, mobile: drawer) */}
       <TeamFeedFilterPanel
         isOpen={isFilterPanelOpen}
@@ -97,8 +98,10 @@ export function TeamFeedClient({
         onResetFilters={handleResetFilters}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 min-w-0 px-4 py-6">
+      {/* Main Content - Flex container */}
+      <div className="flex-1 flex flex-col lg:flex-row min-w-0 overflow-hidden">
+        {/* Center: Entries List */}
+        <div className="flex-1 min-w-0 px-4 py-6 overflow-y-auto border-r border-[#d0d7de]">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -202,6 +205,14 @@ export function TeamFeedClient({
             </p>
           </div>
         )}
+        </div>
+
+        {/* Right: Daily Activity (desktop only) */}
+        <div className="hidden lg:block w-64 shrink-0 px-4 py-6 overflow-y-auto">
+          <div className="sticky top-6">
+            <DailyActivity feedItems={initialFeedItems} />
+          </div>
+        </div>
       </div>
     </div>
   );
