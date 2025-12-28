@@ -324,15 +324,15 @@ function SnapshotsMainViewInner({
   };
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl bg-white border border-gray-100">
-      {/* 헤더 영역 - 글래스모피즘 */}
-      <div className="shrink-0 px-4 md:px-6 py-4 md:py-5 bg-gradient-to-r from-white via-white to-slate-50/50 border-b border-gray-100">
+    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-md overflow-hidden bg-white border border-[#d0d7de]">
+      {/* 헤더 영역 */}
+      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           {/* 좌측: 타이틀 */}
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-md bg-[#ddf4ff] flex items-center justify-center">
               <svg
-                className="w-4 h-4 md:w-5 md:h-5 text-white"
+                className="w-4 h-4 md:w-4.5 md:h-4.5 text-[#0969da]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -346,10 +346,10 @@ function SnapshotsMainViewInner({
               </svg>
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">
+              <h1 className="text-base md:text-lg font-semibold text-[#24292f]">
                 스냅샷 관리
               </h1>
-              <p className="text-xs md:text-sm text-gray-500">
+              <p className="text-xs text-[#57606a]">
                 주차별 스냅샷 조회 및 관리
               </p>
             </div>
@@ -363,10 +363,10 @@ function SnapshotsMainViewInner({
               <button
                 onClick={clearFilters}
                 disabled={!hasActiveFilters}
-                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
                   hasActiveFilters
-                    ? "text-gray-700 bg-gray-100 hover:bg-gray-200"
-                    : "text-gray-300 bg-gray-50 cursor-not-allowed"
+                    ? "text-[#24292f] bg-white border-[#d0d7de] hover:bg-[#f6f8fa]"
+                    : "text-[#8c959f] bg-[#f6f8fa] border-[#d0d7de] cursor-not-allowed"
                 }`}
                 title="필터 초기화"
               >
@@ -386,7 +386,7 @@ function SnapshotsMainViewInner({
                 Reset
               </button>
 
-              <div className="w-px h-4 bg-gray-200" />
+              <div className="w-px h-4 bg-[#d0d7de]" />
 
               {/* 프로젝트 필터 */}
               <div className="relative">
@@ -396,15 +396,15 @@ function SnapshotsMainViewInner({
                     setIsModuleFilterOpen(false);
                     setIsFeatureFilterOpen(false);
                   }}
-                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
                     projectFilters.size > 0
-                      ? "bg-blue-50 text-blue-600 border border-blue-200"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                      ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
+                      : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
                   }`}
                 >
                   <span>Project</span>
                   {projectFilters.size > 0 && (
-                    <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                       {projectFilters.size}
                     </span>
                   )}
@@ -425,23 +425,23 @@ function SnapshotsMainViewInner({
                   </svg>
                 </button>
                 {isProjectFilterOpen && (
-                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
                     {filterOptions.projects.map((p) => (
                       <label
                         key={p}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
                       >
                         <input
                           type="checkbox"
                           checked={projectFilters.has(p)}
                           onChange={() => toggleProjectFilter(p)}
-                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
                         />
                         <span
                           className={
                             projectFilters.has(p)
-                              ? "font-medium text-blue-600"
-                              : "text-gray-700"
+                              ? "font-medium text-[#0969da]"
+                              : "text-[#24292f]"
                           }
                         >
                           {p}
@@ -449,7 +449,7 @@ function SnapshotsMainViewInner({
                       </label>
                     ))}
                     {filterOptions.projects.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-gray-400">
+                      <div className="px-3 py-2 text-xs text-[#57606a]">
                         항목 없음
                       </div>
                     )}
@@ -465,15 +465,15 @@ function SnapshotsMainViewInner({
                     setIsProjectFilterOpen(false);
                     setIsFeatureFilterOpen(false);
                   }}
-                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
                     moduleFilters.size > 0
-                      ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                      ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
+                      : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
                   }`}
                 >
                   <span>Module</span>
                   {moduleFilters.size > 0 && (
-                    <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                       {moduleFilters.size}
                     </span>
                   )}
@@ -494,23 +494,23 @@ function SnapshotsMainViewInner({
                   </svg>
                 </button>
                 {isModuleFilterOpen && (
-                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
                     {filterOptions.modules.map((m) => (
                       <label
                         key={m}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
                       >
                         <input
                           type="checkbox"
                           checked={moduleFilters.has(m)}
                           onChange={() => toggleModuleFilter(m)}
-                          className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                          className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
                         />
                         <span
                           className={
                             moduleFilters.has(m)
-                              ? "font-medium text-emerald-600"
-                              : "text-gray-700"
+                              ? "font-medium text-[#0969da]"
+                              : "text-[#24292f]"
                           }
                         >
                           {m}
@@ -518,7 +518,7 @@ function SnapshotsMainViewInner({
                       </label>
                     ))}
                     {filterOptions.modules.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-gray-400">
+                      <div className="px-3 py-2 text-xs text-[#57606a]">
                         항목 없음
                       </div>
                     )}
@@ -534,15 +534,15 @@ function SnapshotsMainViewInner({
                     setIsProjectFilterOpen(false);
                     setIsModuleFilterOpen(false);
                   }}
-                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
                     featureFilters.size > 0
-                      ? "bg-amber-50 text-amber-600 border border-amber-200"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                      ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
+                      : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
                   }`}
                 >
                   <span>Feature</span>
                   {featureFilters.size > 0 && (
-                    <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                       {featureFilters.size}
                     </span>
                   )}
@@ -563,23 +563,23 @@ function SnapshotsMainViewInner({
                   </svg>
                 </button>
                 {isFeatureFilterOpen && (
-                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
                     {filterOptions.features.map((f) => (
                       <label
                         key={f}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
                       >
                         <input
                           type="checkbox"
                           checked={featureFilters.has(f)}
                           onChange={() => toggleFeatureFilter(f)}
-                          className="w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                          className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
                         />
                         <span
                           className={
                             featureFilters.has(f)
-                              ? "font-medium text-amber-600"
-                              : "text-gray-700"
+                              ? "font-medium text-[#0969da]"
+                              : "text-[#24292f]"
                           }
                         >
                           {f}
@@ -587,7 +587,7 @@ function SnapshotsMainViewInner({
                       </label>
                     ))}
                     {filterOptions.features.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-gray-400">
+                      <div className="px-3 py-2 text-xs text-[#57606a]">
                         항목 없음
                       </div>
                     )}
@@ -596,7 +596,7 @@ function SnapshotsMainViewInner({
               </div>
             </div>
 
-            <div className="hidden md:block h-6 w-px bg-gray-200" />
+            <div className="hidden md:block h-6 w-px bg-[#d0d7de]" />
 
             {/* 액션 버튼 */}
             <div className="flex items-center gap-2 md:gap-3">
@@ -609,7 +609,7 @@ function SnapshotsMainViewInner({
                 size="md"
                 icon={
                   <svg
-                    className="w-4 h-4 group-hover:rotate-12 transition-transform"
+                    className="w-4 h-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -622,7 +622,7 @@ function SnapshotsMainViewInner({
                     />
                   </svg>
                 }
-                className="group flex-1 md:flex-none text-blue-600 bg-blue-50 border-2 border-blue-100 hover:border-blue-200 hover:bg-blue-100"
+                className="group flex-1 md:flex-none"
               >
                 <span className="hidden sm:inline">편집하기</span>
                 <span className="sm:hidden">편집</span>
@@ -635,7 +635,7 @@ function SnapshotsMainViewInner({
                 size="md"
                 icon={
                   <svg
-                    className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
+                    className="w-4 h-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -648,7 +648,7 @@ function SnapshotsMainViewInner({
                     />
                   </svg>
                 }
-                className="group flex-1 md:flex-none"
+                className="flex-1 md:flex-none"
                 title={
                   snapshots.length > 0
                     ? "이미 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요."
@@ -665,8 +665,8 @@ function SnapshotsMainViewInner({
 
       {/* 메인 콘텐츠 영역 */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* 서브 메뉴 영역 - 글래스 효과 + z-index 설정 */}
-        <div className="shrink-0 relative z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 px-4 md:px-6 py-3 bg-gradient-to-r from-slate-50/80 to-white/80 backdrop-blur-sm border-b border-gray-100">
+        {/* 서브 메뉴 영역 */}
+        <div className="shrink-0 relative z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
           {/* 좌측: WeekSelector */}
           <WeekSelector
             year={selectedYear}
@@ -683,13 +683,13 @@ function SnapshotsMainViewInner({
           {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
           <div className="flex items-center gap-3">
             {/* 뷰 모드 토글 */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+            <div className="flex items-center border border-[#d0d7de] rounded-md overflow-hidden">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-colors ${
+                className={`p-1.5 transition-colors ${
                   viewMode === "grid"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-400 hover:text-gray-600"
+                    ? "bg-[#0969da] text-white"
+                    : "bg-white text-[#57606a] hover:bg-[#f6f8fa] border-r border-[#d0d7de]"
                 }`}
                 title="그리드 뷰"
               >
@@ -709,10 +709,10 @@ function SnapshotsMainViewInner({
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-md transition-colors ${
+                className={`p-1.5 transition-colors ${
                   viewMode === "list"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-400 hover:text-gray-600"
+                    ? "bg-[#0969da] text-white"
+                    : "bg-white text-[#57606a] hover:bg-[#f6f8fa]"
                 }`}
                 title="리스트 뷰"
               >
@@ -732,14 +732,14 @@ function SnapshotsMainViewInner({
               </button>
             </div>
 
-            {/* 전체 펼치기/접기 버튼 - 토글 버튼과 높이 맞춤 */}
+            {/* 전체 펼치기/접기 버튼 */}
             {filteredSnapshots.length > 0 && (
               <button
                 onClick={() => setAllExpanded(!allExpanded)}
-                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
                   allExpanded
-                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da] hover:bg-[#b6e3ff]"
+                    : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
                 }`}
               >
                 <svg
@@ -765,10 +765,10 @@ function SnapshotsMainViewInner({
             {snapshots.length > 0 && (
               <button
                 onClick={() => setIsSelectMode(!isSelectMode)}
-                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors ${
                   isSelectMode
-                    ? "bg-blue-500 text-white hover:bg-blue-600"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-[#0969da] text-white hover:bg-[#0860ca]"
+                    : "bg-white text-[#57606a] border border-[#d0d7de] hover:bg-[#f6f8fa]"
                 }`}
               >
                 <svg
@@ -790,10 +790,10 @@ function SnapshotsMainViewInner({
           </div>
         </div>
 
-        {/* 스냅샷 목록 영역 - Bottom Sheet를 위한 relative 컨테이너 */}
+        {/* 스냅샷 목록 영역 */}
         <div className="flex-1 relative min-h-0 overflow-hidden">
           {/* 스냅샷 목록 */}
-          <div className="h-full overflow-y-auto p-4 md:p-6 pb-24 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30">
+          <div className="h-full overflow-y-auto p-4 md:p-6 pb-24 bg-white">
             <SnapshotList
               snapshots={filteredSnapshots}
               isLoading={isLoading}
