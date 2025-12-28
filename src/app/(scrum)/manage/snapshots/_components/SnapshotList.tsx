@@ -184,17 +184,17 @@ export function SnapshotList({
     <div>
       {/* 선택 모드 툴바 */}
       {isSelectMode && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+        <div className="mb-4 p-4 bg-[#ddf4ff] border border-[#0969da] rounded-md flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={toggleSelectAll}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              className="text-sm font-medium text-[#0969da] hover:text-[#0860ca] transition-colors"
             >
               {selectedEntryIds.size === allEntries.length
                 ? "전체 해제"
                 : "전체 선택"}
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-[#57606a]">
               {selectedEntryIds.size}개 선택됨
             </span>
           </div>
@@ -202,14 +202,14 @@ export function SnapshotList({
             <button
               onClick={() => setShowBulkDeleteModal(true)}
               disabled={selectedEntryIds.size === 0}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-[#cf222e] hover:bg-[#a40e26] disabled:bg-[#8c959f] disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <TrashIcon className="w-4 h-4" />
               삭제 ({selectedEntryIds.size})
             </button>
             <button
               onClick={() => onToggleSelectMode?.(false)}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 rounded-md text-sm font-medium text-[#24292f] bg-white border border-[#d0d7de] hover:bg-[#f6f8fa] transition-colors"
             >
               취소
             </button>
@@ -243,36 +243,24 @@ export function SnapshotList({
       {showBulkDeleteModal && mounted &&
         createPortal(
           <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
-            style={{ background: "rgba(0, 0, 0, 0.5)" }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#c8d1da66]"
             onClick={() => !isDeleting && setShowBulkDeleteModal(false)}
           >
             <div
-              className="relative w-full max-w-md rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-              style={{
-                background: "white",
-                boxShadow:
-                  "0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)",
-              }}
+              className="relative w-full max-w-md rounded-md overflow-hidden animate-in zoom-in-95 duration-200 bg-white border border-[#d0d7de]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* 헤더 */}
-              <div
-                className="px-6 py-5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                }}
-              >
+              <div className="px-6 py-4 bg-[#ffebe9] border-b border-[#ff8182]">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                    <TrashIcon className="w-6 h-6 text-white" />
+                  <div className="w-10 h-10 rounded-md flex items-center justify-center bg-[#ffebe9]">
+                    <TrashIcon className="w-5 h-5 text-[#cf222e]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">
+                    <h3 className="text-base font-semibold text-[#24292f]">
                       일괄 삭제 확인
                     </h3>
-                    <p className="text-sm text-white/80">
+                    <p className="text-sm text-[#57606a]">
                       {selectedEntryIds.size}개 항목을 삭제합니다
                     </p>
                   </div>
@@ -281,8 +269,8 @@ export function SnapshotList({
 
               {/* 내용 */}
               <div className="p-6">
-                <p className="text-gray-700">
-                  선택한 <span className="font-bold text-red-600">{selectedEntryIds.size}개</span>의 스냅샷 항목을 삭제하시겠습니까?
+                <p className="text-[#24292f]">
+                  선택한 <span className="font-semibold text-[#cf222e]">{selectedEntryIds.size}개</span>의 스냅샷 항목을 삭제하시겠습니까?
                   <br />
                   <br />
                   삭제된 항목은 복구할 수 없습니다.
@@ -290,30 +278,18 @@ export function SnapshotList({
               </div>
 
               {/* 버튼 */}
-              <div
-                className="flex gap-3 px-6 pb-6"
-                style={{ background: "#f9fafb" }}
-              >
+              <div className="flex gap-3 px-6 pb-6 bg-[#f6f8fa]">
                 <button
                   onClick={() => setShowBulkDeleteModal(false)}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background: "white",
-                    border: "1px solid #e5e7eb",
-                    color: "#6b7280",
-                  }}
+                  className="flex-1 px-4 py-2 rounded-md text-sm font-medium bg-white border border-[#d0d7de] text-[#24292f] hover:bg-[#f3f4f6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleBulkDelete}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-white transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                  }}
+                  className="flex-1 px-4 py-2 rounded-md text-sm font-medium text-white bg-[#cf222e] hover:bg-[#a40e26] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDeleting ? "삭제 중..." : "삭제"}
                 </button>
@@ -540,10 +516,10 @@ function EntryCard({
 
   return (
     <div
-      className={`bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-gray-300 transition-all cursor-pointer h-fit relative group ${
+      className={`bg-white rounded-md border hover:border-[#0969da] transition-colors cursor-pointer h-fit relative group ${
         isSelectMode && isSelected
-          ? "border-blue-500 ring-2 ring-blue-200"
-          : "border-gray-200"
+          ? "border-[#0969da] ring-2 ring-[#b6e3ff]"
+          : "border-[#d0d7de]"
       }`}
       onClick={() => {
         if (isSelectMode) {
@@ -557,10 +533,10 @@ function EntryCard({
       {isSelectMode && (
         <div className="absolute top-3 left-3 z-20">
           <div
-            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+            className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
               isSelected
-                ? "bg-blue-500 border-blue-500"
-                : "bg-white border-gray-300"
+                ? "bg-[#0969da] border-[#0969da]"
+                : "bg-white border-[#d0d7de]"
             }`}
             onClick={(e) => {
               e.stopPropagation();
@@ -594,10 +570,10 @@ function EntryCard({
             {/* Domain */}
             {entry.domain && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
                   Domain
                 </span>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
                   {entry.domain}
                 </span>
               </div>
@@ -605,10 +581,10 @@ function EntryCard({
             {/* Project */}
             {entry.project && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
                   Project
                 </span>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
                   {entry.project}
                 </span>
               </div>
@@ -616,10 +592,10 @@ function EntryCard({
             {/* Module */}
             {entry.module && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
                   Module
                 </span>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
                   {entry.module}
                 </span>
               </div>
@@ -627,10 +603,10 @@ function EntryCard({
             {/* Feature */}
             {entry.feature && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
                   Feature
                 </span>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
                   {entry.feature}
                 </span>
               </div>
@@ -638,17 +614,17 @@ function EntryCard({
             {/* 진행률 (접힌 상태에서만 표시 - 확장 시 상세 내용에서 표시됨) */}
             {!isExpanded && avgProgress !== null && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
                   진행률
                 </span>
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-16 h-1.5 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
                     <div
-                      className="h-full bg-blue-500 rounded-full transition-all"
+                      className="h-full bg-[#0969da] rounded-full transition-all"
                       style={{ width: `${avgProgress}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-medium text-gray-600">
+                  <span className="text-[10px] font-medium text-[#24292f]">
                     {avgProgress}%
                   </span>
                 </div>
@@ -657,11 +633,13 @@ function EntryCard({
             {/* 리스크 레벨 (접힌 상태에서도 표시) */}
             {riskLevel > 0 && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0">
+                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
                   Risk
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text}`}
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text} border ${
+                    riskLevel >= 3 ? 'border-red-200' : riskLevel >= 2 ? 'border-orange-200' : 'border-yellow-200'
+                  }`}
                 >
                   Lv.{riskLevel} {riskStyle.label}
                 </span>
@@ -680,14 +658,14 @@ function EntryCard({
                 e.stopPropagation();
                 setLocalExpanded(!localExpanded);
               }}
-              className={`p-1.5 rounded-lg transition-all duration-200 ${
+              className={`p-1.5 rounded transition-colors ${
                 isExpanded
-                  ? "bg-blue-100 text-blue-600"
-                  : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  ? "bg-[#ddf4ff] text-[#0969da]"
+                  : "text-[#57606a] hover:bg-[#f6f8fa]"
               }`}
             >
               <svg
-                className={`w-4 h-4 transition-transform duration-200 ${
+                className={`w-4 h-4 transition-transform ${
                   isExpanded ? "rotate-180" : ""
                 }`}
                 fill="none"
@@ -710,7 +688,7 @@ function EntryCard({
                 e.stopPropagation();
                 setShowOptionsMenu(!showOptionsMenu);
               }}
-              className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all shrink-0"
+              className="p-1.5 rounded text-[#57606a] hover:bg-[#f6f8fa] transition-colors shrink-0"
               title="옵션"
               type="button"
             >
@@ -735,13 +713,13 @@ function EntryCard({
             {showOptionsMenu && (
               <div
                 ref={optionsMenuRef}
-                className="absolute top-full right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]"
+                className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 min-w-[120px]"
                 onClick={(e) => e.stopPropagation()}
               >
                 {onEdit && (
                   <button
                     onClick={handleEdit}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
                     type="button"
                   >
                     <svg
@@ -762,7 +740,7 @@ function EntryCard({
                 )}
                 <button
                   onClick={handleDeleteClick}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#cf222e] hover:bg-[#ffebe9] transition-colors"
                   type="button"
                 >
                   <TrashIcon className="w-4 h-4" />
@@ -774,26 +752,26 @@ function EntryCard({
         </div>
       </div>
 
-      {/* 펼친 내용 - ScrumCard 스타일 */}
+      {/* 펼친 내용 */}
       {isExpanded && (
-        <div className="border-t border-gray-100">
+        <div className="border-t border-[#d0d7de]">
           {/* 진행률 요약 */}
           {avgProgress !== null && (
-            <div className="mx-4 my-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-100">
+            <div className="mx-4 my-3 p-3 rounded-md bg-[#f6f8fa] border border-[#d0d7de]">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">평균 진행률</span>
+                <span className="text-[#57606a]">평균 진행률</span>
                 <span
-                  className={`font-semibold ${
-                    avgProgress === 100 ? "text-emerald-600" : "text-gray-700"
+                  className={`font-medium ${
+                    avgProgress === 100 ? "text-[#1a7f37]" : "text-[#24292f]"
                   }`}
                 >
                   {avgProgress}%
                 </span>
               </div>
-              <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="mt-2 h-1.5 bg-white rounded-full overflow-hidden border border-[#d0d7de]">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    avgProgress === 100 ? "bg-emerald-500" : "bg-blue-500"
+                    avgProgress === 100 ? "bg-[#1a7f37]" : "bg-[#0969da]"
                   }`}
                   style={{ width: `${avgProgress}%` }}
                 />
@@ -804,22 +782,22 @@ function EntryCard({
           {/* PAST WEEK TASKS */}
           {pastWeekTasks.length > 0 && (
             <div className="mx-4 mb-3">
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <div className="text-[10px] font-medium text-[#57606a] uppercase tracking-wider mb-2">
                 PAST WEEK TASKS:
               </div>
               <ul className="space-y-1">
                 {pastWeekTasks.map((task, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-xs text-gray-700"
+                    className="flex items-start gap-2 text-xs text-[#24292f]"
                   >
-                    <span className="text-gray-400 mt-0.5">•</span>
+                    <span className="text-[#57606a] mt-0.5">•</span>
                     <span className="flex-1">{task.title}</span>
                     <span
                       className={`shrink-0 text-[10px] font-medium ${
                         task.progress === 100
-                          ? "text-emerald-600"
-                          : "text-gray-500"
+                          ? "text-[#1a7f37]"
+                          : "text-[#57606a]"
                       }`}
                     >
                       {task.progress}%
@@ -836,17 +814,17 @@ function EntryCard({
               <span
                 className={`font-medium ${
                   riskLevel >= 3
-                    ? "text-red-600"
+                    ? "text-[#cf222e]"
                     : riskLevel >= 2
-                    ? "text-orange-600"
+                    ? "text-[#fb8500]"
                     : riskLevel >= 1
-                    ? "text-yellow-600"
-                    : "text-gray-500"
+                    ? "text-[#9a6700]"
+                    : "text-[#57606a]"
                 }`}
               >
                 Risk:
               </span>
-              <span className="text-gray-700">
+              <span className="text-[#24292f]">
                 {risks.length > 0 ? risks.join(", ") : "미정"}
               </span>
             </div>
@@ -855,14 +833,16 @@ function EntryCard({
           {/* Collaborators 표시 (태그 형태) */}
           {collaborators.length > 0 && (
             <div className="mx-4 mb-3 flex items-start gap-2 text-xs">
-              <span className="text-gray-500 font-medium shrink-0">with:</span>
+              <span className="text-[#57606a] font-medium shrink-0">with:</span>
               <div className="flex flex-wrap gap-1.5">
                 {collaborators.map((c, i) => {
                   const style = getRelationStyle(c.relations);
                   return (
                     <span
                       key={i}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${style.bg} ${style.text}`}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${style.bg} ${style.text} border ${
+                        c.relations?.[0] === 'pair' ? 'border-purple-200' : c.relations?.[0] === 'pre' ? 'border-blue-200' : 'border-green-200'
+                      }`}
                     >
                       {c.name}
                       {style.label && (
@@ -878,16 +858,16 @@ function EntryCard({
           {/* THIS WEEK TASKS */}
           {thisWeekTasks.length > 0 && (
             <div className="mx-4 mb-4">
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <div className="text-[10px] font-medium text-[#57606a] uppercase tracking-wider mb-2">
                 THIS WEEK TASKS:
               </div>
               <ul className="space-y-1">
                 {thisWeekTasks.map((task, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-xs text-gray-700"
+                    className="flex items-start gap-2 text-xs text-[#24292f]"
                   >
-                    <span className="text-gray-400 mt-0.5">•</span>
+                    <span className="text-[#57606a] mt-0.5">•</span>
                     <span className="flex-1">{task}</span>
                   </li>
                 ))}
@@ -896,7 +876,7 @@ function EntryCard({
           )}
 
           {pastWeekTasks.length === 0 && thisWeekTasks.length === 0 && (
-            <p className="mx-4 mb-4 text-xs text-gray-400 text-center py-2">
+            <p className="mx-4 mb-4 text-xs text-[#57606a] text-center py-2">
               등록된 작업이 없습니다.
             </p>
           )}
@@ -907,36 +887,24 @@ function EntryCard({
       {showDeleteModal &&
         createPortal(
           <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
-            style={{ background: "rgba(0, 0, 0, 0.5)" }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#c8d1da66]"
             onClick={handleDeleteCancel}
           >
             <div
-              className="relative w-full max-w-md rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-              style={{
-                background: "white",
-                boxShadow:
-                  "0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)",
-              }}
+              className="relative w-full max-w-md rounded-md overflow-hidden animate-in zoom-in-95 duration-200 bg-white border border-[#d0d7de]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* 헤더 */}
-              <div
-                className="px-6 py-5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                }}
-              >
+              <div className="px-6 py-4 bg-[#ffebe9] border-b border-[#ff8182]">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                    <TrashIcon className="w-6 h-6 text-white" />
+                  <div className="w-10 h-10 rounded-md flex items-center justify-center bg-[#ffebe9]">
+                    <TrashIcon className="w-5 h-5 text-[#cf222e]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">
+                    <h3 className="text-base font-semibold text-[#24292f]">
                       스냅샷 항목 삭제
                     </h3>
-                    <p className="text-sm text-white/80">
+                    <p className="text-sm text-[#57606a]">
                       이 작업은 되돌릴 수 없습니다
                     </p>
                   </div>
@@ -945,7 +913,7 @@ function EntryCard({
 
               {/* 내용 */}
               <div className="p-6">
-                <p className="text-gray-700">
+                <p className="text-[#24292f]">
                   정말로 이 스냅샷 항목을 삭제하시겠습니까?
                   <br />
                   <br />
@@ -954,28 +922,16 @@ function EntryCard({
               </div>
 
               {/* 버튼 */}
-              <div
-                className="flex gap-3 px-6 pb-6"
-                style={{ background: "#f9fafb" }}
-              >
+              <div className="flex gap-3 px-6 pb-6 bg-[#f6f8fa]">
                 <button
                   onClick={handleDeleteCancel}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95"
-                  style={{
-                    background: "white",
-                    border: "1px solid #e5e7eb",
-                    color: "#6b7280",
-                  }}
+                  className="flex-1 px-4 py-2 rounded-md text-sm font-medium bg-white border border-[#d0d7de] text-[#24292f] hover:bg-[#f3f4f6] transition-colors"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-white transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                  }}
+                  className="flex-1 px-4 py-2 rounded-md text-sm font-medium text-white bg-[#cf222e] hover:bg-[#a40e26] transition-colors"
                 >
                   삭제
                 </button>
@@ -1073,10 +1029,10 @@ function EntryRow({
 
   return (
     <div
-      className={`flex items-center gap-3 p-4 bg-white rounded-xl border shadow-sm hover:border-gray-300 hover:shadow-md transition-all cursor-pointer group relative ${
+      className={`flex items-center gap-3 p-4 bg-white rounded-md border hover:border-[#0969da] transition-colors cursor-pointer group relative ${
         isSelectMode && isSelected
-          ? "border-blue-500 ring-2 ring-blue-200"
-          : "border-gray-200"
+          ? "border-[#0969da] ring-2 ring-[#b6e3ff]"
+          : "border-[#d0d7de]"
       }`}
       onClick={() => {
         if (isSelectMode) {
@@ -1087,10 +1043,10 @@ function EntryRow({
       {/* 선택 모드 체크박스 */}
       {isSelectMode && (
         <div
-          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+          className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
             isSelected
-              ? "bg-blue-500 border-blue-500"
-              : "bg-white border-gray-300"
+              ? "bg-[#0969da] border-[#0969da]"
+              : "bg-white border-[#d0d7de]"
           }`}
           onClick={(e) => {
             e.stopPropagation();
@@ -1124,7 +1080,7 @@ function EntryRow({
             e.stopPropagation();
             setShowOptionsMenu(!showOptionsMenu);
           }}
-          className="p-1.5 rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 shrink-0"
+          className="p-1.5 rounded text-[#57606a] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#f6f8fa] shrink-0"
           title="옵션"
           type="button"
         >
@@ -1147,13 +1103,13 @@ function EntryRow({
         {showOptionsMenu && (
           <div
             ref={optionsMenuRef}
-            className="absolute top-8 right-0 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]"
+            className="absolute top-8 right-0 bg-white rounded-md border border-[#d0d7de] py-1 min-w-[120px]"
             onClick={(e) => e.stopPropagation()}
           >
             {onEdit && (
               <button
                 onClick={handleEdit}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
                 type="button"
               >
                 <svg
@@ -1174,7 +1130,7 @@ function EntryRow({
                 )}
                 <button
                   onClick={handleDeleteClick}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#cf222e] hover:bg-[#ffebe9] transition-colors"
                   type="button"
                 >
                   <TrashIcon className="w-4 h-4" />
@@ -1193,32 +1149,34 @@ function EntryRow({
       <div className="flex-1 flex items-center gap-1.5 flex-wrap min-w-0">
         {/* Domain */}
         {entry.domain && (
-          <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-50 text-purple-600 rounded-md shrink-0">
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de] rounded shrink-0">
             {entry.domain}
           </span>
         )}
         {/* Project */}
         {entry.project && (
-          <span className="px-2 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-600 rounded-md shrink-0">
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-[#ddf4ff] text-[#0969da] border border-[#54aeff] rounded shrink-0">
             {entry.project}
           </span>
         )}
         {/* Module */}
         {entry.module && (
-          <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded-md shrink-0">
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-[#dafbe1] text-[#1a7f37] border border-[#4ac26b] rounded shrink-0">
             {entry.module}
           </span>
         )}
         {/* Feature */}
         {entry.feature && (
-          <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-600 rounded-md shrink-0">
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-[#fff8c5] text-[#9a6700] border border-[#d4a72c] rounded shrink-0">
             {entry.feature}
           </span>
         )}
         {/* Risk */}
         {riskStyle && (
           <span
-            className={`px-2 py-0.5 text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text} rounded-md shrink-0`}
+            className={`px-2 py-0.5 text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text} rounded shrink-0 ${
+              riskLevel >= 3 ? 'border border-red-200' : riskLevel >= 2 ? 'border border-orange-200' : 'border border-yellow-200'
+            }`}
           >
             Risk Lv.{riskLevel}
           </span>
@@ -1228,7 +1186,7 @@ function EntryRow({
 
       {/* 화살표 */}
       <svg
-        className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors shrink-0"
+        className="w-4 h-4 text-[#57606a] group-hover:text-[#24292f] transition-colors shrink-0"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -1245,36 +1203,24 @@ function EntryRow({
       {showDeleteModal && mounted &&
         createPortal(
           <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
-            style={{ background: "rgba(0, 0, 0, 0.5)" }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#c8d1da66]"
             onClick={handleDeleteCancel}
           >
             <div
-              className="relative w-full max-w-md rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-              style={{
-                background: "white",
-                boxShadow:
-                  "0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)",
-              }}
+              className="relative w-full max-w-md rounded-md overflow-hidden animate-in zoom-in-95 duration-200 bg-white border border-[#d0d7de]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* 헤더 */}
-              <div
-                className="px-6 py-5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                }}
-              >
+              <div className="px-6 py-4 bg-[#ffebe9] border-b border-[#ff8182]">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                    <TrashIcon className="w-6 h-6 text-white" />
+                  <div className="w-10 h-10 rounded-md flex items-center justify-center bg-[#ffebe9]">
+                    <TrashIcon className="w-5 h-5 text-[#cf222e]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">
+                    <h3 className="text-base font-semibold text-[#24292f]">
                       스냅샷 항목 삭제
                     </h3>
-                    <p className="text-sm text-white/80">
+                    <p className="text-sm text-[#57606a]">
                       이 작업은 되돌릴 수 없습니다
                     </p>
                   </div>
@@ -1283,7 +1229,7 @@ function EntryRow({
 
               {/* 내용 */}
               <div className="p-6">
-                <p className="text-gray-700">
+                <p className="text-[#24292f]">
                   정말로 이 스냅샷 항목을 삭제하시겠습니까?
                   <br />
                   <br />
@@ -1292,28 +1238,16 @@ function EntryRow({
               </div>
 
               {/* 버튼 */}
-              <div
-                className="flex gap-3 px-6 pb-6"
-                style={{ background: "#f9fafb" }}
-              >
+              <div className="flex gap-3 px-6 pb-6 bg-[#f6f8fa]">
                 <button
                   onClick={handleDeleteCancel}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95"
-                  style={{
-                    background: "white",
-                    border: "1px solid #e5e7eb",
-                    color: "#6b7280",
-                  }}
+                  className="flex-1 px-4 py-2 rounded-md text-sm font-medium bg-white border border-[#d0d7de] text-[#24292f] hover:bg-[#f3f4f6] transition-colors"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-white transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                  }}
+                  className="flex-1 px-4 py-2 rounded-md text-sm font-medium text-white bg-[#cf222e] hover:bg-[#a40e26] transition-colors"
                 >
                   삭제
                 </button>
@@ -1334,7 +1268,7 @@ function LoadingSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="p-4 bg-gray-100 rounded-xl animate-pulse"
+            className="p-4 bg-[#f6f8fa] rounded-md animate-pulse border border-[#d0d7de]"
             style={{ height: 160 }}
           />
         ))}
@@ -1345,7 +1279,7 @@ function LoadingSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
   return (
     <div className="space-y-2">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
+        <div key={i} className="h-16 bg-[#f6f8fa] rounded-md animate-pulse border border-[#d0d7de]" />
       ))}
     </div>
   );
@@ -1355,9 +1289,9 @@ function LoadingSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-16">
-      <div className="w-20 h-20 mb-6 flex items-center justify-center bg-gray-100 rounded-2xl">
+      <div className="w-20 h-20 mb-6 flex items-center justify-center bg-[#f6f8fa] rounded-md border border-[#d0d7de]">
         <svg
-          className="w-10 h-10 text-gray-400"
+          className="w-10 h-10 text-[#57606a]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -1370,10 +1304,10 @@ function EmptyState() {
           />
         </svg>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <h3 className="text-base font-semibold text-[#24292f] mb-2">
         스냅샷이 없습니다
       </h3>
-      <p className="text-sm text-gray-500 text-center max-w-xs">
+      <p className="text-sm text-[#57606a] text-center max-w-xs">
         선택한 주차에 작성된 스냅샷이 없습니다.
         <br />
         우측 상단의 &quot;새로 작성하기&quot; 버튼으로 시작하세요.
