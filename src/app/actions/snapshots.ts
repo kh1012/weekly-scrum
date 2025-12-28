@@ -213,6 +213,21 @@ export async function deleteSnapshotEntryAction(entryId: string) {
     return { success: false, error: "인증이 필요합니다." };
   }
 
+  // 엔트리의 snapshot_id를 먼저 조회
+  const { data: entry, error: fetchError } = await supabase
+    .from("snapshot_entries")
+    .select("snapshot_id")
+    .eq("id", entryId)
+    .single();
+
+  if (fetchError || !entry) {
+    console.error("Error fetching entry:", fetchError);
+    return { success: false, error: "엔트리를 찾을 수 없습니다." };
+  }
+
+  const snapshotId = entry.snapshot_id;
+
+  // 엔트리 삭제
   const { error } = await supabase
     .from("snapshot_entries")
     .delete()
@@ -223,7 +238,27 @@ export async function deleteSnapshotEntryAction(entryId: string) {
     return { success: false, error: error.message };
   }
 
+  // 해당 스냅샷의 남은 엔트리 수 확인
+  const { count: remainingCount } = await supabase
+    .from("snapshot_entries")
+    .select("id", { count: "exact", head: true })
+    .eq("snapshot_id", snapshotId);
+
+  // 남은 엔트리가 없으면 스냅샷도 삭제
+  if (remainingCount === 0) {
+    const { error: deleteSnapshotError } = await supabase
+      .from("snapshots")
+      .delete()
+      .eq("id", snapshotId);
+
+    if (deleteSnapshotError) {
+      console.error("Error deleting snapshot:", deleteSnapshotError);
+      // 엔트리는 이미 삭제되었으므로, 에러는 무시하고 성공으로 처리
+    }
+  }
+
   revalidatePath("/");
+  revalidatePath("/manage/snapshots");
   return { success: true };
 }
 
