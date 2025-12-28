@@ -34,14 +34,21 @@ export default async function ScrumLayout({
     } = await supabase.auth.getUser();
 
     if (user) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("user_id")
+        .select("user_id, display_name")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
+
+      console.log("[ScrumLayout] Profile check:", {
+        userId: user.id,
+        profile,
+        profileError,
+      });
 
       // 프로필이 없으면 온보딩으로 리다이렉트
       if (!profile) {
+        console.log("[ScrumLayout] Redirecting to onboarding (no profile)");
         redirect("/onboarding/profile");
       }
     }

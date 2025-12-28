@@ -126,31 +126,47 @@ export async function updateSession(request: NextRequest) {
 
   // 로그인된 사용자의 프로필 완성 여부 확인
   if (user && !isPublicRoute && !isOnboardingRoute) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("user_id")
+      .select("user_id, display_name")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
+
+    console.log("[Middleware] Profile check for protected route:", {
+      userId: user.id,
+      profile,
+      profileError,
+      pathname,
+    });
 
     // 프로필이 없으면 온보딩으로 리다이렉트
     if (!profile) {
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding/profile";
+      console.log("[Middleware] Redirecting to onboarding (no profile)");
       return NextResponse.redirect(url);
     }
   }
 
   // 이미 프로필이 있는 사용자가 온보딩 접근 시 메인으로 리다이렉트
   if (user && isOnboardingRoute) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("user_id")
+      .select("user_id, display_name")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
+
+    console.log("[Middleware] Profile check for onboarding route:", {
+      userId: user.id,
+      profile,
+      profileError,
+      pathname,
+    });
 
     if (profile) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
+      console.log("[Middleware] Redirecting to main (profile exists)");
       return NextResponse.redirect(url);
     }
   }

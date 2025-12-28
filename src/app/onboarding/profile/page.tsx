@@ -40,18 +40,36 @@ export default function OnboardingProfilePage() {
         return;
       }
 
+      // 먼저 기존 프로필 확인
+      const { data: existingProfile, error: checkError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      console.log("[Profile Check]", { existingProfile, checkError });
+
+      if (existingProfile) {
+        // 이미 프로필이 있음 - 메인으로 이동
+        router.push("/");
+        router.refresh();
+        return;
+      }
+
       const { error: insertError } = await supabase.from("profiles").insert({
         user_id: user.id,
         display_name: trimmedName,
         email: user.email || "",
       });
 
+      console.log("[Profile Insert]", { insertError, code: insertError?.code, message: insertError?.message, details: insertError?.details });
+
       if (insertError) {
         console.error("Profile insert error:", insertError);
         if (insertError.code === "23505") {
           setError("이미 프로필이 등록되어 있습니다.");
         } else {
-          setError("프로필 저장에 실패했습니다. 다시 시도해주세요.");
+          setError(`프로필 저장에 실패했습니다: ${insertError.message || "알 수 없는 오류"}`);
         }
         setIsLoading(false);
         return;
