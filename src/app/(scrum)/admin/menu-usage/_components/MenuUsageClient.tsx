@@ -58,16 +58,17 @@ export function MenuUsageClient({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-[#24292f]">Menu Usage Analytics</h1>
-          <p className="text-sm mt-1 text-[#57606a]">
-            실시간 메뉴/페이지 사용 분석 (최근 {initialWeeks}주)
-          </p>
+    <div className="min-h-[calc(100vh-5rem)] bg-white">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-[#24292f]">Menu Usage Analytics</h1>
+            <p className="text-sm mt-1 text-[#57606a]">
+              실시간 메뉴/페이지 사용 분석 (최근 {initialWeeks}주)
+            </p>
+          </div>
         </div>
-      </div>
 
       {/* Filters */}
       <div className="p-4 bg-[#f6f8fa] border border-[#d0d7de] rounded-md space-y-4">
@@ -194,10 +195,11 @@ export function MenuUsageClient({
         </div>
       </div>
 
-      {/* Tables */}
-      {activeTab === "menu" && <MenuUsageTable data={menuUsage} />}
-      {activeTab === "page" && <PageUsageTable data={pageUsage} />}
-      {activeTab === "user" && <UserMenuUsageTable data={userMenuUsage} />}
+        {/* Tables */}
+        {activeTab === "menu" && <MenuUsageTable data={menuUsage} />}
+        {activeTab === "page" && <PageUsageTable data={pageUsage} />}
+        {activeTab === "user" && <UserMenuUsageTable data={userMenuUsage} />}
+      </div>
     </div>
   );
 }
