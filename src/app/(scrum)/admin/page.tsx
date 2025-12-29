@@ -11,23 +11,30 @@ const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
  */
 function getISOWeekInfo(date: Date) {
   // 복사본으로 작업
-  const target = new Date(date.getTime());
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   
-  // 목요일로 조정 (ISO 8601: 목요일이 속한 연도가 해당 주의 연도)
-  target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
+  // ISO 8601: 목요일이 속한 연도가 해당 주의 연도
+  // 해당 주의 목요일 날짜 구하기
+  const dayOfWeek = target.getUTCDay();
+  const nearestThursday = new Date(target.getTime());
+  nearestThursday.setUTCDate(target.getUTCDate() + 4 - (dayOfWeek || 7));
   
-  // 해당 연도의 1월 4일 (항상 1주차에 포함)
-  const jan4 = new Date(target.getFullYear(), 0, 4);
+  // 목요일이 속한 연도
+  const yearOfThursday = nearestThursday.getUTCFullYear();
+  
+  // 그 연도의 1월 4일 (항상 W01에 포함)
+  const jan4 = new Date(Date.UTC(yearOfThursday, 0, 4));
   
   // 1월 4일이 포함된 주의 월요일
+  const jan4DayOfWeek = jan4.getUTCDay();
   const firstMonday = new Date(jan4.getTime());
-  firstMonday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+  firstMonday.setUTCDate(jan4.getUTCDate() - (jan4DayOfWeek === 0 ? 6 : jan4DayOfWeek - 1));
   
   // 주차 계산
-  const weekNumber = 1 + Math.round(((target.getTime() - firstMonday.getTime()) / 86400000) / 7);
+  const weekNumber = Math.floor((nearestThursday.getTime() - firstMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
   
   return { 
-    year: target.getFullYear(), 
+    year: yearOfThursday, 
     week: weekNumber 
   };
 }
