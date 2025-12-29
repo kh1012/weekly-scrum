@@ -195,13 +195,21 @@ export function TeamFeedFilterPanel({
         />
       )}
 
-      {/* Filter panel */}
+      {/* Filter panel - Desktop: 좌측 고정, Mobile: 하단 Sheet */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#d0d7de] overflow-y-auto transition-transform lg:translate-x-0 h-screen ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`
+          fixed lg:static z-50 bg-white border-[#d0d7de] overflow-y-auto transition-transform
+          lg:inset-y-0 lg:left-0 lg:w-64 lg:border-r lg:translate-x-0 lg:h-screen
+          inset-x-0 bottom-0 max-h-[70vh] rounded-t-2xl border-t shadow-2xl
+          ${isOpen ? "translate-y-0" : "translate-y-full lg:translate-y-0"}
+        `}
       >
         <div className="p-4 space-y-4">
+          {/* Mobile Sheet 드래그 핸들 */}
+          <div className="lg:hidden flex justify-center -mt-2 mb-2">
+            <div className="w-12 h-1 bg-[#d0d7de] rounded-full" />
+          </div>
+
           {/* Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#24292f]">필터</h2>
