@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServerClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
 // Service role client (bypasses RLS)
 function createServiceRoleClient() {
@@ -31,23 +31,19 @@ function createServiceRoleClient() {
 // Excluded emails (developers/test accounts)
 const EXCLUDED_EMAILS = ["kh1012@midasit.com", "zrelor@gmail.com"];
 
-// Get current user from session
+// Get current user from session using server client
 async function getCurrentUser() {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("sb-access-token")?.value;
-
-    if (!sessionCookie) return null;
-
-    const supabase = createServiceRoleClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser(sessionCookie);
+    } = await supabase.auth.getUser();
 
     if (error || !user) return null;
     return { id: user.id, email: user.email };
-  } catch {
+  } catch (error) {
+    console.error("[Telemetry] Error getting current user:", error);
     return null;
   }
 }
