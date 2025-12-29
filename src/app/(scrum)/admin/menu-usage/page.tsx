@@ -69,6 +69,7 @@ export default async function MenuUsagePage({ searchParams }: PageProps) {
       initialWeeks={weeksLimit}
       initialMenuGroup={menuGroup}
       initialEventType={eventType}
+      workspaceId={DEFAULT_WORKSPACE_ID}
     />
   );
 }

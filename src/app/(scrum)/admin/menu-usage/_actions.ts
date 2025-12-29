@@ -5,12 +5,11 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createServerClient } from "@supabase/supabase-js";
 
 /**
  * Get recent menu events for debugging
  */
-export async function getRecentMenuEvents() {
+export async function getRecentMenuEvents(workspaceId: string) {
   const supabase = await createClient();
 
   const { data: userData } = await supabase.auth.getUser();
@@ -18,22 +17,11 @@ export async function getRecentMenuEvents() {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Get workspace_id from profiles
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("user_id", userData.user.id)
-    .single();
-
-  if (!profile?.workspace_id) {
-    return { success: false, error: "No workspace found" };
-  }
-
   // Get recent menu events
   const { data, error } = await supabase
     .from("menu_events")
     .select("*")
-    .eq("workspace_id", profile.workspace_id)
+    .eq("workspace_id", workspaceId)
     .order("occurred_at", { ascending: false })
     .limit(50);
 
@@ -48,7 +36,7 @@ export async function getRecentMenuEvents() {
 /**
  * Get view data for debugging
  */
-export async function getViewData() {
+export async function getViewData(workspaceId: string) {
   const supabase = await createClient();
 
   const { data: userData } = await supabase.auth.getUser();
@@ -56,35 +44,24 @@ export async function getViewData() {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Get workspace_id from profiles
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("workspace_id")
-    .eq("user_id", userData.user.id)
-    .single();
-
-  if (!profile?.workspace_id) {
-    return { success: false, error: "No workspace found" };
-  }
-
   // Get data from all views
   const [menuUsage, pageUsage, userMenuUsage] = await Promise.all([
     supabase
       .from("v_menu_usage_weekly")
       .select("*")
-      .eq("workspace_id", profile.workspace_id)
+      .eq("workspace_id", workspaceId)
       .order("week_start_seoul", { ascending: false })
       .limit(10),
     supabase
       .from("v_page_usage_weekly")
       .select("*")
-      .eq("workspace_id", profile.workspace_id)
+      .eq("workspace_id", workspaceId)
       .order("week_start_seoul", { ascending: false })
       .limit(10),
     supabase
       .from("v_user_menu_usage_weekly")
       .select("*")
-      .eq("workspace_id", profile.workspace_id)
+      .eq("workspace_id", workspaceId)
       .order("week_start_seoul", { ascending: false })
       .limit(10),
   ]);

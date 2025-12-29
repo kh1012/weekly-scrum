@@ -30,6 +30,7 @@ interface MenuUsageClientProps {
   initialWeeks: number;
   initialMenuGroup?: string;
   initialEventType?: string;
+  workspaceId: string;
 }
 
 export function MenuUsageClient({
@@ -39,6 +40,7 @@ export function MenuUsageClient({
   initialWeeks,
   initialMenuGroup,
   initialEventType,
+  workspaceId,
 }: MenuUsageClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"menu" | "page" | "user">("menu");
@@ -65,17 +67,18 @@ export function MenuUsageClient({
 
   const handleDebugData = async () => {
     console.log("=== Menu Usage Debug ===");
+    console.log("0. Workspace ID:", workspaceId);
 
     // Test current user
     const userResult = await testCurrentUser();
     console.log("1. Current User:", userResult);
 
     // Get recent menu events
-    const eventsResult = await getRecentMenuEvents();
+    const eventsResult = await getRecentMenuEvents(workspaceId);
     console.log("2. Recent Menu Events (50):", eventsResult);
 
     // Get view data
-    const viewsResult = await getViewData();
+    const viewsResult = await getViewData(workspaceId);
     console.log("3. View Data:", viewsResult);
 
     alert("디버그 정보가 콘솔에 출력되었습니다. F12를 눌러 개발자 도구를 확인하세요.");
