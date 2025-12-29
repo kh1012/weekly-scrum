@@ -85,23 +85,25 @@ export async function POST(request: NextRequest) {
     const user_email = currentUser?.email || null;
 
     // Skip telemetry for excluded emails (developers/test accounts)
-    if (user_email && EXCLUDED_EMAILS.includes(user_email.toLowerCase())) {
-      return NextResponse.json({
-        success: true,
-        logged: false,
-        reason: "excluded_user",
-      });
-    }
+    // TEMPORARILY DISABLED FOR TESTING
+    // if (user_email && EXCLUDED_EMAILS.includes(user_email.toLowerCase())) {
+    //   return NextResponse.json({
+    //     success: true,
+    //     logged: false,
+    //     reason: "excluded_user",
+    //   });
+    // }
 
     // Skip telemetry for localhost referrer (development/testing)
     const actualReferrer = referrer || request.headers.get("referer") || "";
-    if (actualReferrer.includes("localhost")) {
-      return NextResponse.json({
-        success: true,
-        logged: false,
-        reason: "localhost_referrer",
-      });
-    }
+    // TEMPORARILY DISABLED FOR TESTING
+    // if (actualReferrer.includes("localhost")) {
+    //   return NextResponse.json({
+    //     success: true,
+    //     logged: false,
+    //     reason: "localhost_referrer",
+    //   });
+    // }
 
     // Extract user_agent and device
     const user_agent = request.headers.get("user-agent") || undefined;
