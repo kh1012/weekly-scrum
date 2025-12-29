@@ -487,57 +487,57 @@ function NewSnapshotViewInner({
     return (
       <div className="h-[calc(100vh-3.5rem)] flex flex-col">
         {/* 상단 헤더 - 좌측 정렬 */}
-        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => {
-                navigationProgress.start();
-                router.push("/manage/snapshots");
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+        <div className="px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 border-b border-gray-100">
+          <button
+            onClick={() => {
+              navigationProgress.start();
+              router.push("/manage/snapshots");
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
             >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            <span className="hidden sm:inline">스냅샷 목록으로</span>
+            <span className="sm:hidden">목록</span>
+          </button>
+
+          <div className="hidden sm:block h-4 w-px bg-gray-200" />
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 shadow-lg shadow-rose-500/25 shrink-0">
               <svg
-                className="w-4 h-4"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2}
+                strokeWidth={1.5}
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              스냅샷 목록으로
-            </button>
-
-            <div className="h-4 w-px bg-gray-200" />
-
-            <div className="flex items-center gap-3">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 shadow-lg shadow-rose-500/25">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-                  스냅샷 관리
-                </h1>
-                <p className="text-sm text-gray-500">
-                  {year}년 W{week.toString().padStart(2, "0")} ({weekRange})
-                </p>
-              </div>
+            </div>
+            <div>
+              <h1 className="text-base sm:text-xl font-bold text-gray-900 tracking-tight">
+                스냅샷 관리
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500">
+                <span className="hidden sm:inline">{year}년 </span>
+                W{week.toString().padStart(2, "0")} <span className="hidden sm:inline">({weekRange})</span>
+              </p>
             </div>
           </div>
         </div>
@@ -666,14 +666,14 @@ function NewSnapshotViewInner({
     return (
       <div className="h-[calc(100vh-3.5rem)] flex flex-col">
         {/* 상단 헤더 */}
-        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
-          <div className="flex items-center gap-4">
+        <div className="px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100">
+          <div className="flex items-center gap-3 sm:gap-4 flex-1">
             <button
               onClick={() => {
                 navigationProgress.start();
                 router.push("/manage/snapshots");
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all shrink-0"
             >
               <svg
                 className="w-4 h-4"
@@ -688,15 +688,16 @@ function NewSnapshotViewInner({
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
-              스냅샷 목록으로
+              <span className="hidden sm:inline">스냅샷 목록으로</span>
+              <span className="sm:hidden">목록</span>
             </button>
 
-            <div className="h-4 w-px bg-gray-200" />
+            <div className="hidden sm:block h-4 w-px bg-gray-200" />
 
-            <div className="flex items-center gap-3">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25 shrink-0">
                 <svg
-                  className="w-5 h-5 text-white"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -709,12 +710,13 @@ function NewSnapshotViewInner({
                   />
                 </svg>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-gray-900 tracking-tight truncate">
                   데이터 불러오기
                 </h1>
-                <p className="text-sm text-gray-500">
-                  {year}년 W{week.toString().padStart(2, "0")} ({weekRange})
+                <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <span className="hidden sm:inline">{year}년 </span>
+                  W{week.toString().padStart(2, "0")} <span className="hidden sm:inline">({weekRange})</span>
                 </p>
               </div>
             </div>
@@ -724,7 +726,7 @@ function NewSnapshotViewInner({
           <button
             onClick={handleLoadFromWeeks}
             disabled={selectedWeeks.size === 0}
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl transition-all ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-medium rounded-lg sm:rounded-xl transition-all shrink-0 ${
               selectedWeeks.size > 0
                 ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -743,7 +745,8 @@ function NewSnapshotViewInner({
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
               />
             </svg>
-            불러오기 ({selectedWeeks.size})
+            <span className="hidden xs:inline">불러오기 ({selectedWeeks.size})</span>
+            <span className="xs:hidden">({selectedWeeks.size})</span>
           </button>
         </div>
 
@@ -957,14 +960,14 @@ function NewSnapshotViewInner({
   return (
     <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* 상단 툴바 */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 overflow-x-auto">
           <button
             onClick={() => {
               navigationProgress.start();
               router.push("/manage/snapshots");
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all shrink-0"
           >
             <svg
               className="w-4 h-4"
@@ -979,30 +982,34 @@ function NewSnapshotViewInner({
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            <span className="text-xs font-medium">스냅샷 목록으로</span>
+            <span className="text-xs font-medium hidden sm:inline">스냅샷 목록으로</span>
+            <span className="text-xs font-medium sm:hidden">목록</span>
           </button>
 
-          <div className="h-4 w-px bg-gray-200" />
+          <div className="hidden sm:block h-4 w-px bg-gray-200" />
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900">
-              {year}년 W{week.toString().padStart(2, "0")}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <span className="text-xs sm:text-sm font-semibold text-gray-900 whitespace-nowrap">
+              <span className="hidden sm:inline">{year}년 </span>
+              W{week.toString().padStart(2, "0")}
             </span>
-            <span className="text-sm text-gray-500">({weekRange})</span>
-            <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full">
+            <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap hidden sm:inline">
+              ({weekRange})
+            </span>
+            <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full whitespace-nowrap">
               신규
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="hidden sm:flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-xs font-medium text-gray-700">
+            <span className="text-xs font-medium text-gray-700 whitespace-nowrap">
               {tempSnapshots.length}개 엔트리
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
           {/* 신규 등록하기 버튼 */}
           <LoadingButton
             onClick={handleSaveClick}
@@ -1010,7 +1017,7 @@ function NewSnapshotViewInner({
             isLoading={isSaving}
             loadingText="저장 중..."
             variant="primary"
-            size="md"
+            size="sm"
             icon={
               <svg
                 className="w-4 h-4"
@@ -1027,7 +1034,8 @@ function NewSnapshotViewInner({
               </svg>
             }
           >
-            신규 등록하기
+            <span className="hidden sm:inline">신규 등록하기</span>
+            <span className="sm:hidden">등록</span>
           </LoadingButton>
         </div>
       </div>

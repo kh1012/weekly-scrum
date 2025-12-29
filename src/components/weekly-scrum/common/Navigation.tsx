@@ -182,12 +182,6 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         icon: Icons.house,
       },
       {
-        key: "admin-calendar",
-        label: "Weekly Log",
-        href: "/calendar",
-        icon: Icons.calendarDays,
-      },
-      {
         key: "admin-plans",
         label: "Plans Management",
         href: "/admin/plans",
