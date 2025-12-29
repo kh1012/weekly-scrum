@@ -4,16 +4,32 @@ import { AdminDashboardView } from "./_components/AdminDashboardView";
 const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
- * ISO 주차 계산 헬퍼
+ * ISO 주차 계산 헬퍼 (ISO 8601 표준)
+ * - 주는 월요일부터 시작
+ * - 1월 4일이 포함된 주가 1주차
+ * - 연도는 해당 주의 목요일이 속한 연도
  */
 function getISOWeekInfo(date: Date) {
-  const jan4 = new Date(date.getFullYear(), 0, 4);
-  const dayOfWeek = jan4.getDay() || 7;
-  const firstMonday = new Date(jan4);
-  firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
-  const weekDiff = date.getTime() - firstMonday.getTime();
-  const currentWeek = Math.ceil(weekDiff / (7 * 24 * 60 * 60 * 1000));
-  return { year: date.getFullYear(), week: currentWeek };
+  // 복사본으로 작업
+  const target = new Date(date.getTime());
+  
+  // 목요일로 조정 (ISO 8601: 목요일이 속한 연도가 해당 주의 연도)
+  target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
+  
+  // 해당 연도의 1월 4일 (항상 1주차에 포함)
+  const jan4 = new Date(target.getFullYear(), 0, 4);
+  
+  // 1월 4일이 포함된 주의 월요일
+  const firstMonday = new Date(jan4.getTime());
+  firstMonday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+  
+  // 주차 계산
+  const weekNumber = 1 + Math.round(((target.getTime() - firstMonday.getTime()) / 86400000) / 7);
+  
+  return { 
+    year: target.getFullYear(), 
+    week: weekNumber 
+  };
 }
 
 /**
@@ -41,7 +57,8 @@ export default async function AdminDashboardPage() {
 
   // 최근 6주차 정보
   const recentWeeks = getRecentWeeks(6);
-  const currentWeek = recentWeeks[0];
+  const currentWeek = recentWeeks[0]; // 이번 주 (실제로는 표시 안 함)
+  const lastWeek = recentWeeks[1]; // 지난 주 (메인으로 표시)
 
   // 1. 워크스페이스 멤버 조회
   const { data: members } = await supabase
@@ -147,13 +164,13 @@ export default async function AdminDashboardPage() {
   const totalSnapshots = snapshots?.length || 0;
   const totalEntries = entries?.length || 0;
 
-  // 이번 주 작성 완료자 수
-  const currentWeekKey = `${currentWeek.year}-${currentWeek.label}`;
-  const completedThisWeek = memberDataList.filter(
-    (m) => (m.weeklyEntries[currentWeekKey] || 0) > 0
+  // 지난 주 작성 완료자 수
+  const lastWeekKey = `${lastWeek.year}-${lastWeek.label}`;
+  const completedLastWeek = memberDataList.filter(
+    (m) => (m.weeklyEntries[lastWeekKey] || 0) > 0
   ).length;
 
-  // 이번 주 부담 수준 통계
+  // 지난 주 부담 수준 통계
   const workloadStats = {
     light: 0,
     normal: 0,
@@ -161,7 +178,7 @@ export default async function AdminDashboardPage() {
   };
   
   memberDataList.forEach((m) => {
-    const workload = m.weeklyWorkload[currentWeekKey];
+    const workload = m.weeklyWorkload[lastWeekKey];
     if (workload?.level === 'light') workloadStats.light++;
     else if (workload?.level === 'normal') workloadStats.normal++;
     else if (workload?.level === 'burden') workloadStats.burden++;
@@ -173,14 +190,14 @@ export default async function AdminDashboardPage() {
         totalMembers,
         totalSnapshots,
         totalEntries,
-        completedThisWeek,
+        completedLastWeek,
         workloadLight: workloadStats.light,
         workloadNormal: workloadStats.normal,
         workloadBurden: workloadStats.burden,
       }}
       recentWeeks={recentWeeks}
       memberDataList={memberDataList}
-      currentWeekKey={currentWeekKey}
+      lastWeekKey={lastWeekKey}
     />
   );
 }
