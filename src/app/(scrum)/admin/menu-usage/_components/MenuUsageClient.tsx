@@ -17,6 +17,11 @@ import type {
   PageUsageWeekly,
   UserMenuUsageWeekly,
 } from "@/lib/data/menuUsage";
+import {
+  getRecentMenuEvents,
+  getViewData,
+  testCurrentUser,
+} from "../_actions";
 
 interface MenuUsageClientProps {
   menuUsage: MenuUsageWeekly[];
@@ -58,6 +63,24 @@ export function MenuUsageClient({
     router.push("/admin/menu-usage");
   };
 
+  const handleDebugData = async () => {
+    console.log("=== Menu Usage Debug ===");
+
+    // Test current user
+    const userResult = await testCurrentUser();
+    console.log("1. Current User:", userResult);
+
+    // Get recent menu events
+    const eventsResult = await getRecentMenuEvents();
+    console.log("2. Recent Menu Events (50):", eventsResult);
+
+    // Get view data
+    const viewsResult = await getViewData();
+    console.log("3. View Data:", viewsResult);
+
+    alert("디버그 정보가 콘솔에 출력되었습니다. F12를 눌러 개발자 도구를 확인하세요.");
+  };
+
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-white">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6">
@@ -69,6 +92,13 @@ export function MenuUsageClient({
               실시간 메뉴/페이지 사용 분석 (최근 {initialWeeks}주)
             </p>
           </div>
+          <button
+            onClick={handleDebugData}
+            className="px-3 py-2 text-xs font-medium text-[#57606a] hover:text-[#24292f] border border-[#d0d7de] hover:bg-[#f6f8fa] rounded-md transition-colors"
+            title="디버그 정보를 콘솔에 출력합니다"
+          >
+            🐛 Debug
+          </button>
         </div>
 
       {/* Filters */}
