@@ -411,12 +411,6 @@ function MenuUsageTable({ data }: { data: MenuUsageWeekly[] }) {
         <thead className="bg-[#f6f8fa] border-b border-[#d0d7de]">
           <tr>
             <SortableHeader
-              label="주차"
-              sortKey="week_start_seoul"
-              currentSort={sortConfig}
-              onSort={handleSort}
-            />
-            <SortableHeader
               label="그룹"
               sortKey="menu_group"
               currentSort={sortConfig}
@@ -456,9 +450,6 @@ function MenuUsageTable({ data }: { data: MenuUsageWeekly[] }) {
               key={idx}
               className="hover:bg-[#f6f8fa] transition-colors"
             >
-              <td className="px-4 py-3 text-[#24292f]">
-                {formatWeek(row.week_start_seoul)}
-              </td>
               <td className="px-4 py-3 text-[#24292f]">
                 {row.menu_group || "-"}
               </td>
@@ -539,12 +530,6 @@ function PageUsageTable({ data }: { data: PageUsageWeekly[] }) {
         <thead className="bg-[#f6f8fa] border-b border-[#d0d7de]">
           <tr>
             <SortableHeader
-              label="주차"
-              sortKey="week_start_seoul"
-              currentSort={sortConfig}
-              onSort={handleSort}
-            />
-            <SortableHeader
               label="페이지 경로"
               sortKey="page_path"
               currentSort={sortConfig}
@@ -572,9 +557,6 @@ function PageUsageTable({ data }: { data: PageUsageWeekly[] }) {
               key={idx}
               className="hover:bg-[#f6f8fa] transition-colors"
             >
-              <td className="px-4 py-3 text-[#24292f]">
-                {formatWeek(row.week_start_seoul)}
-              </td>
               <td className="px-4 py-3 font-mono text-xs text-[#24292f]">
                 {row.page_path}
               </td>
@@ -645,12 +627,6 @@ function UserMenuUsageTable({ data }: { data: UserMenuUsageWeekly[] }) {
         <thead className="bg-[#f6f8fa] border-b border-[#d0d7de]">
           <tr>
             <SortableHeader
-              label="주차"
-              sortKey="week_start_seoul"
-              currentSort={sortConfig}
-              onSort={handleSort}
-            />
-            <SortableHeader
               label="사용자"
               sortKey="display_name"
               currentSort={sortConfig}
@@ -678,9 +654,6 @@ function UserMenuUsageTable({ data }: { data: UserMenuUsageWeekly[] }) {
               className="hover:bg-[#f6f8fa] transition-colors"
             >
               <td className="px-4 py-3 text-[#24292f]">
-                {formatWeek(row.week_start_seoul)}
-              </td>
-              <td className="px-4 py-3 text-[#24292f]">
                 {row.display_name || row.user_id.substring(0, 8)}
               </td>
               <td className="px-4 py-3 text-[#24292f]">
@@ -697,19 +670,3 @@ function UserMenuUsageTable({ data }: { data: UserMenuUsageWeekly[] }) {
   );
 }
 
-/**
- * Format week string (YYYY-MM-DD → YYYY-W##)
- */
-function formatWeek(weekStartSeoul: string): string {
-  try {
-    const date = new Date(weekStartSeoul);
-    const year = date.getFullYear();
-    // Simple week calculation
-    const startOfYear = new Date(year, 0, 1);
-    const diff = date.getTime() - startOfYear.getTime();
-    const week = Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
-    return `${year}-W${week.toString().padStart(2, "0")}`;
-  } catch {
-    return weekStartSeoul;
-  }
-}
