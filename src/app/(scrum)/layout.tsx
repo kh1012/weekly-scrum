@@ -9,6 +9,7 @@ import {
 import { getSupabaseOnlyData } from "@/lib/data/supabaseSnapshots";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceRole } from "@/lib/auth/getWorkspaceRole";
+import { getMenuSettings } from "@/lib/data/menuSettings";
 import { ScrumProvider } from "@/context/ScrumContext";
 import { LayoutWrapper, MainContent } from "@/components/weekly-scrum/common";
 import type { WeekOption, WeeklyScrumData } from "@/types/scrum";
@@ -57,6 +58,14 @@ export default async function ScrumLayout({
   // 현재 유저의 workspace role 조회
   const role = await getWorkspaceRole();
 
+  // 메뉴 설정 조회
+  let menuSettings: Awaited<ReturnType<typeof getMenuSettings>> = [];
+  try {
+    menuSettings = await getMenuSettings(DEFAULT_WORKSPACE_ID);
+  } catch (error) {
+    console.error("[ScrumLayout] Failed to fetch menu settings:", error);
+  }
+
   let allData: Record<string, WeeklyScrumData>;
   let weeks: WeekOption[];
 
@@ -94,7 +103,7 @@ export default async function ScrumLayout({
         weeks={mockWeeks}
         initialWeekKey={mockKey}
       >
-        <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID}>
+        <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID} menuSettings={menuSettings}>
           <MainContent>{children}</MainContent>
         </LayoutWrapper>
       </ScrumProvider>
@@ -109,7 +118,7 @@ export default async function ScrumLayout({
       weeks={weeks}
       initialWeekKey={initialWeekKey}
     >
-      <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID}>
+      <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID} menuSettings={menuSettings}>
         <MainContent>{children}</MainContent>
       </LayoutWrapper>
     </ScrumProvider>

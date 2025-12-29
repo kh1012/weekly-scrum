@@ -8,6 +8,7 @@ import { SideNavigation } from "./Navigation";
 import { Logo } from "./Logo";
 import { TelemetryProvider } from "@/components/telemetry/TelemetryProvider";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
+import type { MenuSetting } from "@/lib/data/menuSettings";
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -15,6 +16,8 @@ interface LayoutWrapperProps {
   role?: WorkspaceRole;
   /** 현재 워크스페이스 ID (텔레메트리용) */
   workspaceId?: string;
+  /** 메뉴 설정 */
+  menuSettings?: MenuSetting[];
 }
 
 // max-w-full을 적용할 페이지 경로
@@ -96,9 +99,10 @@ interface DrawerNavigationProps {
   onClose: () => void;
   role?: WorkspaceRole;
   workspaceId?: string;
+  menuSettings?: MenuSetting[];
 }
 
-function DrawerNavigation({ isOpen, onClose, role, workspaceId }: DrawerNavigationProps) {
+function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings }: DrawerNavigationProps) {
   // ESC 키로 닫기
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -175,14 +179,14 @@ function DrawerNavigation({ isOpen, onClose, role, workspaceId }: DrawerNavigati
 
         {/* 네비게이션 - 스크롤 가능 영역 */}
         <div className="flex-1 overflow-y-auto py-2">
-          <SideNavigation onItemClick={onClose} role={role} workspaceId={workspaceId} />
+          <SideNavigation onItemClick={onClose} role={role} workspaceId={workspaceId} menuSettings={menuSettings} />
         </div>
       </aside>
     </>
   );
 }
 
-export function LayoutWrapper({ children, role, workspaceId }: LayoutWrapperProps) {
+export function LayoutWrapper({ children, role, workspaceId, menuSettings }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -221,6 +225,7 @@ export function LayoutWrapper({ children, role, workspaceId }: LayoutWrapperProp
         onClose={() => setIsMenuOpen(false)}
         role={role}
         workspaceId={workspaceId}
+        menuSettings={menuSettings}
       />
 
       {/* 메인 영역 */}

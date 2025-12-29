@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useVisitorCount } from "@/hooks/useVisitorCount";
 import { RELEASES } from "../releases/releaseData";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
+import type { MenuSetting } from "@/lib/data/menuSettings";
 import { Logo } from "./Logo";
 import { navigationProgress } from "./NavigationProgress";
 import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
@@ -209,6 +210,12 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         badge: "NEW",
         tagVariant: "orange",
       },
+      {
+        key: "admin-menu-settings",
+        label: "Menu Settings",
+        href: "/admin/menu-settings",
+        icon: Icons.cog,
+      },
     ],
   },
   {
@@ -265,16 +272,21 @@ interface SideNavigationProps {
   onItemClick?: () => void;
   role?: WorkspaceRole;
   workspaceId?: string;
+  menuSettings?: MenuSetting[];
 }
 
 export function SideNavigation({
   onItemClick,
   role = "member",
   workspaceId = "",
+  menuSettings = [],
 }: SideNavigationProps) {
   const isActive = useIsActive();
   const { count, isLoading } = useVisitorCount();
   const navCategories = getNavCategories(role);
+
+  // 메뉴 설정을 Map으로 변환
+  const settingsMap = new Map(menuSettings.map((s) => [s.menu_key, s]));
 
   // 접힌 카테고리 상태
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
@@ -361,6 +373,15 @@ export function SideNavigation({
                     const active = isActive(item.href);
                     const isDisabled = item.disabled;
 
+                    // 메뉴 설정 적용
+                    const setting = settingsMap.get(item.key);
+                    const isEnabled = setting?.is_enabled ?? true; // 기본값: 표시
+                    if (!isEnabled) return null; // 숨김 처리
+
+                    // 태그 오버라이드 (DB 설정 우선)
+                    const badgeLabel = setting?.tag_label || item.badge;
+                    const badgeVariant = setting?.tag_color as typeof item.tagVariant || item.tagVariant || "gray";
+
                     return (
                       <Link
                         key={item.key}
@@ -391,12 +412,12 @@ export function SideNavigation({
                           {item.icon}
                           <span>{item.label}</span>
                         </div>
-                        {item.badge && (
+                        {badgeLabel && (
                           <LiquidGlassTag
-                            variant={item.tagVariant || "gray"}
+                            variant={badgeVariant}
                             shimmer
                           >
-                            {item.badge}
+                            {badgeLabel}
                           </LiquidGlassTag>
                         )}
                       </Link>
