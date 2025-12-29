@@ -1,6 +1,6 @@
 /**
  * Workspace Members Data Layer
- * 
+ *
  * workspace_members 테이블과 profiles 테이블을 조인하여
  * 멤버 정보를 조회하고 관리합니다.
  */
@@ -35,7 +35,7 @@ export interface WorkspaceMember {
   role: string;
   email: string | null;
   display_name: string | null;
-  joined_at: string;
+  joined_at: string; // workspace_members.created_at (실제 가입일)
 }
 
 /**
@@ -46,13 +46,13 @@ export async function listWorkspaceMembers(
 ): Promise<WorkspaceMember[]> {
   const supabase = await createClient();
 
-  // 1. workspace_members 조회
+  // 1. workspace_members 조회 (created_at = 실제 가입일)
   const { data: members, error: membersError } = await supabase
     .from("workspace_members")
-    .select("user_id, workspace_id, role, joined_at")
+    .select("user_id, workspace_id, role, created_at")
     .eq("workspace_id", workspaceId)
     .order("role")
-    .order("joined_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (membersError) {
     console.error("[WorkspaceMembers] List error:", membersError);
@@ -76,9 +76,7 @@ export async function listWorkspaceMembers(
   }
 
   // 3. 데이터 병합
-  const profileMap = new Map(
-    (profiles || []).map((p) => [p.user_id, p])
-  );
+  const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
 
   return members.map((member) => {
     const profile = profileMap.get(member.user_id);
@@ -88,7 +86,7 @@ export async function listWorkspaceMembers(
       role: member.role,
       email: profile?.email || null,
       display_name: profile?.display_name || null,
-      joined_at: member.joined_at,
+      joined_at: member.created_at, // workspace_members.created_at을 joined_at으로 매핑
     };
   });
 }
@@ -163,4 +161,3 @@ export async function removeMember(
 
   return { success: true };
 }
-
