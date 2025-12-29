@@ -77,7 +77,7 @@ export function LiquidGlassTag({
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "2px 7px",
+          padding: "1px 6px",
           fontSize: "9px",
           fontWeight: 600,
           letterSpacing: "0.5px",
@@ -89,7 +89,7 @@ export function LiquidGlassTag({
           WebkitBackdropFilter: "blur(16px) saturate(100%)",
           // 부드러운 테두리
           border: `1px solid ${style.border}`,
-          borderRadius: "6px",
+          borderRadius: "5px",
           // 내부 광택 효과
           boxShadow: `
           inset 0 1px 1px rgba(255, 255, 255, 0.4),

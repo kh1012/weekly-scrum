@@ -146,6 +146,10 @@ function NewSnapshotViewInner({
   const [workloadNote, setWorkloadNote] = useState("");
   const [showWorkloadModal, setShowWorkloadModal] = useState(false);
 
+  // 모바일 Drawer 상태
+  const [mobileCardDrawerOpen, setMobileCardDrawerOpen] = useState(false);
+  const [mobilePreviewDrawerOpen, setMobilePreviewDrawerOpen] = useState(false);
+
   // 본인 주차별 데이터 불러오기
   const fetchMyEntries = useCallback(async () => {
     setIsLoadingMyData(true);
@@ -1010,6 +1014,30 @@ function NewSnapshotViewInner({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
+          {/* 모바일: 카드 리스트 버튼 */}
+          <button
+            onClick={() => setMobileCardDrawerOpen(true)}
+            className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            <span className="hidden xs:inline">카드</span>
+          </button>
+
+          {/* 모바일: 미리보기 버튼 */}
+          <button
+            onClick={() => setMobilePreviewDrawerOpen(true)}
+            disabled={!selectedSnapshot}
+            className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span className="hidden xs:inline">미리보기</span>
+          </button>
+
           {/* 신규 등록하기 버튼 */}
           <LoadingButton
             onClick={handleSaveClick}
@@ -1120,6 +1148,116 @@ function NewSnapshotViewInner({
           </>
         )}
       </div>
+
+      {/* 모바일: 카드 리스트 Drawer */}
+      {mobileCardDrawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setMobileCardDrawerOpen(false)}
+          />
+
+          {/* Drawer */}
+          <div className="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col">
+            {/* Handle */}
+            <div className="flex justify-center py-3 border-b border-gray-200">
+              <div className="w-12 h-1 bg-gray-300 rounded-full" />
+            </div>
+
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">카드 리스트</h3>
+              <button
+                onClick={() => setMobileCardDrawerOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              <SnapshotCardList
+                ref={cardListRef}
+                snapshots={tempSnapshots}
+                selectedId={selectedId}
+                onSelectCard={(id) => {
+                  handleSelectCard(id);
+                  setMobileCardDrawerOpen(false);
+                }}
+                onDeleteCard={handleDeleteCard}
+                onDuplicateCard={handleDuplicateCard}
+                onCopyJson={handleCopyCardJson}
+                onCopyPlainText={handleCopyCardPlainText}
+                onAddEmpty={handleAddEmpty}
+                onCopyAllJson={handleCopyAllJson}
+                onCopyAllPlainText={handleCopyAllPlainText}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 모바일: 미리보기 Drawer */}
+      {mobilePreviewDrawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setMobilePreviewDrawerOpen(false)}
+          />
+
+          {/* Drawer */}
+          <div className="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col">
+            {/* Handle */}
+            <div className="flex justify-center py-3 border-b border-gray-200">
+              <div className="w-12 h-1 bg-gray-300 rounded-full" />
+            </div>
+
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">미리보기</h3>
+              <button
+                onClick={() => setMobilePreviewDrawerOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              {selectedSnapshot ? (
+                <PlainTextPreview
+                  snapshot={selectedSnapshot}
+                  onCopy={handleCopyCurrentPlainText}
+                  focusedSection={
+                    focusedSection as
+                      | import("@/components/weekly-scrum/manage/PlainTextPreview").PreviewSection
+                      | null
+                  }
+                  onSectionClick={(section) => setFocusedSection(section)}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full p-8 text-center">
+                  <div>
+                    <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <p className="text-sm text-gray-500">카드를 선택하면 미리보기가 표시됩니다</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Workload Level 모달 */}
       <WorkloadLevelModal

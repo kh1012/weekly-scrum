@@ -380,7 +380,10 @@ export function SideNavigation({
 
                     // 태그 오버라이드 (DB 설정 우선)
                     const badgeLabel = setting?.tag_label || item.badge;
-                    const badgeVariant = setting?.tag_color as typeof item.tagVariant || item.tagVariant || "gray";
+                    const badgeVariant =
+                      (setting?.tag_color as typeof item.tagVariant) ||
+                      item.tagVariant ||
+                      "gray";
 
                     return (
                       <Link
@@ -400,7 +403,7 @@ export function SideNavigation({
                           }
                           onItemClick?.();
                         }}
-                        className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${
+                        className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors min-h-[36px] ${
                           isDisabled
                             ? "opacity-50 cursor-not-allowed"
                             : active
@@ -413,10 +416,7 @@ export function SideNavigation({
                           <span>{item.label}</span>
                         </div>
                         {badgeLabel && (
-                          <LiquidGlassTag
-                            variant={badgeVariant}
-                            shimmer
-                          >
+                          <LiquidGlassTag variant={badgeVariant} shimmer>
                             {badgeLabel}
                           </LiquidGlassTag>
                         )}
