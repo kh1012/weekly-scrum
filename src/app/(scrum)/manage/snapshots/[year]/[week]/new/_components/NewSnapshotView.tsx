@@ -794,7 +794,7 @@ function NewSnapshotViewInner({
           ) : (
             <>
               {/* 좌측: 주차 선택 목록 */}
-              <div className="w-80 border-r border-gray-100 bg-gray-50/50 flex flex-col shrink-0">
+              <div className="w-full lg:w-80 border-r border-gray-100 bg-gray-50/50 flex flex-col shrink-0">
                 {/* 헤더 */}
                 <div className="px-5 py-4 border-b border-gray-100 bg-white">
                   <div className="flex items-center justify-between">
@@ -887,7 +887,7 @@ function NewSnapshotViewInner({
               </div>
 
               {/* 우측: 선택된 주차의 엔트리 카드 목록 */}
-              <div className="flex-1 overflow-y-auto bg-gray-50/30">
+              <div className="hidden lg:flex flex-1 overflow-y-auto bg-gray-50/30">
                 {selectedWeeks.size === 0 ? (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">
@@ -1044,7 +1044,7 @@ function NewSnapshotViewInner({
       <div className="flex-1 flex min-h-0">
         {/* 좌측: 카드 리스트 */}
         <div
-          className="border-r border-gray-100 bg-white flex flex-col shrink-0"
+          className="hidden lg:flex border-r border-gray-100 bg-white flex-col shrink-0"
           style={{ width: leftPanelWidth }}
         >
           <SnapshotCardList
@@ -1062,15 +1062,17 @@ function NewSnapshotViewInner({
           />
         </div>
 
-        <ResizeHandle onResize={handleLeftResize} />
+        <div className="hidden lg:block">
+          <ResizeHandle onResize={handleLeftResize} />
+        </div>
 
         {/* 중앙: 편집 폼 */}
         <div
-          className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white"
+          className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white w-full lg:w-auto"
           style={{
-            width: forceThreeColumn
+            width: forceThreeColumn && typeof window !== 'undefined' && window.innerWidth >= 1024
               ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
-              : "100%",
+              : undefined,
           }}
         >
           {selectedSnapshot ? (
@@ -1100,8 +1102,10 @@ function NewSnapshotViewInner({
         {/* 우측: 미리보기 */}
         {forceThreeColumn && (
           <>
-            <ResizeHandle onResize={handleEditPreviewResize} />
-            <div className="overflow-hidden min-w-0 flex-1">
+            <div className="hidden lg:block">
+              <ResizeHandle onResize={handleEditPreviewResize} />
+            </div>
+            <div className="hidden lg:block overflow-hidden min-w-0 flex-1">
               <PlainTextPreview
                 snapshot={selectedSnapshot}
                 onCopy={handleCopyCurrentPlainText}
