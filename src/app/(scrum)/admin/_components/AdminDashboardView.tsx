@@ -160,18 +160,18 @@ export function AdminDashboardView({
                       </th>
                     ))}
                   </tr>
-                  <tr className="bg-[#f6f8fa] border-b border-[#d0d7de]">
+                  <tr className="bg-[#f6f8fa] border-t border-b border-[#d0d7de]">
                     {recentWeeks.map((w, idx) => (
                       <React.Fragment key={`${w.year}-${w.label}-sub`}>
                         <th
-                          className={`px-2 py-2 text-center text-[10px] font-medium border-r border-[#d0d7de] ${
+                          className={`px-2 py-2 text-center text-[10px] font-medium border-r border-[#d0d7de] min-w-[48px] ${
                             idx === 0 ? "text-[#0969da] bg-[#ddf4ff]" : "text-[#57606a]"
                           }`}
                         >
                           부담
                         </th>
                         <th
-                          className={`px-2 py-2 text-center text-[10px] font-medium border-r border-[#d0d7de] ${
+                          className={`px-2 py-2 text-center text-[10px] font-medium border-r border-[#d0d7de] min-w-[48px] ${
                             idx === 0 ? "text-[#0969da] bg-[#ddf4ff]" : "text-[#57606a]"
                           }`}
                         >
@@ -228,7 +228,7 @@ export function AdminDashboardView({
                           <React.Fragment key={weekKey}>
                             {/* 부담 수준 열 */}
                             <td
-                              className={`px-2 py-2.5 text-center border-r border-[#d0d7de] ${
+                              className={`px-2 py-2.5 text-center border-r border-[#d0d7de] min-w-[48px] ${
                                 isCurrentWeek ? "bg-[#ddf4ff]" : ""
                               }`}
                             >
@@ -258,7 +258,7 @@ export function AdminDashboardView({
 
                             {/* 엔트리 개수 열 */}
                             <td
-                              className={`px-2 py-2.5 text-center border-r border-[#d0d7de] ${
+                              className={`px-2 py-2.5 text-center border-r border-[#d0d7de] min-w-[48px] ${
                                 isCurrentWeek ? "bg-[#ddf4ff]" : ""
                               }`}
                             >
