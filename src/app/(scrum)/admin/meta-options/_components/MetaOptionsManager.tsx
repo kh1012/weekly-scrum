@@ -204,7 +204,7 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
 
         {/* 카테고리 탭 - GitHub 스타일 */}
         <div className="mb-6 border-b border-[#d0d7de]">
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
             {CATEGORIES.map((category) => (
               <button
                 key={category}
@@ -212,7 +212,7 @@ export function MetaOptionsManager({ workspaceId }: MetaOptionsManagerProps) {
                   setSelectedCategory(category);
                   setSearchTerm("");
                 }}
-                className={`px-4 py-2 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-all border-b-2 whitespace-nowrap ${
                   selectedCategory === category
                     ? "border-[#0969da] text-[#0969da]"
                     : "border-transparent text-[#57606a] hover:text-[#24292f] hover:border-[#d0d7de]"

@@ -272,11 +272,12 @@ export function MetaOptionsTable({
                 </td>
 
                 {/* Actions - GitHub 스타일 */}
-                <td className="py-3 px-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
+                <td className="py-3 px-2 sm:px-4 text-right">
+                  <div className="flex items-center justify-end gap-1 sm:gap-2">
                     <button
                       onClick={() => onEdit(option)}
-                      className="px-3 py-1.5 text-sm font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors"
+                      className="p-2 sm:px-3 sm:py-1.5 text-sm font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors"
+                      title="편집"
                     >
                       <span className="flex items-center gap-1">
                         <svg
@@ -292,12 +293,13 @@ export function MetaOptionsTable({
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                           />
                         </svg>
-                        편집
+                        <span className="hidden sm:inline">편집</span>
                       </span>
                     </button>
                     <button
                       onClick={() => onDelete(option)}
-                      className="px-3 py-1.5 text-sm font-medium text-[#cf222e] hover:bg-[#ffebe9] rounded-md transition-colors"
+                      className="p-2 sm:px-3 sm:py-1.5 text-sm font-medium text-[#cf222e] hover:bg-[#ffebe9] rounded-md transition-colors"
+                      title="삭제"
                     >
                       <span className="flex items-center gap-1">
                         <svg
@@ -313,7 +315,7 @@ export function MetaOptionsTable({
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
-                        삭제
+                        <span className="hidden sm:inline">삭제</span>
                       </span>
                     </button>
                   </div>
