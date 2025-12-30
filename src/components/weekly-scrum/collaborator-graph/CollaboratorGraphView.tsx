@@ -6,6 +6,7 @@ import { useCollaborationData } from "./useCollaborationData";
 import { buildCollabGraph, type GraphNode, type GraphEdge } from "./buildCollabGraph";
 import { WeekChecklist } from "./WeekChecklist";
 import { CollaborationGraph } from "./CollaborationGraph";
+import { StatsCards } from "./StatsCards";
 
 interface CollaboratorGraphViewProps {
   workspaceId: string;
@@ -203,33 +204,12 @@ export function CollaboratorGraphView({
           </div>
 
           {/* Right Panel: Analytics Cards */}
-          <div className="w-80 shrink-0 space-y-4 overflow-y-auto">
-            <div className="bg-white rounded-lg border border-[#d0d7de] p-4">
-              <h2 className="text-sm font-semibold text-[#24292f] mb-3">
-                Overview
-              </h2>
-              <div className="text-center text-xs text-[#57606a] py-4">
-                주차를 선택하면 통계가 표시됩니다
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-[#d0d7de] p-4">
-              <h2 className="text-sm font-semibold text-[#24292f] mb-3">
-                Top 3 Collaborators
-              </h2>
-              <div className="text-center text-xs text-[#57606a] py-4">
-                데이터 없음
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-[#d0d7de] p-4">
-              <h2 className="text-sm font-semibold text-[#24292f] mb-3">
-                Distribution
-              </h2>
-              <div className="text-center text-xs text-[#57606a] py-4">
-                데이터 없음
-              </div>
-            </div>
+          <div className="w-80 shrink-0 overflow-y-auto">
+            <StatsCards
+              stats={graphData.stats}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+            />
           </div>
         </div>
       </div>
