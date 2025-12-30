@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * GET /api/manage/snapshots/counts
  * 
- * 특정 년도의 모든 주차별 본인 엔트리 갯수 조회
+ * 모든 주차별 본인 엔트리 갯수 조회
+ * year 파라미터는 선택적 (없으면 모든 연도 조회)
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId");
   const year = searchParams.get("year");
 
-  if (!workspaceId || !userId || !year) {
+  if (!workspaceId || !userId) {
     return NextResponse.json(
       { error: "Missing required parameters" },
       { status: 400 }
@@ -30,17 +31,23 @@ export async function GET(request: NextRequest) {
 
   const displayName = profile?.display_name;
 
-  // 해당 연도의 모든 스냅샷 조회 (주차 정보 포함)
-  const yearNum = parseInt(year, 10);
-  const yearStart = `${yearNum}-01-01`;
-  const yearEnd = `${yearNum}-12-31`;
-
-  const { data: snapshots, error: snapshotError } = await supabase
+  // 모든 스냅샷 조회 (주차 정보 및 연도 정보 포함)
+  // year 파라미터가 있으면 해당 연도만, 없으면 모든 연도
+  let snapshotsQuery = supabase
     .from("snapshots")
-    .select("id, week")
-    .eq("workspace_id", workspaceId)
-    .gte("week_start_date", yearStart)
-    .lte("week_start_date", yearEnd);
+    .select("id, week, week_start_date")
+    .eq("workspace_id", workspaceId);
+
+  if (year) {
+    const yearNum = parseInt(year, 10);
+    const yearStart = `${yearNum}-01-01`;
+    const yearEnd = `${yearNum}-12-31`;
+    snapshotsQuery = snapshotsQuery
+      .gte("week_start_date", yearStart)
+      .lte("week_start_date", yearEnd);
+  }
+
+  const { data: snapshots, error: snapshotError } = await snapshotsQuery;
 
   if (snapshotError) {
     console.error("Error fetching snapshots:", snapshotError);
@@ -80,11 +87,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // snapshot_id → week 매핑 생성
-  const snapshotWeekMap = new Map<string, string>();
+  // snapshot_id → (week, year) 매핑 생성
+  const snapshotInfoMap = new Map<string, { week: string; year: number }>();
   snapshots.forEach((s) => {
-    if (s.week) {
-      snapshotWeekMap.set(s.id, s.week);
+    if (s.week && s.week_start_date) {
+      // week_start_date에서 ISO 연도 추출
+      const weekStartDate = new Date(s.week_start_date);
+      const isoYear = weekStartDate.getFullYear();
+      snapshotInfoMap.set(s.id, { week: s.week, year: isoYear });
     }
   });
 
@@ -92,10 +102,10 @@ export async function GET(request: NextRequest) {
   const countMap: Record<string, number> = {};
   
   (entries || []).forEach((entry) => {
-    const week = snapshotWeekMap.get(entry.snapshot_id);
-    if (week) {
-      const weekNum = parseInt(week.replace("W", ""), 10);
-      const key = `${yearNum}-${weekNum}`;
+    const info = snapshotInfoMap.get(entry.snapshot_id);
+    if (info) {
+      const weekNum = parseInt(info.week.replace("W", ""), 10);
+      const key = `${info.year}-${weekNum}`;
       countMap[key] = (countMap[key] || 0) + 1;
     }
   });

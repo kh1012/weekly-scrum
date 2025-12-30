@@ -284,8 +284,9 @@ function SnapshotsMainViewInner({
   // 주차별 스냅샷 갯수 조회
   const fetchSnapshotCounts = useCallback(async () => {
     try {
+      // year 파라미터 없이 모든 연도의 스냅샷 카운트 조회
       const response = await fetch(
-        `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}&year=${selectedYear}`
+        `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}`
       );
 
       if (response.ok) {
@@ -298,7 +299,7 @@ function SnapshotsMainViewInner({
     } catch (error) {
       console.error("Failed to fetch snapshot counts:", error);
     }
-  }, [selectedYear, workspaceId, userId]);
+  }, [workspaceId, userId]);
 
   // localStorage 상태 복원이 완료된 후에만 fetch
   useEffect(() => {
