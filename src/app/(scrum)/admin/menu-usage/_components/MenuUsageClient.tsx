@@ -66,22 +66,25 @@ export function MenuUsageClient({
   };
 
   const handleDebugData = async () => {
-    console.log("=== Menu Usage Debug ===");
-    console.log("0. Workspace ID:", workspaceId);
-
     // Test current user
     const userResult = await testCurrentUser();
-    console.log("1. Current User:", userResult);
 
     // Get recent menu events
     const eventsResult = await getRecentMenuEvents(workspaceId);
-    console.log("2. Recent Menu Events (50):", eventsResult);
 
     // Get view data
     const viewsResult = await getViewData(workspaceId);
-    console.log("3. View Data:", viewsResult);
 
-    alert("디버그 정보가 콘솔에 출력되었습니다. F12를 눌러 개발자 도구를 확인하세요.");
+    // 디버그 정보 표시
+    const eventsCount = eventsResult.success && eventsResult.data ? eventsResult.data.length : 0;
+    const debugInfo = [
+      `Workspace ID: ${workspaceId}`,
+      `Current User: ${JSON.stringify(userResult, null, 2)}`,
+      `Recent Events: ${eventsCount} events`,
+      `View Data: ${JSON.stringify(viewsResult, null, 2)}`,
+    ].join('\n\n');
+
+    alert(`디버그 정보:\n\n${debugInfo}`);
   };
 
   return (

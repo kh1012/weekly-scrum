@@ -119,10 +119,6 @@ function generateWeeksBetween(
     iterations++;
   }
   
-  if (iterations >= MAX_ITERATIONS) {
-    console.error('[generateWeeksBetween] 무한 루프 감지됨!', { startYear, startWeek, endYear, endWeek });
-  }
-  
   return weeks;
 }
 
@@ -140,7 +136,6 @@ export function WeekTimeline({
   const groupedWeeks = useMemo(() => {
     // 1. 현재 ISO 주차 계산
     const currentISOWeek = getCurrentISOWeek();
-    console.log('[WeekTimeline] 현재 ISO 주차:', currentISOWeek);
     
     // 2. 다음 주차 계산 (현재 주차 +1)
     const nextWeek = { ...currentISOWeek };
@@ -165,7 +160,6 @@ export function WeekTimeline({
       nextWeek.year = currentISOWeek.year + 1;
       nextWeek.week = 1;
     }
-    console.log('[WeekTimeline] 다음 주차 (+1):', nextWeek, `(${currentISOWeek.year}년은 ${weeksInYear}주까지 존재)`);
     
     // 3. 스냅샷이 있는 주차들 추출
     const snapshotWeeks: Array<{ year: number; week: number }> = [];
@@ -199,7 +193,6 @@ export function WeekTimeline({
       nextWeek.year,
       nextWeek.week
     );
-    console.log('[WeekTimeline] 생성된 주차 목록:', allWeeks.map(w => `${w.year}-W${w.week}`).join(', '));
     
     // 6. 연도별로 그룹화
     const weeksByYear = new Map<number, Array<{ year: number; week: number }>>();

@@ -35,21 +35,14 @@ export default async function ScrumLayout({
     } = await supabase.auth.getUser();
 
     if (user) {
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("user_id, display_name")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      console.log("[ScrumLayout] Profile check:", {
-        userId: user.id,
-        profile,
-        profileError,
-      });
-
       // 프로필이 없으면 온보딩으로 리다이렉트
       if (!profile) {
-        console.log("[ScrumLayout] Redirecting to onboarding (no profile)");
         redirect("/onboarding/profile");
       }
     }
@@ -62,8 +55,8 @@ export default async function ScrumLayout({
   let menuSettings: Awaited<ReturnType<typeof getMenuSettings>> = [];
   try {
     menuSettings = await getMenuSettings(DEFAULT_WORKSPACE_ID);
-  } catch (error) {
-    console.error("[ScrumLayout] Failed to fetch menu settings:", error);
+  } catch {
+    // 메뉴 설정 로드 실패 시 빈 배열 사용
   }
 
   let allData: Record<string, WeeklyScrumData>;
@@ -74,9 +67,7 @@ export default async function ScrumLayout({
     const result = await getSupabaseOnlyData(DEFAULT_WORKSPACE_ID);
     allData = result.allData;
     weeks = result.weeks;
-    console.log(`[ScrumLayout] Loaded ${Object.keys(allData).length} weeks from Supabase`);
-  } catch (error) {
-    console.error("[ScrumLayout] Failed to fetch from Supabase:", error);
+  } catch {
     allData = {};
     weeks = [];
   }

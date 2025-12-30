@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVisitorCount } from "@/hooks/useVisitorCount";
@@ -269,7 +269,7 @@ interface SideNavigationProps {
   menuSettings?: MenuSetting[];
 }
 
-export function SideNavigation({
+export const SideNavigation = memo(function SideNavigation({
   onItemClick,
   role = "member",
   workspaceId = "",
@@ -277,10 +277,13 @@ export function SideNavigation({
 }: SideNavigationProps) {
   const isActive = useIsActive();
   const { count, isLoading } = useVisitorCount();
-  const navCategories = getNavCategories(role);
+  const navCategories = useMemo(() => getNavCategories(role), [role]);
 
   // 메뉴 설정을 Map으로 변환
-  const settingsMap = new Map(menuSettings.map((s) => [s.menu_key, s]));
+  const settingsMap = useMemo(
+    () => new Map(menuSettings.map((s) => [s.menu_key, s])),
+    [menuSettings]
+  );
 
   // 접힌 카테고리 상태
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
@@ -315,7 +318,7 @@ export function SideNavigation({
   }, [collapsedCategories, isInitialized]);
 
   // 카테고리 토글
-  const toggleCategory = (key: string) => {
+  const toggleCategory = useCallback((key: string) => {
     setCollapsedCategories((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -325,7 +328,7 @@ export function SideNavigation({
       }
       return next;
     });
-  };
+  }, []);
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -442,7 +445,7 @@ export function SideNavigation({
       </div>
     </div>
   );
-}
+});
 
 // 모바일 네비게이션은 제거됨 (drawer로 대체)
 export function MobileNavigation() {

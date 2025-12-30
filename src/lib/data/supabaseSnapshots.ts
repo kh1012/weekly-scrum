@@ -108,19 +108,15 @@ export async function getAllSnapshotsFromSupabase(
   }
 
   if (error) {
-    console.error("Error fetching snapshots from Supabase:", error);
     return {};
   }
 
   if (!snapshots || snapshots.length === 0) {
-    console.log("[getAllSnapshotsFromSupabase] No snapshots found");
     return {};
   }
 
   // 3. snapshot_weeks에서 주차 목록 조회 (중복 없음)
   const weeks = await listSnapshotWeeks(workspaceId);
-  
-  console.log(`[getAllSnapshotsFromSupabase] Found ${weeks.length} weeks in snapshot_weeks, ${snapshots.length} snapshots`);
 
   // 3. 주차별로 스냅샷 entries 그룹화
   const allData: Record<string, WeeklyScrumData> = {};
@@ -168,8 +164,6 @@ export async function getAllSnapshotsFromSupabase(
     }
   } else {
     // snapshot_weeks가 비어있으면 snapshots에서 직접 주차 추출 (레거시 호환)
-    console.log("[getAllSnapshotsFromSupabase] Fallback: extracting weeks from snapshots directly");
-    
     // 주차별로 그룹화 (중복 제거)
     const weekMap = new Map<string, { year: number; week: string; weekStart: string; weekEnd: string; snapshots: typeof snapshots }>();
     
@@ -210,7 +204,6 @@ export async function getAllSnapshotsFromSupabase(
     }
   }
 
-  console.log(`[getAllSnapshotsFromSupabase] Returning ${Object.keys(allData).length} weeks with data`);
   return allData;
 }
 
@@ -231,7 +224,6 @@ export async function listSnapshotWeeks(
     .order("week_start_date", { ascending: false });
 
   if (error) {
-    console.error("Error fetching snapshot_weeks:", error);
     return [];
   }
 
@@ -265,7 +257,6 @@ export async function getAvailableWeeksFromSupabase(
   }
 
   // 2. 폴백: snapshots에서 직접 주차 추출 (중복 제거)
-  console.log("[getAvailableWeeksFromSupabase] Fallback: extracting weeks from snapshots");
   const supabase = await createClient();
   
   const { data, error } = await supabase
@@ -275,7 +266,6 @@ export async function getAvailableWeeksFromSupabase(
     .order("week_start_date", { ascending: false });
 
   if (error) {
-    console.error("Error fetching weeks from Supabase:", error);
     return [];
   }
 
@@ -327,7 +317,6 @@ export async function getDataSource(workspaceId: string): Promise<{
 
     // Supabase 데이터가 없으면 정적 파일만 사용
     if (Object.keys(supabaseAllData).length === 0) {
-      console.log("[getDataSource] No Supabase data, using static files only");
       return { allData: staticAllData, weeks: staticWeeks, source: "static" };
     }
 
@@ -364,13 +353,8 @@ export async function getDataSource(workspaceId: string): Promise<{
       return keyB.localeCompare(keyA);
     });
 
-    console.log(
-      `[getDataSource] Merged data: ${Object.keys(supabaseAllData).length} from Supabase, ${Object.keys(staticAllData).length} from static files, ${Object.keys(mergedAllData).length} total`
-    );
-
     return { allData: mergedAllData, weeks: mergedWeeks, source: "merged" };
-  } catch (error) {
-    console.log("[getDataSource] Supabase error, using static files only:", error);
+  } catch {
     return { allData: staticAllData, weeks: staticWeeks, source: "static" };
   }
 }

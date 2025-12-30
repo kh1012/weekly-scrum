@@ -232,7 +232,6 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
     if (!lockState.isMyLock || inactivitySeconds === null) return;
     
     if (inactivitySeconds >= INACTIVITY_TIMEOUT) {
-      console.log("[useLock] 비활성 타임아웃 - 자동 편집 종료");
       stopEditingRef.current?.();
       onInactivityTimeoutRef.current?.();
     }

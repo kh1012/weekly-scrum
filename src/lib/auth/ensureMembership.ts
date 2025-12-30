@@ -12,41 +12,25 @@ export async function ensureMembership(
 ): Promise<{ success: boolean; error?: string }> {
   const defaultWorkspaceId = process.env.DEFAULT_WORKSPACE_ID;
 
-  console.log("[ensureMembership] Starting...", {
-    userId,
-    userEmail,
-    defaultWorkspaceId: defaultWorkspaceId ? "set" : "NOT SET",
-  });
-
   if (!defaultWorkspaceId) {
-    console.error("[ensureMembership] DEFAULT_WORKSPACE_ID is not set");
     return { success: false, error: "DEFAULT_WORKSPACE_ID not configured" };
   }
 
   try {
     // 1. 이미 멤버인지 확인
-    const { data: existingMember, error: selectError } = await supabase
+    const { data: existingMember } = await supabase
       .from("workspace_members")
       .select("user_id, role")
       .eq("workspace_id", defaultWorkspaceId)
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (selectError) {
-      console.error("[ensureMembership] Select failed:", {
-        code: selectError.code,
-        message: selectError.message,
-      });
-    }
-
     if (existingMember) {
-      console.log("[ensureMembership] Already a member:", existingMember);
       return { success: true };
     }
 
     // 2. 새로 멤버 등록
-    console.log("[ensureMembership] Inserting new member...");
-    const { data: insertData, error: insertError } = await supabase
+    const { error: insertError } = await supabase
       .from("workspace_members")
       .insert({
         workspace_id: defaultWorkspaceId,
@@ -57,16 +41,8 @@ export async function ensureMembership(
       .single();
 
     if (insertError) {
-      console.error("[ensureMembership] Insert failed:", {
-        code: insertError.code,
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-      });
-
       // 23505: unique violation (이미 존재) - 이건 성공으로 처리
       if (insertError.code === "23505") {
-        console.log("[ensureMembership] Already exists (unique violation)");
         return { success: true };
       }
 
@@ -83,10 +59,8 @@ export async function ensureMembership(
       return { success: false, error: insertError.message };
     }
 
-    console.log("[ensureMembership] Member created successfully:", insertData);
     return { success: true };
-  } catch (err) {
-    console.error("[ensureMembership] Unexpected error:", err);
+  } catch {
     return { success: false, error: "Unexpected error" };
   }
 }

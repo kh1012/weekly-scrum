@@ -129,7 +129,6 @@ export async function logMenuEvent(payload: MenuEventPayload): Promise<void> {
         page_path: payload.page_path,
       })
     ) {
-      console.log("[Telemetry] Skipped (dedupe):", payload.page_path);
       return;
     }
 
@@ -143,19 +142,17 @@ export async function logMenuEvent(payload: MenuEventPayload): Promise<void> {
       referrer: payload.referrer || referrer,
     };
 
-    console.log("[Telemetry] Logging:", body);
-
     // Fire and forget
     fetch("/api/telemetry/menu-events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       keepalive: true,
-    }).catch((error) => {
-      console.warn("[Telemetry] Failed to log event:", error);
+    }).catch(() => {
+      // Silent fail for telemetry
     });
-  } catch (error) {
-    console.warn("[Telemetry] Unexpected error:", error);
+  } catch {
+    // Silent fail for telemetry
   }
 }
 

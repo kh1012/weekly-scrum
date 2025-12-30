@@ -29,29 +29,12 @@ export async function ensureUserMembership(): Promise<{
     user.email
   );
 
-  if (!membershipResult.success) {
-    console.error(
-      "[ensureUserMembership] Failed to ensure membership:",
-      membershipResult.error
-    );
-  }
-
   // 프로필 존재 여부 확인 (.maybeSingle() 사용)
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
     .select("user_id")
     .eq("user_id", user.id)
     .maybeSingle();
-
-  if (profileError) {
-    console.error("[ensureUserMembership] Profile check error:", profileError);
-  }
-
-  console.log("[ensureUserMembership] Profile check result:", {
-    userId: user.id,
-    hasProfile: !!profile,
-    profileError: profileError?.message,
-  });
 
   return {
     success: membershipResult.success,

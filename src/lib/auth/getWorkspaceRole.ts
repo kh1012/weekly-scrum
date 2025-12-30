@@ -20,7 +20,6 @@ export async function getWorkspaceRole(
   const targetWorkspaceId = workspaceId || process.env.DEFAULT_WORKSPACE_ID;
 
   if (!targetWorkspaceId) {
-    console.error("[getWorkspaceRole] DEFAULT_WORKSPACE_ID is not set");
     return null;
   }
 
@@ -34,7 +33,6 @@ export async function getWorkspaceRole(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      console.log("[getWorkspaceRole] No authenticated user");
       return null;
     }
 
@@ -46,16 +44,7 @@ export async function getWorkspaceRole(
       .eq("user_id", user.id)
       .single();
 
-    if (memberError) {
-      console.error("[getWorkspaceRole] Failed to fetch member:", {
-        code: memberError.code,
-        message: memberError.message,
-      });
-      return null;
-    }
-
-    if (!member) {
-      console.log("[getWorkspaceRole] User is not a member of workspace");
+    if (memberError || !member) {
       return null;
     }
 
@@ -66,8 +55,7 @@ export async function getWorkspaceRole(
     }
 
     return role as WorkspaceRole;
-  } catch (err) {
-    console.error("[getWorkspaceRole] Unexpected error:", err);
+  } catch {
     return null;
   }
 }
@@ -103,7 +91,6 @@ export async function getWorkspaceRoleWithUser(workspaceId?: string): Promise<{
   const targetWorkspaceId = workspaceId || process.env.DEFAULT_WORKSPACE_ID;
 
   if (!targetWorkspaceId) {
-    console.error("[getWorkspaceRoleWithUser] DEFAULT_WORKSPACE_ID is not set");
     return { userId: null, role: null, displayName: null };
   }
 
@@ -153,8 +140,7 @@ export async function getWorkspaceRoleWithUser(workspaceId?: string): Promise<{
       role: role as WorkspaceRole,
       displayName: profile?.display_name || null,
     };
-  } catch (err) {
-    console.error("[getWorkspaceRoleWithUser] Unexpected error:", err);
+  } catch {
     return { userId: null, role: null, displayName: null };
   }
 }
