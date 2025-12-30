@@ -42,35 +42,51 @@ export function WeekTimeline({
   snapshotCountByWeek,
   className = "",
 }: WeekTimelineProps) {
-  // 연도별 주차 데이터 생성 (실제 스냅샷이 있는 주차만)
+  // 연도별 주차 데이터 생성
   const groupedWeeks = useMemo(() => {
-    // snapshotCountByWeek에서 모든 키를 추출하여 연도별로 그룹화
-    const weeksByYear = new Map<number, number[]>();
+    const weeksByYear = new Map<number, Set<number>>();
     
+    // 1. snapshotCountByWeek에서 스냅샷이 있는 주차 추출
     snapshotCountByWeek.forEach((_, key) => {
       const [yearStr, weekStr] = key.split('-');
       const y = parseInt(yearStr, 10);
       const w = parseInt(weekStr, 10);
       
       if (!weeksByYear.has(y)) {
-        weeksByYear.set(y, []);
+        weeksByYear.set(y, new Set());
       }
-      weeksByYear.get(y)!.push(w);
+      weeksByYear.get(y)!.add(w);
     });
 
-    // 현재 선택된 주차도 포함
+    // 2. 현재 선택된 주차는 항상 포함 (스냅샷이 없어도 표시)
     if (!weeksByYear.has(year)) {
-      weeksByYear.set(year, [week]);
-    } else if (!weeksByYear.get(year)!.includes(week)) {
-      weeksByYear.get(year)!.push(week);
+      weeksByYear.set(year, new Set([week]));
+    } else {
+      weeksByYear.get(year)!.add(week);
     }
 
-    // 연도별로 정렬하고 각 연도의 주차도 정렬 (최신이 위로)
+    // 3. 현재 ISO 주차도 항상 포함 (새로 작성할 수 있도록)
+    const now = new Date();
+    const jan4 = new Date(Date.UTC(now.getFullYear(), 0, 4));
+    const jan4Day = jan4.getUTCDay() || 7;
+    const week1Monday = new Date(jan4);
+    week1Monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+    const daysSinceWeek1 = Math.floor((now.getTime() - week1Monday.getTime()) / (24 * 60 * 60 * 1000));
+    const currentWeek = Math.floor(daysSinceWeek1 / 7) + 1;
+    const currentYear = now.getFullYear();
+
+    if (!weeksByYear.has(currentYear)) {
+      weeksByYear.set(currentYear, new Set([currentWeek]));
+    } else {
+      weeksByYear.get(currentYear)!.add(currentWeek);
+    }
+
+    // 4. 연도별로 정렬하고 각 연도의 주차도 정렬 (최신이 위로)
     return Array.from(weeksByYear.entries())
       .sort(([a], [b]) => b - a) // 연도 내림차순
-      .map(([y, weeks]) => ({
+      .map(([y, weeksSet]) => ({
         year: y,
-        weeks: weeks.sort((a, b) => b - a), // 주차 내림차순
+        weeks: Array.from(weeksSet).sort((a, b) => b - a), // 주차 내림차순
       }))
       .filter(group => group.weeks.length > 0); // 빈 그룹 제외
   }, [snapshotCountByWeek, year, week]);
