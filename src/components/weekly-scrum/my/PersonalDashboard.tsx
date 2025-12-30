@@ -63,10 +63,12 @@ export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData 
   };
 
   // 새 스냅샷 모달 핸들러
-  const handleLoadExistingData = () => {
+  const handleLoadExistingData = (selectedWeekKeys: string[]) => {
     setIsNewSnapshotModalOpen(false);
     navigationProgress.start();
-    router.push(`/manage/snapshots/${currentWeek.year}/${currentWeek.week}/new?mode=load`);
+    // 선택된 주차 키들을 쿼리 파라미터로 전달
+    const weekKeysParam = selectedWeekKeys.join(',');
+    router.push(`/manage/snapshots/${currentWeek.year}/${currentWeek.week}/new?mode=load&weeks=${encodeURIComponent(weekKeysParam)}`);
   };
 
   const handleCreateEmpty = () => {

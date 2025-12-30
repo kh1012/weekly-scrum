@@ -27,7 +27,7 @@ interface NewSnapshotModalProps {
   onClose: () => void;
   year: number;
   week: number;
-  onLoadExistingData: () => void;
+  onLoadExistingData: (selectedWeekKeys: string[]) => void;
   onCreateEmpty: () => void;
   /** 현재 주차에 스냅샷 데이터가 존재하는지 여부 */
   hasCurrentWeekData?: boolean;
@@ -139,7 +139,8 @@ export function NewSnapshotModal({
   // 불러오기 확정
   const handleConfirmLoad = () => {
     setIsLoadingData(true);
-    onLoadExistingData();
+    const weekKeys = Array.from(selectedWeeks);
+    onLoadExistingData(weekKeys);
   };
 
   // 현재 주차에 데이터가 존재하는 경우 안내 화면 표시

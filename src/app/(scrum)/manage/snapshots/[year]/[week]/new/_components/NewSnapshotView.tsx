@@ -140,6 +140,7 @@ function NewSnapshotViewInner({
   const [myWeeklyData, setMyWeeklyData] = useState<WeekData[]>([]);
   const [isLoadingMyData, setIsLoadingMyData] = useState(false);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
+  const [autoLoadTriggered, setAutoLoadTriggered] = useState(false);
 
   // Workload 상태 (스냅샷 단위)
   const [workloadLevel, setWorkloadLevel] = useState<WorkloadLevel | null>(null);
@@ -174,6 +175,68 @@ function NewSnapshotViewInner({
       fetchMyEntries();
     }
   }, [mode, myWeeklyData.length, fetchMyEntries]);
+
+  // URL에서 weeks 파라미터 읽어서 자동 선택
+  useEffect(() => {
+    if (urlMode === "load" && myWeeklyData.length > 0 && !autoLoadTriggered) {
+      const weeksParam = searchParams.get("weeks");
+      if (weeksParam) {
+        const weekKeys = weeksParam.split(',').filter(Boolean);
+        if (weekKeys.length > 0) {
+          setSelectedWeeks(new Set(weekKeys));
+          setAutoLoadTriggered(true);
+        }
+      }
+    }
+  }, [urlMode, myWeeklyData.length, searchParams, autoLoadTriggered]);
+
+  // 자동 선택된 주차가 있으면 로드
+  useEffect(() => {
+    if (autoLoadTriggered && selectedWeeks.size > 0 && myWeeklyData.length > 0) {
+      const loadedSnapshots: TempSnapshot[] = [];
+      selectedWeeks.forEach((weekKey) => {
+        const weekData = myWeeklyData.find((w) => w.key === weekKey);
+        if (weekData) {
+          weekData.entries.forEach((entry: Record<string, unknown>) => {
+            const pastWeekData = entry.past_week as
+              | { tasks?: PastWeekTask[] }
+              | undefined;
+            const thisWeekData = entry.this_week as
+              | { tasks?: string[] }
+              | undefined;
+
+            const snapshot = convertToTempSnapshot({
+              name: (entry.name as string) || "",
+              domain: (entry.domain as string) || "",
+              project: (entry.project as string) || "",
+              module: (entry.module as string) ?? undefined,
+              feature: (entry.feature as string) ?? undefined,
+              pastWeek: {
+                tasks: pastWeekData?.tasks || [],
+                risk: (entry.risks as string[]) || null,
+                riskLevel: entry.risk_level as number | null,
+                collaborators: (entry.collaborators as Collaborator[]) || [],
+              },
+              thisWeek: {
+                tasks: thisWeekData?.tasks || [],
+              },
+            });
+            loadedSnapshots.push(snapshot);
+          });
+        }
+      });
+
+      if (loadedSnapshots.length > 0) {
+        setTempSnapshots(loadedSnapshots);
+        setSelectedId(loadedSnapshots[0].tempId);
+        setMode("editor");
+        showToast(
+          `${loadedSnapshots.length}개 엔트리를 불러왔습니다.`,
+          "success"
+        );
+      }
+    }
+  }, [autoLoadTriggered, selectedWeeks, myWeeklyData, showToast]);
 
   // URL mode=empty로 시작 시 초기 selectedId 설정
   useEffect(() => {

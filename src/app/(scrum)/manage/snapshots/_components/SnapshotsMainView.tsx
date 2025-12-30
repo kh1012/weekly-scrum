@@ -329,11 +329,13 @@ function SnapshotsMainViewInner({
   const [isNewSnapshotModalOpen, setIsNewSnapshotModalOpen] = useState(false);
 
   // 기존 데이터 불러오기 선택
-  const handleLoadExistingData = () => {
+  const handleLoadExistingData = (selectedWeekKeys: string[]) => {
     setIsNewSnapshotModalOpen(false);
     navigationProgress.start();
+    // 선택된 주차 키들을 쿼리 파라미터로 전달
+    const weekKeysParam = selectedWeekKeys.join(',');
     router.push(
-      `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=load`
+      `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=load&weeks=${encodeURIComponent(weekKeysParam)}`
     );
   };
 
