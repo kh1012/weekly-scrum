@@ -51,6 +51,7 @@ const NO_PADDING_PAGES = [
   "/feedbacks",
   "/team-feed",
   "/admin/meta-options",
+  "/manage/snapshots",
 ];
 
 // padding 없는 동적 경로 패턴

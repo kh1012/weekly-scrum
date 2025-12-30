@@ -339,7 +339,7 @@ function SnapshotsMainViewInner({
   const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
 
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col lg:flex-row overflow-hidden bg-white border border-[#d0d7de] rounded-md">
+    <div className="h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-hidden bg-white">
       {/* 좌측: 주차 타임라인 (PC) */}
       <aside className="hidden lg:flex lg:w-80 lg:shrink-0 border-r border-[#d0d7de] overflow-y-auto">
         <WeekTimeline

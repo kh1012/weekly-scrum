@@ -143,7 +143,7 @@ export function WeekTimeline({
         weeks: weeks.sort((a, b) => b.week - a.week), // 주차 내림차순
       }))
       .filter(group => group.weeks.length > 0);
-  }, [snapshotCountByWeek]);
+  }, [snapshotCountByWeek, year, week]);
 
   const handleWeekSelect = (selectedYear: number, selectedWeek: number) => {
     if (selectedYear !== year) {
