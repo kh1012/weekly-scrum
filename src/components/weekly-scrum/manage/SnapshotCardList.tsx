@@ -109,9 +109,28 @@ export const SnapshotCardList = forwardRef<
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, snapshot: TempSnapshot) => {
       e.preventDefault();
+      
+      const menuWidth = 160; // 컨텍스트 메뉴 너비
+      const menuHeight = 120; // 컨텍스트 메뉴 예상 높이
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      let x = e.clientX;
+      let y = e.clientY;
+      
+      // 우측 경계 체크
+      if (x + menuWidth > viewportWidth) {
+        x = viewportWidth - menuWidth - 8; // 8px 여유 공간
+      }
+      
+      // 하단 경계 체크
+      if (y + menuHeight > viewportHeight) {
+        y = viewportHeight - menuHeight - 8; // 8px 여유 공간
+      }
+      
       setContextMenu({
-        x: e.clientX,
-        y: e.clientY,
+        x,
+        y,
         snapshot,
       });
     },
@@ -130,9 +149,16 @@ export const SnapshotCardList = forwardRef<
       const button = optionButtonRefs.current[tempId];
       if (button) {
         const rect = button.getBoundingClientRect();
+        const menuWidth = 160; // 메뉴 너비
+        const viewportWidth = window.innerWidth;
+        
+        // 우측에 공간이 충분한지 체크
+        const spaceOnRight = viewportWidth - rect.left;
+        const shouldAlignRight = spaceOnRight >= menuWidth + 8; // 8px 여유 공간
+        
         setOptionMenuPosition({
           top: rect.bottom + 4,
-          left: rect.right - 160, // 메뉴 너비 160px
+          left: shouldAlignRight ? rect.left : rect.right - menuWidth,
         });
       }
       setOptionMenuId((prev) => (prev === tempId ? null : tempId));
@@ -218,9 +244,16 @@ export const SnapshotCardList = forwardRef<
     e.stopPropagation();
     if (copyButtonRef.current) {
       const rect = copyButtonRef.current.getBoundingClientRect();
+      const menuWidth = 160; // 드롭다운 메뉴 너비
+      const viewportWidth = window.innerWidth;
+      
+      // 우측에 공간이 충분한지 체크
+      const spaceOnRight = viewportWidth - rect.left;
+      const shouldAlignRight = spaceOnRight >= menuWidth + 8; // 8px 여유 공간
+      
       setDropdownPosition({
         top: rect.bottom + 4,
-        left: rect.left,
+        left: shouldAlignRight ? rect.left : rect.right - menuWidth,
       });
     }
     setIsCopyDropdownOpen((prev) => !prev);
