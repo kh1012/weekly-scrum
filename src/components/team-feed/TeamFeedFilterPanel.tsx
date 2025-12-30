@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { GnbParams } from "@/lib/ui/gnbParams";
 import type { WorkspaceMember } from "@/lib/data/members";
 import { MultiSelectDropdown } from "@/components/common/MultiSelectDropdown";
+import { DateRangePicker } from "@/components/common/DateRangePicker";
 
 interface TeamFeedFilterPanelProps {
   isOpen: boolean;
@@ -464,22 +465,12 @@ export function TeamFeedFilterPanel({
             <label className="block text-sm font-medium text-[#24292f]">
               날짜 범위
             </label>
-            <div className="space-y-2">
-              <input
-                type="date"
-                value={dateRangeStart || ""}
-                onChange={(e) => setDateRangeStart(e.target.value || undefined)}
-                placeholder="시작일"
-                className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] bg-white focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
-              />
-              <input
-                type="date"
-                value={dateRangeEnd || ""}
-                onChange={(e) => setDateRangeEnd(e.target.value || undefined)}
-                placeholder="종료일"
-                className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] bg-white focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
-              />
-            </div>
+            <DateRangePicker
+              startDate={dateRangeStart}
+              endDate={dateRangeEnd}
+              onStartDateChange={setDateRangeStart}
+              onEndDateChange={setDateRangeEnd}
+            />
           </div>
 
           {/* Collaborator toggle */}
