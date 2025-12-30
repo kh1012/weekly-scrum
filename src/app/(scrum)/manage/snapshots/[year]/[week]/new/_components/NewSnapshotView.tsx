@@ -24,6 +24,7 @@ import {
   ToastProvider,
   useToast,
 } from "@/components/weekly-scrum/manage/Toast";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import type { TempSnapshot } from "@/components/weekly-scrum/manage/types";
 import {
   createEmptySnapshot,
@@ -194,7 +195,7 @@ function NewSnapshotViewInner({
 
   // 자동 선택된 주차가 있으면 로드
   useEffect(() => {
-    if (autoLoadTriggered && selectedWeeks.size > 0 && myWeeklyData.length > 0) {
+    if (autoLoadTriggered && selectedWeeks.size > 0 && myWeeklyData.length > 0 && tempSnapshots.length === 0) {
       const loadedSnapshots: TempSnapshot[] = [];
       selectedWeeks.forEach((weekKey) => {
         const weekData = myWeeklyData.find((w) => w.key === weekKey);
@@ -239,7 +240,7 @@ function NewSnapshotViewInner({
         );
       }
     }
-  }, [autoLoadTriggered, selectedWeeks, myWeeklyData, showToast]);
+  }, [autoLoadTriggered, selectedWeeks, myWeeklyData, tempSnapshots.length, showToast]);
 
   // URL mode=empty로 시작 시 초기 selectedId 설정
   useEffect(() => {
@@ -741,21 +742,11 @@ function NewSnapshotViewInner({
           <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-white" />
           
           {/* 로딩 콘텐츠 */}
-          <div className="relative flex flex-col items-center gap-6">
-            {/* 로딩 스피너 */}
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
-            </div>
-            
-            {/* 로딩 텍스트 */}
-            <div className="text-center">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                데이터를 불러오는 중입니다
-              </h2>
-              <p className="text-sm text-gray-600">
-                선택한 주차의 스냅샷을 준비하고 있습니다...
-              </p>
-            </div>
+          <div className="relative">
+            <LogoLoadingSpinner
+              title="데이터를 불러오는 중입니다"
+              description="선택한 주차의 스냅샷을 준비하고 있습니다..."
+            />
           </div>
         </div>
       );
