@@ -59,7 +59,9 @@ export function DateRangePicker({
 
   const displayText = React.useMemo(() => {
     if (range?.from && range?.to) {
-      return `${formatDisplayDate(range.from)} ~ ${formatDisplayDate(range.to)}`;
+      return `${formatDisplayDate(range.from)} ~ ${formatDisplayDate(
+        range.to
+      )}`;
     }
     if (range?.from) {
       return `${formatDisplayDate(range.from)} ~ (종료일 선택)`;
@@ -115,7 +117,6 @@ export function DateRangePicker({
         top: `${top}px`,
         left: `${buttonRect.left}px`,
         width: `auto`,
-        maxHeight: `${Math.min(dropdownHeight, maxHeight)}px`,
         zIndex: 9999,
       });
     }
@@ -217,7 +218,6 @@ export function DateRangePicker({
                 position: absolute;
                 top: 0;
                 right: 0;
-                left: 0;
                 display: flex;
                 justify-content: space-between;
                 z-index: 2;
@@ -269,7 +269,7 @@ export function DateRangePicker({
                 color: #0969da;
               }
             `}</style>
-            
+
             <DayPicker
               mode="range"
               selected={range}
@@ -286,9 +286,11 @@ export function DateRangePicker({
               <div className="text-xs text-gray-500 text-center">
                 {!range?.from && "시작일을 선택하세요"}
                 {range?.from && !range?.to && "종료일을 선택하세요"}
-                {range?.from && range?.to && "선택 완료 - 확인 버튼을 눌러주세요"}
+                {range?.from &&
+                  range?.to &&
+                  "선택 완료 - 확인 버튼을 눌러주세요"}
               </div>
-              
+
               {/* 버튼 그룹 */}
               <div className="flex gap-2">
                 <button
@@ -306,7 +308,7 @@ export function DateRangePicker({
                   초기화
                 </button>
               </div>
-              
+
               {/* 확인 버튼 */}
               <button
                 type="button"

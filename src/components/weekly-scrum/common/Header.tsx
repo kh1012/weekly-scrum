@@ -70,6 +70,14 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/admin" ||
     pathname === "/admin/" ||
     pathname.startsWith("/admin/");
+  // Snapshots/Work-map 페이지 여부 (페이지 내부에 통합 필터 있음)
+  const hasInternalFilters =
+    pathname === "/snapshots" ||
+    pathname === "/snapshots/" ||
+    pathname.startsWith("/snapshots/") ||
+    pathname === "/work-map" ||
+    pathname === "/work-map/" ||
+    pathname.startsWith("/work-map/");
 
   // 최소 GNB 모드
   const isMinimalGnb =
@@ -86,9 +94,9 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
   // GNB 컴포넌트 완전 숨김
   const hideAllControls = isMinimalGnb;
   // 주차 선택기 숨김
-  const hideWeekSelector = isMinimalGnb || isCalendarPage;
-  // 필터 숨김
-  const hideFilters = isMinimalGnb;
+  const hideWeekSelector = isMinimalGnb || isCalendarPage || hasInternalFilters;
+  // 필터 숨김 (최소 GNB 모드 + 페이지 내부에 필터가 있는 경우)
+  const hideFilters = isMinimalGnb || hasInternalFilters;
 
   // 외부 클릭 시 필터 팝오버 닫기
   useEffect(() => {
