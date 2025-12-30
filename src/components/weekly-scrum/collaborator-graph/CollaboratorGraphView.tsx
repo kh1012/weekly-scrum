@@ -197,6 +197,7 @@ export function CollaboratorGraphView({
               stats={graphData.stats}
               selectedNode={selectedNode}
               selectedEdge={selectedEdge}
+              allNodes={graphData.nodes}
             />
           </div>
         </div>

@@ -1,18 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import type { GraphStats, GraphNode, GraphEdge } from "./buildCollabGraph";
 
 interface StatsCardsProps {
   stats: GraphStats;
   selectedNode: GraphNode | null;
   selectedEdge: GraphEdge | null;
+  allNodes: GraphNode[];
 }
 
 export function StatsCards({
   stats,
   selectedNode,
   selectedEdge,
+  allNodes,
 }: StatsCardsProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="space-y-4">
       {/* Overview Card */}
@@ -61,9 +65,19 @@ export function StatsCards({
 
       {/* Top 3 Collaborators Card */}
       <div className="bg-white rounded-lg border border-[#d0d7de] p-4">
-        <h2 className="text-sm font-semibold text-[#24292f] mb-3">
-          Top 3 Collaborators
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-[#24292f]">
+            Top 3 Collaborators
+          </h2>
+          {stats.top3Collaborators.length > 0 && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="text-xs text-[#0969da] hover:underline font-medium"
+            >
+              더보기
+            </button>
+          )}
+        </div>
         {stats.top3Collaborators.length === 0 ? (
           <div className="text-center text-xs text-[#57606a] py-4">
             데이터 없음

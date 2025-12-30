@@ -76,7 +76,10 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname.startsWith("/snapshots/") ||
     pathname === "/work-map" ||
     pathname === "/work-map/" ||
-    pathname.startsWith("/work-map/");
+    pathname.startsWith("/work-map/") ||
+    pathname === "/collaborator-graph" ||
+    pathname === "/collaborator-graph/" ||
+    pathname.startsWith("/collaborator-graph/");
 
   // 최소 GNB 모드
   const isMinimalGnb =
