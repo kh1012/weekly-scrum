@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   // year 파라미터가 있으면 해당 연도만, 없으면 모든 연도
   let snapshotsQuery = supabase
     .from("snapshots")
-    .select("id, week, week_start_date")
+    .select("id, week, year, week_start_date")
     .eq("workspace_id", workspaceId);
 
   if (year) {
@@ -90,11 +90,9 @@ export async function GET(request: NextRequest) {
   // snapshot_id → (week, year) 매핑 생성
   const snapshotInfoMap = new Map<string, { week: string; year: number }>();
   snapshots.forEach((s) => {
-    if (s.week && s.week_start_date) {
-      // week_start_date에서 ISO 연도 추출
-      const weekStartDate = new Date(s.week_start_date);
-      const isoYear = weekStartDate.getFullYear();
-      snapshotInfoMap.set(s.id, { week: s.week, year: isoYear });
+    if (s.week && s.year) {
+      // DB에 저장된 year 컬럼 사용 (ISO 주차 연도)
+      snapshotInfoMap.set(s.id, { week: s.week, year: s.year });
     }
   });
 
