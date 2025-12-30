@@ -136,6 +136,8 @@ export const FlagBar = memo(function FlagBar({
           if (newStart <= originalEnd) {
             updateFlagLocal(flag.clientId, {
               startDate: formatDate(newStart),
+              // 현재 레인 위치 유지
+              laneHint: flag.laneHint !== undefined ? flag.laneHint : laneIndex,
             });
           }
         } else if (mode === "resize-right" && daysDelta !== 0) {
@@ -147,6 +149,8 @@ export const FlagBar = memo(function FlagBar({
           if (newEnd >= originalStart) {
             updateFlagLocal(flag.clientId, {
               endDate: formatDate(newEnd),
+              // 현재 레인 위치 유지
+              laneHint: flag.laneHint !== undefined ? flag.laneHint : laneIndex,
             });
           }
         }

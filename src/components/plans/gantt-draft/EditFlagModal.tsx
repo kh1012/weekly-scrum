@@ -77,6 +77,8 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
       endDate: finalEnd,
       color,
       links: validLinks.length > 0 ? validLinks : undefined,
+      // 현재 레인 위치 유지 (확장된 레인에서 수정 시 위치 보존)
+      laneHint: flag.laneHint,
     });
 
     onClose();
