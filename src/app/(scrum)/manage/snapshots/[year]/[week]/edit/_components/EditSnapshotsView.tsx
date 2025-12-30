@@ -775,11 +775,11 @@ function EditSnapshotsViewInner({
               </div>
             </div>
 
-            {/* 우측: 워크로드, 스냅샷 선택, 엔트리 갯수 */}
+            {/* 우측: 워크로드, 엔트리 갯수, 업데이트 버튼 */}
             <div className="relative flex items-center gap-2 md:ml-0">
-              {/* 워크로드 태그 및 편집 아이콘 - 데스크톱에서만 표시 */}
+              {/* 워크로드 태그 및 편집 아이콘 - 모바일/데스크톱 모두 표시 */}
               {workloadLevel && (
-                <div className="hidden md:flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${WORKLOAD_LEVEL_COLORS[workloadLevel].bg} ${WORKLOAD_LEVEL_COLORS[workloadLevel].text} border ${WORKLOAD_LEVEL_COLORS[workloadLevel].border}`}
                   >
@@ -814,8 +814,8 @@ function EditSnapshotsViewInner({
                 </div>
               )}
 
-              {/* 엔트리 갯수 - 데스크톱에서만 표시 */}
-              <div className="hidden md:flex items-center gap-1.5">
+              {/* 엔트리 갯수 - 모바일/데스크톱 모두 표시 */}
+              <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 <span className="text-xs font-medium text-gray-700">
                   {tempSnapshots.length}개 엔트리
@@ -853,53 +853,16 @@ function EditSnapshotsViewInner({
             </div>
           </div>
 
-          {/* 두 번째 줄: 워크로드 + 스냅샷 선택 + 엔트리 갯수 (모바일에서 우측 정렬) */}
-          <div className="flex items-center justify-end md:justify-start gap-2 flex-wrap">
-            {/* 워크로드 태그 - 모바일에서만 표시 (두 번째 줄) */}
-            {workloadLevel && (
-              <div className="flex md:hidden items-center gap-1.5">
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${WORKLOAD_LEVEL_COLORS[workloadLevel].bg} ${WORKLOAD_LEVEL_COLORS[workloadLevel].text} border ${WORKLOAD_LEVEL_COLORS[workloadLevel].border}`}
-                >
-                  {workloadLevel === "light" && "🌿"}
-                  {workloadLevel === "normal" && "⚡"}
-                  {workloadLevel === "burden" && "🔥"}
-                  <span>{WORKLOAD_LEVEL_LABELS[workloadLevel]}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowWorkloadModal(true);
-                  }}
-                  className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                  title="워크로드 편집"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            )}
-
-            {/* 스냅샷 선택 드롭다운 */}
+          {/* 두 번째 줄: 스냅샷 선택 (PC), 업데이트 버튼 (모바일) */}
+          <div className="flex items-center justify-end md:justify-start gap-2">
+            {/* 스냅샷 선택 드롭다운 - PC에서만 표시 */}
             {snapshots.length > 1 && selectedSnapshotId && (
               <>
                 <div className="h-4 w-px bg-gray-200 hidden md:block" />
                 <select
                   value={selectedSnapshotId}
                   onChange={(e) => handleSnapshotChange(e.target.value)}
-                  className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                  className="hidden md:block px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                 >
                   {snapshots.map((s, i) => (
                     <option key={s.id} value={s.id}>
@@ -910,43 +873,34 @@ function EditSnapshotsViewInner({
               </>
             )}
 
-            {/* 엔트리 갯수 - 모바일에서만 표시 */}
-            <div className="flex md:hidden items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-xs font-medium text-gray-700">
-                {tempSnapshots.length}개 엔트리
-              </span>
-            </div>
-          </div>
-
-          {/* 세 번째 줄: 저장 버튼 (모바일 전용) */}
-          <div className="flex md:hidden items-center justify-end gap-2">
             {/* 업데이트하기 버튼 - 모바일에서만 표시 */}
-            <LoadingButton
-              onClick={handleSaveClick}
-              disabled={isSaving}
-              isLoading={isSaving}
-              loadingText="저장 중..."
-              variant="primary"
-              size="md"
-              icon={
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              }
-            >
-              {isNewMode ? "신규 등록" : "업데이트"}
-            </LoadingButton>
+            <div className="md:hidden w-full">
+              <LoadingButton
+                onClick={handleSaveClick}
+                disabled={isSaving}
+                isLoading={isSaving}
+                loadingText="저장 중..."
+                variant="primary"
+                size="md"
+                icon={
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                }
+              >
+                {isNewMode ? "신규 등록" : "업데이트"}
+              </LoadingButton>
+            </div>
           </div>
         </div>
 
