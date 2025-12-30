@@ -133,6 +133,8 @@ export function MultiSelectDropdown({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const isInputFocused = document.activeElement?.tagName === "INPUT";
+
       if (e.key === "Escape") {
         setIsOpen(false);
         setSearchTerm("");
@@ -143,20 +145,34 @@ export function MultiSelectDropdown({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setFocusedIndex((prev) => {
-          const next = prev < filteredOptions.length - 1 ? prev + 1 : 0;
-          optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
-          return next;
-        });
+        // 검색 input에서 벗어나서 첫 번째 옵션으로 포커스 이동
+        if (isInputFocused) {
+          setFocusedIndex(0);
+          optionRefs.current[0]?.scrollIntoView({ block: "nearest" });
+          (document.activeElement as HTMLElement)?.blur();
+        } else {
+          setFocusedIndex((prev) => {
+            const next = prev < filteredOptions.length - 1 ? prev + 1 : 0;
+            optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+            return next;
+          });
+        }
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setFocusedIndex((prev) => {
-          const next = prev > 0 ? prev - 1 : filteredOptions.length - 1;
-          optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
-          return next;
-        });
+        // 검색 input에서 벗어나서 마지막 옵션으로 포커스 이동
+        if (isInputFocused) {
+          setFocusedIndex(filteredOptions.length - 1);
+          optionRefs.current[filteredOptions.length - 1]?.scrollIntoView({ block: "nearest" });
+          (document.activeElement as HTMLElement)?.blur();
+        } else {
+          setFocusedIndex((prev) => {
+            const next = prev > 0 ? prev - 1 : filteredOptions.length - 1;
+            optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+            return next;
+          });
+        }
       } else if (e.key === "Enter" || e.key === " ") {
-        if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
+        if (focusedIndex >= 0 && focusedIndex < filteredOptions.length && !isInputFocused) {
           e.preventDefault();
           handleToggle(filteredOptions[focusedIndex]);
         }

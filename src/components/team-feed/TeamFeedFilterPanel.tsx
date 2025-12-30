@@ -158,8 +158,7 @@ export function TeamFeedFilterPanel({
     if (!isAuthorOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 검색 input에 focus가 있으면 키보드 네비게이션 스킵
-      if (document.activeElement?.tagName === "INPUT") return;
+      const isInputFocused = document.activeElement?.tagName === "INPUT";
 
       if (e.key === "Escape") {
         closeAuthorDropdown();
@@ -171,20 +170,34 @@ export function TeamFeedFilterPanel({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setFocusedAuthorIndex((prev) => {
-          const next = prev < totalOptions - 1 ? prev + 1 : 0;
-          authorOptionRefs.current[next]?.scrollIntoView({ block: "nearest" });
-          return next;
-        });
+        // 검색 input에서 벗어나서 첫 번째 옵션으로 포커스 이동
+        if (isInputFocused) {
+          setFocusedAuthorIndex(0);
+          authorOptionRefs.current[0]?.scrollIntoView({ block: "nearest" });
+          (document.activeElement as HTMLElement)?.blur();
+        } else {
+          setFocusedAuthorIndex((prev) => {
+            const next = prev < totalOptions - 1 ? prev + 1 : 0;
+            authorOptionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+            return next;
+          });
+        }
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setFocusedAuthorIndex((prev) => {
-          const next = prev > 0 ? prev - 1 : totalOptions - 1;
-          authorOptionRefs.current[next]?.scrollIntoView({ block: "nearest" });
-          return next;
-        });
+        // 검색 input에서 벗어나서 마지막 옵션으로 포커스 이동
+        if (isInputFocused) {
+          setFocusedAuthorIndex(totalOptions - 1);
+          authorOptionRefs.current[totalOptions - 1]?.scrollIntoView({ block: "nearest" });
+          (document.activeElement as HTMLElement)?.blur();
+        } else {
+          setFocusedAuthorIndex((prev) => {
+            const next = prev > 0 ? prev - 1 : totalOptions - 1;
+            authorOptionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+            return next;
+          });
+        }
       } else if (e.key === "Enter") {
-        if (focusedAuthorIndex >= 0) {
+        if (focusedAuthorIndex >= 0 && !isInputFocused) {
           e.preventDefault();
           authorOptionRefs.current[focusedAuthorIndex]?.click();
         }
