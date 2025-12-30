@@ -311,6 +311,12 @@ function SnapshotsMainViewInner({
     fetchSnapshotCounts();
   }, [fetchSnapshotCounts, isStateInitialized]);
 
+  // 엔트리 삭제 후 처리
+  const handleEntryDeleted = useCallback(() => {
+    fetchSnapshots();
+    fetchSnapshotCounts(); // 주차별 카운트도 갱신
+  }, [fetchSnapshots, fetchSnapshotCounts]);
+
   // 편집하기
   const [isNavigatingToEdit, setIsNavigatingToEdit] = useState(false);
   const handleEditWeek = () => {
@@ -925,7 +931,7 @@ function SnapshotsMainViewInner({
                 year={selectedYear}
                 week={selectedWeek}
                 allExpanded={allExpanded}
-                onEntryDeleted={fetchSnapshots}
+                onEntryDeleted={handleEntryDeleted}
                 isSelectMode={isSelectMode}
                 onToggleSelectMode={setIsSelectMode}
               />
