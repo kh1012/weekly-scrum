@@ -11,6 +11,8 @@ interface WeekTimelineProps {
   snapshotCountByWeek: Map<string, number>;
   isLoading?: boolean;
   className?: string;
+  /** 편집 모드에서는 스냅샷이 없는 주차를 비활성화 */
+  disableEmptyWeeks?: boolean;
 }
 
 // ISO 8601 주차 계산 (정확한 계산)
@@ -132,6 +134,7 @@ export function WeekTimeline({
   snapshotCountByWeek,
   isLoading = false,
   className = "",
+  disableEmptyWeeks = false,
 }: WeekTimelineProps) {
   // 연도별 주차 데이터 생성 (연속된 주차 표시)
   const groupedWeeks = useMemo(() => {
@@ -255,17 +258,21 @@ export function WeekTimeline({
               const dateRange = getWeekDateRange(weekData.year, weekData.week);
               const weekKey = `${weekData.year}-${weekData.week}`;
               const snapshotCount = snapshotCountByWeek.get(weekKey) || 0;
+              const isDisabled = disableEmptyWeeks && snapshotCount === 0;
 
               return (
                 <button
                   key={`${weekData.year}-${weekData.week}`}
-                  onClick={() => handleWeekSelect(weekData.year, weekData.week)}
+                  onClick={() => !isDisabled && handleWeekSelect(weekData.year, weekData.week)}
+                  disabled={isDisabled}
                   className={`
                     flex items-center gap-2 px-2 py-1.5 rounded-md
                     transition-colors duration-150
                     ${
                       isSelected
                         ? "bg-[#0969da] text-white"
+                        : isDisabled
+                        ? "text-[#8c959f] cursor-not-allowed opacity-50"
                         : "hover:bg-[#f6f8fa] text-[#24292f]"
                     }
                   `}

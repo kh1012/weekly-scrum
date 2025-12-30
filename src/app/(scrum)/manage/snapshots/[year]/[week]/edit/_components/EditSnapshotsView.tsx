@@ -685,6 +685,7 @@ function EditSnapshotsViewInner({
             snapshotCountByWeek={snapshotCountByWeek}
             isLoading={isLoadingCounts}
             className="w-full"
+            disableEmptyWeeks={true}
           />
         </div>
       </aside>
@@ -704,6 +705,7 @@ function EditSnapshotsViewInner({
           snapshotCountByWeek={snapshotCountByWeek}
           isLoading={isLoadingCounts}
           className="w-full"
+          disableEmptyWeeks={true}
         />
       </aside>
 
@@ -879,10 +881,9 @@ function EditSnapshotsViewInner({
               </span>
             </div>
           </div>
-        </div>
 
-        {/* 세 번째 줄: 미리보기 토글 및 저장 버튼 */}
-        <div className="flex items-center justify-between gap-2 md:gap-3">
+          {/* 세 번째 줄: 미리보기 토글 및 저장 버튼 */}
+          <div className="flex items-center justify-between gap-2 md:gap-3">
           {/* 미리보기 토글 - 모바일에서 숨김 */}
           <label className="hidden md:flex items-center gap-2 cursor-pointer select-none group">
             <div className="relative">
@@ -938,11 +939,11 @@ function EditSnapshotsViewInner({
           >
             {isNewMode ? "신규 등록하기" : "업데이트하기"}
           </LoadingButton>
+          </div>
         </div>
-      </div>
 
-      {isMobile ? (
-        <div className="flex-1 flex flex-col min-h-0">
+        {isMobile ? (
+          <div className="flex-1 flex flex-col min-h-0">
           {mobileView === "list" ? (
             <div className="flex-1 bg-white overflow-hidden">
               <SnapshotCardList
@@ -1091,7 +1092,8 @@ function EditSnapshotsViewInner({
             </>
           )}
         </div>
-      )}
+        )}
+      </div>
 
       {/* Workload Level 모달 */}
       <WorkloadLevelModal
