@@ -783,7 +783,7 @@ function SnapshotsMainViewInner({
       {/* 메인 콘텐츠 영역 */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* 서브 메뉴 영역 */}
-        <div className="shrink-0 relative z-40 flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
+        <div className="shrink-0 relative z-[60] flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
           {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
           <div className="hidden lg:flex items-center gap-2 text-sm">
             <span className="font-semibold text-[#0969da]">

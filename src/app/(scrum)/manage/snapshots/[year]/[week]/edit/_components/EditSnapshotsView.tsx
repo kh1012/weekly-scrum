@@ -655,56 +655,19 @@ function EditSnapshotsViewInner({
   return (
     <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* 상단 툴바 */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 md:px-4 py-2 md:py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 shrink-0">
-        <div className="flex items-center gap-2 md:gap-4">
-          <button
-            onClick={() => {
-              navigationProgress.start();
-              router.push("/manage/snapshots");
-            }}
-            className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            <span className="text-xs font-medium hidden sm:inline">목록으로</span>
-          </button>
-
-          <div className="h-4 w-px bg-gray-200" />
-
-          {/* 주차 선택 드롭다운 */}
-          <div className="relative flex items-center gap-2">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 md:px-4 py-2 md:py-3 flex flex-col gap-2 shrink-0">
+        {/* 첫 번째 줄: 목록으로 버튼 (좌측) + 주차 선택 (우측) - 모바일만 적용 */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div className="flex items-center justify-between md:justify-start gap-2">
             <button
-              ref={weekButtonRef}
-              type="button"
-              onClick={openWeekDropdown}
-              className="flex items-center gap-2 h-9 rounded-lg px-3 text-sm font-medium bg-gray-50 transition-colors hover:bg-gray-100"
+              onClick={() => {
+                navigationProgress.start();
+                router.push("/manage/snapshots");
+              }}
+              className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
             >
-              <span className="font-semibold text-gray-900">{year}년</span>
-              <span className="font-semibold text-gray-900">
-                W{week.toString().padStart(2, "0")}
-              </span>
-              <span className="text-gray-500 text-xs">({weekRange})</span>
-              {currentWeekInfo.year === year &&
-                currentWeekInfo.week === week && (
-                  <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
-                    현재
-                  </span>
-                )}
               <svg
-                className={`w-4 h-4 text-gray-400 transition-transform ${
-                  isWeekDropdownOpen ? "rotate-180" : ""
-                }`}
+                className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -713,14 +676,95 @@ function EditSnapshotsViewInner({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
+              <span className="text-xs font-medium hidden sm:inline">목록으로</span>
             </button>
 
-            {/* 워크로드 태그 및 편집 아이콘 */}
+            <div className="hidden md:block h-4 w-px bg-gray-200" />
+
+            {/* 주차 선택 드롭다운 - 모바일에서는 우측 정렬 */}
+            <div className="relative flex items-center gap-2 md:ml-0">
+              <button
+                ref={weekButtonRef}
+                type="button"
+                onClick={openWeekDropdown}
+                className="flex items-center gap-2 h-9 rounded-lg px-3 text-sm font-medium bg-gray-50 transition-colors hover:bg-gray-100"
+              >
+                <span className="font-semibold text-gray-900">{year}년</span>
+                <span className="font-semibold text-gray-900">
+                  W{week.toString().padStart(2, "0")}
+                </span>
+                <span className="text-gray-500 text-xs hidden sm:inline">({weekRange})</span>
+                {currentWeekInfo.year === year &&
+                  currentWeekInfo.week === week && (
+                    <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
+                      현재
+                    </span>
+                  )}
+                <svg
+                  className={`w-4 h-4 text-gray-400 transition-transform ${
+                    isWeekDropdownOpen ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {/* 워크로드 태그 및 편집 아이콘 - 데스크톱에서만 표시 */}
+              {workloadLevel && (
+                <div className="hidden md:flex items-center gap-1.5">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${WORKLOAD_LEVEL_COLORS[workloadLevel].bg} ${WORKLOAD_LEVEL_COLORS[workloadLevel].text} border ${WORKLOAD_LEVEL_COLORS[workloadLevel].border}`}
+                  >
+                    {workloadLevel === "light" && "🌿"}
+                    {workloadLevel === "normal" && "⚡"}
+                    {workloadLevel === "burden" && "🔥"}
+                    <span>{WORKLOAD_LEVEL_LABELS[workloadLevel]}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowWorkloadModal(true);
+                    }}
+                    className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    title="워크로드 편집"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 두 번째 줄: 워크로드 + 스냅샷 선택 + 엔트리 갯수 (모바일에서 우측 정렬) */}
+          <div className="flex items-center justify-end md:justify-start gap-2 flex-wrap">
+
+            {/* 워크로드 태그 - 모바일에서만 표시 (두 번째 줄) */}
             {workloadLevel && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex md:hidden items-center gap-1.5">
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${WORKLOAD_LEVEL_COLORS[workloadLevel].bg} ${WORKLOAD_LEVEL_COLORS[workloadLevel].text} border ${WORKLOAD_LEVEL_COLORS[workloadLevel].border}`}
                 >
@@ -754,93 +798,95 @@ function EditSnapshotsViewInner({
                 </button>
               </div>
             )}
-          </div>
 
-          {/* Portal로 렌더링 */}
-          {isWeekDropdownOpen &&
-            typeof document !== "undefined" &&
-            createPortal(
-                <div
-                  ref={weekDropdownRef}
-                  className="fixed bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-80 overflow-y-auto min-w-[240px]"
-                  style={{
-                    top: dropdownPosition.top,
-                    left: dropdownPosition.left,
-                    zIndex: 9999,
-                  }}
+            {/* 스냅샷 선택 드롭다운 */}
+            {snapshots.length > 1 && selectedSnapshotId && (
+              <>
+                <div className="h-4 w-px bg-gray-200 hidden md:block" />
+                <select
+                  value={selectedSnapshotId}
+                  onChange={(e) => handleSnapshotChange(e.target.value)}
+                  className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                 >
-                  {weekOptionsWithRange.map((w) => {
-                    const weekKey = `${year}-${w.week}`;
-                    const count = snapshotCountByWeek.get(weekKey) || 0;
-                    const hasSnapshots = count > 0;
+                  {snapshots.map((s, i) => (
+                    <option key={s.id} value={s.id}>
+                      스냅샷 {i + 1}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
-                    return (
-                      <button
-                        key={w.week}
-                        ref={w.week === week ? selectedWeekRef : null}
-                        type="button"
-                        onClick={() => handleWeekChange(w.week)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
-                          w.week === week
-                            ? "bg-gray-100 font-medium"
-                            : "hover:bg-gray-50"
-                        } ${
-                          w.isCurrentWeek ? "text-blue-600" : "text-gray-700"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {/* 스냅샷 갯수 표시 */}
-                          {hasSnapshots ? (
-                            <span className="w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full flex items-center justify-center font-medium">
-                              {count}
-                            </span>
-                          ) : (
-                            <span className="w-[18px] h-[18px] flex items-center justify-center">
-                              <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                            </span>
-                          )}
-                          <span className="font-medium">{w.label}</span>
-                          {w.isCurrentWeek && (
-                            <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
-                              현재
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-400">{w.range}</span>
-                      </button>
-                    );
-                  })}
-                </div>,
-                document.body
-              )}
-
-          {/* 스냅샷 선택 드롭다운 */}
-          {snapshots.length > 1 && selectedSnapshotId && (
-            <>
-              <div className="h-4 w-px bg-gray-200" />
-              <select
-                value={selectedSnapshotId}
-                onChange={(e) => handleSnapshotChange(e.target.value)}
-                className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-              >
-                {snapshots.map((s, i) => (
-                  <option key={s.id} value={s.id}>
-                    스냅샷 {i + 1}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
-
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-xs font-medium text-gray-700">
-              {tempSnapshots.length}개 엔트리
-            </span>
+            {/* 엔트리 갯수 */}
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="text-xs font-medium text-gray-700">
+                {tempSnapshots.length}개 엔트리
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
+        {/* Portal로 렌더링 */}
+        {isWeekDropdownOpen &&
+          typeof document !== "undefined" &&
+          createPortal(
+              <div
+                ref={weekDropdownRef}
+                className="fixed bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-80 overflow-y-auto min-w-[240px]"
+                style={{
+                  top: dropdownPosition.top,
+                  left: dropdownPosition.left,
+                  zIndex: 9999,
+                }}
+              >
+                {weekOptionsWithRange.map((w) => {
+                  const weekKey = `${year}-${w.week}`;
+                  const count = snapshotCountByWeek.get(weekKey) || 0;
+                  const hasSnapshots = count > 0;
+
+                  return (
+                    <button
+                      key={w.week}
+                      ref={w.week === week ? selectedWeekRef : null}
+                      type="button"
+                      onClick={() => handleWeekChange(w.week)}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                        w.week === week
+                          ? "bg-gray-100 font-medium"
+                          : "hover:bg-gray-50"
+                      } ${
+                        w.isCurrentWeek ? "text-blue-600" : "text-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {/* 스냅샷 갯수 표시 */}
+                        {hasSnapshots ? (
+                          <span className="w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full flex items-center justify-center font-medium">
+                            {count}
+                          </span>
+                        ) : (
+                          <span className="w-[18px] h-[18px] flex items-center justify-center">
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                          </span>
+                        )}
+                        <span className="font-medium">{w.label}</span>
+                        {w.isCurrentWeek && (
+                          <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
+                            현재
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-400">{w.range}</span>
+                    </button>
+                  );
+                })}
+              </div>,
+              document.body
+            )}
+
+        {/* 세 번째 줄: 미리보기 토글 및 저장 버튼 */}
+        <div className="flex items-center justify-between gap-2 md:gap-3">
           {/* 미리보기 토글 - 모바일에서 숨김 */}
           <label className="hidden md:flex items-center gap-2 cursor-pointer select-none group">
             <div className="relative">
