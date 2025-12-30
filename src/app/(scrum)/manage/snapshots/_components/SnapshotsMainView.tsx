@@ -20,6 +20,7 @@ import { getCurrentISOWeek, getWeekStartDateString } from "@/lib/date/isoWeek";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
 import { ToastProvider } from "@/components/weekly-scrum/manage/Toast";
 import type { WorkloadLevel } from "@/lib/supabase/types";
+import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
 
 interface SnapshotsMainViewProps {
   userId: string;
@@ -469,6 +470,14 @@ function SnapshotsMainViewInner({
                   주차별 스냅샷 조회 및 관리
                 </p>
               </div>
+
+              {/* 워크로드 레벨 (스냅샷이 있을 때만 표시) */}
+              {snapshots.length > 0 && snapshots[0].workload_level && (
+                <div className="flex items-center">
+                  <div className="h-4 w-px bg-[#d0d7de] mx-3" />
+                  <WorkloadBadge level={snapshots[0].workload_level} />
+                </div>
+              )}
             </div>
 
             {/* 우측: 필터 + 액션 버튼 */}
@@ -947,6 +956,23 @@ function SnapshotsMainViewInner({
         userId={userId}
       />
     </div>
+  );
+}
+
+// Workload 뱃지 컴포넌트
+function WorkloadBadge({ level }: { level: WorkloadLevel }) {
+  const colors = WORKLOAD_LEVEL_COLORS[level];
+  const label = WORKLOAD_LEVEL_LABELS[level];
+  
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${colors.bg} ${colors.text} border ${colors.border}`}
+    >
+      {level === "light" && "🌿"}
+      {level === "normal" && "⚡"}
+      {level === "burden" && "🔥"}
+      <span>{label}</span>
+    </span>
   );
 }
 

@@ -14,8 +14,6 @@ import { TrashIcon } from "@/components/common/Icons";
 import { deleteSnapshotEntryAction } from "@/app/actions/snapshots";
 import { useToast } from "@/components/weekly-scrum/manage/Toast";
 import type { SnapshotSummary } from "./SnapshotsMainView";
-import type { WorkloadLevel } from "@/lib/supabase/types";
-import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
 
 // Entry 타입 (개별 카드용)
 interface SnapshotEntry {
@@ -31,9 +29,6 @@ interface SnapshotEntry {
   risks?: string[];
   risk_level?: number;
   collaborators?: { name: string; relations?: string[] }[];
-  /** 스냅샷 레벨의 workload (첫 엔트리에만 표시) */
-  workload_level?: WorkloadLevel | null;
-  isFirstEntry?: boolean;
 }
 
 interface SnapshotListProps {
@@ -164,9 +159,6 @@ export function SnapshotList({
         name: c.name,
         relations: c.relations,
       })),
-      // 첫 엔트리에만 workload 표시
-      workload_level: index === 0 ? snapshot.workload_level : undefined,
-      isFirstEntry: index === 0,
     }))
   );
 
@@ -368,23 +360,6 @@ function ListView({
         />
       ))}
     </div>
-  );
-}
-
-// Workload 뱃지 컴포넌트
-function WorkloadBadge({ level }: { level: WorkloadLevel }) {
-  const colors = WORKLOAD_LEVEL_COLORS[level];
-  const label = WORKLOAD_LEVEL_LABELS[level];
-  
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${colors.bg} ${colors.text} border ${colors.border}`}
-    >
-      {level === "light" && "🌿"}
-      {level === "normal" && "⚡"}
-      {level === "burden" && "🔥"}
-      <span>{label}</span>
-    </span>
   );
 }
 
@@ -1140,11 +1115,6 @@ function EntryRow({
         )}
       </div>
       )}
-      {/* Workload 뱃지 (첫 엔트리에만 표시) */}
-      {entry.isFirstEntry && entry.workload_level && (
-        <WorkloadBadge level={entry.workload_level} />
-      )}
-
       {/* 태그 일렬 표시 */}
       <div className="flex-1 flex items-center gap-1.5 flex-wrap min-w-0">
         {/* Domain */}
