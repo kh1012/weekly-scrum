@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import ReactFlow, {
   Node,
   Edge,
@@ -12,6 +12,7 @@ import ReactFlow, {
   ConnectionMode,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import * as d3 from "d3-force";
 import type { GraphNode, GraphEdge } from "./buildCollabGraph";
 
 interface CollaborationGraphProps {
@@ -27,57 +28,90 @@ export function CollaborationGraph({
   onNodeClick,
   onEdgeClick,
 }: CollaborationGraphProps) {
-  // React Flow 노드 변환
+  // React Flow 노드 변환 (force-directed layout 적용)
   const initialNodes: Node[] = useMemo(() => {
     if (graphNodes.length === 0) return [];
 
     // 최대 totalCollabs 값 찾기 (노드 크기 스케일링용)
     const maxCollabs = Math.max(...graphNodes.map((n) => n.totalCollabs), 1);
 
-    return graphNodes.map((node, index) => {
-      // 노드 크기 계산 (최소 60, 최대 150)
+    // d3-force 시뮬레이션 준비
+    const nodeData = graphNodes.map((node) => {
       const baseSize = 60;
       const maxSize = 150;
       const size =
         baseSize + ((node.totalCollabs / maxCollabs) * (maxSize - baseSize));
 
-      // 원형 배치 (초기 위치)
-      const angle = (index / graphNodes.length) * 2 * Math.PI;
-      const radius = 250;
-      const x = 400 + radius * Math.cos(angle);
-      const y = 300 + radius * Math.sin(angle);
-
       return {
         id: node.id,
-        type: "default",
-        position: { x, y },
-        data: {
-          label: (
-            <div className="text-center">
-              <div className="font-semibold text-sm">{node.label}</div>
-              <div className="text-xs text-[#57606a] mt-1">
-                {node.totalCollabs}회
-              </div>
-            </div>
-          ),
-        },
-        style: {
-          width: size,
-          height: size,
-          borderRadius: "50%",
-          backgroundColor: "#ddf4ff",
-          border: "2px solid #0969da",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "12px",
-          fontWeight: "500",
-          color: "#24292f",
-          cursor: "pointer",
-        },
+        label: node.label,
+        totalCollabs: node.totalCollabs,
+        size,
       };
     });
-  }, [graphNodes]);
+
+    // 엣지 데이터 준비
+    const linkData = graphEdges.map((edge) => ({
+      source: edge.source,
+      target: edge.target,
+      weight: edge.weight,
+    }));
+
+    // Force simulation 실행
+    const simulation = d3
+      .forceSimulation(nodeData as any)
+      .force(
+        "link",
+        d3
+          .forceLink(linkData)
+          .id((d: any) => d.id)
+          .distance(150) // 노드 간 거리
+          .strength(0.5)
+      )
+      .force("charge", d3.forceManyBody().strength(-800)) // 노드 간 반발력
+      .force("center", d3.forceCenter(480, 482)) // 중심점 (960/2, 964/2)
+      .force(
+        "collide",
+        d3.forceCollide().radius((d: any) => d.size / 2 + 20) // 충돌 방지
+      )
+      .stop();
+
+    // 시뮬레이션 실행 (300회 반복)
+    for (let i = 0; i < 300; i++) {
+      simulation.tick();
+    }
+
+    // React Flow 노드로 변환
+    return nodeData.map((node: any) => ({
+      id: node.id,
+      type: "default",
+      position: { x: node.x || 480, y: node.y || 482 },
+      data: {
+        label: (
+          <div className="text-center">
+            <div className="font-semibold text-sm">{node.label}</div>
+            <div className="text-xs text-[#57606a] mt-1">
+              {node.totalCollabs}회
+            </div>
+          </div>
+        ),
+      },
+      style: {
+        width: node.size,
+        height: node.size,
+        borderRadius: "50%",
+        backgroundColor: "#ddf4ff",
+        border: "2px solid #0969da",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "12px",
+        fontWeight: "500",
+        color: "#24292f",
+        cursor: "pointer",
+      },
+    }));
+  }, [graphNodes, graphEdges]);
 
   // React Flow 엣지 변환
   const initialEdges: Edge[] = useMemo(() => {
