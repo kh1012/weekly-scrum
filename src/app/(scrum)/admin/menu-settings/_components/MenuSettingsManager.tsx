@@ -22,6 +22,7 @@ const ALL_MENUS = [
   { key: "plans", label: "Plans", category: "Works" },
   { key: "snapshots", label: "Snapshots", category: "Works" },
   { key: "work-map", label: "Work Map", category: "Works" },
+  { key: "collaborator-graph", label: "Collaborator Graph", category: "Works" },
   // Personal Space
   { key: "my-dashboard", label: "My Dashboard", category: "Personal Space" },
   { key: "my-snapshots", label: "Snapshot Management", category: "Personal Space" },
