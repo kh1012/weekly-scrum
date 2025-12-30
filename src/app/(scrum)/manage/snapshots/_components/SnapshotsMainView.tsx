@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { WeekSelector } from "./WeekSelector";
+import { WeekTimeline } from "./WeekTimeline";
 import { SnapshotList } from "./SnapshotList";
 import { WeekMetaPanel } from "./WeekMetaPanel";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
@@ -323,14 +323,100 @@ function SnapshotsMainViewInner({
     );
   };
 
+  // 모바일: 타임라인 오버레이 상태
+  const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
+
   return (
-    <div className="h-[calc(100vh-7rem)] flex flex-col rounded-md overflow-hidden bg-white border border-[#d0d7de]">
-      {/* 헤더 영역 */}
-      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
+    <div className="h-[calc(100vh-7rem)] flex flex-col lg:flex-row overflow-hidden bg-white border border-[#d0d7de] rounded-md">
+      {/* 좌측: 주차 타임라인 (PC) */}
+      <aside className="hidden lg:flex lg:w-80 lg:shrink-0 border-r border-[#d0d7de] overflow-y-auto">
+        <WeekTimeline
+          year={selectedYear}
+          week={selectedWeek}
+          onYearChange={setSelectedYear}
+          onWeekChange={setSelectedWeek}
+          snapshotCountByWeek={snapshotCountByWeek}
+          className="w-full"
+        />
+      </aside>
+
+      {/* 모바일: 주차 타임라인 (오버레이) */}
+      {isMobileTimelineOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setIsMobileTimelineOpen(false)}
+        >
+          <div
+            className="absolute left-0 top-0 bottom-0 w-80 bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 bg-white border-b border-[#d0d7de] px-4 py-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[#24292f]">
+                주차 선택
+              </h2>
+              <button
+                onClick={() => setIsMobileTimelineOpen(false)}
+                className="p-2 hover:bg-[#f6f8fa] rounded-md transition-colors"
+              >
+                <svg
+                  className="w-5 h-5 text-[#57606a]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <WeekTimeline
+              year={selectedYear}
+              week={selectedWeek}
+              onYearChange={setSelectedYear}
+              onWeekChange={setSelectedWeek}
+              snapshotCountByWeek={snapshotCountByWeek}
+              className="w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 우측: 메인 콘텐츠 */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* 헤더 영역 */}
+        <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* 좌측: 타이틀 */}
+          {/* 좌측: 타이틀 + 모바일 주차 버튼 */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 md:w-9 md:h-9 rounded-md bg-[#ddf4ff] flex items-center justify-center">
+            {/* 모바일: 타임라인 열기 버튼 */}
+            <button
+              onClick={() => setIsMobileTimelineOpen(true)}
+              className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#0969da] bg-[#ddf4ff] rounded-lg hover:bg-[#b6e3ff] transition-colors shrink-0"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span className="hidden sm:inline">
+                {selectedYear}년 W{String(selectedWeek).padStart(2, "0")}
+              </span>
+              <span className="sm:hidden">주차</span>
+            </button>
+
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-md bg-[#ddf4ff] flex items-center justify-center shrink-0">
               <svg
                 className="w-4 h-4 md:w-4.5 md:h-4.5 text-[#0969da]"
                 fill="none"
@@ -345,7 +431,7 @@ function SnapshotsMainViewInner({
                 />
               </svg>
             </div>
-            <div>
+            <div className="hidden sm:block">
               <h1 className="text-base md:text-lg font-semibold text-[#24292f]">
                 스냅샷 관리
               </h1>
@@ -666,19 +752,19 @@ function SnapshotsMainViewInner({
       {/* 메인 콘텐츠 영역 */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* 서브 메뉴 영역 */}
-        <div className="shrink-0 relative z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
-          {/* 좌측: WeekSelector */}
-          <WeekSelector
-            year={selectedYear}
-            week={selectedWeek}
-            onYearChange={setSelectedYear}
-            onWeekChange={setSelectedWeek}
-            snapshotCount={snapshots.length}
-            snapshotCountByWeek={snapshotCountByWeek}
-            workloadLevel={
-              snapshots.length > 0 ? snapshots[0].workload_level : null
-            }
-          />
+        <div className="shrink-0 relative z-40 flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
+          {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
+          <div className="hidden lg:flex items-center gap-2 text-sm">
+            <span className="font-semibold text-[#0969da]">
+              {selectedYear}년 W{String(selectedWeek).padStart(2, "0")}
+            </span>
+            <span className="text-[#57606a]">
+              ({snapshots.length}개의 스냅샷)
+            </span>
+          </div>
+
+          {/* 모바일: 빈 공간 */}
+          <div className="lg:hidden" />
 
           {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
           <div className="flex items-center gap-3">
@@ -819,6 +905,7 @@ function SnapshotsMainViewInner({
           </div>
         </div>
       </div>
+    </div>
 
       {/* 새로 작성하기 모달 */}
       <NewSnapshotModal
