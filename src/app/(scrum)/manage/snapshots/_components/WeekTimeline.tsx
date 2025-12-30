@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 interface WeekTimelineProps {
   year: number;
@@ -8,6 +9,7 @@ interface WeekTimelineProps {
   onYearChange: (year: number) => void;
   onWeekChange: (week: number) => void;
   snapshotCountByWeek: Map<string, number>;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -128,6 +130,7 @@ export function WeekTimeline({
   onYearChange,
   onWeekChange,
   snapshotCountByWeek,
+  isLoading = false,
   className = "",
 }: WeekTimelineProps) {
   // 연도별 주차 데이터 생성 (연속된 주차 표시)
@@ -220,6 +223,19 @@ export function WeekTimeline({
     }
     onWeekChange(selectedWeek);
   };
+
+  // 로딩 중일 때 스피너 표시
+  if (isLoading) {
+    return (
+      <div className={`flex flex-col ${className}`}>
+        <LogoLoadingSpinner
+          title="주차 정보 불러오는 중"
+          description="잠시만 기다려주세요"
+          className="py-12"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col ${className}`}>

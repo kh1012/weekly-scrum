@@ -158,6 +158,7 @@ function SnapshotsMainViewInner({
   const [snapshotCountByWeek, setSnapshotCountByWeek] = useState<
     Map<string, number>
   >(new Map());
+  const [isLoadingCounts, setIsLoadingCounts] = useState(true); // 주차별 카운트 로딩 상태
 
   // 메타데이터
   const [weekStats, setWeekStats] = useState<WeekStatsData | null>(null);
@@ -283,6 +284,7 @@ function SnapshotsMainViewInner({
 
   // 주차별 스냅샷 갯수 조회
   const fetchSnapshotCounts = useCallback(async () => {
+    setIsLoadingCounts(true);
     try {
       // year 파라미터 없이 모든 연도의 스냅샷 카운트 조회
       const response = await fetch(
@@ -298,6 +300,8 @@ function SnapshotsMainViewInner({
       }
     } catch (error) {
       console.error("Failed to fetch snapshot counts:", error);
+    } finally {
+      setIsLoadingCounts(false);
     }
   }, [workspaceId, userId]);
 
@@ -349,6 +353,7 @@ function SnapshotsMainViewInner({
           onYearChange={setSelectedYear}
           onWeekChange={setSelectedWeek}
           snapshotCountByWeek={snapshotCountByWeek}
+          isLoading={isLoadingCounts}
           className="w-full"
         />
       </aside>
@@ -411,6 +416,7 @@ function SnapshotsMainViewInner({
               setIsMobileTimelineOpen(false);
             }}
             snapshotCountByWeek={snapshotCountByWeek}
+            isLoading={isLoadingCounts}
             className="w-full"
           />
         </div>
