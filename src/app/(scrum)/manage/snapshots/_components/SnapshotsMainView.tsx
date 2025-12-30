@@ -101,7 +101,7 @@ function SnapshotsMainViewInner({
   // 컴포넌트 마운트 시 현재 주차로 자동 선택
   useEffect(() => {
     if (!isStateInitialized) return;
-    
+
     // localStorage에 저장된 값이 없으면 현재 주차로 설정
     const savedState = localStorage.getItem(SNAPSHOTS_STATE_KEY);
     if (!savedState) {
@@ -420,523 +420,523 @@ function SnapshotsMainViewInner({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* 헤더 영역 */}
         <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* 좌측: 타이틀 + 모바일 주차 버튼 */}
-          <div className="flex items-center gap-3">
-            {/* 모바일: 타임라인 열기 버튼 */}
-            <button
-              onClick={() => setIsMobileTimelineOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#0969da] bg-[#ddf4ff] rounded-lg hover:bg-[#b6e3ff] transition-colors shrink-0"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* 좌측: 타이틀 + 모바일 주차 버튼 */}
+            <div className="flex items-center gap-3">
+              {/* 모바일: 타임라인 열기 버튼 */}
+              <button
+                onClick={() => setIsMobileTimelineOpen(true)}
+                className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#0969da] bg-[#ddf4ff] rounded-lg hover:bg-[#b6e3ff] transition-colors shrink-0"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">
+                  {selectedYear}년 W{String(selectedWeek).padStart(2, "0")}
+                </span>
+                <span className="sm:hidden">주차</span>
+              </button>
+
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-md bg-[#ddf4ff] flex items-center justify-center shrink-0">
+                <svg
+                  className="w-4 h-4 md:w-4.5 md:h-4.5 text-[#0969da]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                   strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="hidden sm:inline">
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-base md:text-lg font-semibold text-[#24292f]">
+                  스냅샷 관리
+                </h1>
+                <p className="text-xs text-[#57606a]">
+                  주차별 스냅샷 조회 및 관리
+                </p>
+              </div>
+            </div>
+
+            {/* 우측: 필터 + 액션 버튼 */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+              {/* 필터 드롭다운 (체크박스 형태) - 모바일에서는 숨김 */}
+              <div className="hidden md:flex items-center gap-2">
+                {/* 필터 초기화 (Reset) 버튼 - 항상 표시, 필터 없으면 비활성화 */}
+                <button
+                  onClick={clearFilters}
+                  disabled={!hasActiveFilters}
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
+                    hasActiveFilters
+                      ? "text-[#24292f] bg-white border-[#d0d7de] hover:bg-[#f6f8fa]"
+                      : "text-[#8c959f] bg-[#f6f8fa] border-[#d0d7de] cursor-not-allowed"
+                  }`}
+                  title="필터 초기화"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Reset
+                </button>
+
+                <div className="w-px h-4 bg-[#d0d7de]" />
+
+                {/* 프로젝트 필터 */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setIsProjectFilterOpen(!isProjectFilterOpen);
+                      setIsModuleFilterOpen(false);
+                      setIsFeatureFilterOpen(false);
+                    }}
+                    className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
+                      projectFilters.size > 0
+                        ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
+                        : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
+                    }`}
+                  >
+                    <span>Project</span>
+                    {projectFilters.size > 0 && (
+                      <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                        {projectFilters.size}
+                      </span>
+                    )}
+                    <svg
+                      className={`w-3 h-3 transition-transform ${
+                        isProjectFilterOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                  {isProjectFilterOpen && (
+                    <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                      {filterOptions.projects.map((p) => (
+                        <label
+                          key={p}
+                          className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={projectFilters.has(p)}
+                            onChange={() => toggleProjectFilter(p)}
+                            className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
+                          />
+                          <span
+                            className={
+                              projectFilters.has(p)
+                                ? "font-medium text-[#0969da]"
+                                : "text-[#24292f]"
+                            }
+                          >
+                            {p}
+                          </span>
+                        </label>
+                      ))}
+                      {filterOptions.projects.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-[#57606a]">
+                          항목 없음
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 모듈 필터 */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setIsModuleFilterOpen(!isModuleFilterOpen);
+                      setIsProjectFilterOpen(false);
+                      setIsFeatureFilterOpen(false);
+                    }}
+                    className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
+                      moduleFilters.size > 0
+                        ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
+                        : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
+                    }`}
+                  >
+                    <span>Module</span>
+                    {moduleFilters.size > 0 && (
+                      <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                        {moduleFilters.size}
+                      </span>
+                    )}
+                    <svg
+                      className={`w-3 h-3 transition-transform ${
+                        isModuleFilterOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                  {isModuleFilterOpen && (
+                    <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                      {filterOptions.modules.map((m) => (
+                        <label
+                          key={m}
+                          className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={moduleFilters.has(m)}
+                            onChange={() => toggleModuleFilter(m)}
+                            className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
+                          />
+                          <span
+                            className={
+                              moduleFilters.has(m)
+                                ? "font-medium text-[#0969da]"
+                                : "text-[#24292f]"
+                            }
+                          >
+                            {m}
+                          </span>
+                        </label>
+                      ))}
+                      {filterOptions.modules.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-[#57606a]">
+                          항목 없음
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 기능 필터 */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setIsFeatureFilterOpen(!isFeatureFilterOpen);
+                      setIsProjectFilterOpen(false);
+                      setIsModuleFilterOpen(false);
+                    }}
+                    className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
+                      featureFilters.size > 0
+                        ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
+                        : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
+                    }`}
+                  >
+                    <span>Feature</span>
+                    {featureFilters.size > 0 && (
+                      <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                        {featureFilters.size}
+                      </span>
+                    )}
+                    <svg
+                      className={`w-3 h-3 transition-transform ${
+                        isFeatureFilterOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                  {isFeatureFilterOpen && (
+                    <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
+                      {filterOptions.features.map((f) => (
+                        <label
+                          key={f}
+                          className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={featureFilters.has(f)}
+                            onChange={() => toggleFeatureFilter(f)}
+                            className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
+                          />
+                          <span
+                            className={
+                              featureFilters.has(f)
+                                ? "font-medium text-[#0969da]"
+                                : "text-[#24292f]"
+                            }
+                          >
+                            {f}
+                          </span>
+                        </label>
+                      ))}
+                      {filterOptions.features.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-[#57606a]">
+                          항목 없음
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="hidden md:block h-6 w-px bg-[#d0d7de]" />
+
+              {/* 액션 버튼 */}
+              <div className="flex items-center gap-2 md:gap-3">
+                <LoadingButton
+                  onClick={handleEditWeek}
+                  disabled={snapshots.length === 0}
+                  isLoading={isNavigatingToEdit}
+                  loadingText="이동 중..."
+                  variant="secondary"
+                  size="md"
+                  icon={
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  }
+                  className="group flex-1 md:flex-none"
+                >
+                  <span className="hidden sm:inline">편집하기</span>
+                  <span className="sm:hidden">편집</span>
+                </LoadingButton>
+
+                <LoadingButton
+                  onClick={() => setIsNewSnapshotModalOpen(true)}
+                  disabled={snapshots.some((s) => s.entriesCount > 0)}
+                  variant="primary"
+                  size="md"
+                  icon={
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  }
+                  className="flex-1 md:flex-none"
+                  title={
+                    snapshots.some((s) => s.entriesCount > 0)
+                      ? "이미 엔트리가 있는 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요."
+                      : ""
+                  }
+                >
+                  <span className="hidden sm:inline">새로 작성하기</span>
+                  <span className="sm:hidden">작성</span>
+                </LoadingButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 메인 콘텐츠 영역 */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* 서브 메뉴 영역 */}
+          <div className="shrink-0 relative flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
+            {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
+            <div className="hidden lg:flex items-center gap-2 text-sm">
+              <span className="font-semibold text-[#0969da]">
                 {selectedYear}년 W{String(selectedWeek).padStart(2, "0")}
               </span>
-              <span className="sm:hidden">주차</span>
-            </button>
-
-            <div className="w-8 h-8 md:w-9 md:h-9 rounded-md bg-[#ddf4ff] flex items-center justify-center shrink-0">
-              <svg
-                className="w-4 h-4 md:w-4.5 md:h-4.5 text-[#0969da]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-base md:text-lg font-semibold text-[#24292f]">
-                스냅샷 관리
-              </h1>
-              <p className="text-xs text-[#57606a]">
-                주차별 스냅샷 조회 및 관리
-              </p>
-            </div>
-          </div>
-
-          {/* 우측: 필터 + 액션 버튼 */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-            {/* 필터 드롭다운 (체크박스 형태) - 모바일에서는 숨김 */}
-            <div className="hidden md:flex items-center gap-2">
-              {/* 필터 초기화 (Reset) 버튼 - 항상 표시, 필터 없으면 비활성화 */}
-              <button
-                onClick={clearFilters}
-                disabled={!hasActiveFilters}
-                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
-                  hasActiveFilters
-                    ? "text-[#24292f] bg-white border-[#d0d7de] hover:bg-[#f6f8fa]"
-                    : "text-[#8c959f] bg-[#f6f8fa] border-[#d0d7de] cursor-not-allowed"
-                }`}
-                title="필터 초기화"
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Reset
-              </button>
-
-              <div className="w-px h-4 bg-[#d0d7de]" />
-
-              {/* 프로젝트 필터 */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setIsProjectFilterOpen(!isProjectFilterOpen);
-                    setIsModuleFilterOpen(false);
-                    setIsFeatureFilterOpen(false);
-                  }}
-                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
-                    projectFilters.size > 0
-                      ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
-                      : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
-                  }`}
-                >
-                  <span>Project</span>
-                  {projectFilters.size > 0 && (
-                    <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                      {projectFilters.size}
-                    </span>
-                  )}
-                  <svg
-                    className={`w-3 h-3 transition-transform ${
-                      isProjectFilterOpen ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                {isProjectFilterOpen && (
-                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
-                    {filterOptions.projects.map((p) => (
-                      <label
-                        key={p}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={projectFilters.has(p)}
-                          onChange={() => toggleProjectFilter(p)}
-                          className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
-                        />
-                        <span
-                          className={
-                            projectFilters.has(p)
-                              ? "font-medium text-[#0969da]"
-                              : "text-[#24292f]"
-                          }
-                        >
-                          {p}
-                        </span>
-                      </label>
-                    ))}
-                    {filterOptions.projects.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-[#57606a]">
-                        항목 없음
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* 모듈 필터 */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setIsModuleFilterOpen(!isModuleFilterOpen);
-                    setIsProjectFilterOpen(false);
-                    setIsFeatureFilterOpen(false);
-                  }}
-                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
-                    moduleFilters.size > 0
-                      ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
-                      : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
-                  }`}
-                >
-                  <span>Module</span>
-                  {moduleFilters.size > 0 && (
-                    <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                      {moduleFilters.size}
-                    </span>
-                  )}
-                  <svg
-                    className={`w-3 h-3 transition-transform ${
-                      isModuleFilterOpen ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                {isModuleFilterOpen && (
-                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
-                    {filterOptions.modules.map((m) => (
-                      <label
-                        key={m}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={moduleFilters.has(m)}
-                          onChange={() => toggleModuleFilter(m)}
-                          className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
-                        />
-                        <span
-                          className={
-                            moduleFilters.has(m)
-                              ? "font-medium text-[#0969da]"
-                              : "text-[#24292f]"
-                          }
-                        >
-                          {m}
-                        </span>
-                      </label>
-                    ))}
-                    {filterOptions.modules.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-[#57606a]">
-                        항목 없음
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* 기능 필터 */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setIsFeatureFilterOpen(!isFeatureFilterOpen);
-                    setIsProjectFilterOpen(false);
-                    setIsModuleFilterOpen(false);
-                  }}
-                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
-                    featureFilters.size > 0
-                      ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da]"
-                      : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
-                  }`}
-                >
-                  <span>Feature</span>
-                  {featureFilters.size > 0 && (
-                    <span className="bg-[#0969da] text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                      {featureFilters.size}
-                    </span>
-                  )}
-                  <svg
-                    className={`w-3 h-3 transition-transform ${
-                      isFeatureFilterOpen ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                {isFeatureFilterOpen && (
-                  <div className="absolute top-full right-0 mt-1 z-50 bg-white rounded-md border border-[#d0d7de] py-1 max-h-60 overflow-y-auto min-w-[180px]">
-                    {filterOptions.features.map((f) => (
-                      <label
-                        key={f}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[#f6f8fa] transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={featureFilters.has(f)}
-                          onChange={() => toggleFeatureFilter(f)}
-                          className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da]"
-                        />
-                        <span
-                          className={
-                            featureFilters.has(f)
-                              ? "font-medium text-[#0969da]"
-                              : "text-[#24292f]"
-                          }
-                        >
-                          {f}
-                        </span>
-                      </label>
-                    ))}
-                    {filterOptions.features.length === 0 && (
-                      <div className="px-3 py-2 text-xs text-[#57606a]">
-                        항목 없음
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <span className="text-[#57606a]">
+                ({snapshots.length}개의 스냅샷)
+              </span>
             </div>
 
-            <div className="hidden md:block h-6 w-px bg-[#d0d7de]" />
+            {/* 모바일: 빈 공간 */}
+            <div className="lg:hidden" />
 
-            {/* 액션 버튼 */}
-            <div className="flex items-center gap-2 md:gap-3">
-              <LoadingButton
-                onClick={handleEditWeek}
-                disabled={snapshots.length === 0}
-                isLoading={isNavigatingToEdit}
-                loadingText="이동 중..."
-                variant="secondary"
-                size="md"
-                icon={
+            {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
+            <div className="flex items-center gap-3">
+              {/* 뷰 모드 토글 */}
+              <div className="flex items-center border border-[#d0d7de] rounded-md overflow-hidden">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 transition-colors ${
+                    viewMode === "grid"
+                      ? "bg-[#0969da] text-white"
+                      : "bg-white text-[#57606a] hover:bg-[#f6f8fa] border-r border-[#d0d7de]"
+                  }`}
+                  title="그리드 뷰"
+                >
                   <svg
                     className="w-4 h-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    strokeWidth={2}
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
                     />
                   </svg>
-                }
-                className="group flex-1 md:flex-none"
-              >
-                <span className="hidden sm:inline">편집하기</span>
-                <span className="sm:hidden">편집</span>
-              </LoadingButton>
-
-              <LoadingButton
-                onClick={() => setIsNewSnapshotModalOpen(true)}
-                disabled={snapshots.some((s) => s.entriesCount > 0)}
-                variant="primary"
-                size="md"
-                icon={
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-1.5 transition-colors ${
+                    viewMode === "list"
+                      ? "bg-[#0969da] text-white"
+                      : "bg-white text-[#57606a] hover:bg-[#f6f8fa]"
+                  }`}
+                  title="리스트 뷰"
+                >
                   <svg
                     className="w-4 h-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    strokeWidth={2}
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
+                      d="M4 6h16M4 12h16M4 18h16"
                     />
                   </svg>
-                }
-                className="flex-1 md:flex-none"
-                title={
-                  snapshots.some((s) => s.entriesCount > 0)
-                    ? "이미 엔트리가 있는 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요."
-                    : ""
-                }
-              >
-                <span className="hidden sm:inline">새로 작성하기</span>
-                <span className="sm:hidden">작성</span>
-              </LoadingButton>
-            </div>
-          </div>
-        </div>
-      </div>
+                </button>
+              </div>
 
-      {/* 메인 콘텐츠 영역 */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* 서브 메뉴 영역 */}
-        <div className="shrink-0 relative z-[60] flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
-          {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
-          <div className="hidden lg:flex items-center gap-2 text-sm">
-            <span className="font-semibold text-[#0969da]">
-              {selectedYear}년 W{String(selectedWeek).padStart(2, "0")}
-            </span>
-            <span className="text-[#57606a]">
-              ({snapshots.length}개의 스냅샷)
-            </span>
-          </div>
-
-          {/* 모바일: 빈 공간 */}
-          <div className="lg:hidden" />
-
-          {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
-          <div className="flex items-center gap-3">
-            {/* 뷰 모드 토글 */}
-            <div className="flex items-center border border-[#d0d7de] rounded-md overflow-hidden">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-[#0969da] text-white"
-                    : "bg-white text-[#57606a] hover:bg-[#f6f8fa] border-r border-[#d0d7de]"
-                }`}
-                title="그리드 뷰"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-1.5 transition-colors ${
-                  viewMode === "list"
-                    ? "bg-[#0969da] text-white"
-                    : "bg-white text-[#57606a] hover:bg-[#f6f8fa]"
-                }`}
-                title="리스트 뷰"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* 전체 펼치기/접기 버튼 */}
-            {filteredSnapshots.length > 0 && (
-              <button
-                onClick={() => setAllExpanded(!allExpanded)}
-                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
-                  allExpanded
-                    ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da] hover:bg-[#b6e3ff]"
-                    : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
-                }`}
-              >
-                <svg
-                  className={`w-3.5 h-3.5 transition-transform ${
-                    allExpanded ? "rotate-180" : ""
+              {/* 전체 펼치기/접기 버튼 */}
+              {filteredSnapshots.length > 0 && (
+                <button
+                  onClick={() => setAllExpanded(!allExpanded)}
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors border ${
+                    allExpanded
+                      ? "bg-[#ddf4ff] text-[#0969da] border-[#0969da] hover:bg-[#b6e3ff]"
+                      : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
                   }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-                {allExpanded ? "전체 접기" : "전체 펼치기"}
-              </button>
-            )}
+                  <svg
+                    className={`w-3.5 h-3.5 transition-transform ${
+                      allExpanded ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                  {allExpanded ? "전체 접기" : "전체 펼치기"}
+                </button>
+              )}
 
-            {/* 선택 모드 토글 버튼 */}
-            {snapshots.length > 0 && (
-              <button
-                onClick={() => setIsSelectMode(!isSelectMode)}
-                className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors ${
-                  isSelectMode
-                    ? "bg-[#0969da] text-white hover:bg-[#0860ca]"
-                    : "bg-white text-[#57606a] border border-[#d0d7de] hover:bg-[#f6f8fa]"
-                }`}
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+              {/* 선택 모드 토글 버튼 */}
+              {snapshots.length > 0 && (
+                <button
+                  onClick={() => setIsSelectMode(!isSelectMode)}
+                  className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors ${
+                    isSelectMode
+                      ? "bg-[#0969da] text-white hover:bg-[#0860ca]"
+                      : "bg-white text-[#57606a] border border-[#d0d7de] hover:bg-[#f6f8fa]"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-                {isSelectMode ? "완료" : "선택"}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* 스냅샷 목록 영역 */}
-        <div className="flex-1 relative min-h-0 overflow-hidden">
-          {/* 스냅샷 목록 */}
-          <div className="h-full overflow-y-auto p-4 md:p-6 pb-24 bg-white">
-            <SnapshotList
-              snapshots={filteredSnapshots}
-              isLoading={isLoading}
-              viewMode={viewMode}
-              onRefresh={fetchSnapshots}
-              year={selectedYear}
-              week={selectedWeek}
-              allExpanded={allExpanded}
-              onEntryDeleted={fetchSnapshots}
-              isSelectMode={isSelectMode}
-              onToggleSelectMode={setIsSelectMode}
-            />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  {isSelectMode ? "완료" : "선택"}
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* 메타데이터 패널 - Bottom Sheet 스타일 (모바일에서 숨김) */}
-          <div className="hidden md:block">
-            <WeekMetaPanel
-              stats={weekStats}
-              isExpanded={isMetaPanelExpanded}
-              onToggle={() => setIsMetaPanelExpanded(!isMetaPanelExpanded)}
-              snapshotCount={snapshots.length}
-            />
+          {/* 스냅샷 목록 영역 */}
+          <div className="flex-1 relative min-h-0 overflow-hidden">
+            {/* 스냅샷 목록 */}
+            <div className="h-full overflow-y-auto p-4 md:p-6 pb-24 bg-white">
+              <SnapshotList
+                snapshots={filteredSnapshots}
+                isLoading={isLoading}
+                viewMode={viewMode}
+                onRefresh={fetchSnapshots}
+                year={selectedYear}
+                week={selectedWeek}
+                allExpanded={allExpanded}
+                onEntryDeleted={fetchSnapshots}
+                isSelectMode={isSelectMode}
+                onToggleSelectMode={setIsSelectMode}
+              />
+            </div>
+
+            {/* 메타데이터 패널 - Bottom Sheet 스타일 (모바일에서 숨김) */}
+            <div className="hidden md:block">
+              <WeekMetaPanel
+                stats={weekStats}
+                isExpanded={isMetaPanelExpanded}
+                onToggle={() => setIsMetaPanelExpanded(!isMetaPanelExpanded)}
+                snapshotCount={snapshots.length}
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       {/* 새로 작성하기 모달 */}
       <NewSnapshotModal

@@ -92,8 +92,28 @@ export function WeekTimeline({
   const groupedWeeks = useMemo(() => {
     // 1. 현재 ISO 주차 계산
     const currentISOWeek = getCurrentISOWeek();
+    console.log('[WeekTimeline] 현재 ISO 주차:', currentISOWeek);
     
-    // 2. 스냅샷이 있는 주차들 추출
+    // 2. 다음 주차 계산 (현재 주차 +1)
+    const nextWeek = { ...currentISOWeek };
+    // 해당 연도의 마지막 주차 계산
+    const dec31 = new Date(Date.UTC(currentISOWeek.year, 11, 31));
+    const dec31Day = (dec31.getUTCDay() + 6) % 7;
+    dec31.setUTCDate(dec31.getUTCDate() - dec31Day + 3);
+    const lastWeekYear = dec31.getUTCFullYear();
+    const firstThursday = new Date(Date.UTC(lastWeekYear, 0, 4));
+    const weekDiff = Math.round((dec31.getTime() - firstThursday.getTime()) / 86400000);
+    const weeksInYear = 1 + Math.floor(weekDiff / 7);
+    
+    if (currentISOWeek.week < weeksInYear) {
+      nextWeek.week = currentISOWeek.week + 1;
+    } else {
+      nextWeek.year = currentISOWeek.year + 1;
+      nextWeek.week = 1;
+    }
+    console.log('[WeekTimeline] 다음 주차 (+1):', nextWeek, `(${weeksInYear}주까지 존재)`);
+    
+    // 3. 스냅샷이 있는 주차들 추출
     const snapshotWeeks: Array<{ year: number; week: number }> = [];
     snapshotCountByWeek.forEach((_, key) => {
       const [yearStr, weekStr] = key.split('-');
@@ -103,7 +123,7 @@ export function WeekTimeline({
       });
     });
     
-    // 3. 범위 결정: 가장 오래된 스냅샷 주차부터 현재 주차까지
+    // 4. 범위 결정: 가장 오래된 스냅샷 주차부터 다음 주차까지
     let startYear = currentISOWeek.year;
     let startWeek = currentISOWeek.week;
     
@@ -118,15 +138,16 @@ export function WeekTimeline({
       startWeek = oldest.week;
     }
     
-    // 4. 시작 주차부터 현재 주차까지 모든 주차 생성
+    // 5. 시작 주차부터 다음 주차(현재 +1)까지 모든 주차 생성
     const allWeeks = generateWeeksBetween(
       startYear,
       startWeek,
-      currentISOWeek.year,
-      currentISOWeek.week
+      nextWeek.year,
+      nextWeek.week
     );
+    console.log('[WeekTimeline] 생성된 주차 목록:', allWeeks.map(w => `${w.year}-W${w.week}`).join(', '));
     
-    // 5. 연도별로 그룹화
+    // 6. 연도별로 그룹화
     const weeksByYear = new Map<number, Array<{ year: number; week: number }>>();
     allWeeks.forEach((w) => {
       if (!weeksByYear.has(w.year)) {
@@ -135,7 +156,7 @@ export function WeekTimeline({
       weeksByYear.get(w.year)!.push(w);
     });
     
-    // 6. 연도별로 정렬하고 각 연도의 주차도 정렬 (최신이 위로)
+    // 7. 연도별로 정렬하고 각 연도의 주차도 정렬 (최신이 위로)
     return Array.from(weeksByYear.entries())
       .sort(([a], [b]) => b - a) // 연도 내림차순
       .map(([y, weeks]) => ({
