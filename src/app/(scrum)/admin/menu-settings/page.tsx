@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getWorkspaceRole } from "@/lib/auth/getWorkspaceRole";
-import { getMenuSettings } from "@/lib/data/menuSettings";
+import { getMenuSettings, type MenuSetting } from "@/lib/data/menuSettings";
 import { MenuSettingsManager } from "./_components/MenuSettingsManager";
 
 export const metadata = {
@@ -23,7 +23,13 @@ export default async function MenuSettingsPage() {
     redirect("/");
   }
 
-  const settings = await getMenuSettings(DEFAULT_WORKSPACE_ID);
+  let settings: MenuSetting[] = [];
+  try {
+    settings = await getMenuSettings(DEFAULT_WORKSPACE_ID);
+  } catch (error) {
+    console.error("[MenuSettingsPage] Error fetching menu settings:", error);
+    // 에러가 발생해도 빈 배열로 초기화하여 UI는 표시되도록 함
+  }
 
   return (
     <MenuSettingsManager
