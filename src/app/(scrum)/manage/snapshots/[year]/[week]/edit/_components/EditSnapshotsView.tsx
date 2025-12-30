@@ -813,6 +813,14 @@ function EditSnapshotsViewInner({
                   </button>
                 </div>
               )}
+
+              {/* 엔트리 갯수 - 데스크톱에서만 표시 */}
+              <div className="hidden md:flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-xs font-medium text-gray-700">
+                  {tempSnapshots.length}개 엔트리
+                </span>
+              </div>
             </div>
           </div>
 
@@ -873,8 +881,8 @@ function EditSnapshotsViewInner({
               </>
             )}
 
-            {/* 엔트리 갯수 */}
-            <div className="flex items-center gap-1.5">
+            {/* 엔트리 갯수 - 모바일에서만 표시 */}
+            <div className="flex md:hidden items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span className="text-xs font-medium text-gray-700">
                 {tempSnapshots.length}개 엔트리
