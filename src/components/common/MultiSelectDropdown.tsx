@@ -44,8 +44,10 @@ export function MultiSelectDropdown({
 }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<(HTMLLabelElement | null)[]>([]);
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -58,6 +60,7 @@ export function MultiSelectDropdown({
       ) {
         setIsOpen(false);
         setSearchTerm("");
+        setFocusedIndex(-1);
       }
     };
     if (isOpen) {
@@ -99,6 +102,7 @@ export function MultiSelectDropdown({
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
     setSearchTerm("");
+    setFocusedIndex(-1);
   }, []);
 
   // 스크롤/리사이즈 시 위치 재계산
@@ -118,6 +122,50 @@ export function MultiSelectDropdown({
   const filteredOptions = options.filter((opt) =>
     opt.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // 검색어 변경 시 focusedIndex 리셋
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [searchTerm]);
+
+  // 키보드 네비게이션
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        setSearchTerm("");
+        setFocusedIndex(-1);
+        buttonRef.current?.focus();
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) => {
+          const next = prev < filteredOptions.length - 1 ? prev + 1 : 0;
+          optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+          return next;
+        });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) => {
+          const next = prev > 0 ? prev - 1 : filteredOptions.length - 1;
+          optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+          return next;
+        });
+      } else if (e.key === "Enter" || e.key === " ") {
+        if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
+          e.preventDefault();
+          handleToggle(filteredOptions[focusedIndex]);
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, focusedIndex, filteredOptions]);
 
   const handleToggle = (opt: string) => {
     if (value.includes(opt)) {
@@ -215,18 +263,27 @@ export function MultiSelectDropdown({
             {/* 옵션 목록 */}
             <div className="max-h-60 overflow-y-auto">
               {filteredOptions.length > 0 ? (
-                filteredOptions.map((opt) => {
+                filteredOptions.map((opt, idx) => {
                   const isChecked = value.includes(opt);
+                  const isFocused = idx === focusedIndex;
                   return (
                     <label
                       key={opt}
-                      className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-[#f6f8fa] transition-colors"
+                      ref={(el) => {
+                        optionRefs.current[idx] = el;
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors ${
+                        isFocused
+                          ? "bg-[#ddf4ff] ring-2 ring-inset ring-[#0969da]"
+                          : "hover:bg-[#f6f8fa]"
+                      }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => handleToggle(opt)}
                         className="w-4 h-4 text-[#0969da] border-[#d0d7de] rounded focus:ring-2 focus:ring-[#0969da]"
+                        tabIndex={-1}
                       />
                       <span className="text-[#24292f]">{opt}</span>
                     </label>

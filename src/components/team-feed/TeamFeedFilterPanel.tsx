@@ -63,8 +63,10 @@ export function TeamFeedFilterPanel({
   // Author 드롭다운 상태
   const [isAuthorOpen, setIsAuthorOpen] = useState(false);
   const [authorSearch, setAuthorSearch] = useState("");
+  const [focusedAuthorIndex, setFocusedAuthorIndex] = useState<number>(-1);
   const authorButtonRef = useRef<HTMLButtonElement>(null);
   const authorDropdownRef = useRef<HTMLDivElement>(null);
+  const authorOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [authorDropdownStyle, setAuthorDropdownStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
@@ -88,6 +90,7 @@ export function TeamFeedFilterPanel({
       ) {
         setIsAuthorOpen(false);
         setAuthorSearch("");
+        setFocusedAuthorIndex(-1);
       }
     };
     if (isAuthorOpen) {
@@ -125,6 +128,7 @@ export function TeamFeedFilterPanel({
   const closeAuthorDropdown = useCallback(() => {
     setIsAuthorOpen(false);
     setAuthorSearch("");
+    setFocusedAuthorIndex(-1);
   }, []);
 
   // 스크롤/리사이즈 시 위치 재계산
@@ -143,6 +147,53 @@ export function TeamFeedFilterPanel({
   const filteredMembers = workspaceMembers.filter((member) =>
     (member.display_name || "").toLowerCase().includes(authorSearch.toLowerCase())
   );
+
+  // Author 검색어 변경 시 focusedIndex 리셋
+  useEffect(() => {
+    setFocusedAuthorIndex(-1);
+  }, [authorSearch]);
+
+  // Author 드롭다운 키보드 네비게이션
+  useEffect(() => {
+    if (!isAuthorOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 검색 input에 focus가 있으면 키보드 네비게이션 스킵
+      if (document.activeElement?.tagName === "INPUT") return;
+
+      if (e.key === "Escape") {
+        closeAuthorDropdown();
+        authorButtonRef.current?.focus();
+        return;
+      }
+
+      const totalOptions = filteredMembers.length + 1; // +1 for "전체" option
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedAuthorIndex((prev) => {
+          const next = prev < totalOptions - 1 ? prev + 1 : 0;
+          authorOptionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+          return next;
+        });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedAuthorIndex((prev) => {
+          const next = prev > 0 ? prev - 1 : totalOptions - 1;
+          authorOptionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+          return next;
+        });
+      } else if (e.key === "Enter") {
+        if (focusedAuthorIndex >= 0) {
+          e.preventDefault();
+          authorOptionRefs.current[focusedAuthorIndex]?.click();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isAuthorOpen, focusedAuthorIndex, filteredMembers, closeAuthorDropdown]);
 
   const handleAuthorSelect = (userId: string) => {
     setSelectedAuthor(userId === selectedAuthor ? undefined : userId);
@@ -307,13 +358,18 @@ export function TeamFeedFilterPanel({
                   <div className="max-h-48 overflow-y-auto">
                     {/* 전체 옵션 */}
                     <button
+                      ref={(el) => {
+                        authorOptionRefs.current[0] = el;
+                      }}
                       type="button"
                       onClick={() => {
                         setSelectedAuthor(undefined);
                         closeAuthorDropdown();
                       }}
                       className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
-                        !selectedAuthor
+                        focusedAuthorIndex === 0
+                          ? "bg-[#ddf4ff] ring-2 ring-inset ring-[#0969da]"
+                          : !selectedAuthor
                           ? "bg-[#ddf4ff] text-[#0969da] font-medium"
                           : "text-[#24292f] hover:bg-[#f6f8fa]"
                       }`}
@@ -339,15 +395,21 @@ export function TeamFeedFilterPanel({
                     </button>
 
                     {filteredMembers.length > 0 ? (
-                      filteredMembers.map((member) => {
+                      filteredMembers.map((member, idx) => {
                         const isSelected = selectedAuthor === member.user_id;
+                        const isFocused = focusedAuthorIndex === idx + 1; // +1 because index 0 is "전체"
                         return (
                           <button
                             key={member.user_id}
+                            ref={(el) => {
+                              authorOptionRefs.current[idx + 1] = el;
+                            }}
                             type="button"
                             onClick={() => handleAuthorSelect(member.user_id)}
                             className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
-                              isSelected
+                              isFocused
+                                ? "bg-[#ddf4ff] ring-2 ring-inset ring-[#0969da]"
+                                : isSelected
                                 ? "bg-[#ddf4ff] text-[#0969da] font-medium"
                                 : "text-[#24292f] hover:bg-[#f6f8fa]"
                             }`}
