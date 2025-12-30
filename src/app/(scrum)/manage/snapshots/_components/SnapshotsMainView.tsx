@@ -352,50 +352,68 @@ function SnapshotsMainViewInner({
         />
       </aside>
 
-      {/* 모바일: 주차 타임라인 (오버레이) */}
+      {/* 모바일: Overlay */}
       {isMobileTimelineOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-50 bg-black/50"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsMobileTimelineOpen(false)}
-        >
-          <div
-            className="absolute left-0 top-0 bottom-0 w-80 bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-10 bg-white border-b border-[#d0d7de] px-4 py-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[#24292f]">
-                주차 선택
-              </h2>
-              <button
-                onClick={() => setIsMobileTimelineOpen(false)}
-                className="p-2 hover:bg-[#f6f8fa] rounded-md transition-colors"
-              >
-                <svg
-                  className="w-5 h-5 text-[#57606a]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <WeekTimeline
-              year={selectedYear}
-              week={selectedWeek}
-              onYearChange={setSelectedYear}
-              onWeekChange={setSelectedWeek}
-              snapshotCountByWeek={snapshotCountByWeek}
-              className="w-full"
-            />
-          </div>
-        </div>
+        />
       )}
+
+      {/* 모바일: 주차 타임라인 (하단 Sheet) */}
+      <aside
+        className={`
+          fixed lg:hidden z-50 bg-white border-[#d0d7de] overflow-y-auto transition-transform duration-300
+          inset-x-0 bottom-0 max-h-[75vh] rounded-t-2xl border-t shadow-2xl
+          ${isMobileTimelineOpen ? "translate-y-0" : "translate-y-full"}
+        `}
+      >
+        <div className="p-4 space-y-4">
+          {/* Mobile Sheet 드래그 핸들 */}
+          <div className="flex justify-center -mt-2 mb-2">
+            <div className="w-12 h-1 bg-[#d0d7de] rounded-full" />
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[#24292f]">주차 선택</h2>
+            <button
+              onClick={() => setIsMobileTimelineOpen(false)}
+              className="p-1 text-[#57606a] hover:text-[#24292f] transition-colors"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Week Timeline */}
+          <WeekTimeline
+            year={selectedYear}
+            week={selectedWeek}
+            onYearChange={(y) => {
+              setSelectedYear(y);
+              setIsMobileTimelineOpen(false);
+            }}
+            onWeekChange={(w) => {
+              setSelectedWeek(w);
+              setIsMobileTimelineOpen(false);
+            }}
+            snapshotCountByWeek={snapshotCountByWeek}
+            className="w-full"
+          />
+        </div>
+      </aside>
 
       {/* 우측: 메인 콘텐츠 */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

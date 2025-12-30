@@ -102,23 +102,39 @@ export function DateRangePicker({
     if (isOpen && buttonRef.current) {
       const buttonRect = buttonRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
       const dropdownHeight = 400;
+      const isMobile = viewportWidth < 1024; // lg breakpoint
 
-      let top = buttonRect.bottom + 4;
-      let maxHeight = viewportHeight - buttonRect.bottom - 20;
+      if (isMobile) {
+        // 모바일: 화면 중앙에 모달로 표시
+        setDropdownStyle({
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "calc(100% - 2rem)",
+          maxWidth: "360px",
+          zIndex: 9999,
+        });
+      } else {
+        // 데스크톱: 버튼 아래에 표시
+        let top = buttonRect.bottom + 4;
+        let maxHeight = viewportHeight - buttonRect.bottom - 20;
 
-      if (maxHeight < dropdownHeight && buttonRect.top > dropdownHeight) {
-        top = buttonRect.top - dropdownHeight - 4;
-        maxHeight = buttonRect.top - 20;
+        if (maxHeight < dropdownHeight && buttonRect.top > dropdownHeight) {
+          top = buttonRect.top - dropdownHeight - 4;
+          maxHeight = buttonRect.top - 20;
+        }
+
+        setDropdownStyle({
+          position: "fixed",
+          top: `${top}px`,
+          left: `${buttonRect.left}px`,
+          width: `auto`,
+          zIndex: 9999,
+        });
       }
-
-      setDropdownStyle({
-        position: "fixed",
-        top: `${top}px`,
-        left: `${buttonRect.left}px`,
-        width: `auto`,
-        zIndex: 9999,
-      });
     }
   }, [isOpen]);
 
@@ -186,6 +202,12 @@ export function DateRangePicker({
 
       {isOpen &&
         createPortal(
+          <>
+            {/* 모바일 overlay */}
+            <div
+              className="fixed inset-0 bg-black/50 z-[9998] lg:hidden"
+              onClick={() => setIsOpen(false)}
+            />
           <div
             ref={dropdownRef}
             className="rounded-md shadow-lg border border-[#d0d7de] bg-white overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150 p-4"
@@ -323,7 +345,8 @@ export function DateRangePicker({
                 확인
               </button>
             </div>
-          </div>,
+          </div>
+          </>,
           document.body
         )}
     </div>
