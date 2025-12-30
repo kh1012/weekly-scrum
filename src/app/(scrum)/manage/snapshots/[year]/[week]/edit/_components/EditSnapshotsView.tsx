@@ -821,6 +821,35 @@ function EditSnapshotsViewInner({
                   {tempSnapshots.length}개 엔트리
                 </span>
               </div>
+
+              {/* 업데이트 버튼 - 데스크톱에서만 표시 */}
+              <div className="hidden md:block">
+                <LoadingButton
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  isLoading={isSaving}
+                  loadingText="저장 중..."
+                  variant="primary"
+                  size="sm"
+                  icon={
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  }
+                >
+                  {isNewMode ? "신규 등록" : "업데이트"}
+                </LoadingButton>
+              </div>
             </div>
           </div>
 
@@ -890,63 +919,34 @@ function EditSnapshotsViewInner({
             </div>
           </div>
 
-          {/* 세 번째 줄: 미리보기 토글 및 저장 버튼 */}
-          <div className="flex items-center justify-between gap-2 md:gap-3">
-          {/* 미리보기 토글 - 모바일에서 숨김 */}
-          <label className="hidden md:flex items-center gap-2 cursor-pointer select-none group">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={forceThreeColumn}
-                onChange={(e) => setForceThreeColumn(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div
-                className={`w-9 h-5 rounded-full transition-colors ${
-                  forceThreeColumn
-                    ? "bg-gray-900"
-                    : "bg-gray-200 group-hover:bg-gray-300"
-                }`}
-              />
-              <div
-                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                  forceThreeColumn ? "translate-x-4" : "translate-x-0"
-                }`}
-              />
-            </div>
-            <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">
-              미리보기
-            </span>
-          </label>
-
-          <div className="hidden md:block h-6 w-px bg-gray-200" />
-
-          {/* 업데이트하기 버튼 */}
-          <LoadingButton
-            onClick={handleSaveClick}
-            disabled={isSaving}
-            isLoading={isSaving}
-            loadingText="저장 중..."
-            variant="primary"
-            size="md"
-            icon={
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            }
-          >
-            {isNewMode ? "신규 등록하기" : "업데이트하기"}
-          </LoadingButton>
+          {/* 세 번째 줄: 저장 버튼 (모바일 전용) */}
+          <div className="flex md:hidden items-center justify-end gap-2">
+            {/* 업데이트하기 버튼 - 모바일에서만 표시 */}
+            <LoadingButton
+              onClick={handleSaveClick}
+              disabled={isSaving}
+              isLoading={isSaving}
+              loadingText="저장 중..."
+              variant="primary"
+              size="md"
+              icon={
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              }
+            >
+              {isNewMode ? "신규 등록" : "업데이트"}
+            </LoadingButton>
           </div>
         </div>
 
@@ -1010,6 +1010,8 @@ function EditSnapshotsViewInner({
                     singleColumn
                     hideName
                     weekInfo={weekInfo}
+                    forceThreeColumn={forceThreeColumn}
+                    onToggleThreeColumn={setForceThreeColumn}
                     nameOptions={memberNames}
                   />
                 ) : (
@@ -1070,6 +1072,8 @@ function EditSnapshotsViewInner({
                 singleColumn
                 hideName
                 weekInfo={weekInfo}
+                forceThreeColumn={forceThreeColumn}
+                onToggleThreeColumn={setForceThreeColumn}
                 nameOptions={memberNames}
                 domainOptions={domainOptions}
                 projectOptions={projectOptions}
