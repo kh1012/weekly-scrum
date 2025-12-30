@@ -814,77 +814,17 @@ function EditSnapshotsViewInner({
                 </div>
               )}
 
-              {/* 엔트리 갯수 - 모바일/데스크톱 모두 표시 */}
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="text-xs font-medium text-gray-700">
-                  {tempSnapshots.length}개 엔트리
-                </span>
-              </div>
-
-              {/* 업데이트 버튼 - 데스크톱에서만 표시 */}
-              <div className="hidden md:block">
-                <LoadingButton
-                  onClick={handleSaveClick}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                  loadingText="저장 중..."
-                  variant="primary"
-                  size="sm"
-                  icon={
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  }
-                >
-                  {isNewMode ? "신규 등록" : "업데이트"}
-                </LoadingButton>
-              </div>
-            </div>
-          </div>
-
-          {/* 두 번째 줄: 스냅샷 선택 (PC), 업데이트 버튼 (모바일) */}
-          <div className="flex items-center justify-end md:justify-start gap-2">
-            {/* 스냅샷 선택 드롭다운 - PC에서만 표시 */}
-            {snapshots.length > 1 && selectedSnapshotId && (
-              <>
-                <div className="h-4 w-px bg-gray-200 hidden md:block" />
-                <select
-                  value={selectedSnapshotId}
-                  onChange={(e) => handleSnapshotChange(e.target.value)}
-                  className="hidden md:block px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                >
-                  {snapshots.map((s, i) => (
-                    <option key={s.id} value={s.id}>
-                      스냅샷 {i + 1}
-                    </option>
-                  ))}
-                </select>
-              </>
-            )}
-
-            {/* 업데이트하기 버튼 - 모바일에서만 표시 */}
-            <div className="md:hidden w-full">
+              {/* 업데이트 버튼 - 모바일/데스크톱 모두 표시 */}
               <LoadingButton
                 onClick={handleSaveClick}
                 disabled={isSaving}
                 isLoading={isSaving}
                 loadingText="저장 중..."
                 variant="primary"
-                size="md"
+                size="sm"
                 icon={
                   <svg
-                    className="w-4 h-4"
+                    className="w-3.5 h-3.5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -902,6 +842,24 @@ function EditSnapshotsViewInner({
               </LoadingButton>
             </div>
           </div>
+
+          {/* 두 번째 줄: 스냅샷 선택 (PC 전용, 복수 스냅샷이 있을 때만) */}
+          {snapshots.length > 1 && selectedSnapshotId && (
+            <div className="hidden md:flex items-center gap-2">
+              <div className="h-4 w-px bg-gray-200" />
+              <select
+                value={selectedSnapshotId}
+                onChange={(e) => handleSnapshotChange(e.target.value)}
+                className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+              >
+                {snapshots.map((s, i) => (
+                  <option key={s.id} value={s.id}>
+                    스냅샷 {i + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {isMobile ? (
