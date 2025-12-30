@@ -51,7 +51,8 @@ export function MenuSettingsManager({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingMenuKey, setEditingMenuKey] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMenu, setEditingMenu] = useState<typeof ALL_MENUS[0] | null>(null);
   const [formData, setFormData] = useState<{
     is_enabled: boolean;
     tag_label: string;
@@ -72,27 +73,34 @@ export function MenuSettingsManager({
     menu.key.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 편집 시작
+  // 편집 모달 열기
   const handleEdit = (menuKey: string) => {
+    const menu = ALL_MENUS.find(m => m.key === menuKey);
+    if (!menu) return;
+    
     const setting = settingsMap.get(menuKey);
-    setEditingMenuKey(menuKey);
+    setEditingMenu(menu);
     setFormData({
       is_enabled: setting?.is_enabled ?? true,
       tag_label: setting?.tag_label || "",
       tag_color: (setting?.tag_color as TagColor) || "",
     });
+    setIsModalOpen(true);
   };
 
   // 편집 취소
   const handleCancel = () => {
-    setEditingMenuKey(null);
+    setIsModalOpen(false);
+    setEditingMenu(null);
     setFormData({ is_enabled: true, tag_label: "", tag_color: "" });
   };
 
   // 저장
-  const handleSave = async (menuKey: string) => {
+  const handleSave = async () => {
+    if (!editingMenu) return;
+
     const input: MenuSettingInput = {
-      menu_key: menuKey,
+      menu_key: editingMenu.key,
       is_enabled: formData.is_enabled,
       tag_label: formData.tag_label.trim() || null,
       tag_color: formData.tag_color || null,
@@ -101,7 +109,8 @@ export function MenuSettingsManager({
     startTransition(async () => {
       const result = await upsertMenuSettingAction(workspaceId, input);
       if (result.success) {
-        setEditingMenuKey(null);
+        setIsModalOpen(false);
+        setEditingMenu(null);
         router.refresh();
       } else {
         alert(`저장 실패: ${result.error}`);
@@ -144,8 +153,151 @@ export function MenuSettingsManager({
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-white">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
+    <>
+      {/* 편집 모달 */}
+      {isModalOpen && editingMenu && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full animate-in fade-in-0 zoom-in-95 duration-150">
+            {/* 헤더 */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#d0d7de]">
+              <div>
+                <h3 className="text-lg font-semibold text-[#24292f]">
+                  메뉴 설정 편집
+                </h3>
+                <p className="text-sm text-[#57606a] mt-1">
+                  {editingMenu.label} <span className="text-xs font-mono">({editingMenu.key})</span>
+                </p>
+              </div>
+              <button
+                onClick={handleCancel}
+                className="p-1.5 rounded-md hover:bg-[#f6f8fa] transition-colors"
+              >
+                <svg className="w-5 h-5 text-[#57606a]" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* 내용 */}
+            <div className="px-6 py-4 space-y-4">
+              {/* 카테고리 */}
+              <div>
+                <label className="block text-sm font-medium text-[#24292f] mb-1">
+                  카테고리
+                </label>
+                <div className="px-3 py-2 bg-[#f6f8fa] border border-[#d0d7de] rounded-md text-sm text-[#57606a]">
+                  {editingMenu.category}
+                </div>
+              </div>
+
+              {/* Enabled 토글 */}
+              <div>
+                <label className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-[#24292f]">
+                    메뉴 활성화
+                  </span>
+                  <button
+                    onClick={() => setFormData({ ...formData, is_enabled: !formData.is_enabled })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      formData.is_enabled ? "bg-[#0969da]" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        formData.is_enabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </label>
+                <p className="text-xs text-[#57606a] mt-1">
+                  비활성화 시 SNB에서 숨겨집니다.
+                </p>
+              </div>
+
+              {/* 태그 라벨 */}
+              <div>
+                <label className="block text-sm font-medium text-[#24292f] mb-1">
+                  태그 라벨
+                </label>
+                <input
+                  type="text"
+                  placeholder="예: NEW, HOT, BETA"
+                  value={formData.tag_label}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tag_label: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-[#d0d7de] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+                />
+              </div>
+
+              {/* 태그 색상 */}
+              <div>
+                <label className="block text-sm font-medium text-[#24292f] mb-2">
+                  태그 색상
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {TAG_COLORS.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tag_color: color.value })}
+                      className={`px-3 py-2 rounded-md text-xs font-medium border transition-all ${
+                        formData.tag_color === color.value
+                          ? `${color.preview} ring-2 ring-offset-2 ring-[#0969da]`
+                          : `${color.preview} opacity-60 hover:opacity-100`
+                      }`}
+                    >
+                      {color.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 미리보기 */}
+              {formData.tag_label && formData.tag_color && (
+                <div className="pt-2 border-t border-[#d0d7de]">
+                  <label className="block text-sm font-medium text-[#24292f] mb-2">
+                    미리보기
+                  </label>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+                      TAG_COLORS.find((c) => c.value === formData.tag_color)?.preview ||
+                      "bg-gray-100 text-gray-700 border-gray-300"
+                    }`}
+                  >
+                    {formData.tag_label}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 푸터 */}
+            <div className="flex items-center justify-end gap-2 px-6 py-4 bg-[#f6f8fa] border-t border-[#d0d7de] rounded-b-lg">
+              <button
+                onClick={handleCancel}
+                disabled={isPending}
+                className="px-4 py-2 text-sm font-medium text-[#57606a] hover:bg-white border border-[#d0d7de] rounded-md transition-colors disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#0969da] hover:bg-[#0860ca] rounded-md transition-colors disabled:opacity-50"
+              >
+                {isPending ? "저장 중..." : "저장"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-[calc(100vh-5rem)] bg-white">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
         {/* 헤더 */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#24292f] mb-2">Menu Settings</h1>
@@ -195,7 +347,6 @@ export function MenuSettingsManager({
                 {filteredMenus.map((menu) => {
                   const setting = settingsMap.get(menu.key);
                   const isEnabled = setting?.is_enabled ?? true;
-                  const isEditing = editingMenuKey === menu.key;
 
                   return (
                     <tr
@@ -227,36 +378,7 @@ export function MenuSettingsManager({
                         </button>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              placeholder="태그 라벨 (예: NEW)"
-                              value={formData.tag_label}
-                              onChange={(e) =>
-                                setFormData({ ...formData, tag_label: e.target.value })
-                              }
-                              className="w-full px-2 py-1 border border-[#d0d7de] rounded text-sm"
-                            />
-                            <select
-                              value={formData.tag_color}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  tag_color: e.target.value as TagColor | "",
-                                })
-                              }
-                              className="w-full px-2 py-1 border border-[#d0d7de] rounded text-sm"
-                            >
-                              <option value="">색상 선택</option>
-                              {TAG_COLORS.map((color) => (
-                                <option key={color.value} value={color.value}>
-                                  {color.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        ) : setting?.tag_label ? (
+                        {setting?.tag_label ? (
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
                               TAG_COLORS.find((c) => c.value === setting.tag_color)
@@ -270,57 +392,23 @@ export function MenuSettingsManager({
                         )}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-right">
-                        {isEditing ? (
-                          <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(menu.key)}
+                            className="px-3 py-1.5 text-sm font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors"
+                          >
+                            편집
+                          </button>
+                          {setting && (
                             <button
-                              onClick={() => handleSave(menu.key)}
+                              onClick={() => handleReset(menu.key)}
                               disabled={isPending}
-                              className="px-3 py-1.5 text-sm font-medium text-[#ffffff] bg-[#0969da] hover:bg-[#0860ca] rounded-md transition-colors disabled:opacity-50"
+                              className="px-3 py-1.5 text-sm font-medium text-[#cf222e] hover:bg-[#ffebe9] rounded-md transition-colors disabled:opacity-50"
                             >
-                              <span className="flex items-center gap-1">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                저장
-                              </span>
+                              초기화
                             </button>
-                            <button
-                              onClick={handleCancel}
-                              disabled={isPending}
-                              className="px-3 py-1.5 text-sm font-medium text-[#57606a] hover:bg-[#f6f8fa] rounded-md transition-colors disabled:opacity-50"
-                            >
-                              취소
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleEdit(menu.key)}
-                              className="px-3 py-1.5 text-sm font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors"
-                            >
-                              <span className="flex items-center gap-1">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                편집
-                              </span>
-                            </button>
-                            {setting && (
-                              <button
-                                onClick={() => handleReset(menu.key)}
-                                disabled={isPending}
-                                className="px-3 py-1.5 text-sm font-medium text-[#cf222e] hover:bg-[#ffebe9] rounded-md transition-colors disabled:opacity-50"
-                              >
-                                <span className="flex items-center gap-1">
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                  </svg>
-                                  초기화
-                                </span>
-                              </button>
-                            )}
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -349,6 +437,7 @@ export function MenuSettingsManager({
         </div>
       </div>
     </div>
+    </>
   );
 }
 

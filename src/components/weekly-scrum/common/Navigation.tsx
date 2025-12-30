@@ -130,8 +130,6 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         label: "Team Feed",
         href: "/team-feed",
         icon: Icons.users,
-        badge: "NEW",
-        tagVariant: "orange",
       },
       {
         key: "plans",
@@ -199,16 +197,12 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         label: "Members",
         href: "/admin/members",
         icon: Icons.users,
-        badge: "NEW",
-        tagVariant: "orange",
       },
       {
         key: "admin-menu-usage",
         label: "Menu Usage",
         href: "/admin/menu-usage",
         icon: Icons.chartBar,
-        badge: "NEW",
-        tagVariant: "orange",
       },
       {
         key: "admin-menu-settings",

@@ -286,10 +286,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
   // 모바일 뷰 렌더링
   if (isMobile) {
     return (
-      <div
-        className="h-full flex flex-col"
-        style={{ minHeight: "calc(100vh - 120px)" }}
-      >
+      <div className="h-full flex flex-col">
         {mobileView === "tree" ? (
           // 모바일: 트리 뷰 (전체 화면)
           <div className="flex-1 flex flex-col">
@@ -303,13 +300,20 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                  <span
-                    className="font-semibold"
-                    style={{ color: "#24292f" }}
+                  <svg
+                    className="w-5 h-5 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
                   >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                    />
+                  </svg>
+                  <span className="font-semibold" style={{ color: "#24292f" }}>
                     Work Map
                   </span>
                   {hasActiveMultiFilters && (
@@ -334,19 +338,36 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         viewMode === "person"
                           ? "rgba(59, 130, 246, 0.15)"
                           : "var(--gnb-filter-bg)",
-                      color:
-                        viewMode === "person"
-                          ? "#3b82f6"
-                          : "#57606a",
+                      color: viewMode === "person" ? "#3b82f6" : "#57606a",
                     }}
                   >
                     {viewMode === "project" ? (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
                       </svg>
                     )}
                   </button>
@@ -378,10 +399,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   </button>
                 </div>
               </div>
-              <div
-                className="text-xs mt-1"
-                style={{ color: "#57606a" }}
-              >
+              <div className="text-xs mt-1" style={{ color: "#57606a" }}>
                 {viewMode === "project"
                   ? `${projects.length} projects · ${filteredItems.length} snapshots`
                   : `${persons.length} members · ${filteredItems.length} snapshots`}
@@ -408,10 +426,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         }}
                         className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                       />
-                      <span
-                        className="text-xs"
-                        style={{ color: "#24292f" }}
-                      >
+                      <span className="text-xs" style={{ color: "#24292f" }}>
                         완료 항목 숨김
                       </span>
                     </label>
@@ -491,10 +506,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                     ? selection.feature
                     : personSelection.feature}
                 </div>
-                <div
-                  className="text-xs truncate"
-                  style={{ color: "#57606a" }}
-                >
+                <div className="text-xs truncate" style={{ color: "#57606a" }}>
                   {viewMode === "project"
                     ? `${selection.project} / ${selection.module}`
                     : `${personSelection.person} / ${personSelection.domain}`}
@@ -575,13 +587,10 @@ export function WorkMapView({ items }: WorkMapViewProps) {
 
   // 데스크톱 뷰 렌더링
   return (
-    <div
-      className="flex gap-1"
-      style={{ height: "calc(100vh - 120px)", minHeight: "600px" }}
-    >
+    <div className="flex gap-1">
       {/* 좌측: 디렉토리 트리 */}
       <div
-        className="flex-shrink-0 rounded-md overflow-hidden flex flex-col animate-slide-in-left interactive-card"
+        className="flex-shrink-0 rounded-md overflow-hidden flex flex-col animate-slide-in-left"
         style={{
           width: treeWidth,
           background: "white",
@@ -595,13 +604,20 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              <span
-                className="font-semibold"
-                style={{ color: "#24292f" }}
+              <svg
+                className="w-5 h-5 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
               >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                />
+              </svg>
+              <span className="font-semibold" style={{ color: "#24292f" }}>
                 Work Map
               </span>
               {hasActiveMultiFilters && (
@@ -630,14 +646,21 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       viewMode === "project"
                         ? "rgba(59, 130, 246, 0.15)"
                         : "transparent",
-                    color:
-                      viewMode === "project"
-                        ? "#3b82f6"
-                        : "#57606a",
+                    color: viewMode === "project" ? "#3b82f6" : "#57606a",
                   }}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    />
                   </svg>
                   <span>Project</span>
                 </button>
@@ -649,14 +672,21 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                       viewMode === "person"
                         ? "rgba(59, 130, 246, 0.15)"
                         : "transparent",
-                    color:
-                      viewMode === "person"
-                        ? "#3b82f6"
-                        : "#57606a",
+                    color: viewMode === "person" ? "#3b82f6" : "#57606a",
                   }}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
                   </svg>
                   <span>Person</span>
                 </button>
@@ -708,10 +738,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                           onChange={(e) => setHideCompleted(e.target.checked)}
                           className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                         />
-                        <span
-                          className="text-xs"
-                          style={{ color: "#24292f" }}
-                        >
+                        <span className="text-xs" style={{ color: "#24292f" }}>
                           완료 항목 숨김
                         </span>
                       </label>
@@ -721,10 +748,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
               </div>
             </div>
           </div>
-          <div
-            className="text-xs mt-1"
-            style={{ color: "#57606a" }}
-          >
+          <div className="text-xs mt-1" style={{ color: "#57606a" }}>
             {viewMode === "project"
               ? `${projects.length} projects · ${filteredItems.length} snapshots`
               : `${persons.length} members · ${filteredItems.length} snapshots`}
@@ -781,7 +805,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         {/* 선택된 정보 헤더 */}
         {activeFeatureItems.length > 0 && (
           <div
-            className="flex-shrink-0 px-5 py-4 rounded-md interactive-card animate-card-reveal"
+            className="flex-shrink-0 px-5 py-4 rounded-md animate-card-reveal"
             style={{
               background: "white",
               border: "1px solid #d0d7de",
@@ -801,9 +825,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                         : "cursor-pointer"
                     }`}
                     style={{
-                      color: !selection.module
-                        ? "#24292f"
-                        : undefined,
+                      color: !selection.module ? "#24292f" : undefined,
                     }}
                     disabled={!selection.module}
                   >
@@ -825,9 +847,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                             : "cursor-pointer"
                         }`}
                         style={{
-                          color: !selection.feature
-                            ? "#24292f"
-                            : undefined,
+                          color: !selection.feature ? "#24292f" : undefined,
                         }}
                         disabled={!selection.feature}
                       >
@@ -860,10 +880,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 </>
               ) : (
                 <>
-                  <span
-                    className="font-semibold"
-                    style={{ color: "#0969da" }}
-                  >
+                  <span className="font-semibold" style={{ color: "#0969da" }}>
                     {personSelection.person}
                   </span>
                   <span>/</span>
@@ -873,10 +890,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                   <span>/</span>
                   <span>{personSelection.module}</span>
                   <span>/</span>
-                  <span
-                    className="font-semibold"
-                    style={{ color: "#24292f" }}
-                  >
+                  <span className="font-semibold" style={{ color: "#24292f" }}>
                     {personSelection.feature}
                   </span>
                 </>
@@ -988,10 +1002,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
             >
               피쳐를 선택하세요
             </div>
-            <div
-              className="text-sm text-center"
-              style={{ color: "#57606a" }}
-            >
+            <div className="text-sm text-center" style={{ color: "#57606a" }}>
               좌측 트리에서 피쳐를 선택하면
               <br />
               협업 네트워크와 스냅샷 정보가 표시됩니다

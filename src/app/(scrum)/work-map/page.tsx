@@ -9,7 +9,7 @@ export default function WorkMapPage() {
   const { filteredItems } = useScrumContext();
 
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-hidden bg-white flex flex-col">
+    <div className="overflow-hidden bg-white flex flex-col">
       {/* 필터 바 */}
       <div className="shrink-0 bg-white py-3">
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
@@ -29,7 +29,7 @@ export default function WorkMapPage() {
       </div>
 
       {/* 메인 콘텐츠 */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1">
         <WorkMapView items={filteredItems} />
       </div>
     </div>
