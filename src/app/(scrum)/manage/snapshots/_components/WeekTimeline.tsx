@@ -15,12 +15,29 @@ interface WeekTimelineProps {
 function getCurrentISOWeek(): { year: number; week: number } {
   const now = new Date();
   const target = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const dayNum = (target.getUTCDay() + 6) % 7; // Monday = 0, Sunday = 6
-  target.setUTCDate(target.getUTCDate() - dayNum + 3); // Thursday of current week
-  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
-  const weekDiff = Math.round((target.getTime() - firstThursday.getTime()) / 86400000);
-  const week = 1 + Math.floor(weekDiff / 7);
-  return { year: target.getUTCFullYear(), week };
+  
+  // ISO 8601: 주는 월요일부터 시작, 연도의 첫 주는 목요일을 포함하는 주
+  const dayOfWeek = (target.getUTCDay() + 6) % 7; // Monday = 0, Sunday = 6
+  
+  // 이번 주의 목요일로 이동
+  const thursday = new Date(target);
+  thursday.setUTCDate(target.getUTCDate() - dayOfWeek + 3);
+  
+  // 목요일이 속한 연도가 ISO 주차의 연도
+  const year = thursday.getUTCFullYear();
+  
+  // 해당 연도의 1월 4일 (항상 첫 번째 주에 포함)
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4DayOfWeek = (jan4.getUTCDay() + 6) % 7;
+  
+  // 첫 번째 주의 월요일
+  const firstMonday = new Date(jan4);
+  firstMonday.setUTCDate(jan4.getUTCDate() - jan4DayOfWeek);
+  
+  // 주차 계산
+  const weekNumber = Math.floor((thursday.getTime() - firstMonday.getTime()) / 86400000 / 7) + 1;
+  
+  return { year, week: weekNumber };
 }
 
 // 날짜 범위 계산 (ISO 주차)
@@ -58,23 +75,48 @@ function generateWeeksBetween(
   let currentYear = startYear;
   let currentWeek = startWeek;
   
-  while (currentYear < endYear || (currentYear === endYear && currentWeek <= endWeek)) {
+  // 안전장치: 무한 루프 방지 (최대 200주)
+  let iterations = 0;
+  const MAX_ITERATIONS = 200;
+  
+  while (iterations < MAX_ITERATIONS) {
+    // 종료 조건 확인
+    if (currentYear > endYear || (currentYear === endYear && currentWeek > endWeek)) {
+      break;
+    }
+    
     weeks.push({ year: currentYear, week: currentWeek });
     
-    // 해당 연도의 마지막 주차 계산
+    // 해당 연도의 마지막 주차 계산 (ISO 8601)
     const dec31 = new Date(Date.UTC(currentYear, 11, 31));
-    const dec31Day = (dec31.getUTCDay() + 6) % 7;
-    dec31.setUTCDate(dec31.getUTCDate() - dec31Day + 3);
-    const lastWeekYear = dec31.getUTCFullYear();
-    const firstThursday = new Date(Date.UTC(lastWeekYear, 0, 4));
-    const weekDiff = Math.round((dec31.getTime() - firstThursday.getTime()) / 86400000);
-    const weeksInYear = 1 + Math.floor(weekDiff / 7);
+    const dec31DayOfWeek = (dec31.getUTCDay() + 6) % 7;
+    const dec31Thursday = new Date(dec31);
+    dec31Thursday.setUTCDate(dec31.getUTCDate() - dec31DayOfWeek + 3);
     
+    // 12월 31일의 목요일이 속한 연도
+    const lastWeekYear = dec31Thursday.getUTCFullYear();
+    
+    // 그 연도의 1월 4일
+    const jan4 = new Date(Date.UTC(lastWeekYear, 0, 4));
+    const jan4DayOfWeek = (jan4.getUTCDay() + 6) % 7;
+    const firstMonday = new Date(jan4);
+    firstMonday.setUTCDate(jan4.getUTCDate() - jan4DayOfWeek);
+    
+    // 마지막 주차 계산
+    const weeksInYear = Math.floor((dec31Thursday.getTime() - firstMonday.getTime()) / 86400000 / 7) + 1;
+    
+    // 다음 주차로 이동
     currentWeek++;
     if (currentWeek > weeksInYear) {
       currentWeek = 1;
       currentYear++;
     }
+    
+    iterations++;
+  }
+  
+  if (iterations >= MAX_ITERATIONS) {
+    console.error('[generateWeeksBetween] 무한 루프 감지됨!', { startYear, startWeek, endYear, endWeek });
   }
   
   return weeks;
@@ -96,14 +138,20 @@ export function WeekTimeline({
     
     // 2. 다음 주차 계산 (현재 주차 +1)
     const nextWeek = { ...currentISOWeek };
-    // 해당 연도의 마지막 주차 계산
+    
+    // 해당 연도의 마지막 주차 계산 (ISO 8601)
     const dec31 = new Date(Date.UTC(currentISOWeek.year, 11, 31));
-    const dec31Day = (dec31.getUTCDay() + 6) % 7;
-    dec31.setUTCDate(dec31.getUTCDate() - dec31Day + 3);
-    const lastWeekYear = dec31.getUTCFullYear();
-    const firstThursday = new Date(Date.UTC(lastWeekYear, 0, 4));
-    const weekDiff = Math.round((dec31.getTime() - firstThursday.getTime()) / 86400000);
-    const weeksInYear = 1 + Math.floor(weekDiff / 7);
+    const dec31DayOfWeek = (dec31.getUTCDay() + 6) % 7;
+    const dec31Thursday = new Date(dec31);
+    dec31Thursday.setUTCDate(dec31.getUTCDate() - dec31DayOfWeek + 3);
+    
+    const lastWeekYear = dec31Thursday.getUTCFullYear();
+    const jan4 = new Date(Date.UTC(lastWeekYear, 0, 4));
+    const jan4DayOfWeek = (jan4.getUTCDay() + 6) % 7;
+    const firstMonday = new Date(jan4);
+    firstMonday.setUTCDate(jan4.getUTCDate() - jan4DayOfWeek);
+    
+    const weeksInYear = Math.floor((dec31Thursday.getTime() - firstMonday.getTime()) / 86400000 / 7) + 1;
     
     if (currentISOWeek.week < weeksInYear) {
       nextWeek.week = currentISOWeek.week + 1;
@@ -111,7 +159,7 @@ export function WeekTimeline({
       nextWeek.year = currentISOWeek.year + 1;
       nextWeek.week = 1;
     }
-    console.log('[WeekTimeline] 다음 주차 (+1):', nextWeek, `(${weeksInYear}주까지 존재)`);
+    console.log('[WeekTimeline] 다음 주차 (+1):', nextWeek, `(${currentISOWeek.year}년은 ${weeksInYear}주까지 존재)`);
     
     // 3. 스냅샷이 있는 주차들 추출
     const snapshotWeeks: Array<{ year: number; week: number }> = [];
