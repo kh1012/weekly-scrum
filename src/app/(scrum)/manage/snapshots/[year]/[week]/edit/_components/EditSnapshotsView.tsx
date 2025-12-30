@@ -16,7 +16,6 @@ import {
   useEffect,
   Suspense,
 } from "react";
-import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import { LoadingButton } from "@/components/common/LoadingButton";
@@ -46,18 +45,26 @@ import {
   tempSnapshotToPlainText,
 } from "@/components/weekly-scrum/manage/types";
 import { WorkloadLevelModal } from "@/components/weekly-scrum/manage/WorkloadLevelModal";
+import { WeekTimeline } from "../../../../_components/WeekTimeline";
 import {
   updateSnapshotAndEntries,
   createSnapshotAndEntries,
 } from "../../../../_actions";
-import type { SnapshotEntryPayload, UpdateSnapshotPayload, CreateSnapshotPayload } from "../../../../_actions";
+import type {
+  SnapshotEntryPayload,
+  UpdateSnapshotPayload,
+  CreateSnapshotPayload,
+} from "../../../../_actions";
 import type {
   Database,
   PastWeekTask,
   Collaborator,
   WorkloadLevel,
 } from "@/lib/supabase/types";
-import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
+import {
+  WORKLOAD_LEVEL_LABELS,
+  WORKLOAD_LEVEL_COLORS,
+} from "@/lib/supabase/types";
 
 type SnapshotEntryRow = Database["public"]["Tables"]["snapshot_entries"]["Row"];
 
@@ -245,84 +252,30 @@ function EditSnapshotsViewInner({
   const weekInfo = {
     year,
     week,
-    pastWeekLabel: `W${week.toString().padStart(2, "0")} (${formatWeekRangeCompact(year, week)})`,
-    thisWeekLabel: `W${(week + 1).toString().padStart(2, "0")} (${formatWeekRangeCompact(year, week + 1)})`,
+    pastWeekLabel: `W${week
+      .toString()
+      .padStart(2, "0")} (${formatWeekRangeCompact(year, week)})`,
+    thisWeekLabel: `W${(week + 1)
+      .toString()
+      .padStart(2, "0")} (${formatWeekRangeCompact(year, week + 1)})`,
   };
 
   // 주차별 스냅샷 갯수 맵
   const [snapshotCountByWeek, setSnapshotCountByWeek] = useState<
     Map<string, number>
   >(new Map());
+  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
 
-  // 주차 선택 드롭다운 상태
-  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
-  const weekButtonRef = useRef<HTMLButtonElement>(null);
-  const weekDropdownRef = useRef<HTMLDivElement>(null);
-  const selectedWeekRef = useRef<HTMLButtonElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-
-  const currentWeekInfo = useMemo(() => getCurrentISOWeek(), []);
-
-  // 주차 옵션 (현재 년도 기준)
-  const weekOptionsWithRange = useMemo(() => {
-    const weekOpts = getWeekOptions(year);
-    return weekOpts.map((w) => {
-      const { weekStart, weekEnd } = getWeekDateRange(year, w);
-      const isCurrentWeek =
-        currentWeekInfo.year === year && currentWeekInfo.week === w;
-      return {
-        week: w,
-        label: `W${w.toString().padStart(2, "0")}`,
-        range: `${formatShortDate(weekStart)} ~ ${formatShortDate(weekEnd)}`,
-        isCurrentWeek,
-      };
-    });
-  }, [year, currentWeekInfo]);
-
-  // 드롭다운 열 때 위치 계산
-  const openWeekDropdown = () => {
-    if (weekButtonRef.current) {
-      const rect = weekButtonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-      });
-    }
-    setIsWeekDropdownOpen(!isWeekDropdownOpen);
-  };
-
-  // 클릭 외부 감지
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        weekDropdownRef.current &&
-        !weekDropdownRef.current.contains(event.target as Node) &&
-        weekButtonRef.current &&
-        !weekButtonRef.current.contains(event.target as Node)
-      ) {
-        setIsWeekDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // 선택된 주차로 스크롤
-  useEffect(() => {
-    if (isWeekDropdownOpen && selectedWeekRef.current) {
-      selectedWeekRef.current.scrollIntoView({
-        block: "center",
-        behavior: "auto",
-      });
-    }
-  }, [isWeekDropdownOpen]);
+  // 모바일 타임라인 상태
+  const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
 
   // 주차별 스냅샷 갯수 조회
   useEffect(() => {
-    async function fetchSnapshotCounts() {
+    const fetchSnapshotCounts = async () => {
+      setIsLoadingCounts(true);
       try {
         const response = await fetch(
-          `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}&year=${year}`
+          `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}`
         );
 
         if (response.ok) {
@@ -334,17 +287,27 @@ function EditSnapshotsViewInner({
         }
       } catch (error) {
         console.error("Failed to fetch snapshot counts:", error);
+      } finally {
+        setIsLoadingCounts(false);
       }
-    }
+    };
+
     fetchSnapshotCounts();
-  }, [year, workspaceId, userId]);
+  }, [workspaceId, userId]);
 
   // 주차 변경 시 라우팅
   const handleWeekChange = (newWeek: number) => {
-    setIsWeekDropdownOpen(false);
     if (newWeek !== week) {
       navigationProgress.start();
       router.push(`/manage/snapshots/${year}/${newWeek}/edit`);
+    }
+  };
+
+  // 연도 + 주차 통합 변경 핸들러
+  const handleYearWeekChange = (newYear: number, newWeek: number) => {
+    if (newYear !== year || newWeek !== week) {
+      navigationProgress.start();
+      router.push(`/manage/snapshots/${newYear}/${newWeek}/edit`);
     }
   };
 
@@ -364,13 +327,16 @@ function EditSnapshotsViewInner({
   };
 
   // 카드 선택
-  const handleSelectCard = useCallback((tempId: string) => {
-    setSelectedId(tempId);
-    // 모바일에서는 폼 뷰로 전환
-    if (isMobile) {
-      setMobileView("form");
-    }
-  }, [isMobile]);
+  const handleSelectCard = useCallback(
+    (tempId: string) => {
+      setSelectedId(tempId);
+      // 모바일에서는 폼 뷰로 전환
+      if (isMobile) {
+        setMobileView("form");
+      }
+    },
+    [isMobile]
+  );
 
   // 카드 삭제
   const handleDeleteCard = useCallback(
@@ -552,13 +518,13 @@ function EditSnapshotsViewInner({
       showToast("저장할 항목이 없습니다.", "error");
       return;
     }
-    
+
     // 편집 모드에서 워크로드 데이터가 이미 있으면 모달 띄우지 않고 바로 저장
     if (!isNewMode && workloadLevel) {
       await handleSaveConfirm(workloadLevel, workloadNote);
       return;
     }
-    
+
     // 새 모드이거나 워크로드 데이터가 없으면 모달 표시
     setShowWorkloadModal(true);
   };
@@ -570,16 +536,19 @@ function EditSnapshotsViewInner({
   };
 
   // 모달에서 확인 시 실제 저장
-  const handleSaveConfirm = async (level: WorkloadLevel | null, note: string) => {
+  const handleSaveConfirm = async (
+    level: WorkloadLevel | null,
+    note: string
+  ) => {
     if (!level) {
       showToast("워크로드 레벨을 선택해주세요.", "error");
       return;
     }
-    
+
     setWorkloadLevel(level);
     setWorkloadNote(note);
     setIsSaving(true);
-    
+
     try {
       const entries: SnapshotEntryPayload[] = tempSnapshots.map((s) => ({
         id: s.isOriginal ? s.tempId : undefined,
@@ -627,7 +596,10 @@ function EditSnapshotsViewInner({
           workloadNote: note.trim() || null,
         };
 
-        const result = await updateSnapshotAndEntries(selectedSnapshotId, payload);
+        const result = await updateSnapshotAndEntries(
+          selectedSnapshotId,
+          payload
+        );
 
         if (result.success) {
           setShowWorkloadModal(false);
@@ -653,60 +625,105 @@ function EditSnapshotsViewInner({
   };
 
   return (
-    <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* 상단 툴바 */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 md:px-4 py-2 md:py-3 flex flex-col gap-2 shrink-0">
-        {/* 첫 번째 줄: 목록으로 버튼 (좌측) + 주차 선택 (우측) - 모바일만 적용 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div className="flex items-center justify-between md:justify-start gap-2">
+    <div className="h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-hidden bg-white">
+      {/* 모바일: Overlay */}
+      {isMobileTimelineOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileTimelineOpen(false)}
+        />
+      )}
+
+      {/* 모바일: 주차 타임라인 (하단 Sheet) */}
+      <aside
+        className={`
+          fixed lg:hidden z-50 bg-white border-[#d0d7de] overflow-y-auto transition-transform duration-300
+          inset-x-0 bottom-0 max-h-[75vh] rounded-t-2xl border-t shadow-2xl
+          ${isMobileTimelineOpen ? "translate-y-0" : "translate-y-full"}
+        `}
+      >
+        <div className="p-4 space-y-4">
+          {/* Mobile Sheet 드래그 핸들 */}
+          <div className="flex justify-center -mt-2 mb-2">
+            <div className="w-12 h-1 bg-[#d0d7de] rounded-full" />
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[#24292f]">주차 선택</h2>
             <button
-              onClick={() => {
-                navigationProgress.start();
-                router.push("/manage/snapshots");
-              }}
-              className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+              onClick={() => setIsMobileTimelineOpen(false)}
+              className="p-1 text-[#57606a] hover:text-[#24292f] transition-colors"
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5"
                 fill="none"
-                viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2}
+                viewBox="0 0 24 24"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
-              <span className="text-xs font-medium hidden sm:inline">목록으로</span>
             </button>
+          </div>
 
-            <div className="hidden md:block h-4 w-px bg-gray-200" />
+          {/* Week Timeline */}
+          <WeekTimeline
+            year={year}
+            week={week}
+            onYearChange={() => {
+              // 실제 라우팅은 onWeekChange에서 처리
+            }}
+            onWeekChange={(w) => {
+              handleWeekChange(w);
+              setIsMobileTimelineOpen(false);
+            }}
+            snapshotCountByWeek={snapshotCountByWeek}
+            isLoading={isLoadingCounts}
+            className="w-full"
+          />
+        </div>
+      </aside>
 
-            {/* 주차 선택 드롭다운 - 모바일에서는 우측 정렬 */}
-            <div className="relative flex items-center gap-2 md:ml-0">
+      {/* 좌측: 주차 타임라인 (PC) */}
+      <aside className="hidden lg:flex lg:w-80 lg:shrink-0 border-r border-[#d0d7de] overflow-y-auto">
+        <WeekTimeline
+          year={year}
+          week={week}
+          onYearChange={(newYear) => {
+            // WeekTimeline에서는 onWeekChange도 호출되므로 중복 라우팅 방지
+            // 실제 라우팅은 onWeekChange에서 처리
+          }}
+          onWeekChange={(newWeek) => {
+            handleWeekChange(newWeek);
+          }}
+          snapshotCountByWeek={snapshotCountByWeek}
+          isLoading={isLoadingCounts}
+          className="w-full"
+        />
+      </aside>
+
+      {/* 우측: 편집 영역 */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* 상단 툴바 */}
+        <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 md:px-4 py-2 md:py-3 flex flex-col gap-2 shrink-0">
+          {/* 첫 번째 줄 */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {/* 목록으로 버튼 */}
               <button
-                ref={weekButtonRef}
-                type="button"
-                onClick={openWeekDropdown}
-                className="flex items-center gap-2 h-9 rounded-lg px-3 text-sm font-medium bg-gray-50 transition-colors hover:bg-gray-100"
+                onClick={() => {
+                  navigationProgress.start();
+                  router.push("/manage/snapshots");
+                }}
+                className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
               >
-                <span className="font-semibold text-gray-900">{year}년</span>
-                <span className="font-semibold text-gray-900">
-                  W{week.toString().padStart(2, "0")}
-                </span>
-                <span className="text-gray-500 text-xs hidden sm:inline">({weekRange})</span>
-                {currentWeekInfo.year === year &&
-                  currentWeekInfo.week === week && (
-                    <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
-                      현재
-                    </span>
-                  )}
                 <svg
-                  className={`w-4 h-4 text-gray-400 transition-transform ${
-                    isWeekDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className="w-4 h-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -715,11 +732,49 @@ function EditSnapshotsViewInner({
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
                   />
                 </svg>
+                <span className="text-xs font-medium hidden sm:inline">
+                  목록으로
+                </span>
               </button>
 
+              {/* 모바일: 주차 선택 버튼 */}
+              <button
+                onClick={() => setIsMobileTimelineOpen(true)}
+                className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#0969da] bg-[#ddf4ff] rounded-lg hover:bg-[#b6e3ff] transition-colors shrink-0"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span>
+                  {year}년 W{String(week).padStart(2, "0")}
+                </span>
+              </button>
+
+              {/* PC: 주차 정보 표시 */}
+              <div className="hidden lg:flex items-center gap-2 text-sm">
+                <div className="h-4 w-px bg-gray-200" />
+                <span className="font-semibold text-[#0969da]">
+                  {year}년 W{String(week).padStart(2, "0")}
+                </span>
+                <span className="text-[#57606a]">({weekRange})</span>
+              </div>
+            </div>
+
+            {/* 우측: 워크로드, 스냅샷 선택, 엔트리 갯수 */}
+            <div className="relative flex items-center gap-2 md:ml-0">
               {/* 워크로드 태그 및 편집 아이콘 - 데스크톱에서만 표시 */}
               {workloadLevel && (
                 <div className="hidden md:flex items-center gap-1.5">
@@ -761,7 +816,6 @@ function EditSnapshotsViewInner({
 
           {/* 두 번째 줄: 워크로드 + 스냅샷 선택 + 엔트리 갯수 (모바일에서 우측 정렬) */}
           <div className="flex items-center justify-end md:justify-start gap-2 flex-wrap">
-
             {/* 워크로드 태그 - 모바일에서만 표시 (두 번째 줄) */}
             {workloadLevel && (
               <div className="flex md:hidden items-center gap-1.5">
@@ -826,64 +880,6 @@ function EditSnapshotsViewInner({
             </div>
           </div>
         </div>
-
-        {/* Portal로 렌더링 */}
-        {isWeekDropdownOpen &&
-          typeof document !== "undefined" &&
-          createPortal(
-              <div
-                ref={weekDropdownRef}
-                className="fixed bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-80 overflow-y-auto min-w-[240px]"
-                style={{
-                  top: dropdownPosition.top,
-                  left: dropdownPosition.left,
-                  zIndex: 9999,
-                }}
-              >
-                {weekOptionsWithRange.map((w) => {
-                  const weekKey = `${year}-${w.week}`;
-                  const count = snapshotCountByWeek.get(weekKey) || 0;
-                  const hasSnapshots = count > 0;
-
-                  return (
-                    <button
-                      key={w.week}
-                      ref={w.week === week ? selectedWeekRef : null}
-                      type="button"
-                      onClick={() => handleWeekChange(w.week)}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
-                        w.week === week
-                          ? "bg-gray-100 font-medium"
-                          : "hover:bg-gray-50"
-                      } ${
-                        w.isCurrentWeek ? "text-blue-600" : "text-gray-700"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {/* 스냅샷 갯수 표시 */}
-                        {hasSnapshots ? (
-                          <span className="w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full flex items-center justify-center font-medium">
-                            {count}
-                          </span>
-                        ) : (
-                          <span className="w-[18px] h-[18px] flex items-center justify-center">
-                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                          </span>
-                        )}
-                        <span className="font-medium">{w.label}</span>
-                        {w.isCurrentWeek && (
-                          <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">
-                            현재
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-400">{w.range}</span>
-                    </button>
-                  );
-                })}
-              </div>,
-              document.body
-            )}
 
         {/* 세 번째 줄: 미리보기 토글 및 저장 버튼 */}
         <div className="flex items-center justify-between gap-2 md:gap-3">
@@ -971,8 +967,18 @@ function EditSnapshotsViewInner({
                   onClick={() => setMobileView("list")}
                   className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                   목록으로 돌아가기
                 </button>
@@ -1038,32 +1044,32 @@ function EditSnapshotsViewInner({
                 : "100%",
             }}
           >
-          {selectedSnapshot ? (
-            <SnapshotEditForm
-              key={selectedSnapshot.tempId}
-              snapshot={selectedSnapshot}
-              onUpdate={(updates) =>
-                handleUpdateCard(selectedSnapshot.tempId, updates)
-              }
-              onFocusSection={setFocusedSection}
-              activeSection={
-                focusedSection as
-                  | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
-                  | null
-              }
-              compact
-              singleColumn
-              hideName
-              weekInfo={weekInfo}
-              nameOptions={memberNames}
-              domainOptions={domainOptions}
-              projectOptions={projectOptions}
-              moduleOptions={moduleOptions}
-              featureOptions={featureOptions}
-            />
-          ) : (
-            <EmptyState onAddEmpty={handleAddEmpty} />
-          )}
+            {selectedSnapshot ? (
+              <SnapshotEditForm
+                key={selectedSnapshot.tempId}
+                snapshot={selectedSnapshot}
+                onUpdate={(updates) =>
+                  handleUpdateCard(selectedSnapshot.tempId, updates)
+                }
+                onFocusSection={setFocusedSection}
+                activeSection={
+                  focusedSection as
+                    | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                    | null
+                }
+                compact
+                singleColumn
+                hideName
+                weekInfo={weekInfo}
+                nameOptions={memberNames}
+                domainOptions={domainOptions}
+                projectOptions={projectOptions}
+                moduleOptions={moduleOptions}
+                featureOptions={featureOptions}
+              />
+            ) : (
+              <EmptyState onAddEmpty={handleAddEmpty} />
+            )}
           </div>
 
           {/* 우측: 미리보기 */}

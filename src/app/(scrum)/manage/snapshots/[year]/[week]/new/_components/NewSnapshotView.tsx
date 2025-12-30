@@ -668,16 +668,16 @@ function NewSnapshotViewInner({
   // 데이터 불러오기 화면
   if (mode === "loading") {
     return (
-      <div className="h-[calc(100vh-3.5rem)] flex flex-col">
-        {/* 상단 헤더 */}
-        <div className="px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100">
+      <div className="h-[calc(100vh-3.5rem)] flex flex-col bg-[#010409]">
+        {/* 상단 헤더 - GitHub 스타일 */}
+        <div className="px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#30363d] bg-[#0d1117]">
           <div className="flex items-center gap-3 sm:gap-4 flex-1">
             <button
               onClick={() => {
                 navigationProgress.start();
                 router.push("/manage/snapshots");
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#7d8590] hover:text-[#c9d1d9] hover:bg-[#21262d] rounded-lg transition-all shrink-0"
             >
               <svg
                 className="w-4 h-4"
@@ -696,16 +696,16 @@ function NewSnapshotViewInner({
               <span className="sm:hidden">목록</span>
             </button>
 
-            <div className="hidden sm:block h-4 w-px bg-gray-200" />
+            <div className="hidden sm:block h-4 w-px bg-[#30363d]" />
 
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <div className="inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25 shrink-0">
+              <div className="inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#1f6feb] shrink-0">
                 <svg
                   className="w-4 h-4 sm:w-5 sm:h-5 text-white"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={1.5}
+                  strokeWidth={2}
                 >
                   <path
                     strokeLinecap="round"
@@ -715,10 +715,10 @@ function NewSnapshotViewInner({
                 </svg>
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold text-gray-900 tracking-tight truncate">
+                <h1 className="text-base sm:text-xl font-semibold text-[#c9d1d9] tracking-tight truncate">
                   데이터 불러오기
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">
+                <p className="text-xs sm:text-sm text-[#7d8590] truncate">
                   <span className="hidden sm:inline">{year}년 </span>
                   W{week.toString().padStart(2, "0")} <span className="hidden sm:inline">({weekRange})</span>
                 </p>
@@ -730,10 +730,10 @@ function NewSnapshotViewInner({
           <button
             onClick={handleLoadFromWeeks}
             disabled={selectedWeeks.size === 0}
-            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-medium rounded-lg sm:rounded-xl transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-medium rounded-lg transition-all shrink-0 ${
               selectedWeeks.size > 0
-                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-[#238636] text-white hover:bg-[#2ea043] border border-[rgba(240,246,252,0.1)]"
+                : "bg-[#21262d] text-[#7d8590] cursor-not-allowed border border-[#30363d]"
             }`}
           >
             <svg
@@ -757,18 +757,18 @@ function NewSnapshotViewInner({
         {/* 메인 콘텐츠 - 2열 레이아웃 */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {isLoadingMyData ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center bg-[#010409]">
               <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
+                <div className="w-12 h-12 border-3 border-[#1f6feb] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-[#7d8590]">데이터를 불러오는 중...</p>
               </div>
             </div>
           ) : myWeeklyData.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center bg-[#010409]">
               <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-lg bg-[#161b22] flex items-center justify-center">
                   <svg
-                    className="w-10 h-10 text-gray-300"
+                    className="w-10 h-10 text-[#30363d]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -781,15 +781,15 @@ function NewSnapshotViewInner({
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-[#c9d1d9] mb-2">
                   저장된 스냅샷이 없습니다
                 </h3>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-[#7d8590] mb-6">
                   새로 작성하기로 시작해보세요
                 </p>
                 <button
                   onClick={() => setMode("entry")}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[#58a6ff] hover:bg-[#161b22] rounded-lg transition-colors border border-[#30363d]"
                 >
                   돌아가기
                 </button>
@@ -797,16 +797,16 @@ function NewSnapshotViewInner({
             </div>
           ) : (
             <>
-              {/* 좌측: 주차 선택 목록 */}
-              <div className="w-full lg:w-80 border-r border-gray-100 bg-gray-50/50 flex flex-col shrink-0">
+              {/* 좌측: 주차 선택 목록 - GitHub 스타일 */}
+              <div className="w-full lg:w-80 border-r border-[#30363d] bg-[#0d1117] flex flex-col shrink-0">
                 {/* 헤더 */}
-                <div className="px-5 py-4 border-b border-gray-100 bg-white">
+                <div className="px-5 py-4 border-b border-[#30363d] bg-[#161b22]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-sm font-semibold text-gray-900">
+                      <h2 className="text-sm font-semibold text-[#c9d1d9]">
                         주차 선택
                       </h2>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-[#7d8590] mt-0.5">
                         {selectedWeeks.size}/{myWeeklyData.length}개 선택됨
                       </p>
                     </div>
@@ -820,7 +820,7 @@ function NewSnapshotViewInner({
                           );
                         }
                       }}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-xs text-[#58a6ff] hover:text-[#79c0ff] font-medium transition-colors"
                     >
                       {selectedWeeks.size === myWeeklyData.length
                         ? "전체 해제"
@@ -836,17 +836,17 @@ function NewSnapshotViewInner({
                     return (
                       <label
                         key={weekData.key}
-                        className={`group flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
+                        className={`group flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
                           isSelected
-                            ? "border-blue-400 bg-blue-50 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                            ? "border-[#1f6feb] bg-[#161b22] shadow-sm"
+                            : "border-[#30363d] bg-[#0d1117] hover:border-[#58a6ff] hover:bg-[#161b22]"
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
                             isSelected
-                              ? "bg-blue-500 border-blue-500"
-                              : "border-gray-300 group-hover:border-gray-400"
+                              ? "bg-[#1f6feb] border-[#1f6feb]"
+                              : "border-[#30363d] group-hover:border-[#58a6ff]"
                           }`}
                         >
                           {isSelected && (
@@ -873,14 +873,14 @@ function NewSnapshotViewInner({
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">
+                            <span className="text-sm font-medium text-[#c9d1d9]">
                               {weekData.year}년 {weekData.week}
                             </span>
-                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 rounded">
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[#21262d] text-[#7d8590] rounded">
                               {weekData.entriesCount}개
                             </span>
                           </div>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-[#7d8590]">
                             {weekData.weekStartDate} ~ {weekData.weekEndDate}
                           </span>
                         </div>
@@ -890,14 +890,14 @@ function NewSnapshotViewInner({
                 </div>
               </div>
 
-              {/* 우측: 선택된 주차의 엔트리 카드 목록 */}
-              <div className="hidden lg:flex flex-1 overflow-y-auto bg-gray-50/30">
+              {/* 우측: 선택된 주차의 엔트리 카드 목록 - GitHub 스타일 */}
+              <div className="hidden lg:flex flex-1 overflow-y-auto bg-[#010409]">
                 {selectedWeeks.size === 0 ? (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-[#161b22] flex items-center justify-center">
                         <svg
-                          className="w-8 h-8 text-gray-300"
+                          className="w-8 h-8 text-[#30363d]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -910,8 +910,8 @@ function NewSnapshotViewInner({
                           />
                         </svg>
                       </div>
-                      <p className="text-sm text-gray-500">주차를 선택하면</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-sm text-[#7d8590]">주차를 선택하면</p>
+                      <p className="text-xs text-[#7d8590] mt-1">
                         엔트리 목록이 표시됩니다
                       </p>
                     </div>
@@ -920,10 +920,10 @@ function NewSnapshotViewInner({
                   <div className="p-4">
                     {/* 선택된 엔트리 수 표시 */}
                     <div className="mb-4 flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-[#c9d1d9]">
                         선택된 엔트리
                       </span>
-                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-[#1f6feb] text-white rounded-full">
                         {Array.from(selectedWeeks).reduce((acc, weekKey) => {
                           const week = myWeeklyData.find(
                             (w) => w.key === weekKey
@@ -1351,15 +1351,21 @@ function LoadingEntryCard({
   const riskStyle = getRiskLevelStyle(entry.risk_level);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-3 hover:shadow-sm transition-shadow">
+    <div className="bg-[#0d1117] rounded-lg border border-[#30363d] p-3 hover:border-[#58a6ff] hover:bg-[#161b22] transition-all">
       {/* 주차 라벨 */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-medium text-gray-400">
+        <span className="text-[10px] font-medium text-[#7d8590]">
           {weekLabel}
         </span>
         {riskStyle && (
           <span
-            className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${riskStyle.bg} ${riskStyle.text}`}
+            className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${
+              entry.risk_level && entry.risk_level >= 3
+                ? "bg-[#da3633] text-white"
+                : entry.risk_level && entry.risk_level >= 2
+                ? "bg-[#9e6a03] text-white"
+                : "bg-[#9a6700] text-white"
+            }`}
           >
             Lv.{entry.risk_level}
           </span>
@@ -1370,40 +1376,40 @@ function LoadingEntryCard({
       <div className="space-y-1.5">
         {entry.domain && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+            <span className="text-[10px] text-[#7d8590] w-10 shrink-0">
               Domain
             </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#21262d] text-[#c9d1d9] truncate">
               {entry.domain}
             </span>
           </div>
         )}
         {entry.project && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+            <span className="text-[10px] text-[#7d8590] w-10 shrink-0">
               Project
             </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#21262d] text-[#c9d1d9] truncate">
               {entry.project}
             </span>
           </div>
         )}
         {entry.module && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+            <span className="text-[10px] text-[#7d8590] w-10 shrink-0">
               Module
             </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#21262d] text-[#c9d1d9] truncate">
               {entry.module}
             </span>
           </div>
         )}
         {entry.feature && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0">
+            <span className="text-[10px] text-[#7d8590] w-10 shrink-0">
               Feature
             </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 truncate">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#21262d] text-[#c9d1d9] truncate">
               {entry.feature}
             </span>
           </div>
@@ -1411,25 +1417,25 @@ function LoadingEntryCard({
       </div>
 
       {/* 진행률 및 태스크 수 */}
-      <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+      <div className="mt-3 pt-2 border-t border-[#30363d] flex items-center justify-between">
         <div className="flex items-center gap-2">
           {avgProgress !== null && (
             <>
-              <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="w-12 h-1.5 bg-[#21262d] rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${
-                    avgProgress === 100 ? "bg-emerald-500" : "bg-blue-500"
+                    avgProgress === 100 ? "bg-[#3fb950]" : "bg-[#1f6feb]"
                   }`}
                   style={{ width: `${avgProgress}%` }}
                 />
               </div>
-              <span className="text-[10px] font-medium text-gray-500">
+              <span className="text-[10px] font-medium text-[#7d8590]">
                 {avgProgress}%
               </span>
             </>
           )}
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-gray-400">
+        <div className="flex items-center gap-2 text-[10px] text-[#7d8590]">
           <span>{(entry.past_week_tasks || []).length}개 작업</span>
           {(entry.collaborators || []).length > 0 && (
             <span>· {(entry.collaborators || []).length}명 협업</span>
