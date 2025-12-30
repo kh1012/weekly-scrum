@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useScrumContext } from "@/context/ScrumContext";
+import { weekKeyToSortValue } from "@/lib/weekUtils";
 
 interface WeekTimelineProps {
   className?: string;
+  multiSelect?: boolean; // 다중 선택 모드
 }
 
 // 날짜 범위 표시용 포맷 함수
@@ -21,13 +23,22 @@ function formatDateRange(range: string): string {
   return range;
 }
 
-export function WeekTimeline({ className = "" }: WeekTimelineProps) {
+export function WeekTimeline({ className = "", multiSelect = false }: WeekTimelineProps) {
   const {
     weeks,
     selectedWeekKey,
     setSelectedWeekKey,
+    selectMode,
+    setSelectMode,
+    rangeStart,
+    rangeEnd,
+    setRangeStart,
+    setRangeEnd,
     allData,
   } = useScrumContext();
+
+  // 다중 선택 상태 (체크박스 모드)
+  const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set([selectedWeekKey]));
 
   // 주차를 연도별로 그룹화 (실제 데이터가 있는 주차만)
   const groupedWeeks = useMemo(() => {
@@ -54,7 +65,50 @@ export function WeekTimeline({ className = "" }: WeekTimelineProps) {
   }, [weeks]);
 
   const handleWeekSelect = (weekKey: string) => {
-    setSelectedWeekKey(weekKey);
+    if (multiSelect) {
+      // 다중 선택 모드: 체크박스 토글
+      const newSelected = new Set(selectedWeeks);
+      if (newSelected.has(weekKey)) {
+        newSelected.delete(weekKey);
+      } else {
+        newSelected.add(weekKey);
+      }
+      setSelectedWeeks(newSelected);
+
+      // 선택된 주차들의 범위를 계산하여 range 모드로 전환
+      if (newSelected.size > 0) {
+        const sortedKeys = Array.from(newSelected).sort((a, b) => {
+          const sortA = weekKeyToSortValue(a);
+          const sortB = weekKeyToSortValue(b);
+          return sortA - sortB;
+        });
+        const minKey = sortedKeys[0];
+        const maxKey = sortedKeys[sortedKeys.length - 1];
+
+        if (sortedKeys.length === 1) {
+          // 하나만 선택된 경우 single 모드
+          setSelectMode("single");
+          setSelectedWeekKey(minKey);
+        } else {
+          // 여러 개 선택된 경우 range 모드
+          setSelectMode("range");
+          setRangeStart(minKey);
+          setRangeEnd(maxKey);
+        }
+      }
+    } else {
+      // 단일 선택 모드
+      setSelectedWeekKey(weekKey);
+    }
+  };
+
+  // 선택 상태 확인 함수
+  const isWeekSelected = (weekKey: string) => {
+    if (multiSelect) {
+      return selectedWeeks.has(weekKey);
+    } else {
+      return weekKey === selectedWeekKey;
+    }
   };
 
   return (
@@ -71,7 +125,7 @@ export function WeekTimeline({ className = "" }: WeekTimelineProps) {
           {/* 주차 리스트 */}
           <div className="flex flex-col gap-0.5 px-2">
             {group.weeks.map((week) => {
-              const isSelected = week.key === selectedWeekKey;
+              const isSelected = isWeekSelected(week.key);
               const weekData = allData[week.key];
               const dateRange = weekData?.range ? formatDateRange(weekData.range) : "";
               const entryCount = weekData?.items?.length || 0;
@@ -90,6 +144,33 @@ export function WeekTimeline({ className = "" }: WeekTimelineProps) {
                     }
                   `}
                 >
+                  {/* 체크박스 (다중 선택 모드) */}
+                  {multiSelect && (
+                    <div
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${
+                        isSelected
+                          ? "bg-white border-white"
+                          : "border-[#d0d7de] bg-white"
+                      }`}
+                    >
+                      {isSelected && (
+                        <svg
+                          className="w-3 h-3 text-[#0969da]"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  )}
+
                   {/* 주차 정보 */}
                   <div className="flex-1 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">

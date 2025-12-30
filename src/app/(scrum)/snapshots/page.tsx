@@ -10,6 +10,7 @@ import { ExpandableFilters } from "@/components/weekly-scrum/common/ExpandableFi
 export default function SnapshotsPage() {
   const { currentData } = useScrumContext();
   const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
 
   if (!currentData) {
     return (
@@ -22,8 +23,34 @@ export default function SnapshotsPage() {
   return (
     <div className="-mx-4 -my-6 sm:-mx-6 lg:-mx-8 h-[calc(100vh-4rem)] bg-white flex flex-col lg:flex-row overflow-hidden">
       {/* 좌측: 주차 타임라인 (PC) */}
-      <aside className="hidden lg:flex lg:w-80 lg:shrink-0 border-r border-[#d0d7de] overflow-y-auto">
-        <WeekTimeline className="w-full" />
+      <aside className="hidden lg:flex lg:w-80 lg:shrink-0 border-r border-[#d0d7de] overflow-y-auto flex-col">
+        {/* 다중 선택 토글 버튼 */}
+        <div className="shrink-0 p-3 border-b border-[#d0d7de] bg-[#f6f8fa]">
+          <button
+            onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+            className={`w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              isMultiSelectMode
+                ? "bg-[#0969da] text-white"
+                : "bg-white text-[#24292f] border border-[#d0d7de] hover:bg-[#f6f8fa]"
+            }`}
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+            {isMultiSelectMode ? "다중 선택 중" : "다중 선택"}
+          </button>
+        </div>
+        <WeekTimeline className="w-full flex-1 overflow-y-auto" multiSelect={isMultiSelectMode} />
       </aside>
 
       {/* 모바일: 주차 타임라인 (오버레이) */}
@@ -36,30 +63,56 @@ export default function SnapshotsPage() {
             className="absolute left-0 top-0 bottom-0 w-80 bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 bg-white border-b border-[#d0d7de] px-4 py-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[#24292f]">
-                주차 선택
-              </h2>
+            <div className="sticky top-0 z-10 bg-white border-b border-[#d0d7de] px-4 py-3">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-[#24292f]">
+                  주차 선택
+                </h2>
+                <button
+                  onClick={() => setIsMobileTimelineOpen(false)}
+                  className="p-2 hover:bg-[#f6f8fa] rounded-md transition-colors"
+                >
+                  <svg
+                    className="w-5 h-5 text-[#57606a]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              {/* 다중 선택 토글 버튼 */}
               <button
-                onClick={() => setIsMobileTimelineOpen(false)}
-                className="p-2 hover:bg-[#f6f8fa] rounded-md transition-colors"
+                onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+                className={`w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  isMultiSelectMode
+                    ? "bg-[#0969da] text-white"
+                    : "bg-white text-[#24292f] border border-[#d0d7de]"
+                }`}
               >
                 <svg
-                  className="w-5 h-5 text-[#57606a]"
+                  className="w-3.5 h-3.5"
                   fill="none"
-                  stroke="currentColor"
                   viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                   />
                 </svg>
+                {isMultiSelectMode ? "다중 선택 중" : "다중 선택"}
               </button>
             </div>
-            <WeekTimeline className="w-full" />
+            <WeekTimeline className="w-full" multiSelect={isMultiSelectMode} />
           </div>
         </div>
       )}

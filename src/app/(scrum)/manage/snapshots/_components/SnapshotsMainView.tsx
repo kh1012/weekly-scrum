@@ -94,9 +94,21 @@ function SnapshotsMainViewInner({
   // localStorage에서 상태 복원
   const [isStateInitialized, setIsStateInitialized] = useState(false);
 
-  // 주차 선택 상태
+  // 주차 선택 상태 (현재 주차를 기본값으로)
   const [selectedYear, setSelectedYear] = useState(currentWeek.year);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek.week);
+
+  // 컴포넌트 마운트 시 현재 주차로 자동 선택
+  useEffect(() => {
+    if (!isStateInitialized) return;
+    
+    // localStorage에 저장된 값이 없으면 현재 주차로 설정
+    const savedState = localStorage.getItem(SNAPSHOTS_STATE_KEY);
+    if (!savedState) {
+      setSelectedYear(currentWeek.year);
+      setSelectedWeek(currentWeek.week);
+    }
+  }, [isStateInitialized, currentWeek.year, currentWeek.week]);
 
   // 뷰 모드
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
