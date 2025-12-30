@@ -120,6 +120,9 @@ function SnapshotsMainViewInner({
   // 선택 모드 상태
   const [isSelectMode, setIsSelectMode] = useState(false);
 
+  // 검색어 상태
+  const [searchQuery, setSearchQuery] = useState("");
+
   // localStorage에서 상태 복원
   useEffect(() => {
     try {
@@ -225,6 +228,20 @@ function SnapshotsMainViewInner({
   // 필터링된 스냅샷
   const filteredSnapshots = useMemo(() => {
     return snapshots.filter((s) => {
+      // 검색어 필터링
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = s.entries.some((e) => {
+          return (
+            e.domain.toLowerCase().includes(query) ||
+            e.project.toLowerCase().includes(query) ||
+            (e.module && e.module.toLowerCase().includes(query)) ||
+            (e.feature && e.feature.toLowerCase().includes(query))
+          );
+        });
+        if (!matchesSearch) return false;
+      }
+      
       const matchesProject =
         projectFilters.size === 0 ||
         s.entries.some((e) => projectFilters.has(e.project));
@@ -236,7 +253,7 @@ function SnapshotsMainViewInner({
         s.entries.some((e) => e.feature && featureFilters.has(e.feature));
       return matchesProject && matchesModule && matchesFeature;
     });
-  }, [snapshots, projectFilters, moduleFilters, featureFilters]);
+  }, [snapshots, searchQuery, projectFilters, moduleFilters, featureFilters]);
 
   // 필터 초기화
   const clearFilters = () => {
@@ -788,6 +805,61 @@ function SnapshotsMainViewInner({
 
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* 검색창 */}
+          <div className="shrink-0 bg-white border-b border-[#d0d7de] px-4 sm:px-6 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 w-full">
+                  <div className="relative flex-1">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#57606a]">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="스냅샷 검색..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-10 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] bg-white placeholder-[#57606a] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da] transition-all"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#57606a] hover:text-[#24292f] transition-colors"
+                        title="검색어 지우기"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* 서브 메뉴 영역 */}
           <div className="shrink-0 relative flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
             {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
