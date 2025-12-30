@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAvailableSnapshotWeeks } from "./useAvailableSnapshotWeeks";
+import { useCollaborationData } from "./useCollaborationData";
+import { buildCollabGraph } from "./buildCollabGraph";
 import { WeekChecklist } from "./WeekChecklist";
 
 interface CollaboratorGraphViewProps {
@@ -13,6 +15,16 @@ export function CollaboratorGraphView({
 }: CollaboratorGraphViewProps) {
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
   const { weeks, isLoading, error } = useAvailableSnapshotWeeks(workspaceId);
+  const {
+    entries,
+    isLoading: isLoadingEntries,
+    error: entriesError,
+  } = useCollaborationData(workspaceId, selectedWeeks);
+
+  // 그래프 데이터 계산 (메모이제이션)
+  const graphData = useMemo(() => {
+    return buildCollabGraph(entries, selectedWeeks);
+  }, [entries, selectedWeeks]);
 
   // 자동으로 최근 4주 선택 (첫 로드 시)
   useEffect(() => {
@@ -105,28 +117,76 @@ export function CollaboratorGraphView({
           {/* Center Panel: React Flow Graph */}
           <div className="flex-1 bg-white rounded-lg border border-[#d0d7de] overflow-hidden">
             <div className="h-full flex items-center justify-center">
-              <div className="text-center">
-                <svg
-                  className="w-16 h-16 mx-auto text-[#d0d7de] mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                <p className="text-[#57606a] font-medium">
-                  주차를 선택하여 협업 그래프를 확인하세요
-                </p>
-                <p className="text-xs text-[#8c959f] mt-2">
-                  왼쪽에서 하나 이상의 주차를 선택하면 네트워크 그래프가
-                  표시됩니다
-                </p>
-              </div>
+              {isLoadingEntries ? (
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-[#d0d7de] border-t-[#0969da] rounded-full animate-spin mb-4" />
+                  <p className="text-sm text-[#57606a] font-medium">
+                    협업 데이터를 불러오는 중...
+                  </p>
+                </div>
+              ) : entriesError ? (
+                <div className="text-center">
+                  <p className="text-sm text-red-600 font-medium">
+                    데이터 로드 실패
+                  </p>
+                  <p className="text-xs text-[#57606a] mt-1">{entriesError}</p>
+                </div>
+              ) : selectedWeeks.size === 0 ? (
+                <div className="text-center">
+                  <svg
+                    className="w-16 h-16 mx-auto text-[#d0d7de] mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <p className="text-[#57606a] font-medium">
+                    주차를 선택하여 협업 그래프를 확인하세요
+                  </p>
+                  <p className="text-xs text-[#8c959f] mt-2">
+                    왼쪽에서 하나 이상의 주차를 선택하면 네트워크 그래프가
+                    표시됩니다
+                  </p>
+                </div>
+              ) : graphData.nodes.length === 0 ? (
+                <div className="text-center">
+                  <svg
+                    className="w-16 h-16 mx-auto text-[#d0d7de] mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                    />
+                  </svg>
+                  <p className="text-[#57606a] font-medium">
+                    선택한 주차에 협업 데이터가 없습니다
+                  </p>
+                  <p className="text-xs text-[#8c959f] mt-2">
+                    다른 주차를 선택하거나 스냅샷에 협업자를 추가해주세요
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-sm text-[#57606a]">
+                    React Flow 그래프 (다음 단계에서 구현)
+                  </p>
+                  <p className="text-xs text-[#8c959f] mt-2">
+                    노드: {graphData.nodes.length}, 엣지:{" "}
+                    {graphData.edges.length}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
