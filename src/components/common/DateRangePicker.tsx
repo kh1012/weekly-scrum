@@ -69,15 +69,15 @@ export function DateRangePicker({
 
   const handleRangeSelect = (selectedRange: DateRange | undefined) => {
     setRange(selectedRange);
-    
-    if (selectedRange?.from && selectedRange?.to) {
-      const start = format(selectedRange.from, "yyyy-MM-dd");
-      const end = format(selectedRange.to, "yyyy-MM-dd");
+    // 날짜 선택 시 바로 닫지 않고, 사용자가 확인 버튼을 누를 때까지 유지
+  };
+
+  const handleApply = () => {
+    if (range?.from && range?.to) {
+      const start = format(range.from, "yyyy-MM-dd");
+      const end = format(range.to, "yyyy-MM-dd");
       onChange(start, end);
       setIsOpen(false);
-    } else if (selectedRange?.from && !selectedRange?.to) {
-      // 시작일만 선택된 상태, 종료일 대기 중
-      // 아직 onChange 호출하지 않음
     }
   };
 
@@ -201,10 +201,12 @@ export function DateRangePicker({
                 justify-content: center;
               }
               .rdp-caption {
+                position: relative;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 height: 40px;
+                z-index: 1;
               }
               .rdp-caption_label {
                 font-size: 14px;
@@ -218,6 +220,7 @@ export function DateRangePicker({
                 left: 0;
                 display: flex;
                 justify-content: space-between;
+                z-index: 2;
               }
               .rdp-nav_button {
                 width: 32px;
@@ -278,28 +281,45 @@ export function DateRangePicker({
             />
 
             {/* Footer */}
-            <div className="flex justify-between items-center border-t border-[#d0d7de] pt-3 mt-3">
-              <span className="text-xs text-gray-500">
+            <div className="border-t border-[#d0d7de] pt-3 mt-3 space-y-2">
+              {/* 상태 메시지 */}
+              <div className="text-xs text-gray-500 text-center">
                 {!range?.from && "시작일을 선택하세요"}
                 {range?.from && !range?.to && "종료일을 선택하세요"}
-                {range?.from && range?.to && "선택 완료"}
-              </span>
+                {range?.from && range?.to && "선택 완료 - 확인 버튼을 눌러주세요"}
+              </div>
+              
+              {/* 버튼 그룹 */}
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={handleToday}
-                  className="px-3 py-1.5 text-xs font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors"
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors border border-[#d0d7de]"
                 >
                   오늘
                 </button>
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="px-3 py-1.5 text-xs font-medium text-[#cf222e] hover:bg-[#ffebe9] rounded-md transition-colors"
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-[#cf222e] hover:bg-[#ffebe9] rounded-md transition-colors border border-[#d0d7de]"
                 >
                   초기화
                 </button>
               </div>
+              
+              {/* 확인 버튼 */}
+              <button
+                type="button"
+                onClick={handleApply}
+                disabled={!range?.from || !range?.to}
+                className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  range?.from && range?.to
+                    ? "bg-[#0969da] text-white hover:bg-[#0860ca]"
+                    : "bg-[#f6f8fa] text-[#8c959f] cursor-not-allowed"
+                }`}
+              >
+                확인
+              </button>
             </div>
           </div>,
           document.body
