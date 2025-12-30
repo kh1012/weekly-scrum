@@ -35,6 +35,9 @@ export function PlanViewPopover({
 }: PlanViewPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  // rowId에서 프로젝트, 모듈, 기능 추출
+  const [project, module, feature] = bar.rowId.split("::");
+
   // 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -150,6 +153,19 @@ export function PlanViewPopover({
 
       {/* 콘텐츠 */}
       <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <span className="font-medium text-gray-700">{project}</span>
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="font-medium text-gray-700">{module}</span>
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="font-medium text-gray-900">{feature}</span>
+        </div>
+
         {/* 제목 */}
         <h3 className="text-lg font-semibold text-gray-900 leading-snug">
           {bar.title}
