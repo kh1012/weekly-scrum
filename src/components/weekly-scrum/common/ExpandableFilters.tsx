@@ -467,16 +467,20 @@ export function ExpandableFilters({
             </div>
 
             {/* 필터 섹션 목록 */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {filterSections.map((section) => {
                 const selectedCount = multiFilters[section.key].length;
                 const hasSelection = selectedCount > 0;
 
                 return (
-                  <div key={section.key} className="space-y-2">
-                    <div className="flex items-center justify-between">
+                  <div 
+                    key={section.key} 
+                    className="border border-[#d0d7de] rounded-lg bg-white overflow-hidden"
+                  >
+                    {/* 섹션 헤더 */}
+                    <div className="flex items-center justify-between px-3 py-2 bg-[#f6f8fa] border-b border-[#d0d7de]">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{section.icon}</span>
+                        <span className="text-base">{section.icon}</span>
                         <span className="text-sm font-semibold text-[#24292f]">
                           {section.title}
                         </span>
@@ -507,43 +511,50 @@ export function ExpandableFilters({
                       </div>
                     </div>
 
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {section.options.map((option) => {
-                        const isSelected = multiFilters[section.key].includes(option.value);
-                        const isDisabled = !option.enabled;
+                    {/* 옵션 목록 */}
+                    <div className="p-2 space-y-1 max-h-48 overflow-y-auto">
+                      {section.options.length === 0 ? (
+                        <div className="text-center py-4 text-xs text-[#57606a]">
+                          옵션 없음
+                        </div>
+                      ) : (
+                        section.options.map((option) => {
+                          const isSelected = multiFilters[section.key].includes(option.value);
+                          const isDisabled = !option.enabled;
 
-                        return (
-                          <label
-                            key={option.value}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
-                              isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#f6f8fa]"
-                            } ${isSelected && !isDisabled ? "bg-[#ddf4ff]" : ""}`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              disabled={isDisabled}
-                              onChange={() => {
-                                if (isDisabled) return;
-                                toggleMultiFilter(section.key, option.value);
-                              }}
-                              className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da] focus:ring-offset-0"
-                            />
-                            <span className={`flex-1 text-xs truncate ${isDisabled ? "text-[#8c959f]" : "text-[#24292f]"}`}>
-                              {option.value}
-                            </span>
-                            <span
-                              className={`text-[10px] px-1.5 py-0.5 rounded-md ${
-                                isDisabled
-                                  ? "bg-[#f6f8fa] text-[#8c959f]"
-                                  : "bg-[#ddf4ff] text-[#0969da]"
-                              }`}
+                          return (
+                            <label
+                              key={option.value}
+                              className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+                                isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#f6f8fa]"
+                              } ${isSelected && !isDisabled ? "bg-[#ddf4ff]" : ""}`}
                             >
-                              {option.count}
-                            </span>
-                          </label>
-                        );
-                      })}
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                onChange={() => {
+                                  if (isDisabled) return;
+                                  toggleMultiFilter(section.key, option.value);
+                                }}
+                                className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da] focus:ring-offset-0"
+                              />
+                              <span className={`flex-1 text-xs truncate ${isDisabled ? "text-[#8c959f]" : "text-[#24292f]"}`}>
+                                {option.value}
+                              </span>
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded-md flex-shrink-0 ${
+                                  isDisabled
+                                    ? "bg-[#f6f8fa] text-[#8c959f]"
+                                    : "bg-[#ddf4ff] text-[#0969da]"
+                                }`}
+                              >
+                                {option.count}
+                              </span>
+                            </label>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 );
