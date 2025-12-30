@@ -141,6 +141,7 @@ function NewSnapshotViewInner({
   const [isLoadingMyData, setIsLoadingMyData] = useState(false);
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
   const [autoLoadTriggered, setAutoLoadTriggered] = useState(false);
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
 
   // Workload 상태 (스냅샷 단위)
   const [workloadLevel, setWorkloadLevel] = useState<WorkloadLevel | null>(null);
@@ -185,6 +186,7 @@ function NewSnapshotViewInner({
         if (weekKeys.length > 0) {
           setSelectedWeeks(new Set(weekKeys));
           setAutoLoadTriggered(true);
+          setIsAutoLoading(true);
         }
       }
     }
@@ -230,6 +232,7 @@ function NewSnapshotViewInner({
         setTempSnapshots(loadedSnapshots);
         setSelectedId(loadedSnapshots[0].tempId);
         setMode("editor");
+        setIsAutoLoading(false);
         showToast(
           `${loadedSnapshots.length}개 엔트리를 불러왔습니다.`,
           "success"
@@ -730,6 +733,34 @@ function NewSnapshotViewInner({
 
   // 데이터 불러오기 화면
   if (mode === "loading") {
+    // 자동 로딩 중일 때는 로딩 화면 표시
+    if (isAutoLoading || isLoadingMyData) {
+      return (
+        <div className="h-[calc(100vh-3.5rem)] flex items-center justify-center bg-white relative">
+          {/* 백드롭 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-white" />
+          
+          {/* 로딩 콘텐츠 */}
+          <div className="relative flex flex-col items-center gap-6">
+            {/* 로딩 스피너 */}
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+            
+            {/* 로딩 텍스트 */}
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                데이터를 불러오는 중입니다
+              </h2>
+              <p className="text-sm text-gray-600">
+                선택한 주차의 스냅샷을 준비하고 있습니다...
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-[calc(100vh-3.5rem)] flex flex-col bg-white">
         {/* 상단 헤더 */}
