@@ -25,6 +25,7 @@ const FULL_WIDTH_PAGES = [
   "/matrix",
   "/quadrant",
   "/work-map",
+  "/works/collaborator-graph",
   "/snapshots",
   "/manage",
   "/manage/snapshots",
@@ -50,6 +51,7 @@ const NO_PADDING_PAGES = [
   "/my",
   "/feedbacks",
   "/team-feed",
+  "/works/collaborator-graph",
   "/admin/meta-options",
   "/manage/snapshots",
 ];
