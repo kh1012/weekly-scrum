@@ -9,8 +9,8 @@ const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
  * 필요에 따라 이메일을 추가하여 통계에서 제외할 수 있습니다.
  */
 const EXCLUDED_EMAILS = [
-  "kh1012@midasit.com", // 개발자 계정
   "zrelor@gmail.com", // 개발자 계정
+  "hsy0410@midasit.com",
   // 테스트 계정 추가 시 여기에 이메일 추가
   // "test@midasit.com",
 ];
@@ -23,38 +23,48 @@ const EXCLUDED_EMAILS = [
  */
 function getISOWeekInfo(date: Date) {
   // 복사본으로 작업
-  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  
+  const target = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+
   // ISO 8601: 목요일이 속한 연도가 해당 주의 연도
   // 해당 주의 목요일 날짜 구하기
   const dayOfWeek = target.getUTCDay();
   const nearestThursday = new Date(target.getTime());
   nearestThursday.setUTCDate(target.getUTCDate() + 4 - (dayOfWeek || 7));
-  
+
   // 목요일이 속한 연도
   const yearOfThursday = nearestThursday.getUTCFullYear();
-  
+
   // 그 연도의 1월 4일 (항상 W01에 포함)
   const jan4 = new Date(Date.UTC(yearOfThursday, 0, 4));
-  
+
   // 1월 4일이 포함된 주의 월요일
   const jan4DayOfWeek = jan4.getUTCDay();
   const firstMonday = new Date(jan4.getTime());
-  firstMonday.setUTCDate(jan4.getUTCDate() - (jan4DayOfWeek === 0 ? 6 : jan4DayOfWeek - 1));
-  
+  firstMonday.setUTCDate(
+    jan4.getUTCDate() - (jan4DayOfWeek === 0 ? 6 : jan4DayOfWeek - 1)
+  );
+
   // 주차 계산
-  const weekNumber = Math.floor((nearestThursday.getTime() - firstMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
-  
-  return { 
-    year: yearOfThursday, 
-    week: weekNumber 
+  const weekNumber =
+    Math.floor(
+      (nearestThursday.getTime() - firstMonday.getTime()) /
+        (7 * 24 * 60 * 60 * 1000)
+    ) + 1;
+
+  return {
+    year: yearOfThursday,
+    week: weekNumber,
   };
 }
 
 /**
  * 최근 N주차 정보 가져오기
  */
-function getRecentWeeks(count: number): { year: number; week: number; label: string }[] {
+function getRecentWeeks(
+  count: number
+): { year: number; week: number; label: string }[] {
   const weeks: { year: number; week: number; label: string }[] = [];
   const now = new Date();
 
@@ -88,16 +98,20 @@ export default async function AdminDashboardPage() {
 
   // 2. profiles 별도 조회
   const userIds = members?.map((m) => m.user_id) || [];
-  const { data: profiles } = userIds.length > 0
-    ? await supabase
-        .from("profiles")
-        .select("user_id, display_name, email")
-        .in("user_id", userIds)
-    : { data: [] };
+  const { data: profiles } =
+    userIds.length > 0
+      ? await supabase
+          .from("profiles")
+          .select("user_id, display_name, email")
+          .in("user_id", userIds)
+      : { data: [] };
 
   // profiles를 user_id로 맵핑
   const profilesMap = new Map(
-    (profiles || []).map((p) => [p.user_id, { display_name: p.display_name, email: p.email }])
+    (profiles || []).map((p) => [
+      p.user_id,
+      { display_name: p.display_name, email: p.email },
+    ])
   );
 
   // 스냅샷 조회 (최근 6주치)
@@ -113,12 +127,13 @@ export default async function AdminDashboardPage() {
 
   // 스냅샷별 엔트리 수 조회
   const snapshotIds = snapshots?.map((s) => s.id) || [];
-  const { data: entries } = snapshotIds.length > 0
-    ? await supabase
-        .from("snapshot_entries")
-        .select("snapshot_id")
-        .in("snapshot_id", snapshotIds)
-    : { data: [] };
+  const { data: entries } =
+    snapshotIds.length > 0
+      ? await supabase
+          .from("snapshot_entries")
+          .select("snapshot_id")
+          .in("snapshot_id", snapshotIds)
+      : { data: [] };
 
   // 스냅샷별 엔트리 수 맵핑
   const entryCountBySnapshot = new Map<string, number>();
@@ -134,7 +149,10 @@ export default async function AdminDashboardPage() {
     email: string;
     role: string;
     weeklyEntries: Record<string, number>; // "2024-W01" -> entry count
-    weeklyWorkload: Record<string, { level: string | null; note: string | null }>; // "2024-W01" -> workload info
+    weeklyWorkload: Record<
+      string,
+      { level: string | null; note: string | null }
+    >; // "2024-W01" -> workload info
   }
 
   const memberDataList: MemberData[] = (members || [])
@@ -143,15 +161,22 @@ export default async function AdminDashboardPage() {
       const profile = profilesMap.get(m.user_id);
 
       const weeklyEntries: Record<string, number> = {};
-      const weeklyWorkload: Record<string, { level: string | null; note: string | null }> = {};
+      const weeklyWorkload: Record<
+        string,
+        { level: string | null; note: string | null }
+      > = {};
 
       recentWeeks.forEach((w) => {
         const weekKey = `${w.year}-${w.label}`;
 
         // 해당 멤버의 해당 주차 스냅샷 찾기
-        const memberSnapshots = snapshots?.filter(
-          (s) => s.author_id === m.user_id && s.year === w.year && s.week === w.label
-        ) || [];
+        const memberSnapshots =
+          snapshots?.filter(
+            (s) =>
+              s.author_id === m.user_id &&
+              s.year === w.year &&
+              s.week === w.label
+          ) || [];
 
         // 엔트리 수 합산
         let totalEntries = 0;
@@ -171,7 +196,8 @@ export default async function AdminDashboardPage() {
 
       return {
         userId: m.user_id,
-        displayName: profile?.display_name || profile?.email?.split("@")[0] || "Unknown",
+        displayName:
+          profile?.display_name || profile?.email?.split("@")[0] || "Unknown",
         email: profile?.email || "",
         role: m.role,
         weeklyEntries,
@@ -198,12 +224,12 @@ export default async function AdminDashboardPage() {
     normal: 0,
     burden: 0,
   };
-  
+
   memberDataList.forEach((m) => {
     const workload = m.weeklyWorkload[lastWeekKey];
-    if (workload?.level === 'light') workloadStats.light++;
-    else if (workload?.level === 'normal') workloadStats.normal++;
-    else if (workload?.level === 'burden') workloadStats.burden++;
+    if (workload?.level === "light") workloadStats.light++;
+    else if (workload?.level === "normal") workloadStats.normal++;
+    else if (workload?.level === "burden") workloadStats.burden++;
   });
 
   return (

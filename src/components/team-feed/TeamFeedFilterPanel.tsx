@@ -200,7 +200,7 @@ export function TeamFeedFilterPanel({
         className={`
           fixed lg:static z-50 bg-white border-[#d0d7de] overflow-y-auto transition-transform
           lg:inset-y-0 lg:left-0 lg:w-64 lg:border-r lg:translate-x-0 lg:h-screen
-          inset-x-0 bottom-0 max-h-[70vh] rounded-t-2xl border-t shadow-2xl
+          inset-x-0 bottom-0 max-h-[70vh] lg:max-h-none rounded-t-2xl lg:rounded-none border-t lg:border-t-0 shadow-2xl lg:shadow-none
           ${isOpen ? "translate-y-0" : "translate-y-full lg:translate-y-0"}
         `}
       >
