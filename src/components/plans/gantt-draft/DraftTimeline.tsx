@@ -995,7 +995,6 @@ export function DraftTimeline({
           scrollLeft={headerScrollLeft}
           onOpenCreateModal={() => setShowCreateFlagModal(true)}
           onOpenEditModal={(flag) => setEditingFlag(flag)}
-          readOnly={readOnly}
         />
       </div>
 

@@ -92,7 +92,7 @@ export function FlagViewPopover({
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 w-[360px] rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150 flex flex-col max-h-[400px]"
+      className="fixed z-[9999] w-[360px] rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150 flex flex-col max-h-[400px]"
       style={{
         left: position.x,
         top: position.y,

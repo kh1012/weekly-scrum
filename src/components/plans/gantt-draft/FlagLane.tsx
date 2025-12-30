@@ -26,8 +26,6 @@ interface FlagLaneProps {
   onOpenEditModal: (flag: DraftFlag) => void;
   /** Bar에서 호버/선택 시 프리뷰 숨김용 */
   onClearHover?: () => void;
-  /** readOnly 모드 여부 */
-  readOnly?: boolean;
 }
 
 export function FlagLane({
@@ -40,7 +38,6 @@ export function FlagLane({
   onOpenCreateModal,
   onOpenEditModal,
   onClearHover,
-  readOnly = false,
 }: FlagLaneProps) {
   const flags = useDraftStore((s) => s.flags);
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
@@ -365,13 +362,13 @@ export function FlagLane({
             isEditing={isEditing}
             onSelect={() => selectFlag(flag.clientId)}
             onDoubleClick={(e) => {
-              if (readOnly && e) {
-                // readOnly 모드: 팝오버 표시
+              if (!isEditing && e) {
+                // 편집 모드가 아닐 때: 팝오버 표시 (읽기 전용)
                 setViewPopover({
                   flag,
                   position: { x: e.clientX, y: e.clientY },
                 });
-              } else {
+              } else if (isEditing) {
                 // 편집 모드: 모달 열기
                 onOpenEditModal(flag);
               }
