@@ -104,10 +104,7 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
                     key={contributor.personId}
                     className="flex items-center gap-2 text-xs"
                   >
-                    <div className="w-5 h-5 rounded-full bg-[#0969da] flex items-center justify-center text-white font-semibold text-[10px] flex-shrink-0">
-                      {contributor.personName.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-[#57606a] truncate">
+                    <span className="text-[#24292f] font-medium truncate">
                       {contributor.personName}
                     </span>
                     <span className="text-[#8c959f] text-[10px]">

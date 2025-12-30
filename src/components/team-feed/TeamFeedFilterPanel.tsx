@@ -212,7 +212,7 @@ export function TeamFeedFilterPanel({
 
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#24292f]">필터</h2>
+            <h2 className="text-lg font-semibold text-[#24292f]">Filters</h2>
             <button
               onClick={onClose}
               className="lg:hidden p-1 text-[#57606a] hover:text-[#24292f] transition-colors"
