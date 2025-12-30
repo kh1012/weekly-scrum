@@ -82,21 +82,9 @@ export function CollaboratorGraphView({
 
   return (
     <div className="h-full flex flex-col bg-[#f6f8fa]">
-      {/* Header */}
-      <div className="shrink-0 bg-white border-b border-[#d0d7de] px-6 py-4">
-        <div className="max-w-[1400px] mx-auto">
-          <h1 className="text-2xl font-bold text-[#24292f]">
-            Collaborator Graph
-          </h1>
-          <p className="text-sm text-[#57606a] mt-1">
-            주차별 협업 관계를 시각화하여 팀 내 협력 패턴을 파악합니다
-          </p>
-        </div>
-      </div>
-
-      {/* Main Content: 3-Panel Layout */}
+      {/* Main Content: 3-Panel Layout (Full Height) */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full max-w-[1400px] mx-auto px-6 py-4 flex gap-4">
+        <div className="h-full flex gap-4 p-4">
           {/* Left Panel: Week Selector */}
           <div className="w-80 shrink-0 bg-white rounded-lg border border-[#d0d7de] overflow-hidden flex flex-col">
             <div className="p-4 border-b border-[#d0d7de]">

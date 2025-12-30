@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/browser";
 
 export interface WeekOption {
   year: number;
@@ -28,37 +29,59 @@ export function useAvailableSnapshotWeeks(workspaceId: string) {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(
-          `/api/manage/snapshots/counts?workspaceId=${workspaceId}`
-        );
+        const supabase = createClient();
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch snapshot weeks");
+        // 워크스페이스의 모든 스냅샷 조회 (주차 정보만)
+        const { data: snapshots, error: snapshotError } = await supabase
+          .from("snapshots")
+          .select("id, year, week, week_start_date")
+          .eq("workspace_id", workspaceId)
+          .order("year", { ascending: false })
+          .order("week", { ascending: false });
+
+        if (snapshotError) {
+          throw new Error(`Failed to fetch snapshots: ${snapshotError.message}`);
         }
 
-        const data = await response.json();
+        if (!snapshots || snapshots.length === 0) {
+          setWeeks([]);
+          return;
+        }
 
-        // API 응답을 WeekOption 형식으로 변환
-        const weekOptions: WeekOption[] = Object.entries(
-          data.snapshotCountByWeek || {}
-        )
-          .filter(([_, count]) => (count as number) > 0)
-          .map(([weekKey, count]) => {
-            const [yearStr, weekStr] = weekKey.split("-");
-            const year = parseInt(yearStr, 10);
-            const week = parseInt(weekStr, 10);
+        // 주차별로 그룹화하고 스냅샷 갯수 계산
+        const weekMap = new Map<string, { year: number; week: number; count: number }>();
 
+        snapshots.forEach((snapshot: any) => {
+          if (!snapshot.week || !snapshot.year) return;
+
+          const weekNum = parseInt(snapshot.week.replace("W", ""), 10);
+          const weekKey = `${snapshot.year}-${weekNum}`;
+
+          if (weekMap.has(weekKey)) {
+            weekMap.get(weekKey)!.count += 1;
+          } else {
+            weekMap.set(weekKey, {
+              year: snapshot.year,
+              week: weekNum,
+              count: 1,
+            });
+          }
+        });
+
+        // WeekOption 형식으로 변환
+        const weekOptions: WeekOption[] = Array.from(weekMap.entries())
+          .map(([weekKey, data]) => {
             // ISO 주차를 기준으로 날짜 범위 계산
-            const weekStart = getWeekStartDate(year, week);
-            const weekEnd = getWeekEndDate(year, week);
+            const weekStart = getWeekStartDate(data.year, data.week);
+            const weekEnd = getWeekEndDate(data.year, data.week);
 
             return {
-              year,
-              week,
+              year: data.year,
+              week: data.week,
               weekKey,
               weekStart: formatDate(weekStart),
               weekEnd: formatDate(weekEnd),
-              snapshotCount: count as number,
+              snapshotCount: data.count,
             };
           })
           .sort((a, b) => {
