@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { SideNavigation } from "./Navigation";
 import { WeekSelector } from "./WeekSelector";
-import { SearchInput } from "./SearchInput";
 import { ExpandableFilters } from "./ExpandableFilters";
 import { UserProfile } from "./UserProfile";
 import { Logo } from "./Logo";
@@ -173,15 +172,8 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
           )}
         </div>
 
-        {/* 우측: 검색 + 필터 + 프로필 */}
+        {/* 우측: 필터 + 프로필 */}
         <div className="flex items-center gap-3">
-          {/* 검색 */}
-          {!hideAllControls && (
-            <div className="hidden sm:block">
-              <SearchInput />
-            </div>
-          )}
-
           {/* 필터 - 항상 표시 */}
           {!hideFilters && (
             <div className="flex items-center">

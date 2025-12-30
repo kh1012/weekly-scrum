@@ -11,7 +11,7 @@ export default function WorkMapPage() {
   return (
     <div className="h-[calc(100vh-4rem)] overflow-hidden bg-white flex flex-col">
       {/* 필터 바 */}
-      <div className="shrink-0 bg-white border-b border-[#d0d7de] px-4 sm:px-6 lg:px-8 py-3">
+      <div className="shrink-0 bg-white py-3">
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           {/* 주차 선택기 */}
           <div className="w-full lg:w-auto">
