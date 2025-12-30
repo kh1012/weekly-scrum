@@ -1,49 +1,106 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { DayPicker, DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import { CalendarIcon, XIcon } from "@/components/common/Icons";
+import "react-day-picker/dist/style.css";
 
 interface DateRangePickerProps {
-  startDate: string | undefined; // YYYY-MM-DD format
-  endDate: string | undefined; // YYYY-MM-DD format
-  onStartDateChange: (date: string | undefined) => void;
-  onEndDateChange: (date: string | undefined) => void;
+  startDate: string | undefined; // YYYY-MM-DD
+  endDate: string | undefined; // YYYY-MM-DD
+  onChange: (start: string | undefined, end: string | undefined) => void;
+  placeholder?: string;
   className?: string;
+  minDate?: string;
+  maxDate?: string;
 }
 
 export function DateRangePicker({
   startDate,
   endDate,
-  onStartDateChange,
-  onEndDateChange,
+  onChange,
+  placeholder = "날짜 범위 선택",
   className = "",
+  minDate,
+  maxDate,
 }: DateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectingStart, setSelectingStart] = useState(true);
+  const [range, setRange] = useState<DateRange | undefined>(() => {
+    if (startDate && endDate) {
+      return {
+        from: new Date(startDate),
+        to: new Date(endDate),
+      };
+    }
+    return undefined;
+  });
+
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
-  // 현재 보여줄 년월 상태
-  const [viewYear, setViewYear] = useState(() => {
-    if (startDate) {
-      return parseInt(startDate.split("-")[0]);
+  useEffect(() => {
+    if (startDate && endDate) {
+      setRange({
+        from: new Date(startDate),
+        to: new Date(endDate),
+      });
+    } else {
+      setRange(undefined);
     }
-    return new Date().getFullYear();
-  });
-  const [viewMonth, setViewMonth] = useState(() => {
-    if (startDate) {
-      return parseInt(startDate.split("-")[1]);
+  }, [startDate, endDate]);
+
+  const formatDisplayDate = (date: Date) => {
+    return format(date, "yyyy. MM. dd.", { locale: ko });
+  };
+
+  const displayText = React.useMemo(() => {
+    if (range?.from && range?.to) {
+      return `${formatDisplayDate(range.from)} ~ ${formatDisplayDate(range.to)}`;
     }
-    return new Date().getMonth() + 1;
-  });
+    if (range?.from) {
+      return `${formatDisplayDate(range.from)} ~ (종료일 선택)`;
+    }
+    return placeholder;
+  }, [range, placeholder]);
+
+  const handleRangeSelect = (selectedRange: DateRange | undefined) => {
+    setRange(selectedRange);
+    
+    if (selectedRange?.from && selectedRange?.to) {
+      const start = format(selectedRange.from, "yyyy-MM-dd");
+      const end = format(selectedRange.to, "yyyy-MM-dd");
+      onChange(start, end);
+      setIsOpen(false);
+    } else if (selectedRange?.from && !selectedRange?.to) {
+      // 시작일만 선택된 상태, 종료일 대기 중
+      // 아직 onChange 호출하지 않음
+    }
+  };
+
+  const handleClear = () => {
+    setRange(undefined);
+    onChange(undefined, undefined);
+    setIsOpen(false);
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    const todayString = format(today, "yyyy-MM-dd");
+    setRange({ from: today, to: today });
+    onChange(todayString, todayString);
+    setIsOpen(false);
+  };
 
   // 드롭다운 위치 계산
-  const calculatePosition = useCallback(() => {
-    if (buttonRef.current) {
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
       const buttonRect = buttonRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      const dropdownHeight = 380;
+      const dropdownHeight = 400;
 
       let top = buttonRect.bottom + 4;
       let maxHeight = viewportHeight - buttonRect.bottom - 20;
@@ -57,18 +114,12 @@ export function DateRangePicker({
         position: "fixed",
         top: `${top}px`,
         left: `${buttonRect.left}px`,
-        width: `${Math.max(buttonRect.width, 320)}px`,
+        width: `auto`,
         maxHeight: `${Math.min(dropdownHeight, maxHeight)}px`,
         zIndex: 9999,
       });
     }
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      calculatePosition();
-    }
-  }, [isOpen, calculatePosition]);
+  }, [isOpen]);
 
   // 외부 클릭 감지
   useEffect(() => {
@@ -103,125 +154,19 @@ export function DateRangePicker({
     return () => document.removeEventListener("keydown", handleEsc);
   }, [isOpen]);
 
-  // 캘린더 날짜 데이터 생성
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month - 1, 1).getDay();
-  };
-
-  const generateCalendar = () => {
-    const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-    const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-    const days: (number | null)[] = [];
-
-    // 이전 달의 빈 칸
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
+  const disabledDays = React.useMemo(() => {
+    const disabled: any[] = [];
+    if (minDate) {
+      disabled.push({ before: new Date(minDate) });
     }
-
-    // 현재 달의 날짜
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
+    if (maxDate) {
+      disabled.push({ after: new Date(maxDate) });
     }
-
-    return days;
-  };
-
-  const handleDateClick = (day: number) => {
-    const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-    if (selectingStart) {
-      onStartDateChange(dateStr);
-      onEndDateChange(undefined);
-      setSelectingStart(false);
-    } else {
-      if (startDate && dateStr < startDate) {
-        // 종료일이 시작일보다 이전이면 시작일로 설정
-        onStartDateChange(dateStr);
-        onEndDateChange(undefined);
-      } else {
-        onEndDateChange(dateStr);
-        setIsOpen(false);
-        setSelectingStart(true);
-      }
-    }
-  };
-
-  const handlePrevMonth = () => {
-    if (viewMonth === 1) {
-      setViewYear(viewYear - 1);
-      setViewMonth(12);
-    } else {
-      setViewMonth(viewMonth - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (viewMonth === 12) {
-      setViewYear(viewYear + 1);
-      setViewMonth(1);
-    } else {
-      setViewMonth(viewMonth + 1);
-    }
-  };
-
-  const handleClear = () => {
-    onStartDateChange(undefined);
-    onEndDateChange(undefined);
-    setSelectingStart(true);
-  };
-
-  const handleToday = () => {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    
-    if (selectingStart) {
-      onStartDateChange(todayStr);
-      setSelectingStart(false);
-    } else {
-      if (startDate && todayStr < startDate) {
-        onStartDateChange(todayStr);
-        onEndDateChange(undefined);
-      } else {
-        onEndDateChange(todayStr);
-        setIsOpen(false);
-        setSelectingStart(true);
-      }
-    }
-  };
-
-  const isDateInRange = (dateStr: string): boolean => {
-    if (!startDate || !endDate) return false;
-    return dateStr >= startDate && dateStr <= endDate;
-  };
-
-  const isDateStart = (dateStr: string): boolean => {
-    return dateStr === startDate;
-  };
-
-  const isDateEnd = (dateStr: string): boolean => {
-    return dateStr === endDate;
-  };
-
-  const formatDisplayDate = (date: string | undefined) => {
-    if (!date) return "";
-    const [year, month, day] = date.split("-");
-    return `${year}.${month}.${day}`;
-  };
-
-  const displayText = startDate && endDate
-    ? `${formatDisplayDate(startDate)} ~ ${formatDisplayDate(endDate)}`
-    : startDate
-    ? `${formatDisplayDate(startDate)} ~ 종료일 선택`
-    : "날짜 범위 선택";
-
-  const calendarDays = generateCalendar();
+    return disabled.length > 0 ? disabled : undefined;
+  }, [minDate, maxDate]);
 
   return (
-    <>
+    <div className={className}>
       <button
         ref={buttonRef}
         type="button"
@@ -230,132 +175,135 @@ export function DateRangePicker({
           isOpen
             ? "ring-2 ring-[#0969da] border-[#0969da]"
             : "hover:border-[#8c959f]"
-        } ${className}`}
+        }`}
       >
-        <span className={startDate ? "text-[#24292f]" : "text-[#57606a]"}>
+        <span className={range?.from ? "text-[#24292f]" : "text-[#57606a]"}>
           {displayText}
         </span>
-        <svg
-          className="w-4 h-4 text-[#57606a]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
+        <CalendarIcon className="w-4 h-4 text-[#57606a]" />
       </button>
 
       {isOpen &&
         createPortal(
           <div
             ref={dropdownRef}
-            className="rounded-md shadow-lg border border-[#d0d7de] bg-white overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+            className="rounded-md shadow-lg border border-[#d0d7de] bg-white overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150 p-4"
             style={dropdownStyle}
           >
-            {/* 헤더 */}
-            <div className="p-3 border-b border-[#d0d7de] bg-[#f6f8fa]">
-              <div className="flex items-center justify-between mb-2">
+            <style>{`
+              .rdp {
+                --rdp-cell-size: 40px;
+                --rdp-accent-color: #0969da;
+                --rdp-background-color: #ddf4ff;
+                margin: 0;
+              }
+              .rdp-months {
+                justify-content: center;
+              }
+              .rdp-caption {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 40px;
+              }
+              .rdp-caption_label {
+                font-size: 14px;
+                font-weight: 600;
+                color: #24292f;
+              }
+              .rdp-nav {
+                position: absolute;
+                top: 0;
+                right: 0;
+                left: 0;
+                display: flex;
+                justify-content: space-between;
+              }
+              .rdp-nav_button {
+                width: 32px;
+                height: 32px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background-color 0.15s;
+              }
+              .rdp-nav_button:hover {
+                background-color: #f6f8fa;
+              }
+              .rdp-head_cell {
+                font-size: 12px;
+                font-weight: 500;
+                color: #57606a;
+                text-transform: uppercase;
+              }
+              .rdp-cell {
+                padding: 2px;
+              }
+              .rdp-day {
+                border-radius: 6px;
+                font-size: 13px;
+                transition: all 0.1s;
+              }
+              .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+                background-color: #f6f8fa;
+              }
+              .rdp-day_selected {
+                background-color: var(--rdp-accent-color);
+                color: white;
+                font-weight: 600;
+              }
+              .rdp-day_today:not(.rdp-day_selected) {
+                border: 1px solid var(--rdp-accent-color);
+                font-weight: 600;
+              }
+              .rdp-day_disabled {
+                color: #d0d7de;
+                cursor: not-allowed;
+              }
+              .rdp-day_range_middle {
+                background-color: var(--rdp-background-color);
+                color: #0969da;
+              }
+            `}</style>
+            
+            <DayPicker
+              mode="range"
+              selected={range}
+              onSelect={handleRangeSelect}
+              locale={ko}
+              disabled={disabledDays}
+              numberOfMonths={1}
+              defaultMonth={range?.from || new Date()}
+            />
+
+            {/* Footer */}
+            <div className="flex justify-between items-center border-t border-[#d0d7de] pt-3 mt-3">
+              <span className="text-xs text-gray-500">
+                {!range?.from && "시작일을 선택하세요"}
+                {range?.from && !range?.to && "종료일을 선택하세요"}
+                {range?.from && range?.to && "선택 완료"}
+              </span>
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={handlePrevMonth}
-                  className="p-1 hover:bg-[#eaeef2] rounded transition-colors"
+                  onClick={handleToday}
+                  className="px-3 py-1.5 text-xs font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded-md transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  오늘
                 </button>
-                <div className="text-sm font-semibold text-[#24292f]">
-                  {viewYear}년 {viewMonth}월
-                </div>
                 <button
                   type="button"
-                  onClick={handleNextMonth}
-                  className="p-1 hover:bg-[#eaeef2] rounded transition-colors"
+                  onClick={handleClear}
+                  className="px-3 py-1.5 text-xs font-medium text-[#cf222e] hover:bg-[#ffebe9] rounded-md transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  초기화
                 </button>
               </div>
-              <div className="text-xs text-[#57606a] text-center">
-                {selectingStart ? "시작일을 선택하세요" : "종료일을 선택하세요"}
-              </div>
-            </div>
-
-            {/* 요일 헤더 */}
-            <div className="grid grid-cols-7 gap-0 p-2 border-b border-[#d0d7de] bg-[#f6f8fa]">
-              {["일", "월", "화", "수", "목", "금", "토"].map((day, idx) => (
-                <div
-                  key={day}
-                  className={`text-center text-xs font-medium py-1 ${
-                    idx === 0 ? "text-red-600" : idx === 6 ? "text-blue-600" : "text-[#57606a]"
-                  }`}
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* 날짜 그리드 */}
-            <div className="grid grid-cols-7 gap-0 p-2">
-              {calendarDays.map((day, idx) => {
-                if (day === null) {
-                  return <div key={`empty-${idx}`} className="aspect-square" />;
-                }
-
-                const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                const isInRange = isDateInRange(dateStr);
-                const isStart = isDateStart(dateStr);
-                const isEnd = isDateEnd(dateStr);
-                const isToday = dateStr === new Date().toISOString().split("T")[0];
-
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => handleDateClick(day)}
-                    className={`aspect-square flex items-center justify-center text-sm transition-colors relative ${
-                      isStart || isEnd
-                        ? "bg-[#0969da] text-white font-semibold rounded"
-                        : isInRange
-                        ? "bg-[#ddf4ff] text-[#0969da]"
-                        : isToday
-                        ? "border border-[#0969da] text-[#0969da] rounded"
-                        : "text-[#24292f] hover:bg-[#f6f8fa] rounded"
-                    }`}
-                  >
-                    {day}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* 푸터 */}
-            <div className="p-2 border-t border-[#d0d7de] flex gap-2">
-              <button
-                type="button"
-                onClick={handleToday}
-                className="flex-1 px-3 py-1.5 text-xs font-medium text-[#0969da] hover:bg-[#ddf4ff] rounded transition-colors"
-              >
-                오늘
-              </button>
-              <button
-                type="button"
-                onClick={handleClear}
-                className="flex-1 px-3 py-1.5 text-xs font-medium text-[#57606a] hover:bg-[#f6f8fa] rounded transition-colors"
-              >
-                초기화
-              </button>
             </div>
           </div>,
           document.body
         )}
-    </>
+    </div>
   );
 }
-

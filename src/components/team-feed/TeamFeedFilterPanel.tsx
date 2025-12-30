@@ -468,8 +468,10 @@ export function TeamFeedFilterPanel({
             <DateRangePicker
               startDate={dateRangeStart}
               endDate={dateRangeEnd}
-              onStartDateChange={setDateRangeStart}
-              onEndDateChange={setDateRangeEnd}
+              onChange={(start, end) => {
+                setDateRangeStart(start);
+                setDateRangeEnd(end);
+              }}
             />
           </div>
 
