@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAvailableSnapshotWeeks } from "./useAvailableSnapshotWeeks";
 import { useCollaborationData } from "./useCollaborationData";
-import { buildCollabGraph } from "./buildCollabGraph";
+import { buildCollabGraph, type GraphNode, type GraphEdge } from "./buildCollabGraph";
 import { WeekChecklist } from "./WeekChecklist";
+import { CollaborationGraph } from "./CollaborationGraph";
 
 interface CollaboratorGraphViewProps {
   workspaceId: string;
@@ -25,6 +26,20 @@ export function CollaboratorGraphView({
   const graphData = useMemo(() => {
     return buildCollabGraph(entries, selectedWeeks);
   }, [entries, selectedWeeks]);
+
+  // 선택된 노드/엣지 상태
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null);
+
+  const handleNodeClick = useCallback((node: GraphNode) => {
+    setSelectedNode(node);
+    setSelectedEdge(null);
+  }, []);
+
+  const handleEdgeClick = useCallback((edge: GraphEdge) => {
+    setSelectedEdge(edge);
+    setSelectedNode(null);
+  }, []);
 
   // 자동으로 최근 4주 선택 (첫 로드 시)
   useEffect(() => {
@@ -177,15 +192,12 @@ export function CollaboratorGraphView({
                   </p>
                 </div>
               ) : (
-                <div className="text-center">
-                  <p className="text-sm text-[#57606a]">
-                    React Flow 그래프 (다음 단계에서 구현)
-                  </p>
-                  <p className="text-xs text-[#8c959f] mt-2">
-                    노드: {graphData.nodes.length}, 엣지:{" "}
-                    {graphData.edges.length}
-                  </p>
-                </div>
+                <CollaborationGraph
+                  nodes={graphData.nodes}
+                  edges={graphData.edges}
+                  onNodeClick={handleNodeClick}
+                  onEdgeClick={handleEdgeClick}
+                />
               )}
             </div>
           </div>
