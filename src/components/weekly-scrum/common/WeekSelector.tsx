@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useScrumContext } from "@/context/ScrumContext";
+import { CustomSelect } from "@/components/common/CustomSelect";
 import type { SelectMode } from "@/types/scrum";
 
 interface WeekSelectorProps {
@@ -173,30 +174,26 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
         {/* 하단: 셀렉터 */}
         {selectMode === "single" ? (
           <div className="flex items-center gap-2">
-            <select
+            <CustomSelect
               value={selectedYear}
-              onChange={(e) => handleYearChange(Number(e.target.value))}
-              className="notion-select text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
+              onChange={(val) => handleYearChange(Number(val))}
+              options={years.map((year) => ({
+                value: year,
+                label: `${year}년`,
+              }))}
+              className="text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
               style={{ background: "var(--notion-bg-secondary)", border: "none" }}
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}년
-                </option>
-              ))}
-            </select>
-            <select
+            />
+            <CustomSelect
               value={selectedWeek}
-              onChange={(e) => handleWeekChange(e.target.value)}
-              className="notion-select text-xs py-2 px-3 w-20 rounded-xl font-medium"
+              onChange={(val) => handleWeekChange(String(val))}
+              options={availableWeeks.map((w) => ({
+                value: w.week,
+                label: w.week,
+              }))}
+              className="text-xs py-2 px-3 w-20 rounded-xl font-medium"
               style={{ background: "var(--notion-bg-secondary)", border: "none" }}
-            >
-              {availableWeeks.map((w) => (
-                <option key={w.week} value={w.week}>
-                  {w.week}
-                </option>
-              ))}
-            </select>
+            />
             {/* 주차 날짜 범위 표시 */}
             {selectedWeekRange && (
               <span 
@@ -212,36 +209,32 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <select
+            <CustomSelect
               value={rangeStart}
-              onChange={(e) => setRangeStart(e.target.value)}
-              className="notion-select text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
+              onChange={(val) => setRangeStart(String(val))}
+              options={allWeekOptions.map((opt) => ({
+                value: opt.key,
+                label: opt.label,
+              }))}
+              className="text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
               style={{ background: "var(--notion-bg-secondary)", border: "none" }}
-            >
-              {allWeekOptions.map((opt) => (
-                <option key={opt.key} value={opt.key}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            />
             <span
               className="text-xs font-medium px-1"
               style={{ color: "var(--notion-text-muted)" }}
             >
               →
             </span>
-            <select
+            <CustomSelect
               value={rangeEnd}
-              onChange={(e) => setRangeEnd(e.target.value)}
-              className="notion-select text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
+              onChange={(val) => setRangeEnd(String(val))}
+              options={allWeekOptions.map((opt) => ({
+                value: opt.key,
+                label: opt.label,
+              }))}
+              className="text-xs py-2 px-3 flex-1 min-w-0 rounded-xl font-medium"
               style={{ background: "var(--notion-bg-secondary)", border: "none" }}
-            >
-              {allWeekOptions.map((opt) => (
-                <option key={opt.key} value={opt.key}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         )}
       </div>
@@ -302,36 +295,32 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
       {/* 주차 셀렉터 */}
       {selectMode === "single" ? (
         <div className="flex items-center gap-2">
-          <select
+          <CustomSelect
             value={selectedYear}
-            onChange={(e) => handleYearChange(Number(e.target.value))}
-            className="notion-select h-9 rounded-xl px-3 text-sm font-medium"
+            onChange={(val) => handleYearChange(Number(val))}
+            options={years.map((year) => ({
+              value: year,
+              label: `${year}년`,
+            }))}
+            className="h-9 rounded-xl px-3 text-sm font-medium"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
             }}
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}년
-              </option>
-            ))}
-          </select>
-          <select
+          />
+          <CustomSelect
             value={selectedWeek}
-            onChange={(e) => handleWeekChange(e.target.value)}
-            className="notion-select h-9 rounded-xl px-3 text-sm font-medium"
+            onChange={(val) => handleWeekChange(String(val))}
+            options={availableWeeks.map((w) => ({
+              value: w.week,
+              label: w.week,
+            }))}
+            className="h-9 rounded-xl px-3 text-sm font-medium"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
             }}
-          >
-            {availableWeeks.map((w) => (
-              <option key={w.week} value={w.week}>
-                {w.week}
-              </option>
-            ))}
-          </select>
+          />
           {/* 주차 날짜 범위 표시 */}
           {selectedWeekRange && (
             <span 
@@ -347,42 +336,38 @@ export function WeekSelector({ isMobile = false }: WeekSelectorProps) {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <select
+          <CustomSelect
             value={rangeStart}
-            onChange={(e) => setRangeStart(e.target.value)}
-            className="notion-select h-9 rounded-xl px-3 text-sm font-medium min-w-[150px]"
+            onChange={(val) => setRangeStart(String(val))}
+            options={allWeekOptions.map((opt) => ({
+              value: opt.key,
+              label: opt.label,
+            }))}
+            className="h-9 rounded-xl px-3 text-sm font-medium min-w-[150px]"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
             }}
-          >
-            {allWeekOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          />
           <span
             className="text-sm font-medium px-1"
             style={{ color: "var(--notion-text-muted)" }}
           >
             →
           </span>
-          <select
+          <CustomSelect
             value={rangeEnd}
-            onChange={(e) => setRangeEnd(e.target.value)}
-            className="notion-select h-9 rounded-xl px-3 text-sm font-medium min-w-[150px]"
+            onChange={(val) => setRangeEnd(String(val))}
+            options={allWeekOptions.map((opt) => ({
+              value: opt.key,
+              label: opt.label,
+            }))}
+            className="h-9 rounded-xl px-3 text-sm font-medium min-w-[150px]"
             style={{
               background: "var(--notion-bg-secondary)",
               border: "none",
             }}
-          >
-            {allWeekOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       )}
 
