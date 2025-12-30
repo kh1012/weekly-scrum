@@ -941,6 +941,8 @@ function SnapshotsMainViewInner({
         week={selectedWeek}
         onLoadExistingData={handleLoadExistingData}
         onCreateEmpty={handleCreateEmpty}
+        workspaceId={workspaceId}
+        userId={userId}
       />
     </div>
   );

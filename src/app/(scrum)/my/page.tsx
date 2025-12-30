@@ -202,6 +202,8 @@ export default async function MyPage() {
       stats={stats}
       trends={trends}
       hasCurrentWeekData={hasCurrentWeekData}
+      workspaceId={DEFAULT_WORKSPACE_ID}
+      userId={user?.id}
     />
   );
 }

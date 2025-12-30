@@ -37,6 +37,10 @@ interface PersonalDashboardProps {
   };
   /** 현재 주차에 스냅샷 데이터가 존재하는지 여부 */
   hasCurrentWeekData?: boolean;
+  /** 워크스페이스 ID */
+  workspaceId?: string;
+  /** 사용자 ID */
+  userId?: string;
 }
 
 /**
@@ -48,7 +52,7 @@ function formatTrend(value: number, suffix: string = ""): string | undefined {
   return `${sign}${value}${suffix}`;
 }
 
-export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData = false }: PersonalDashboardProps) {
+export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData = false, workspaceId, userId }: PersonalDashboardProps) {
   const router = useRouter();
   const [isNewSnapshotModalOpen, setIsNewSnapshotModalOpen] = useState(false);
   const currentWeek = getCurrentISOWeek();
@@ -191,6 +195,8 @@ export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData 
         onLoadExistingData={handleLoadExistingData}
         onCreateEmpty={handleCreateEmpty}
         hasCurrentWeekData={hasCurrentWeekData}
+        workspaceId={workspaceId}
+        userId={userId}
       />
     </div>
   );
