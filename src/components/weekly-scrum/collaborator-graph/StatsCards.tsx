@@ -307,6 +307,124 @@ export function StatsCards({
           </div>
         </div>
       )}
+
+      {/* All Collaborators Modal */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-[#d0d7de]">
+              <h2 className="text-lg font-semibold text-[#24292f]">
+                전체 협업자 순위
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-[#57606a] hover:text-[#24292f] transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto max-h-[calc(80vh-80px)] p-6">
+              {allNodes.length === 0 ? (
+                <div className="text-center text-sm text-[#57606a] py-8">
+                  협업 데이터가 없습니다
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {allNodes
+                    .sort((a, b) => b.totalCollabs - a.totalCollabs)
+                    .map((node, index) => {
+                      const percentage =
+                        stats.totalCollabWeight > 0
+                          ? (node.totalCollabs / stats.totalCollabWeight) * 100
+                          : 0;
+
+                      return (
+                        <div
+                          key={node.id}
+                          className={`p-4 rounded-lg border transition-colors ${
+                            index < 3
+                              ? "border-[#0969da] bg-[#ddf4ff]"
+                              : "border-[#d0d7de] bg-white hover:bg-[#f6f8fa]"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`text-sm font-bold min-w-[2rem] ${
+                                  index === 0
+                                    ? "text-[#0969da]"
+                                    : index === 1
+                                    ? "text-[#57606a]"
+                                    : index === 2
+                                    ? "text-[#8c959f]"
+                                    : "text-[#8c959f]"
+                                }`}
+                              >
+                                #{index + 1}
+                              </span>
+                              <div>
+                                <div className="text-sm font-semibold text-[#24292f]">
+                                  {node.label}
+                                </div>
+                                <div className="text-xs text-[#57606a] mt-0.5">
+                                  {node.uniquePartners}명과 협업 • 작성{" "}
+                                  {node.authoredCount}건
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-bold text-[#0969da]">
+                                {node.totalCollabs}회
+                              </div>
+                              <div className="text-xs text-[#57606a]">
+                                {percentage.toFixed(1)}%
+                              </div>
+                            </div>
+                          </div>
+                          <div className="w-full bg-[#f6f8fa] rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                index === 0
+                                  ? "bg-[#0969da]"
+                                  : index === 1
+                                  ? "bg-[#57606a]"
+                                  : index === 2
+                                  ? "bg-[#8c959f]"
+                                  : "bg-[#d0d7de]"
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
