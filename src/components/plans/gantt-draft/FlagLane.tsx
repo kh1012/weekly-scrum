@@ -12,6 +12,7 @@ import { useMemo, useCallback, useState, useRef } from "react";
 import { useDraftStore } from "./store";
 import { packFlagsIntoLanes, FLAG_LANE_HEIGHT } from "./flagLayout";
 import { FlagBar } from "./FlagBar";
+import { FlagViewPopover } from "./FlagViewPopover";
 import type { DraftFlag } from "./types";
 
 interface FlagLaneProps {
@@ -25,6 +26,8 @@ interface FlagLaneProps {
   onOpenEditModal: (flag: DraftFlag) => void;
   /** Bar에서 호버/선택 시 프리뷰 숨김용 */
   onClearHover?: () => void;
+  /** readOnly 모드 여부 */
+  readOnly?: boolean;
 }
 
 export function FlagLane({
@@ -37,6 +40,7 @@ export function FlagLane({
   onOpenCreateModal,
   onOpenEditModal,
   onClearHover,
+  readOnly = false,
 }: FlagLaneProps) {
   const flags = useDraftStore((s) => s.flags);
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
@@ -54,6 +58,12 @@ export function FlagLane({
   const [dragEnd, setDragEnd] = useState<number | null>(null);
   const [dragLaneIndex, setDragLaneIndex] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // 팝오버 상태 (readOnly 모드에서 더블클릭 시 표시)
+  const [viewPopover, setViewPopover] = useState<{
+    flag: DraftFlag;
+    position: { x: number; y: number };
+  } | null>(null);
 
   // Lane packing 계산
   const { laneCount, items } = useMemo(
@@ -354,7 +364,18 @@ export function FlagLane({
             isSelected={selectedFlagId === flag.clientId}
             isEditing={isEditing}
             onSelect={() => selectFlag(flag.clientId)}
-            onDoubleClick={() => onOpenEditModal(flag)}
+            onDoubleClick={(e) => {
+              if (readOnly && e) {
+                // readOnly 모드: 팝오버 표시
+                setViewPopover({
+                  flag,
+                  position: { x: e.clientX, y: e.clientY },
+                });
+              } else {
+                // 편집 모드: 모달 열기
+                onOpenEditModal(flag);
+              }
+            }}
             dayWidth={dayWidth}
             rangeStart={rangeStart}
             laneCount={effectiveLaneCount}
@@ -426,6 +447,15 @@ export function FlagLane({
             </span>
           </div>
         )}
+
+      {/* readOnly 모드: Flag 상세 팝오버 */}
+      {viewPopover && (
+        <FlagViewPopover
+          flag={viewPopover.flag}
+          anchorPosition={viewPopover.position}
+          onClose={() => setViewPopover(null)}
+        />
+      )}
     </div>
   );
 }

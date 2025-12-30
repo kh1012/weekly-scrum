@@ -23,7 +23,7 @@ interface FlagBarProps {
   isSelected: boolean;
   isEditing: boolean;
   onSelect: () => void;
-  onDoubleClick: () => void;
+  onDoubleClick: (e?: React.MouseEvent) => void;
   dayWidth: number;
   rangeStart: Date;
   /** 현재 레인 개수 (위아래 이동 범위 제한용) */
@@ -192,11 +192,10 @@ export const FlagBar = memo(function FlagBar({
         color: flag.color || "#ef4444",
         nodeId: flag.clientId,
       });
-      if (isEditing) {
-        onDoubleClick();
-      }
+      // 이벤트 객체를 전달하여 팝오버/모달 처리 위임
+      onDoubleClick(e);
     },
-    [isEditing, onDoubleClick, flag, setHighlightDateRange]
+    [onDoubleClick, flag, setHighlightDateRange]
   );
 
   const isDragging = dragMode !== null;
