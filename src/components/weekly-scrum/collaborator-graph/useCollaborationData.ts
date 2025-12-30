@@ -45,7 +45,7 @@ export function useCollaborationData(
           const [yearStr, weekStr] = weekKey.split("-");
           return {
             year: parseInt(yearStr, 10),
-            week: weekStr,
+            week: `W${weekStr}`, // DB에는 "W48" 형식으로 저장됨
           };
         });
 
@@ -82,13 +82,26 @@ export function useCollaborationData(
             }
 
             if (entries) {
-              allEntries.push(
-                ...entries.map((entry: any) => ({
+              // collaborators가 있는 엔트리만 추가
+              const validEntries = entries
+                .map((entry: any) => ({
                   ...entry,
                   year: snapshot.year,
-                  week: snapshot.week,
+                  week: parseInt(snapshot.week.replace("W", ""), 10),
                   collaborators: entry.collaborators || [],
                 }))
+                .filter(
+                  (entry: any) =>
+                    entry.collaborators &&
+                    Array.isArray(entry.collaborators) &&
+                    entry.collaborators.length > 0
+                );
+
+              allEntries.push(...validEntries);
+
+              // 디버그 로그
+              console.log(
+                `[useCollaborationData] Fetched ${entries.length} entries, ${validEntries.length} with collaborators for ${snapshot.year}-${snapshot.week}`
               );
             }
           }
