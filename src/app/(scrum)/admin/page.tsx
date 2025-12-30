@@ -4,6 +4,18 @@ import { AdminDashboardView } from "./_components/AdminDashboardView";
 const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
+ * Admin Dashboard에서 제외할 사용자 이메일 목록
+ * 테스트 계정이나 시스템 계정 등을 제외
+ * 필요에 따라 이메일을 추가하여 통계에서 제외할 수 있습니다.
+ */
+const EXCLUDED_EMAILS = [
+  "kh1012@midasit.com", // 개발자 계정
+  "zrelor@gmail.com", // 개발자 계정
+  // 테스트 계정 추가 시 여기에 이메일 추가
+  // "test@midasit.com",
+];
+
+/**
  * ISO 주차 계산 헬퍼 (ISO 8601 표준)
  * - 주는 월요일부터 시작
  * - 1월 4일이 포함된 주가 1주차
@@ -125,46 +137,49 @@ export default async function AdminDashboardPage() {
     weeklyWorkload: Record<string, { level: string | null; note: string | null }>; // "2024-W01" -> workload info
   }
 
-  const memberDataList: MemberData[] = (members || []).map((m) => {
-    // profiles 맵에서 조회
-    const profile = profilesMap.get(m.user_id);
+  const memberDataList: MemberData[] = (members || [])
+    .map((m) => {
+      // profiles 맵에서 조회
+      const profile = profilesMap.get(m.user_id);
 
-    const weeklyEntries: Record<string, number> = {};
-    const weeklyWorkload: Record<string, { level: string | null; note: string | null }> = {};
+      const weeklyEntries: Record<string, number> = {};
+      const weeklyWorkload: Record<string, { level: string | null; note: string | null }> = {};
 
-    recentWeeks.forEach((w) => {
-      const weekKey = `${w.year}-${w.label}`;
+      recentWeeks.forEach((w) => {
+        const weekKey = `${w.year}-${w.label}`;
 
-      // 해당 멤버의 해당 주차 스냅샷 찾기
-      const memberSnapshots = snapshots?.filter(
-        (s) => s.author_id === m.user_id && s.year === w.year && s.week === w.label
-      ) || [];
+        // 해당 멤버의 해당 주차 스냅샷 찾기
+        const memberSnapshots = snapshots?.filter(
+          (s) => s.author_id === m.user_id && s.year === w.year && s.week === w.label
+        ) || [];
 
-      // 엔트리 수 합산
-      let totalEntries = 0;
-      memberSnapshots.forEach((s) => {
-        totalEntries += entryCountBySnapshot.get(s.id) || 0;
+        // 엔트리 수 합산
+        let totalEntries = 0;
+        memberSnapshots.forEach((s) => {
+          totalEntries += entryCountBySnapshot.get(s.id) || 0;
+        });
+
+        weeklyEntries[weekKey] = totalEntries;
+
+        // workload 정보 (가장 최근 스냅샷 기준)
+        const latestSnapshot = memberSnapshots[0]; // snapshots는 updated_at desc 순서가 아니므로 첫 번째 값 사용
+        weeklyWorkload[weekKey] = {
+          level: latestSnapshot?.workload_level || null,
+          note: latestSnapshot?.workload_note || null,
+        };
       });
 
-      weeklyEntries[weekKey] = totalEntries;
-
-      // workload 정보 (가장 최근 스냅샷 기준)
-      const latestSnapshot = memberSnapshots[0]; // snapshots는 updated_at desc 순서가 아니므로 첫 번째 값 사용
-      weeklyWorkload[weekKey] = {
-        level: latestSnapshot?.workload_level || null,
-        note: latestSnapshot?.workload_note || null,
+      return {
+        userId: m.user_id,
+        displayName: profile?.display_name || profile?.email?.split("@")[0] || "Unknown",
+        email: profile?.email || "",
+        role: m.role,
+        weeklyEntries,
+        weeklyWorkload,
       };
-    });
-
-    return {
-      userId: m.user_id,
-      displayName: profile?.display_name || profile?.email?.split("@")[0] || "Unknown",
-      email: profile?.email || "",
-      role: m.role,
-      weeklyEntries,
-      weeklyWorkload,
-    };
-  });
+    })
+    // 제외할 이메일 필터링
+    .filter((member) => !EXCLUDED_EMAILS.includes(member.email.toLowerCase()));
 
   // 전체 통계
   const totalMembers = members?.length || 0;
