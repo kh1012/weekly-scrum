@@ -73,18 +73,18 @@ export function NewSnapshotModal({
   if (hasCurrentWeekData) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* 배경 오버레이 - GitHub 스타일 */}
+        {/* 배경 오버레이 */}
         <div
-          className="absolute inset-0 bg-[rgba(1,4,9,0.8)] backdrop-blur-sm"
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         />
 
-        {/* 모달 콘텐츠 - GitHub 스타일 */}
-        <div className="relative bg-[#0d1117] border border-[#30363d] rounded-xl shadow-2xl max-w-lg w-full p-8 animate-fadeIn">
+        {/* 모달 콘텐츠 */}
+        <div className="relative bg-white rounded-xl shadow-2xl max-w-lg w-full p-8 animate-fadeIn">
           {/* 닫기 버튼 */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-[#7d8590] hover:text-[#c9d1d9] hover:bg-[#21262d] rounded-lg transition-colors"
+            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <svg
               className="w-5 h-5"
@@ -104,7 +104,7 @@ export function NewSnapshotModal({
           {/* 콘텐츠 */}
           <div className="relative text-center">
             {/* 아이콘 */}
-            <div className="w-14 h-14 mx-auto mb-5 rounded-lg bg-[#9e6a03] flex items-center justify-center">
+            <div className="w-14 h-14 mx-auto mb-5 rounded-lg bg-amber-500 flex items-center justify-center">
               <svg
                 className="w-7 h-7 text-white"
                 fill="none"
@@ -121,14 +121,14 @@ export function NewSnapshotModal({
             </div>
 
             {/* 메시지 */}
-            <h2 className="text-lg font-semibold text-[#c9d1d9] mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
               이번 주 스냅샷이 이미 존재합니다
             </h2>
-            <p className="text-sm text-[#7d8590] mb-2">
+            <p className="text-sm text-gray-500 mb-2">
               {year}년 W{week.toString().padStart(2, "0")} ({weekRange})
             </p>
-            <p className="text-sm text-[#7d8590] leading-relaxed mb-6">
-              <span className="font-medium text-[#58a6ff]">스냅샷 관리</span>에서 기존 스냅샷을 확인하고 수정하세요.
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              <span className="font-medium text-blue-600">스냅샷 관리</span>에서 기존 스냅샷을 확인하고 수정하세요.
             </p>
 
             {/* 버튼 영역 */}
@@ -165,18 +165,18 @@ export function NewSnapshotModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* 배경 오버레이 - GitHub 스타일 */}
+      {/* 배경 오버레이 */}
       <div
-        className="absolute inset-0 bg-[rgba(1,4,9,0.8)] backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* 모달 콘텐츠 - GitHub 스타일 */}
-      <div className="relative bg-[#0d1117] border border-[#30363d] rounded-xl shadow-2xl max-w-2xl w-full p-6 md:p-8 animate-fadeIn">
+      {/* 모달 콘텐츠 */}
+      <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 md:p-8 animate-fadeIn">
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-[#7d8590] hover:text-[#c9d1d9] hover:bg-[#21262d] rounded-lg transition-colors"
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <svg
             className="w-5 h-5"
@@ -195,25 +195,25 @@ export function NewSnapshotModal({
 
         {/* 헤더 */}
         <div className="relative text-center mb-6 md:mb-8">
-          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full bg-[#21262d] border border-[#30363d] text-[#58a6ff] text-[11px] md:text-xs font-semibold mb-3">
+          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-[11px] md:text-xs font-semibold mb-3">
             <span>✨</span>
             <span>새 스냅샷 작성 방법을 선택하세요</span>
           </div>
-          <p className="text-sm md:text-base text-[#7d8590]">
+          <p className="text-sm md:text-base text-gray-600">
             {year}년 W{week.toString().padStart(2, "0")} ({weekRange})
           </p>
         </div>
 
-        {/* 선택 카드 - GitHub 스타일 */}
+        {/* 선택 카드 */}
         <div className="relative grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           {/* 데이터 불러오기 */}
           <button
             onClick={handleLoadData}
             disabled={isLoadingData || isCreatingEmpty}
-            className="group relative p-4 md:p-6 bg-[#161b22] rounded-lg border border-[#30363d] hover:border-[#58a6ff] hover:bg-[#0d1117] transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group relative p-4 md:p-6 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="relative">
-              <div className="w-10 h-10 md:w-12 md:h-12 mb-3 md:mb-4 rounded-lg bg-[#1f6feb] flex items-center justify-center group-hover:bg-[#58a6ff] transition-colors">
+              <div className="w-10 h-10 md:w-12 md:h-12 mb-3 md:mb-4 rounded-lg bg-blue-500 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
                 {isLoadingData ? (
                   <SmallLoadingSpinner size="md" className="text-white" />
                 ) : (
@@ -232,17 +232,17 @@ export function NewSnapshotModal({
                   </svg>
                 )}
               </div>
-              <h3 className="text-base md:text-lg font-semibold text-[#c9d1d9] mb-2 group-hover:text-[#58a6ff] transition-colors">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                 {isLoadingData ? "불러오는 중..." : "데이터 불러오기"}
               </h3>
-              <p className="text-xs md:text-sm text-[#7d8590] leading-relaxed">
+              <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
                 이전 주차의 데이터를 복사하여 시작합니다. 프로젝트 이력이
                 유지됩니다.
               </p>
             </div>
             {/* 화살표 */}
             {!isLoadingData && (
-              <div className="absolute bottom-4 right-4 text-[#7d8590] group-hover:text-[#58a6ff] transition-colors">
+              <div className="absolute bottom-4 right-4 text-gray-400 group-hover:text-blue-500 transition-colors">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -264,10 +264,10 @@ export function NewSnapshotModal({
           <button
             onClick={handleCreateEmpty}
             disabled={isLoadingData || isCreatingEmpty}
-            className="group relative p-4 md:p-6 bg-[#161b22] rounded-lg border border-[#30363d] hover:border-[#3fb950] hover:bg-[#0d1117] transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group relative p-4 md:p-6 bg-white rounded-lg border-2 border-gray-200 hover:border-emerald-400 hover:shadow-lg transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="relative">
-              <div className="w-10 h-10 md:w-12 md:h-12 mb-3 md:mb-4 rounded-lg bg-[#238636] flex items-center justify-center group-hover:bg-[#3fb950] transition-colors">
+              <div className="w-10 h-10 md:w-12 md:h-12 mb-3 md:mb-4 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
                 {isCreatingEmpty ? (
                   <SmallLoadingSpinner size="md" className="text-white" />
                 ) : (
@@ -286,16 +286,16 @@ export function NewSnapshotModal({
                   </svg>
                 )}
               </div>
-              <h3 className="text-base md:text-lg font-semibold text-[#c9d1d9] mb-2 group-hover:text-[#3fb950] transition-colors">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">
                 {isCreatingEmpty ? "생성 중..." : "새로 작성하기"}
               </h3>
-              <p className="text-xs md:text-sm text-[#7d8590] leading-relaxed">
+              <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
                 빈 스냅샷으로 시작합니다. 편집 화면에서 새로 입력합니다.
               </p>
             </div>
             {/* 화살표 */}
             {!isCreatingEmpty && (
-              <div className="absolute bottom-4 right-4 text-[#7d8590] group-hover:text-[#3fb950] transition-colors">
+              <div className="absolute bottom-4 right-4 text-gray-400 group-hover:text-emerald-500 transition-colors">
                 <svg
                   className="w-4 h-4"
                   fill="none"
