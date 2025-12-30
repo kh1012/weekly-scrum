@@ -28,56 +28,57 @@ export function CollaborationGraph({
   onNodeClick,
   onEdgeClick,
 }: CollaborationGraphProps) {
-  // React Flow 노드 변환 (force-directed layout 적용)
+  // React Flow 노드 변환 (원형 배치 + 충돌 방지)
   const initialNodes: Node[] = useMemo(() => {
     if (graphNodes.length === 0) return [];
 
     // 최대 totalCollabs 값 찾기 (노드 크기 스케일링용)
     const maxCollabs = Math.max(...graphNodes.map((n) => n.totalCollabs), 1);
 
-    // d3-force 시뮬레이션 준비
-    const nodeData = graphNodes.map((node) => {
+    // 노드 데이터 준비 (원형 초기 배치)
+    const centerX = 480;
+    const centerY = 482;
+    const nodeData = graphNodes.map((node, index) => {
       const baseSize = 60;
       const maxSize = 150;
       const size =
         baseSize + ((node.totalCollabs / maxCollabs) * (maxSize - baseSize));
+
+      // 원형 배치 (초기 위치)
+      const angle = (index / graphNodes.length) * 2 * Math.PI;
+      const radius = Math.max(300, graphNodes.length * 30); // 노드 수에 따라 반경 조정
 
       return {
         id: node.id,
         label: node.label,
         totalCollabs: node.totalCollabs,
         size,
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle),
       };
     });
 
-    // 엣지 데이터 준비
-    const linkData = graphEdges.map((edge) => ({
-      source: edge.source,
-      target: edge.target,
-      weight: edge.weight,
-    }));
-
-    // Force simulation 실행
+    // 충돌 방지 시뮬레이션만 적용 (원형 배치 유지)
     const simulation = d3
       .forceSimulation(nodeData as any)
       .force(
-        "link",
-        d3
-          .forceLink(linkData)
-          .id((d: any) => d.id)
-          .distance(150) // 노드 간 거리
-          .strength(0.5)
-      )
-      .force("charge", d3.forceManyBody().strength(-800)) // 노드 간 반발력
-      .force("center", d3.forceCenter(480, 482)) // 중심점 (960/2, 964/2)
-      .force(
         "collide",
-        d3.forceCollide().radius((d: any) => d.size / 2 + 20) // 충돌 방지
+        d3.forceCollide().radius((d: any) => d.size / 2 + 30).strength(0.8)
+      )
+      .force(
+        "radial",
+        d3
+          .forceRadial(
+            (d: any, i: number) => Math.max(300, graphNodes.length * 30),
+            centerX,
+            centerY
+          )
+          .strength(0.3) // 원형 유지 강도
       )
       .stop();
 
-    // 시뮬레이션 실행 (300회 반복)
-    for (let i = 0; i < 300; i++) {
+    // 시뮬레이션 실행 (100회 반복 - 원형 유지하면서 겹침만 방지)
+    for (let i = 0; i < 100; i++) {
       simulation.tick();
     }
 
@@ -85,7 +86,7 @@ export function CollaborationGraph({
     return nodeData.map((node: any) => ({
       id: node.id,
       type: "default",
-      position: { x: node.x || 480, y: node.y || 482 },
+      position: { x: node.x || centerX, y: node.y || centerY },
       data: {
         label: (
           <div className="text-center">
@@ -111,7 +112,7 @@ export function CollaborationGraph({
         cursor: "pointer",
       },
     }));
-  }, [graphNodes, graphEdges]);
+  }, [graphNodes]);
 
   // React Flow 엣지 변환
   const initialEdges: Edge[] = useMemo(() => {
