@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useAvailableSnapshotWeeks } from "./useAvailableSnapshotWeeks";
+import { WeekChecklist } from "./WeekChecklist";
 
 interface CollaboratorGraphViewProps {
   workspaceId: string;
@@ -10,6 +12,45 @@ export function CollaboratorGraphView({
   workspaceId,
 }: CollaboratorGraphViewProps) {
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
+  const { weeks, isLoading, error } = useAvailableSnapshotWeeks(workspaceId);
+
+  // 자동으로 최근 4주 선택 (첫 로드 시)
+  useEffect(() => {
+    if (!isLoading && weeks.length > 0 && selectedWeeks.size === 0) {
+      const last4 = weeks.slice(0, 4).map((w) => w.weekKey);
+      setSelectedWeeks(new Set(last4));
+    }
+  }, [weeks, isLoading, selectedWeeks.size]);
+
+  const toggleWeek = useCallback((weekKey: string) => {
+    setSelectedWeeks((prev) => {
+      const next = new Set(prev);
+      if (next.has(weekKey)) {
+        next.delete(weekKey);
+      } else {
+        next.add(weekKey);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectAll = useCallback(() => {
+    setSelectedWeeks(new Set(weeks.map((w) => w.weekKey)));
+  }, [weeks]);
+
+  const selectNone = useCallback(() => {
+    setSelectedWeeks(new Set());
+  }, []);
+
+  const selectLast4 = useCallback(() => {
+    const last4 = weeks.slice(0, 4).map((w) => w.weekKey);
+    setSelectedWeeks(new Set(last4));
+  }, [weeks]);
+
+  const selectLast8 = useCallback(() => {
+    const last8 = weeks.slice(0, 8).map((w) => w.weekKey);
+    setSelectedWeeks(new Set(last8));
+  }, [weeks]);
 
   return (
     <div className="h-full flex flex-col bg-[#f6f8fa]">
@@ -39,9 +80,25 @@ export function CollaboratorGraphView({
               </p>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="text-center text-sm text-[#57606a] py-8">
-                주차 데이터를 불러오는 중...
-              </div>
+              {error ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-red-600 font-medium">
+                    데이터 로드 실패
+                  </p>
+                  <p className="text-xs text-[#57606a] mt-1">{error}</p>
+                </div>
+              ) : (
+                <WeekChecklist
+                  weeks={weeks}
+                  selectedWeeks={selectedWeeks}
+                  onToggleWeek={toggleWeek}
+                  onSelectAll={selectAll}
+                  onSelectNone={selectNone}
+                  onSelectLast4={selectLast4}
+                  onSelectLast8={selectLast8}
+                  isLoading={isLoading}
+                />
+              )}
             </div>
           </div>
 
