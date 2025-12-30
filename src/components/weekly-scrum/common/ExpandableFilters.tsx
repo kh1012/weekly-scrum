@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useScrumContext } from "@/context/ScrumContext";
 import type { FilterOptionState, MultiFilterState } from "@/types/scrum";
 
@@ -8,6 +9,10 @@ interface ExpandableFiltersProps {
   isMobile?: boolean;
   /** 기본 필터 값 설정 (컴포넌트 마운트 시 자동 적용) */
   defaultFilters?: Partial<Omit<MultiFilterState, "search">>;
+  /** 통합 필터 모드 (버튼 하나로 모든 필터 표시) */
+  unified?: boolean;
+  /** 검색 기능 포함 여부 */
+  withSearch?: boolean;
 }
 
 interface FilterSectionProps {
@@ -213,8 +218,17 @@ function FilterSection({
  *     projects: ["weekly-scrum"]
  *   }}
  * />
+ * 
+ * @example
+ * // 통합 필터 모드 (버튼 하나로 모든 필터 표시)
+ * <ExpandableFilters unified withSearch />
  */
-export function ExpandableFilters({ isMobile = false, defaultFilters }: ExpandableFiltersProps) {
+export function ExpandableFilters({ 
+  isMobile = false, 
+  defaultFilters,
+  unified = false,
+  withSearch = false,
+}: ExpandableFiltersProps) {
   const {
     multiFilters,
     memberOptions,
@@ -227,9 +241,15 @@ export function ExpandableFilters({ isMobile = false, defaultFilters }: Expandab
     clearMultiFilter,
     resetMultiFilters,
     hasActiveMultiFilters,
+    setSearchTerm,
   } = useScrumContext();
 
+  const searchTerm = multiFilters.search;
+
   const [hasAppliedDefaults, setHasAppliedDefaults] = useState(false);
+  const [isUnifiedPanelOpen, setIsUnifiedPanelOpen] = useState(false);
+  const unifiedButtonRef = useRef<HTMLButtonElement>(null);
+  const unifiedPanelRef = useRef<HTMLDivElement>(null);
 
   // 확장된 필터 섹션 상태
   const [expandedSection, setExpandedSection] = useState<keyof Omit<MultiFilterState, "search"> | null>(null);
@@ -251,6 +271,9 @@ export function ExpandableFilters({ isMobile = false, defaultFilters }: Expandab
     { key: "features", title: "피쳐", icon: "✨", options: featureOptions },
   ];
 
+  // 활성 필터 개수 계산
+  const activeFilterCount = Object.values(multiFilters).reduce((sum, arr) => sum + arr.length, 0);
+
   // 기본 필터 값 적용 (마운트 시 한 번만)
   useEffect(() => {
     if (!defaultFilters || hasAppliedDefaults) return;
@@ -269,6 +292,39 @@ export function ExpandableFilters({ isMobile = false, defaultFilters }: Expandab
 
     setHasAppliedDefaults(true);
   }, [defaultFilters, hasAppliedDefaults, filterSections, setMultiFilterAll]);
+
+  // 통합 패널 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!isUnifiedPanelOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        unifiedPanelRef.current &&
+        !unifiedPanelRef.current.contains(e.target as Node) &&
+        unifiedButtonRef.current &&
+        !unifiedButtonRef.current.contains(e.target as Node)
+      ) {
+        setIsUnifiedPanelOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isUnifiedPanelOpen]);
+
+  // ESC 키로 닫기
+  useEffect(() => {
+    if (!isUnifiedPanelOpen) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsUnifiedPanelOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [isUnifiedPanelOpen]);
 
   // 리셋 버튼 컴포넌트 - GitHub 스타일
   const ResetButton = ({ isMobileStyle = false }: { isMobileStyle?: boolean }) => (
@@ -304,6 +360,203 @@ export function ExpandableFilters({ isMobile = false, defaultFilters }: Expandab
     </button>
   );
 
+  // 통합 필터 모드
+  if (unified) {
+    return (
+      <div className="flex items-center gap-2 w-full">
+        {/* 검색 입력 */}
+        {withSearch && (
+          <div className="relative flex-1">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57606a]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="스냅샷 검색..."
+              className="w-full pl-10 pr-10 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] bg-white placeholder-[#57606a] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da] transition-all"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#57606a] hover:text-[#24292f] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 통합 필터 버튼 */}
+        <button
+          ref={unifiedButtonRef}
+          onClick={() => setIsUnifiedPanelOpen(!isUnifiedPanelOpen)}
+          className={`flex items-center gap-2 px-4 h-10 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+            activeFilterCount > 0
+              ? "bg-[#ddf4ff] text-[#0969da] border border-[#0969da]/30"
+              : "bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
+          </svg>
+          <span>필터</span>
+          {activeFilterCount > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-[#0969da] text-white font-semibold">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+
+        {/* 통합 필터 패널 */}
+        {isUnifiedPanelOpen && createPortal(
+          <div
+            ref={unifiedPanelRef}
+            className="fixed right-4 top-20 w-[400px] max-h-[calc(100vh-6rem)] bg-white border border-[#d0d7de] rounded-lg shadow-2xl z-50 animate-in fade-in-0 zoom-in-95 duration-150 flex flex-col"
+          >
+            {/* 헤더 */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#d0d7de] bg-[#f6f8fa]">
+              <h3 className="text-sm font-semibold text-[#24292f]">필터 옵션</h3>
+              <div className="flex items-center gap-2">
+                {hasActiveMultiFilters && (
+                  <button
+                    onClick={() => {
+                      resetMultiFilters();
+                      setHasAppliedDefaults(false);
+                    }}
+                    className="px-3 py-1 text-xs font-medium text-[#cf222e] bg-[#ffebe9] hover:bg-[#ffd8d5] rounded-md transition-colors"
+                  >
+                    전체 초기화
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsUnifiedPanelOpen(false)}
+                  className="p-1.5 rounded-md hover:bg-[#d0d7de] transition-colors"
+                >
+                  <svg className="w-4 h-4 text-[#57606a]" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* 필터 섹션 목록 */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {filterSections.map((section) => {
+                const selectedCount = multiFilters[section.key].length;
+                const hasSelection = selectedCount > 0;
+
+                return (
+                  <div key={section.key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{section.icon}</span>
+                        <span className="text-sm font-semibold text-[#24292f]">
+                          {section.title}
+                        </span>
+                        {hasSelection && (
+                          <span className="px-1.5 py-0.5 text-xs rounded-full bg-[#ddf4ff] text-[#0969da] font-semibold">
+                            {selectedCount}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            const allValues = section.options.filter(opt => opt.enabled).map(opt => opt.value);
+                            setMultiFilterAll(section.key, allValues);
+                          }}
+                          className="px-2 py-0.5 text-[10px] rounded-md bg-[#ddf4ff] text-[#0969da] hover:bg-[#b6e3ff] transition-colors"
+                        >
+                          전체
+                        </button>
+                        {hasSelection && (
+                          <button
+                            onClick={() => clearMultiFilter(section.key)}
+                            className="px-2 py-0.5 text-[10px] rounded-md bg-[#ffebe9] text-[#cf222e] hover:bg-[#ffd8d5] transition-colors"
+                          >
+                            해제
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {section.options.map((option) => {
+                        const isSelected = multiFilters[section.key].includes(option.value);
+                        const isDisabled = !option.enabled;
+
+                        return (
+                          <label
+                            key={option.value}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+                              isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#f6f8fa]"
+                            } ${isSelected && !isDisabled ? "bg-[#ddf4ff]" : ""}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              disabled={isDisabled}
+                              onChange={() => {
+                                if (isDisabled) return;
+                                toggleMultiFilter(section.key, option.value);
+                              }}
+                              className="w-3.5 h-3.5 rounded border-[#d0d7de] text-[#0969da] focus:ring-[#0969da] focus:ring-offset-0"
+                            />
+                            <span className={`flex-1 text-xs truncate ${isDisabled ? "text-[#8c959f]" : "text-[#24292f]"}`}>
+                              {option.value}
+                            </span>
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded-md ${
+                                isDisabled
+                                  ? "bg-[#f6f8fa] text-[#8c959f]"
+                                  : "bg-[#ddf4ff] text-[#0969da]"
+                              }`}
+                            >
+                              {option.count}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
+    );
+  }
+
+  // 기존 모드 (개별 필터 버튼)
   if (isMobile) {
     return (
       <div className="flex items-center gap-1 flex-wrap">

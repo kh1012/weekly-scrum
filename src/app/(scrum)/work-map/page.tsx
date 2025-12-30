@@ -21,9 +21,9 @@ export default function WorkMapPage() {
           {/* 구분선 (PC만) */}
           <div className="hidden lg:block w-px h-6 bg-[#d0d7de]" />
 
-          {/* 필터 */}
-          <div className="w-full lg:w-auto flex-1">
-            <ExpandableFilters isMobile={false} />
+          {/* 검색 + 필터 (통합 모드) */}
+          <div className="w-full lg:flex-1">
+            <ExpandableFilters unified withSearch />
           </div>
         </div>
       </div>

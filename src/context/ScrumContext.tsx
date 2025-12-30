@@ -62,6 +62,7 @@ interface ScrumContextValue {
   setMultiFilterAll: (key: keyof Omit<MultiFilterState, "search">, values: string[]) => void;
   clearMultiFilter: (key: keyof Omit<MultiFilterState, "search">) => void;
   resetMultiFilters: () => void;
+  setSearchTerm: (search: string) => void;
   hasActiveMultiFilters: boolean;
 }
 
@@ -443,6 +444,11 @@ export function ScrumProvider({
     setMultiFilters(defaultMultiFilters);
   }, []);
 
+  // 검색어 설정
+  const setSearchTerm = useCallback((search: string) => {
+    setMultiFilters((prev) => ({ ...prev, search }));
+  }, []);
+
   // 활성화된 다중 필터 여부
   const hasActiveMultiFilters = useMemo(
     () =>
@@ -489,6 +495,7 @@ export function ScrumProvider({
     setMultiFilterAll,
     clearMultiFilter,
     resetMultiFilters,
+    setSearchTerm,
     hasActiveMultiFilters,
   };
 
