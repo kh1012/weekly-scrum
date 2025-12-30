@@ -16,6 +16,7 @@ interface TeamFeedFilterPanelProps {
   featureOptions: string[];
   onApplyFilters: (params: GnbParams) => void;
   onResetFilters: () => void;
+  isPending?: boolean;
 }
 
 /**
@@ -35,6 +36,7 @@ export function TeamFeedFilterPanel({
   featureOptions,
   onApplyFilters,
   onResetFilters,
+  isPending = false,
 }: TeamFeedFilterPanelProps) {
   const [selectedAuthor, setSelectedAuthor] = useState<string | undefined>(
     currentGnbParams.author
@@ -455,13 +457,22 @@ export function TeamFeedFilterPanel({
           <div className="space-y-2 pt-4 border-t border-[#d0d7de]">
             <button
               onClick={handleApply}
-              className="w-full px-4 py-2 text-sm font-medium text-white bg-[#0969da] hover:bg-[#0550ae] rounded-md transition-colors"
+              disabled={isPending}
+              className={`w-full px-4 py-2 text-sm font-medium text-white bg-[#0969da] hover:bg-[#0550ae] rounded-md transition-colors flex items-center justify-center gap-2 ${
+                isPending ? "opacity-60 cursor-not-allowed" : ""
+              }`}
             >
+              {isPending && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
               필터 적용
             </button>
             <button
               onClick={handleReset}
-              className="w-full px-4 py-2 text-sm font-medium text-[#24292f] bg-[#f6f8fa] hover:bg-[#eaeef2] border border-[#d0d7de] rounded-md transition-colors"
+              disabled={isPending}
+              className={`w-full px-4 py-2 text-sm font-medium text-[#24292f] bg-[#f6f8fa] hover:bg-[#eaeef2] border border-[#d0d7de] rounded-md transition-colors ${
+                isPending ? "opacity-60 cursor-not-allowed" : ""
+              }`}
             >
               초기화
             </button>

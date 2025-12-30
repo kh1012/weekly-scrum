@@ -90,7 +90,7 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
       {/* 일자별 활동 */}
       <div className="space-y-3">
         {dailyGroups.map((day) => (
-          <div key={day.date} className="border-l-2 border-[#d0d7de] pl-3">
+          <div key={day.date}>
             <div className="mb-2">
               <p className="text-xs font-semibold text-[#24292f]">
                 {day.dayLabel}
@@ -104,6 +104,7 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
                     key={contributor.personId}
                     className="flex items-center gap-2 text-xs"
                   >
+                    <span className="w-1 h-1 rounded-full bg-[#0969da] flex-shrink-0" />
                     <span className="text-[#24292f] font-medium truncate">
                       {contributor.personName}
                     </span>

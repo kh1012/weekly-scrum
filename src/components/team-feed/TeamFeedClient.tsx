@@ -124,6 +124,7 @@ export function TeamFeedClient({
         featureOptions={featureOptions}
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
+        isPending={isPending}
       />
 
       {/* Main Content - Flex container */}
@@ -168,14 +169,17 @@ export function TeamFeedClient({
               placeholder="엔트리 검색 (이름, 프로젝트, 모듈, 기능)"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-10 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+              disabled={isPending}
+              className={`w-full pl-10 pr-10 py-2 border border-[#d0d7de] rounded-md text-sm text-[#24292f] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da] transition-opacity ${
+                isPending ? "opacity-60 cursor-not-allowed" : ""
+              }`}
             />
-            {(searchInput || isSearching) && (
+            {(searchInput || isSearching || isPending) && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                {isSearching && (
+                {(isSearching || isPending) && (
                   <div className="w-4 h-4 border-2 border-[#0969da] border-t-transparent rounded-full animate-spin" />
                 )}
-                {searchInput && !isSearching && (
+                {searchInput && !isSearching && !isPending && (
                   <button
                     onClick={() => setSearchInput("")}
                     className="text-[#57606a] hover:text-[#24292f] transition-colors"
