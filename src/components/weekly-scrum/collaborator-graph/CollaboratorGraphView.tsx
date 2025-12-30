@@ -42,11 +42,11 @@ export function CollaboratorGraphView({
     setSelectedNode(null);
   }, []);
 
-  // 자동으로 최근 4주 선택 (첫 로드 시)
+  // 자동으로 최근 1주 선택 (첫 로드 시)
   useEffect(() => {
     if (!isLoading && weeks.length > 0 && selectedWeeks.size === 0) {
-      const last4 = weeks.slice(0, 4).map((w) => w.weekKey);
-      setSelectedWeeks(new Set(last4));
+      const last1 = weeks.slice(0, 1).map((w) => w.weekKey);
+      setSelectedWeeks(new Set(last1));
     }
   }, [weeks, isLoading, selectedWeeks.size]);
 
