@@ -69,6 +69,11 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/admin" ||
     pathname === "/admin/" ||
     pathname.startsWith("/admin/");
+  const isCollaboratorGraphPage =
+    pathname === "/works/collaborator-graph" ||
+    pathname === "/works/collaborator-graph/" ||
+    pathname.startsWith("/works/collaborator-graph/");
+
   // Snapshots/Work-map 페이지 여부 (페이지 내부에 통합 필터 있음)
   const hasInternalFilters =
     pathname === "/snapshots" ||
@@ -76,10 +81,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname.startsWith("/snapshots/") ||
     pathname === "/work-map" ||
     pathname === "/work-map/" ||
-    pathname.startsWith("/work-map/") ||
-    pathname === "/collaborator-graph" ||
-    pathname === "/collaborator-graph/" ||
-    pathname.startsWith("/collaborator-graph/");
+    pathname.startsWith("/work-map/");
 
   // 최소 GNB 모드
   const isMinimalGnb =
@@ -91,7 +93,8 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     isMetaOptionsPage ||
     isTeamFeedPage ||
     isReleasesPage ||
-    isAdminPage;
+    isAdminPage ||
+    isCollaboratorGraphPage;
 
   // GNB 컴포넌트 완전 숨김
   const hideAllControls = isMinimalGnb;
