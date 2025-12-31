@@ -751,80 +751,80 @@ export function DraftGanttView({
     <div className={`flex flex-col bg-white ${isHeaderHidden ? 'fixed inset-0 z-40' : 'h-full'}`}>
       {/* 헤더 - Airbnb 스타일 (보조 액션 포함) */}
       {!isHeaderHidden && (
-        <GanttHeader
-          workspaceId={workspaceId}
-          onCommit={handleCommit}
-          isCommitting={isCommitting}
-          onDiscardChanges={handleDiscardChanges}
-          // 읽기 전용 모드
-          readOnly={readOnly}
-          title={title}
-          // 내 것만 보기 필터
-          onlyMine={onlyMine}
-          onOnlyMineChange={onOnlyMineChange}
-          isFilterLoading={isFilterLoading}
-          // 마지막 업데이트 시각
-          maxUpdatedAt={maxUpdatedAt}
-          updatedByName={updatedByName}
-          // 중앙 액션 props
-          onUndo={undo}
-          onRedo={redo}
-          onOpenCommandPalette={() => setShowCommandPalette(true)}
-          onOpenHelp={readOnly ? undefined : () => setShowHelp(true)}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          dragInfo={dragDateInfo}
-          // 기간 범위 props
-          rangeMonths={rangeMonths}
-          onRangeMonthsChange={setRangeMonths}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          onCustomRangeChange={(start, end) => {
-            setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
-            setRangeStart(start);
-            setRangeEnd(end);
-          }}
+      <GanttHeader
+        workspaceId={workspaceId}
+        onCommit={handleCommit}
+        isCommitting={isCommitting}
+        onDiscardChanges={handleDiscardChanges}
+        // 읽기 전용 모드
+        readOnly={readOnly}
+        title={title}
+        // 내 것만 보기 필터
+        onlyMine={onlyMine}
+        onOnlyMineChange={onOnlyMineChange}
+        isFilterLoading={isFilterLoading}
+        // 마지막 업데이트 시각
+        maxUpdatedAt={maxUpdatedAt}
+        updatedByName={updatedByName}
+        // 중앙 액션 props
+        onUndo={undo}
+        onRedo={redo}
+        onOpenCommandPalette={() => setShowCommandPalette(true)}
+        onOpenHelp={readOnly ? undefined : () => setShowHelp(true)}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        dragInfo={dragDateInfo}
+        // 기간 범위 props
+        rangeMonths={rangeMonths}
+        onRangeMonthsChange={setRangeMonths}
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        onCustomRangeChange={(start, end) => {
+          setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
+          setRangeStart(start);
+          setRangeEnd(end);
+        }}
           onToggleHeader={handleToggleHeader}
-          onLockError={(type, lockedByName) => {
-            if (type === "locked_by_other") {
-              showToast(
-                "warning",
-                "편집할 수 없음",
-                `현재 ${
-                  lockedByName || "다른 사용자"
-                }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
-              );
-            } else {
-              showToast(
-                "error",
-                "작업을 시작할 수 없습니다",
-                "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
-              );
-            }
-          }}
-          onStartSuccess={() => {
+        onLockError={(type, lockedByName) => {
+          if (type === "locked_by_other") {
+            showToast(
+              "warning",
+              "편집할 수 없음",
+              `현재 ${
+                lockedByName || "다른 사용자"
+              }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
+            );
+          } else {
+            showToast(
+              "error",
+              "작업을 시작할 수 없습니다",
+              "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
+            );
+          }
+        }}
+        onStartSuccess={() => {
+          showToast(
+            "success",
+            "편집 모드 시작",
+            "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
+          );
+        }}
+        onStopSuccess={(discardedCount) => {
+          if (discardedCount > 0) {
+            showToast(
+              "info",
+              "작업 종료",
+              `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
+            );
+          } else {
             showToast(
               "success",
-              "편집 모드 시작",
-              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
+              "작업 종료",
+              "작업이 정상적으로 종료되었습니다."
             );
-          }}
-          onStopSuccess={(discardedCount) => {
-            if (discardedCount > 0) {
-              showToast(
-                "info",
-                "작업 종료",
-                `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
-              );
-            } else {
-              showToast(
-                "success",
-                "작업 종료",
-                "작업이 정상적으로 종료되었습니다."
-              );
-            }
-          }}
-        />
+          }
+        }}
+      />
       )}
 
       {/* Floating 복원 버튼 (Header 숨김 시) */}

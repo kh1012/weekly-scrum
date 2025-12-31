@@ -196,12 +196,12 @@ export function CreatePlanModal({
   // 드롭다운 열릴 때 위치 계산 및 검색창 포커스
   useEffect(() => {
     if (isAssigneeDropdownOpen && assigneeButtonRef.current) {
-      const rect = assigneeButtonRef.current.getBoundingClientRect();
-      setDropdownPosition({
+        const rect = assigneeButtonRef.current.getBoundingClientRect();
+        setDropdownPosition({
         top: rect.bottom + window.scrollY + 8,
         left: rect.left + window.scrollX,
-        width: rect.width,
-      });
+          width: rect.width,
+        });
       setTimeout(() => assigneeSearchRef.current?.focus(), 50);
     } else {
       setDropdownPosition(null);
@@ -653,7 +653,7 @@ export function CreatePlanModal({
                     <div className="px-4 py-8 text-center text-sm text-gray-400">
                       검색 결과가 없습니다
                     </div>
-                    )}
+                  )}
                 </div>
               </div>,
               document.body

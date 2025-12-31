@@ -396,14 +396,14 @@ export class LockManager {
           // 연속 실패가 임계치를 넘으면 그때 락 상실 처리
           if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
             console.error("[LockManager] 연속 heartbeat 실패, 락 상실 처리");
-            this.isActive = false;
-            this.stopHeartbeat();
-            this.removeVisibilityHandler();
-            
-            await releaseLock(this.workspaceId);
-            
-            this.onLockStateChange({ isLocked: false, isMyLock: false });
-            this.onLockLost();
+          this.isActive = false;
+          this.stopHeartbeat();
+          this.removeVisibilityHandler();
+          
+          await releaseLock(this.workspaceId);
+          
+          this.onLockStateChange({ isLocked: false, isMyLock: false });
+          this.onLockLost();
           }
         }
       }

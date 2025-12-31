@@ -4,12 +4,16 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { ScrumItem } from "@/types/scrum";
 import { useScrumContext } from "@/context/ScrumContext";
 import type { SnapshotViewMode, PersonGroup, CompareState } from "./types";
-import { SnapshotToolbar, type DisplayMode } from "./SnapshotToolbar";
+import { SnapshotToolbar, type DisplayMode, type ExportFormat } from "./SnapshotToolbar";
 import { SnapshotAllView } from "./SnapshotAllView";
 import { SnapshotPersonView } from "./SnapshotPersonView";
 import { SnapshotCompareView } from "./SnapshotCompareView";
 import { SnapshotContinuityView } from "./SnapshotContinuityView";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
+import {
+  downloadSnapshotsAsCSV,
+  downloadSnapshotsAsJSON,
+} from "@/lib/utils/exportSnapshot";
 
 const STORAGE_KEY = "snapshot-viewer-state";
 
@@ -23,7 +27,7 @@ interface StoredState {
  * 스냅샷 뷰어 메인 컴포넌트
  */
 export function SnapshotViewer() {
-  const { filteredItems, allData, sortedWeekKeys, selectedWeekKey } = useScrumContext();
+  const { filteredItems, allData, sortedWeekKeys, selectedWeekKey, currentData } = useScrumContext();
   
   // 뷰 모드
   const [viewMode, setViewMode] = useState<SnapshotViewMode>("all");
@@ -219,6 +223,30 @@ export function SnapshotViewer() {
     setIsSelectMode((prev) => !prev);
   }, []);
 
+  // 데이터 추출 핸들러
+  const handleExport = useCallback(
+    (format: ExportFormat) => {
+      if (!currentData) return;
+
+      // 현재 주차의 전체 데이터 (필터 적용 전)를 추출
+      const currentWeekData = allData[selectedWeekKey];
+      if (!currentWeekData || !currentWeekData.items) {
+        console.warn("No data to export");
+        return;
+      }
+
+      const year = currentData.year;
+      const week = currentData.week;
+
+      if (format === "csv") {
+        downloadSnapshotsAsCSV(currentWeekData.items, year, week);
+      } else if (format === "json") {
+        downloadSnapshotsAsJSON(currentWeekData.items, year, week);
+      }
+    },
+    [currentData, allData, selectedWeekKey]
+  );
+
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -240,6 +268,7 @@ export function SnapshotViewer() {
         onClearCompare={handleClearCompare}
         isSelectMode={isSelectMode}
         onToggleSelectMode={handleToggleSelectMode}
+        onExport={handleExport}
       />
 
       {/* 뷰 컨텐츠 */}

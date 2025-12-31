@@ -76,8 +76,8 @@ export function useCollaborationData(
         // 모든 스냅샷의 엔트리를 병렬로 가져오기
         const entryPromises = allSnapshots.map((snapshot) =>
           supabase
-            .from("snapshot_entries")
-            .select("id, author_id, name, collaborators")
+              .from("snapshot_entries")
+              .select("id, author_id, name, collaborators")
             .eq("snapshot_id", snapshot.id)
             .then((result: { data: any[] | null; error: any }) => ({
               snapshot,
@@ -94,31 +94,31 @@ export function useCollaborationData(
           if (error) {
             console.error("[useCollaborationData] Entries error:", error);
             return;
-          }
+            }
 
-          if (entries) {
-            // collaborators가 있는 엔트리만 추가
-            const validEntries = entries
-              .map((entry: any) => ({
-                ...entry,
-                year: snapshot.year,
-                week: parseInt(snapshot.week.replace("W", ""), 10),
-                collaborators: entry.collaborators || [],
-              }))
-              .filter(
-                (entry: any) =>
-                  entry.collaborators &&
-                  Array.isArray(entry.collaborators) &&
-                  entry.collaborators.length > 0
+            if (entries) {
+              // collaborators가 있는 엔트리만 추가
+              const validEntries = entries
+                .map((entry: any) => ({
+                  ...entry,
+                  year: snapshot.year,
+                  week: parseInt(snapshot.week.replace("W", ""), 10),
+                  collaborators: entry.collaborators || [],
+                }))
+                .filter(
+                  (entry: any) =>
+                    entry.collaborators &&
+                    Array.isArray(entry.collaborators) &&
+                    entry.collaborators.length > 0
+                );
+
+              allEntries.push(...validEntries);
+
+              // 디버그 로그
+              console.log(
+                `[useCollaborationData] Fetched ${entries.length} entries, ${validEntries.length} with collaborators for ${snapshot.year}-${snapshot.week}`
               );
-
-            allEntries.push(...validEntries);
-
-            // 디버그 로그
-            console.log(
-              `[useCollaborationData] Fetched ${entries.length} entries, ${validEntries.length} with collaborators for ${snapshot.year}-${snapshot.week}`
-            );
-          }
+            }
         });
 
         setEntries(allEntries);

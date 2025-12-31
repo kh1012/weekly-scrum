@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import type { SnapshotViewMode } from "./types";
 
 export type DisplayMode = "card" | "list";
+export type ExportFormat = "csv" | "json";
 
 interface SnapshotToolbarProps {
   viewMode: SnapshotViewMode;
@@ -15,6 +16,7 @@ interface SnapshotToolbarProps {
   onClearCompare: () => void;
   isSelectMode: boolean;
   onToggleSelectMode: () => void;
+  onExport?: (format: ExportFormat) => void;
 }
 
 // 아이콘 컴포넌트들
@@ -53,10 +55,15 @@ export function SnapshotToolbar({
   onClearCompare,
   isSelectMode,
   onToggleSelectMode,
+  onExport,
 }: SnapshotToolbarProps) {
   // 탭 인디케이터 위치/크기 계산
   const tabsRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  
+  // Export 드롭다운 상태
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const exportButtonRef = useRef<HTMLDivElement>(null);
 
   // 인디케이터 위치 업데이트
   useEffect(() => {
@@ -79,6 +86,26 @@ export function SnapshotToolbar({
     window.addEventListener("resize", updateIndicator);
     return () => window.removeEventListener("resize", updateIndicator);
   }, [viewMode]);
+  
+  // Export 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!showExportDropdown) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportButtonRef.current && !exportButtonRef.current.contains(e.target as Node)) {
+        setShowExportDropdown(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showExportDropdown]);
+  
+  // Export 핸들러
+  const handleExport = (format: ExportFormat) => {
+    onExport?.(format);
+    setShowExportDropdown(false);
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-4 animate-slide-in-left">
@@ -152,6 +179,54 @@ export function SnapshotToolbar({
           </svg>
           <span>선택</span>
         </button>
+        
+        {/* 데이터 추출 버튼 */}
+        {onExport && (
+          <div ref={exportButtonRef} className="relative">
+            <button
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors h-[42px] bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
+              title="데이터 추출"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>추출</span>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {/* Export 드롭다운 */}
+            {showExportDropdown && (
+              <div
+                className="absolute right-0 top-[calc(100%+4px)] z-50 w-40 rounded-md overflow-hidden animate-fadeIn bg-white border border-[#d0d7de]"
+                style={{
+                  boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
+                }}
+              >
+                <button
+                  onClick={() => handleExport("csv")}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  CSV로 저장
+                </button>
+                <button
+                  onClick={() => handleExport("json")}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  JSON으로 저장
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 카드/리스트 토글 */}
         <div className="flex items-center border border-[#d0d7de] rounded-md overflow-hidden">
