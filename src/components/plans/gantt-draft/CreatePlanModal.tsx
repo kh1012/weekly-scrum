@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { XIcon, CalendarIcon, UserIcon, LinkIcon, PlusIcon, ChevronDownIcon } from "@/components/common/Icons";
 import type { PlanStatus, DraftAssignee, PlanLink } from "./types";
 import type { AssigneeRole } from "@/lib/data/plans";
@@ -140,6 +141,8 @@ export function CreatePlanModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const assigneeDropdownRef = useRef<HTMLDivElement>(null);
   const assigneeSearchRef = useRef<HTMLInputElement>(null);
+  const assigneeButtonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -190,11 +193,18 @@ export function CreatePlanModal({
     return () => window.removeEventListener("keydown", handleGlobalKeyDown, true);
   }, [isOpen]);
 
-  // 드롭다운 열릴 때 검색창 포커스
+  // 드롭다운 열릴 때 위치 계산 및 검색창 포커스
   useEffect(() => {
-    if (isAssigneeDropdownOpen) {
+    if (isAssigneeDropdownOpen && assigneeButtonRef.current) {
+      const rect = assigneeButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
       setTimeout(() => assigneeSearchRef.current?.focus(), 50);
     } else {
+      setDropdownPosition(null);
       setAssigneeSearchQuery("");
       setHighlightedIndex(0);
     }
@@ -474,8 +484,9 @@ export function CreatePlanModal({
               </label>
             <div className="space-y-3">
               {/* 커스텀 담당자 드롭다운 */}
-              <div className="relative" ref={assigneeDropdownRef} onKeyDown={handleAssigneeKeyDown}>
+              <div className="relative" onKeyDown={handleAssigneeKeyDown}>
                 <button
+                  ref={assigneeButtonRef}
                   type="button"
                   onClick={() => setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none"
@@ -520,11 +531,15 @@ export function CreatePlanModal({
                   </svg>
                 </button>
 
-                {/* 드롭다운 목록 */}
-                {isAssigneeDropdownOpen && (
+                {/* 드롭다운 목록 - Portal */}
+                {isAssigneeDropdownOpen && dropdownPosition && createPortal(
                   <div
-                    className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+                    ref={assigneeDropdownRef}
+                    className="fixed rounded-xl overflow-hidden z-[9999]"
                     style={{
+                      top: `${dropdownPosition.top}px`,
+                      left: `${dropdownPosition.left}px`,
+                      width: `${dropdownPosition.width}px`,
                       background: "white",
                       border: "1px solid rgba(0, 0, 0, 0.1)",
                       boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
@@ -638,10 +653,11 @@ export function CreatePlanModal({
                     <div className="px-4 py-8 text-center text-sm text-gray-400">
                       검색 결과가 없습니다
                     </div>
-                  )}
+                    )}
                 </div>
-              </div>
-                )}
+              </div>,
+              document.body
+            )}
               </div>
 
               {/* 역할 선택 - 담당자 선택 시에만 활성화 */}
