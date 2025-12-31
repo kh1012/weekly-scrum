@@ -637,6 +637,7 @@ export async function commitFlags(payload: {
           color: flag.color || null,
           order_index: flag.orderIndex,
           lane_hint: flag.laneHint ?? null,
+          description: flag.description || null,
           links: flag.links || [],
           created_by: user.id,
         });
@@ -659,6 +660,7 @@ export async function commitFlags(payload: {
           color: flag.color || null,
           order_index: flag.orderIndex,
           lane_hint: flag.laneHint ?? null,
+          description: flag.description || null,
           links: flag.links || [],
           updated_at: new Date().toISOString(),
         })

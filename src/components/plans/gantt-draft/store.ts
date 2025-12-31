@@ -31,6 +31,7 @@ const MAX_UNDO_STACK = 20;
 interface FlagDraft {
   start: Date | null;
   end: Date | null;
+  laneIndex?: number; // 드래그로 생성 시 레인 정보 저장
 }
 
 interface FlagState {
@@ -229,7 +230,7 @@ interface DraftActions {
   /** Flag 목록 조회 (서버에서 로드) */
   fetchFlags: (workspaceId: string) => Promise<void>;
   /** Pending flag 시작점 설정 */
-  startPendingFlag: (date: Date) => void;
+  startPendingFlag: (date: Date, laneIndex?: number) => void;
   /** Pending flag 끝점 설정 */
   endPendingFlag: (date: Date) => void;
   /** Pending flag 초기화 */
@@ -243,12 +244,14 @@ interface DraftActions {
     startDate: string;
     endDate: string;
     color?: string | null;
+    description?: string;
     links?: PlanLink[];
+    laneHint?: number;
   }) => DraftFlag;
   /** Flag 수정 (로컬 상태만 변경) */
   updateFlagLocal: (
     clientId: string,
-    updates: Partial<Pick<DraftFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color" | "laneHint" | "links">>
+    updates: Partial<Pick<DraftFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color" | "laneHint" | "description" | "links">>
   ) => void;
   /** Flag 삭제 (로컬 상태만 변경, soft delete) */
   deleteFlag: (clientId: string) => void;
@@ -1124,6 +1127,7 @@ export const useDraftStore = create<DraftStore>()(
               color: f.color,
               orderIndex: f.orderIndex,
               laneHint: f.laneHint ?? undefined,
+              description: f.description,
               links: f.links, // links 필드 추가
               dirty: false,
               deleted: false,
@@ -1141,17 +1145,17 @@ export const useDraftStore = create<DraftStore>()(
         }
       },
 
-      startPendingFlag: (date) => {
+      startPendingFlag: (date, laneIndex) => {
         set({
-          pendingFlag: { start: date, end: null },
+          pendingFlag: { start: date, end: null, laneIndex },
         });
       },
 
       endPendingFlag: (date) => {
         const state = get();
-        const { start } = state.pendingFlag;
+        const { start, laneIndex } = state.pendingFlag;
         if (!start) {
-          set({ pendingFlag: { start: date, end: null } });
+          set({ pendingFlag: { start: date, end: null, laneIndex } });
           return;
         }
 
@@ -1163,13 +1167,13 @@ export const useDraftStore = create<DraftStore>()(
         }
 
         set({
-          pendingFlag: { start: finalStart, end: finalEnd },
+          pendingFlag: { start: finalStart, end: finalEnd, laneIndex },
         });
       },
 
       clearPendingFlag: () => {
         set({
-          pendingFlag: { start: null, end: null },
+          pendingFlag: { start: null, end: null, laneIndex: undefined },
         });
       },
 
@@ -1210,7 +1214,9 @@ export const useDraftStore = create<DraftStore>()(
           startDate: payload.startDate,
           endDate: payload.endDate,
           color: payload.color || null,
+          description: payload.description,
           links: payload.links,
+          laneHint: payload.laneHint, // 레인 정보 유지
           orderIndex: maxOrderIndex + 1,
           dirty: true,
           deleted: false,
@@ -1224,7 +1230,7 @@ export const useDraftStore = create<DraftStore>()(
             if (startCompare !== 0) return startCompare;
             return a.orderIndex - b.orderIndex;
           }),
-          pendingFlag: { start: null, end: null },
+          pendingFlag: { start: null, end: null, laneIndex: undefined },
         });
 
         return newFlag;

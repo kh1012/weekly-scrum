@@ -32,6 +32,7 @@ function mapFlagFromDb(row: Record<string, unknown>): GanttFlag {
     color: row.color as string | null,
     orderIndex: (row.order_index as number) || 0,
     laneHint: row.lane_hint as number | null | undefined,
+    description: row.description as string | undefined,
     links: links.length > 0 ? links : undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
@@ -151,7 +152,7 @@ export async function createFlag(payload: {
  */
 export async function updateFlag(
   id: string,
-  updates: Partial<Pick<GanttFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color" | "laneHint">>
+  updates: Partial<Pick<GanttFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color" | "laneHint" | "description">>
 ): Promise<{ success: boolean; flag?: GanttFlag; error?: string }> {
   try {
     // 권한 확인
@@ -184,6 +185,9 @@ export async function updateFlag(
     }
     if (updates.laneHint !== undefined) {
       dbUpdates.lane_hint = updates.laneHint;
+    }
+    if (updates.description !== undefined) {
+      dbUpdates.description = updates.description;
     }
 
     const { data, error } = await supabase

@@ -224,11 +224,11 @@ export function FlagLane({
       const minIndex = Math.min(dragStart, endIndex);
       const maxIndex = Math.max(dragStart, endIndex);
 
-      // pendingFlag 설정 후 모달 열기
+      // pendingFlag 설정 후 모달 열기 (레인 정보 포함)
       const startDate = getDateFromIndex(minIndex);
       const endDate = getDateFromIndex(maxIndex);
 
-      startPendingFlag(startDate);
+      startPendingFlag(startDate, dragLaneIndex ?? undefined);
       endPendingFlag(endDate);
       onOpenCreateModal();
 

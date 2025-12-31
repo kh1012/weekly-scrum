@@ -25,6 +25,8 @@ export interface GanttFlag {
   orderIndex: number;
   /** 사용자가 명시적으로 지정한 레인 인덱스 */
   laneHint?: number | null;
+  /** Flag 상세 설명 (멀티라인 지원) */
+  description?: string;
   /** 관련 링크 목록 (선택사항) */
   links?: PlanLink[];
   createdAt: string;
@@ -48,6 +50,8 @@ export interface DraftFlag {
   orderIndex: number;
   /** 사용자가 명시적으로 지정한 레인 인덱스 (빈 레인 이동 시 설정) */
   laneHint?: number;
+  /** Flag 상세 설명 (멀티라인 지원) */
+  description?: string;
   /** 관련 링크 목록 (선택사항) */
   links?: PlanLink[];
   /** 변경됨 플래그 */

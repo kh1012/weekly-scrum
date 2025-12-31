@@ -32,6 +32,7 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [color, setColor] = useState("#ef4444");
+  const [description, setDescription] = useState("");
   const [links, setLinks] = useState<{ url: string; label?: string }[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -47,6 +48,7 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
       setStartDate(flag.startDate);
       setEndDate(flag.endDate);
       setColor(flag.color || "#ef4444");
+      setDescription(flag.description || "");
       setLinks(flag.links || []);
       setShowDeleteConfirm(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -76,6 +78,7 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
       startDate: finalStart,
       endDate: finalEnd,
       color,
+      description: description.trim() || undefined,
       links: validLinks.length > 0 ? validLinks : undefined,
       // 현재 레인 위치 유지 (확장된 레인에서 수정 시 위치 보존)
       laneHint: flag.laneHint,
@@ -265,6 +268,33 @@ export function EditFlagModal({ isOpen, onClose, flag }: EditFlagModalProps) {
                 />
               ))}
             </div>
+          </div>
+
+          {/* 설명 */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-2">
+              설명 (선택사항)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Flag에 대한 상세 설명을 입력하세요..."
+              rows={3}
+              className="w-full px-3 py-2 text-sm rounded-lg transition-colors resize-none"
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                color: "#1e293b",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = color;
+                e.target.style.background = "#ffffff";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.background = "#f8fafc";
+              }}
+            />
           </div>
 
           {/* Links (관련 링크) */}
