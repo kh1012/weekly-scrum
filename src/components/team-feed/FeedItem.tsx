@@ -111,7 +111,7 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
               {data.year} {data.week}
             </span>
             <span className="text-xs text-[#57606a]">
-              updated {data.entries.length} snapshot{data.entries.length > 1 ? "s" : ""}
+              updated {data.entries.length} {data.entries.length > 1 ? "entries" : "entry"}
             </span>
             <span className="text-xs text-[#57606a]">·</span>
             <time className="text-xs text-[#57606a]">{formatTimeAgo(data.latestActivityDate)}</time>
