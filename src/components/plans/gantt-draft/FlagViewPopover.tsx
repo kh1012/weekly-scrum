@@ -86,6 +86,7 @@ export function FlagViewPopover({
 
   const position = getPopoverPosition();
   const hasLinks = flag.links && flag.links.length > 0;
+  const hasDescription = flag.description && flag.description.trim().length > 0;
   const flagColor = flag.color || "#ef4444";
   const isPointFlag = flag.startDate === flag.endDate;
 
@@ -160,6 +161,34 @@ export function FlagViewPopover({
           </span>
         </div>
 
+        {/* 설명 */}
+        {hasDescription && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h7"
+                />
+              </svg>
+              설명
+            </div>
+            <div
+              className="p-3 rounded-lg text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words"
+              style={{ background: "#f8fafc" }}
+            >
+              {flag.description}
+            </div>
+          </div>
+        )}
+
         {/* 링크 */}
         {hasLinks && (
           <div className="space-y-2">
@@ -208,7 +237,7 @@ export function FlagViewPopover({
         )}
 
         {/* 정보 없음 표시 */}
-        {!hasLinks && (
+        {!hasLinks && !hasDescription && (
           <div className="text-sm text-gray-400 text-center py-4">
             추가 정보가 없습니다
           </div>
