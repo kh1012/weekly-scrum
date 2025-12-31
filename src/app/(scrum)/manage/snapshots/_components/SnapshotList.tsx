@@ -754,11 +754,11 @@ function EntryCard({
             </div>
           )}
 
-          {/* PAST WEEK TASKS */}
+          {/* PROGRESS */}
           {pastWeekTasks.length > 0 && (
             <div className="mx-4 mb-3">
               <div className="text-[10px] font-medium text-[#57606a] uppercase tracking-wider mb-2">
-                PAST WEEK TASKS:
+                PROGRESS:
               </div>
               <ul className="space-y-1">
                 {pastWeekTasks.map((task, i) => (
@@ -830,11 +830,11 @@ function EntryCard({
             </div>
           )}
 
-          {/* THIS WEEK TASKS */}
+          {/* NEXT */}
           {thisWeekTasks.length > 0 && (
             <div className="mx-4 mb-4">
               <div className="text-[10px] font-medium text-[#57606a] uppercase tracking-wider mb-2">
-                THIS WEEK TASKS:
+                NEXT:
               </div>
               <ul className="space-y-1">
                 {thisWeekTasks.map((task, i) => (
