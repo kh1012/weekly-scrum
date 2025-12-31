@@ -13,6 +13,8 @@ import { CollaborationGraph } from "./CollaborationGraph";
 import { StatsCards } from "./StatsCards";
 import { LogoLoadingSpinner } from "../common";
 
+type MobileView = "weeks" | "graph" | "stats";
+
 interface CollaboratorGraphViewProps {
   workspaceId: string;
 }
@@ -21,6 +23,8 @@ export function CollaboratorGraphView({
   workspaceId,
 }: CollaboratorGraphViewProps) {
   const [selectedWeeks, setSelectedWeeks] = useState<Set<string>>(new Set());
+  const [mobileView, setMobileView] = useState<MobileView>("graph");
+  const [isWeekSelectorOpen, setIsWeekSelectorOpen] = useState(false);
   const { weeks, isLoading, error } = useAvailableSnapshotWeeks(workspaceId);
   const {
     entries,
@@ -87,11 +91,69 @@ export function CollaboratorGraphView({
 
   return (
     <div className="h-full flex flex-col bg-[#f6f8fa]">
-      {/* Main Content: 3-Panel Layout (Full Height) */}
+      {/* Mobile Navigation Tabs (모바일에서만 표시) */}
+      <div className="lg:hidden shrink-0 bg-white border-b border-[#d0d7de]">
+        <div className="flex">
+          <button
+            onClick={() => setMobileView("weeks")}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+              mobileView === "weeks"
+                ? "text-[#24292f] border-[#0969da]"
+                : "text-[#57606a] border-transparent hover:text-[#24292f]"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              주차
+              {selectedWeeks.size > 0 && (
+                <span className="px-1.5 py-0.5 text-xs bg-[#0969da] text-white rounded-full">
+                  {selectedWeeks.size}
+                </span>
+              )}
+            </div>
+          </button>
+          <button
+            onClick={() => setMobileView("graph")}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+              mobileView === "graph"
+                ? "text-[#24292f] border-[#0969da]"
+                : "text-[#57606a] border-transparent hover:text-[#24292f]"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              그래프
+            </div>
+          </button>
+          <button
+            onClick={() => setMobileView("stats")}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+              mobileView === "stats"
+                ? "text-[#24292f] border-[#0969da]"
+                : "text-[#57606a] border-transparent hover:text-[#24292f]"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              통계
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content: Responsive Layout */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full flex gap-4 p-4">
-          {/* Left Panel: Week Selector */}
-          <div className="w-80 shrink-0 bg-white rounded-lg border border-[#d0d7de] overflow-hidden flex flex-col">
+        <div className="h-full flex flex-col lg:flex-row gap-4 p-4">
+          {/* Left Panel: Week Selector (데스크톱에서만 항상 표시, 모바일에서는 탭 전환) */}
+          <div className={`${
+            mobileView === "weeks" ? "flex" : "hidden"
+          } lg:flex w-full lg:w-80 shrink-0 bg-white rounded-lg border border-[#d0d7de] overflow-hidden flex-col`}>
             <div className="p-4 border-b border-[#d0d7de]">
               <h2 className="text-sm font-semibold text-[#24292f]">
                 주차 선택
@@ -123,25 +185,27 @@ export function CollaboratorGraphView({
             </div>
           </div>
 
-          {/* Center Panel: React Flow Graph */}
-          <div className="flex-1 bg-white rounded-lg border border-[#d0d7de] overflow-hidden">
-            <div className="h-full flex items-center justify-center">
+          {/* Center Panel: React Flow Graph (모바일/데스크톱) */}
+          <div className={`${
+            mobileView === "graph" ? "flex" : "hidden"
+          } lg:flex flex-1 bg-white rounded-lg border border-[#d0d7de] overflow-hidden`}>
+            <div className="h-full w-full flex items-center justify-center">
               {isLoadingEntries ? (
                 <LogoLoadingSpinner
                   title="협업 데이터를 불러오는 중입니다"
                   description="잠시만 기다려주세요."
                 />
               ) : entriesError ? (
-                <div className="text-center">
+                <div className="text-center p-4">
                   <p className="text-sm text-red-600 font-medium">
                     데이터 로드 실패
                   </p>
                   <p className="text-xs text-[#57606a] mt-1">{entriesError}</p>
                 </div>
               ) : selectedWeeks.size === 0 ? (
-                <div className="text-center">
+                <div className="text-center p-4">
                   <svg
-                    className="w-16 h-16 mx-auto text-[#d0d7de] mb-4"
+                    className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-[#d0d7de] mb-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -153,18 +217,18 @@ export function CollaboratorGraphView({
                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                     />
                   </svg>
-                  <p className="text-[#57606a] font-medium">
+                  <p className="text-sm lg:text-base text-[#57606a] font-medium">
                     주차를 선택하여 협업 그래프를 확인하세요
                   </p>
                   <p className="text-xs text-[#8c959f] mt-2">
-                    왼쪽에서 하나 이상의 주차를 선택하면 네트워크 그래프가
-                    표시됩니다
+                    <span className="lg:hidden">주차 탭에서</span>
+                    <span className="hidden lg:inline">왼쪽에서</span> 하나 이상의 주차를 선택하면 네트워크 그래프가 표시됩니다
                   </p>
                 </div>
               ) : graphData.nodes.length === 0 ? (
-                <div className="text-center">
+                <div className="text-center p-4">
                   <svg
-                    className="w-16 h-16 mx-auto text-[#d0d7de] mb-4"
+                    className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-[#d0d7de] mb-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -176,7 +240,7 @@ export function CollaboratorGraphView({
                       d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                     />
                   </svg>
-                  <p className="text-[#57606a] font-medium">
+                  <p className="text-sm lg:text-base text-[#57606a] font-medium">
                     선택한 주차에 협업 데이터가 없습니다
                   </p>
                   <p className="text-xs text-[#8c959f] mt-2">
@@ -194,8 +258,10 @@ export function CollaboratorGraphView({
             </div>
           </div>
 
-          {/* Right Panel: Analytics Cards */}
-          <div className="w-80 shrink-0 overflow-y-auto">
+          {/* Right Panel: Analytics Cards (모바일/데스크톱) */}
+          <div className={`${
+            mobileView === "stats" ? "flex" : "hidden"
+          } lg:flex w-full lg:w-80 shrink-0 overflow-y-auto`}>
             <StatsCards
               stats={graphData.stats}
               selectedNode={selectedNode}
