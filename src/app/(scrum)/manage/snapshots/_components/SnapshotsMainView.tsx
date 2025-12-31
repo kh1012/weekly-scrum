@@ -363,6 +363,8 @@ function SnapshotsMainViewInner({
           onWeekChange={setSelectedWeek}
           snapshotCountByWeek={snapshotCountByWeek}
           currentWeekSnapshots={snapshots}
+          workspaceId={workspaceId}
+          userId={userId}
           isLoading={isLoadingCounts}
           className="w-full"
         />
@@ -428,6 +430,8 @@ function SnapshotsMainViewInner({
             snapshotCountByWeek={snapshotCountByWeek}
             isLoading={isLoadingCounts}
             currentWeekSnapshots={snapshots}
+            workspaceId={workspaceId}
+            userId={userId}
             className="w-full"
           />
         </div>
