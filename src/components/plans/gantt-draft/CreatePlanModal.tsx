@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { XIcon, CalendarIcon, UserIcon, LinkIcon, PlusIcon, ChevronDownIcon } from "@/components/common/Icons";
 import type { PlanStatus, DraftAssignee, PlanLink } from "./types";
@@ -100,6 +100,14 @@ export function CreatePlanModal({
 
   // 섹션 접기/펼치기 상태
   const [isAdditionalExpanded, setIsAdditionalExpanded] = useState(false);
+
+  /**
+   * 선택된 멤버 정보 (useMemo로 안정적인 렌더링)
+   */
+  const selectedMember = useMemo(() => {
+    if (!selectedAssignee) return null;
+    return members.find((m) => m.userId === selectedAssignee) || null;
+  }, [selectedAssignee, members]);
 
   /**
    * 담당자 선택 핸들러: basic_role 기반 role 자동 설정
@@ -282,12 +290,11 @@ export function CreatePlanModal({
 
     // 담당자 생성
     const assignees: DraftAssignee[] = [];
-    if (selectedAssignee) {
-      const member = members.find((m) => m.userId === selectedAssignee);
+    if (selectedMember) {
       assignees.push({
-        userId: selectedAssignee,
+        userId: selectedMember.userId,
         role: selectedRole,
-        displayName: member?.displayName,
+        displayName: selectedMember.displayName,
       });
     }
 
@@ -494,17 +501,17 @@ export function CreatePlanModal({
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    {selectedAssignee ? (
+                    {selectedMember ? (
                       <>
                         <span
                           className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-bold"
                         >
-                          {members.find((m) => m.userId === selectedAssignee)?.displayName?.charAt(0) || 
-                           members.find((m) => m.userId === selectedAssignee)?.email?.charAt(0) || "?"}
+                          {selectedMember.displayName?.charAt(0) || 
+                           selectedMember.email?.charAt(0) || "?"}
                         </span>
                         <span className="font-medium text-gray-900">
-                          {members.find((m) => m.userId === selectedAssignee)?.displayName || 
-                           members.find((m) => m.userId === selectedAssignee)?.email || 
+                          {selectedMember.displayName || 
+                           selectedMember.email || 
                            selectedAssignee}
                         </span>
                       </>
@@ -699,7 +706,7 @@ export function CreatePlanModal({
             </div>
 
             {/* 선택된 담당자 표시 */}
-            {selectedAssignee && (
+            {selectedMember && (
               <div
                 className="mt-3 flex items-center gap-2 p-3 rounded-lg"
                 style={{ background: "#f8fafc" }}
@@ -715,10 +722,7 @@ export function CreatePlanModal({
                   {ROLES.find((r) => r.value === selectedRole)?.label}
                 </span>
                 <span className="text-sm font-medium text-gray-800">
-                  {
-                    members.find((m) => m.userId === selectedAssignee)
-                      ?.displayName
-                  }
+                  {selectedMember.displayName}
                 </span>
               </div>
               )}

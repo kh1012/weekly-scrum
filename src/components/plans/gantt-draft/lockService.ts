@@ -333,9 +333,11 @@ export class LockManager {
         this.consecutiveFailures++;
         console.warn(`[LockManager] Heartbeat 실패 (${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES})`);
         
-        // 연속 실패 횟수가 임계치를 넘으면 락 상실 처리
+        // 편집 중일 때는 heartbeat 실패에도 불구하고 락을 유지
+        // 단, 연속 실패 횟수가 임계치를 넘으면 그때 락 상실 처리
+        // 이는 사용자가 작업 중일 때 네트워크 불안정으로 인한 작업 손실을 방지하기 위함
         if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
-          console.error("[LockManager] 연속 heartbeat 실패, 락 상실 처리 및 서버 락 해제");
+          console.error("[LockManager] 연속 heartbeat 실패, 락 상실 처리");
           this.isActive = false;
           this.stopHeartbeat();
           this.removeVisibilityHandler();
@@ -386,16 +388,23 @@ export class LockManager {
           }
           console.log("[LockManager] Visibility heartbeat 성공, 락 유지");
         } else {
-          console.warn("[LockManager] Visibility heartbeat 실패, 락 상실");
-          this.isActive = false;
-          this.stopHeartbeat();
-          this.removeVisibilityHandler();
+          // Visibility 복원 시 heartbeat 실패는 경고만 하고 락은 유지
+          // 사용자가 편집 중일 때는 서버 상태와 상관없이 로컬 작업을 계속할 수 있도록 함
+          console.warn("[LockManager] Visibility heartbeat 실패, 하지만 편집 모드는 유지");
+          this.consecutiveFailures++;
           
-          // 서버의 락도 해제 시도 (동기화)
-          await releaseLock(this.workspaceId);
-          
-          this.onLockStateChange({ isLocked: false, isMyLock: false });
-          this.onLockLost();
+          // 연속 실패가 임계치를 넘으면 그때 락 상실 처리
+          if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
+            console.error("[LockManager] 연속 heartbeat 실패, 락 상실 처리");
+            this.isActive = false;
+            this.stopHeartbeat();
+            this.removeVisibilityHandler();
+            
+            await releaseLock(this.workspaceId);
+            
+            this.onLockStateChange({ isLocked: false, isMyLock: false });
+            this.onLockLost();
+          }
         }
       }
     };

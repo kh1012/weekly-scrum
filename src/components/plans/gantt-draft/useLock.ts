@@ -122,9 +122,21 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
 
     const handleLockStateChange = (state: LockState) => {
       setLockStateRef.current(state);
-      // 락 상태와 편집 모드 동기화
+      
+      // 편집 중(락 획득 후)에는 락 상태가 변경되어도 편집 모드를 유지
+      // 이는 사용자가 작업 중일 때 서버 데이터와의 동기화를 방지하기 위함
+      if (hasAcquiredRef.current) {
+        // 이미 락을 획득한 경우, 편집 모드를 유지하고 state만 업데이트
+        // 단, 내 락이 아니게 되면 경고만 하고 편집 모드는 유지
+        if (!state.isMyLock) {
+          console.warn("[useLock] 락 상태가 변경되었지만 편집 모드는 유지됩니다.");
+        }
+        return;
+      }
+      
+      // 락 상태와 편집 모드 동기화 (초기 로드 시에만)
       // - 락 획득 중이거나, 이미 획득한 경우에는 자동 해제 안 함
-      if (!isAcquiringRef.current && !hasAcquiredRef.current) {
+      if (!isAcquiringRef.current) {
         if (state.isMyLock) {
           setEditingRef.current(true);
           hasAcquiredRef.current = true;
@@ -132,6 +144,7 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
           setEditingRef.current(false);
         }
       }
+      
       // 내 락으로 변경되면 hasAcquiredRef 설정
       if (state.isMyLock) {
         hasAcquiredRef.current = true;
