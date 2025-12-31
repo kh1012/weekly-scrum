@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useVisitorCount } from "@/hooks/useVisitorCount";
 import { RELEASES } from "../releases/releaseData";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
@@ -287,6 +287,7 @@ export const SideNavigation = memo(function SideNavigation({
   menuSettings = [],
 }: SideNavigationProps) {
   const isActive = useIsActive();
+  const router = useRouter();
   const { count, isLoading } = useVisitorCount();
   const navCategories = useMemo(() => getNavCategories(role), [role]);
 
@@ -327,6 +328,27 @@ export const SideNavigation = memo(function SideNavigation({
       // 무시
     }
   }, [collapsedCategories, isInitialized]);
+
+  // 초기 로드 시 자주 사용되는 페이지들 prefetch (최적화)
+  useEffect(() => {
+    // 주요 메뉴들을 미리 prefetch
+    const priorityRoutes = [
+      "/team-feed",
+      "/snapshots",
+      "/plans/gantt",
+      "/work-map",
+      "/my",
+    ];
+    
+    // 약간의 지연 후 prefetch (초기 로딩에 영향 최소화)
+    const timer = setTimeout(() => {
+      priorityRoutes.forEach((route) => {
+        router.prefetch(route);
+      });
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
 
   // 카테고리 토글
   const toggleCategory = useCallback((key: string) => {
@@ -397,6 +419,13 @@ export const SideNavigation = memo(function SideNavigation({
                       <Link
                         key={item.key}
                         href={isDisabled ? "#" : item.href}
+                        prefetch={true}
+                        onMouseEnter={() => {
+                          // Hover 시 즉시 prefetch (더 빠른 페이지 전환)
+                          if (!isDisabled && !active) {
+                            router.prefetch(item.href);
+                          }
+                        }}
                         onClick={() => {
                           if (isDisabled) return;
                           if (!active) navigationProgress.start();
