@@ -127,7 +127,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
     ],
   },
   {
-    key: "work",
+    key: "works",
     label: "Works",
     items: [
       {
