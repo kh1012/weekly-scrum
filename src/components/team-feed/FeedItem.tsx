@@ -61,20 +61,20 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
   const riskItems: Array<{ entry: TeamFeedEntry; content: string }> = [];
 
   data.entries.forEach((entry) => {
-    // Progress
-    if (entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0) {
-      entry.thisWeek.tasks.forEach((task) => {
-        progressItems.push({ entry, content: task });
-      });
-    }
-
-    // Next
+    // Progress (저번 주 계획했던 작업들 - 진행률 포함)
     if (entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0) {
       entry.pastWeek.tasks.forEach((task) => {
-        nextItems.push({
+        progressItems.push({
           entry,
           content: `${task.title}${task.progress > 0 ? ` (${task.progress}%)` : ""}`,
         });
+      });
+    }
+
+    // Next (이번 주 새로 계획하는 작업들 - 진행률 없음)
+    if (entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0) {
+      entry.thisWeek.tasks.forEach((task) => {
+        nextItems.push({ entry, content: task });
       });
     }
 
@@ -87,10 +87,10 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
   });
 
   const progressCount = data.entries.filter(
-    (e) => e.thisWeek.tasks && e.thisWeek.tasks.length > 0
+    (e) => e.pastWeek.tasks && e.pastWeek.tasks.length > 0
   ).length;
   const nextCount = data.entries.filter(
-    (e) => e.pastWeek.tasks && e.pastWeek.tasks.length > 0
+    (e) => e.thisWeek.tasks && e.thisWeek.tasks.length > 0
   ).length;
   const riskCount = data.entries.filter((e) => e.risks.length > 0).length;
 
@@ -211,26 +211,12 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
                 </span>
               </div>
 
-              {/* Progress (This Week) */}
-              {entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0 && (
+              {/* Progress (저번 주 계획했던 작업들 - 진행률 포함) */}
+              {entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0 && (
                 <div>
                   <p className="text-[11px] font-semibold text-[#24292f] mb-1.5">
                     Progress
                   </p>
-                  <ul className="space-y-1 text-[#57606a]">
-                    {entry.thisWeek.tasks.map((task, idx) => (
-                      <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                        {highlightText(task, searchQuery)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Next (Past Week) */}
-              {entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold text-[#24292f] mb-1.5">Next</p>
                   <ul className="space-y-1 text-[#57606a]">
                     {entry.pastWeek.tasks.map((task, idx) => (
                       <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
@@ -240,6 +226,20 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
                             ({task.progress}%)
                           </span>
                         )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Next (이번 주 새로 계획하는 작업들 - 진행률 없음) */}
+              {entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-[#24292f] mb-1.5">Next</p>
+                  <ul className="space-y-1 text-[#57606a]">
+                    {entry.thisWeek.tasks.map((task, idx) => (
+                      <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                        {highlightText(task, searchQuery)}
                       </li>
                     ))}
                   </ul>
