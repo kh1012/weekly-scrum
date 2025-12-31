@@ -49,63 +49,77 @@ export function useCollaborationData(
           };
         });
 
-        // 모든 주차의 스냅샷 가져오기
-        const allEntries: SnapshotEntry[] = [];
-
-        for (const { year, week } of weekFilters) {
-          const { data: snapshots, error: snapshotError } = await supabase
+        // 모든 주차의 스냅샷을 병렬로 가져오기
+        const snapshotPromises = weekFilters.map(({ year, week }) =>
+          supabase
             .from("snapshots")
             .select("id, year, week")
             .eq("workspace_id", workspaceId)
             .eq("year", year)
-            .eq("week", week);
+            .eq("week", week)
+        );
 
+        const snapshotResults = await Promise.all(snapshotPromises);
+
+        // 모든 스냅샷 수집
+        const allSnapshots: Array<{ id: string; year: number; week: string }> = [];
+        snapshotResults.forEach(({ data: snapshots, error: snapshotError }) => {
           if (snapshotError) {
             console.error("[useCollaborationData] Snapshot error:", snapshotError);
-            continue;
+            return;
+          }
+          if (snapshots && snapshots.length > 0) {
+            allSnapshots.push(...snapshots);
+          }
+        });
+
+        // 모든 스냅샷의 엔트리를 병렬로 가져오기
+        const entryPromises = allSnapshots.map((snapshot) =>
+          supabase
+            .from("snapshot_entries")
+            .select("id, author_id, name, collaborators")
+            .eq("snapshot_id", snapshot.id)
+            .then((result: { data: any[] | null; error: any }) => ({
+              snapshot,
+              entries: result.data,
+              error: result.error,
+            }))
+        );
+
+        const entryResults = await Promise.all(entryPromises);
+
+        // 모든 엔트리 수집 및 변환
+        const allEntries: SnapshotEntry[] = [];
+        entryResults.forEach(({ snapshot, entries, error }) => {
+          if (error) {
+            console.error("[useCollaborationData] Entries error:", error);
+            return;
           }
 
-          if (!snapshots || snapshots.length === 0) {
-            continue;
-          }
-
-          // 각 스냅샷의 엔트리 가져오기
-          for (const snapshot of snapshots) {
-            const { data: entries, error: entriesError } = await supabase
-              .from("snapshot_entries")
-              .select("id, author_id, name, collaborators")
-              .eq("snapshot_id", snapshot.id);
-
-            if (entriesError) {
-              console.error("[useCollaborationData] Entries error:", entriesError);
-              continue;
-            }
-
-            if (entries) {
-              // collaborators가 있는 엔트리만 추가
-              const validEntries = entries
-                .map((entry: any) => ({
-                  ...entry,
-                  year: snapshot.year,
-                  week: parseInt(snapshot.week.replace("W", ""), 10),
-                  collaborators: entry.collaborators || [],
-                }))
-                .filter(
-                  (entry: any) =>
-                    entry.collaborators &&
-                    Array.isArray(entry.collaborators) &&
-                    entry.collaborators.length > 0
-                );
-
-              allEntries.push(...validEntries);
-
-              // 디버그 로그
-              console.log(
-                `[useCollaborationData] Fetched ${entries.length} entries, ${validEntries.length} with collaborators for ${snapshot.year}-${snapshot.week}`
+          if (entries) {
+            // collaborators가 있는 엔트리만 추가
+            const validEntries = entries
+              .map((entry: any) => ({
+                ...entry,
+                year: snapshot.year,
+                week: parseInt(snapshot.week.replace("W", ""), 10),
+                collaborators: entry.collaborators || [],
+              }))
+              .filter(
+                (entry: any) =>
+                  entry.collaborators &&
+                  Array.isArray(entry.collaborators) &&
+                  entry.collaborators.length > 0
               );
-            }
+
+            allEntries.push(...validEntries);
+
+            // 디버그 로그
+            console.log(
+              `[useCollaborationData] Fetched ${entries.length} entries, ${validEntries.length} with collaborators for ${snapshot.year}-${snapshot.week}`
+            );
           }
-        }
+        });
 
         setEntries(allEntries);
       } catch (err) {
