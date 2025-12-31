@@ -9,7 +9,7 @@
  * - 우측 상단: 편집하기 / 새로 작성하기 버튼
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { WeekTimeline } from "./WeekTimeline";
 import { SnapshotList } from "./SnapshotList";
@@ -21,6 +21,11 @@ import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotMo
 import { ToastProvider } from "@/components/weekly-scrum/manage/Toast";
 import type { WorkloadLevel } from "@/lib/supabase/types";
 import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
+import {
+  downloadSnapshotsAsCSV,
+  downloadSnapshotsAsJSON,
+} from "@/lib/utils/exportSnapshot";
+import type { ScrumItem } from "@/types/scrum";
 
 interface SnapshotsMainViewProps {
   userId: string;
@@ -174,6 +179,10 @@ function SnapshotsMainViewInner({
   const [isProjectFilterOpen, setIsProjectFilterOpen] = useState(false);
   const [isModuleFilterOpen, setIsModuleFilterOpen] = useState(false);
   const [isFeatureFilterOpen, setIsFeatureFilterOpen] = useState(false);
+  
+  // Export 드롭다운 상태
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const exportButtonRef = useRef<HTMLDivElement>(null);
 
   // 필터 토글 함수
   const toggleProjectFilter = (project: string) => {
@@ -253,6 +262,20 @@ function SnapshotsMainViewInner({
   useEffect(() => {
     navigationProgress.done();
   }, []);
+  
+  // Export 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!showExportDropdown) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportButtonRef.current && !exportButtonRef.current.contains(e.target as Node)) {
+        setShowExportDropdown(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showExportDropdown]);
 
   // 스냅샷 목록 조회
   const fetchSnapshots = useCallback(async () => {
@@ -348,6 +371,40 @@ function SnapshotsMainViewInner({
       `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=empty`
     );
   };
+  
+  // 데이터 추출 핸들러
+  const handleExport = useCallback(
+    (format: "csv" | "json") => {
+      // 현재 주차의 전체 스냅샷 데이터를 ScrumItem 형식으로 변환
+      const items: ScrumItem[] = snapshots.flatMap((snapshot) =>
+        snapshot.entries.map((entry) => ({
+          name: "", // 스냅샷에는 이름 정보가 없으므로 빈 문자열
+          domain: entry.domain,
+          project: entry.project,
+          module: entry.module || null,
+          topic: entry.feature || "",
+          plan: "",
+          planPercent: 0,
+          progress: entry.past_week?.tasks?.map((t) => t.title) || [],
+          progressPercent: entry.past_week?.tasks?.[0]?.progress || 0,
+          reason: "",
+          next: entry.this_week?.tasks || [],
+          risk: entry.risks || null,
+          riskLevel: (entry.risk_level ?? null) as 0 | 1 | 2 | 3 | null,
+          collaborators: entry.collaborators,
+        }))
+      );
+
+      const weekString = `W${String(selectedWeek).padStart(2, "0")}`;
+
+      if (format === "csv") {
+        downloadSnapshotsAsCSV(items, selectedYear, weekString);
+      } else if (format === "json") {
+        downloadSnapshotsAsJSON(items, selectedYear, weekString);
+      }
+    },
+    [snapshots, selectedYear, selectedWeek]
+  );
 
   // 모바일: 타임라인 오버레이 상태
   const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
@@ -731,6 +788,50 @@ function SnapshotsMainViewInner({
 
               {/* 액션 버튼 - PC에서는 아이콘+텍스트, 모바일에서는 텍스트만 */}
               <div className="flex items-center gap-2">
+                {/* 데이터 추출 버튼 */}
+                <div ref={exportButtonRef} className="relative">
+                  <button
+                    onClick={() => setShowExportDropdown(!showExportDropdown)}
+                    disabled={snapshots.length === 0}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6] disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="데이터 추출"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="hidden md:inline">추출</span>
+                  </button>
+                  
+                  {/* Export 드롭다운 */}
+                  {showExportDropdown && (
+                    <div
+                      className="absolute right-0 top-[calc(100%+4px)] z-50 w-40 rounded-md overflow-hidden animate-fadeIn bg-white border border-[#d0d7de]"
+                      style={{
+                        boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
+                      }}
+                    >
+                      <button
+                        onClick={() => handleExport("csv")}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        CSV로 저장
+                      </button>
+                      <button
+                        onClick={() => handleExport("json")}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        JSON으로 저장
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
                 <LoadingButton
                   onClick={handleEditWeek}
                   disabled={snapshots.length === 0}

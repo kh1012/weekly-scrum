@@ -130,6 +130,21 @@ export function exportSnapshotsToJSON(
 }
 
 /**
+ * 타임스탬프 파일명 생성 (YYMMDDHHmmss 형식)
+ */
+function generateTimestampFilename(extension: string): string {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(2);
+  const MM = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const HH = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  
+  return `${yy}${MM}${dd}${HH}${mm}${ss}_snapshots.${extension}`;
+}
+
+/**
  * 파일 다운로드
  */
 export function downloadFile(content: string, filename: string, mimeType: string) {
@@ -153,7 +168,7 @@ export function downloadSnapshotsAsCSV(
   week: string
 ) {
   const csv = exportSnapshotsToCSV(items, year, week);
-  const filename = `snapshot-${year}-${week}.csv`;
+  const filename = generateTimestampFilename("csv");
   downloadFile(csv, filename, "text/csv;charset=utf-8;");
 }
 
@@ -166,7 +181,7 @@ export function downloadSnapshotsAsJSON(
   week: string
 ) {
   const json = exportSnapshotsToJSON(items, year, week);
-  const filename = `snapshot-${year}-${week}.json`;
+  const filename = generateTimestampFilename("json");
   downloadFile(json, filename, "application/json;charset=utf-8;");
 }
 
