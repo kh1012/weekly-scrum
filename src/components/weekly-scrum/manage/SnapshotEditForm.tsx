@@ -48,7 +48,7 @@ interface SnapshotEditFormProps {
   hideName?: boolean;
   /** 외부에서 활성화된 섹션 (미리보기 클릭 등) */
   activeSection?: FormSection | null;
-  /** 주차 정보 (Past Week/This Week 표시용) */
+  /** 주차 정보 (Progress/Next 표시용) */
   weekInfo?: {
     year: number;
     week: number;
@@ -394,7 +394,7 @@ function MetaField({
 }
 
 /**
- * Task 편집 컴포넌트 (Past Week) - 25% 단위 슬라이더 포함
+ * Task 편집 컴포넌트 (Progress) - 25% 단위 슬라이더 포함
  */
 function TaskEditor({
   tasks,
@@ -643,7 +643,7 @@ function TaskEditor({
 }
 
 /**
- * This Week Task 편집 컴포넌트
+ * Next Task 편집 컴포넌트
  */
 function ThisWeekTaskEditor({
   tasks,
@@ -2043,7 +2043,7 @@ export function SnapshotEditForm({
           </div>
         </section>
 
-        {/* Past Week - 챕터 스타일 */}
+        {/* Progress (Past Week) - 챕터 스타일 */}
         <section
           data-section="pastWeek"
           className={`mb-10 transition-all duration-200 group/pastweek hover:opacity-100 ${getSectionOpacity(
@@ -2053,7 +2053,7 @@ export function SnapshotEditForm({
         >
           <div className="flex items-center justify-between mb-3">
             <h2 className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/pastweek:text-gray-600">
-              <span>Past Week</span>
+              <span>Progress</span>
               {weekInfo?.pastWeekLabel && (
                 <span className="font-normal normal-case text-gray-700 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
                   {weekInfo.pastWeekLabel}
@@ -2061,7 +2061,7 @@ export function SnapshotEditForm({
               )}
             </h2>
 
-            {/* This Week → Past Week 가져오기 버튼 */}
+            {/* Next → Progress 가져오기 버튼 */}
             {snapshot.thisWeek.tasks.length > 0 && (
               <button
                 type="button"
@@ -2076,7 +2076,7 @@ export function SnapshotEditForm({
                   });
                 }}
                 className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                title="This Week 작업을 Past Week로 복사합니다"
+                title="Next 작업을 Progress로 이동합니다"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -2091,7 +2091,7 @@ export function SnapshotEditForm({
                     d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
                   />
                 </svg>
-                This Week에서 가져오기
+                Next에서 가져오기
               </button>
             )}
           </div>
@@ -2296,7 +2296,7 @@ export function SnapshotEditForm({
           </div>
         </section>
 
-        {/* This Week - 챕터 스타일 */}
+        {/* Next (This Week) - 챕터 스타일 */}
         <section
           data-section="thisWeek"
           className={`transition-all duration-200 group/thisweek hover:opacity-100 ${getSectionOpacity(
@@ -2306,7 +2306,7 @@ export function SnapshotEditForm({
         >
           <div className="mb-3">
             <h2 className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider transition-colors duration-200 group-hover/thisweek:text-gray-600">
-              <span>This Week</span>
+              <span>Next</span>
               {weekInfo?.thisWeekLabel && (
                 <span className="font-normal normal-case text-gray-700 text-[10px] px-1.5 py-0.5 bg-gray-100 rounded">
                   {weekInfo.thisWeekLabel}

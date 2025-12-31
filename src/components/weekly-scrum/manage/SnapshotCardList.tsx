@@ -700,7 +700,7 @@ export const SnapshotCardList = forwardRef<
                 {isExpanded && (
                   <div className="px-4 pb-4 pt-2 border-t border-gray-100 animate-fadeIn">
                     <div className="space-y-3">
-                      {/* Past Week Tasks */}
+                      {/* Progress (Past Week) */}
                       {snapshot.pastWeek.tasks.length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
@@ -717,7 +717,7 @@ export const SnapshotCardList = forwardRef<
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                               />
                             </svg>
-                            Past Week
+                            Progress
                           </div>
                           <ul className="space-y-1.5">
                             {snapshot.pastWeek.tasks.map((task, i) => (
@@ -751,7 +751,7 @@ export const SnapshotCardList = forwardRef<
                           </ul>
                         </div>
                       )}
-                      {/* This Week Tasks */}
+                      {/* Next (This Week) */}
                       {snapshot.thisWeek.tasks.length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
@@ -768,7 +768,7 @@ export const SnapshotCardList = forwardRef<
                                 d="M13 7l5 5m0 0l-5 5m5-5H6"
                               />
                             </svg>
-                            This Week
+                            Next
                           </div>
                           <ul className="space-y-1.5">
                             {snapshot.thisWeek.tasks.map((task, i) => (

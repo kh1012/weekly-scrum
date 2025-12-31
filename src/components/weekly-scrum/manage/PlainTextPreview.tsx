@@ -166,7 +166,7 @@ export function PlainTextPreview({
               </div>
             </div>
 
-            {/* Past Week 섹션 */}
+            {/* Progress (Past Week) 섹션 */}
             <div
               ref={(el) => {
                 sectionRefs.current["pastWeek"] = el;
@@ -175,7 +175,7 @@ export function PlainTextPreview({
               onClick={() => handleSectionClick("pastWeek")}
             >
               <div className="text-xs font-mono font-semibold text-gray-900 mb-2">
-                * Past Week
+                * Progress
               </div>
 
               {/* Tasks */}
@@ -283,7 +283,7 @@ export function PlainTextPreview({
               </div>
             </div>
 
-            {/* This Week 섹션 */}
+            {/* Next (This Week) 섹션 */}
             <div
               ref={(el) => {
                 sectionRefs.current["thisWeek"] = el;
@@ -292,7 +292,7 @@ export function PlainTextPreview({
               onClick={() => handleSectionClick("thisWeek")}
             >
               <div className="text-xs font-mono font-semibold text-gray-900 mb-2">
-                * This Week
+                * Next
               </div>
 
               <div

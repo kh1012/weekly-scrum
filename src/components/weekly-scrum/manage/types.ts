@@ -237,8 +237,8 @@ export function tempSnapshotToPlainText(snapshot: TempSnapshot): string {
   // Name
   lines.push(`* Name: ${snapshot.name}`);
   
-  // Past Week
-  lines.push("* Past Week");
+  // Progress (Past Week)
+  lines.push("* Progress");
   lines.push("    * Tasks");
   if (snapshot.pastWeek.tasks.length > 0) {
     snapshot.pastWeek.tasks.forEach((task) => {
@@ -270,8 +270,8 @@ export function tempSnapshotToPlainText(snapshot: TempSnapshot): string {
     lines.push("    * Collaborators: None");
   }
   
-  // This Week
-  lines.push("* This Week");
+  // Next (This Week)
+  lines.push("* Next");
   lines.push("    * Tasks");
   if (snapshot.thisWeek.tasks.length > 0) {
     snapshot.thisWeek.tasks.forEach((task) => {

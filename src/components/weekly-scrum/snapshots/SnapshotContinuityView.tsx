@@ -139,7 +139,7 @@ export function SnapshotContinuityView({
             연속성 분석
           </h2>
           <span className="text-xs text-[#57606a]">
-            이전 thisWeek ↔ 현재 pastWeek · 현재 thisWeek ↔ 다음 pastWeek
+            이전 Next ↔ 현재 Progress · 현재 Next ↔ 다음 Progress
           </span>
         </div>
         <div className="flex items-center gap-3">

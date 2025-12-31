@@ -145,11 +145,11 @@ export function ScrumListItem({
       {isExpanded && (
         <div className="px-3 pb-3 pt-0 border-t border-[#d0d7de]">
           <div className="pt-3 space-y-3">
-            {/* Past Week */}
+            {/* Progress (Past Week) */}
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="text-[10px] font-semibold" style={{ color: PROGRESS_COLORS.completed.text }}>
-                  Past Week
+                  Progress
                 </span>
               </div>
               <div className="space-y-1.5 pl-2" style={{ borderLeft: `2px solid ${PROGRESS_COLORS.completed.text}` }}>
@@ -193,11 +193,11 @@ export function ScrumListItem({
               </div>
             </div>
 
-            {/* This Week */}
+            {/* Next (This Week) */}
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="text-[10px] font-semibold text-[#0969da]">
-                  This Week
+                  Next
                 </span>
               </div>
               <div className="space-y-1.5 pl-2 border-l-2 border-[#0969da]">

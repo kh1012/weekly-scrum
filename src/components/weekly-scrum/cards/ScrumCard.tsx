@@ -35,8 +35,8 @@ function formatToPlainText(item: ScrumItem): string {
   // Name
   lines.push(`* Name: ${item.name}`);
   
-  // Past Week
-  lines.push("* Past Week");
+  // Progress (Past Week)
+  lines.push("* Progress");
   lines.push("    * Tasks");
   if (item.progress && item.progress.length > 0) {
     item.progress.forEach((task) => {
@@ -73,8 +73,8 @@ function formatToPlainText(item: ScrumItem): string {
     lines.push("    * Collaborators: None");
   }
   
-  // This Week
-  lines.push("* This Week");
+  // Next (This Week)
+  lines.push("* Next");
   lines.push("    * Tasks");
   if (item.next && item.next.length > 0) {
     item.next.forEach((task) => {
@@ -349,7 +349,7 @@ export function ScrumCard({
           </div>
         )}
 
-        {/* Past Week */}
+        {/* Progress (Past Week) */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
             <div 
@@ -357,7 +357,7 @@ export function ScrumCard({
               style={{ background: PROGRESS_COLORS.completed.text }}
             />
             <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">
-              Past Week
+              Progress
             </span>
           </div>
           <div className="space-y-2 pl-4 border-l-2" style={{ borderColor: `${PROGRESS_COLORS.completed.text}40` }}>
@@ -410,14 +410,14 @@ export function ScrumCard({
           </div>
         </div>
 
-        {/* This Week */}
+        {/* Next (This Week) */}
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div 
               className="w-1.5 h-1.5 rounded-full bg-blue-500"
             />
             <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">
-              This Week
+              Next
             </span>
           </div>
           <div className="space-y-2 pl-4 border-l-2 border-blue-100">
