@@ -3,10 +3,15 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAvailableSnapshotWeeks } from "./useAvailableSnapshotWeeks";
 import { useCollaborationData } from "./useCollaborationData";
-import { buildCollabGraph, type GraphNode, type GraphEdge } from "./buildCollabGraph";
+import {
+  buildCollabGraph,
+  type GraphNode,
+  type GraphEdge,
+} from "./buildCollabGraph";
 import { WeekChecklist } from "./WeekChecklist";
 import { CollaborationGraph } from "./CollaborationGraph";
 import { StatsCards } from "./StatsCards";
+import { LogoLoadingSpinner } from "../common";
 
 interface CollaboratorGraphViewProps {
   workspaceId: string;
@@ -122,12 +127,10 @@ export function CollaboratorGraphView({
           <div className="flex-1 bg-white rounded-lg border border-[#d0d7de] overflow-hidden">
             <div className="h-full flex items-center justify-center">
               {isLoadingEntries ? (
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-[#d0d7de] border-t-[#0969da] rounded-full animate-spin mb-4" />
-                  <p className="text-sm text-[#57606a] font-medium">
-                    협업 데이터를 불러오는 중...
-                  </p>
-                </div>
+                <LogoLoadingSpinner
+                  title="협업 데이터를 불러오는 중입니다"
+                  description="잠시만 기다려주세요."
+                />
               ) : entriesError ? (
                 <div className="text-center">
                   <p className="text-sm text-red-600 font-medium">
@@ -205,4 +208,3 @@ export function CollaboratorGraphView({
     </div>
   );
 }
-
