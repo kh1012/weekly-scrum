@@ -495,9 +495,9 @@ export function CreatePlanModal({
                   onClick={() => setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all duration-150 outline-none"
                   style={{
-                    background: selectedAssignee ? "rgba(59, 130, 246, 0.08)" : "#f8fafc",
-                    border: selectedAssignee ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid #e2e8f0",
-                    color: selectedAssignee ? "#1e40af" : "#64748b",
+                    background: selectedMember ? "rgba(59, 130, 246, 0.08)" : "#f8fafc",
+                    border: selectedMember ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid #e2e8f0",
+                    color: selectedMember ? "#1e40af" : "#64748b",
                   }}
                 >
                   <div className="flex items-center gap-3">

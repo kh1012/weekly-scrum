@@ -748,7 +748,7 @@ export function DraftGanttView({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className={`flex flex-col bg-white ${isHeaderHidden ? 'fixed inset-0 z-40' : 'h-full'}`}>
       {/* 헤더 - Airbnb 스타일 (보조 액션 포함) */}
       {!isHeaderHidden && (
         <GanttHeader
