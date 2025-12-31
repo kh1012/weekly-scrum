@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 interface WeekTimelineProps {
@@ -13,6 +13,8 @@ interface WeekTimelineProps {
   className?: string;
   /** 편집 모드에서는 스냅샷이 없는 주차를 비활성화 */
   disableEmptyWeeks?: boolean;
+  /** 현재 선택된 주차의 스냅샷 데이터 */
+  currentWeekSnapshots?: any[];
 }
 
 // ISO 8601 주차 계산 (정확한 계산)
@@ -131,7 +133,146 @@ export function WeekTimeline({
   isLoading = false,
   className = "",
   disableEmptyWeeks = false,
+  currentWeekSnapshots = [],
 }: WeekTimelineProps) {
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Export 메뉴 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target as Node) &&
+        exportButtonRef.current &&
+        !exportButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    if (isExportMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isExportMenuOpen]);
+
+  // TXT 형식으로 export
+  const exportAsTxt = () => {
+    if (!currentWeekSnapshots || currentWeekSnapshots.length === 0) {
+      alert("내보낼 스냅샷 데이터가 없습니다.");
+      return;
+    }
+
+    const lines: string[] = [];
+    lines.push(`# ${year}년 W${String(week).padStart(2, "0")} 주차 스냅샷`);
+    lines.push(`# 생성일: ${new Date().toLocaleDateString("ko-KR")}`);
+    lines.push("");
+
+    currentWeekSnapshots.forEach((snapshot, snapshotIndex) => {
+      lines.push(`## 스냅샷 ${snapshotIndex + 1}`);
+      lines.push(`작성일: ${new Date(snapshot.created_at).toLocaleString("ko-KR")}`);
+      lines.push("");
+
+      if (snapshot.entries && snapshot.entries.length > 0) {
+        snapshot.entries.forEach((entry: any, entryIndex: number) => {
+          lines.push(`### 엔트리 ${entryIndex + 1}`);
+          lines.push(`[${entry.domain} / ${entry.project} / ${entry.module || "-"} / ${entry.feature || "-"}]`);
+          lines.push("");
+
+          // Progress (Past Week)
+          if (entry.past_week?.tasks && entry.past_week.tasks.length > 0) {
+            lines.push("* Progress");
+            lines.push("    * Tasks");
+            entry.past_week.tasks.forEach((task: any) => {
+              lines.push(`        * ${task.title} (${task.progress}%)`);
+            });
+            lines.push("");
+          }
+
+          // Next (This Week)
+          if (entry.this_week?.tasks && entry.this_week.tasks.length > 0) {
+            lines.push("* Next");
+            lines.push("    * Tasks");
+            entry.this_week.tasks.forEach((task: string) => {
+              lines.push(`        * ${task}`);
+            });
+            lines.push("");
+          }
+
+          // Risks
+          if (entry.risks && entry.risks.length > 0) {
+            lines.push("* Risks");
+            entry.risks.forEach((risk: string) => {
+              lines.push(`    * ${risk}`);
+            });
+            lines.push("");
+          }
+
+          // Collaborators
+          if (entry.collaborators && entry.collaborators.length > 0) {
+            lines.push("* Collaborators");
+            entry.collaborators.forEach((collab: any) => {
+              const relations = collab.relations || [collab.relation || "pair"];
+              lines.push(`    * ${collab.name} (${relations.join(", ")})`);
+            });
+            lines.push("");
+          }
+
+          lines.push("---");
+          lines.push("");
+        });
+      }
+    });
+
+    const content = lines.join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `snapshot_${year}_W${String(week).padStart(2, "0")}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setIsExportMenuOpen(false);
+  };
+
+  // JSON 형식으로 export
+  const exportAsJson = () => {
+    if (!currentWeekSnapshots || currentWeekSnapshots.length === 0) {
+      alert("내보낼 스냅샷 데이터가 없습니다.");
+      return;
+    }
+
+    const exportData = {
+      year,
+      week,
+      weekKey: `${year}-${week}`,
+      exportDate: new Date().toISOString(),
+      snapshots: currentWeekSnapshots.map((snapshot) => ({
+        id: snapshot.id,
+        created_at: snapshot.created_at,
+        updated_at: snapshot.updated_at,
+        workload_level: snapshot.workload_level,
+        workload_note: snapshot.workload_note,
+        entries: snapshot.entries,
+      })),
+    };
+
+    const content = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `snapshot_${year}_W${String(week).padStart(2, "0")}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setIsExportMenuOpen(false);
+  };
   // 연도별 주차 데이터 생성 (연속된 주차 표시)
   const groupedWeeks = useMemo(() => {
     // 1. 현재 ISO 주차 계산
@@ -235,7 +376,91 @@ export function WeekTimeline({
 
   return (
     <div className={`flex flex-col ${className}`}>
-      {groupedWeeks.map((group, groupIndex) => (
+      {/* 헤더 - SnapshotsMainViewInner와 높이 맞춤 */}
+      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de] flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#24292f]">주차 선택</h2>
+          <p className="text-xs text-[#57606a] mt-0.5">
+            주차별 스냅샷 조회
+          </p>
+        </div>
+
+        {/* Export 옵션 버튼 */}
+        <div className="relative">
+          <button
+            ref={exportButtonRef}
+            onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+            aria-label="옵션"
+            className="p-1.5 rounded-lg transition-all duration-200 hover:bg-gray-200 text-gray-700"
+            disabled={!currentWeekSnapshots || currentWeekSnapshots.length === 0}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+              />
+            </svg>
+          </button>
+
+          {/* Export 드롭다운 메뉴 */}
+          {isExportMenuOpen && (
+            <div
+              ref={exportMenuRef}
+              className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 animate-fadeIn"
+            >
+              <button
+                onClick={exportAsTxt}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                  />
+                </svg>
+                TXT로 내보내기
+              </button>
+              <button
+                onClick={exportAsJson}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+                  />
+                </svg>
+                JSON으로 내보내기
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 주차 리스트 */}
+      <div className="flex-1 overflow-y-auto w-full">
+        {groupedWeeks.map((group, groupIndex) => (
         <div key={group.year} className="py-2">
           {/* 연도 헤더 */}
           <div className="px-3 py-1 mb-1">
@@ -304,26 +529,27 @@ export function WeekTimeline({
             })}
           </div>
         </div>
-      ))}
+        ))}
 
-      {groupedWeeks.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-          <svg
-            className="w-12 h-12 text-[#d0d7de] mb-3"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <p className="text-xs text-[#57606a]">스냅샷이 없습니다</p>
-        </div>
-      )}
+        {groupedWeeks.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <svg
+              className="w-12 h-12 text-[#d0d7de] mb-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <p className="text-xs text-[#57606a]">스냅샷이 없습니다</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

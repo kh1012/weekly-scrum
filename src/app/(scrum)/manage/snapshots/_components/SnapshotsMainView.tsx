@@ -362,6 +362,7 @@ function SnapshotsMainViewInner({
           onYearChange={setSelectedYear}
           onWeekChange={setSelectedWeek}
           snapshotCountByWeek={snapshotCountByWeek}
+          currentWeekSnapshots={snapshots}
           isLoading={isLoadingCounts}
           className="w-full"
         />
@@ -426,6 +427,7 @@ function SnapshotsMainViewInner({
             }}
             snapshotCountByWeek={snapshotCountByWeek}
             isLoading={isLoadingCounts}
+            currentWeekSnapshots={snapshots}
             className="w-full"
           />
         </div>
