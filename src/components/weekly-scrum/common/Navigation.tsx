@@ -339,7 +339,7 @@ export const SideNavigation = memo(function SideNavigation({
       "/work-map",
       "/my",
     ];
-    
+
     // 약간의 지연 후 prefetch (초기 로딩에 영향 최소화)
     const timer = setTimeout(() => {
       priorityRoutes.forEach((route) => {

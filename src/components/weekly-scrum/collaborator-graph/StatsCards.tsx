@@ -19,9 +19,9 @@ export function StatsCards({
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <>
-      <div className="space-y-4">
+      <div className="w-full space-y-4">
         {/* Overview Card */}
-        <div className="bg-white rounded-lg border border-[#d0d7de] p-4">
+        <div className="w-full bg-white rounded-lg border border-[#d0d7de] p-4">
           <h2 className="text-sm font-semibold text-[#24292f] mb-3">
             Overview
           </h2>
@@ -65,7 +65,7 @@ export function StatsCards({
         </div>
 
         {/* Top 3 Collaborators Card */}
-        <div className="bg-white rounded-lg border border-[#d0d7de] p-4">
+        <div className="w-full bg-white rounded-lg border border-[#d0d7de] p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-[#24292f]">
               Top 3 Collaborators
@@ -134,7 +134,7 @@ export function StatsCards({
         </div>
 
         {/* Distribution Card */}
-        <div className="bg-white rounded-lg border border-[#d0d7de] p-4">
+        <div className="w-full bg-white rounded-lg border border-[#d0d7de] p-4">
           <h2 className="text-sm font-semibold text-[#24292f] mb-3">
             Distribution
           </h2>
@@ -246,7 +246,7 @@ export function StatsCards({
 
         {/* Selected Node/Edge Info */}
         {selectedNode && (
-          <div className="bg-[#ddf4ff] rounded-lg border border-[#0969da] p-4">
+          <div className="w-full bg-[#ddf4ff] rounded-lg border border-[#0969da] p-4">
             <h2 className="text-sm font-semibold text-[#0969da] mb-3">
               선택된 노드
             </h2>
@@ -282,7 +282,7 @@ export function StatsCards({
         )}
 
         {selectedEdge && (
-          <div className="bg-[#ddf4ff] rounded-lg border border-[#0969da] p-4">
+          <div className="w-full bg-[#ddf4ff] rounded-lg border border-[#0969da] p-4">
             <h2 className="text-sm font-semibold text-[#0969da] mb-3">
               선택된 엣지
             </h2>
