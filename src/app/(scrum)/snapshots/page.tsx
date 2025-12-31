@@ -25,7 +25,7 @@ export default function SnapshotsPage() {
       {/* 좌측: 주차 타임라인 (PC) */}
       <aside className="hidden lg:flex lg:w-80 lg:shrink-0 border-r border-[#d0d7de] overflow-y-auto flex-col">
         {/* 다중 선택 토글 버튼 */}
-        <div className="shrink-0 p-3 border-b border-[#d0d7de] bg-[#f6f8fa]">
+        <div className="shrink-0 p-3">
           <button
             onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
             className={`w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
@@ -50,7 +50,10 @@ export default function SnapshotsPage() {
             {isMultiSelectMode ? "다중 선택 중" : "다중 선택"}
           </button>
         </div>
-        <WeekTimeline className="w-full flex-1 overflow-y-auto" multiSelect={isMultiSelectMode} />
+        <WeekTimeline
+          className="w-full flex-1 overflow-y-auto"
+          multiSelect={isMultiSelectMode}
+        />
       </aside>
 
       {/* 모바일: 주차 타임라인 (오버레이) */}
@@ -161,4 +164,3 @@ export default function SnapshotsPage() {
     </div>
   );
 }
-

@@ -377,13 +377,14 @@ export function WeekTimeline({
   return (
     <div className={`flex flex-col ${className}`}>
       {/* 헤더 - SnapshotsMainViewInner와 높이 맞춤 */}
-      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de] flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-[#24292f]">주차 선택</h2>
-          <p className="text-xs text-[#57606a] mt-0.5">
-            주차별 스냅샷 조회
-          </p>
-        </div>
+      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base md:text-lg font-semibold text-[#24292f]">주차 선택</h2>
+            <p className="text-xs text-[#57606a]">
+              주차별 스냅샷 조회
+            </p>
+          </div>
 
         {/* Export 옵션 버튼 */}
         <div className="relative">
@@ -394,67 +395,68 @@ export function WeekTimeline({
             className="p-1.5 rounded-lg transition-all duration-200 hover:bg-gray-200 text-gray-700"
             disabled={!currentWeekSnapshots || currentWeekSnapshots.length === 0}
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                />
+              </svg>
+            </button>
 
-          {/* Export 드롭다운 메뉴 */}
-          {isExportMenuOpen && (
-            <div
-              ref={exportMenuRef}
-              className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 animate-fadeIn"
-            >
-              <button
-                onClick={exportAsTxt}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+            {/* Export 드롭다운 메뉴 */}
+            {isExportMenuOpen && (
+              <div
+                ref={exportMenuRef}
+                className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 animate-fadeIn"
               >
-                <svg
-                  className="w-4 h-4 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+                <button
+                  onClick={exportAsTxt}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
-                TXT로 내보내기
-              </button>
-              <button
-                onClick={exportAsJson}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-              >
-                <svg
-                  className="w-4 h-4 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                  TXT로 내보내기
+                </button>
+                <button
+                  onClick={exportAsJson}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-                  />
-                </svg>
-                JSON으로 내보내기
-              </button>
-            </div>
-          )}
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+                    />
+                  </svg>
+                  JSON으로 내보내기
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
