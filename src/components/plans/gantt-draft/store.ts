@@ -1124,6 +1124,7 @@ export const useDraftStore = create<DraftStore>()(
               color: f.color,
               orderIndex: f.orderIndex,
               laneHint: f.laneHint ?? undefined,
+              links: f.links, // links 필드 추가
               dirty: false,
               deleted: false,
               createdAtLocal: f.createdAt,

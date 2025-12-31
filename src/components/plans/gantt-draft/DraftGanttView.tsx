@@ -94,12 +94,25 @@ export function DraftGanttView({
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileTree, setShowMobileTree] = useState(false);
 
+  // GNB/Header 숨기기 상태
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Header 숨기기/보이기 핸들러
+  const handleToggleHeader = useCallback(() => {
+    setIsHeaderHidden((prev) => !prev);
+    // GNB도 함께 숨기기/보이기
+    const gnb = document.querySelector('header[class*="sticky top-0"]') as HTMLElement;
+    if (gnb) {
+      gnb.style.display = isHeaderHidden ? '' : 'none';
+    }
+  }, [isHeaderHidden]);
 
   // 저장 진행 상태 모달
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -737,79 +750,114 @@ export function DraftGanttView({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* 헤더 - Airbnb 스타일 (보조 액션 포함) */}
-      <GanttHeader
-        workspaceId={workspaceId}
-        onCommit={handleCommit}
-        isCommitting={isCommitting}
-        onDiscardChanges={handleDiscardChanges}
-        // 읽기 전용 모드
-        readOnly={readOnly}
-        title={title}
-        // 내 것만 보기 필터
-        onlyMine={onlyMine}
-        onOnlyMineChange={onOnlyMineChange}
-        isFilterLoading={isFilterLoading}
-        // 마지막 업데이트 시각
-        maxUpdatedAt={maxUpdatedAt}
-        updatedByName={updatedByName}
-        // 중앙 액션 props
-        onUndo={undo}
-        onRedo={redo}
-        onOpenCommandPalette={() => setShowCommandPalette(true)}
-        onOpenHelp={readOnly ? undefined : () => setShowHelp(true)}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        dragInfo={dragDateInfo}
-        // 기간 범위 props
-        rangeMonths={rangeMonths}
-        onRangeMonthsChange={setRangeMonths}
-        rangeStart={rangeStart}
-        rangeEnd={rangeEnd}
-        onCustomRangeChange={(start, end) => {
-          setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
-          setRangeStart(start);
-          setRangeEnd(end);
-        }}
-        onLockError={(type, lockedByName) => {
-          if (type === "locked_by_other") {
-            showToast(
-              "warning",
-              "편집할 수 없음",
-              `현재 ${
-                lockedByName || "다른 사용자"
-              }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
-            );
-          } else {
-            showToast(
-              "error",
-              "작업을 시작할 수 없습니다",
-              "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
-            );
-          }
-        }}
-        onStartSuccess={() => {
-          showToast(
-            "success",
-            "편집 모드 시작",
-            "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
-          );
-        }}
-        onStopSuccess={(discardedCount) => {
-          if (discardedCount > 0) {
-            showToast(
-              "info",
-              "작업 종료",
-              `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
-            );
-          } else {
+      {!isHeaderHidden && (
+        <GanttHeader
+          workspaceId={workspaceId}
+          onCommit={handleCommit}
+          isCommitting={isCommitting}
+          onDiscardChanges={handleDiscardChanges}
+          // 읽기 전용 모드
+          readOnly={readOnly}
+          title={title}
+          // 내 것만 보기 필터
+          onlyMine={onlyMine}
+          onOnlyMineChange={onOnlyMineChange}
+          isFilterLoading={isFilterLoading}
+          // 마지막 업데이트 시각
+          maxUpdatedAt={maxUpdatedAt}
+          updatedByName={updatedByName}
+          // 중앙 액션 props
+          onUndo={undo}
+          onRedo={redo}
+          onOpenCommandPalette={() => setShowCommandPalette(true)}
+          onOpenHelp={readOnly ? undefined : () => setShowHelp(true)}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          dragInfo={dragDateInfo}
+          // 기간 범위 props
+          rangeMonths={rangeMonths}
+          onRangeMonthsChange={setRangeMonths}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          onCustomRangeChange={(start, end) => {
+            setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
+            setRangeStart(start);
+            setRangeEnd(end);
+          }}
+          onToggleHeader={handleToggleHeader}
+          onLockError={(type, lockedByName) => {
+            if (type === "locked_by_other") {
+              showToast(
+                "warning",
+                "편집할 수 없음",
+                `현재 ${
+                  lockedByName || "다른 사용자"
+                }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
+              );
+            } else {
+              showToast(
+                "error",
+                "작업을 시작할 수 없습니다",
+                "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
+              );
+            }
+          }}
+          onStartSuccess={() => {
             showToast(
               "success",
-              "작업 종료",
-              "작업이 정상적으로 종료되었습니다."
+              "편집 모드 시작",
+              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
             );
-          }
-        }}
-      />
+          }}
+          onStopSuccess={(discardedCount) => {
+            if (discardedCount > 0) {
+              showToast(
+                "info",
+                "작업 종료",
+                `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
+              );
+            } else {
+              showToast(
+                "success",
+                "작업 종료",
+                "작업이 정상적으로 종료되었습니다."
+              );
+            }
+          }}
+        />
+      )}
+
+      {/* Floating 복원 버튼 (Header 숨김 시) */}
+      {isHeaderHidden && (
+        <button
+          onClick={handleToggleHeader}
+          className="fixed top-4 right-4 z-50 p-3 rounded-full shadow-lg transition-all hover:shadow-xl active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+          }}
+          title="헤더 보이기 (👁️)"
+        >
+          <svg
+            className="w-5 h-5 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+            />
+          </svg>
+        </button>
+      )}
 
       {/* 메인 영역 - border 없이 꽉 차게 */}
       <div className="flex flex-1 overflow-hidden bg-white relative">

@@ -138,6 +138,30 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             </div>
           </section>
 
+          {/* 화면 확장 기능 */}
+          <section>
+            <h3
+              className="text-base font-semibold mb-2"
+              style={{ color: "var(--notion-text)" }}
+            >
+              👁️ 화면 확장 (헤더 숨기기)
+            </h3>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: "var(--notion-text-muted)" }}
+            >
+              타임라인 영역을 더 넓게 보고 싶을 때, 헤더 우측의 <strong>눈 아이콘 (👁️‍🗨️)</strong> 버튼을 클릭하면
+              GNB와 헤더를 숨길 수 있습니다. 숨김 상태에서는 우측 상단에 Floating 버튼이 나타나며,
+              이를 클릭하면 다시 헤더를 표시할 수 있습니다.
+            </p>
+            <div
+              className="mt-2 p-3 rounded-md text-xs"
+              style={{ background: "var(--notion-bg-secondary)" }}
+            >
+              💡 임시로 타임라인 작업 영역을 최대화하는 기능입니다. 페이지를 새로고침하면 원래대로 돌아옵니다.
+            </div>
+          </section>
+
           {/* Lane 규칙 */}
           <section>
             <h3
