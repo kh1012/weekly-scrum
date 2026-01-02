@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useCallback, useTransition, useMemo } from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import type { WorkspaceMemberOption } from "@/components/plans/gantt-draft/CreatePlanModal";
 
@@ -33,7 +33,8 @@ interface AdminPlansGanttClientProps {
   workspaceId: string;
   initialPlans: InitialPlan[];
   members: WorkspaceMemberOption[];
-  initialOnlyMine: boolean;
+  initialStages: string[];
+  initialAssignees: string[];
   maxUpdatedAt?: string;
   updatedByName?: string;
 }
@@ -42,7 +43,8 @@ export function AdminPlansGanttClient({
   workspaceId,
   initialPlans,
   members,
-  initialOnlyMine,
+  initialStages,
+  initialAssignees,
   maxUpdatedAt,
   updatedByName,
 }: AdminPlansGanttClientProps) {
@@ -50,13 +52,31 @@ export function AdminPlansGanttClient({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const handleOnlyMineChange = useCallback(
-    (value: boolean) => {
+  const selectedStages = useMemo(() => new Set(initialStages), [initialStages]);
+  const selectedAssignees = useMemo(() => new Set(initialAssignees), [initialAssignees]);
+
+  const handleStagesChange = useCallback(
+    (stages: Set<string>) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set("onlyMine", "1");
+      if (stages.size > 0) {
+        params.set("stages", Array.from(stages).join(","));
       } else {
-        params.delete("onlyMine");
+        params.delete("stages");
+      }
+      startTransition(() => {
+        router.push(`?${params.toString()}`);
+      });
+    },
+    [router, searchParams]
+  );
+
+  const handleAssigneesChange = useCallback(
+    (assignees: Set<string>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (assignees.size > 0) {
+        params.set("assignees", Array.from(assignees).join(","));
+      } else {
+        params.delete("assignees");
       }
       startTransition(() => {
         router.push(`?${params.toString()}`);
@@ -70,8 +90,10 @@ export function AdminPlansGanttClient({
       workspaceId={workspaceId}
       initialPlans={initialPlans}
       members={members}
-      onlyMine={initialOnlyMine}
-      onOnlyMineChange={handleOnlyMineChange}
+      selectedStages={selectedStages}
+      onStagesChange={handleStagesChange}
+      selectedAssignees={selectedAssignees}
+      onAssigneesChange={handleAssigneesChange}
       isFilterLoading={isPending}
       maxUpdatedAt={maxUpdatedAt}
       updatedByName={updatedByName}

@@ -61,6 +61,7 @@ const initialUIState: DraftUIState = {
     modules: [],
     features: [],
     stages: [],
+    assignees: [],
   },
   lockState: {
     isLocked: false,
@@ -915,7 +916,7 @@ export const useDraftStore = create<DraftStore>()(
           ui: {
             ...get().ui,
             searchQuery: "",
-            filters: { projects: [], modules: [], features: [], stages: [] },
+            filters: { projects: [], modules: [], features: [], stages: [], assignees: [] },
           },
         });
       },

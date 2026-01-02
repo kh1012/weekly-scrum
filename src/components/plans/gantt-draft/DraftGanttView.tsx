@@ -58,10 +58,14 @@ interface DraftGanttViewProps {
   readOnly?: boolean;
   /** 헤더 제목 */
   title?: string;
-  /** 내 것만 보기 필터 상태 */
-  onlyMine?: boolean;
-  /** 내 것만 보기 필터 변경 핸들러 (URL 업데이트용) */
-  onOnlyMineChange?: (value: boolean) => void;
+  /** 스테이지 필터 상태 */
+  selectedStages?: Set<string>;
+  /** 스테이지 필터 변경 핸들러 */
+  onStagesChange?: (stages: Set<string>) => void;
+  /** 담당자 필터 상태 (userId 집합) */
+  selectedAssignees?: Set<string>;
+  /** 담당자 필터 변경 핸들러 */
+  onAssigneesChange?: (assignees: Set<string>) => void;
   /** 필터 로딩 중 상태 */
   isFilterLoading?: boolean;
   /** Plans 최대 updated_at (마지막 업데이트 시각) */
@@ -76,8 +80,10 @@ export function DraftGanttView({
   members = [],
   readOnly = false,
   title,
-  onlyMine = false,
-  onOnlyMineChange,
+  selectedStages = new Set(),
+  onStagesChange,
+  selectedAssignees = new Set(),
+  onAssigneesChange,
   isFilterLoading = false,
   maxUpdatedAt,
   updatedByName,
@@ -148,6 +154,15 @@ export function DraftGanttView({
   const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
   const selectFlag = useDraftStore((s) => s.selectFlag);
+  const setFilters = useDraftStore((s) => s.setFilters);
+
+  // 필터를 store에 동기화
+  useEffect(() => {
+    setFilters({
+      stages: Array.from(selectedStages),
+      assignees: Array.from(selectedAssignees),
+    });
+  }, [selectedStages, selectedAssignees, setFilters]);
 
   // Flags 관련
   const getDirtyFlags = useDraftStore((s) => s.getDirtyFlags);
@@ -759,9 +774,12 @@ export function DraftGanttView({
         // 읽기 전용 모드
         readOnly={readOnly}
         title={title}
-        // 내 것만 보기 필터
-        onlyMine={onlyMine}
-        onOnlyMineChange={onOnlyMineChange}
+        // 필터
+        selectedStages={selectedStages}
+        onStagesChange={onStagesChange}
+        selectedAssignees={selectedAssignees}
+        onAssigneesChange={onAssigneesChange}
+        members={members}
         isFilterLoading={isFilterLoading}
         // 마지막 업데이트 시각
         maxUpdatedAt={maxUpdatedAt}

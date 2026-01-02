@@ -17,19 +17,20 @@ import { AdminPlansGanttClient } from "./_components/AdminPlansGanttClient";
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 
 interface PageProps {
-  searchParams: Promise<{ onlyMine?: string }>;
+  searchParams: Promise<{ stages?: string; assignees?: string }>;
 }
 
 export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
-  // searchParams에서 onlyMine 파라미터 확인
+  // searchParams에서 필터 파라미터 확인
   const params = await searchParams;
-  const onlyMine = params.onlyMine === "1" || params.onlyMine === "true";
+  const initialStages = params.stages ? params.stages.split(",").filter(Boolean) : [];
+  const initialAssignees = params.assignees ? params.assignees.split(",").filter(Boolean) : [];
 
   // 권한 확인과 데이터 조회를 병렬로 실행
   const [hasAccess, result, workspaceMembers, maxUpdatedAtResult] =
     await Promise.all([
       isAdminOrLeader(),
-      fetchFeaturePlans({ workspaceId: DEFAULT_WORKSPACE_ID, onlyMine }),
+      fetchFeaturePlans({ workspaceId: DEFAULT_WORKSPACE_ID }),
       listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
       getPlansMaxUpdatedAt(DEFAULT_WORKSPACE_ID),
     ]);
@@ -73,7 +74,8 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
       workspaceId={DEFAULT_WORKSPACE_ID}
       initialPlans={initialPlans}
       members={members}
-      initialOnlyMine={onlyMine}
+      initialStages={initialStages}
+      initialAssignees={initialAssignees}
       maxUpdatedAt={maxUpdatedAt}
       updatedByName={updatedByName}
     />

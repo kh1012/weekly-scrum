@@ -195,10 +195,24 @@ export function DraftTimeline({
     [expandedNodesArray]
   );
 
-  // 활성 bars (삭제되지 않은 것들)
+  // 활성 bars (삭제되지 않은 것들 + 필터 적용)
   const activeBars = useMemo(() => {
-    return allBars.filter((b) => !b.deleted);
-  }, [allBars]);
+    let bars = allBars.filter((b) => !b.deleted);
+
+    // 스테이지 필터 적용
+    if (filters.stages && filters.stages.length > 0) {
+      bars = bars.filter((b) => filters.stages.includes(b.stage));
+    }
+
+    // 담당자 필터 적용
+    if (filters.assignees && filters.assignees.length > 0) {
+      bars = bars.filter((b) =>
+        b.assignees.some((assignee) => filters.assignees.includes(assignee.userId))
+      );
+    }
+
+    return bars;
+  }, [allBars, filters.stages, filters.assignees]);
 
   // 필터링된 rows (useMemo로 캐싱)
   const rows = useMemo(() => {

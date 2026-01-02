@@ -182,6 +182,7 @@ export interface DraftUIState {
     modules: string[];
     features: string[];
     stages: string[];
+    assignees: string[];
   };
   lockState: LockState;
   lastSyncAt?: string;

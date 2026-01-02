@@ -1714,10 +1714,10 @@ export function DraftTreePanel({
                   ? "bg-blue-100 text-blue-600"
                   : "hover:bg-white text-gray-500"
               }`}
-              title="필터 옵션"
+              title="트리 필터 옵션"
             >
               <FilterIcon className="w-3 h-3" />
-              <span>필터</span>
+              <span>트리 필터</span>
               {hasActiveFilters && (
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
               )}

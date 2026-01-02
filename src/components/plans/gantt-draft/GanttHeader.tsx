@@ -39,10 +39,16 @@ interface GanttHeaderProps {
   readOnly?: boolean;
   /** 헤더 제목 */
   title?: string;
-  /** 내 것만 보기 필터 상태 */
-  onlyMine?: boolean;
-  /** 내 것만 보기 필터 변경 핸들러 */
-  onOnlyMineChange?: (value: boolean) => void;
+  /** 스테이지 필터 상태 */
+  selectedStages?: Set<string>;
+  /** 스테이지 필터 변경 핸들러 */
+  onStagesChange?: (stages: Set<string>) => void;
+  /** 담당자 필터 상태 (userId 집합) */
+  selectedAssignees?: Set<string>;
+  /** 담당자 필터 변경 핸들러 */
+  onAssigneesChange?: (assignees: Set<string>) => void;
+  /** 담당자 목록 */
+  members?: Array<{ userId: string; displayName: string }>;
   /** 필터 로딩 중 상태 */
   isFilterLoading?: boolean;
   /** Plans 최대 updated_at (마지막 업데이트 시각) */
@@ -82,8 +88,11 @@ export function GanttHeader({
   onDiscardChanges,
   readOnly = false,
   title,
-  onlyMine = false,
-  onOnlyMineChange,
+  selectedStages = new Set(),
+  onStagesChange,
+  selectedAssignees = new Set(),
+  onAssigneesChange,
+  members = [],
   isFilterLoading = false,
   maxUpdatedAt,
   updatedByName,
@@ -149,8 +158,22 @@ export function GanttHeader({
   const [isStopping, setIsStopping] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [showRangePopover, setShowRangePopover] = useState(false);
+  const [showStagesFilter, setShowStagesFilter] = useState(false);
+  const [showAssigneesFilter, setShowAssigneesFilter] = useState(false);
   const [isExtendPressed, setIsExtendPressed] = useState(false);
   const rangePopoverRef = useRef<HTMLDivElement>(null);
+  const stagesFilterRef = useRef<HTMLDivElement>(null);
+  const assigneesFilterRef = useRef<HTMLDivElement>(null);
+
+  // 스테이지 목록
+  const STAGES = [
+    "컨셉 기획",
+    "상세 기획",
+    "UI 디자인",
+    "FE 개발",
+    "BE 개발",
+    "QA 검증",
+  ];
 
   // 클릭 외부 감지
   useEffect(() => {
@@ -161,12 +184,24 @@ export function GanttHeader({
       ) {
         setShowRangePopover(false);
       }
+      if (
+        stagesFilterRef.current &&
+        !stagesFilterRef.current.contains(e.target as Node)
+      ) {
+        setShowStagesFilter(false);
+      }
+      if (
+        assigneesFilterRef.current &&
+        !assigneesFilterRef.current.contains(e.target as Node)
+      ) {
+        setShowAssigneesFilter(false);
+      }
     };
-    if (showRangePopover) {
+    if (showRangePopover || showStagesFilter || showAssigneesFilter) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showRangePopover]);
+  }, [showRangePopover, showStagesFilter, showAssigneesFilter]);
 
   // 날짜 포맷
   const formatRangeLabel = () => {
@@ -354,32 +389,118 @@ export function GanttHeader({
 
         {/* 중앙: 필터 + 기간 설정 + 보조 액션 */}
         <div className={`flex items-center gap-3 ${isMobile && readOnly ? "justify-center" : ""}`}>
-          {/* 내 것만 보기 필터 */}
-          {onOnlyMineChange && (
-            <>
-              <label
+          {/* 스테이지 필터 */}
+          {onStagesChange && (
+            <div className="relative" ref={stagesFilterRef}>
+              <button
+                onClick={() => setShowStagesFilter(!showStagesFilter)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  isFilterLoading ? "cursor-wait opacity-70" : "cursor-pointer hover:bg-gray-100"
+                  selectedStages.size > 0
+                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    : "text-gray-600 hover:bg-gray-100"
                 }`}
-                title="담당자로 지정된 일정만 표시"
+                title="스테이지 필터"
               >
-                {isFilterLoading ? (
-                  <LoadingIcon className="w-4 h-4 animate-spin text-blue-500" />
-                ) : (
-                  <input
-                    type="checkbox"
-                    checked={onlyMine}
-                    onChange={(e) => onOnlyMineChange(e.target.checked)}
-                    disabled={isFilterLoading}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer disabled:cursor-wait"
-                  />
+                <span>스테이지</span>
+                {selectedStages.size > 0 && (
+                  <span className="px-1.5 py-0.5 text-xs font-bold rounded-full bg-blue-500 text-white">
+                    {selectedStages.size}
+                  </span>
                 )}
-                <span className={onlyMine ? "text-blue-600" : "text-gray-600"}>
-                  내 것만
-                </span>
-              </label>
-              <div className="w-px h-5 bg-gray-200" />
-            </>
+                <ChevronDownIcon
+                  className={`w-3 h-3 transition-transform ${
+                    showStagesFilter ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {showStagesFilter && (
+                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 p-2 min-w-[180px] z-50">
+                  <div className="space-y-1">
+                    {STAGES.map((stage) => (
+                      <label
+                        key={stage}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedStages.has(stage)}
+                          onChange={(e) => {
+                            const newStages = new Set(selectedStages);
+                            if (e.target.checked) {
+                              newStages.add(stage);
+                            } else {
+                              newStages.delete(stage);
+                            }
+                            onStagesChange(newStages);
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{stage}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 담당자 필터 */}
+          {onAssigneesChange && members && members.length > 0 && (
+            <div className="relative" ref={assigneesFilterRef}>
+              <button
+                onClick={() => setShowAssigneesFilter(!showAssigneesFilter)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  selectedAssignees.size > 0
+                    ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+                title="담당자 필터"
+              >
+                <span>담당자</span>
+                {selectedAssignees.size > 0 && (
+                  <span className="px-1.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500 text-white">
+                    {selectedAssignees.size}
+                  </span>
+                )}
+                <ChevronDownIcon
+                  className={`w-3 h-3 transition-transform ${
+                    showAssigneesFilter ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {showAssigneesFilter && (
+                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 p-2 min-w-[200px] max-h-[300px] overflow-y-auto z-50">
+                  <div className="space-y-1">
+                    {members.map((member) => (
+                      <label
+                        key={member.userId}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedAssignees.has(member.userId)}
+                          onChange={(e) => {
+                            const newAssignees = new Set(selectedAssignees);
+                            if (e.target.checked) {
+                              newAssignees.add(member.userId);
+                            } else {
+                              newAssignees.delete(member.userId);
+                            }
+                            onAssigneesChange(newAssignees);
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-sm text-gray-700">{member.displayName}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {(onStagesChange || (onAssigneesChange && members && members.length > 0)) && (
+            <div className="w-px h-5 bg-gray-200" />
           )}
 
           {/* 기간 설정 버튼 */}
