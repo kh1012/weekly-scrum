@@ -1330,7 +1330,7 @@ export function DraftTimeline({
             return (
               <div
                 key={node.id}
-                className="absolute left-0 cursor-crosshair transition-all duration-200"
+                className="absolute left-0 cursor-crosshair"
                 style={{
                   top,
                   height,
