@@ -100,25 +100,6 @@ export function GanttSkeleton() {
           ))}
         </div>
 
-        {/* 로딩 텍스트 */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-          <div className="flex flex-col items-center gap-3 bg-white/90 backdrop-blur-sm px-6 py-4 rounded-xl shadow-lg">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
-              <div
-                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                style={{ animationDelay: "0.1s" }}
-              />
-              <div
-                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                style={{ animationDelay: "0.2s" }}
-              />
-            </div>
-            <p className="text-sm font-medium text-gray-700">
-              필터 적용 중...
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
