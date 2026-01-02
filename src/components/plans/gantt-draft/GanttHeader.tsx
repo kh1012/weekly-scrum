@@ -165,6 +165,19 @@ export function GanttHeader({
   const stagesFilterRef = useRef<HTMLDivElement>(null);
   const assigneesFilterRef = useRef<HTMLDivElement>(null);
 
+  // 필터 로컬 상태 (드롭다운 내부에서만 사용)
+  const [localStages, setLocalStages] = useState<Set<string>>(new Set(selectedStages));
+  const [localAssignees, setLocalAssignees] = useState<Set<string>>(new Set(selectedAssignees));
+
+  // 부모에서 전달받은 필터 상태가 변경되면 로컬 상태도 동기화
+  useEffect(() => {
+    setLocalStages(new Set(selectedStages));
+  }, [selectedStages]);
+
+  useEffect(() => {
+    setLocalAssignees(new Set(selectedAssignees));
+  }, [selectedAssignees]);
+
   // 스테이지 목록
   const STAGES = [
     "컨셉 기획",
@@ -414,8 +427,8 @@ export function GanttHeader({
                 />
               </button>
               {showStagesFilter && (
-                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 p-2 min-w-[180px] z-50">
-                  <div className="space-y-1">
+                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
+                  <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
                     {STAGES.map((stage) => (
                       <label
                         key={stage}
@@ -423,21 +436,41 @@ export function GanttHeader({
                       >
                         <input
                           type="checkbox"
-                          checked={selectedStages.has(stage)}
+                          checked={localStages.has(stage)}
                           onChange={(e) => {
-                            const newStages = new Set(selectedStages);
+                            const newStages = new Set(localStages);
                             if (e.target.checked) {
                               newStages.add(stage);
                             } else {
                               newStages.delete(stage);
                             }
-                            onStagesChange(newStages);
+                            setLocalStages(newStages);
                           }}
                           className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{stage}</span>
                       </label>
                     ))}
+                  </div>
+                  {/* 액션 버튼 */}
+                  <div className="border-t border-gray-200 p-2 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setLocalStages(new Set());
+                      }}
+                      className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
+                    >
+                      초기화
+                    </button>
+                    <button
+                      onClick={() => {
+                        onStagesChange(localStages);
+                        setShowStagesFilter(false);
+                      }}
+                      className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                    >
+                      적용
+                    </button>
                   </div>
                 </div>
               )}
@@ -469,8 +502,8 @@ export function GanttHeader({
                 />
               </button>
               {showAssigneesFilter && (
-                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 p-2 min-w-[200px] max-h-[300px] overflow-y-auto z-50">
-                  <div className="space-y-1">
+                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[200px] z-50 overflow-hidden">
+                  <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
                     {members.map((member) => (
                       <label
                         key={member.userId}
@@ -478,21 +511,41 @@ export function GanttHeader({
                       >
                         <input
                           type="checkbox"
-                          checked={selectedAssignees.has(member.userId)}
+                          checked={localAssignees.has(member.userId)}
                           onChange={(e) => {
-                            const newAssignees = new Set(selectedAssignees);
+                            const newAssignees = new Set(localAssignees);
                             if (e.target.checked) {
                               newAssignees.add(member.userId);
                             } else {
                               newAssignees.delete(member.userId);
                             }
-                            onAssigneesChange(newAssignees);
+                            setLocalAssignees(newAssignees);
                           }}
                           className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                         />
                         <span className="text-sm text-gray-700">{member.displayName}</span>
                       </label>
                     ))}
+                  </div>
+                  {/* 액션 버튼 */}
+                  <div className="border-t border-gray-200 p-2 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setLocalAssignees(new Set());
+                      }}
+                      className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
+                    >
+                      초기화
+                    </button>
+                    <button
+                      onClick={() => {
+                        onAssigneesChange(localAssignees);
+                        setShowAssigneesFilter(false);
+                      }}
+                      className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-emerald-500 rounded hover:bg-emerald-600 transition-colors"
+                    >
+                      적용
+                    </button>
                   </div>
                 </div>
               )}

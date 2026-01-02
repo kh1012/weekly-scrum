@@ -882,13 +882,7 @@ export function DraftGanttView({
       <div className="flex flex-1 overflow-hidden bg-white relative">
         {/* 필터 로딩 오버레이 (테이블 영역만) */}
         {isFilterLoading && (
-          <div
-            className="absolute inset-0 z-50 flex items-center justify-center"
-            style={{
-              background: "rgba(255, 255, 255, 0.85)",
-              backdropFilter: "blur(4px)",
-            }}
-          >
+          <div className="absolute inset-0 z-50 flex items-center justify-center">
             <LogoLoadingSpinner
               title="필터 적용 중"
               description="결과를 불러오고 있습니다..."
