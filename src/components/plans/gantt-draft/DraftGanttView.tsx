@@ -24,6 +24,7 @@ import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
 interface InitialAssignee {
   userId: string;
@@ -1022,6 +1023,22 @@ export function DraftGanttView({
       <ToastContainer />
 
       {/* Save Progress Modal */}
+      {/* 필터 로딩 오버레이 */}
+      {isFilterLoading && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          style={{
+            background: "rgba(255, 255, 255, 0.85)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <LogoLoadingSpinner
+            title="필터 적용 중"
+            description="결과를 불러오고 있습니다..."
+          />
+        </div>
+      )}
+
       <SaveProgressModal
         isOpen={showSaveModal}
         onClose={() => {
