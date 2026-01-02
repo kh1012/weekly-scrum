@@ -24,7 +24,7 @@ import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
-import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
+import { GanttSkeleton } from "./GanttSkeleton";
 
 interface InitialAssignee {
   userId: string;
@@ -880,15 +880,8 @@ export function DraftGanttView({
 
       {/* 메인 영역 - border 없이 꽉 차게 */}
       <div className="flex flex-1 overflow-hidden bg-white relative">
-        {/* 필터 로딩 오버레이 (테이블 영역만) */}
-        {isFilterLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center">
-            <LogoLoadingSpinner
-              title="필터 적용 중"
-              description="결과를 불러오고 있습니다..."
-            />
-          </div>
-        )}
+        {/* 필터 로딩 스켈레톤 (테이블 영역만) */}
+        {isFilterLoading && <GanttSkeleton />}
 
         {/* 모바일: 트리 패널 토글 버튼 (readOnly일 때는 숨김) */}
         {isMobile && !readOnly && (
