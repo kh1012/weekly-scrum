@@ -38,7 +38,7 @@ export default async function EditSnapshotsPage({ params }: EditPageProps) {
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name")
-    .eq("id", user.id)
+    .eq("user_id", user.id)
     .single();
 
   const displayName = profile?.display_name?.trim() || "지정된 이름없음";

@@ -21,6 +21,15 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // 사용자 프로필에서 display_name 조회 (name이 비어있을 때 사용)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .single();
+
+  const defaultName = profile?.display_name?.trim() || "";
+
   // 본인의 모든 스냅샷과 엔트리 조회 (새 DB 스키마: risks, collaborators 별도 컬럼)
   const { data: snapshots, error } = await supabase
     .from("snapshots")
@@ -55,6 +64,16 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+
+  // entries의 name이 비어있거나 "지정된 이름없음"이면 defaultName으로 채우기
+  (snapshots || []).forEach((snapshot) => {
+    (snapshot.entries || []).forEach((entry: any) => {
+      const entryName = entry.name?.trim();
+      if (!entryName || entryName === "지정된 이름없음" || entryName === "사용자") {
+        entry.name = defaultName;
+      }
+    });
+  });
 
   // 주차별로 그룹화
   const weeklyData: Record<string, {

@@ -57,8 +57,9 @@ export interface LoadSelectionState {
 
 /**
  * 빈 스냅샷 생성 함수
+ * @param displayName - 사용자 display_name (기본값으로 사용)
  */
-export function createEmptySnapshot(): TempSnapshot {
+export function createEmptySnapshot(displayName?: string): TempSnapshot {
   const now = new Date();
   return {
     tempId: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -66,7 +67,7 @@ export function createEmptySnapshot(): TempSnapshot {
     isDirty: false,
     createdAt: now,
     updatedAt: now,
-    name: "",
+    name: displayName?.trim() || "",
     domain: "",
     project: "",
     module: "",

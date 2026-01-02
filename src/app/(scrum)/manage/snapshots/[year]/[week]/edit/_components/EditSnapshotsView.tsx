@@ -98,16 +98,24 @@ const DEFAULT_LEFT_PANEL_WIDTH = 280;
 
 function convertEntryToTempSnapshot(
   entry: SnapshotEntryRow,
-  index: number
+  index: number,
+  displayName?: string
 ): TempSnapshot {
   // 새 DB 스키마: risks, collaborators 별도 컬럼
+  // name이 비어있거나 "지정된 이름없음"이면 displayName 사용
+  const entryName = entry.name?.trim();
+  const finalName = 
+    !entryName || entryName === "지정된 이름없음" || entryName === "사용자"
+      ? (displayName || entryName || "")
+      : entryName;
+  
   return {
     tempId: entry.id,
     isOriginal: true,
     isDirty: false,
     createdAt: new Date(entry.created_at),
     updatedAt: new Date(entry.updated_at),
-    name: entry.name,
+    name: finalName,
     domain: entry.domain,
     project: entry.project,
     module: entry.module || "",
@@ -205,8 +213,8 @@ function EditSnapshotsViewInner({
     if (isNewMode) {
       return [createEmptyTempSnapshot(displayName)];
     }
-    return (selectedSnapshotData?.entries || []).map(
-      convertEntryToTempSnapshot
+    return (selectedSnapshotData?.entries || []).map((entry, index) =>
+      convertEntryToTempSnapshot(entry, index, displayName)
     );
   });
 
@@ -295,11 +303,15 @@ function EditSnapshotsViewInner({
     fetchSnapshotCounts();
   }, [workspaceId, userId]);
 
-  // 주차 변경 시 라우팅
+  // 연도 상태 (WeekTimeline에서 연도 변경 시 임시 저장)
+  const [tempYear, setTempYear] = useState(year);
+
+  // 주차 변경 시 라우팅 (연도도 함께 고려)
   const handleWeekChange = (newWeek: number) => {
-    if (newWeek !== week) {
+    if (tempYear !== year || newWeek !== week) {
       navigationProgress.start();
-      router.push(`/manage/snapshots/${year}/${newWeek}/edit`);
+      router.push(`/manage/snapshots/${tempYear}/${newWeek}/edit`);
+      setTempYear(year); // 라우팅 후 초기화
     }
   };
 
@@ -315,8 +327,8 @@ function EditSnapshotsViewInner({
   const handleSnapshotChange = (snapshotId: string) => {
     setSelectedSnapshotId(snapshotId);
     const snapshotData = snapshots.find((s) => s.id === snapshotId);
-    const newTempSnapshots = (snapshotData?.entries || []).map(
-      convertEntryToTempSnapshot
+    const newTempSnapshots = (snapshotData?.entries || []).map((entry, index) =>
+      convertEntryToTempSnapshot(entry, index, displayName)
     );
     setTempSnapshots(newTempSnapshots);
     setSelectedId(newTempSnapshots[0]?.tempId || null);
@@ -675,8 +687,8 @@ function EditSnapshotsViewInner({
           <WeekTimeline
             year={year}
             week={week}
-            onYearChange={() => {
-              // 실제 라우팅은 onWeekChange에서 처리
+            onYearChange={(newYear) => {
+              setTempYear(newYear);
             }}
             onWeekChange={(w) => {
               handleWeekChange(w);
@@ -696,8 +708,7 @@ function EditSnapshotsViewInner({
           year={year}
           week={week}
           onYearChange={(newYear) => {
-            // WeekTimeline에서는 onWeekChange도 호출되므로 중복 라우팅 방지
-            // 실제 라우팅은 onWeekChange에서 처리
+            setTempYear(newYear);
           }}
           onWeekChange={(newWeek) => {
             handleWeekChange(newWeek);
@@ -1011,6 +1022,7 @@ function EditSnapshotsViewInner({
                       | null
                   }
                   onSectionClick={(section) => setFocusedSection(section)}
+                  displayName={displayName}
                 />
               </div>
             </>

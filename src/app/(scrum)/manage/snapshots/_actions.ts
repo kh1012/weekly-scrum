@@ -64,7 +64,7 @@ export async function updateSnapshotAndEntries(
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name")
-    .eq("id", user.id)
+    .eq("user_id", user.id)
     .single();
 
   const defaultName = profile?.display_name?.trim() || "지정된 이름없음";
@@ -217,7 +217,7 @@ export async function createSnapshotAndEntries(
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name")
-    .eq("id", user.id)
+    .eq("user_id", user.id)
     .single();
 
   const defaultName = profile?.display_name?.trim() || "사용자";

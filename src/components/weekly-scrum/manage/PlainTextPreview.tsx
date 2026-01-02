@@ -27,6 +27,8 @@ interface PlainTextPreviewProps {
   focusedSection?: PreviewSection | null;
   /** 섹션 클릭 시 콜백 - 편집폼 활성화용 */
   onSectionClick?: (section: PreviewSection) => void;
+  /** 사용자 display_name (name이 비어있을 때 표시용) */
+  displayName?: string;
 }
 
 export function PlainTextPreview({
@@ -34,6 +36,7 @@ export function PlainTextPreview({
   onCopy,
   focusedSection,
   onSectionClick,
+  displayName,
 }: PlainTextPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -154,12 +157,19 @@ export function PlainTextPreview({
               className={`rounded-lg p-3 ${getHighlightClass("meta")}`}
               onClick={() => handleSectionClick("meta")}
             >
-              {/* Name 표시 */}
-              {snapshot.name && (
-                <div className="text-xs font-mono font-semibold text-gray-900 mb-1">
-                  {snapshot.name}
-                </div>
-              )}
+              {/* Name 표시 - name이 비어있거나 "사용자"일 때 displayName 사용 */}
+              {(() => {
+                const name = snapshot.name?.trim();
+                const displayNameToShow = 
+                  !name || name === "사용자" 
+                    ? (displayName || "사용자")
+                    : name;
+                return (
+                  <div className="text-xs font-mono font-semibold text-gray-900 mb-1">
+                    {displayNameToShow}
+                  </div>
+                );
+              })()}
               <div className="text-xs font-mono text-gray-500">
                 [{snapshot.domain} / {snapshot.project} / {snapshot.module} /{" "}
                 {snapshot.feature}]

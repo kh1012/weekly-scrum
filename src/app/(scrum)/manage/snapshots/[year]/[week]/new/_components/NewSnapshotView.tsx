@@ -34,8 +34,15 @@ import {
 } from "@/components/weekly-scrum/manage/types";
 import { WorkloadLevelModal } from "@/components/weekly-scrum/manage/WorkloadLevelModal";
 import { createSnapshotAndEntries } from "../../../../_actions";
-import type { SnapshotEntryPayload, CreateSnapshotPayload } from "../../../../_actions";
-import type { PastWeekTask, Collaborator, WorkloadLevel } from "@/lib/supabase/types";
+import type {
+  SnapshotEntryPayload,
+  CreateSnapshotPayload,
+} from "../../../../_actions";
+import type {
+  PastWeekTask,
+  Collaborator,
+  WorkloadLevel,
+} from "@/lib/supabase/types";
 
 // 기존 주차별 데이터 타입
 interface WeekData {
@@ -113,8 +120,7 @@ function NewSnapshotViewInner({
   const [tempSnapshots, setTempSnapshots] = useState<TempSnapshot[]>(() => {
     // URL에서 mode=empty면 빈 스냅샷 하나 생성
     if (urlMode === "empty") {
-      const emptySnapshot = createEmptySnapshot();
-      emptySnapshot.name = displayName;
+      const emptySnapshot = createEmptySnapshot(displayName);
       return [emptySnapshot];
     }
     return [];
@@ -136,6 +142,8 @@ function NewSnapshotViewInner({
   // 미리보기는 항상 표시 (토글 삭제)
   const forceThreeColumn = true;
   const [isSaving, setIsSaving] = useState(false);
+  // 클라이언트 마운트 여부 (hydration 에러 방지)
+  const [isMounted, setIsMounted] = useState(false);
 
   // 데이터 불러오기 상태
   const [myWeeklyData, setMyWeeklyData] = useState<WeekData[]>([]);
@@ -145,7 +153,9 @@ function NewSnapshotViewInner({
   const [isAutoLoading, setIsAutoLoading] = useState(false);
 
   // Workload 상태 (스냅샷 단위)
-  const [workloadLevel, setWorkloadLevel] = useState<WorkloadLevel | null>(null);
+  const [workloadLevel, setWorkloadLevel] = useState<WorkloadLevel | null>(
+    null
+  );
   const [workloadNote, setWorkloadNote] = useState("");
   const [showWorkloadModal, setShowWorkloadModal] = useState(false);
 
@@ -183,7 +193,7 @@ function NewSnapshotViewInner({
     if (urlMode === "load" && myWeeklyData.length > 0 && !autoLoadTriggered) {
       const weeksParam = searchParams.get("weeks");
       if (weeksParam) {
-        const weekKeys = weeksParam.split(',').filter(Boolean);
+        const weekKeys = weeksParam.split(",").filter(Boolean);
         if (weekKeys.length > 0) {
           setSelectedWeeks(new Set(weekKeys));
           setAutoLoadTriggered(true);
@@ -195,7 +205,12 @@ function NewSnapshotViewInner({
 
   // 자동 선택된 주차가 있으면 로드
   useEffect(() => {
-    if (autoLoadTriggered && selectedWeeks.size > 0 && myWeeklyData.length > 0 && tempSnapshots.length === 0) {
+    if (
+      autoLoadTriggered &&
+      selectedWeeks.size > 0 &&
+      myWeeklyData.length > 0 &&
+      tempSnapshots.length === 0
+    ) {
       const loadedSnapshots: TempSnapshot[] = [];
       selectedWeeks.forEach((weekKey) => {
         const weekData = myWeeklyData.find((w) => w.key === weekKey);
@@ -240,7 +255,13 @@ function NewSnapshotViewInner({
         );
       }
     }
-  }, [autoLoadTriggered, selectedWeeks, myWeeklyData, tempSnapshots.length, showToast]);
+  }, [
+    autoLoadTriggered,
+    selectedWeeks,
+    myWeeklyData,
+    tempSnapshots.length,
+    showToast,
+  ]);
 
   // URL mode=empty로 시작 시 초기 selectedId 설정
   useEffect(() => {
@@ -252,6 +273,11 @@ function NewSnapshotViewInner({
       setSelectedId(tempSnapshots[0].tempId);
     }
   }, [urlMode, tempSnapshots, selectedId]);
+
+  // 클라이언트 마운트 확인 (hydration 에러 방지)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // 선택된 주차의 엔트리 불러오기
   const handleLoadFromWeeks = () => {
@@ -323,15 +349,17 @@ function NewSnapshotViewInner({
   const weekInfo = {
     year,
     week,
-    pastWeekLabel: `W${week.toString().padStart(2, "0")} (${formatWeekRangeCompact(year, week)})`,
-    thisWeekLabel: `W${(week + 1).toString().padStart(2, "0")} (${formatWeekRangeCompact(year, week + 1)})`,
+    pastWeekLabel: `W${week
+      .toString()
+      .padStart(2, "0")} (${formatWeekRangeCompact(year, week)})`,
+    thisWeekLabel: `W${(week + 1)
+      .toString()
+      .padStart(2, "0")} (${formatWeekRangeCompact(year, week + 1)})`,
   };
 
   // 새로 작성하기 (빈 상태로 시작)
   const handleStartEmpty = () => {
-    const newSnapshot = createEmptySnapshot();
-    // 현재 로그인한 사용자의 이름을 기본값으로 설정
-    newSnapshot.name = displayName;
+    const newSnapshot = createEmptySnapshot(displayName);
     setTempSnapshots([newSnapshot]);
     setSelectedId(newSnapshot.tempId);
     setMode("editor");
@@ -422,9 +450,7 @@ function NewSnapshotViewInner({
 
   // 빈 카드 추가
   const handleAddEmpty = useCallback(() => {
-    const newSnapshot = createEmptySnapshot();
-    // 현재 로그인한 사용자의 이름을 기본값으로 설정
-    newSnapshot.name = displayName;
+    const newSnapshot = createEmptySnapshot(displayName);
     setTempSnapshots((prev) => [...prev, newSnapshot]);
     setSelectedId(newSnapshot.tempId);
   }, [displayName]);
@@ -510,10 +536,11 @@ function NewSnapshotViewInner({
     setWorkloadLevel(level);
     setWorkloadNote(note);
     setIsSaving(true);
-    
+
     try {
       const entries: SnapshotEntryPayload[] = tempSnapshots.map((s) => ({
-        name: s.name,
+        // name이 비어있으면 displayName 사용 (서버에서도 처리하지만 클라이언트에서도 처리)
+        name: s.name?.trim() || displayName || "",
         domain: s.domain,
         project: s.project,
         module: s.module || null,
@@ -606,8 +633,9 @@ function NewSnapshotViewInner({
                 스냅샷 관리
               </h1>
               <p className="text-xs sm:text-sm text-gray-500">
-                <span className="hidden sm:inline">{year}년 </span>
-                W{week.toString().padStart(2, "0")} <span className="hidden sm:inline">({weekRange})</span>
+                <span className="hidden sm:inline">{year}년 </span>W
+                {week.toString().padStart(2, "0")}{" "}
+                <span className="hidden sm:inline">({weekRange})</span>
               </p>
             </div>
           </div>
@@ -740,7 +768,7 @@ function NewSnapshotViewInner({
         <div className="h-[calc(100vh-3.5rem)] flex items-center justify-center bg-white relative">
           {/* 백드롭 */}
           <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-white" />
-          
+
           {/* 로딩 콘텐츠 */}
           <div className="relative">
             <LogoLoadingSpinner
@@ -804,8 +832,9 @@ function NewSnapshotViewInner({
                   데이터 불러오기
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-600 truncate">
-                  <span className="hidden sm:inline">{year}년 </span>
-                  W{week.toString().padStart(2, "0")} <span className="hidden sm:inline">({weekRange})</span>
+                  <span className="hidden sm:inline">{year}년 </span>W
+                  {week.toString().padStart(2, "0")}{" "}
+                  <span className="hidden sm:inline">({weekRange})</span>
                 </p>
               </div>
             </div>
@@ -834,7 +863,9 @@ function NewSnapshotViewInner({
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
               />
             </svg>
-            <span className="hidden xs:inline">불러오기 ({selectedWeeks.size})</span>
+            <span className="hidden xs:inline">
+              불러오기 ({selectedWeeks.size})
+            </span>
             <span className="xs:hidden">({selectedWeeks.size})</span>
           </button>
         </div>
@@ -1071,7 +1102,9 @@ function NewSnapshotViewInner({
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            <span className="text-xs font-medium hidden sm:inline">스냅샷 목록으로</span>
+            <span className="text-xs font-medium hidden sm:inline">
+              스냅샷 목록으로
+            </span>
             <span className="text-xs font-medium sm:hidden">목록</span>
           </button>
 
@@ -1079,8 +1112,8 @@ function NewSnapshotViewInner({
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <span className="text-xs sm:text-sm font-semibold text-gray-900 whitespace-nowrap">
-              <span className="hidden sm:inline">{year}년 </span>
-              W{week.toString().padStart(2, "0")}
+              <span className="hidden sm:inline">{year}년 </span>W
+              {week.toString().padStart(2, "0")}
             </span>
             <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap hidden sm:inline">
               ({weekRange})
@@ -1104,8 +1137,18 @@ function NewSnapshotViewInner({
             onClick={() => setMobileCardDrawerOpen(true)}
             className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 10h16M4 14h16M4 18h16"
+              />
             </svg>
             <span className="hidden xs:inline">카드</span>
           </button>
@@ -1116,9 +1159,23 @@ function NewSnapshotViewInner({
             disabled={!selectedSnapshot}
             className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
             </svg>
             <span className="hidden xs:inline">미리보기</span>
           </button>
@@ -1183,9 +1240,13 @@ function NewSnapshotViewInner({
         <div
           className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white w-full lg:w-auto"
           style={{
-            width: forceThreeColumn && typeof window !== 'undefined' && window.innerWidth >= 1024
-              ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
-              : undefined,
+            width:
+              forceThreeColumn &&
+              isMounted &&
+              typeof window !== "undefined" &&
+              window.innerWidth >= 1024
+                ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
+                : undefined,
           }}
         >
           {selectedSnapshot ? (
@@ -1196,7 +1257,11 @@ function NewSnapshotViewInner({
                 handleUpdateCard(selectedSnapshot.tempId, updates)
               }
               onFocusSection={setFocusedSection}
-              activeSection={focusedSection as import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection | null}
+              activeSection={
+                focusedSection as
+                  | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                  | null
+              }
               compact
               singleColumn
               hideName
@@ -1228,6 +1293,7 @@ function NewSnapshotViewInner({
                     | null
                 }
                 onSectionClick={(section) => setFocusedSection(section)}
+                displayName={displayName}
               />
             </div>
           </>
@@ -1252,13 +1318,25 @@ function NewSnapshotViewInner({
 
             {/* Header */}
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">카드 리스트</h3>
+              <h3 className="text-sm font-semibold text-gray-900">
+                카드 리스트
+              </h3>
               <button
                 onClick={() => setMobileCardDrawerOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -1309,8 +1387,18 @@ function NewSnapshotViewInner({
                 onClick={() => setMobilePreviewDrawerOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -1327,15 +1415,33 @@ function NewSnapshotViewInner({
                       | null
                   }
                   onSectionClick={(section) => setFocusedSection(section)}
+                  displayName={displayName}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full p-8 text-center">
                   <div>
-                    <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <svg
+                      className="w-12 h-12 mx-auto text-gray-300 mb-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
                     </svg>
-                    <p className="text-sm text-gray-500">카드를 선택하면 미리보기가 표시됩니다</p>
+                    <p className="text-sm text-gray-500">
+                      카드를 선택하면 미리보기가 표시됩니다
+                    </p>
                   </div>
                 </div>
               )}
