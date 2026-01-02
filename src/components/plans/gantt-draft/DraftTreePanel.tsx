@@ -763,6 +763,12 @@ export function DraftTreePanel({
     return bars;
   }, [allBars, filterIndex, filters.stages, filters.assignees]);
 
+  // activeBars를 Set으로 변환 (빠른 조회용)
+  const activeBarsSet = useMemo(
+    () => new Set(activeBars.map((b) => b.clientUid)),
+    [activeBars]
+  );
+
   // 필터링된 rows
   const filteredRows = useMemo(() => {
     if (filterIndex) {
@@ -846,9 +852,10 @@ export function DraftTreePanel({
   }, [expandedNodesArray]);
 
   // FlatTree와 nodePositions 계산 (Timeline과 동일)
+  // 중요: lane 레이아웃은 전체 bars(allBars) 기준으로 계산하되, 표시는 activeBars만
   const flatNodes = useMemo(
-    () => buildFlatTree(filteredRows, activeBars, expandedNodes),
-    [filteredRows, activeBars, expandedNodes]
+    () => buildFlatTree(filteredRows, allBars.filter((b) => !b.deleted), expandedNodes),
+    [filteredRows, allBars, expandedNodes]
   );
 
   // 필터 레벨에 따라 노드 필터링 (상위 레벨 숨김) + top 재계산
@@ -1325,11 +1332,12 @@ export function DraftTreePanel({
     const hasChildren = node.type !== "feature";
     const isSelected = node.row?.rowId === selectedRowId;
 
-    // feature의 bar 개수 (범위 내 bar만 카운트)
+    // feature의 bar 개수 (범위 내 + 필터링된 bar만 카운트)
     const barCount = (() => {
       if (!node.bars) return 0;
-      if (!rangeStart || !rangeEnd) return node.bars.length;
-      return node.bars.filter((bar) =>
+      const visibleBars = node.bars.filter((bar) => activeBarsSet.has(bar.clientUid));
+      if (!rangeStart || !rangeEnd) return visibleBars.length;
+      return visibleBars.filter((bar) =>
         isDateRangeOverlapping(bar.startDate, bar.endDate, rangeStart, rangeEnd)
       ).length;
     })();

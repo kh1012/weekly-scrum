@@ -227,6 +227,12 @@ export function DraftTimeline({
     return bars;
   }, [allBars, filterIndex, filters.stages, filters.assignees]);
 
+  // activeBars를 Set으로 변환 (빠른 조회용)
+  const activeBarsSet = useMemo(
+    () => new Set(activeBars.map((b) => b.clientUid)),
+    [activeBars]
+  );
+
   // 필터링된 rows (useMemo로 캐싱)
   const rows = useMemo(() => {
     if (filterIndex) {
@@ -315,8 +321,9 @@ export function DraftTimeline({
   const totalWidth = days.length * DAY_WIDTH;
 
   // 트리 구조 기반 노드 리스트 (좌측 트리와 동기화)
+  // 중요: lane 레이아웃은 전체 bars(allBars) 기준으로 계산하되, 렌더링은 activeBars만
   const flatNodes = useMemo(() => {
-    const nodes = buildFlatTree(rows, activeBars, expandedNodes);
+    const nodes = buildFlatTree(rows, allBars, expandedNodes);
 
     // 기능 필터: feature 노드만 반환
     if (filters.features.length > 0) {
@@ -329,7 +336,7 @@ export function DraftTimeline({
       );
     }
     return nodes;
-  }, [rows, activeBars, expandedNodes, filters.features, filters.modules]);
+  }, [rows, allBars, expandedNodes, filters.features, filters.modules]);
 
   // 노드별 위치 계산
   const nodePositions = useMemo(
@@ -1405,7 +1412,9 @@ export function DraftTimeline({
                 }}
               >
                 {/* Bars */}
-                {nodeBars.map((bar) => {
+                {nodeBars
+                  .filter((bar) => activeBarsSet.has(bar.clientUid)) // 필터링된 bars만 렌더링
+                  .map((bar) => {
                   const barStart = parseLocalDate(bar.startDate);
                   const barEnd = parseLocalDate(bar.endDate);
 
