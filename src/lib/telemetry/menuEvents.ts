@@ -8,21 +8,25 @@
  * - Menu key mapping from pathname
  */
 
-// SNB menu mapping (from update1.md)
+// SNB menu mapping (Navigation.tsx의 키와 일치하도록 수정)
 const MENU_MAP: Record<string, { group: string; key: string }> = {
   "/feedbacks": { group: "community", key: "feedbacks" },
   "/team-feed": { group: "works", key: "team-feed" },
   "/plans/gantt": { group: "works", key: "plans" },
-  "/admin/plans": { group: "works", key: "plans" },
-  "/admin/plans/gantt": { group: "works", key: "plans" },
+  "/admin/plans": { group: "admin", key: "admin-plans" },
+  "/admin/plans/gantt": { group: "admin", key: "admin-plans" },
   "/snapshots": { group: "works", key: "snapshots" },
-  "/manage/snapshots": { group: "personal", key: "snapshots-management" },
+  "/manage/snapshots": { group: "personal", key: "my-snapshots" }, // Navigation.tsx와 일치
   "/work-map": { group: "works", key: "work-map" },
-  "/my": { group: "personal", key: "dashboard" },
-  "/admin": { group: "admin", key: "dashboard" },
-  "/admin/snapshots": { group: "admin", key: "weekly-log" },
-  "/admin/meta-options": { group: "admin", key: "meta-options" },
-  "/releases": { group: "etc", key: "release-notes" },
+  "/works/collaborator-graph": { group: "works", key: "collaborator-graph" },
+  "/my": { group: "personal", key: "my-dashboard" }, // Navigation.tsx와 일치
+  "/admin": { group: "admin", key: "admin-dashboard" }, // Navigation.tsx와 일치
+  "/admin/snapshots": { group: "admin", key: "admin-snapshots" },
+  "/admin/meta-options": { group: "admin", key: "admin-meta-options" }, // Navigation.tsx와 일치
+  "/admin/members": { group: "admin", key: "admin-members" },
+  "/admin/menu-usage": { group: "admin", key: "admin-menu-usage" },
+  "/admin/menu-settings": { group: "admin", key: "admin-menu-settings" },
+  "/releases": { group: "extra", key: "releases" }, // Navigation.tsx와 일치
 };
 
 // Session ID management (persisted in sessionStorage)
