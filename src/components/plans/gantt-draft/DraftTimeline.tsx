@@ -1335,12 +1335,9 @@ export function DraftTimeline({
                   top,
                   height,
                   width: totalWidth,
-                  // 선택된 행 강조 - 상단/하단 테두리
-                  borderTop: isRowSelected ? "2px solid #10b981" : "none",
-                  borderBottom: isRowSelected ? "2px solid #10b981" : "none",
-                  background: isRowSelected
-                    ? "linear-gradient(90deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
-                    : "transparent",
+                  // 선택된 행 강조 - 파란색 얇은 라인
+                  borderTop: isRowSelected ? "1px solid #3b82f6" : "none",
+                  borderBottom: isRowSelected ? "1px solid #3b82f6" : "none",
                 }}
                 onMouseDown={(e) => {
                   // 클릭 위치에서 laneIndex 계산 (merge된 레인 지원)
