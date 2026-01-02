@@ -438,11 +438,19 @@ function NewSnapshotViewInner({
   const handleUpdateCard = useCallback(
     (tempId: string, updates: Partial<TempSnapshot>) => {
       setTempSnapshots((prev) =>
-        prev.map((s) =>
-          s.tempId === tempId
-            ? { ...s, ...updates, isDirty: true, updatedAt: new Date() }
-            : s
-        )
+        prev.map((s) => {
+          if (s.tempId !== tempId) return s;
+          
+          // 식별자 필드(tempId, isOriginal, createdAt)는 보호
+          const { tempId: _, isOriginal: __, createdAt: ___, ...safeUpdates } = updates;
+          
+          return {
+            ...s,
+            ...safeUpdates,
+            isDirty: true,
+            updatedAt: new Date(),
+          };
+        })
       );
     },
     []
