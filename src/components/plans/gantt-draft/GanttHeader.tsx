@@ -178,14 +178,14 @@ export function GanttHeader({
     setLocalAssignees(new Set(selectedAssignees));
   }, [selectedAssignees]);
 
-  // 스테이지 목록
+  // 스테이지 목록과 색상
   const STAGES = [
-    "컨셉 기획",
-    "상세 기획",
-    "UI 디자인",
-    "FE 개발",
-    "BE 개발",
-    "QA 검증",
+    { name: "컨셉 기획", color: "#f59e0b" },
+    { name: "상세 기획", color: "#f59e0b" },
+    { name: "UI 디자인", color: "#ec4899" },
+    { name: "FE 개발", color: "#3b82f6" },
+    { name: "BE 개발", color: "#10b981" },
+    { name: "QA 검증", color: "#8b5cf6" },
   ];
 
   // 클릭 외부 감지
@@ -431,24 +431,28 @@ export function GanttHeader({
                   <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
                     {STAGES.map((stage) => (
                       <label
-                        key={stage}
+                        key={stage.name}
                         className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
                       >
                         <input
                           type="checkbox"
-                          checked={localStages.has(stage)}
+                          checked={localStages.has(stage.name)}
                           onChange={(e) => {
                             const newStages = new Set(localStages);
                             if (e.target.checked) {
-                              newStages.add(stage);
+                              newStages.add(stage.name);
                             } else {
-                              newStages.delete(stage);
+                              newStages.delete(stage.name);
                             }
                             setLocalStages(newStages);
                           }}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">{stage}</span>
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: stage.color }}
+                        />
+                        <span className="text-xs text-gray-700 flex-1">{stage.name}</span>
                       </label>
                     ))}
                   </div>
@@ -521,9 +525,9 @@ export function GanttHeader({
                             }
                             setLocalAssignees(newAssignees);
                           }}
-                          className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                         />
-                        <span className="text-sm text-gray-700">{member.displayName}</span>
+                        <span className="text-xs text-gray-700">{member.displayName}</span>
                       </label>
                     ))}
                   </div>
