@@ -7,6 +7,25 @@ import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpin
 export const metadata: Metadata = {
   title: "Weekly Scrum Dashboard",
   description: "팀 위클리 스크럼 현황 대시보드",
+  openGraph: {
+    title: "Weekly Scrum Dashboard",
+    description: "팀 위클리 스크럼 현황 대시보드",
+    type: "website",
+    images: [
+      {
+        url: "/assets/logo.svg",
+        width: 512,
+        height: 512,
+        alt: "Weekly Scrum Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Weekly Scrum Dashboard",
+    description: "팀 위클리 스크럼 현황 대시보드",
+    images: ["/assets/logo.svg"],
+  },
 };
 
 export default function RootLayout({

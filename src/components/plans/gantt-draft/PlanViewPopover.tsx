@@ -113,7 +113,7 @@ export function PlanViewPopover({
     >
       {/* 헤더 */}
       <div
-        className="flex-shrink-0 flex items-center justify-between px-4 py-3"
+        className="flex-shrink-0 flex items-center justify-between px-4 py-3 rounded-t-2xl"
         style={{
           background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
           borderBottom: "1px solid rgba(0, 0, 0, 0.06)",

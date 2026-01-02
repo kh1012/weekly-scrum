@@ -161,6 +161,7 @@ export function DraftTimeline({
   const addBar = useDraftStore((s) => s.addBar);
   const addRow = useDraftStore((s) => s.addRow);
   const selectedBarId = useDraftStore((s) => s.ui.selectedBarId);
+  const selectedRowId = useDraftStore((s) => s.ui.selectedRowId);
   const selectBar = useDraftStore((s) => s.selectBar);
   const deleteBar = useDraftStore((s) => s.deleteBar);
   const updateBar = useDraftStore((s) => s.updateBar);
@@ -1317,15 +1318,22 @@ export function DraftTimeline({
 
             const row = node.row;
             const nodeBars = node.bars || [];
+            const isRowSelected = row.rowId === selectedRowId;
 
             return (
               <div
                 key={node.id}
-                className="absolute left-0 cursor-crosshair transition-colors duration-100"
+                className="absolute left-0 cursor-crosshair transition-all duration-200"
                 style={{
                   top,
                   height,
                   width: totalWidth,
+                  // 선택된 행 강조 - 상단/하단 테두리
+                  borderTop: isRowSelected ? "2px solid #10b981" : "none",
+                  borderBottom: isRowSelected ? "2px solid #10b981" : "none",
+                  background: isRowSelected
+                    ? "linear-gradient(90deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%)"
+                    : "transparent",
                 }}
                 onMouseDown={(e) => {
                   // 클릭 위치에서 laneIndex 계산 (merge된 레인 지원)

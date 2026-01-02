@@ -603,7 +603,6 @@ export function WeekTimeline({
                   onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
                   aria-label="옵션"
                   className="p-1.5 rounded-lg transition-all duration-200 hover:bg-gray-200 text-gray-700"
-                  disabled={!currentWeekSnapshots || currentWeekSnapshots.length === 0}
                 >
               <svg
                 className="w-5 h-5"
@@ -628,7 +627,12 @@ export function WeekTimeline({
                   >
                     <button
                       onClick={exportAsTxt}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                      disabled={!currentWeekSnapshots || currentWeekSnapshots.length === 0}
+                      className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+                        !currentWeekSnapshots || currentWeekSnapshots.length === 0
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
                     >
                       <svg
                         className="w-4 h-4 text-gray-500"
@@ -647,7 +651,12 @@ export function WeekTimeline({
                     </button>
                     <button
                       onClick={exportAsJson}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                      disabled={!currentWeekSnapshots || currentWeekSnapshots.length === 0}
+                      className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+                        !currentWeekSnapshots || currentWeekSnapshots.length === 0
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
                     >
                       <svg
                         className="w-4 h-4 text-gray-500"
@@ -667,7 +676,12 @@ export function WeekTimeline({
                     <div className="border-t border-gray-200 my-1" />
                     <button
                       onClick={startMultiSelectMode}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                      disabled={!currentWeekSnapshots || currentWeekSnapshots.length === 0}
+                      className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+                        !currentWeekSnapshots || currentWeekSnapshots.length === 0
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
                     >
                       <svg
                         className="w-4 h-4 text-gray-500"
