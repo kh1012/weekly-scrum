@@ -208,6 +208,20 @@ export type UndoAction =
   | { type: "REORDER_ROWS"; prevOrder: DraftRow[]; nextOrder: DraftRow[] };
 
 /**
+ * 필터링 성능 최적화를 위한 인덱스
+ * filterCache.ts의 FilterIndex 타입과 동일하게 유지
+ */
+export interface FilterIndex {
+  byStage: Map<string, Set<string>>;
+  byAssignee: Map<string, Set<string>>;
+  byRowId: Map<string, Set<string>>;
+  byProject: Map<string, Set<string>>;
+  byModule: Map<string, Set<string>>;
+  byFeature: Map<string, Set<string>>;
+  createdAt: number;
+}
+
+/**
  * Draft Store 전체 상태
  */
 export interface DraftState {
@@ -216,6 +230,8 @@ export interface DraftState {
   ui: DraftUIState;
   undoStack: UndoAction[];
   redoStack: UndoAction[];
+  /** 필터링 성능 최적화를 위한 인덱스 캐시 */
+  filterIndex?: FilterIndex | null;
 }
 
 /**

@@ -39,6 +39,7 @@ import { FLAG_LANE_HEIGHT, packFlagsIntoLanes } from "./flagLayout";
 import { FlagIcon, DocumentIcon } from "@/components/common/Icons";
 import type { DraftFlag, HighlightDateRange } from "./types";
 import { FlagDocPanel } from "./FlagDocPanel";
+import { filterBarsWithIndex, filterRowsWithIndex } from "./filterCache";
 
 export const TREE_WIDTH = 280;
 const HEADER_HEIGHT = 76; // 38px + 38px (검색 + 필터/버튼, p-2 패딩 포함)
@@ -444,6 +445,7 @@ export function DraftTreePanel({
   const allBars = useDraftStore((s) => s.bars);
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
   const filters = useDraftStore((s) => s.ui.filters);
+  const filterIndex = useDraftStore((s) => s.filterIndex);
   const setSearchQuery = useDraftStore((s) => s.setSearchQuery);
 
   // 검색 debounce 상태
@@ -733,7 +735,17 @@ export function DraftTreePanel({
   );
 
   // 활성 bars (삭제되지 않은 것들 + 필터 적용)
+  // 인덱스가 있으면 고속 필터링, 없으면 기존 방식
   const activeBars = useMemo(() => {
+    if (filterIndex) {
+      // 인덱스를 사용한 고속 필터링
+      return filterBarsWithIndex(allBars, filterIndex, {
+        stages: filters.stages || [],
+        assignees: filters.assignees || [],
+      });
+    }
+
+    // 폴백: 기존 방식
     let bars = allBars.filter((b) => !b.deleted);
 
     // 스테이지 필터 적용
@@ -749,10 +761,21 @@ export function DraftTreePanel({
     }
 
     return bars;
-  }, [allBars, filters.stages, filters.assignees]);
+  }, [allBars, filterIndex, filters.stages, filters.assignees]);
 
   // 필터링된 rows
   const filteredRows = useMemo(() => {
+    if (filterIndex) {
+      // 인덱스를 사용한 고속 필터링
+      const barsInView = new Set(activeBars.map((b) => b.clientUid));
+      return filterRowsWithIndex(allRows, barsInView, filterIndex, {
+        projects: filters.projects || [],
+        modules: filters.modules || [],
+        features: filters.features || [],
+      }, searchQuery);
+    }
+
+    // 폴백: 기존 방식
     return allRows.filter((row) => {
       // 로컬에서 생성된 row는 bars 없이도 표시
       if (!row.isLocal) {
@@ -793,7 +816,7 @@ export function DraftTreePanel({
 
       return true;
     });
-  }, [allRows, activeBars, searchQuery, filters]);
+  }, [allRows, activeBars, filterIndex, searchQuery, filters]);
 
   // 필터 레벨 결정 (가장 하위 레벨 기준)
   // 기능 필터가 있으면 2, 모듈 필터가 있으면 1, 프로젝트 필터가 있으면 0, 없으면 -1

@@ -38,6 +38,7 @@ import { packFlagsIntoLanes } from "./flagLayout";
 import { CreateFlagModal } from "./CreateFlagModal";
 import { EditFlagModal } from "./EditFlagModal";
 import { PlanViewPopover } from "./PlanViewPopover";
+import { filterBarsWithIndex, filterRowsWithIndex } from "./filterCache";
 
 const DAY_WIDTH = 40;
 const HEADER_HEIGHT = 76; // 38px + 38px (월 + 일, TreePanel 헤더와 동일)
@@ -155,6 +156,7 @@ export function DraftTimeline({
   const allBars = useDraftStore((s) => s.bars);
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
   const filters = useDraftStore((s) => s.ui.filters);
+  const filterIndex = useDraftStore((s) => s.filterIndex);
   const expandedNodesArray = useDraftStore((s) => s.ui.expandedNodes);
   const addBar = useDraftStore((s) => s.addBar);
   const addRow = useDraftStore((s) => s.addRow);
@@ -196,7 +198,17 @@ export function DraftTimeline({
   );
 
   // 활성 bars (삭제되지 않은 것들 + 필터 적용)
+  // 인덱스가 있으면 고속 필터링, 없으면 기존 방식
   const activeBars = useMemo(() => {
+    if (filterIndex) {
+      // 인덱스를 사용한 고속 필터링
+      return filterBarsWithIndex(allBars, filterIndex, {
+        stages: filters.stages || [],
+        assignees: filters.assignees || [],
+      });
+    }
+
+    // 폴백: 기존 방식
     let bars = allBars.filter((b) => !b.deleted);
 
     // 스테이지 필터 적용
@@ -212,10 +224,21 @@ export function DraftTimeline({
     }
 
     return bars;
-  }, [allBars, filters.stages, filters.assignees]);
+  }, [allBars, filterIndex, filters.stages, filters.assignees]);
 
   // 필터링된 rows (useMemo로 캐싱)
   const rows = useMemo(() => {
+    if (filterIndex) {
+      // 인덱스를 사용한 고속 필터링
+      const barsInView = new Set(activeBars.map((b) => b.clientUid));
+      return filterRowsWithIndex(allRows, barsInView, filterIndex, {
+        projects: filters.projects || [],
+        modules: filters.modules || [],
+        features: filters.features || [],
+      }, searchQuery);
+    }
+
+    // 폴백: 기존 방식
     return allRows.filter((row) => {
       // 로컬에서 생성된 row는 bars 없이도 표시
       // 서버에서 로드된 row는 bars가 있어야 표시
@@ -251,7 +274,7 @@ export function DraftTimeline({
 
       return true;
     });
-  }, [allRows, activeBars, searchQuery, filters]);
+  }, [allRows, activeBars, filterIndex, searchQuery, filters]);
 
   // 날짜 배열 생성 (rangeStart ~ rangeEnd)
   const days = useMemo(() => {

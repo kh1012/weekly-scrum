@@ -22,6 +22,7 @@ import type {
   HighlightDateRange,
 } from "./types";
 import { listFlags } from "./flagService";
+import { buildFilterIndex } from "./filterCache";
 
 const MAX_UNDO_STACK = 20;
 
@@ -310,9 +311,13 @@ export const useDraftStore = create<DraftStore>()(
           }
         }
 
+        // 필터링 성능 최적화를 위한 인덱스 생성
+        const filterIndex = buildFilterIndex(bars, rows);
+
         set({
           rows,
           bars,
+          filterIndex,
           undoStack: [],
           redoStack: [],
           ui: {
