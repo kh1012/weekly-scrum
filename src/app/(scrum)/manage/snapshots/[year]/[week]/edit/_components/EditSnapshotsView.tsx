@@ -277,31 +277,34 @@ function EditSnapshotsViewInner({
   // 모바일 타임라인 상태
   const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
 
+  // 최근 업데이트된 주차 추적 (애니메이션용)
+  const [recentlyUpdatedWeek, setRecentlyUpdatedWeek] = useState<string | null>(null);
+
   // 주차별 스냅샷 갯수 조회
-  useEffect(() => {
-    const fetchSnapshotCounts = async () => {
-      setIsLoadingCounts(true);
-      try {
-        const response = await fetch(
-          `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}`
+  const fetchSnapshotCounts = useCallback(async () => {
+    setIsLoadingCounts(true);
+    try {
+      const response = await fetch(
+        `/api/manage/snapshots/counts?workspaceId=${workspaceId}&userId=${userId}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const counts = data.counts || {};
+        setSnapshotCountByWeek(
+          new Map(Object.entries(counts).map(([k, v]) => [k, v as number]))
         );
-
-        if (response.ok) {
-          const data = await response.json();
-          const counts = data.counts || {};
-          setSnapshotCountByWeek(
-            new Map(Object.entries(counts).map(([k, v]) => [k, v as number]))
-          );
-        }
-      } catch (error) {
-        console.error("Failed to fetch snapshot counts:", error);
-      } finally {
-        setIsLoadingCounts(false);
       }
-    };
-
-    fetchSnapshotCounts();
+    } catch (error) {
+      console.error("Failed to fetch snapshot counts:", error);
+    } finally {
+      setIsLoadingCounts(false);
+    }
   }, [workspaceId, userId]);
+
+  useEffect(() => {
+    fetchSnapshotCounts();
+  }, [fetchSnapshotCounts]);
 
   // 연도 상태 (WeekTimeline에서 연도 변경 시 임시 저장)
   const [tempYear, setTempYear] = useState(year);
@@ -630,6 +633,15 @@ function EditSnapshotsViewInner({
             router.push("/manage/snapshots");
           } else {
             showToast("업데이트 완료!", "success");
+            
+            // 주차별 카운트 갱신
+            await fetchSnapshotCounts();
+            
+            // 애니메이션 효과를 위한 최근 업데이트 주차 설정
+            const weekKey = `${year}-${week}`;
+            setRecentlyUpdatedWeek(weekKey);
+            setTimeout(() => setRecentlyUpdatedWeek(null), 2000);
+            
             router.refresh();
           }
         } else {
@@ -706,6 +718,7 @@ function EditSnapshotsViewInner({
             isLoading={isLoadingCounts}
             className="w-full"
             disableEmptyWeeks={true}
+            recentlyUpdatedWeek={recentlyUpdatedWeek}
           />
         </div>
       </aside>
@@ -725,6 +738,7 @@ function EditSnapshotsViewInner({
           isLoading={isLoadingCounts}
           className="w-full"
           disableEmptyWeeks={true}
+          recentlyUpdatedWeek={recentlyUpdatedWeek}
         />
       </aside>
 

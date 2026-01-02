@@ -19,6 +19,8 @@ interface WeekTimelineProps {
   workspaceId?: string;
   /** 사용자 ID */
   userId?: string;
+  /** 최근 업데이트된 주차 (애니메이션용) */
+  recentlyUpdatedWeek?: string | null;
 }
 
 // ISO 8601 주차 계산 (정확한 계산)
@@ -140,6 +142,7 @@ export function WeekTimeline({
   currentWeekSnapshots = [],
   workspaceId,
   userId,
+  recentlyUpdatedWeek = null,
 }: WeekTimelineProps) {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
@@ -793,7 +796,11 @@ export function WeekTimeline({
                     </div>
                     {/* 스냅샷 개수 항상 표시 */}
                     <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-all duration-300 ${
+                        recentlyUpdatedWeek === weekKey
+                          ? "animate-[pulse-scale_0.6s_ease-in-out]"
+                          : ""
+                      } ${
                         isMultiSelectMode
                           ? isWeekSelected
                             ? "bg-blue-600 text-white"
@@ -808,6 +815,13 @@ export function WeekTimeline({
                           ? "bg-white/10 text-white/70"
                           : "bg-[#f6f8fa] text-[#57606a]"
                       }`}
+                      style={
+                        recentlyUpdatedWeek === weekKey
+                          ? {
+                              animation: "pulse-scale 0.6s ease-in-out",
+                            }
+                          : undefined
+                      }
                     >
                       {snapshotCount}
                     </span>
