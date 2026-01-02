@@ -169,14 +169,18 @@ export function GanttHeader({
   const [localStages, setLocalStages] = useState<Set<string>>(new Set(selectedStages));
   const [localAssignees, setLocalAssignees] = useState<Set<string>>(new Set(selectedAssignees));
 
-  // 부모에서 전달받은 필터 상태가 변경되면 로컬 상태도 동기화
+  // 드롭다운이 열릴 때만 부모 상태로 초기화
   useEffect(() => {
-    setLocalStages(new Set(selectedStages));
-  }, [selectedStages]);
+    if (showStagesFilter) {
+      setLocalStages(new Set(selectedStages));
+    }
+  }, [showStagesFilter, selectedStages]);
 
   useEffect(() => {
-    setLocalAssignees(new Set(selectedAssignees));
-  }, [selectedAssignees]);
+    if (showAssigneesFilter) {
+      setLocalAssignees(new Set(selectedAssignees));
+    }
+  }, [showAssigneesFilter, selectedAssignees]);
 
   // 스테이지 목록과 색상
   const STAGES = [
