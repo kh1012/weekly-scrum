@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { XIcon, CalendarIcon, UserIcon, TrashIcon, LinkIcon, PlusIcon, ChevronDownIcon } from "@/components/common/Icons";
 import type { PlanStatus, DraftAssignee, DraftBar, PlanLink } from "./types";
 import type { AssigneeRole } from "@/lib/data/plans";
@@ -61,6 +61,10 @@ interface EditPlanModalProps {
   onDelete: () => void;
   bar: DraftBar | null;
   members?: WorkspaceMemberOption[];
+  activeFilters?: {
+    stages?: string[];
+    assignees?: string[];
+  };
 }
 
 export function EditPlanModal({
@@ -70,6 +74,7 @@ export function EditPlanModal({
   onDelete,
   bar,
   members = [],
+  activeFilters,
 }: EditPlanModalProps) {
   const [title, setTitle] = useState("");
   const [stage, setStage] = useState("컨셉 기획");
@@ -89,6 +94,23 @@ export function EditPlanModal({
   // 섹션 접기/펼치기 상태
   const [isRequiredExpanded, setIsRequiredExpanded] = useState(true);
   const [isOptionalExpanded, setIsOptionalExpanded] = useState(false);
+
+  /**
+   * 필터가 활성화된 경우 사용 가능한 스테이지/담당자 계산
+   */
+  const availableStages = useMemo(() => {
+    if (!activeFilters?.stages || activeFilters.stages.length === 0) {
+      return STAGES;
+    }
+    return STAGES.filter((stage) => activeFilters.stages!.includes(stage));
+  }, [activeFilters?.stages]);
+
+  const availableMembers = useMemo(() => {
+    if (!activeFilters?.assignees || activeFilters.assignees.length === 0) {
+      return members;
+    }
+    return members.filter((member) => activeFilters.assignees!.includes(member.userId));
+  }, [activeFilters?.assignees, members]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const assigneeDropdownRef = useRef<HTMLDivElement>(null);
@@ -162,8 +184,8 @@ export function EditPlanModal({
     }
   }, [isAssigneeDropdownOpen]);
 
-  // 검색 쿼리로 멤버 필터링
-  const filteredMembers = members.filter((member) => {
+  // 검색 쿼리로 멤버 필터링 (activeFilters가 있으면 제한된 멤버만 표시)
+  const filteredMembers = availableMembers.filter((member) => {
     if (!assigneeSearchQuery.trim()) return true;
     const query = assigneeSearchQuery.toLowerCase();
     const displayName = (member.displayName || "").toLowerCase();
@@ -438,25 +460,33 @@ export function EditPlanModal({
                     스테이지
                   </label>
             <div className="flex flex-wrap gap-2">
-              {STAGES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStage(s)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 active:scale-95 ${
-                    stage === s
-                      ? "text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                  style={{
-                    background: stage === s 
-                      ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" 
-                      : "#f1f5f9",
-                  }}
-                >
-                  {s}
-                </button>
-                  ))}
+              {STAGES.map((s) => {
+                const isDisabled = !availableStages.includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => !isDisabled && setStage(s)}
+                    disabled={isDisabled}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 ${
+                      isDisabled
+                        ? "opacity-40 cursor-not-allowed"
+                        : "active:scale-95"
+                    } ${
+                      stage === s
+                        ? "text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    style={{
+                      background: stage === s 
+                        ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" 
+                        : "#f1f5f9",
+                    }}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
                 </div>
               </div>
             </div>

@@ -1575,6 +1575,10 @@ export function DraftTimeline({
             endDate: formatDate(showCreateModal.endDate),
           }}
           members={members}
+          activeFilters={{
+            stages: filters.stages,
+            assignees: filters.assignees,
+          }}
         />
       )}
 
@@ -1600,6 +1604,10 @@ export function DraftTimeline({
           }}
           bar={showEditModal}
           members={members}
+          activeFilters={{
+            stages: filters.stages,
+            assignees: filters.assignees,
+          }}
         />
       )}
 

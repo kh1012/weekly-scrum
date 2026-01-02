@@ -597,8 +597,13 @@ export const useDraftStore = create<DraftStore>()(
           updatedAtLocal: now,
         };
 
+        const newBars = [...state.bars, newBar];
+        // filterIndex 재생성
+        const filterIndex = buildFilterIndex(newBars, state.rows);
+
         set({
-          bars: [...state.bars, newBar],
+          bars: newBars,
+          filterIndex,
           ...pushUndo(state, { type: "ADD_BAR", bar: newBar }),
         });
 
@@ -621,8 +626,12 @@ export const useDraftStore = create<DraftStore>()(
         const newBars = [...state.bars];
         newBars[barIndex] = nextBar;
 
+        // filterIndex 재생성 (stage나 assignees 변경 시 필요)
+        const filterIndex = buildFilterIndex(newBars, state.rows);
+
         set({
           bars: newBars,
+          filterIndex,
           ...pushUndo(state, {
             type: "UPDATE_BAR",
             barId: clientUid,
@@ -648,8 +657,12 @@ export const useDraftStore = create<DraftStore>()(
             : b
         );
 
+        // filterIndex 재생성 (삭제된 bar는 인덱스에서 제외)
+        const filterIndex = buildFilterIndex(newBars, state.rows);
+
         set({
           bars: newBars,
+          filterIndex,
           ui: {
             ...state.ui,
             selectedBarId:
@@ -677,8 +690,12 @@ export const useDraftStore = create<DraftStore>()(
             : b
         );
 
+        // filterIndex 재생성 (복원된 bar를 인덱스에 포함)
+        const filterIndex = buildFilterIndex(newBars, state.rows);
+
         set({
           bars: newBars,
+          filterIndex,
           ...pushUndo(state, { type: "RESTORE_BAR", bar }),
         });
       },
