@@ -311,7 +311,9 @@ export interface PastWeekTask {
 
 export interface Collaborator {
   name: string;
-  relation: "pair" | "pre" | "post";
+  /** @deprecated - relations 배열을 사용하세요 */
+  relation?: "pair" | "pre" | "post";
+  /** 복수 관계 선택 */
   relations?: ("pair" | "pre" | "post")[];
 }
 

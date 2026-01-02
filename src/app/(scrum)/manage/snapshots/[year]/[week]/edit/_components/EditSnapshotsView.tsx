@@ -586,7 +586,6 @@ function EditSnapshotsViewInner({
         risk_level: s.pastWeek.riskLevel,
         collaborators: s.pastWeek.collaborators.map((c) => ({
           name: c.name,
-          relation: c.relation || "pair",
           relations: c.relations,
         })),
       }));

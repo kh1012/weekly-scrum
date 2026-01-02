@@ -52,7 +52,6 @@ function convertTempSnapshotToEntry(temp: TempSnapshot): SnapshotEntryPayload {
     risk_level: temp.pastWeek.riskLevel,
     collaborators: temp.pastWeek.collaborators.map((c) => ({
       name: c.name,
-      relation: c.relations?.[0] || c.relation || "pair",
       relations: c.relations,
     })),
   };

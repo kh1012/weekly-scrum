@@ -157,7 +157,6 @@ export function convertToTempSnapshot(
           const relations = normalizeRelations(c);
           return {
             name: c.name,
-            relation: relations[0], // 하위 호환성
             relations,
           };
         }),
@@ -197,7 +196,6 @@ export function convertToTempSnapshot(
         const relations = normalizeRelations(c);
         return {
           name: c.name,
-          relation: relations[0], // 하위 호환성
           relations,
         };
       }),
