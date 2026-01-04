@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-01-XX
+
+### Added
+- **데모 환경 확장**: 데모 모드 전면 개선
+  - 데모 워크스페이스에 대한 완전한 기능 지원
+  - 로그인 페이지에 데모 환경 안내 토스트 메시지 추가
+  - Continue as Guest 버튼을 통한 즉시 접속 지원
+  - 회원가입을 통한 새 계정 생성 및 데모 환경 둘러보기 가능
+- **데모 데이터 생성**: 포괄적인 목업 데이터 제공
+  - 2025년 12월 ~ 2026년 2월 기간의 스냅샷 엔트리 (120개)
+  - 프로젝트, 모듈, 기능별 계획 데이터 (50개 이상)
+  - 역할 기반 담당자 할당 (Planning, Design, FE, BE, QA)
+  - 간트 차트 플래그 데이터 (스프린트, 릴리즈, 배포 등)
+- **전체 통계 표시**: Admin 및 Team Feed 페이지 개선
+  - Admin 대시보드에 전체 스냅샷/엔트리 통계 표시
+  - Team Feed에 전체 스냅샷 엔트리 개수 표시 (필터 무관)
+
+### Fixed
+- **데모 모드 데이터 호환성**: 프로덕션과 데모 환경 간 데이터 구조 차이 해결
+  - `thisWeek.tasks` 및 `risks` 필드의 문자열/객체 타입 혼용 처리
+  - `ScrumCard`, `FeedItem` 컴포넌트에 방어적 프로그래밍 적용
+  - `snapshot_entries` 테이블의 `name` 컬럼을 `profiles.display_name`과 일치하도록 수정
+- **워크스페이스 ID 하드코딩 제거**: 동적 워크스페이스 ID 사용
+  - `getDefaultWorkspaceId()` 함수로 환경변수 기반 워크스페이스 선택
+  - `NEXT_PUBLIC_APP_MODE`에 따라 자동으로 프로덕션/데모 워크스페이스 선택
+- **간트 차트 스크롤 동기화**: 플래그 영역과 타임라인 스크롤 연동
+  - 플래그 영역의 가로 스크롤이 타임라인과 동기화되도록 개선
+- **계획 데이터 무결성**: `plan_assignees`가 없는 계획 데이터 정리
+  - 역할 기반 담당자 할당 보장 (각 스테이지당 1명)
+
+### Improved
+- **데모 환경 사용성**: 데모 환경 접근성 및 안내 개선
+  - 로그인 페이지 상단에 데모 환경 사용 안내 메시지 표시
+  - 중앙 정렬 및 줄바꿈 적용으로 가독성 향상
+- **데이터 일관성**: 데모 데이터의 구조적 일관성 확보
+  - 모든 스냅샷 엔트리의 `name` 필드를 작성자 `display_name`으로 통일
+  - 계획 데이터의 담당자 할당을 `basic_role` 기반으로 자동화
+
+### Technical Details
+- `src/lib/supabase/mode.ts`: `getDefaultWorkspaceId()` 함수 추가
+- `src/app/(scrum)/admin/page.tsx`: 전체 통계 조회 로직 추가
+- `src/app/(scrum)/team-feed/page.tsx`: 전체 엔트리 개수 조회 추가
+- `src/components/weekly-scrum/cards/ScrumCard.tsx`: 타입 안전성 개선
+- `src/components/team-feed/FeedItem.tsx`: 방어적 데이터 처리 추가
+- `src/components/plans/gantt-draft/DraftTimeline.tsx`: 플래그 영역 스크롤 동기화 구현
+
+---
+
 ## [2.7.2] - 2025-12-23
 
 ### Added

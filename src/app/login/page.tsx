@@ -159,6 +159,24 @@ function LoginForm() {
       className="min-h-screen flex items-center justify-center py-8"
       style={{ backgroundColor: "#f6f8fa" }}
     >
+      {/* Demo 환경 토스트 메시지 */}
+      {isDemo && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4 px-4 py-3 rounded-lg shadow-lg"
+          style={{
+            backgroundColor: "#0969da",
+            color: "#ffffff",
+            border: "1px solid #0550ae",
+          }}
+        >
+          <p className="text-sm text-center whitespace-pre-line leading-relaxed">
+            데모 환경에서는 Continue as Guest 버튼을 통해 바로 접속할 수
+            있습니다.{"\n"}
+            또한, 회원가입을 통해 새로 가입하여 환경을 둘러볼 수 있습니다.
+          </p>
+        </div>
+      )}
+
       {/* Card */}
       <div className="w-full max-w-md mx-4">
         <div
