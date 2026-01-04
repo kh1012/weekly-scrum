@@ -114,7 +114,7 @@ export default async function AdminDashboardPage() {
     ])
   );
 
-  // 스냅샷 조회 (최근 6주치)
+  // 스냅샷 조회 (최근 6주치) - 테이블 표시용
   const weekLabels = recentWeeks.map((w) => w.label);
   const years = [...new Set(recentWeeks.map((w) => w.year))];
 
@@ -125,7 +125,7 @@ export default async function AdminDashboardPage() {
     .in("year", years)
     .in("week", weekLabels);
 
-  // 스냅샷별 엔트리 수 조회
+  // 스냅샷별 엔트리 수 조회 (최근 6주치) - 테이블 표시용
   const snapshotIds = snapshots?.map((s) => s.id) || [];
   const { data: entries } =
     snapshotIds.length > 0
@@ -134,6 +134,21 @@ export default async function AdminDashboardPage() {
           .select("snapshot_id")
           .in("snapshot_id", snapshotIds)
       : { data: [] };
+
+  // 전체 통계 조회 (필터 없이 전체)
+  const [
+    { count: totalSnapshotsCount },
+    { count: totalEntriesCount }
+  ] = await Promise.all([
+    supabase
+      .from("snapshots")
+      .select("*", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId),
+    supabase
+      .from("snapshot_entries")
+      .select("*", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId)
+  ]);
 
   // 스냅샷별 엔트리 수 맵핑
   const entryCountBySnapshot = new Map<string, number>();
@@ -209,8 +224,8 @@ export default async function AdminDashboardPage() {
 
   // 전체 통계
   const totalMembers = members?.length || 0;
-  const totalSnapshots = snapshots?.length || 0;
-  const totalEntries = entries?.length || 0;
+  const totalSnapshots = totalSnapshotsCount || 0;
+  const totalEntries = totalEntriesCount || 0;
 
   // 지난 주 작성 완료자 수
   const lastWeekKey = `${lastWeek.year}-${lastWeek.label}`;

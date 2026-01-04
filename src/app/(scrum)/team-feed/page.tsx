@@ -7,6 +7,7 @@ import { TeamFeedClient } from "@/components/team-feed/TeamFeedClient";
 import { parseGnbParams } from "@/lib/ui/gnbParams";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
+import { createClient } from "@/lib/supabase/server";
 
 const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
@@ -31,9 +32,15 @@ export default async function TeamFeedPage({ searchParams }: PageProps) {
   });
   const gnbParams = parseGnbParams(params);
 
-  const [feedResult, membersResult] = await Promise.all([
+  const supabase = await createClient();
+
+  const [feedResult, membersResult, { count: totalEntriesCount }] = await Promise.all([
     getTeamFeedData(DEFAULT_WORKSPACE_ID, 8, gnbParams),
     listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
+    supabase
+      .from("snapshot_entries")
+      .select("*", { count: "exact", head: true })
+      .eq("workspace_id", DEFAULT_WORKSPACE_ID),
   ]);
 
   const { feedItems, projectOptions, moduleOptions, featureOptions, error: feedError } = feedResult;
@@ -61,6 +68,7 @@ export default async function TeamFeedPage({ searchParams }: PageProps) {
         projectOptions={projectOptions || []}
         moduleOptions={moduleOptions || []}
         featureOptions={featureOptions || []}
+        totalEntriesCount={totalEntriesCount || 0}
       />
     </Suspense>
   );

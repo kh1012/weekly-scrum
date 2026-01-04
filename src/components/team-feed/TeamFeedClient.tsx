@@ -23,6 +23,7 @@ interface TeamFeedClientProps {
   projectOptions: string[];
   moduleOptions: string[];
   featureOptions: string[];
+  totalEntriesCount: number;
 }
 
 /**
@@ -38,6 +39,7 @@ export function TeamFeedClient({
   projectOptions,
   moduleOptions,
   featureOptions,
+  totalEntriesCount,
 }: TeamFeedClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -138,7 +140,7 @@ export function TeamFeedClient({
                 Team Feed
               </h1>
               <p className="text-sm mt-1 text-[#57606a]">
-                팀원들의 최근 스냅샷 엔트리 ({initialFeedItems.length}개)
+                팀원들의 최근 스냅샷 엔트리 (총 {totalEntriesCount}개)
               </p>
             </div>
             <button

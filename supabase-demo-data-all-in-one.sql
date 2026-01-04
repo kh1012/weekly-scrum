@@ -1,4 +1,16 @@
 -- ============================================
+-- 데모 데이터 완전 재생성 (Supabase SQL Editor용)
+-- ============================================
+-- 이 파일 하나만 복사해서 Supabase SQL Editor에 붙여넣으세요
+-- ============================================
+
+-- 1. 기존 데이터 삭제
+DELETE FROM snapshot_entries WHERE workspace_id = '00000000-0000-0000-0000-000000000002';
+DELETE FROM snapshots WHERE workspace_id = '00000000-0000-0000-0000-000000000002';
+DELETE FROM plan_assignees WHERE workspace_id = '00000000-0000-0000-0000-000000000002';
+DELETE FROM plans WHERE workspace_id = '00000000-0000-0000-0000-000000000002';
+
+-- ============================================
 -- 데모용 목업 데이터 생성 SQL
 -- ============================================
 -- 프로젝트: CRM 시스템 고도화
@@ -60,11 +72,7 @@ BEGIN
     '2025-12-02', '2025-12-06',
     v_planning_user_id, v_planning_user_id,
     'Google, Kakao, Naver OAuth 2.0 통합 및 사용자 동의 플로우 설계'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -74,11 +82,7 @@ BEGIN
     '2025-12-09', '2025-12-13',
     v_design_user_id, v_design_user_id,
     '로그인 화면 소셜 버튼 디자인 및 로딩 상태 표현'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (서준)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -88,11 +92,7 @@ BEGIN
     '2025-12-16', '2025-12-23',
     v_fe_user_id, v_fe_user_id,
     'OAuth 콜백 처리 및 토큰 관리 로직 구현'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_fe_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -102,11 +102,7 @@ BEGIN
     '2025-12-16', '2025-12-20',
     v_be_user_id, v_be_user_id,
     'Provider별 OAuth API 연동 및 JWT 토큰 발급'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -116,11 +112,7 @@ BEGIN
     '2025-12-24', '2025-12-27',
     v_qa_user_id, v_qa_user_id,
     '각 Provider별 로그인 시나리오 테스트 및 오류 케이스 검증'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 2: 실시간 매출 대시보드
   -- 기획 (지민)
@@ -131,11 +123,7 @@ BEGIN
     '2025-12-09', '2025-12-13',
     v_planning_user_id, v_planning_user_id,
     '일/주/월별 매출 추이, 상위 상품, 지역별 매출 등 핵심 지표 선정'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -145,11 +133,7 @@ BEGIN
     '2025-12-16', '2025-12-20',
     v_design_user_id, v_design_user_id,
     'Recharts 기반 차트 스타일 가이드 및 반응형 레이아웃'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (김현 - Admin)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -159,11 +143,7 @@ BEGIN
     '2025-12-23', '2026-01-03',
     v_admin_user_id, v_admin_user_id,
     'Recharts 활용 매출 차트 및 WebSocket 실시간 업데이트'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_admin_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -173,11 +153,7 @@ BEGIN
     '2025-12-23', '2025-12-30',
     v_be_user_id, v_be_user_id,
     'Redis 캐싱 및 실시간 매출 데이터 스트리밍 API'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -187,11 +163,7 @@ BEGIN
     '2026-01-04', '2026-01-08',
     v_qa_user_id, v_qa_user_id,
     '대량 데이터 환경에서 차트 로딩 성능 및 데이터 정확도 검증'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 3: 고객 검색 및 필터링
   -- 기획 (지민)
@@ -202,11 +174,7 @@ BEGIN
     '2025-12-16', '2025-12-20',
     v_planning_user_id, v_planning_user_id,
     '다중 조건 필터링, 저장된 필터, 빠른 검색 등 기능 명세'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -216,11 +184,7 @@ BEGIN
     '2025-12-23', '2026-01-03',
     v_design_user_id, v_design_user_id,
     '검색바, 필터 드롭다운, 태그 선택 UI 디자인'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (서준)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -230,11 +194,7 @@ BEGIN
     '2026-01-06', '2026-01-13',
     v_fe_user_id, v_fe_user_id,
     'Debounce 적용 자동완성 검색 및 다중 필터 상태 관리'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_fe_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -244,11 +204,7 @@ BEGIN
     '2026-01-06', '2026-01-10',
     v_be_user_id, v_be_user_id,
     '전문 검색 엔진 연동 및 다중 조건 쿼리 최적화'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -258,11 +214,7 @@ BEGIN
     '2026-01-14', '2026-01-17',
     v_qa_user_id, v_qa_user_id,
     '다양한 검색 조건 조합 테스트 및 응답 속도 측정'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 4: 고객 세그먼트 분석
   -- 기획 (지민)
@@ -273,11 +225,7 @@ BEGIN
     '2025-12-23', '2026-01-03',
     v_planning_user_id, v_planning_user_id,
     'RFM 분석, 구매 패턴, 지역별 세그먼트 등 분류 기준 설정'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -287,11 +235,7 @@ BEGIN
     '2026-01-06', '2026-01-10',
     v_design_user_id, v_design_user_id,
     '세그먼트별 분포 차트 및 인사이트 카드 디자인'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (김현)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -301,11 +245,7 @@ BEGIN
     '2026-01-13', '2026-01-20',
     v_admin_user_id, v_admin_user_id,
     'D3.js 활용 세그먼트 시각화 및 드릴다운 기능'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_admin_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -315,11 +255,7 @@ BEGIN
     '2026-01-13', '2026-01-17',
     v_be_user_id, v_be_user_id,
     '야간 배치로 세그먼트 재계산 및 조회 API 구현'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -329,11 +265,7 @@ BEGIN
     '2026-01-21', '2026-01-24',
     v_qa_user_id, v_qa_user_id,
     '샘플 고객 데이터 기반 세그먼트 분류 정확도 및 성능 테스트'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 5: 주문 추적 시스템
   -- 기획 (지민)
@@ -344,11 +276,7 @@ BEGIN
     '2026-01-06', '2026-01-10',
     v_planning_user_id, v_planning_user_id,
     '주문 접수 ~ 배송 완료까지 단계별 상태 관리 및 알림 정의'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -358,11 +286,7 @@ BEGIN
     '2026-01-13', '2026-01-17',
     v_design_user_id, v_design_user_id,
     '단계별 진행 상태 타임라인 및 배송 정보 카드 디자인'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (서준)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -372,11 +296,7 @@ BEGIN
     '2026-01-20', '2026-01-27',
     v_fe_user_id, v_fe_user_id,
     'WebSocket 연동 실시간 주문 상태 업데이트 UI'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_fe_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -386,11 +306,7 @@ BEGIN
     '2026-01-20', '2026-01-24',
     v_be_user_id, v_be_user_id,
     '상태 변경 이벤트 기반 아키텍처 및 배송 API 연동'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -400,11 +316,7 @@ BEGIN
     '2026-01-28', '2026-01-31',
     v_qa_user_id, v_qa_user_id,
     '정상 배송, 지연, 취소 등 다양한 시나리오 테스트'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 6: 자동 알림 시스템
   -- 기획 (지민)
@@ -415,11 +327,7 @@ BEGIN
     '2026-01-13', '2026-01-17',
     v_planning_user_id, v_planning_user_id,
     '주문 상태 변경, 프로모션, 중요 공지 등 자동 알림 규칙 정의'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -429,11 +337,7 @@ BEGIN
     '2026-01-20', '2026-01-24',
     v_design_user_id, v_design_user_id,
     '인앱 알림 센터 및 이메일/푸시 알림 템플릿 디자인'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (김현)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -443,11 +347,7 @@ BEGIN
     '2026-01-27', '2026-02-03',
     v_admin_user_id, v_admin_user_id,
     'Service Worker 기반 푸시 알림 및 알림 히스토리'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_admin_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -457,11 +357,7 @@ BEGIN
     '2026-01-27', '2026-01-31',
     v_be_user_id, v_be_user_id,
     'RabbitMQ 기반 알림 큐 및 FCM/이메일 발송 서비스'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -471,11 +367,7 @@ BEGIN
     '2026-02-04', '2026-02-07',
     v_qa_user_id, v_qa_user_id,
     '다양한 디바이스 및 브라우저에서 알림 정상 수신 검증'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 7: 고객 피드백 수집
   -- 기획 (지민)
@@ -486,11 +378,7 @@ BEGIN
     '2026-01-20', '2026-01-24',
     v_planning_user_id, v_planning_user_id,
     '설문조사, 별점 평가, 자유 의견 등 다양한 피드백 형식 정의'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -500,11 +388,7 @@ BEGIN
     '2026-01-27', '2026-01-31',
     v_design_user_id, v_design_user_id,
     '사용자 친화적 피드백 입력 폼 및 관리자 대시보드'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (서준)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -514,11 +398,7 @@ BEGIN
     '2026-02-03', '2026-02-10',
     v_fe_user_id, v_fe_user_id,
     '동적 폼 빌더 및 피드백 통계 차트'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_fe_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -528,11 +408,7 @@ BEGIN
     '2026-02-03', '2026-02-07',
     v_be_user_id, v_be_user_id,
     '피드백 데이터 저장, 태깅, 감정 분석 API'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -542,11 +418,7 @@ BEGIN
     '2026-02-11', '2026-02-14',
     v_qa_user_id, v_qa_user_id,
     '다양한 피드백 유형 입력 및 통계 정확도 검증'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 8: 데이터 내보내기
   -- 기획 (지민)
@@ -557,11 +429,7 @@ BEGIN
     '2026-01-27', '2026-01-31',
     v_planning_user_id, v_planning_user_id,
     'Excel, CSV, PDF 형식 지원 및 개인정보 필터링 규칙'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -571,11 +439,7 @@ BEGIN
     '2026-02-03', '2026-02-07',
     v_design_user_id, v_design_user_id,
     '파일 형식, 필드 선택, 날짜 범위 설정 UI'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (김현)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -585,11 +449,7 @@ BEGIN
     '2026-02-10', '2026-02-17',
     v_admin_user_id, v_admin_user_id,
     '클라이언트 사이드 Excel/CSV 생성 및 다운로드'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_admin_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -599,11 +459,7 @@ BEGIN
     '2026-02-10', '2026-02-14',
     v_be_user_id, v_be_user_id,
     '스트리밍 방식 대용량 데이터 export 및 S3 임시 저장'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -613,11 +469,7 @@ BEGIN
     '2026-02-18', '2026-02-21',
     v_qa_user_id, v_qa_user_id,
     '각 파일 형식별 데이터 무결성 및 대용량 처리 테스트'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 9: 권한 관리 시스템
   -- 기획 (지민)
@@ -628,11 +480,7 @@ BEGIN
     '2026-02-03', '2026-02-07',
     v_planning_user_id, v_planning_user_id,
     '관리자, 매니저, 일반 사용자 권한 체계 및 리소스별 접근 규칙'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -642,11 +490,7 @@ BEGIN
     '2026-02-10', '2026-02-14',
     v_design_user_id, v_design_user_id,
     '역할 관리, 사용자 할당, 권한 매트릭스 화면 디자인'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (서준)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -656,11 +500,7 @@ BEGIN
     '2026-02-17', '2026-02-24',
     v_fe_user_id, v_fe_user_id,
     '사용자 권한에 따른 메뉴 및 기능 접근 제어'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_fe_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -670,11 +510,7 @@ BEGIN
     '2026-02-17', '2026-02-21',
     v_be_user_id, v_be_user_id,
     'API 레벨 권한 검증 미들웨어 및 동적 권한 조회'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -684,11 +520,7 @@ BEGIN
     '2026-02-25', '2026-02-28',
     v_qa_user_id, v_qa_user_id,
     '역할별 접근 가능/불가능 리소스 전수 검증'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   -- 기능 10: 모바일 반응형 UI
   -- 기획 (지민)
@@ -699,11 +531,7 @@ BEGIN
     '2026-02-10', '2026-02-14',
     v_planning_user_id, v_planning_user_id,
     '모바일에서 자주 사용되는 기능 파악 및 간소화 전략'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_planning_user_id, 'planner');
+  );
   
   -- 디자인 (하림)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -713,11 +541,7 @@ BEGIN
     '2026-02-17', '2026-02-21',
     v_design_user_id, v_design_user_id,
     '모바일 네비게이션, 터치 최적화 컴포넌트 디자인'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_design_user_id, 'designer');
+  );
   
   -- FE (김현)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -727,11 +551,7 @@ BEGIN
     '2026-02-24', '2026-03-03',
     v_admin_user_id, v_admin_user_id,
     'Tailwind breakpoint 활용 반응형 및 제스처 인터랙션'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_admin_user_id, 'fe');
+  );
   
   -- BE (민재)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -741,11 +561,7 @@ BEGIN
     '2026-02-24', '2026-02-28',
     v_be_user_id, v_be_user_id,
     '모바일 네트워크 환경 고려 페이로드 최적화'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_be_user_id, 'be');
+  );
   
   -- QA (수아)
   INSERT INTO plans (workspace_id, type, domain, project, module, feature, title, stage, status, start_date, end_date, created_by, updated_by, description)
@@ -755,11 +571,7 @@ BEGIN
     '2026-03-04', '2026-03-07',
     v_qa_user_id, v_qa_user_id,
     'iOS/Android 다양한 화면 크기에서 UI/UX 검증'
-  )
-  RETURNING id INTO v_plan_id;
-  
-  INSERT INTO plan_assignees (plan_id, workspace_id, user_id, role)
-  VALUES (v_plan_id, v_workspace_id, v_qa_user_id, 'qa');
+  );
   
   RAISE NOTICE '계획 데이터 50개 생성 완료';
   

@@ -378,6 +378,20 @@ export function DraftTimeline({
     }
   }, [onScrollChange]);
 
+  // Flag 영역 스크롤 시 타임라인 동기화 (양방향)
+  const handleFlagScroll = useCallback(() => {
+    if (flagLaneRef.current && containerRef.current) {
+      const scrollLeft = flagLaneRef.current.scrollLeft;
+      
+      // 타임라인과 헤더 동기화
+      containerRef.current.scrollLeft = scrollLeft;
+      if (headerRef.current) {
+        headerRef.current.scrollLeft = scrollLeft;
+      }
+      setHeaderScrollLeft(scrollLeft);
+    }
+  }, []);
+
   // 오늘로 스크롤하는 함수
   const scrollToToday = useCallback(
     (smooth = true) => {
@@ -1030,6 +1044,7 @@ export function DraftTimeline({
           scrollbarWidth: "none", // Firefox
           msOverflowStyle: "none", // IE/Edge
         }}
+        onScroll={handleFlagScroll}
       >
         <FlagLane
           rangeStart={rangeStart}
