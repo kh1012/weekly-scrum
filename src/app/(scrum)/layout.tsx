@@ -2,10 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import {
-  getMockData,
-  getLatestWeekKey,
-} from "@/lib/scrumData";
+import { getMockData, getLatestWeekKey } from "@/lib/scrumData";
 import { getSupabaseOnlyData } from "@/lib/data/supabaseSnapshots";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceRole } from "@/lib/auth/getWorkspaceRole";
@@ -133,9 +130,9 @@ export default async function ScrumLayout({
         weeks={mockWeeks}
         initialWeekKey={mockKey}
       >
-        <LayoutWrapper 
-          role={role} 
-          workspaceId={DEFAULT_WORKSPACE_ID} 
+        <LayoutWrapper
+          role={role}
+          workspaceId={DEFAULT_WORKSPACE_ID}
           menuSettings={menuSettings}
           menuViewCounts={menuViewCounts}
           menuStats={menuStats}
@@ -154,9 +151,9 @@ export default async function ScrumLayout({
       weeks={weeks}
       initialWeekKey={initialWeekKey}
     >
-      <LayoutWrapper 
-        role={role} 
-        workspaceId={DEFAULT_WORKSPACE_ID} 
+      <LayoutWrapper
+        role={role}
+        workspaceId={DEFAULT_WORKSPACE_ID}
         menuSettings={menuSettings}
         menuViewCounts={menuViewCounts}
         menuStats={menuStats}

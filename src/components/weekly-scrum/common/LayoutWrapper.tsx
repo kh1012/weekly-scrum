@@ -113,7 +113,15 @@ interface DrawerNavigationProps {
   menuStats?: MenuStats;
 }
 
-function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, menuViewCounts, menuStats }: DrawerNavigationProps) {
+function DrawerNavigation({
+  isOpen,
+  onClose,
+  role,
+  workspaceId,
+  menuSettings,
+  menuViewCounts,
+  menuStats,
+}: DrawerNavigationProps) {
   // ESC 키로 닫기
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -190,10 +198,10 @@ function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, me
 
         {/* 네비게이션 - 스크롤 가능 영역 */}
         <div className="flex-1 overflow-y-auto py-2">
-          <SideNavigation 
-            onItemClick={onClose} 
-            role={role} 
-            workspaceId={workspaceId} 
+          <SideNavigation
+            onItemClick={onClose}
+            role={role}
+            workspaceId={workspaceId}
             menuSettings={menuSettings}
             menuViewCounts={menuViewCounts}
             menuStats={menuStats}
@@ -204,7 +212,14 @@ function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, me
   );
 }
 
-export function LayoutWrapper({ children, role, workspaceId, menuSettings, menuViewCounts, menuStats }: LayoutWrapperProps) {
+export function LayoutWrapper({
+  children,
+  role,
+  workspaceId,
+  menuSettings,
+  menuViewCounts,
+  menuStats,
+}: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -228,29 +243,29 @@ export function LayoutWrapper({ children, role, workspaceId, menuSettings, menuV
 
   return (
     <TelemetryProvider workspaceId={workspaceId || ""}>
-    <div className="min-h-screen bg-white">
-      {/* 네비게이션 프로그레스 바 */}
-      <Suspense fallback={null}>
-        <NavigationProgress />
-      </Suspense>
+      <div className="min-h-screen bg-white">
+        {/* 네비게이션 프로그레스 바 */}
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
 
-      {/* GNB */}
-      <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
+        {/* GNB */}
+        <Header onMenuOpen={() => setIsMenuOpen(true)} role={role} />
 
-      {/* Drawer SNB */}
-      <DrawerNavigation
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        role={role}
-        workspaceId={workspaceId}
-        menuSettings={menuSettings}
-        menuViewCounts={menuViewCounts}
-        menuStats={menuStats}
-      />
+        {/* Drawer SNB */}
+        <DrawerNavigation
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+          role={role}
+          workspaceId={workspaceId}
+          menuSettings={menuSettings}
+          menuViewCounts={menuViewCounts}
+          menuStats={menuStats}
+        />
 
-      {/* 메인 영역 */}
-      <div className="w-full">{children}</div>
-    </div>
+        {/* 메인 영역 */}
+        <div className="w-full">{children}</div>
+      </div>
     </TelemetryProvider>
   );
 }

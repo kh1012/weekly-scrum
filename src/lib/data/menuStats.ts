@@ -49,9 +49,8 @@ export async function getMenuStats(params: {
       .eq("workspace_id", workspaceId)
       .not("feature", "is", null);
 
-    const uniqueFeatures = new Set(
-      featuresData?.map((d) => d.feature) || []
-    ).size;
+    const uniqueFeatures = new Set(featuresData?.map((d) => d.feature) || [])
+      .size;
 
     // Collaborations count (total collaborators in all entries)
     const { data: entriesWithCollaborators } = await supabase
@@ -98,4 +97,3 @@ export async function getMenuStats(params: {
     };
   }
 }
-
