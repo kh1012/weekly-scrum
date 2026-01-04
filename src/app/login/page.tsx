@@ -33,6 +33,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -137,12 +138,12 @@ function LoginForm() {
   };
 
   const handleGuestLogin = async () => {
-    setIsLoading(true);
+    setIsGuestLoading(true);
     setMessage(null);
 
     const result = await signInWithPassword("demo-admin@example.com", "1234");
 
-    setIsLoading(false);
+    setIsGuestLoading(false);
 
     if (result.success) {
       router.push(redirectTo);
@@ -162,17 +163,23 @@ function LoginForm() {
       {/* Demo 환경 토스트 메시지 */}
       {isDemo && (
         <div
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4 px-4 py-3 rounded-lg shadow-lg"
+          className="fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 sm:max-w-lg sm:w-full px-4 py-3 rounded-lg shadow-lg"
           style={{
             backgroundColor: "#0969da",
             color: "#ffffff",
             border: "1px solid #0550ae",
           }}
         >
-          <p className="text-sm text-center whitespace-pre-line leading-relaxed">
-            데모 환경에서는 Continue as Guest 버튼을 통해 바로 접속할 수
-            있습니다.{"\n"}
-            또한, 회원가입을 통해 새로 가입하여 환경을 둘러볼 수 있습니다.
+          <p className="text-xs sm:text-sm text-center leading-relaxed">
+            데모 환경에서는{" "}
+            <span className="font-semibold underline decoration-2 underline-offset-2">
+              Continue as Guest
+            </span>{" "}
+            버튼을 통해 바로 접속할 수 있습니다.
+            <br className="hidden sm:block" />
+            <span className="block sm:inline sm:ml-1">
+              또한, 회원가입을 통해 새로 가입하여 환경을 둘러볼 수 있습니다.
+            </span>
           </p>
         </div>
       )}
@@ -420,7 +427,7 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={handleGuestLogin}
-                disabled={isLoading}
+                disabled={isGuestLoading}
                 className="w-full py-2 px-4 rounded-md text-sm font-medium focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 style={{
                   backgroundColor: "#f6f8fa",
@@ -438,7 +445,29 @@ function LoginForm() {
                   e.currentTarget.style.borderColor = "#d0d7de";
                 }}
               >
-                Continue as Guest
+                {isGuestLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    접속 중...
+                  </span>
+                ) : (
+                  "Continue as Guest"
+                )}
               </button>
             </div>
           )}
