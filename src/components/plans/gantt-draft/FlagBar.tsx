@@ -232,8 +232,8 @@ export const FlagBar = memo(function FlagBar({
     });
 
     if (rightBlocks.length === 0) {
-      // 우측에 블록이 없으면 충분한 공간 제공 (최대 300px)
-      availableWidth = Math.max(currentWidth, 300);
+      // 우측에 블록이 없으면 충분한 공간 제공 (최대 600px)
+      availableWidth = Math.max(currentWidth, 600);
     } else {
       // 가장 가까운 우측 블록까지의 거리 계산
       const nearestRightBlock = rightBlocks.reduce((nearest, block) => {
