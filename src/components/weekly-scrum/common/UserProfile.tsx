@@ -10,9 +10,10 @@ interface UserInfo {
   displayName: string;
   snapshotCount: number;
 }
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
 // 기본 workspace ID
-const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 /**
  * 사용자 프로필 컴포넌트 - GitHub 스타일
@@ -139,6 +140,12 @@ export function UserProfile() {
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    
+    // Workspace ID 클리어
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("selected_workspace_id");
+    }
+    
     router.push("/login");
     router.refresh();
   };

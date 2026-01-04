@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { AdminDashboardView } from "./_components/AdminDashboardView";
-
-const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
 /**
  * Admin Dashboard에서 제외할 사용자 이메일 목록
@@ -83,6 +82,7 @@ function getRecentWeeks(
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
+  const workspaceId = getDefaultWorkspaceId();
 
   // 최근 6주차 정보
   const recentWeeks = getRecentWeeks(6);
@@ -93,7 +93,7 @@ export default async function AdminDashboardPage() {
   const { data: members } = await supabase
     .from("workspace_members")
     .select("user_id, role")
-    .eq("workspace_id", DEFAULT_WORKSPACE_ID)
+    .eq("workspace_id", workspaceId)
     .order("role");
 
   // 2. profiles 별도 조회
@@ -121,7 +121,7 @@ export default async function AdminDashboardPage() {
   const { data: snapshots } = await supabase
     .from("snapshots")
     .select("id, author_id, year, week, workload_level, workload_note")
-    .eq("workspace_id", DEFAULT_WORKSPACE_ID)
+    .eq("workspace_id", workspaceId)
     .in("year", years)
     .in("week", weekLabels);
 

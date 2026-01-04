@@ -18,8 +18,9 @@ import type { CreatePlanActionInput } from "@/lib/actions/plans";
 import type { PlanType } from "@/lib/data/plans";
 import { SearchableSelect } from "@/components/common";
 import { createClient } from "@/lib/supabase/browser";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 const TYPE_OPTIONS: { value: PlanType; label: string }[] = [
   { value: "feature", label: "기능 (Feature)" },

@@ -9,14 +9,13 @@ import { createClient } from "@/lib/supabase/browser";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import type { PlanWithAssignees } from "@/lib/data/plans";
 import type { CreatePlanActionInput } from "@/lib/actions/plans";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
 interface PlanFormData extends CreatePlanActionInput {
   id?: string;
 }
 
-const DEFAULT_WORKSPACE_ID =
-  process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID ||
-  "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 /**
  * Plan 수정 페이지

@@ -4,8 +4,9 @@ import { getWeekStartDateString } from "@/lib/date/isoWeek";
 import { getMemberNames } from "@/lib/data/profiles";
 import { getAllMetaOptions } from "@/lib/data/snapshotMetaOptions";
 import { EditSnapshotsView } from "./_components/EditSnapshotsView";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 interface EditPageProps {
   params: Promise<{

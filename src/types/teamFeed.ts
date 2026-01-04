@@ -4,7 +4,14 @@
 
 export interface PastWeekTask {
   title: string;
-  progress: number;
+  progress?: number;
+  note?: string;
+}
+
+export interface RiskItem {
+  note?: string;
+  title?: string;
+  level?: string;
 }
 
 export interface TeamFeedEntry {
@@ -20,12 +27,12 @@ export interface TeamFeedEntry {
   module: string;
   feature: string;
   pastWeek: {
-    tasks?: PastWeekTask[];
+    tasks?: (string | PastWeekTask | any)[]; // 문자열 또는 객체 지원
   };
   thisWeek: {
-    tasks?: string[];
+    tasks?: (string | any)[]; // 문자열 또는 객체 지원
   };
-  risks: string[];
+  risks: (string | RiskItem | any)[]; // 문자열 또는 객체 지원
   riskLevel: number;
   collaborators: Array<{
     name: string;

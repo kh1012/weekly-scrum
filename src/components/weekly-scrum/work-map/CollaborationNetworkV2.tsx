@@ -842,6 +842,7 @@ export function CollaborationNetworkV2({
                 {/* 병목 표시 */}
                 {isBottleneck && (
                   <circle
+                    key={`${node.id}-bottleneck`}
                     r={radius + 7}
                     fill="none"
                     stroke="#ef4444"
@@ -853,6 +854,7 @@ export function CollaborationNetworkV2({
                 {/* 선택 하이라이트 */}
                 {isActive && (
                   <circle
+                    key={`${node.id}-highlight`}
                     r={radius + 4}
                     fill="none"
                     stroke={getDomainColor(node.domain)}
@@ -862,6 +864,7 @@ export function CollaborationNetworkV2({
                 )}
                 {/* 노드 */}
                 <circle
+                  key={`${node.id}-node`}
                   r={radius}
                   fill={getDomainColor(node.domain)}
                   stroke="white"
@@ -872,6 +875,7 @@ export function CollaborationNetworkV2({
                 />
                 {/* 이름 */}
                 <text
+                  key={`${node.id}-name`}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="white"
@@ -882,13 +886,13 @@ export function CollaborationNetworkV2({
                     textShadow: "0 1px 2px rgba(0,0,0,0.3)",
                   }}
                 >
-                  {node.name.length > 5
+                  {node.name && node.name.length > 5
                     ? node.name.slice(0, 4) + "…"
-                    : node.name}
+                    : (node.name || "")}
                 </text>
                 {/* Pair 뱃지 */}
                 {node.pairCount > 0 && (
-                  <g transform={`translate(${radius - 2}, ${-radius + 2})`}>
+                  <g key={`${node.id}-pair`} transform={`translate(${radius - 2}, ${-radius + 2})`}>
                     <circle
                       r={10}
                       fill="#3b82f6"
@@ -908,7 +912,7 @@ export function CollaborationNetworkV2({
                 )}
                 {/* Pre 뱃지 */}
                 {node.preCount > 0 && (
-                  <g transform={`translate(${-radius + 2}, ${-radius + 2})`}>
+                  <g key={`${node.id}-pre`} transform={`translate(${-radius + 2}, ${-radius + 2})`}>
                     <circle
                       r={10}
                       fill="#ef4444"

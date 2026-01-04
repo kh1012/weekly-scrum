@@ -7,9 +7,9 @@ export const metadata = {
   title: "Menu Settings - Weekly Scrum",
   description: "SNB 메뉴 설정 관리",
 };
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID =
-  process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 export default async function MenuSettingsPage() {
   const role = await getWorkspaceRole();

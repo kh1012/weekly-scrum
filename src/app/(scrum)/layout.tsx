@@ -13,9 +13,10 @@ import { getMenuSettings } from "@/lib/data/menuSettings";
 import { ScrumProvider } from "@/context/ScrumContext";
 import { LayoutWrapper, MainContent } from "@/components/weekly-scrum/common";
 import type { WeekOption, WeeklyScrumData } from "@/types/scrum";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
 // 기본 workspace ID
-const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 export default async function ScrumLayout({
   children,

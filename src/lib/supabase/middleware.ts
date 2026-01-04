@@ -8,6 +8,13 @@ import { NextResponse, type NextRequest } from "next/server";
 const DEV_BYPASS_KEY = "supabase";
 
 /**
+ * Demo 모드 여부 확인
+ */
+function isDemoMode(): boolean {
+  return process.env.NEXT_PUBLIC_APP_MODE === "demo";
+}
+
+/**
  * localhost 여부 확인
  */
 function isLocalhost(request: NextRequest): boolean {
@@ -90,7 +97,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // 공개 경로 (로그인 불필요)
-  const publicRoutes = ["/login", "/auth/callback"];
+  const publicRoutes = ["/login", "/auth/callback", "/select-workspace"];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
@@ -133,7 +140,7 @@ export async function updateSession(request: NextRequest) {
 
     // 프로필 체크에 에러가 있거나 프로필이 없으면 온보딩으로 리다이렉트
     // 단, RLS 권한 에러(42501)가 아닌 경우에만
-    if (!profile && (!profileError || profileError.code !== '42501')) {
+    if (!profile && (!profileError || profileError.code !== "42501")) {
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding/profile";
       return NextResponse.redirect(url);

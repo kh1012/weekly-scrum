@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SnapshotsMainView } from "./_components/SnapshotsMainView";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 export default async function ManageSnapshotsPage() {
   const supabase = await createClient();

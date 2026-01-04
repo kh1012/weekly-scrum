@@ -74,14 +74,22 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
     // Next (이번 주 새로 계획하는 작업들 - 진행률 없음)
     if (entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0) {
       entry.thisWeek.tasks.forEach((task) => {
-        nextItems.push({ entry, content: task });
+        // task가 객체인 경우 처리 (데이터 불일치 방어)
+        const taskContent = typeof task === 'string' 
+          ? task 
+          : (task as any)?.title || (task as any)?.note || JSON.stringify(task);
+        nextItems.push({ entry, content: taskContent });
       });
     }
 
     // Risk
     if (entry.risks.length > 0) {
       entry.risks.forEach((risk) => {
-        riskItems.push({ entry, content: risk });
+        // risk가 객체인 경우 처리 (데이터 불일치 방어)
+        const riskContent = typeof risk === 'string' 
+          ? risk 
+          : (risk as any)?.note || (risk as any)?.title || JSON.stringify(risk);
+        riskItems.push({ entry, content: riskContent });
       });
     }
   });
@@ -237,11 +245,16 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
                 <div>
                   <p className="text-[11px] font-semibold text-[#24292f] mb-1.5">Next</p>
                   <ul className="space-y-1 text-[#57606a]">
-                    {entry.thisWeek.tasks.map((task, idx) => (
-                      <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                        {highlightText(task, searchQuery)}
-                      </li>
-                    ))}
+                    {entry.thisWeek.tasks.map((task, idx) => {
+                      const taskText = typeof task === 'string' 
+                        ? task 
+                        : (task as any)?.title || (task as any)?.note || JSON.stringify(task);
+                      return (
+                        <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                          {highlightText(taskText, searchQuery)}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
@@ -251,11 +264,16 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
                 <div>
                   <p className="text-[11px] font-semibold text-[#24292f] mb-1.5">Risk</p>
                   <ul className="space-y-1 text-[#57606a]">
-                    {entry.risks.map((risk, idx) => (
-                      <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                        {highlightText(risk, searchQuery)}
-                      </li>
-                    ))}
+                    {entry.risks.map((risk, idx) => {
+                      const riskText = typeof risk === 'string' 
+                        ? risk 
+                        : (risk as any)?.note || (risk as any)?.title || JSON.stringify(risk);
+                      return (
+                        <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                          {highlightText(riskText, searchQuery)}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}

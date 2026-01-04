@@ -17,43 +17,45 @@
 - **Backend**: Supabase (Postgres + Auth + RLS)
 - **배포**: Vercel (권장)
 
-## 환경 설정
+## 빠른 시작
 
-### 1. 환경변수 설정
+### 1. 의존성 설치
+
+```bash
+yarn install
+```
+
+### 2. 환경변수 설정
 
 `.env.local` 파일을 생성하고 다음 환경변수를 설정합니다:
 
 ```bash
+# App Mode: 'prod' 또는 'demo'
+NEXT_PUBLIC_APP_MODE=prod
+
 # Supabase 설정
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
 
-# 기본 워크스페이스 ID
-DEFAULT_WORKSPACE_ID=00000000-0000-0000-0000-000000000001
-
-# 데이터 소스 (true: Supabase, false: 정적 파일)
-USE_SUPABASE_DATA=true
+# Demo 모드용 (선택사항)
+NEXT_PUBLIC_DEMO_WORKSPACE_ID=00000000-0000-0000-0000-000000000002
 ```
 
-### 2. Supabase 설정
+> 💡 **Tip**: Demo 모드로 테스트하려면 `NEXT_PUBLIC_APP_MODE=demo`로 변경하세요.
+
+### 3. Supabase 설정
 
 1. [Supabase Console](https://supabase.com)에서 프로젝트 생성
-2. 다음 테이블 생성:
-   - `workspaces`
-   - `workspace_members`
-   - `snapshots`
-   - `snapshot_entries`
-   - `plans`
-   - `plan_assignees`
-3. RLS 정책 적용
-4. Auth > Email Provider 활성화
+2. 스키마 적용 (`schema.sql` 실행)
+3. Auth 설정:
+   - **Email Provider** 활성화
+   - **Confirm Email** OFF
+4. 워크스페이스 생성 및 사용자 추가
 
-### 3. 의존성 설치 및 실행
+### 4. 실행
 
 ```bash
-# 의존성 설치
-yarn install
-
 # 개발 서버 실행
 yarn dev
 
@@ -61,24 +63,42 @@ yarn dev
 yarn build
 ```
 
-### 4. 정적 데이터 마이그레이션 (선택사항)
+---
 
-기존 `data/` 디렉토리의 정적 데이터를 Supabase로 마이그레이션:
+## 🎭 Demo vs Production 모드
 
-```bash
-yarn db:migrate
-```
+이 프로젝트는 두 가지 모드를 지원합니다:
+
+### Production 모드 (`NEXT_PUBLIC_APP_MODE=prod`)
+
+- ✅ Magic Link 이메일 로그인
+- ✅ RLS 정책으로 데이터 보호
+- ✅ 워크스페이스 자동 할당
+- 🎯 실제 서비스 운영용
+
+### Demo 모드 (`NEXT_PUBLIC_APP_MODE=demo`)
+
+- 🎪 로그인 없이 게스트 접속
+- 🎪 고정 Demo 워크스페이스 사용
+- 🎪 샘플 데이터 읽기만 가능
+- 🎯 데모/테스트용
+
+**자세한 설정:** [SETUP-GUIDE.md](./SETUP-GUIDE.md)  
+**Vercel 배포:** [VERCEL-DEPLOYMENT.md](./VERCEL-DEPLOYMENT.md)  
+**기존 코드 마이그레이션:** [MIGRATION-GUIDE.md](./MIGRATION-GUIDE.md)
 
 ## 스크립트
 
-| 명령어 | 설명 |
-|--------|------|
-| `yarn dev` | 개발 서버 실행 (Turbopack) |
-| `yarn build` | 프로덕션 빌드 |
-| `yarn start` | 프로덕션 서버 실행 |
-| `yarn lint` | 린트 검사 |
-| `yarn scrum:parse` | submitted-scrum.txt 파싱 |
-| `yarn db:migrate` | 정적 데이터 → Supabase 마이그레이션 |
+| 명령어             | 설명                                |
+| ------------------ | ----------------------------------- |
+| `yarn dev`         | 개발 서버 실행 (Turbopack)          |
+| `yarn dev:demo`    | Demo 모드로 실행 (포트 3001)        |
+| `yarn build`       | 프로덕션 빌드                       |
+| `yarn build:demo`  | Demo 모드 빌드                      |
+| `yarn start`       | 프로덕션 서버 실행                  |
+| `yarn lint`        | 린트 검사                           |
+| `yarn scrum:parse` | submitted-scrum.txt 파싱            |
+| `yarn db:migrate`  | 정적 데이터 → Supabase 마이그레이션 |
 
 ## 데이터 스키마
 
@@ -99,9 +119,7 @@ yarn db:migrate
       "module": "모듈명",
       "feature": "기능명",
       "pastWeek": {
-        "tasks": [
-          { "title": "작업1 완료", "progress": 100 }
-        ],
+        "tasks": [{ "title": "작업1 완료", "progress": 100 }],
         "risk": null,
         "riskLevel": null,
         "collaborators": []
@@ -116,10 +134,17 @@ yarn db:migrate
 
 ## 인증 흐름
 
-1. `/login` → Email OTP 입력
-2. 이메일로 로그인 링크 발송
-3. 링크 클릭 → `/auth/callback` → 세션 생성
-4. 첫 로그인 시 `workspace_members`에 자동 등록
+### Production 모드
+
+1. `/login` → 이메일 입력
+2. 이메일로 Magic Link 발송
+3. 링크 클릭 → 자동 로그인
+4. 메인 페이지로 이동
+
+### Demo 모드
+
+1. `/login` → "게스트로 계속하기" 버튼 클릭
+2. 메인 페이지로 바로 이동 (고정 Demo 워크스페이스 사용)
 
 ## 문제 해결
 
@@ -134,11 +159,11 @@ yarn db:migrate
 
 ### 일반적인 오류
 
-| 오류 | 원인 | 해결 |
-|------|------|------|
-| `401 Unauthorized` | 미로그인 | 로그인 필요 |
-| `403 Forbidden` | RLS 차단 | workspace_members 등록 확인 |
-| `PGRST116` | 데이터 없음 | 마이그레이션 실행 |
+| 오류               | 원인        | 해결                        |
+| ------------------ | ----------- | --------------------------- |
+| `401 Unauthorized` | 미로그인    | 로그인 필요                 |
+| `403 Forbidden`    | RLS 차단    | workspace_members 등록 확인 |
+| `PGRST116`         | 데이터 없음 | 마이그레이션 실행           |
 
 ## 라이선스
 

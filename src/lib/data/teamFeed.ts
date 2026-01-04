@@ -9,9 +9,9 @@ import type {
   ActivityChartData,
 } from "@/types/teamFeed";
 import type { GnbParams } from "@/lib/ui/gnbParams";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID =
-  process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 /**
  * 최근 N주의 모든 snapshot entries를 조회하여 person + week별로 그룹화
@@ -319,7 +319,10 @@ function extractWeeklyHighlight(entries: TeamFeedEntry[]): {
   // Progress: this_week tasks가 있는 첫 엔트리
   for (const entry of entries) {
     if (entry.thisWeek.tasks && entry.thisWeek.tasks.length > 0) {
-      progress = entry.thisWeek.tasks[0];
+      const task = entry.thisWeek.tasks[0];
+      // 문자열 또는 객체 지원
+      progress =
+        typeof task === "string" ? task : task?.title || task?.note || "";
       if (progress.length > 80) {
         progress = progress.substring(0, 80) + "...";
       }
@@ -327,10 +330,12 @@ function extractWeeklyHighlight(entries: TeamFeedEntry[]): {
     }
   }
 
-  // Next: past_week tasks가 있는 첫 엔트리 (객체에서 title 추출)
+  // Next: past_week tasks가 있는 첫 엔트리
   for (const entry of entries) {
     if (entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0) {
-      next = entry.pastWeek.tasks[0].title;
+      const task = entry.pastWeek.tasks[0];
+      // 문자열 또는 객체 지원
+      next = typeof task === "string" ? task : task?.title || task?.note || "";
       if (next.length > 80) {
         next = next.substring(0, 80) + "...";
       }
@@ -341,7 +346,12 @@ function extractWeeklyHighlight(entries: TeamFeedEntry[]): {
   // Risk: risks가 있는 첫 엔트리
   for (const entry of entries) {
     if (entry.risks.length > 0) {
-      risk = entry.risks[0];
+      const riskItem = entry.risks[0];
+      // 문자열 또는 객체 지원
+      risk =
+        typeof riskItem === "string"
+          ? riskItem
+          : riskItem?.note || riskItem?.title || "";
       if (risk.length > 80) {
         risk = risk.substring(0, 80) + "...";
       }

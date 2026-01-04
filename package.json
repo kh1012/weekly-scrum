@@ -5,7 +5,9 @@
   "homepage": "https://kh1012.github.io/weekly-scrum",
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:demo": "DOTENV_CONFIG_PATH=.env.demo node -r dotenv/config node_modules/.bin/next dev --turbopack -p 3001",
     "build": "next build",
+    "build:demo": "DOTENV_CONFIG_PATH=.env.demo node -r dotenv/config node_modules/.bin/next build",
     "start": "next start",
     "lint": "next lint",
     "scrum:parse": "tsx scripts/parse-submitted.ts",

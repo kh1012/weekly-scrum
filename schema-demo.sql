@@ -135,19 +135,16 @@ CREATE OR REPLACE FUNCTION "public"."enforce_feedback_resolve_rules"() RETURNS "
     LANGUAGE "plpgsql"
     AS $$
 BEGIN
-  -- resolved 상태로 변경 시 필수 필드 검증
   IF NEW.status = 'resolved' THEN
-    -- resolution_note 필수
     IF NEW.resolution_note IS NULL OR NEW.resolution_note = '' THEN
       RAISE EXCEPTION 'resolution_note is required when status is resolved';
     END IF;
-    
-    -- resolved_by_user_id 필수
+
     IF NEW.resolved_by_user_id IS NULL THEN
       RAISE EXCEPTION 'resolved_by_user_id is required when status is resolved';
     END IF;
   END IF;
-  
+
   RETURN NEW;
 END;
 $$;
@@ -162,18 +159,14 @@ CREATE OR REPLACE FUNCTION "public"."ensure_snapshot_week"() RETURNS "trigger"
 declare
   v_week_id uuid;
 begin
-  -- week_start_date 필수
   if new.week_start_date is null then
     raise exception 'week_start_date is required';
   end if;
 
-  -- week_end_date 없으면 start_date로 기본
   if new.week_end_date is null then
     new.week_end_date := new.week_start_date;
   end if;
 
-  -- year/week 없으면 start_date 기준으로 채워넣기(ISO week)
-  -- 이미 UI/서버에서 넣고 있다면 그냥 유지됨
   if new.year is null then
     new.year := extract(isoyear from new.week_start_date)::int;
   end if;
@@ -182,13 +175,10 @@ begin
     new.week := 'W' || lpad(extract(week from new.week_start_date)::int::text, 2, '0');
   end if;
 
-  -- snapshot_weeks upsert (중복 방지는 unique(workspace_id, week_start_date)가 보장)
   insert into public.snapshot_weeks (workspace_id, year, week, week_start_date, week_end_date)
   values (new.workspace_id, new.year, new.week, new.week_start_date, new.week_end_date)
   on conflict (workspace_id, week_start_date)
   do update set
-    -- year/week/week_end_date는 "더 신뢰할 값"으로 맞추고 싶으면 여기서 정책을 정해라.
-    -- 여기선 가장 최근 입력값으로 덮어씀(필요하면 LEAST/GREATEST로 보수적 병합도 가능)
     year = excluded.year,
     week = excluded.week,
     week_end_date = excluded.week_end_date
@@ -218,6 +208,65 @@ $$;
 
 
 ALTER FUNCTION "public"."get_workspace_lock"("p_workspace_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."handle_new_user_join_default_workspace"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+declare
+  v_workspace_id uuid;
+  v_display_name text;
+begin
+  -- 1) display_name 결정 (meta > email prefix)
+  v_display_name :=
+    nullif(coalesce(new.raw_user_meta_data->>'display_name', ''), '');
+
+  if v_display_name is null then
+    v_display_name := split_part(coalesce(new.email, 'user'), '@', 1);
+  end if;
+
+  -- 2) profiles upsert
+  insert into public.profiles (user_id, display_name, email)
+  values (new.id, v_display_name, coalesce(new.email, ''))
+  on conflict (user_id) do update
+    set display_name = excluded.display_name,
+        email = excluded.email,
+        updated_at = now();
+
+  -- 3) 기본 워크스페이스 선택 (Demo Workspace)
+  select w.id
+    into v_workspace_id
+  from public.workspaces w
+  where w.name = 'Demo Workspace'
+  order by w.created_at asc
+  limit 1;
+
+  -- fallback: 가장 오래된 workspace
+  if v_workspace_id is null then
+    select w.id
+      into v_workspace_id
+    from public.workspaces w
+    order by w.created_at asc
+    limit 1;
+  end if;
+
+  -- workspace 자체가 없으면 profiles만 생성
+  if v_workspace_id is null then
+    return new;
+  end if;
+
+  -- 4) workspace_members → 기본 role = admin
+  insert into public.workspace_members (workspace_id, user_id, role)
+  values (v_workspace_id, new.id, 'admin')
+  on conflict (workspace_id, user_id) do nothing;
+
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."handle_new_user_join_default_workspace"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer DEFAULT 60) RETURNS TABLE("ok" boolean, "holder_user_id" "uuid", "holder_display_name" "text", "expires_at" timestamp with time zone)
@@ -331,7 +380,6 @@ CREATE OR REPLACE FUNCTION "public"."link_legacy_authors"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 begin
-  -- snapshot_entries 연결 + 정리
   update public.snapshot_entries se
   set
     author_id = new.user_id,
@@ -339,7 +387,6 @@ begin
   where se.author_id is null
     and se.author_display_name = new.display_name;
 
-  -- snapshots 연결 + 정리
   update public.snapshots s
   set
     author_id = new.user_id,
@@ -353,70 +400,6 @@ $$;
 
 
 ALTER FUNCTION "public"."link_legacy_authors"() OWNER TO "postgres";
-
-
-CREATE OR REPLACE VIEW "public"."v_plans_with_assignees" AS
-SELECT
-    NULL::"uuid" AS "id",
-    NULL::"uuid" AS "workspace_id",
-    NULL::"public"."plan_type" AS "type",
-    NULL::"text" AS "domain",
-    NULL::"text" AS "project",
-    NULL::"text" AS "module",
-    NULL::"text" AS "feature",
-    NULL::"text" AS "title",
-    NULL::"text" AS "stage",
-    NULL::"text" AS "status",
-    NULL::"date" AS "start_date",
-    NULL::"date" AS "end_date",
-    NULL::"uuid" AS "created_by",
-    NULL::timestamp with time zone AS "created_at",
-    NULL::"uuid" AS "updated_by",
-    NULL::timestamp with time zone AS "updated_at",
-    NULL::"text" AS "client_uid",
-    NULL::"jsonb" AS "assignees";
-
-
-ALTER VIEW "public"."v_plans_with_assignees" OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "public"."list_plans"("p_workspace_id" "uuid", "p_q" "text" DEFAULT NULL::"text", "p_project" "text" DEFAULT NULL::"text", "p_module" "text" DEFAULT NULL::"text", "p_feature" "text" DEFAULT NULL::"text", "p_stage" "text" DEFAULT NULL::"text", "p_status" "text" DEFAULT NULL::"text", "p_type" "public"."plan_type" DEFAULT NULL::"public"."plan_type", "p_from" "date" DEFAULT NULL::"date", "p_to" "date" DEFAULT NULL::"date", "p_assignee_user_id" "uuid" DEFAULT NULL::"uuid", "p_limit" integer DEFAULT 200, "p_offset" integer DEFAULT 0) RETURNS SETOF "public"."v_plans_with_assignees"
-    LANGUAGE "sql" STABLE
-    AS $$
-  select v.*
-  from public.v_plans_with_assignees v
-  where v.workspace_id = p_workspace_id
-    and (p_type is null or v.type = p_type)
-    and (p_project is null or v.project = p_project)
-    and (p_module is null or v.module = p_module)
-    and (p_feature is null or v.feature = p_feature)
-    and (p_stage is null or v.stage = p_stage)
-    and (p_status is null or v.status = p_status)
-    and (p_q is null or v.title ilike ('%' || p_q || '%'))
-    and (
-      (p_from is null and p_to is null)
-      or (
-        coalesce(v.end_date, v.start_date) >= coalesce(p_from, v.start_date)
-        and coalesce(v.start_date, v.end_date) <= coalesce(p_to, v.end_date)
-      )
-    )
-    and (
-      p_assignee_user_id is null
-      or exists (
-        select 1
-        from public.plan_assignees pa
-        where pa.plan_id = v.id
-          and pa.workspace_id = v.workspace_id
-          and pa.user_id = p_assignee_user_id
-      )
-    )
-  order by v.updated_at desc
-  limit greatest(1, least(p_limit, 500))
-  offset greatest(p_offset, 0);
-$$;
-
-
-ALTER FUNCTION "public"."list_plans"("p_workspace_id" "uuid", "p_q" "text", "p_project" "text", "p_module" "text", "p_feature" "text", "p_stage" "text", "p_status" "text", "p_type" "public"."plan_type", "p_from" "date", "p_to" "date", "p_assignee_user_id" "uuid", "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."release_workspace_lock"("p_workspace_id" "uuid") RETURNS boolean
@@ -572,116 +555,6 @@ $$;
 
 ALTER FUNCTION "public"."update_updated_at"() OWNER TO "postgres";
 
-
-CREATE OR REPLACE FUNCTION "public"."upsert_feature_plans_bulk"("p_payload" "jsonb") RETURNS TABLE("id" "uuid", "client_uid" "text")
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_workspace_id uuid;
-begin
-  v_workspace_id := (p_payload->>'workspace_id')::uuid;
-
-  -- 4-1) 삭제 처리 먼저 (deleted=true, clientUid 필수)
-  delete from public.plans p
-  using (
-    select (x->>'clientUid')::text as client_uid
-    from jsonb_array_elements(coalesce(p_payload->'plans','[]'::jsonb)) as x
-    where coalesce((x->>'deleted')::boolean, false) = true
-      and nullif(x->>'clientUid','') is not null
-  ) d
-  where p.workspace_id = v_workspace_id
-    and p.client_uid = d.client_uid
-    and p.type = 'feature'::public.plan_type;
-
-  -- 4-2) upsert 대상(삭제 제외)
-  return query
-  with input as (
-    select
-      (x->>'clientUid')::text as client_uid,
-      nullif(x->>'project','') as project,
-      nullif(x->>'module','') as module,
-      nullif(x->>'feature','') as feature,
-      (x->>'title')::text as title,
-      nullif(x->>'stage','') as stage,
-      coalesce(nullif(x->>'status',''), '진행중') as status,
-      nullif(x->>'start_date','')::date as start_date,
-      nullif(x->>'end_date','')::date as end_date,
-      coalesce(x->'assignees','[]'::jsonb) as assignees
-    from jsonb_array_elements(coalesce(p_payload->'plans','[]'::jsonb)) as x
-    where coalesce((x->>'deleted')::boolean, false) = false
-      and nullif(x->>'clientUid','') is not null
-  ),
-  upserted as (
-    insert into public.plans (
-      workspace_id, type,
-      project, module, feature,
-      title, stage, status, start_date, end_date,
-      client_uid,
-      created_by, updated_by
-    )
-    select
-      v_workspace_id,
-      'feature'::public.plan_type,
-      i.project, i.module, i.feature,
-      i.title, i.stage, i.status, i.start_date, i.end_date,
-      i.client_uid,
-      auth.uid(), auth.uid()
-    from input i
-    on conflict (workspace_id, client_uid)
-    do update set
-      project = excluded.project,
-      module = excluded.module,
-      feature = excluded.feature,
-      title = excluded.title,
-      stage = excluded.stage,
-      status = excluded.status,
-      start_date = excluded.start_date,
-      end_date = excluded.end_date,
-      updated_by = auth.uid()
-    returning id, client_uid
-  )
-  select u.id, u.client_uid
-  from upserted u;
-
-  -- 4-3) assignees 전체 교체 (삭제 제외된 clientUid들)
-  delete from public.plan_assignees pa
-  using public.plans p
-  where p.workspace_id = v_workspace_id
-    and p.client_uid is not null
-    and pa.plan_id = p.id
-    and pa.workspace_id = v_workspace_id
-    and p.client_uid in (
-      select (x->>'clientUid')::text
-      from jsonb_array_elements(coalesce(p_payload->'plans','[]'::jsonb)) as x
-      where coalesce((x->>'deleted')::boolean, false) = false
-        and nullif(x->>'clientUid','') is not null
-    );
-
-  insert into public.plan_assignees (plan_id, workspace_id, user_id, role)
-  select
-    p.id,
-    v_workspace_id,
-    (a->>'userId')::uuid,
-    (a->>'role')::public.assignee_role
-  from (
-    select
-      (x->>'clientUid')::text as client_uid,
-      coalesce(x->'assignees','[]'::jsonb) as assignees
-    from jsonb_array_elements(coalesce(p_payload->'plans','[]'::jsonb)) as x
-    where coalesce((x->>'deleted')::boolean, false) = false
-      and nullif(x->>'clientUid','') is not null
-  ) i
-  join public.plans p
-    on p.workspace_id = v_workspace_id
-   and p.client_uid = i.client_uid
-  cross join jsonb_array_elements(i.assignees) as a;
-
-end;
-$$;
-
-
-ALTER FUNCTION "public"."upsert_feature_plans_bulk"("p_payload" "jsonb") OWNER TO "postgres";
-
 SET default_tablespace = '';
 
 SET default_table_access_method = "heap";
@@ -725,14 +598,6 @@ CREATE TABLE IF NOT EXISTS "public"."gantt_flags" (
 ALTER TABLE "public"."gantt_flags" OWNER TO "postgres";
 
 
-COMMENT ON COLUMN "public"."gantt_flags"."links" IS 'Related links. Example: [{"url":"https://...","label":"Spec"}]';
-
-
-
-COMMENT ON COLUMN "public"."gantt_flags"."description" IS 'Flag의 상세 설명 (멀티라인 지원)';
-
-
-
 CREATE TABLE IF NOT EXISTS "public"."menu_events" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "workspace_id" "uuid" NOT NULL,
@@ -770,26 +635,6 @@ CREATE TABLE IF NOT EXISTS "public"."menu_settings" (
 
 
 ALTER TABLE "public"."menu_settings" OWNER TO "postgres";
-
-
-COMMENT ON TABLE "public"."menu_settings" IS 'SNB 메뉴의 노출 여부 및 태그를 workspace 단위로 관리';
-
-
-
-COMMENT ON COLUMN "public"."menu_settings"."menu_key" IS '메뉴 고유 키 (team-feed, plans, snapshots 등)';
-
-
-
-COMMENT ON COLUMN "public"."menu_settings"."is_enabled" IS '메뉴 노출 여부';
-
-
-
-COMMENT ON COLUMN "public"."menu_settings"."tag_label" IS '메뉴에 표시할 태그 (NEW, BETA 등)';
-
-
-
-COMMENT ON COLUMN "public"."menu_settings"."tag_color" IS '태그 색상 테마';
-
 
 
 CREATE TABLE IF NOT EXISTS "public"."plan_assignees" (
@@ -834,18 +679,6 @@ CREATE TABLE IF NOT EXISTS "public"."plans" (
 
 
 ALTER TABLE "public"."plans" OWNER TO "postgres";
-
-
-COMMENT ON COLUMN "public"."plans"."description" IS '계획에 대한 상세 설명 (선택사항)';
-
-
-
-COMMENT ON COLUMN "public"."plans"."links" IS '관련 링크 목록 (선택사항). 형식: [{"url": "...", "label": "..."}]';
-
-
-
-COMMENT ON COLUMN "public"."plans"."lane_hint" IS '사용자가 수동으로 지정한 레인 인덱스 (0-based)';
-
 
 
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
@@ -951,18 +784,6 @@ CREATE TABLE IF NOT EXISTS "public"."snapshots" (
 ALTER TABLE "public"."snapshots" OWNER TO "postgres";
 
 
-COMMENT ON COLUMN "public"."snapshots"."workload_level" IS '이번 주 작업 부담 수준 (light: 여유, normal: 적정, burden: 부담)';
-
-
-
-COMMENT ON COLUMN "public"."snapshots"."workload_note" IS '작업 부담 관련 한 줄 메모 (선택 입력)';
-
-
-
-COMMENT ON COLUMN "public"."snapshots"."workload_updated_at" IS 'workload 값 변경 시점';
-
-
-
 CREATE OR REPLACE VIEW "public"."v_collab_edges" AS
  SELECT "se"."workspace_id",
     "se"."author_id" AS "from_user_id",
@@ -1021,6 +842,31 @@ CREATE OR REPLACE VIEW "public"."v_page_usage_weekly" AS
 ALTER VIEW "public"."v_page_usage_weekly" OWNER TO "postgres";
 
 
+CREATE OR REPLACE VIEW "public"."v_plans_with_assignees" AS
+SELECT
+    NULL::"uuid" AS "id",
+    NULL::"uuid" AS "workspace_id",
+    NULL::"public"."plan_type" AS "type",
+    NULL::"text" AS "domain",
+    NULL::"text" AS "project",
+    NULL::"text" AS "module",
+    NULL::"text" AS "feature",
+    NULL::"text" AS "title",
+    NULL::"text" AS "stage",
+    NULL::"text" AS "status",
+    NULL::"date" AS "start_date",
+    NULL::"date" AS "end_date",
+    NULL::"uuid" AS "created_by",
+    NULL::timestamp with time zone AS "created_at",
+    NULL::"uuid" AS "updated_by",
+    NULL::timestamp with time zone AS "updated_at",
+    NULL::"text" AS "client_uid",
+    NULL::"jsonb" AS "assignees";
+
+
+ALTER VIEW "public"."v_plans_with_assignees" OWNER TO "postgres";
+
+
 CREATE OR REPLACE VIEW "public"."v_resource_distribution" AS
  SELECT "pa"."workspace_id",
     "pa"."user_id",
@@ -1043,7 +889,7 @@ CREATE OR REPLACE VIEW "public"."v_user_menu_usage_weekly" AS
     COALESCE("me"."menu_key", 'unknown'::"text") AS "menu_key",
     "count"(*) AS "event_count"
    FROM ("public"."menu_events" "me"
-     LEFT JOIN "public"."profiles" "p" ON (("me"."user_id" = "p"."user_id")))
+     LEFT JOIN "public"."profiles" "p" ON (("p"."user_id" = "me"."user_id")))
   WHERE ("me"."user_id" IS NOT NULL)
   GROUP BY "me"."workspace_id", ("date_trunc"('week'::"text", ("me"."occurred_at" AT TIME ZONE 'Asia/Seoul'::"text"))), "me"."user_id", "p"."display_name", COALESCE("me"."menu_group", 'unknown'::"text"), COALESCE("me"."menu_key", 'unknown'::"text");
 
@@ -1122,6 +968,11 @@ ALTER TABLE ONLY "public"."plans"
 
 
 
+ALTER TABLE ONLY "public"."plans"
+    ADD CONSTRAINT "plans_workspace_client_uid_key" UNIQUE ("workspace_id", "client_uid");
+
+
+
 ALTER TABLE ONLY "public"."profiles"
     ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("user_id");
 
@@ -1159,6 +1010,11 @@ ALTER TABLE ONLY "public"."snapshot_weeks"
 
 ALTER TABLE ONLY "public"."snapshots"
     ADD CONSTRAINT "snapshots_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."plan_assignees"
+    ADD CONSTRAINT "ux_plan_assignees_one_per_plan" UNIQUE ("plan_id");
 
 
 
@@ -1352,7 +1208,7 @@ CREATE OR REPLACE VIEW "public"."v_flag_plan_summary" AS
     "min"("p"."start_date") AS "min_plan_start",
     "max"("p"."end_date") AS "max_plan_end"
    FROM ("public"."gantt_flags" "gf"
-     LEFT JOIN "public"."plans" "p" ON ((("p"."workspace_id" = "gf"."workspace_id") AND ("p"."start_date" IS NOT NULL) AND ("p"."end_date" IS NOT NULL) AND ("gf"."start_date" IS NOT NULL) AND ("gf"."end_date" IS NOT NULL) AND ("p"."start_date" <= "gf"."end_date") AND ("p"."end_date" >= "gf"."start_date"))))
+     LEFT JOIN "public"."plans" "p" ON ((("p"."workspace_id" = "gf"."workspace_id") AND ("p"."start_date" IS NOT NULL) AND ("p"."end_date" IS NOT NULL) AND ("p"."start_date" <= "gf"."end_date") AND ("p"."end_date" >= "gf"."start_date"))))
   GROUP BY "gf"."workspace_id", "gf"."id";
 
 
@@ -1400,14 +1256,6 @@ CREATE OR REPLACE TRIGGER "trg_ensure_snapshot_week" BEFORE INSERT ON "public"."
 
 
 CREATE OR REPLACE TRIGGER "trg_entries_updated_at" BEFORE UPDATE ON "public"."snapshot_entries" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
-
-
-
-CREATE OR REPLACE TRIGGER "trg_feedbacks_updated_at" BEFORE UPDATE ON "public"."feedbacks" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at"();
-
-
-
-CREATE OR REPLACE TRIGGER "trg_gantt_flags_set_updated_at" BEFORE UPDATE ON "public"."gantt_flags" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
 
 
 
@@ -1612,55 +1460,15 @@ CREATE POLICY "feedbacks_write_admin_or_leader" ON "public"."feedbacks" TO "auth
 ALTER TABLE "public"."gantt_flags" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "gantt_flags_select_demo_anon" ON "public"."gantt_flags" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
+
+
+
 CREATE POLICY "gantt_flags_write_admin_or_leader" ON "public"."gantt_flags" TO "authenticated" USING (("workspace_id" IN ( SELECT "wm"."workspace_id"
    FROM "public"."workspace_members" "wm"
   WHERE (("wm"."user_id" = "auth"."uid"()) AND (("wm"."role")::"text" = ANY (ARRAY['admin'::"text", 'manager'::"text"])))))) WITH CHECK (("workspace_id" IN ( SELECT "wm"."workspace_id"
    FROM "public"."workspace_members" "wm"
   WHERE (("wm"."user_id" = "auth"."uid"()) AND (("wm"."role")::"text" = ANY (ARRAY['admin'::"text", 'manager'::"text"]))))));
-
-
-
-CREATE POLICY "leader_admin_full_access" ON "public"."feedbacks" USING ((EXISTS ( SELECT 1
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND ("wm"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"])))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id") AND ("wm"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"]))))));
-
-
-
-CREATE POLICY "leader_admin_full_access_feedback" ON "public"."feedbacks" USING ((EXISTS ( SELECT 1
-   FROM "public"."workspace_members"
-  WHERE (("workspace_members"."user_id" = "auth"."uid"()) AND ("workspace_members"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"])))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."workspace_members"
-  WHERE (("workspace_members"."user_id" = "auth"."uid"()) AND ("workspace_members"."role" = ANY (ARRAY['manager'::"public"."workspace_role", 'admin'::"public"."workspace_role"]))))));
-
-
-
-CREATE POLICY "leaders_delete_gantt_flags" ON "public"."gantt_flags" FOR DELETE USING (("workspace_id" IN ( SELECT "wm"."workspace_id"
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"]))))));
-
-
-
-CREATE POLICY "leaders_insert_gantt_flags" ON "public"."gantt_flags" FOR INSERT WITH CHECK (("workspace_id" IN ( SELECT "wm"."workspace_id"
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"]))))));
-
-
-
-CREATE POLICY "leaders_update_gantt_flags" ON "public"."gantt_flags" FOR UPDATE USING (("workspace_id" IN ( SELECT "wm"."workspace_id"
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"])))))) WITH CHECK (("workspace_id" IN ( SELECT "wm"."workspace_id"
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"]))))));
-
-
-
-CREATE POLICY "member_crud_own_feedback" ON "public"."feedbacks" USING ((("auth"."uid"() = "author_user_id") AND (EXISTS ( SELECT 1
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id")))))) WITH CHECK ((("auth"."uid"() = "author_user_id") AND (EXISTS ( SELECT 1
-   FROM "public"."workspace_members" "wm"
-  WHERE (("wm"."user_id" = "auth"."uid"()) AND ("wm"."workspace_id" = "feedbacks"."workspace_id"))))));
 
 
 
@@ -1724,6 +1532,10 @@ CREATE POLICY "menu_settings_insert_policy" ON "public"."menu_settings" FOR INSE
 
 
 
+CREATE POLICY "menu_settings_select_demo_anon" ON "public"."menu_settings" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
+
+
+
 CREATE POLICY "menu_settings_select_policy" ON "public"."menu_settings" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM "public"."workspace_members" "wm"
   WHERE (("wm"."workspace_id" = "menu_settings"."workspace_id") AND ("wm"."user_id" = "auth"."uid"())))));
@@ -1732,27 +1544,17 @@ CREATE POLICY "menu_settings_select_policy" ON "public"."menu_settings" FOR SELE
 
 CREATE POLICY "menu_settings_update_policy" ON "public"."menu_settings" FOR UPDATE USING ((EXISTS ( SELECT 1
    FROM "public"."workspace_members" "wm"
+  WHERE (("wm"."workspace_id" = "menu_settings"."workspace_id") AND ("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"])))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."workspace_members" "wm"
   WHERE (("wm"."workspace_id" = "menu_settings"."workspace_id") AND ("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = ANY (ARRAY['admin'::"public"."workspace_role", 'manager'::"public"."workspace_role"]))))));
 
 
 
-CREATE POLICY "meta_options_delete_admin_leader" ON "public"."snapshot_meta_options" FOR DELETE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
-
-
-
-CREATE POLICY "meta_options_insert_admin_leader" ON "public"."snapshot_meta_options" FOR INSERT TO "authenticated" WITH CHECK (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
-
-
-
-CREATE POLICY "meta_options_select_members" ON "public"."snapshot_meta_options" FOR SELECT TO "authenticated" USING ("public"."is_workspace_member"("workspace_id", "auth"."uid"()));
-
-
-
-CREATE POLICY "meta_options_update_admin_leader" ON "public"."snapshot_meta_options" FOR UPDATE TO "authenticated" USING (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"()))) WITH CHECK (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND "public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())));
-
-
-
 ALTER TABLE "public"."plan_assignees" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "plan_assignees_select_demo_anon" ON "public"."plan_assignees" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
+
 
 
 CREATE POLICY "plan_assignees_select_member" ON "public"."plan_assignees" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
@@ -1766,6 +1568,10 @@ CREATE POLICY "plan_assignees_write_admin_leader" ON "public"."plan_assignees" T
 
 
 ALTER TABLE "public"."plans" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "plans_select_demo_anon" ON "public"."plans" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
+
 
 
 CREATE POLICY "plans_select_member" ON "public"."plans" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
@@ -1782,6 +1588,10 @@ ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "profiles_modify_own" ON "public"."profiles" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "profiles_select_anon_demo" ON "public"."profiles" FOR SELECT TO "anon" USING (true);
 
 
 
@@ -1818,11 +1628,19 @@ CREATE POLICY "releases_select_all" ON "public"."releases" FOR SELECT USING (tru
 ALTER TABLE "public"."snapshot_entries" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "snapshot_entries_select_demo_anon" ON "public"."snapshot_entries" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
+
+
+
 CREATE POLICY "snapshot_meta_modify_leader" ON "public"."snapshot_meta_options" TO "authenticated" USING ("public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"())) WITH CHECK ("public"."is_workspace_admin_or_leader"("workspace_id", "auth"."uid"()));
 
 
 
 ALTER TABLE "public"."snapshot_meta_options" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "snapshot_meta_options_select_demo_anon" ON "public"."snapshot_meta_options" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
+
 
 
 CREATE POLICY "snapshot_meta_select_member" ON "public"."snapshot_meta_options" FOR SELECT TO "authenticated" USING ("public"."is_workspace_member"("workspace_id", "auth"."uid"()));
@@ -1833,6 +1651,10 @@ ALTER TABLE "public"."snapshot_weeks" ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "snapshot_weeks_select" ON "public"."snapshot_weeks" FOR SELECT TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "snapshot_weeks_select_demo_anon" ON "public"."snapshot_weeks" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
 
 
 
@@ -1848,6 +1670,10 @@ CREATE POLICY "snapshots_delete_leader" ON "public"."snapshots" FOR DELETE TO "a
 
 
 CREATE POLICY "snapshots_insert_member" ON "public"."snapshots" FOR INSERT TO "authenticated" WITH CHECK (("public"."is_workspace_member"("workspace_id", "auth"."uid"()) AND ("author_id" = "auth"."uid"())));
+
+
+
+CREATE POLICY "snapshots_select_demo_anon" ON "public"."snapshots" FOR SELECT TO "anon" USING (("workspace_id" = '00000000-0000-0000-0000-000000000002'::"uuid"));
 
 
 
@@ -1895,6 +1721,10 @@ CREATE POLICY "workspace_members_update_admin" ON "public"."workspace_members" F
 ALTER TABLE "public"."workspaces" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "workspaces_select_demo_anon" ON "public"."workspaces" FOR SELECT TO "anon" USING (("is_demo" = true));
+
+
+
 CREATE POLICY "workspaces_select_member" ON "public"."workspaces" FOR SELECT TO "authenticated" USING ("public"."is_workspace_member"("id", "auth"."uid"()));
 
 
@@ -1932,6 +1762,12 @@ GRANT ALL ON FUNCTION "public"."get_workspace_lock"("p_workspace_id" "uuid") TO 
 
 
 
+GRANT ALL ON FUNCTION "public"."handle_new_user_join_default_workspace"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_new_user_join_default_workspace"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_new_user_join_default_workspace"() TO "service_role";
+
+
+
 REVOKE ALL ON FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."heartbeat_workspace_lock"("p_workspace_id" "uuid", "p_ttl_seconds" integer) TO "authenticated";
@@ -1966,19 +1802,6 @@ GRANT ALL ON FUNCTION "public"."is_workspace_member"("p_workspace_id" "uuid", "p
 GRANT ALL ON FUNCTION "public"."link_legacy_authors"() TO "anon";
 GRANT ALL ON FUNCTION "public"."link_legacy_authors"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."link_legacy_authors"() TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."v_plans_with_assignees" TO "anon";
-GRANT ALL ON TABLE "public"."v_plans_with_assignees" TO "authenticated";
-GRANT ALL ON TABLE "public"."v_plans_with_assignees" TO "service_role";
-
-
-
-REVOKE ALL ON FUNCTION "public"."list_plans"("p_workspace_id" "uuid", "p_q" "text", "p_project" "text", "p_module" "text", "p_feature" "text", "p_stage" "text", "p_status" "text", "p_type" "public"."plan_type", "p_from" "date", "p_to" "date", "p_assignee_user_id" "uuid", "p_limit" integer, "p_offset" integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."list_plans"("p_workspace_id" "uuid", "p_q" "text", "p_project" "text", "p_module" "text", "p_feature" "text", "p_stage" "text", "p_status" "text", "p_type" "public"."plan_type", "p_from" "date", "p_to" "date", "p_assignee_user_id" "uuid", "p_limit" integer, "p_offset" integer) TO "anon";
-GRANT ALL ON FUNCTION "public"."list_plans"("p_workspace_id" "uuid", "p_q" "text", "p_project" "text", "p_module" "text", "p_feature" "text", "p_stage" "text", "p_status" "text", "p_type" "public"."plan_type", "p_from" "date", "p_to" "date", "p_assignee_user_id" "uuid", "p_limit" integer, "p_offset" integer) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."list_plans"("p_workspace_id" "uuid", "p_q" "text", "p_project" "text", "p_module" "text", "p_feature" "text", "p_stage" "text", "p_status" "text", "p_type" "public"."plan_type", "p_from" "date", "p_to" "date", "p_assignee_user_id" "uuid", "p_limit" integer, "p_offset" integer) TO "service_role";
 
 
 
@@ -2029,13 +1852,6 @@ GRANT ALL ON FUNCTION "public"."update_menu_settings_updated_at"() TO "service_r
 GRANT ALL ON FUNCTION "public"."update_updated_at"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_updated_at"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_updated_at"() TO "service_role";
-
-
-
-REVOKE ALL ON FUNCTION "public"."upsert_feature_plans_bulk"("p_payload" "jsonb") FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."upsert_feature_plans_bulk"("p_payload" "jsonb") TO "anon";
-GRANT ALL ON FUNCTION "public"."upsert_feature_plans_bulk"("p_payload" "jsonb") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."upsert_feature_plans_bulk"("p_payload" "jsonb") TO "service_role";
 
 
 
@@ -2132,6 +1948,12 @@ GRANT ALL ON TABLE "public"."v_menu_usage_weekly" TO "service_role";
 GRANT ALL ON TABLE "public"."v_page_usage_weekly" TO "anon";
 GRANT ALL ON TABLE "public"."v_page_usage_weekly" TO "authenticated";
 GRANT ALL ON TABLE "public"."v_page_usage_weekly" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."v_plans_with_assignees" TO "anon";
+GRANT ALL ON TABLE "public"."v_plans_with_assignees" TO "authenticated";
+GRANT ALL ON TABLE "public"."v_plans_with_assignees" TO "service_role";
 
 
 

@@ -1,7 +1,8 @@
 import { getFlagPlanSummary, getResourceDistribution, getCollabEdges } from "@/lib/data/insights";
 import { InsightsView } from "./_components/InsightsView";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 export const dynamic = "force-dynamic";
 

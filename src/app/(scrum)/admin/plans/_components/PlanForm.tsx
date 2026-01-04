@@ -7,8 +7,9 @@ import type { CreatePlanActionInput } from "@/lib/actions/plans";
 import type { PlanType, AssigneeRole } from "@/lib/data/plans";
 import type { WorkspaceMember } from "@/lib/data/members";
 import { SearchableSelect } from "@/components/common";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = process.env.NEXT_PUBLIC_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 interface PlanFormData extends CreatePlanActionInput {
   id?: string;

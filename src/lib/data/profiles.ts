@@ -3,8 +3,9 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 /**
  * 워크스페이스 멤버들의 display_name 목록 조회

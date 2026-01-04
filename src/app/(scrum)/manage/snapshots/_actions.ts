@@ -18,8 +18,9 @@ import type {
   WorkloadLevel,
 } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 export interface SnapshotEntryPayload {
   id?: string;

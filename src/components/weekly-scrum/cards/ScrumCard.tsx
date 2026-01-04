@@ -27,14 +27,14 @@ interface ScrumCardProps {
  */
 function formatToPlainText(item: ScrumItem): string {
   const lines: string[] = [];
-  
+
   // Header: [Domain / Project / Module / Feature]
   const modulePart = item.module ? ` / ${item.module}` : "";
   lines.push(`[${item.domain} / ${item.project}${modulePart} / ${item.topic}]`);
-  
+
   // Name
   lines.push(`* Name: ${item.name}`);
-  
+
   // Progress (Past Week)
   lines.push("* Progress");
   lines.push("    * Tasks");
@@ -45,7 +45,7 @@ function formatToPlainText(item: ScrumItem): string {
   } else {
     lines.push("        * (없음)");
   }
-  
+
   // Risk
   if (item.risk && item.risk.length > 0) {
     lines.push("    * Risk");
@@ -55,14 +55,14 @@ function formatToPlainText(item: ScrumItem): string {
   } else {
     lines.push("    * Risk: None");
   }
-  
+
   // RiskLevel
   if (item.riskLevel !== null && item.riskLevel !== undefined) {
     lines.push(`    * RiskLevel: ${item.riskLevel}`);
   } else {
     lines.push("    * RiskLevel: None");
   }
-  
+
   // Collaborators
   if (item.collaborators && item.collaborators.length > 0) {
     lines.push("    * Collaborators");
@@ -72,7 +72,7 @@ function formatToPlainText(item: ScrumItem): string {
   } else {
     lines.push("    * Collaborators: None");
   }
-  
+
   // Next (This Week)
   lines.push("* Next");
   lines.push("    * Tasks");
@@ -83,7 +83,7 @@ function formatToPlainText(item: ScrumItem): string {
   } else {
     lines.push("        * (없음)");
   }
-  
+
   return lines.join("\n");
 }
 
@@ -113,8 +113,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-export function ScrumCard({ 
-  item, 
+export function ScrumCard({
+  item,
   isCompleted = false,
   showCompareCheckbox = false,
   isCompareSelected = false,
@@ -124,11 +124,14 @@ export function ScrumCard({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  
+
   const domainColor = getDomainColor(item.domain);
   const riskLevel = item.riskLevel ?? 0;
   const riskColor = getRiskLevelColor(riskLevel as RiskLevel);
-  const achievementRate = getAchievementRate(item.progressPercent, item.planPercent ?? item.progressPercent);
+  const achievementRate = getAchievementRate(
+    item.progressPercent,
+    item.planPercent ?? item.progressPercent
+  );
   const achievementStatus = getAchievementStatus(achievementRate);
   const achievementColor = ACHIEVEMENT_COLORS[achievementStatus];
 
@@ -138,13 +141,13 @@ export function ScrumCard({
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
     if (!isMenuOpen) return;
-    
+
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
@@ -183,24 +186,26 @@ export function ScrumCard({
       className={`
         group relative overflow-hidden rounded-2xl border transition-all duration-300
         ${isSelectMode ? "cursor-pointer" : ""}
-        ${isCompareSelected 
-          ? "border-blue-400 shadow-lg shadow-blue-100 ring-2 ring-blue-100" 
-          : "border-gray-100 hover:border-gray-200 hover:shadow-lg"
+        ${
+          isCompareSelected
+            ? "border-blue-400 shadow-lg shadow-blue-100 ring-2 ring-blue-100"
+            : "border-gray-100 hover:border-gray-200 hover:shadow-lg"
         }
       `}
-      style={{ 
-        background: riskLevel >= 2 
-          ? `linear-gradient(135deg, ${riskColor.bg}20, white)` 
-          : "white",
+      style={{
+        background:
+          riskLevel >= 2
+            ? `linear-gradient(135deg, ${riskColor.bg}20, white)`
+            : "white",
       }}
       onClick={handleCardClick}
     >
       {/* 복사 메시지 토스트 */}
       {copyMessage && (
-        <div 
+        <div
           className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-xs font-medium z-20 shadow-lg animate-bounce-in"
-          style={{ 
-            background: "#1f2937", 
+          style={{
+            background: "#1f2937",
             color: "white",
           }}
         >
@@ -216,7 +221,10 @@ export function ScrumCard({
             <div className="flex items-center gap-1.5 flex-wrap mb-2">
               {/* 비교 체크박스 - 선택 모드일 때만 표시 */}
               {showCompareCheckbox && isSelectMode && (
-                <label className="flex items-center cursor-pointer mr-1" onClick={(e) => e.stopPropagation()}>
+                <label
+                  className="flex items-center cursor-pointer mr-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={isCompareSelected}
@@ -244,30 +252,35 @@ export function ScrumCard({
                 </>
               )}
             </div>
-            
+
             {/* Feature 제목 */}
             <h3 className="text-base font-bold text-gray-900 leading-tight mb-1">
               {item.topic}
             </h3>
-            
+
             {/* 담당자 + 리스크 */}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5">
                 <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">
                   {item.name.charAt(0)}
                 </div>
-                <span className="text-xs font-medium text-gray-600">{item.name}</span>
+                <span className="text-xs font-medium text-gray-600">
+                  {item.name}
+                </span>
               </div>
               {riskLevel > 0 && (
                 <RiskLevelBadge level={riskLevel as RiskLevel} size="sm" />
               )}
             </div>
           </div>
-          
+
           {/* 우측: 진행률 + 메뉴 */}
           <div className="flex items-start gap-2">
-            <CircularProgress percent={item.progressPercent} isCompleted={isCompleted} />
-            
+            <CircularProgress
+              percent={item.progressPercent}
+              isCompleted={isCompleted}
+            />
+
             {/* 메뉴 버튼 */}
             <div className="relative" ref={menuRef}>
               <button
@@ -278,13 +291,17 @@ export function ScrumCard({
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all opacity-0 group-hover:opacity-100"
                 title="메뉴"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <circle cx="12" cy="5" r="2" />
                   <circle cx="12" cy="12" r="2" />
                   <circle cx="12" cy="19" r="2" />
                 </svg>
               </button>
-              
+
               {/* 드롭다운 메뉴 */}
               {isMenuOpen && (
                 <div
@@ -296,8 +313,18 @@ export function ScrumCard({
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     <span className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      <svg
+                        className="w-3.5 h-3.5 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                        />
                       </svg>
                     </span>
                     JSON으로 복사
@@ -307,8 +334,18 @@ export function ScrumCard({
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     <span className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <svg
+                        className="w-3.5 h-3.5 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                       </svg>
                     </span>
                     Plain Text로 복사
@@ -324,15 +361,38 @@ export function ScrumCard({
           <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-100">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-xs text-gray-600">
-                <span>계획 <span className="font-semibold text-gray-900">{item.planPercent}%</span></span>
-                <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                <span>
+                  계획{" "}
+                  <span className="font-semibold text-gray-900">
+                    {item.planPercent}%
+                  </span>
+                </span>
+                <svg
+                  className="w-3 h-3 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
                 </svg>
-                <span>실제 <span className="font-semibold text-gray-900">{item.progressPercent}%</span></span>
+                <span>
+                  실제{" "}
+                  <span className="font-semibold text-gray-900">
+                    {item.progressPercent}%
+                  </span>
+                </span>
               </div>
               <span
                 className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                style={{ background: achievementColor.bg, color: achievementColor.text }}
+                style={{
+                  background: achievementColor.bg,
+                  color: achievementColor.text,
+                }}
               >
                 {achievementRate}% 달성
               </span>
@@ -352,7 +412,7 @@ export function ScrumCard({
         {/* Progress (Past Week) */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <div 
+            <div
               className="w-1.5 h-1.5 rounded-full"
               style={{ background: PROGRESS_COLORS.completed.text }}
             />
@@ -360,17 +420,25 @@ export function ScrumCard({
               Progress
             </span>
           </div>
-          <div className="space-y-2 pl-4 border-l-2" style={{ borderColor: `${PROGRESS_COLORS.completed.text}40` }}>
+          <div
+            className="space-y-2 pl-4 border-l-2"
+            style={{ borderColor: `${PROGRESS_COLORS.completed.text}40` }}
+          >
             {/* Tasks with progress bars */}
             <TaskList tasks={item.progress} label="Tasks" />
-            
+
             {/* Risk */}
             {item.risk && item.risk.length > 0 && (
               <div className="mt-2">
-                <span className="text-[10px] font-semibold text-red-500 uppercase">Risk:</span>
+                <span className="text-[10px] font-semibold text-red-500 uppercase">
+                  Risk:
+                </span>
                 <ul className="mt-1 space-y-1">
                   {item.risk.map((risk, idx) => (
-                    <li key={idx} className="text-xs text-gray-700 flex items-start gap-1.5">
+                    <li
+                      key={idx}
+                      className="text-xs text-gray-700 flex items-start gap-1.5"
+                    >
                       <span className="text-red-400 text-[8px] mt-1">⚠</span>
                       {risk}
                     </li>
@@ -387,21 +455,27 @@ export function ScrumCard({
             {/* Collaborators */}
             {item.collaborators && item.collaborators.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                <span className="text-[10px] font-medium text-gray-400">with:</span>
+                <span className="text-[10px] font-medium text-gray-400">
+                  with:
+                </span>
                 {item.collaborators.map((collab, idx) => {
                   // relations 우선, relation은 fallback
-                  const relation = collab.relations?.[0] || collab.relation || "pair";
+                  const relation =
+                    collab.relations?.[0] || collab.relation || "pair";
                   return (
                     <span
                       key={idx}
                       className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
                       style={{
-                        backgroundColor: COLLAB_COLORS[relation]?.bg || '#f3f4f6',
-                        color: COLLAB_COLORS[relation]?.text || '#6b7280',
+                        backgroundColor:
+                          COLLAB_COLORS[relation]?.bg || "#f3f4f6",
+                        color: COLLAB_COLORS[relation]?.text || "#6b7280",
                       }}
                     >
                       <span className="font-medium">{collab.name}</span>
-                      <span className="opacity-60">{COLLAB_LABELS[relation]}</span>
+                      <span className="opacity-60">
+                        {COLLAB_LABELS[relation]}
+                      </span>
                     </span>
                   );
                 })}
@@ -413,9 +487,7 @@ export function ScrumCard({
         {/* Next (This Week) */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div 
-              className="w-1.5 h-1.5 rounded-full bg-blue-500"
-            />
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">
               Next
             </span>
@@ -430,24 +502,24 @@ export function ScrumCard({
 }
 
 const COLLAB_COLORS: Record<string, { bg: string; text: string }> = {
-  pair: { bg: '#dbeafe', text: '#2563eb' },
-  pre: { bg: '#ffedd5', text: '#ea580c' },
-  post: { bg: '#dcfce7', text: '#16a34a' },
+  pair: { bg: "#dbeafe", text: "#2563eb" },
+  pre: { bg: "#ffedd5", text: "#ea580c" },
+  post: { bg: "#dcfce7", text: "#16a34a" },
 };
 
 const COLLAB_LABELS: Record<string, string> = {
-  pair: '페어',
-  pre: '선행',
-  post: '후행',
+  pair: "페어",
+  pre: "선행",
+  post: "후행",
 };
 
 /** Task 리스트 컴포넌트 - 프로그래스 바 포함 */
-function TaskList({ 
-  tasks, 
+function TaskList({
+  tasks,
   label,
   isNext = false,
-}: { 
-  tasks: string[]; 
+}: {
+  tasks: (string | any)[];
   label: string;
   isNext?: boolean;
 }) {
@@ -461,12 +533,19 @@ function TaskList({
 
   return (
     <div>
-      <span className="text-[10px] font-semibold text-gray-500 uppercase">{label}:</span>
+      <span className="text-[10px] font-semibold text-gray-500 uppercase">
+        {label}:
+      </span>
       <ul className="mt-1.5 space-y-2">
         {tasks.map((task, idx) => {
           const progress = extractTaskProgress(task);
-          const taskText = task.replace(/\s*\(\d+%\)\s*$/, '').trim();
-          
+          // task가 문자열이 아닐 경우 처리
+          const taskStr =
+            typeof task === "string"
+              ? task
+              : task?.title || task?.note || JSON.stringify(task);
+          const taskText = taskStr.replace(/\s*\(\d+%\)\s*$/, "").trim();
+
           return (
             <li key={idx} className="group/task">
               <div className="flex items-start gap-2">
@@ -476,24 +555,26 @@ function TaskList({
                   {progress !== null && (
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className={`h-full rounded-full transition-all duration-500 ${
-                            progress >= 100 
-                              ? 'bg-emerald-500' 
-                              : progress >= 50 
-                                ? 'bg-blue-500' 
-                                : 'bg-amber-500'
+                            progress >= 100
+                              ? "bg-emerald-500"
+                              : progress >= 50
+                              ? "bg-blue-500"
+                              : "bg-amber-500"
                           }`}
                           style={{ width: `${Math.min(progress, 100)}%` }}
                         />
                       </div>
-                      <span className={`text-[10px] font-bold tabular-nums ${
-                        progress >= 100 
-                          ? 'text-emerald-600' 
-                          : progress >= 50 
-                            ? 'text-blue-600' 
-                            : 'text-amber-600'
-                      }`}>
+                      <span
+                        className={`text-[10px] font-bold tabular-nums ${
+                          progress >= 100
+                            ? "text-emerald-600"
+                            : progress >= 50
+                            ? "text-blue-600"
+                            : "text-amber-600"
+                        }`}
+                      >
                         {progress}%
                       </span>
                     </div>
@@ -511,7 +592,11 @@ function TaskList({
 /**
  * Task 문자열에서 진행률 추출 (예: "작업 완료 (100%)" -> 100)
  */
-function extractTaskProgress(task: string): number | null {
-  const match = task.match(/\((\d+)%\)/);
+function extractTaskProgress(task: string | any): number | null {
+  // task가 문자열이 아닐 경우 처리
+  const taskStr =
+    typeof task === "string" ? task : task?.title || task?.note || "";
+
+  const match = taskStr.match(/\((\d+)%\)/);
   return match ? parseInt(match[1], 10) : null;
 }

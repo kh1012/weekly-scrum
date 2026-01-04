@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { PersonalDashboard } from "@/components/weekly-scrum/my/PersonalDashboard";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 /**
  * ISO 주차 계산 헬퍼

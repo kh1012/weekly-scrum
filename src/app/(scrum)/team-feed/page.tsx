@@ -6,9 +6,9 @@ import { listWorkspaceMembers } from "@/lib/data/members";
 import { TeamFeedClient } from "@/components/team-feed/TeamFeedClient";
 import { parseGnbParams } from "@/lib/ui/gnbParams";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
+import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
-const DEFAULT_WORKSPACE_ID =
-  process.env.DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000001";
+const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

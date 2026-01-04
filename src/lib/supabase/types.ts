@@ -11,6 +11,7 @@ export interface Database {
           user_id: string;
           display_name: string;
           email: string;
+          basic_role?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -18,6 +19,7 @@ export interface Database {
           user_id: string;
           display_name: string;
           email: string;
+          basic_role?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -25,6 +27,7 @@ export interface Database {
           user_id?: string;
           display_name?: string;
           email?: string;
+          basic_role?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -33,16 +36,19 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          is_demo?: boolean | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           name: string;
+          is_demo?: boolean | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           name?: string;
+          is_demo?: boolean | null;
           created_at?: string;
         };
       };
@@ -297,9 +303,20 @@ export const WORKLOAD_LEVEL_LABELS: Record<WorkloadLevel, string> = {
 /**
  * WorkloadLevel 색상 매핑
  */
-export const WORKLOAD_LEVEL_COLORS: Record<WorkloadLevel, { bg: string; text: string; border: string }> = {
-  light: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  normal: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+export const WORKLOAD_LEVEL_COLORS: Record<
+  WorkloadLevel,
+  { bg: string; text: string; border: string }
+> = {
+  light: {
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+  },
+  normal: {
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    border: "border-blue-200",
+  },
   burden: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
 };
 
@@ -330,4 +347,3 @@ export interface ThisWeekData {
 export interface RiskData {
   items?: string[];
 }
-
