@@ -44,7 +44,7 @@ function getMenuCount(
     case "feedbacks":
       return menuStats.feedbacks_count;
     case "team-feed":
-      return menuStats.total_entries_count;
+      return menuStats.snapshots_count;
     case "plans":
       return menuStats.plans_count;
     case "snapshots":
@@ -68,7 +68,7 @@ function getMenuCountLabel(menuKey: string): string {
     case "feedbacks":
       return "피드백 게시물";
     case "team-feed":
-      return "총 스냅샷 엔트리";
+      return "스냅샷";
     case "plans":
       return "계획 데이터";
     case "snapshots":

@@ -80,6 +80,7 @@ export default async function ScrumLayout({
   // 메뉴별 통계 데이터 가져오기
   let menuStats: Awaited<ReturnType<typeof getMenuStats>> = {
     feedbacks_count: 0,
+    snapshots_count: 0,
     total_entries_count: 0,
     plans_count: 0,
     features_count: 0,

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export interface MenuStats {
   feedbacks_count: number;
+  snapshots_count: number;
   total_entries_count: number;
   plans_count: number;
   features_count: number;
@@ -29,6 +30,16 @@ export async function getMenuStats(params: {
       .from("feedbacks")
       .select("*", { count: "exact", head: true })
       .eq("workspace_id", workspaceId);
+
+    // Distinct snapshots count
+    const { data: snapshotsData } = await supabase
+      .from("snapshot_entries")
+      .select("snapshot_id")
+      .eq("workspace_id", workspaceId);
+
+    const uniqueSnapshots = new Set(
+      snapshotsData?.map((d) => d.snapshot_id) || []
+    ).size;
 
     // Total snapshot entries count
     const { count: totalEntriesCount } = await supabase
@@ -79,6 +90,7 @@ export async function getMenuStats(params: {
 
     return {
       feedbacks_count: feedbacksCount || 0,
+      snapshots_count: uniqueSnapshots,
       total_entries_count: totalEntriesCount || 0,
       plans_count: plansCount || 0,
       features_count: uniqueFeatures,
@@ -89,6 +101,7 @@ export async function getMenuStats(params: {
     console.error("[menuStats] Error fetching menu stats:", error);
     return {
       feedbacks_count: 0,
+      snapshots_count: 0,
       total_entries_count: 0,
       plans_count: 0,
       features_count: 0,
