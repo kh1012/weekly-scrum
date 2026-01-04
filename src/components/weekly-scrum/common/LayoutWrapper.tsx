@@ -9,6 +9,7 @@ import { Logo } from "./Logo";
 import { TelemetryProvider } from "@/components/telemetry/TelemetryProvider";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import type { MenuSetting } from "@/lib/data/menuSettings";
+import type { MenuViewCount } from "@/lib/data/menuUsage";
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -18,6 +19,8 @@ interface LayoutWrapperProps {
   workspaceId?: string;
   /** 메뉴 설정 */
   menuSettings?: MenuSetting[];
+  /** 메뉴 조회수 */
+  menuViewCounts?: MenuViewCount[];
 }
 
 // max-w-full을 적용할 페이지 경로
@@ -103,9 +106,10 @@ interface DrawerNavigationProps {
   role?: WorkspaceRole;
   workspaceId?: string;
   menuSettings?: MenuSetting[];
+  menuViewCounts?: MenuViewCount[];
 }
 
-function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings }: DrawerNavigationProps) {
+function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, menuViewCounts }: DrawerNavigationProps) {
   // ESC 키로 닫기
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -182,14 +186,20 @@ function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings }: 
 
         {/* 네비게이션 - 스크롤 가능 영역 */}
         <div className="flex-1 overflow-y-auto py-2">
-          <SideNavigation onItemClick={onClose} role={role} workspaceId={workspaceId} menuSettings={menuSettings} />
+          <SideNavigation 
+            onItemClick={onClose} 
+            role={role} 
+            workspaceId={workspaceId} 
+            menuSettings={menuSettings}
+            menuViewCounts={menuViewCounts}
+          />
         </div>
       </aside>
     </>
   );
 }
 
-export function LayoutWrapper({ children, role, workspaceId, menuSettings }: LayoutWrapperProps) {
+export function LayoutWrapper({ children, role, workspaceId, menuSettings, menuViewCounts }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -229,6 +239,7 @@ export function LayoutWrapper({ children, role, workspaceId, menuSettings }: Lay
         role={role}
         workspaceId={workspaceId}
         menuSettings={menuSettings}
+        menuViewCounts={menuViewCounts}
       />
 
       {/* 메인 영역 */}

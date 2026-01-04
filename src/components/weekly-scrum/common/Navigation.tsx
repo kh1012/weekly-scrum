@@ -7,6 +7,7 @@ import { useVisitorCount } from "@/hooks/useVisitorCount";
 import { RELEASES } from "../releases/releaseData";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import type { MenuSetting } from "@/lib/data/menuSettings";
+import type { MenuViewCount } from "@/lib/data/menuUsage";
 import { Logo } from "./Logo";
 import { navigationProgress } from "./NavigationProgress";
 import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
@@ -14,6 +15,16 @@ import { logMenuClick } from "@/lib/telemetry/menuEvents";
 
 // localStorage 키
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
+
+/**
+ * 조회수 포맷팅 함수
+ * 999까지는 그대로 숫자로, 1000부터는 1k, 999k 형식으로 표시
+ */
+function formatViewCount(count: number): string {
+  if (count < 1000) return count.toString();
+  if (count < 1000000) return `${Math.floor(count / 1000)}k`;
+  return `${Math.floor(count / 1000000)}m`;
+}
 
 /** 네비게이션 아이템 */
 interface NavItem {
@@ -278,6 +289,7 @@ interface SideNavigationProps {
   role?: WorkspaceRole;
   workspaceId?: string;
   menuSettings?: MenuSetting[];
+  menuViewCounts?: MenuViewCount[];
 }
 
 export const SideNavigation = memo(function SideNavigation({
@@ -285,11 +297,44 @@ export const SideNavigation = memo(function SideNavigation({
   role = "member",
   workspaceId = "",
   menuSettings = [],
+  menuViewCounts = [],
 }: SideNavigationProps) {
   const isActive = useIsActive();
   const router = useRouter();
   const { count, isLoading } = useVisitorCount();
-  const navCategories = useMemo(() => getNavCategories(role), [role]);
+  
+  // 조회수 데이터를 Map으로 변환 (빠른 조회를 위해)
+  const viewCountsMap = useMemo(
+    () =>
+      new Map(
+        menuViewCounts.map((vc) => [
+          `${vc.menu_group || "null"}:${vc.menu_key}`,
+          vc.total_views,
+        ])
+      ),
+    [menuViewCounts]
+  );
+
+  // Works 그룹의 items를 조회수 기준으로 정렬
+  const navCategories = useMemo(() => {
+    const categories = getNavCategories(role);
+    
+    return categories.map((category) => {
+      if (category.key === "works") {
+        // Works 그룹은 조회수 기준으로 정렬
+        const sortedItems = [...category.items].sort((a, b) => {
+          const aKey = `${category.key}:${a.key}`;
+          const bKey = `${category.key}:${b.key}`;
+          const aViews = viewCountsMap.get(aKey) || 0;
+          const bViews = viewCountsMap.get(bKey) || 0;
+          return bViews - aViews; // 내림차순
+        });
+        
+        return { ...category, items: sortedItems };
+      }
+      return category;
+    });
+  }, [role, viewCountsMap]);
 
   // 메뉴 설정을 Map으로 변환
   const settingsMap = useMemo(
@@ -415,6 +460,10 @@ export const SideNavigation = memo(function SideNavigation({
                       item.tagVariant ||
                       "gray";
 
+                    // 조회수 가져오기
+                    const viewCountKey = `${category.key}:${item.key}`;
+                    const viewCount = viewCountsMap.get(viewCountKey);
+
                     return (
                       <Link
                         key={item.key}
@@ -452,11 +501,18 @@ export const SideNavigation = memo(function SideNavigation({
                           {item.icon}
                           <span>{item.label}</span>
                         </div>
-                        {badgeLabel && (
-                          <LiquidGlassTag variant={badgeVariant} shimmer>
-                            {badgeLabel}
-                          </LiquidGlassTag>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {viewCount !== undefined && viewCount > 0 && (
+                            <span className="text-xs text-[#57606a] px-1.5 py-0.5 bg-[#f6f8fa] rounded">
+                              {formatViewCount(viewCount)}
+                            </span>
+                          )}
+                          {badgeLabel && (
+                            <LiquidGlassTag variant={badgeVariant} shimmer>
+                              {badgeLabel}
+                            </LiquidGlassTag>
+                          )}
+                        </div>
                       </Link>
                     );
                   })}

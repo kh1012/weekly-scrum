@@ -10,6 +10,7 @@ import { getSupabaseOnlyData } from "@/lib/data/supabaseSnapshots";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import { getMenuSettings } from "@/lib/data/menuSettings";
+import { getMenuViewCounts } from "@/lib/data/menuUsage";
 import { ScrumProvider } from "@/context/ScrumContext";
 import { LayoutWrapper, MainContent } from "@/components/weekly-scrum/common";
 import type { WeekOption, WeeklyScrumData } from "@/types/scrum";
@@ -60,6 +61,17 @@ export default async function ScrumLayout({
     // 메뉴 설정 로드 실패 시 빈 배열 사용
   }
 
+  // 메뉴 조회수 데이터 가져오기
+  let menuViewCounts: Awaited<ReturnType<typeof getMenuViewCounts>> = [];
+  try {
+    menuViewCounts = await getMenuViewCounts({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      weeksLimit: 8,
+    });
+  } catch {
+    // 조회수 데이터 로드 실패 시 빈 배열 사용
+  }
+
   let allData: Record<string, WeeklyScrumData>;
   let weeks: WeekOption[];
 
@@ -95,7 +107,12 @@ export default async function ScrumLayout({
         weeks={mockWeeks}
         initialWeekKey={mockKey}
       >
-        <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID} menuSettings={menuSettings}>
+        <LayoutWrapper 
+          role={role} 
+          workspaceId={DEFAULT_WORKSPACE_ID} 
+          menuSettings={menuSettings}
+          menuViewCounts={menuViewCounts}
+        >
           <MainContent>{children}</MainContent>
         </LayoutWrapper>
       </ScrumProvider>
@@ -110,7 +127,12 @@ export default async function ScrumLayout({
       weeks={weeks}
       initialWeekKey={initialWeekKey}
     >
-      <LayoutWrapper role={role} workspaceId={DEFAULT_WORKSPACE_ID} menuSettings={menuSettings}>
+      <LayoutWrapper 
+        role={role} 
+        workspaceId={DEFAULT_WORKSPACE_ID} 
+        menuSettings={menuSettings}
+        menuViewCounts={menuViewCounts}
+      >
         <MainContent>{children}</MainContent>
       </LayoutWrapper>
     </ScrumProvider>

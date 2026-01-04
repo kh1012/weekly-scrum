@@ -123,3 +123,54 @@ export async function getUserMenuUsageWeekly(params: {
   return (data || []) as UserMenuUsageWeekly[];
 }
 
+/**
+ * Get aggregated menu view counts (for navigation sorting and badges)
+ * Returns total PAGE_VIEW count per menu_key
+ */
+export interface MenuViewCount {
+  menu_key: string;
+  menu_group: string | null;
+  total_views: number;
+}
+
+export async function getMenuViewCounts(params: {
+  workspaceId: string;
+  weeksLimit?: number;
+}): Promise<MenuViewCount[]> {
+  const { workspaceId, weeksLimit = 8 } = params;
+
+  try {
+    const menuUsage = await getMenuUsageWeekly({
+      workspaceId,
+      weeksLimit,
+      eventType: "PAGE_VIEW",
+    });
+
+    // menu_group + menu_key 조합으로 집계
+    const aggregated = new Map<string, MenuViewCount>();
+    
+    for (const record of menuUsage) {
+      if (record.menu_key && record.menu_key !== "unknown") {
+        const key = `${record.menu_group || "null"}:${record.menu_key}`;
+        const existing = aggregated.get(key);
+        if (existing) {
+          existing.total_views += record.event_count;
+        } else {
+          aggregated.set(key, {
+            menu_key: record.menu_key,
+            menu_group: record.menu_group,
+            total_views: record.event_count,
+          });
+        }
+      }
+    }
+
+    return Array.from(aggregated.values()).sort(
+      (a, b) => b.total_views - a.total_views
+    );
+  } catch (error) {
+    console.error("[menuUsage] Error fetching menu view counts:", error);
+    return [];
+  }
+}
+
