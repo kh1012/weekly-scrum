@@ -302,7 +302,7 @@ export const SideNavigation = memo(function SideNavigation({
   const isActive = useIsActive();
   const router = useRouter();
   const { count, isLoading } = useVisitorCount();
-  
+
   // 조회수 데이터를 Map으로 변환 (빠른 조회를 위해)
   const viewCountsMap = useMemo(
     () =>
@@ -318,7 +318,7 @@ export const SideNavigation = memo(function SideNavigation({
   // Works 그룹의 items를 조회수 기준으로 정렬
   const navCategories = useMemo(() => {
     const categories = getNavCategories(role);
-    
+
     return categories.map((category) => {
       if (category.key === "works") {
         // Works 그룹은 조회수 기준으로 정렬
@@ -329,7 +329,7 @@ export const SideNavigation = memo(function SideNavigation({
           const bViews = viewCountsMap.get(bKey) || 0;
           return bViews - aViews; // 내림차순
         });
-        
+
         return { ...category, items: sortedItems };
       }
       return category;
