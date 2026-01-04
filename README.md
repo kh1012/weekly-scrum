@@ -4,7 +4,7 @@
 
 ## 소개
 
-Weekly Scrum은 팀 단위로 주간 업무 현황을 체계적으로 관리하고 시각화하는 웹 애플리케이션입니다. 
+Weekly Scrum은 팀 단위로 주간 업무 현황을 체계적으로 관리하고 시각화하는 웹 애플리케이션입니다.
 각 팀원이 작성한 주간 스냅샷을 통해 업무 진행 상황, 협업 관계, 리스크를 한눈에 파악할 수 있습니다.
 
 ## 주요 기능
@@ -12,45 +12,53 @@ Weekly Scrum은 팀 단위로 주간 업무 현황을 체계적으로 관리하�
 ### Community
 
 #### Feedbacks
+
 - 스냅샷과 업무에 대한 피드백 작성 및 관리
 - 피드백 해결 상태 추적
 
 ### Works
 
 #### Team Feed
+
 - 팀원들의 최근 스냅샷 엔트리를 시간순으로 확인
 - 작성자, 날짜 범위, 협업자별 필터링
 - 프로젝트/모듈/기능별 검색
 
 #### Plans (간트 차트)
+
 - 프로젝트 일정을 트리 구조로 시각화
 - 역할별(Planning, Design, FE, BE, QA) 담당자 할당
 - 드래그 앤 드롭으로 일정 조정
 - 스프린트, 릴리즈, 배포 플래그 표시
 
 #### Snapshots
+
 - 주차별 스냅샷 상세 보기
 - 과거 주차 작업 완료 내역
 - 현재 주차 계획 및 진행 상황
 - 리스크 및 협업자 정보
 
 #### Work Map
+
 - 팀원별 업무 현황 시각화
 - 도메인별 업무 분포
 - 프로젝트 참여 현황
 
 #### Collaborator Graph
+
 - 팀원 간 협업 네트워크 시각화
 - 협업 빈도 및 강도 분석
 
 ### Personal Space
 
 #### Dashboard
+
 - 개인 대시보드
 - 최근 스냅샷 요약
 - 업무량 트렌드
 
 #### Snapshot Management
+
 - 주간 스냅샷 작성/수정/삭제
 - 과거 주차 작업 기록
 - 현재 주차 계획 입력
@@ -59,46 +67,55 @@ Weekly Scrum은 팀 단위로 주간 업무 현황을 체계적으로 관리하�
 ### Admin Space (관리자 전용)
 
 #### Dashboard
+
 - 전체 스냅샷/엔트리 통계
 - 주차별 현황
 - 워크스페이스 멤버 관리
 
 #### Plans Management
+
 - 계획 생성/수정/삭제
 - 담당자 할당
 - 일정 조정
 
 #### Meta Options
+
 - 프로젝트/모듈/기능 옵션 관리
 - 도메인 옵션 관리
 
 #### Members
+
 - 워크스페이스 멤버 관리
 - 권한 설정
 
 #### Menu Usage
+
 - 메뉴별 사용 통계
 - 페이지뷰 분석
 
 #### Menu Settings
+
 - 메뉴 표시/숨김 설정
 - 메뉴 뱃지 커스터마이징
 
 ### Extras
 
 #### Release Notes
+
 - 버전별 릴리즈 노트
 - 신규 기능 및 개선 사항
 
 ## 기술 스택
 
 ### Frontend
+
 - **Next.js 15** (App Router)
 - **React 19**
 - **TypeScript**
 - **Tailwind CSS**
 
 ### Backend & Database
+
 - **Supabase**
   - PostgreSQL 데이터베이스
   - Row Level Security (RLS)
@@ -106,6 +123,7 @@ Weekly Scrum은 팀 단위로 주간 업무 현황을 체계적으로 관리하�
   - 실시간 데이터 동기화
 
 ### 주요 라이브러리
+
 - **d3-force** - 네트워크 그래프
 - **recharts** - 차트 시각화
 - **reactflow** - 플로우 다이어그램
@@ -200,15 +218,21 @@ interface SnapshotEntry {
     }>;
   };
   this_week: {
-    tasks: Array<string | {
-      title: string;
-      progress?: number;
-    }>;
+    tasks: Array<
+      | string
+      | {
+          title: string;
+          progress?: number;
+        }
+    >;
   };
-  risks: Array<string | {
-    title: string;
-    level: number;
-  }>;
+  risks: Array<
+    | string
+    | {
+        title: string;
+        level: number;
+      }
+  >;
   risk_level: number;
   collaborators: string[];
 }
@@ -236,12 +260,12 @@ interface Plan {
 
 ## 스크립트
 
-| 명령어 | 설명 |
-|--------|------|
-| `yarn dev` | 개발 서버 실행 |
-| `yarn build` | 프로덕션 빌드 |
+| 명령어       | 설명               |
+| ------------ | ------------------ |
+| `yarn dev`   | 개발 서버 실행     |
+| `yarn build` | 프로덕션 빌드      |
 | `yarn start` | 프로덕션 서버 실행 |
-| `yarn lint` | 린트 검사 |
+| `yarn lint`  | 린트 검사          |
 
 ## 문제 해결
 

@@ -8,6 +8,7 @@ import { RELEASES } from "../releases/releaseData";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import type { MenuSetting } from "@/lib/data/menuSettings";
 import type { MenuViewCount } from "@/lib/data/menuUsage";
+import type { MenuStats } from "@/lib/data/menuStats";
 import { Logo } from "./Logo";
 import { navigationProgress } from "./NavigationProgress";
 import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
@@ -17,13 +18,46 @@ import { logMenuClick } from "@/lib/telemetry/menuEvents";
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
 
 /**
- * 조회수 포맷팅 함수
+ * 통계 포맷팅 함수
  * 999까지는 그대로 숫자로, 1000부터는 1k, 999k 형식으로 표시
  */
-function formatViewCount(count: number): string {
+function formatCount(count: number): string {
   if (count < 1000) return count.toString();
   if (count < 1000000) return `${Math.floor(count / 1000)}k`;
   return `${Math.floor(count / 1000000)}m`;
+}
+
+/**
+ * 메뉴별 통계 숫자 가져오기
+ */
+function getMenuCount(
+  menuKey: string,
+  categoryKey: string,
+  menuStats?: MenuStats
+): number | undefined {
+  if (!menuStats) return undefined;
+
+  // Admin 그룹은 숫자 표시 안 함
+  if (categoryKey === "admin") return undefined;
+
+  switch (menuKey) {
+    case "feedbacks":
+      return menuStats.feedbacks_count;
+    case "team-feed":
+      return menuStats.total_entries_count;
+    case "plans":
+      return menuStats.plans_count;
+    case "snapshots":
+      return menuStats.total_entries_count;
+    case "work-map":
+      return menuStats.features_count;
+    case "collaborator-graph":
+      return menuStats.collaborations_count;
+    case "my-snapshots":
+      return menuStats.my_entries_count;
+    default:
+      return undefined;
+  }
 }
 
 /** 네비게이션 아이템 */
@@ -290,6 +324,7 @@ interface SideNavigationProps {
   workspaceId?: string;
   menuSettings?: MenuSetting[];
   menuViewCounts?: MenuViewCount[];
+  menuStats?: MenuStats;
 }
 
 export const SideNavigation = memo(function SideNavigation({
@@ -298,6 +333,7 @@ export const SideNavigation = memo(function SideNavigation({
   workspaceId = "",
   menuSettings = [],
   menuViewCounts = [],
+  menuStats,
 }: SideNavigationProps) {
   const isActive = useIsActive();
   const router = useRouter();
@@ -460,9 +496,12 @@ export const SideNavigation = memo(function SideNavigation({
                       item.tagVariant ||
                       "gray";
 
-                    // 조회수 가져오기
-                    const viewCountKey = `${category.key}:${item.key}`;
-                    const viewCount = viewCountsMap.get(viewCountKey);
+                    // 메뉴별 통계 숫자 가져오기
+                    const menuCount = getMenuCount(
+                      item.key,
+                      category.key,
+                      menuStats
+                    );
 
                     return (
                       <Link
@@ -501,10 +540,10 @@ export const SideNavigation = memo(function SideNavigation({
                           {item.icon}
                           <span>{item.label}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {viewCount !== undefined && viewCount > 0 && (
-                            <span className="text-xs text-[#57606a] px-1.5 py-0.5 bg-[#f6f8fa] rounded">
-                              {formatViewCount(viewCount)}
+                        <div className="flex items-center gap-1.5">
+                          {menuCount !== undefined && menuCount > 0 && (
+                            <span className="text-[10px] text-[#57606a] font-medium px-1 py-0.5 bg-[#f6f8fa] rounded min-w-[20px] text-center">
+                              {formatCount(menuCount)}
                             </span>
                           )}
                           {badgeLabel && (

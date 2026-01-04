@@ -10,6 +10,7 @@ import { TelemetryProvider } from "@/components/telemetry/TelemetryProvider";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import type { MenuSetting } from "@/lib/data/menuSettings";
 import type { MenuViewCount } from "@/lib/data/menuUsage";
+import type { MenuStats } from "@/lib/data/menuStats";
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -21,6 +22,8 @@ interface LayoutWrapperProps {
   menuSettings?: MenuSetting[];
   /** 메뉴 조회수 */
   menuViewCounts?: MenuViewCount[];
+  /** 메뉴별 통계 */
+  menuStats?: MenuStats;
 }
 
 // max-w-full을 적용할 페이지 경로
@@ -107,9 +110,10 @@ interface DrawerNavigationProps {
   workspaceId?: string;
   menuSettings?: MenuSetting[];
   menuViewCounts?: MenuViewCount[];
+  menuStats?: MenuStats;
 }
 
-function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, menuViewCounts }: DrawerNavigationProps) {
+function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, menuViewCounts, menuStats }: DrawerNavigationProps) {
   // ESC 키로 닫기
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -192,6 +196,7 @@ function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, me
             workspaceId={workspaceId} 
             menuSettings={menuSettings}
             menuViewCounts={menuViewCounts}
+            menuStats={menuStats}
           />
         </div>
       </aside>
@@ -199,7 +204,7 @@ function DrawerNavigation({ isOpen, onClose, role, workspaceId, menuSettings, me
   );
 }
 
-export function LayoutWrapper({ children, role, workspaceId, menuSettings, menuViewCounts }: LayoutWrapperProps) {
+export function LayoutWrapper({ children, role, workspaceId, menuSettings, menuViewCounts, menuStats }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -240,6 +245,7 @@ export function LayoutWrapper({ children, role, workspaceId, menuSettings, menuV
         workspaceId={workspaceId}
         menuSettings={menuSettings}
         menuViewCounts={menuViewCounts}
+        menuStats={menuStats}
       />
 
       {/* 메인 영역 */}

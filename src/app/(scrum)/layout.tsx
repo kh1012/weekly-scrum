@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import { getMenuSettings } from "@/lib/data/menuSettings";
 import { getMenuViewCounts } from "@/lib/data/menuUsage";
+import { getMenuStats } from "@/lib/data/menuStats";
 import { ScrumProvider } from "@/context/ScrumContext";
 import { LayoutWrapper, MainContent } from "@/components/weekly-scrum/common";
 import type { WeekOption, WeeklyScrumData } from "@/types/scrum";
@@ -53,6 +54,13 @@ export default async function ScrumLayout({
   // 현재 유저의 workspace role 조회
   const role = await getWorkspaceRole();
 
+  // 현재 사용자 ID 가져오기
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id;
+
   // 메뉴 설정 조회
   let menuSettings: Awaited<ReturnType<typeof getMenuSettings>> = [];
   try {
@@ -70,6 +78,24 @@ export default async function ScrumLayout({
     });
   } catch {
     // 조회수 데이터 로드 실패 시 빈 배열 사용
+  }
+
+  // 메뉴별 통계 데이터 가져오기
+  let menuStats: Awaited<ReturnType<typeof getMenuStats>> = {
+    feedbacks_count: 0,
+    total_entries_count: 0,
+    plans_count: 0,
+    features_count: 0,
+    collaborations_count: 0,
+    my_entries_count: 0,
+  };
+  try {
+    menuStats = await getMenuStats({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      userId,
+    });
+  } catch {
+    // 통계 데이터 로드 실패 시 기본값 사용
   }
 
   let allData: Record<string, WeeklyScrumData>;
@@ -112,6 +138,7 @@ export default async function ScrumLayout({
           workspaceId={DEFAULT_WORKSPACE_ID} 
           menuSettings={menuSettings}
           menuViewCounts={menuViewCounts}
+          menuStats={menuStats}
         >
           <MainContent>{children}</MainContent>
         </LayoutWrapper>
@@ -132,6 +159,7 @@ export default async function ScrumLayout({
         workspaceId={DEFAULT_WORKSPACE_ID} 
         menuSettings={menuSettings}
         menuViewCounts={menuViewCounts}
+        menuStats={menuStats}
       >
         <MainContent>{children}</MainContent>
       </LayoutWrapper>
