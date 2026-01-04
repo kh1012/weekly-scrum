@@ -541,15 +541,15 @@ export const SideNavigation = memo(function SideNavigation({
                           <span>{item.label}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          {menuCount !== undefined && menuCount > 0 && (
-                            <span className="text-[10px] text-[#57606a] font-medium px-1 py-0.5 bg-[#f6f8fa] rounded min-w-[20px] text-center">
-                              {formatCount(menuCount)}
-                            </span>
-                          )}
                           {badgeLabel && (
                             <LiquidGlassTag variant={badgeVariant} shimmer>
                               {badgeLabel}
                             </LiquidGlassTag>
+                          )}
+                          {menuCount !== undefined && menuCount > 0 && (
+                            <span className="text-[10px] text-[#57606a] font-medium px-1 py-0.5 bg-[#f6f8fa] rounded min-w-[20px] text-center">
+                              {formatCount(menuCount)}
+                            </span>
                           )}
                         </div>
                       </Link>
