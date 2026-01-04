@@ -9,6 +9,7 @@ import { getWorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import { getMenuSettings } from "@/lib/data/menuSettings";
 import { getMenuViewCounts } from "@/lib/data/menuUsage";
 import { getMenuStats } from "@/lib/data/menuStats";
+import { getMenuNewCounts } from "@/lib/data/menuNotifications";
 import { ScrumProvider } from "@/context/ScrumContext";
 import { LayoutWrapper, MainContent } from "@/components/weekly-scrum/common";
 import type { WeekOption, WeeklyScrumData } from "@/types/scrum";
@@ -96,6 +97,19 @@ export default async function ScrumLayout({
     // 통계 데이터 로드 실패 시 기본값 사용
   }
 
+  // 메뉴별 새 데이터 개수 가져오기
+  let menuNewCounts: Awaited<ReturnType<typeof getMenuNewCounts>> = [];
+  if (userId) {
+    try {
+      menuNewCounts = await getMenuNewCounts({
+        workspaceId: DEFAULT_WORKSPACE_ID,
+        userId,
+      });
+    } catch {
+      // 새 데이터 개수 로드 실패 시 빈 배열 사용
+    }
+  }
+
   let allData: Record<string, WeeklyScrumData>;
   let weeks: WeekOption[];
 
@@ -134,9 +148,11 @@ export default async function ScrumLayout({
         <LayoutWrapper
           role={role}
           workspaceId={DEFAULT_WORKSPACE_ID}
+          userId={userId}
           menuSettings={menuSettings}
           menuViewCounts={menuViewCounts}
           menuStats={menuStats}
+          menuNewCounts={menuNewCounts}
         >
           <MainContent>{children}</MainContent>
         </LayoutWrapper>
@@ -155,9 +171,11 @@ export default async function ScrumLayout({
       <LayoutWrapper
         role={role}
         workspaceId={DEFAULT_WORKSPACE_ID}
+        userId={userId}
         menuSettings={menuSettings}
         menuViewCounts={menuViewCounts}
         menuStats={menuStats}
+        menuNewCounts={menuNewCounts}
       >
         <MainContent>{children}</MainContent>
       </LayoutWrapper>

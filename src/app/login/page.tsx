@@ -171,7 +171,6 @@ function LoginForm() {
           }}
         >
           <p className="text-xs sm:text-sm text-center leading-relaxed">
-            데모 환경에서는{" "}
             <span className="font-semibold underline decoration-2 underline-offset-2">
               Continue as Guest
             </span>{" "}

@@ -9,10 +9,12 @@ import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import type { MenuSetting } from "@/lib/data/menuSettings";
 import type { MenuViewCount } from "@/lib/data/menuUsage";
 import type { MenuStats } from "@/lib/data/menuStats";
+import type { MenuNewCount } from "@/lib/data/menuNotifications";
 import { Logo } from "./Logo";
 import { navigationProgress } from "./NavigationProgress";
 import { LiquidGlassTag } from "@/components/common/LiquidGlassTag";
 import { logMenuClick } from "@/lib/telemetry/menuEvents";
+import { updateMenuVisitAction } from "@/app/actions/menuVisits";
 
 // localStorage 키
 const SNB_COLLAPSED_KEY = "snb-collapsed-categories-v2";
@@ -346,22 +348,38 @@ interface SideNavigationProps {
   onItemClick?: () => void;
   role?: WorkspaceRole;
   workspaceId?: string;
+  userId?: string;
   menuSettings?: MenuSetting[];
   menuViewCounts?: MenuViewCount[];
   menuStats?: MenuStats;
+  menuNewCounts?: MenuNewCount[];
 }
 
 export const SideNavigation = memo(function SideNavigation({
   onItemClick,
   role = "member",
   workspaceId = "",
+  userId = "",
   menuSettings = [],
   menuViewCounts = [],
   menuStats,
+  menuNewCounts = [],
 }: SideNavigationProps) {
   const isActive = useIsActive();
   const router = useRouter();
   const { count, isLoading } = useVisitorCount();
+
+  // 새 데이터 개수를 Map으로 변환 (빠른 조회를 위해)
+  const [newCountsMap, setNewCountsMap] = useState(
+    new Map(menuNewCounts.map((nc) => [nc.menu_key, nc.new_count]))
+  );
+
+  // menuNewCounts가 변경되면 Map 업데이트
+  useEffect(() => {
+    setNewCountsMap(
+      new Map(menuNewCounts.map((nc) => [nc.menu_key, nc.new_count]))
+    );
+  }, [menuNewCounts]);
 
   // 조회수 데이터를 Map으로 변환 (빠른 조회를 위해)
   const viewCountsMap = useMemo(
@@ -527,6 +545,47 @@ export const SideNavigation = memo(function SideNavigation({
                       menuStats
                     );
 
+                    // 새 데이터 개수 가져오기
+                    const newCount = newCountsMap.get(item.key);
+                    const hasNew = newCount !== undefined && newCount > 0;
+
+                    // 메뉴 클릭 핸들러
+                    const handleMenuClick = async () => {
+                      if (isDisabled) return;
+                      if (!active) navigationProgress.start();
+
+                      // Log menu click
+                      if (workspaceId && category.key && item.key) {
+                        logMenuClick(
+                          workspaceId,
+                          item.href,
+                          category.key,
+                          item.key
+                        );
+                      }
+
+                      // 메뉴 방문 기록 업데이트 (새 데이터가 있는 경우에만)
+                      if (hasNew && workspaceId && userId && item.key) {
+                        try {
+                          await updateMenuVisitAction({
+                            workspaceId,
+                            userId,
+                            menuKey: item.key,
+                          });
+                          // 로컬 상태에서 새 데이터 카운트 제거
+                          setNewCountsMap((prev) => {
+                            const next = new Map(prev);
+                            next.delete(item.key);
+                            return next;
+                          });
+                        } catch (error) {
+                          console.error("Failed to update menu visit:", error);
+                        }
+                      }
+
+                      onItemClick?.();
+                    };
+
                     return (
                       <Link
                         key={item.key}
@@ -538,20 +597,7 @@ export const SideNavigation = memo(function SideNavigation({
                             router.prefetch(item.href);
                           }
                         }}
-                        onClick={() => {
-                          if (isDisabled) return;
-                          if (!active) navigationProgress.start();
-                          // Log menu click
-                          if (workspaceId && category.key && item.key) {
-                            logMenuClick(
-                              workspaceId,
-                              item.href,
-                              category.key,
-                              item.key
-                            );
-                          }
-                          onItemClick?.();
-                        }}
+                        onClick={handleMenuClick}
                         className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors min-h-[36px] ${
                           isDisabled
                             ? "opacity-50 cursor-not-allowed"
@@ -569,6 +615,14 @@ export const SideNavigation = memo(function SideNavigation({
                             <LiquidGlassTag variant={badgeVariant} shimmer>
                               {badgeLabel}
                             </LiquidGlassTag>
+                          )}
+                          {hasNew && (
+                            <span
+                              className="flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-[#cf222e] rounded-full"
+                              title="새로운 데이터가 있습니다"
+                            >
+                              N
+                            </span>
                           )}
                           {menuCount !== undefined && menuCount > 0 && (
                             <span

@@ -11,6 +11,7 @@ import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import type { MenuSetting } from "@/lib/data/menuSettings";
 import type { MenuViewCount } from "@/lib/data/menuUsage";
 import type { MenuStats } from "@/lib/data/menuStats";
+import type { MenuNewCount } from "@/lib/data/menuNotifications";
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -18,12 +19,16 @@ interface LayoutWrapperProps {
   role?: WorkspaceRole;
   /** 현재 워크스페이스 ID (텔레메트리용) */
   workspaceId?: string;
+  /** 현재 사용자 ID */
+  userId?: string;
   /** 메뉴 설정 */
   menuSettings?: MenuSetting[];
   /** 메뉴 조회수 */
   menuViewCounts?: MenuViewCount[];
   /** 메뉴별 통계 */
   menuStats?: MenuStats;
+  /** 메뉴별 새 데이터 개수 */
+  menuNewCounts?: MenuNewCount[];
 }
 
 // max-w-full을 적용할 페이지 경로
@@ -108,9 +113,11 @@ interface DrawerNavigationProps {
   onClose: () => void;
   role?: WorkspaceRole;
   workspaceId?: string;
+  userId?: string;
   menuSettings?: MenuSetting[];
   menuViewCounts?: MenuViewCount[];
   menuStats?: MenuStats;
+  menuNewCounts?: MenuNewCount[];
 }
 
 function DrawerNavigation({
@@ -118,9 +125,11 @@ function DrawerNavigation({
   onClose,
   role,
   workspaceId,
+  userId,
   menuSettings,
   menuViewCounts,
   menuStats,
+  menuNewCounts,
 }: DrawerNavigationProps) {
   // ESC 키로 닫기
   useEffect(() => {
@@ -202,9 +211,11 @@ function DrawerNavigation({
             onItemClick={onClose}
             role={role}
             workspaceId={workspaceId}
+            userId={userId}
             menuSettings={menuSettings}
             menuViewCounts={menuViewCounts}
             menuStats={menuStats}
+            menuNewCounts={menuNewCounts}
           />
         </div>
       </aside>
@@ -216,9 +227,11 @@ export function LayoutWrapper({
   children,
   role,
   workspaceId,
+  userId,
   menuSettings,
   menuViewCounts,
   menuStats,
+  menuNewCounts,
 }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -258,9 +271,11 @@ export function LayoutWrapper({
           onClose={() => setIsMenuOpen(false)}
           role={role}
           workspaceId={workspaceId}
+          userId={userId}
           menuSettings={menuSettings}
           menuViewCounts={menuViewCounts}
           menuStats={menuStats}
+          menuNewCounts={menuNewCounts}
         />
 
         {/* 메인 영역 */}
