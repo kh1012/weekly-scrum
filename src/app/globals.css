@@ -988,6 +988,28 @@ select option {
 }
 
 /* ============================================
+   New Data Badge Shimmer Effect
+   ============================================ */
+
+@keyframes badge-shimmer {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.badge-shimmer {
+  animation: badge-shimmer 2s infinite;
+}
+
+/* ============================================
    Custom Scrollbar - GitHub Style
    ============================================ */
 

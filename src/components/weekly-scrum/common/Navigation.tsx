@@ -618,10 +618,22 @@ export const SideNavigation = memo(function SideNavigation({
                           )}
                           {hasNew && (
                             <span
-                              className="flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-[#cf222e] rounded-full"
+                              className="relative flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white rounded-full overflow-hidden"
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #ff4757 0%, #cf222e 50%, #a01820 100%)",
+                              }}
                               title="새로운 데이터가 있습니다"
                             >
-                              N
+                              <span className="relative z-10">N</span>
+                              {/* 반짝이는 유리 효과 */}
+                              <span
+                                className="absolute inset-0 badge-shimmer"
+                                style={{
+                                  background:
+                                    "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent)",
+                                }}
+                              />
                             </span>
                           )}
                           {menuCount !== undefined && menuCount > 0 && (
