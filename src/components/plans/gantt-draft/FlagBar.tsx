@@ -313,7 +313,7 @@ export const FlagBar = memo(function FlagBar({
               : isHovered
               ? `${flagColor}10`
               : "transparent",
-            maxWidth: 120,
+            maxWidth: calculateAvailableWidth(),
             overflow: "hidden",
             textOverflow: "ellipsis",
           }}
