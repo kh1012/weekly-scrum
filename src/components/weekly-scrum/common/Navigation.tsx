@@ -60,6 +60,30 @@ function getMenuCount(
   }
 }
 
+/**
+ * 메뉴별 통계 설명 가져오기
+ */
+function getMenuCountLabel(menuKey: string): string {
+  switch (menuKey) {
+    case "feedbacks":
+      return "피드백 게시물";
+    case "team-feed":
+      return "총 스냅샷 엔트리";
+    case "plans":
+      return "계획 데이터";
+    case "snapshots":
+      return "총 스냅샷 엔트리";
+    case "work-map":
+      return "기능 수";
+    case "collaborator-graph":
+      return "협업 설정";
+    case "my-snapshots":
+      return "내 스냅샷 엔트리";
+    default:
+      return "항목";
+  }
+}
+
 /** 네비게이션 아이템 */
 interface NavItem {
   key: string;
@@ -547,8 +571,15 @@ export const SideNavigation = memo(function SideNavigation({
                             </LiquidGlassTag>
                           )}
                           {menuCount !== undefined && menuCount > 0 && (
-                            <span className="text-[10px] text-[#57606a] font-medium px-1 py-0.5 bg-[#f6f8fa] rounded min-w-[20px] text-center">
+                            <span
+                              className="text-[10px] text-[#57606a] font-medium px-1 py-0.5 bg-[#f6f8fa] rounded min-w-[20px] text-center relative group cursor-help"
+                              title={`${getMenuCountLabel(item.key)}: ${menuCount.toLocaleString()}개`}
+                            >
                               {formatCount(menuCount)}
+                              {/* 툴팁 */}
+                              <span className="invisible group-hover:visible absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-[#24292f] rounded whitespace-nowrap shadow-lg z-50">
+                                {getMenuCountLabel(item.key)}: {menuCount.toLocaleString()}개
+                              </span>
                             </span>
                           )}
                         </div>
