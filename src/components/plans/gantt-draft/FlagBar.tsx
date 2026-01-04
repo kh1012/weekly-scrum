@@ -30,6 +30,8 @@ interface FlagBarProps {
   laneCount: number;
   /** 같은 레인의 다른 Flag들과 orderIndex 스왑 콜백 */
   onSwapOrder?: (targetLaneIndex: number) => void;
+  /** 모든 items (우측 블록 확인용) */
+  allItems?: PackedFlagLaneItem[];
 }
 
 type DragMode = "move" | "resize-left" | "resize-right" | null;
@@ -45,6 +47,7 @@ export const FlagBar = memo(function FlagBar({
   rangeStart,
   laneCount,
   onSwapOrder,
+  allItems = [],
 }: FlagBarProps) {
   const { startX, width, isPoint, laneIndex } = item;
   const top = laneIndex * FLAG_LANE_HEIGHT;
@@ -203,6 +206,55 @@ export const FlagBar = memo(function FlagBar({
   const currentWidth = Math.max(MIN_WIDTH, width + dragOffset.width);
   const currentTop = top + dragOffset.top;
 
+  // 1일 블록의 텍스트 표시를 위한 가용 공간 계산
+  const calculateAvailableWidth = useCallback(() => {
+    // 기본값은 현재 width
+    let availableWidth = currentWidth;
+
+    // 1일 블록인 경우에만 우측 블록 확인
+    const startDate = new Date(flag.startDate);
+    const endDate = new Date(flag.endDate);
+    const isOneDay =
+      startDate.getFullYear() === endDate.getFullYear() &&
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getDate() === endDate.getDate();
+
+    if (!isOneDay) {
+      return availableWidth;
+    }
+
+    // 같은 레인에서 우측에 있는 가장 가까운 블록 찾기
+    const rightBlocks = allItems.filter((otherItem) => {
+      if (otherItem.flagId === item.flagId) return false;
+      if (otherItem.laneIndex !== laneIndex) return false;
+      // 우측에 있는 블록만 (startX가 현재 블록의 끝보다 큼)
+      return otherItem.startX > currentLeft + currentWidth;
+    });
+
+    if (rightBlocks.length === 0) {
+      // 우측에 블록이 없으면 충분한 공간 제공 (최대 300px)
+      availableWidth = Math.max(currentWidth, 300);
+    } else {
+      // 가장 가까운 우측 블록까지의 거리 계산
+      const nearestRightBlock = rightBlocks.reduce((nearest, block) => {
+        return block.startX < nearest.startX ? block : nearest;
+      });
+      const distanceToNext = nearestRightBlock.startX - currentLeft;
+      // 패딩을 고려하여 사용 가능한 너비 계산 (양쪽 패딩 8px)
+      availableWidth = Math.max(currentWidth, distanceToNext - 16);
+    }
+
+    return availableWidth;
+  }, [
+    currentWidth,
+    currentLeft,
+    flag.startDate,
+    flag.endDate,
+    allItems,
+    item.flagId,
+    laneIndex,
+  ]);
+
   if (isPoint) {
     // Point flag: 수직선 + 타이틀 라벨 (드래그 가능)
     return (
@@ -346,8 +398,13 @@ export const FlagBar = memo(function FlagBar({
         onMouseDown={(e) => handleMouseDown(e, "move")}
       >
         <span
-          className="text-[10px] font-medium truncate text-center"
-          style={{ color: flagColor }}
+          className="text-[10px] font-medium text-center overflow-hidden"
+          style={{
+            color: flagColor,
+            maxWidth: `${calculateAvailableWidth() - 16}px`,
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+          }}
           title={flag.title}
         >
           {flag.title}

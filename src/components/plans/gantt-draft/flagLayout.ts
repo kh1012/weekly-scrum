@@ -183,11 +183,38 @@ export function packFlagsIntoLanes(args: {
     addItem(flagWithRange, assignedLane);
   }
 
-  // 최종 레인 개수 계산
+  // 최종 레인 개수 계산 및 빈 레인 제거
   const maxLane = items.reduce((max, item) => Math.max(max, item.laneIndex), -1);
+  const totalLanes = maxLane + 1;
+
+  // 각 레인별로 사용 여부 확인
+  const usedLanes = new Set(items.map((item) => item.laneIndex));
+  
+  // 빈 레인이 있는 경우, 레인 번호 재정렬
+  if (usedLanes.size < totalLanes) {
+    // 사용 중인 레인을 오름차순으로 정렬
+    const sortedUsedLanes = Array.from(usedLanes).sort((a, b) => a - b);
+    
+    // 레인 인덱스 매핑 생성 (기존 레인 번호 -> 새 레인 번호)
+    const laneMapping = new Map<number, number>();
+    sortedUsedLanes.forEach((oldLane, newLane) => {
+      laneMapping.set(oldLane, newLane);
+    });
+    
+    // items의 laneIndex 재정렬
+    const compactedItems = items.map((item) => ({
+      ...item,
+      laneIndex: laneMapping.get(item.laneIndex) ?? item.laneIndex,
+    }));
+    
+    return {
+      laneCount: usedLanes.size,
+      items: compactedItems,
+    };
+  }
 
   return {
-    laneCount: maxLane + 1,
+    laneCount: totalLanes,
     items,
   };
 }

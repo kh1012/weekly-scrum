@@ -78,22 +78,19 @@ export function FlagLane({
   const effectiveLaneCount = Math.max(1, laneCount);
   const totalHeight = effectiveLaneCount * FLAG_LANE_HEIGHT;
 
-  // 레인 스왑 핸들러: 해당 Flag의 laneHint를 설정하여 원하는 레인에 배치
+  // 레인 스왑 핸들러: 드래그 블록을 기준으로 위치 이동, 충돌 시 밀어내기
   const handleSwapOrder = useCallback(
     (flagId: string, currentLaneIndex: number, targetLaneIndex: number) => {
-      // 타겟 레인에 있는 Flag 찾기
       const currentItem = items.find((item) => item.flagId === flagId);
-      const targetItem = items.find(
-        (item) => item.laneIndex === targetLaneIndex && item.flagId !== flagId
-      );
       const currentFlag = flags.find((f) => f.clientId === flagId);
 
       if (!currentFlag || !currentItem) return;
 
-      // 충돌 검사: 타겟 레인에서 현재 flag의 기간과 겹치는 다른 flag가 있는지 확인
-      const hasConflict = items.some((item) => {
+      // 타겟 레인에서 현재 flag의 기간과 겹치는 flag들 찾기
+      const conflictingItems = items.filter((item) => {
         if (item.flagId === flagId) return false;
         if (item.laneIndex !== targetLaneIndex) return false;
+        
         // 기간 겹침 검사
         const itemStart = new Date(item.startDate).getTime();
         const itemEnd = new Date(item.endDate).getTime();
@@ -102,21 +99,24 @@ export function FlagLane({
         return !(currentEnd < itemStart || currentStart > itemEnd);
       });
 
-      if (hasConflict && targetItem) {
-        // 충돌이 있고 타겟 레인에 Flag가 있으면 orderIndex 스왑
-        const targetFlag = flags.find((f) => f.clientId === targetItem.flagId);
-        if (targetFlag) {
-          const tempOrder = currentFlag.orderIndex;
-          // 둘 다 laneHint 제거하고 orderIndex만 스왑
-          updateFlagLocal(currentFlag.clientId, {
-            orderIndex: targetFlag.orderIndex,
-            laneHint: undefined,
-          });
-          updateFlagLocal(targetFlag.clientId, {
-            orderIndex: tempOrder,
-            laneHint: undefined,
-          });
-        }
+      if (conflictingItems.length > 0) {
+        // 충돌이 있는 경우: 드래그 블록을 타겟 레인에 배치하고, 충돌하는 블록들을 한 칸 아래로 밀기
+        
+        // 1. 드래그 중인 블록을 타겟 레인에 배치
+        updateFlagLocal(currentFlag.clientId, {
+          laneHint: targetLaneIndex,
+        });
+
+        // 2. 충돌하는 블록들을 한 칸 아래로 밀기 (재귀적으로 밀림 처리)
+        conflictingItems.forEach((conflictItem) => {
+          const conflictFlag = flags.find((f) => f.clientId === conflictItem.flagId);
+          if (conflictFlag) {
+            // 한 칸 아래 레인으로 이동
+            updateFlagLocal(conflictFlag.clientId, {
+              laneHint: targetLaneIndex + 1,
+            });
+          }
+        });
       } else {
         // 빈 레인으로 이동: laneHint 설정하여 해당 레인에 고정
         updateFlagLocal(currentFlag.clientId, {
@@ -379,6 +379,7 @@ export function FlagLane({
             onSwapOrder={(targetLane) =>
               handleSwapOrder(flag.clientId, item.laneIndex, targetLane)
             }
+            allItems={items}
           />
         );
       })}
