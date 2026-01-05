@@ -395,11 +395,9 @@ function EntryCard({
     setMounted(true);
   }, []);
 
-  // forceExpanded가 false로 변경되면 localExpanded도 리셋
+  // forceExpanded가 변경되면 localExpanded도 동기화
   useEffect(() => {
-    if (!forceExpanded) {
-      setLocalExpanded(false);
-    }
+    setLocalExpanded(forceExpanded);
   }, [forceExpanded]);
 
   // 옵션 메뉴 외부 클릭 시 닫기
@@ -421,7 +419,7 @@ function EntryCard({
     }
   }, [showOptionsMenu]);
 
-  const isExpanded = forceExpanded || localExpanded;
+  const isExpanded = localExpanded;
 
   // 데이터 추출
   const pastWeekTasks = entry.past_week?.tasks || [];
