@@ -62,7 +62,9 @@ src/lib/data/
 ```
 src/components/weekly-scrum/my/
 ├── MySnapshotTimeline.tsx         # 타임라인 UI (클라이언트)
+├── MySnapshotTimelineClient.tsx   # 클라이언트 상태 관리
 ├── MySnapshotTimelineSection.tsx  # 서버 컴포넌트 래퍼
+├── SnapshotEntryPopover.tsx       # 엔트리 상세 팝오버
 └── PersonalDashboard.tsx          # 대시보드 메인 (클라이언트)
 ```
 
@@ -163,22 +165,51 @@ const LEFT_COLUMN_WIDTH = 320;   // 좌측 메타 열 너비
    - 모바일에서는 간소화된 리스트 뷰
    - 불필요한 SVG 렌더링 제거
 
-## 향후 개선 사항
+## 구현된 개선 사항
 
-- [ ] 블록 클릭 시 상세 정보 팝오버
-- [ ] 주차 범위 선택 UI (8/12/16주)
-- [ ] 필터링 (domain/project/module)
-- [ ] 엔트리 검색
+- [x] **주차 범위 선택 UI** (8/12/16주)
+  - 사용자가 보고 싶은 기간 조절
+  - URL 파라미터로 상태 유지
+
+- [x] **블록 클릭 시 상세 정보 팝오버**
+  - Past Week 작업 진척률 표시
+  - 리스크 내용 표시
+  - This Week 계획 표시
+  - ESC 키 및 외부 클릭으로 닫기
+
+- [x] **필터링 UI**
+  - Domain 다중 선택 필터
+  - Project 다중 선택 필터
+  - 필터 초기화 버튼
+  - 필터링된 결과 수 표시
+
+- [x] **엔트리 검색**
+  - 실시간 검색
+  - Domain/Project/Module/Feature/Name/Tasks 검색
+  - 검색 결과 하이라이팅
+
+## 향후 추가 개선 사항
+
 - [ ] PDF/이미지 내보내기
+- [ ] 주차별 엑셀 내보내기
+- [ ] 협업자 필터
+- [ ] 리스크 레벨 필터
 
 ## 커밋 히스토리
 
+### 초기 구현
 1. `feat(dashboard): prepare full-width snapshot timeline section container`
 2. `feat(snapshots): add read-only query for my snapshot entries (range-based)`
 3. `feat(dashboard): group snapshot entries by meta and compute week links`
 4. `feat(dashboard): render snapshot timeline table (gantt-like, read-only)`
 5. `feat(dashboard): responsive snapshot timeline + empty/loading states`
 6. `fix(dashboard): separate server/client components for snapshot timeline`
+7. `docs: add snapshot timeline feature documentation`
+
+### 개선사항 구현
+8. `feat(dashboard): add week range selector (8/12/16 weeks)`
+9. `feat(dashboard): add snapshot entry detail popover`
+10. `feat(dashboard): add filtering and search for snapshot timeline`
 
 ## 참고 자료
 
