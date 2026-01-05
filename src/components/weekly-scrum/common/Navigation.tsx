@@ -369,14 +369,14 @@ function useIsActive() {
   const pathname = usePathname();
 
   return (href: string) => {
-    // 정확히 일치하거나 하위 경로인 경우
-    if (href === "/admin") {
-      return pathname === "/admin" || pathname === "/admin/";
+    // 정확히 일치하는 경우만 활성화해야 하는 경로들
+    if (href === "/admin" || href === "/my") {
+      return pathname === href || pathname === href + "/";
     }
     if (pathname === href || pathname === href + "/") {
       return true;
     }
-    // /admin/snapshots는 /admin/snapshots/xxx도 활성화
+    // 하위 경로도 활성화 (예: /admin/snapshots는 /admin/snapshots/xxx도 활성화)
     if (href !== "/" && pathname.startsWith(href + "/")) {
       return true;
     }
