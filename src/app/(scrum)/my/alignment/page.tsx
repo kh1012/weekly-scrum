@@ -1,7 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
-import { AlignmentView } from "@/components/weekly-scrum/alignment/AlignmentView";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 import { redirect } from "next/navigation";
+import { getAlignmentGanttData } from "@/lib/data/alignmentGanttData";
+import { AlignmentGanttClient } from "./_components/AlignmentGanttClient";
 
 const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
@@ -9,8 +12,10 @@ const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
  * Alignment Page
  * 
  * Personal Space > Alignment
- * Plans를 기준 축으로, Snapshots를 주차별 오버레이로 표시
- * 읽기 전용 비교 뷰
+ * Plans와 Snapshot Entries를 타임라인 기준으로 시계열 형태로 표시
+ * - /plans/gantt와 동일한 간트 차트 UI
+ * - 사용자 개인 관점의 Plans + Snapshot Entries
+ * - 읽기 전용 비교 뷰
  */
 export default async function AlignmentPage() {
   const supabase = await createClient();
@@ -30,10 +35,17 @@ export default async function AlignmentPage() {
   
   const userName = profile?.display_name;
 
+  // Alignment 간트 차트 데이터 조회
+  const { items, members } = await getAlignmentGanttData({
+    workspaceId: DEFAULT_WORKSPACE_ID,
+    userId: user.id,
+  });
+
   return (
-    <AlignmentView
+    <AlignmentGanttClient
       workspaceId={DEFAULT_WORKSPACE_ID}
-      userId={user.id}
+      items={items}
+      members={members}
       userName={userName}
     />
   );
