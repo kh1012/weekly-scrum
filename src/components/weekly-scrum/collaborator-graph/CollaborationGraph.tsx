@@ -29,137 +29,170 @@ export function CollaborationGraph({
   onNodeClick,
   onEdgeClick,
 }: CollaborationGraphProps) {
-  // React Flow 노드 변환 (계층적 트리 레이아웃)
+  // React Flow 노드 변환 (FigJam 스타일 트리 레이아웃)
   const initialNodes: Node[] = useMemo(() => {
     if (graphNodes.length === 0) return [];
 
-    // totalCollabs 기준으로 내림차순 정렬 (연결이 많은 사람이 위)
+    // 엣지 연결 정보 분석하여 계층 구조 생성
+    const nodeConnections = new Map<string, Set<string>>();
+    graphEdges.forEach((edge) => {
+      if (!nodeConnections.has(edge.source)) {
+        nodeConnections.set(edge.source, new Set());
+      }
+      if (!nodeConnections.has(edge.target)) {
+        nodeConnections.set(edge.target, new Set());
+      }
+      nodeConnections.get(edge.source)!.add(edge.target);
+      nodeConnections.get(edge.target)!.add(edge.source);
+    });
+
+    // totalCollabs 기준으로 내림차순 정렬
     const sortedNodes = [...graphNodes].sort(
       (a, b) => b.totalCollabs - a.totalCollabs
     );
 
-    // 최대 totalCollabs 값 찾기 (노드 크기 스케일링용)
+    // 최대 협업 횟수 찾기
     const maxCollabs = Math.max(...graphNodes.map((n) => n.totalCollabs), 1);
 
-    // 레벨별로 노드 그룹화 (totalCollabs 범위로)
+    // 계층별로 노드 배치 (연결이 많은 순서대로)
     const levels: GraphNode[][] = [];
-    const levelThreshold = maxCollabs / 5; // 5개 레벨로 분할
+    const visited = new Set<string>();
+    
+    // 가장 연결이 많은 노드부터 시작하여 BFS로 레벨 할당
+    const queue: Array<{ node: GraphNode; level: number }> = [];
+    if (sortedNodes.length > 0) {
+      queue.push({ node: sortedNodes[0], level: 0 });
+      visited.add(sortedNodes[0].id);
+    }
 
-    sortedNodes.forEach((node) => {
-      const level = Math.floor((maxCollabs - node.totalCollabs) / levelThreshold);
-      const clampedLevel = Math.min(level, 4); // 최대 5레벨
-      if (!levels[clampedLevel]) {
-        levels[clampedLevel] = [];
+    while (queue.length > 0) {
+      const { node, level } = queue.shift()!;
+      
+      if (!levels[level]) {
+        levels[level] = [];
       }
-      levels[clampedLevel].push(node);
+      levels[level].push(node);
+
+      // 연결된 노드를 다음 레벨에 추가
+      const connections = nodeConnections.get(node.id) || new Set();
+      const connectedNodes = sortedNodes.filter(
+        (n) => connections.has(n.id) && !visited.has(n.id)
+      );
+      
+      connectedNodes.forEach((connectedNode) => {
+        visited.add(connectedNode.id);
+        queue.push({ node: connectedNode, level: level + 1 });
+      });
+    }
+
+    // 방문하지 않은 노드를 마지막 레벨에 추가
+    sortedNodes.forEach((node) => {
+      if (!visited.has(node.id)) {
+        const lastLevel = levels.length > 0 ? levels.length : 0;
+        if (!levels[lastLevel]) {
+          levels[lastLevel] = [];
+        }
+        levels[lastLevel].push(node);
+      }
     });
 
-    // 노드 배치
-    const containerWidth = 1200;
-    const containerHeight = 800;
-    const verticalSpacing = 180;
-    const topMargin = 100;
+    // FigJam 스타일 노드 배치
+    const NODE_WIDTH = 140; // 가로가 긴 직사각형
+    const NODE_HEIGHT = 50;
+    const HORIZONTAL_GAP = 100; // 노드 간 여유 있는 간격
+    const VERTICAL_GAP = 120;
+    const TOP_MARGIN = 80;
+    const LEFT_MARGIN = 80;
 
     const nodeData: any[] = [];
 
     levels.forEach((levelNodes, levelIndex) => {
-      const y = topMargin + levelIndex * verticalSpacing;
-      const horizontalSpacing = containerWidth / (levelNodes.length + 1);
+      const y = TOP_MARGIN + levelIndex * (NODE_HEIGHT + VERTICAL_GAP);
+      const levelWidth = levelNodes.length * NODE_WIDTH + (levelNodes.length - 1) * HORIZONTAL_GAP;
+      const startX = LEFT_MARGIN + (1400 - levelWidth) / 2; // 중앙 정렬
 
       levelNodes.forEach((node, nodeIndex) => {
-        const x = horizontalSpacing * (nodeIndex + 1);
+        const x = startX + nodeIndex * (NODE_WIDTH + HORIZONTAL_GAP);
         
-        const baseSize = 80;
-        const maxSize = 180;
-        const size =
-          baseSize + ((node.totalCollabs / maxCollabs) * (maxSize - baseSize));
-
         nodeData.push({
           id: node.id,
           label: node.label,
           totalCollabs: node.totalCollabs,
-          size,
+          uniquePartners: node.uniquePartners,
           x,
           y,
         });
       });
     });
 
-    // React Flow 노드로 변환
+    // React Flow 노드로 변환 (FigJam 스타일)
     return nodeData.map((node: any) => ({
       id: node.id,
       type: "default",
       position: { x: node.x, y: node.y },
       data: {
         label: (
-          <div className="text-center">
-            <div className="font-medium text-xs">{node.label}</div>
-            <div className="text-[11px] text-[#57606a] mt-0.5">
-              {node.totalCollabs}회
+          <div className="flex items-center justify-center gap-2 px-3">
+            <div className="font-normal text-[13px] text-[#24292f]">{node.label}</div>
+            <div className="text-[11px] text-[#6e7781] font-normal">
+              {node.totalCollabs}
             </div>
           </div>
         ),
       },
       style: {
-        width: node.size,
-        height: node.size,
-        borderRadius: "8px", // 사각형 radius
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        borderRadius: "6px",
         backgroundColor: "#ffffff",
-        border: "1.5px solid #0969da",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)",
+        border: "1px solid #d0d7de",
+        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: "11px",
-        fontWeight: "400",
-        color: "#24292f",
+        padding: "0",
         cursor: "pointer",
+        transition: "all 0.2s ease",
       },
     }));
-  }, [graphNodes]);
+  }, [graphNodes, graphEdges]);
 
-  // React Flow 엣지 변환
+  // React Flow 엣지 변환 (FigJam 스타일)
   const initialEdges: Edge[] = useMemo(() => {
     if (graphEdges.length === 0) return [];
 
-    // 최대 weight 값 찾기 (엣지 두께 스케일링용)
-    const maxWeight = Math.max(...graphEdges.map((e) => e.weight), 1);
-
     return graphEdges.map((edge) => {
-      // 엣지 두께 계산 (최소 1, 최대 8)
-      const minWidth = 1;
-      const maxWidth = 8;
-      const strokeWidth =
-        minWidth + ((edge.weight / maxWeight) * (maxWidth - minWidth));
+      // FigJam처럼 얇고 깔끔한 선
+      const strokeWidth = edge.weight > 3 ? 2 : 1.5;
 
       return {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: "default", // 베지어 곡선 엣지
+        type: "smoothstep", // FigJam 스타일 부드러운 선
         animated: false,
         style: {
           strokeWidth,
-          stroke: "#0969da",
-          opacity: 0.3,
+          stroke: "#8c959f",
+          strokeLinecap: "round",
         },
         markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: "#0969da",
-          width: 20,
-          height: 20,
+          type: MarkerType.Arrow,
+          color: "#8c959f",
+          width: 12,
+          height: 12,
         },
-        label: `${edge.weight}회`,
+        label: edge.weight > 1 ? `${edge.weight}` : undefined,
         labelStyle: {
-          fontSize: "9px",
-          fill: "#57606a",
-          fontWeight: "500",
+          fontSize: "10px",
+          fill: "#6e7781",
+          fontWeight: "400",
         },
         labelBgStyle: {
           fill: "#ffffff",
-          fillOpacity: 0.95,
+          fillOpacity: 1,
         },
-        labelBgPadding: [3, 3],
+        labelBgPadding: [2, 4] as [number, number],
         labelBgBorderRadius: 3,
       };
     });
@@ -214,7 +247,7 @@ export function CollaborationGraph({
   const visibleEdges = isLayoutReady ? edges : [];
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full bg-white">
       <ReactFlow
         nodes={nodes}
         edges={visibleEdges}
@@ -225,24 +258,20 @@ export function CollaborationGraph({
         connectionMode={ConnectionMode.Loose}
         fitView={isLayoutReady}
         fitViewOptions={{
-          padding: 0.3,
-          duration: 500,
-          minZoom: 0.5,
-          maxZoom: 1.5,
+          padding: 0.2,
+          duration: 400,
+          minZoom: 0.4,
+          maxZoom: 1.2,
         }}
         minZoom={0.3}
-        maxZoom={2.5}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+        maxZoom={2}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
+        proOptions={{ hideAttribution: true }}
       >
-        <Background 
-          variant={BackgroundVariant.Lines} 
-          gap={20} 
-          size={0.5}
-          color="#e5e7eb"
-        />
+        {/* 배경 없음 - 순수 흰색 */}
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>
