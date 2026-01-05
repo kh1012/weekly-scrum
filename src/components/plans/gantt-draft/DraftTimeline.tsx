@@ -1317,8 +1317,8 @@ export function DraftTimeline({
                       style={{
                         left: rangeBarLeft,
                         width: rangeBarWidth,
-                        top: 6,
-                        height: height - 12,
+                        top: (height - 10) / 2,
+                        height: 10,
                         background:
                           node.type === "project"
                             ? "linear-gradient(90deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.08) 100%)"

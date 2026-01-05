@@ -1476,7 +1476,9 @@ export function DraftTreePanel({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, node)}
         onDragEnd={handleDragEnd}
-        className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 px-3 ${
+        className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 ${
+          node.type === "project" || node.type === "module" ? "px-2" : "px-3"
+        } ${
           isSelected ? "" : "hover:translate-x-0.5"
         } ${isDragging ? "opacity-50" : ""}`}
         style={{

@@ -274,11 +274,11 @@ export function calculateNodePositions(
 
   for (const node of nodes) {
     // feature 노드는 laneCount에 따라 높이 결정
-    // project/module 노드는 더 컴팩트한 높이 (32px)
+    // project/module 노드는 더 컴팩트한 높이 (20px, 여백 없이)
     const height = node.type === "feature"
       ? Math.max(1, node.laneCount) * LANE_HEIGHT
       : node.type === "project" || node.type === "module"
-      ? 32 // 프로젝트/모듈은 더 컴팩트하게
+      ? 20 // 프로젝트/모듈은 더 컴팩트하게 (여백 없이)
       : ROW_HEIGHT;
 
     result.push({ node, top: currentTop, height });
