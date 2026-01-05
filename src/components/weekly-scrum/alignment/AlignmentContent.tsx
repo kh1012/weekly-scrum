@@ -119,9 +119,23 @@ export function AlignmentContent({
 
       {/* Unlinked Snapshots Warning */}
       {(() => {
-        const linkedSnapshotIds = new Set(
-          snapshots.filter((s) => s.planId).map((s) => s.id)
+        // 모든 Plans의 meta 정보 수집
+        const planMetaSet = new Set(
+          plans.map((p) => `${p.domain || ""}|${p.project}|${p.module}|${p.feature}`)
         );
+
+        // 연결된 Snapshot: plan_id가 있거나 meta 정보가 일치
+        const linkedSnapshotIds = new Set(
+          snapshots
+            .filter((s) => {
+              if (s.planId) return true; // plan_id로 연결
+              // meta 정보로 매칭 시도
+              const metaKey = `${s.domain || ""}|${s.project}|${s.module}|${s.feature}`;
+              return planMetaSet.has(metaKey);
+            })
+            .map((s) => s.id)
+        );
+
         const unlinkedSnapshots = snapshots.filter(
           (s) => !linkedSnapshotIds.has(s.id)
         );

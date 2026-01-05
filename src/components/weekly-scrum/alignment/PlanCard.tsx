@@ -161,6 +161,12 @@ export function PlanCard({ plan, snapshots, year, week }: PlanCardProps) {
       {/* Snapshot Overlay */}
       <SnapshotOverlay
         planId={plan.id}
+        planMeta={{
+          domain: plan.domain,
+          project: plan.project,
+          module: plan.module,
+          feature: plan.feature,
+        }}
         snapshots={snapshots}
         year={year}
         week={week}

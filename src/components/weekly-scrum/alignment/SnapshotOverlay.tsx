@@ -11,6 +11,12 @@ import type { AlignmentSnapshotEntry } from "@/lib/data/alignmentData";
 
 interface SnapshotOverlayProps {
   planId: string;
+  planMeta: {
+    domain?: string;
+    project: string;
+    module: string;
+    feature: string;
+  };
   snapshots: AlignmentSnapshotEntry[];
   year: number;
   week: string;
@@ -18,6 +24,7 @@ interface SnapshotOverlayProps {
 
 export function SnapshotOverlay({
   planId,
+  planMeta,
   snapshots,
   year,
   week,
@@ -25,7 +32,24 @@ export function SnapshotOverlay({
   const [isExpanded, setIsExpanded] = useState(false);
 
   // 해당 Plan과 연결된 Snapshots 필터링
-  const linkedSnapshots = snapshots.filter((s) => s.planId === planId);
+  // 1순위: plan_id 매칭
+  // 2순위: meta 정보(domain/project/module/feature) 매칭 (plan_id가 없는 경우)
+  const linkedSnapshots = snapshots.filter((s) => {
+    // 1. plan_id로 직접 연결된 경우
+    if (s.planId === planId) return true;
+
+    // 2. plan_id가 없지만 meta 정보가 일치하는 경우
+    if (!s.planId) {
+      const domainMatch = !planMeta.domain || s.domain === planMeta.domain;
+      const projectMatch = s.project === planMeta.project;
+      const moduleMatch = s.module === planMeta.module;
+      const featureMatch = s.feature === planMeta.feature;
+
+      return domainMatch && projectMatch && moduleMatch && featureMatch;
+    }
+
+    return false;
+  });
 
   // Empty State: 이번 주에 기록된 Snapshot이 없음
   if (linkedSnapshots.length === 0) {
