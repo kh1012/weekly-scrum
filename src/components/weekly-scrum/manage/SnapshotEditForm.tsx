@@ -171,7 +171,7 @@ function MetaField({
           : { top: rect.bottom + 4 }),
         left: rect.left,
         width: rect.width,
-        zIndex: 9999,
+        zIndex: 10001, // 모달(z-[10000])보다 높게 설정
       });
     }
   }, []);
