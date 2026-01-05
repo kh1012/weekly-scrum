@@ -87,6 +87,7 @@ export default async function ScrumLayout({
     features_count: 0,
     collaborations_count: 0,
     my_entries_count: 0,
+    alignment_count: 0,
   };
   try {
     menuStats = await getMenuStats({

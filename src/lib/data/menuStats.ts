@@ -12,6 +12,7 @@ export interface MenuStats {
   features_count: number;
   collaborations_count: number;
   my_entries_count: number;
+  alignment_count: number;
 }
 
 /**
@@ -88,6 +89,58 @@ export async function getMenuStats(params: {
       myEntriesCount = count || 0;
     }
 
+    // Alignment count (assigned Plans + current week Snapshot Entries)
+    let alignmentCount = 0;
+    if (userId) {
+      // 1. 할당된 Plans 수
+      const { data: planAssignees } = await supabase
+        .from("plan_assignees")
+        .select("plan_id")
+        .eq("user_id", userId);
+
+      const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
+
+      if (assignedPlanIds.length > 0) {
+        const { count: assignedPlansCount } = await supabase
+          .from("plans")
+          .select("*", { count: "exact", head: true })
+          .eq("workspace_id", workspaceId)
+          .in("id", assignedPlanIds);
+
+        alignmentCount += assignedPlansCount || 0;
+      }
+
+      // 2. 현재 주차 Snapshot Entries 수
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const jan4 = new Date(currentYear, 0, 4);
+      const dayOfWeek = jan4.getDay() || 7;
+      const firstMonday = new Date(jan4);
+      firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
+      const weekDiff = now.getTime() - firstMonday.getTime();
+      const currentWeek = Math.ceil(weekDiff / (7 * 24 * 60 * 60 * 1000));
+      const currentWeekLabel = `W${currentWeek.toString().padStart(2, "0")}`;
+
+      const { data: currentWeekSnapshots } = await supabase
+        .from("snapshots")
+        .select("id")
+        .eq("workspace_id", workspaceId)
+        .eq("author_id", userId)
+        .eq("year", currentYear)
+        .eq("week", currentWeekLabel);
+
+      if (currentWeekSnapshots && currentWeekSnapshots.length > 0) {
+        const snapshotIds = currentWeekSnapshots.map((s) => s.id);
+
+        const { count: entriesCount } = await supabase
+          .from("snapshot_entries")
+          .select("*", { count: "exact", head: true })
+          .in("snapshot_id", snapshotIds);
+
+        alignmentCount += entriesCount || 0;
+      }
+    }
+
     return {
       feedbacks_count: feedbacksCount || 0,
       snapshots_count: uniqueSnapshots,
@@ -96,6 +149,7 @@ export async function getMenuStats(params: {
       features_count: uniqueFeatures,
       collaborations_count: totalCollaborations,
       my_entries_count: myEntriesCount,
+      alignment_count: alignmentCount,
     };
   } catch (error) {
     console.error("[menuStats] Error fetching menu stats:", error);
@@ -107,6 +161,7 @@ export async function getMenuStats(params: {
       features_count: 0,
       collaborations_count: 0,
       my_entries_count: 0,
+      alignment_count: 0,
     };
   }
 }

@@ -57,6 +57,8 @@ function getMenuCount(
       return menuStats.collaborations_count;
     case "my-snapshots":
       return menuStats.my_entries_count;
+    case "my-alignment":
+      return menuStats.alignment_count;
     default:
       return undefined;
   }
