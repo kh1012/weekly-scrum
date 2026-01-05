@@ -528,23 +528,39 @@ export const DraftBar = memo(function DraftBar({
                 </span>
               )}
 
-              {/* 담당자 이름 (너비 > 40, 2칸부터) */}
-              {currentWidth > 40 &&
-                bar.assignees &&
-                bar.assignees.length > 0 && (
-                  <span
-                    className="text-[9px] font-medium truncate"
-                    style={{ color: barColor.text, opacity: 0.8 }}
-                    title={bar.assignees
-                      .map((a) => a.displayName || a.userId)
-                      .join(", ")}
-                  >
-                    {bar.assignees[0]?.displayName ||
-                      bar.assignees[0]?.userId?.slice(0, 8)}
-                    {bar.assignees.length > 1 &&
-                      ` +${bar.assignees.length - 1}`}
-                  </span>
-                )}
+              {/* Snapshot: 작성자 이름 / Plan: 담당자 이름 (너비 > 40, 2칸부터) */}
+              {currentWidth > 40 && (
+                <>
+                  {isSnapshot && authorName ? (
+                    <span
+                      className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0 truncate"
+                      style={{ 
+                        background: "#e5e7eb", 
+                        color: "#374151",
+                      }}
+                      title={`작성자: ${authorName}`}
+                    >
+                      {authorName}
+                    </span>
+                  ) : (
+                    bar.assignees &&
+                    bar.assignees.length > 0 && (
+                      <span
+                        className="text-[9px] font-medium truncate"
+                        style={{ color: barColor.text, opacity: 0.8 }}
+                        title={bar.assignees
+                          .map((a) => a.displayName || a.userId)
+                          .join(", ")}
+                      >
+                        {bar.assignees[0]?.displayName ||
+                          bar.assignees[0]?.userId?.slice(0, 8)}
+                        {bar.assignees.length > 1 &&
+                          ` +${bar.assignees.length - 1}`}
+                      </span>
+                    )
+                  )}
+                </>
+              )}
             </div>
 
             {/* 우측: 기간 표시 (너비 > 120, 3칸부터) */}

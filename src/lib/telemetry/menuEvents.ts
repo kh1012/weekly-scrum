@@ -17,6 +17,7 @@ const MENU_MAP: Record<string, { group: string; key: string }> = {
   "/admin/plans/gantt": { group: "admin", key: "admin-plans" },
   "/snapshots": { group: "works", key: "snapshots" },
   "/manage/snapshots": { group: "personal", key: "my-snapshots" }, // Navigation.tsx와 일치
+  "/works/alignment": { group: "works", key: "alignment" },
   "/work-map": { group: "works", key: "work-map" },
   "/works/collaborator-graph": { group: "works", key: "collaborator-graph" },
   "/my": { group: "personal", key: "my-dashboard" }, // Navigation.tsx와 일치

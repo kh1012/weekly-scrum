@@ -222,6 +222,12 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         icon: Icons.cameraRetro,
       },
       {
+        key: "alignment",
+        label: "Alignment",
+        href: "/works/alignment",
+        icon: Icons.clipboardList,
+      },
+      {
         key: "work-map",
         label: "Work Map",
         href: "/work-map",
@@ -413,13 +419,16 @@ export const SideNavigation = memo(function SideNavigation({
   const { count, isLoading } = useVisitorCount();
 
   // 브라우저 시간대 기준으로 1일 이내인지 확인하는 함수
-  const isWithin24HoursInBrowserTimezone = useCallback((dateString: string): boolean => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-    return diffHours <= 24 && diffHours >= 0;
-  }, []);
+  const isWithin24HoursInBrowserTimezone = useCallback(
+    (dateString: string): boolean => {
+      const now = new Date();
+      const date = new Date(dateString);
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      return diffHours <= 24 && diffHours >= 0;
+    },
+    []
+  );
 
   // 새 데이터 개수를 Map으로 변환 (빠른 조회를 위해)
   // Team Feed의 경우 브라우저 시간대 기준으로 1일 이내만 표시
@@ -720,12 +729,15 @@ export const SideNavigation = memo(function SideNavigation({
                           {menuCount !== undefined && menuCount > 0 && (
                             <span
                               className="text-[10px] text-[#57606a] font-medium px-1 py-0.5 bg-[#f6f8fa] rounded min-w-[20px] text-center relative group cursor-help"
-                              title={`${getMenuCountLabel(item.key)}: ${menuCount.toLocaleString()}개`}
+                              title={`${getMenuCountLabel(
+                                item.key
+                              )}: ${menuCount.toLocaleString()}개`}
                             >
                               {formatCount(menuCount)}
                               {/* 툴팁 */}
                               <span className="invisible group-hover:visible absolute bottom-full right-0 mb-1 px-2 py-1 text-xs text-white bg-[#24292f] rounded whitespace-nowrap shadow-lg z-50">
-                                {getMenuCountLabel(item.key)}: {menuCount.toLocaleString()}개
+                                {getMenuCountLabel(item.key)}:{" "}
+                                {menuCount.toLocaleString()}개
                               </span>
                             </span>
                           )}
