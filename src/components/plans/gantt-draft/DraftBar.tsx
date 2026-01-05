@@ -164,9 +164,9 @@ export const DraftBar = memo(function DraftBar({
   const primaryRole = bar.assignees?.[0]?.role;
   const roleColor = primaryRole ? ROLE_CONFIG[primaryRole] : null;
 
-  // Snapshot은 어두운 색상 사용
+  // Snapshot은 검정색 배경 사용
   const barColor = isSnapshot
-    ? { color: "#1e293b", bg: "#334155", text: "#ffffff" }
+    ? { color: "#000000", bg: "#1a1a1a", text: "#ffffff" }
     : roleColor || DEFAULT_COLOR;
 
   // 드래그 시작
@@ -342,12 +342,12 @@ export const DraftBar = memo(function DraftBar({
         top: currentTop,
         // Airbnb 스타일: 더 둥근 끝
         borderRadius: 10,
-        // 역할 기반 배경색 (Snapshot은 어두운 색상)
+        // 역할 기반 배경색 (Snapshot은 검정색)
         background: isSnapshot
-          ? "linear-gradient(135deg, #334155 0%, #475569 100%)"
+          ? "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)"
           : barColor.bg,
         border: isSnapshot
-          ? "1px solid #1e293b"
+          ? "1px solid #000000"
           : `1px solid ${isSelected ? barColor.color : `${barColor.color}30`}`,
         // 호버/선택 시 그림자 & lift 효과
         boxShadow: isSelected
@@ -413,11 +413,11 @@ export const DraftBar = memo(function DraftBar({
         >
           {/* 1행: entry 태그 + 타이틀 + 진행률 + 기간 */}
           <div className="flex items-center gap-1 min-w-0">
-            {/* entry 태그 */}
+            {/* entry 태그 - 회색 */}
             <span
               className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
               style={{
-                background: barColor.color,
+                background: "#6b7280",
                 color: "white",
               }}
               title="Snapshot Entry"
