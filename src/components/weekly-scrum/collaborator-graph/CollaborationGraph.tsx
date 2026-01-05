@@ -332,6 +332,25 @@ export function CollaborationGraph({
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
 
+  // selectedNode가 변경될 때 노드 스타일 업데이트
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        const isSelected = selectedNode?.id === node.id;
+        return {
+          ...node,
+          style: {
+            ...node.style,
+            border: isSelected ? "2px solid #0969da" : "1px solid #d0d7de",
+            boxShadow: isSelected
+              ? "0 0 0 3px rgba(9, 105, 218, 0.1)"
+              : "0 1px 2px rgba(0, 0, 0, 0.04)",
+          },
+        };
+      })
+    );
+  }, [selectedNode, setNodes]);
+
   // React Flow 초기화 시 fitView 실행 및 gradient 주입
   const onInit = useCallback((instance: ReactFlowInstance) => {
     setReactFlowInstance(instance);
@@ -523,7 +542,10 @@ export function CollaborationGraph({
 
       {/* 선택된 노드 정보 (우측 하단) */}
       {selectedNode && (
-        <div className="absolute bottom-4 right-4 w-72 bg-[#ddf4ff] rounded-md border-2 border-[#0969da] p-3 shadow-lg">
+        <div
+          key={selectedNode.id}
+          className="absolute bottom-4 right-4 w-72 bg-[#ddf4ff] rounded-md border-2 border-[#0969da] p-3 shadow-lg animate-bounce-in"
+        >
           <div className="text-[11px] font-semibold text-[#24292f] mb-2">
             선택된 노드
           </div>
@@ -537,7 +559,8 @@ export function CollaborationGraph({
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-[#57606a]">총 협업</span>
               <span className="text-[11px] font-medium text-[#24292f]">
-                ({selectedNode.incomingCount}회 지정됨) ({selectedNode.outgoingCount}회 지정함)
+                ({selectedNode.incomingCount}회 지정됨) (
+                {selectedNode.outgoingCount}회 지정함)
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -546,10 +569,10 @@ export function CollaborationGraph({
                 {selectedNode.uniquePartners}
               </span>
             </div>
-            
+
             {/* 구분선 */}
             <div className="border-t border-[#0969da]/20 my-2" />
-            
+
             {/* 관계별 협업 횟수 */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
