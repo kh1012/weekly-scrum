@@ -1906,7 +1906,7 @@ export function SnapshotEditForm({
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
             <span className="text-sm font-semibold text-gray-800">
-              스냅샷 편집
+              엔트리 편집
             </span>
           </div>
           <div className="flex items-center gap-2">
