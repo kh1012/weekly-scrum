@@ -260,13 +260,24 @@ export function CollaborationGraph({
     }));
   }, [graphNodes, graphEdges]);
 
-  // React Flow 엣지 변환 (FigJam 스타일)
+  // React Flow 엣지 변환 (관계별 색상 적용)
   const initialEdges: Edge[] = useMemo(() => {
     if (graphEdges.length === 0) return [];
 
     return graphEdges.map((edge) => {
-      // FigJam처럼 얇고 깔끔한 선
+      // 선 두께
       const strokeWidth = edge.weight > 3 ? 2 : 1.5;
+
+      // 관계별 색상 결정 (work-map과 동일)
+      // pair > pre > post 우선순위
+      let strokeColor = "#8c959f"; // 기본 회색
+      if (edge.relations.includes("pair")) {
+        strokeColor = "#3b82f6"; // 파란색
+      } else if (edge.relations.includes("pre")) {
+        strokeColor = "#f59e0b"; // 주황색
+      } else if (edge.relations.includes("post")) {
+        strokeColor = "#22c55e"; // 초록색
+      }
 
       return {
         id: edge.id,
@@ -276,12 +287,12 @@ export function CollaborationGraph({
         animated: false,
         style: {
           strokeWidth,
-          stroke: "#8c959f",
+          stroke: strokeColor,
           strokeLinecap: "round",
         },
         markerEnd: {
           type: MarkerType.Arrow,
-          color: "#8c959f",
+          color: strokeColor,
           width: 12,
           height: 12,
         },
@@ -292,7 +303,7 @@ export function CollaborationGraph({
           fontWeight: "400",
         },
         labelBgStyle: {
-          fill: "#ffffff",
+          fill: "#f6f8fa",
           fillOpacity: 1,
         },
         labelBgPadding: [2, 4] as [number, number],
@@ -350,7 +361,7 @@ export function CollaborationGraph({
   const visibleEdges = isLayoutReady ? edges : [];
 
   return (
-    <div className="w-full h-full bg-white">
+    <div className="w-full h-full bg-[#f6f8fa] relative">
       <ReactFlow
         nodes={nodes}
         edges={visibleEdges}
@@ -375,9 +386,27 @@ export function CollaborationGraph({
         elementsSelectable={true}
         proOptions={{ hideAttribution: true }}
       >
-        {/* 배경 없음 - 순수 흰색 */}
         <Controls showInteractive={false} />
       </ReactFlow>
+      
+      {/* 범례 */}
+      <div className="absolute top-4 left-4 bg-white rounded-md border border-[#d0d7de] p-3 shadow-sm">
+        <div className="text-[11px] font-semibold text-[#24292f] mb-2">협업 관계</div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-0.5 rounded" style={{ backgroundColor: "#3b82f6" }} />
+            <span className="text-[10px] text-[#57606a]">pair (실시간 협업)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-0.5 rounded" style={{ backgroundColor: "#f59e0b" }} />
+            <span className="text-[10px] text-[#57606a]">pre (선행 협업)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-0.5 rounded" style={{ backgroundColor: "#22c55e" }} />
+            <span className="text-[10px] text-[#57606a]">post (후행 협업)</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
