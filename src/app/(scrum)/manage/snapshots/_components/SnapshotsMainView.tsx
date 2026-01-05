@@ -988,7 +988,6 @@ function SnapshotsMainViewInner({
                 onEntryDeleted={handleEntryDeleted}
                 isSelectMode={isSelectMode}
                 onToggleSelectMode={setIsSelectMode}
-                onNewSnapshotClick={() => setIsNewSnapshotModalOpen(true)}
               />
             </div>
 
