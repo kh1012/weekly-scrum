@@ -58,33 +58,44 @@ export async function getMenuNewCounts(params: {
       }
     }
 
-    // 3. Team Feed - 마지막 방문 이후 새 스냅샷
+    // 3. Team Feed - 마지막 방문 이후 새 스냅샷 (최근 24시간 데이터 가져오기)
+    // 브라우저 시간대 기준 필터링은 클라이언트에서 수행
     const teamFeedLastVisit = visitsMap.get("team-feed");
     if (teamFeedLastVisit) {
       const { data: newSnapshots } = await supabase
         .from("snapshots")
-        .select("id")
+        .select("id, created_at")
         .eq("workspace_id", workspaceId)
         .gt("created_at", teamFeedLastVisit);
 
       const newCount = newSnapshots?.length || 0;
       if (newCount > 0) {
-        results.push({ menu_key: "team-feed", new_count: newCount });
+        // created_at 정보를 포함하여 전달 (클라이언트에서 브라우저 시간대 기준 필터링)
+        results.push({ 
+          menu_key: "team-feed", 
+          new_count: newCount,
+          // 추가 정보: created_at 배열 (클라이언트 필터링용)
+          _snapshotDates: newSnapshots?.map(s => s.created_at) || []
+        } as any);
       }
     } else {
-      // 첫 방문이면 최근 일주일 스냅샷 표시
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      // 첫 방문이면 최근 24시간 스냅샷 가져오기 (브라우저 시간대 기준 필터링은 클라이언트에서)
+      const oneDayAgo = new Date();
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
       const { data: recentSnapshots } = await supabase
         .from("snapshots")
-        .select("id")
+        .select("id, created_at")
         .eq("workspace_id", workspaceId)
-        .gt("created_at", oneWeekAgo.toISOString());
+        .gt("created_at", oneDayAgo.toISOString());
 
       const newCount = recentSnapshots?.length || 0;
       if (newCount > 0) {
-        results.push({ menu_key: "team-feed", new_count: newCount });
+        results.push({ 
+          menu_key: "team-feed", 
+          new_count: newCount,
+          _snapshotDates: recentSnapshots?.map(s => s.created_at) || []
+        } as any);
       }
     }
 

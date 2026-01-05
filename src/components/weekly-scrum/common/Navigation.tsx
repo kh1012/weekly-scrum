@@ -369,17 +369,55 @@ export const SideNavigation = memo(function SideNavigation({
   const router = useRouter();
   const { count, isLoading } = useVisitorCount();
 
+  // 브라우저 시간대 기준으로 1일 이내인지 확인하는 함수
+  const isWithin24HoursInBrowserTimezone = useCallback((dateString: string): boolean => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours <= 24 && diffHours >= 0;
+  }, []);
+
   // 새 데이터 개수를 Map으로 변환 (빠른 조회를 위해)
-  const [newCountsMap, setNewCountsMap] = useState(
-    new Map(menuNewCounts.map((nc) => [nc.menu_key, nc.new_count]))
-  );
+  // Team Feed의 경우 브라우저 시간대 기준으로 1일 이내만 표시
+  const [newCountsMap, setNewCountsMap] = useState(() => {
+    const map = new Map<string, number>();
+    menuNewCounts.forEach((nc) => {
+      if (nc.menu_key === "team-feed") {
+        // Team Feed의 경우 브라우저 시간대 기준으로 필터링
+        const snapshotDates = (nc as any)._snapshotDates || [];
+        const filteredCount = snapshotDates.filter((date: string) =>
+          isWithin24HoursInBrowserTimezone(date)
+        ).length;
+        if (filteredCount > 0) {
+          map.set(nc.menu_key, filteredCount);
+        }
+      } else {
+        map.set(nc.menu_key, nc.new_count);
+      }
+    });
+    return map;
+  });
 
   // menuNewCounts가 변경되면 Map 업데이트
   useEffect(() => {
-    setNewCountsMap(
-      new Map(menuNewCounts.map((nc) => [nc.menu_key, nc.new_count]))
-    );
-  }, [menuNewCounts]);
+    const map = new Map<string, number>();
+    menuNewCounts.forEach((nc) => {
+      if (nc.menu_key === "team-feed") {
+        // Team Feed의 경우 브라우저 시간대 기준으로 필터링
+        const snapshotDates = (nc as any)._snapshotDates || [];
+        const filteredCount = snapshotDates.filter((date: string) =>
+          isWithin24HoursInBrowserTimezone(date)
+        ).length;
+        if (filteredCount > 0) {
+          map.set(nc.menu_key, filteredCount);
+        }
+      } else {
+        map.set(nc.menu_key, nc.new_count);
+      }
+    });
+    setNewCountsMap(map);
+  }, [menuNewCounts, isWithin24HoursInBrowserTimezone]);
 
   // 조회수 데이터를 Map으로 변환 (빠른 조회를 위해)
   const viewCountsMap = useMemo(
