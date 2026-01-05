@@ -9,6 +9,15 @@ export interface GraphNode {
   pairCount: number;
   preCount: number;
   postCount: number;
+  // 방향성 구분
+  outgoingCount: number; // 내가 지정함 (→)
+  incomingCount: number; // 지정됨 (←)
+  pairOutgoing: number;
+  pairIncoming: number;
+  preOutgoing: number;
+  preIncoming: number;
+  postOutgoing: number;
+  postIncoming: number;
 }
 
 export interface GraphEdge {
@@ -76,6 +85,14 @@ export function buildCollabGraph(
       pairCount: number;
       preCount: number;
       postCount: number;
+      outgoingCount: number;
+      incomingCount: number;
+      pairOutgoing: number;
+      pairIncoming: number;
+      preOutgoing: number;
+      preIncoming: number;
+      postOutgoing: number;
+      postIncoming: number;
     }
   >();
 
@@ -105,6 +122,14 @@ export function buildCollabGraph(
         pairCount: 0,
         preCount: 0,
         postCount: 0,
+        outgoingCount: 0,
+        incomingCount: 0,
+        pairOutgoing: 0,
+        pairIncoming: 0,
+        preOutgoing: 0,
+        preIncoming: 0,
+        postOutgoing: 0,
+        postIncoming: 0,
       });
     }
 
@@ -127,6 +152,14 @@ export function buildCollabGraph(
           pairCount: 0,
           preCount: 0,
           postCount: 0,
+          outgoingCount: 0,
+          incomingCount: 0,
+          pairOutgoing: 0,
+          pairIncoming: 0,
+          preOutgoing: 0,
+          preIncoming: 0,
+          postOutgoing: 0,
+          postIncoming: 0,
         });
       }
 
@@ -150,28 +183,40 @@ export function buildCollabGraph(
       authorNode.totalCollabs += 1;
       authorNode.partners.add(collabId);
       
-      // 관계별 카운트 업데이트 (작성자 기준)
+      // 방향성: 작성자가 협업자를 지정 (outgoing)
+      authorNode.outgoingCount += 1;
+      
+      // 관계별 카운트 업데이트 (작성자 기준 - outgoing)
       if (collab.relation === "pair") {
         authorNode.pairCount += 1;
+        authorNode.pairOutgoing += 1;
       } else if (collab.relation === "pre") {
         authorNode.preCount += 1;
+        authorNode.preOutgoing += 1;
       } else if (collab.relation === "post") {
         authorNode.postCount += 1;
+        authorNode.postOutgoing += 1;
       }
 
       const collabNode = nodeMap.get(collabId)!;
       collabNode.totalCollabs += 1;
       collabNode.partners.add(authorId);
       
-      // 관계별 카운트 업데이트 (협업자 기준, 반대 관계)
+      // 방향성: 협업자가 지정됨 (incoming)
+      collabNode.incomingCount += 1;
+      
+      // 관계별 카운트 업데이트 (협업자 기준 - incoming, 반대 관계)
       if (collab.relation === "pair") {
         collabNode.pairCount += 1;
+        collabNode.pairIncoming += 1;
       } else if (collab.relation === "pre") {
         // 작성자가 pre라면 협업자는 post
         collabNode.postCount += 1;
+        collabNode.postIncoming += 1;
       } else if (collab.relation === "post") {
         // 작성자가 post라면 협업자는 pre
         collabNode.preCount += 1;
+        collabNode.preIncoming += 1;
       }
     });
   });
@@ -187,6 +232,14 @@ export function buildCollabGraph(
       pairCount: data.pairCount,
       preCount: data.preCount,
       postCount: data.postCount,
+      outgoingCount: data.outgoingCount,
+      incomingCount: data.incomingCount,
+      pairOutgoing: data.pairOutgoing,
+      pairIncoming: data.pairIncoming,
+      preOutgoing: data.preOutgoing,
+      preIncoming: data.preIncoming,
+      postOutgoing: data.postOutgoing,
+      postIncoming: data.postIncoming,
     })
   );
 

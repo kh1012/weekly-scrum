@@ -248,7 +248,7 @@ export function CollaborationGraph({
     // React Flow 노드로 변환 (FigJam 스타일, 크기 동적 조정)
     return nodeData.map((node: any) => {
       const isSelected = selectedNode?.id === node.id;
-      
+
       return {
         id: node.id,
         type: "custom",
@@ -264,9 +264,7 @@ export function CollaborationGraph({
           height: node.height,
           borderRadius: "6px",
           backgroundColor: "#f6f8fa",
-          border: isSelected
-            ? "2px solid #0969da"
-            : "1px solid #d0d7de",
+          border: isSelected ? "2px solid #0969da" : "1px solid #d0d7de",
           boxShadow: isSelected
             ? "0 0 0 3px rgba(9, 105, 218, 0.1)"
             : "0 1px 2px rgba(0, 0, 0, 0.04)",
@@ -525,7 +523,7 @@ export function CollaborationGraph({
 
       {/* 선택된 노드 정보 (우측 하단) */}
       {selectedNode && (
-        <div className="absolute bottom-4 right-4 w-64 bg-[#ddf4ff] rounded-md border-2 border-[#0969da] p-3 shadow-lg">
+        <div className="absolute bottom-4 right-4 w-72 bg-[#ddf4ff] rounded-md border-2 border-[#0969da] p-3 shadow-lg">
           <div className="text-[11px] font-semibold text-[#24292f] mb-2">
             선택된 노드
           </div>
@@ -539,7 +537,7 @@ export function CollaborationGraph({
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-[#57606a]">총 협업</span>
               <span className="text-[11px] font-medium text-[#24292f]">
-                {selectedNode.totalCollabs}
+                ({selectedNode.incomingCount}회 지정됨) ({selectedNode.outgoingCount}회 지정함)
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -559,8 +557,8 @@ export function CollaborationGraph({
                   <div className="w-2 h-2 rounded-full bg-[#3b82f6]" />
                   <span className="text-[10px] text-[#57606a]">pair</span>
                 </div>
-                <span className="text-[11px] font-medium text-[#24292f]">
-                  {selectedNode.pairCount}회
+                <span className="text-[10px] font-medium text-[#24292f]">
+                  ← {selectedNode.pairIncoming} / → {selectedNode.pairOutgoing}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -568,8 +566,8 @@ export function CollaborationGraph({
                   <div className="w-2 h-2 rounded-full bg-[#f59e0b]" />
                   <span className="text-[10px] text-[#57606a]">pre</span>
                 </div>
-                <span className="text-[11px] font-medium text-[#24292f]">
-                  {selectedNode.preCount}회
+                <span className="text-[10px] font-medium text-[#24292f]">
+                  ← {selectedNode.preIncoming} / → {selectedNode.preOutgoing}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -577,8 +575,8 @@ export function CollaborationGraph({
                   <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
                   <span className="text-[10px] text-[#57606a]">post</span>
                 </div>
-                <span className="text-[11px] font-medium text-[#24292f]">
-                  {selectedNode.postCount}회
+                <span className="text-[10px] font-medium text-[#24292f]">
+                  ← {selectedNode.postIncoming} / → {selectedNode.postOutgoing}
                 </span>
               </div>
             </div>
