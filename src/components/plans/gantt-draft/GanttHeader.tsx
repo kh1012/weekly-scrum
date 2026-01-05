@@ -742,27 +742,66 @@ export function GanttHeader({
               </button>
             ) : (
               <>
-                {/* 자동 저장 체크박스 */}
-                <label
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group relative"
-                  title="자동 저장 (90초 비활성 시 자동 저장)"
-                >
-                  <input
-                    type="checkbox"
-                    checked={autoSaveEnabled}
-                    onChange={(e) => onAutoSaveChange?.(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  {/* 자동 저장 카운트다운 */}
-                  {autoSaveEnabled && inactivitySeconds !== null && inactivitySeconds < 90 && (
-                    <span className="text-[10px] font-mono font-semibold text-emerald-600 tabular-nums">
-                      {90 - inactivitySeconds}초
-                    </span>
+                {/* 자동 저장 체크박스 + 원형 프로그래스바 */}
+                <div className="flex items-center gap-2">
+                  <label
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group relative"
+                    title="자동 저장 (90초 비활성 시 자동 저장)"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={autoSaveEnabled}
+                      onChange={(e) => onAutoSaveChange?.(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                  </label>
+
+                  {/* 원형 프로그래스바 (자동 저장 활성화 시) */}
+                  {autoSaveEnabled && inactivitySeconds !== null && (
+                    <div className="relative flex items-center justify-center">
+                      {isAutoSaving ? (
+                        <LoadingIcon className="w-8 h-8 text-emerald-600 animate-spin" />
+                      ) : (
+                        <>
+                          <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 36 36">
+                            {/* 배경 원 */}
+                            <circle
+                              cx="18"
+                              cy="18"
+                              r="16"
+                              fill="none"
+                              stroke="#e5e7eb"
+                              strokeWidth="2.5"
+                            />
+                            {/* 프로그래스 원 */}
+                            <circle
+                              cx="18"
+                              cy="18"
+                              r="16"
+                              fill="none"
+                              stroke="#10b981"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeDasharray={`${2 * Math.PI * 16}`}
+                              strokeDashoffset={`${
+                                2 * Math.PI * 16 * (inactivitySeconds / 90)
+                              }`}
+                              style={{
+                                transition: "stroke-dashoffset 1s linear",
+                              }}
+                            />
+                          </svg>
+                          {/* 중앙 숫자 */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-[10px] font-mono font-bold text-emerald-600 tabular-nums">
+                              {Math.max(0, 90 - inactivitySeconds)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
-                  {isAutoSaving && (
-                    <LoadingIcon className="w-3 h-3 text-emerald-600 animate-spin" />
-                  )}
-                </label>
+                </div>
 
                 {/* 저장 */}
                 <button
