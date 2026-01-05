@@ -38,6 +38,15 @@ interface MySnapshotTimelineProps {
 export function MySnapshotTimeline({ entries, weeksRange = 12 }: MySnapshotTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Week Axis 및 Meta 그룹 계산
   const weekAxis = useMemo(() => buildWeekAxis(entries), [entries]);
@@ -62,6 +71,26 @@ export function MySnapshotTimeline({ entries, weeksRange = 12 }: MySnapshotTimel
     );
   }
 
+  // 모바일: 간소화된 리스트 뷰
+  if (isMobile) {
+    return (
+      <div className="w-full" ref={containerRef}>
+        <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
+          <div className="bg-white border border-[#d0d7de] rounded-md overflow-hidden divide-y divide-[#d0d7de]">
+            {metaGroups.map((group) => (
+              <MobileMetaGroupItem
+                key={group.metaKey}
+                group={group}
+                weekAxis={weekAxis}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 데스크톱: Gantt 타임라인
   return (
     <div className="w-full" ref={containerRef}>
       <div className="overflow-x-auto">
@@ -282,6 +311,103 @@ function SnapshotBlock({ entries, isSelected, onClick }: SnapshotBlockProps) {
         </div>
       )}
     </button>
+  );
+}
+
+/**
+ * 모바일용 Meta 그룹 아이템 (간소화된 리스트)
+ */
+interface MobileMetaGroupItemProps {
+  group: MetaGroup;
+  weekAxis: WeekAxisItem[];
+}
+
+function MobileMetaGroupItem({ group, weekAxis }: MobileMetaGroupItemProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  // 그룹이 등장하는 주차들만 추출 (시간 순)
+  const presentWeeks = weekAxis.filter((week) =>
+    group.entriesByWeek.has(week.weekKey)
+  );
+
+  return (
+    <div className="p-4">
+      {/* 헤더 */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-start justify-between gap-3 text-left"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-[#24292f]">
+            {group.feature}
+          </div>
+          <div className="text-xs text-[#57606a] mt-0.5 truncate">
+            {group.domain} / {group.project}
+            {group.module && ` / ${group.module}`}
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-[#8c959f]">
+              {group.totalCount}개 엔트리
+            </span>
+            <span className="text-xs text-[#8c959f]">•</span>
+            <span className="text-xs text-[#8c959f]">
+              {presentWeeks.length}주간
+            </span>
+          </div>
+        </div>
+        <svg
+          className={`w-5 h-5 text-[#57606a] transition-transform ${
+            expanded ? "rotate-180" : ""
+          }`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {/* 확장 영역: 주차별 엔트리 */}
+      {expanded && (
+        <div className="mt-4 space-y-2">
+          {presentWeeks.map((week) => {
+            const weekEntries = group.entriesByWeek.get(week.weekKey) || [];
+            return (
+              <div
+                key={week.weekKey}
+                className="bg-[#f6f8fa] rounded p-3 border border-[#d0d7de]"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-[#24292f]">
+                    {week.year} {week.week}
+                  </span>
+                  <span className="text-xs text-[#8c959f]">
+                    {weekEntries.length}개
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {weekEntries.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="text-xs text-[#57606a] truncate"
+                    >
+                      • {entry.name}
+                      {entry.pastWeek?.tasks?.[0]?.title &&
+                        `: ${entry.pastWeek.tasks[0].title}`}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
