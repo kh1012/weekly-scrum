@@ -6,10 +6,12 @@
 
 "use client";
 
+import { getPreviousISOWeek, getWeeksInYear, formatWeekRange } from "@/lib/date/isoWeek";
+
 interface WeekSelectorProps {
   selectedYear: number;
-  selectedWeek: string; // W01, W02, ...
-  onWeekChange: (year: number, week: string) => void;
+  selectedWeek: number; // 1, 2, 3, ... (숫자형)
+  onWeekChange: (year: number, week: number) => void;
 }
 
 export function WeekSelector({
@@ -19,24 +21,22 @@ export function WeekSelector({
 }: WeekSelectorProps) {
   // 이전/다음 주 계산
   const goToPreviousWeek = () => {
-    const weekNum = parseInt(selectedWeek.replace("W", ""), 10);
-    if (weekNum > 1) {
-      onWeekChange(selectedYear, `W${(weekNum - 1).toString().padStart(2, "0")}`);
-    } else {
-      // 작년 마지막 주로
-      onWeekChange(selectedYear - 1, "W52");
-    }
+    const prev = getPreviousISOWeek(selectedYear, selectedWeek);
+    onWeekChange(prev.year, prev.week);
   };
 
   const goToNextWeek = () => {
-    const weekNum = parseInt(selectedWeek.replace("W", ""), 10);
-    if (weekNum < 52) {
-      onWeekChange(selectedYear, `W${(weekNum + 1).toString().padStart(2, "0")}`);
+    const weeksInYear = getWeeksInYear(selectedYear);
+    if (selectedWeek < weeksInYear) {
+      onWeekChange(selectedYear, selectedWeek + 1);
     } else {
       // 내년 첫 주로
-      onWeekChange(selectedYear + 1, "W01");
+      onWeekChange(selectedYear + 1, 1);
     }
   };
+
+  // 주차 범위 포맷 (MM.DD ~ MM.DD)
+  const weekRangeText = formatWeekRange(selectedYear, selectedWeek);
 
   return (
     <div className="flex items-center gap-3">
@@ -65,8 +65,11 @@ export function WeekSelector({
         </button>
 
         {/* 현재 주차 표시 */}
-        <div className="px-4 py-2 font-semibold text-sm text-[#24292f] min-w-[120px] text-center border-x border-[#d0d7de]">
-          {selectedYear} {selectedWeek}
+        <div className="px-4 py-2 font-semibold text-sm text-[#24292f] min-w-[200px] text-center border-x border-[#d0d7de]">
+          <div>{selectedYear} W{selectedWeek.toString().padStart(2, "0")}</div>
+          <div className="text-xs font-normal text-[#57606a] mt-0.5">
+            {weekRangeText}
+          </div>
         </div>
 
         {/* 다음 주 버튼 */}

@@ -21,7 +21,7 @@ interface AlignmentViewProps {
 export function AlignmentView({ workspaceId, userId, userName }: AlignmentViewProps) {
   const currentWeek = getCurrentISOWeek();
   const [selectedYear, setSelectedYear] = useState(currentWeek.year);
-  const [selectedWeek, setSelectedWeek] = useState(currentWeek.week);
+  const [selectedWeek, setSelectedWeek] = useState(currentWeek.week); // 숫자형
 
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-white">
@@ -53,7 +53,7 @@ export function AlignmentView({ workspaceId, userId, userName }: AlignmentViewPr
           workspaceId={workspaceId}
           userId={userId}
           year={selectedYear}
-          week={selectedWeek}
+          week={`W${selectedWeek.toString().padStart(2, "0")}`}
         />
       </div>
     </div>
