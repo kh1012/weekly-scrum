@@ -498,7 +498,18 @@ function EntryCard({
           ? "border-[#0969da] ring-2 ring-[#b6e3ff]"
           : "border-[#d0d7de]"
       }`}
-      onClick={() => {
+      onClick={(e) => {
+        // 버튼 영역 클릭 시 부모 onClick 실행 방지
+        const target = e.target as HTMLElement;
+        if (
+          target.closest('button') ||
+          target.closest('[role="button"]') ||
+          target.tagName === 'BUTTON' ||
+          target.tagName === 'SVG' ||
+          target.tagName === 'PATH'
+        ) {
+          return;
+        }
         if (isSelectMode) {
           onToggleSelection?.();
         } else {
