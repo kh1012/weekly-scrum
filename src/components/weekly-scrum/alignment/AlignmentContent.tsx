@@ -7,13 +7,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DraftGanttView } from "@/components/plans/gantt-draft/DraftGanttView";
-import type { WorkspaceMemberOption } from "@/components/plans/gantt-draft/CreatePlanModal";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import type {
   AlignmentPlan,
   AlignmentSnapshotEntry,
 } from "@/lib/data/alignmentData";
+import { PlanCard } from "./PlanCard";
 
 interface AlignmentContentProps {
   workspaceId: string;
@@ -87,7 +86,7 @@ export function AlignmentContent({
     return null;
   }
 
-  const { plans, snapshots, members } = data;
+  const { plans, snapshots } = data;
 
   // Plans가 없는 경우
   if (plans.length === 0) {
@@ -103,39 +102,74 @@ export function AlignmentContent({
     );
   }
 
-  // Members를 WorkspaceMemberOption 형식으로 변환
-  const memberOptions: WorkspaceMemberOption[] = members.map((m) => ({
-    userId: m.userId,
-    displayName: m.displayName,
-    email: m.email,
-    basicRole: m.basicRole as any,
-  }));
-
   return (
-    <div className="space-y-6">
-      {/* Plans (Read-only Gantt View) */}
-      <div>
-        <DraftGanttView
-          workspaceId={workspaceId}
-          initialPlans={plans}
-          members={memberOptions}
-          readOnly={true}
-          title="내 계획 (Plans)"
-        />
+    <div className="space-y-4">
+      {/* Plans List with Snapshot Overlays */}
+      <div className="space-y-3">
+        {plans.map((plan) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            snapshots={snapshots}
+            year={year}
+            week={week}
+          />
+        ))}
       </div>
 
-      {/* Snapshot Overlay - 다음 스텝에서 구현 */}
-      {/* TODO: Snapshot 오버레이 구현 */}
-      {snapshots.length > 0 && (
-        <div className="mt-4 p-4 bg-[#f6f8fa] border border-[#d0d7de] rounded-md">
-          <p className="text-sm text-[#57606a]">
-            이번 주 기록된 Snapshot: {snapshots.length}건
-          </p>
-          <p className="text-xs text-[#848d97] mt-1">
-            (Snapshot 오버레이 UI는 다음 단계에서 구현됩니다)
-          </p>
-        </div>
-      )}
+      {/* Unlinked Snapshots Warning */}
+      {(() => {
+        const linkedSnapshotIds = new Set(
+          snapshots.filter((s) => s.planId).map((s) => s.id)
+        );
+        const unlinkedSnapshots = snapshots.filter(
+          (s) => !linkedSnapshotIds.has(s.id)
+        );
+
+        if (unlinkedSnapshots.length === 0) return null;
+
+        return (
+          <div className="mt-6 p-4 bg-[#fff8c5] border border-[#d4a72c] rounded-md">
+            <div className="flex items-start gap-3">
+              <svg
+                className="w-5 h-5 text-[#9a6700] flex-shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[#24292f] mb-2">
+                  이번 주 Snapshot 중 일부는 팀의 Plans와 연결되지 않았습니다.
+                </p>
+                <div className="space-y-2">
+                  {unlinkedSnapshots.map((snapshot) => (
+                    <a
+                      key={snapshot.id}
+                      href={`/manage/snapshots/${year}/${week}/edit?entry=${snapshot.id}`}
+                      className="block p-2 bg-white border border-[#d0d7de] rounded hover:border-[#0969da] transition-colors text-sm"
+                    >
+                      <div className="font-medium text-[#24292f]">
+                        {snapshot.name}
+                      </div>
+                      <div className="text-xs text-[#57606a] mt-1">
+                        {snapshot.project} / {snapshot.module} /{" "}
+                        {snapshot.feature}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
