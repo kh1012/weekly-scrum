@@ -812,35 +812,6 @@ function SnapshotsMainViewInner({
                 >
                   <span className="hidden md:inline">새 엔트리 작성하기</span>
                 </LoadingButton>
-
-                <LoadingButton
-                  onClick={() => setIsNewSnapshotModalOpen(true)}
-                  disabled={snapshots.some((s) => s.entriesCount > 0)}
-                  variant="primary"
-                  size="sm"
-                  icon={
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                  }
-                  title={
-                    snapshots.some((s) => s.entriesCount > 0)
-                      ? "이미 엔트리가 있는 스냅샷이 존재합니다. '편집하기' 버튼을 사용하세요."
-                      : ""
-                  }
-                >
-                  <span className="hidden md:inline">새 스냅샷 작성하기</span>
-                </LoadingButton>
               </div>
             </div>
           </div>
@@ -988,6 +959,7 @@ function SnapshotsMainViewInner({
                 onEntryDeleted={handleEntryDeleted}
                 isSelectMode={isSelectMode}
                 onToggleSelectMode={setIsSelectMode}
+                onNewSnapshotClick={() => setIsNewSnapshotModalOpen(true)}
               />
             </div>
 

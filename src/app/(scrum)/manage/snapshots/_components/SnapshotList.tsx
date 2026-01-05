@@ -43,6 +43,7 @@ interface SnapshotListProps {
   onEntryDeleted?: () => void;
   isSelectMode?: boolean;
   onToggleSelectMode?: (enabled: boolean) => void;
+  onNewSnapshotClick?: () => void;
 }
 
 export function SnapshotList({
@@ -55,6 +56,7 @@ export function SnapshotList({
   onEntryDeleted,
   isSelectMode: externalSelectMode = false,
   onToggleSelectMode,
+  onNewSnapshotClick,
 }: SnapshotListProps) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -169,7 +171,7 @@ export function SnapshotList({
 
   // 로딩이 끝나고 데이터가 없으면 빈 상태 표시
   if (!isLoading && snapshots.length === 0) {
-    return <EmptyState />;
+    return <EmptyState onNewSnapshotClick={onNewSnapshotClick} />;
   }
 
   return (
@@ -1234,7 +1236,7 @@ function LoadingSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
 }
 
 // 빈 상태
-function EmptyState() {
+function EmptyState({ onNewSnapshotClick }: { onNewSnapshotClick?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-16">
       <div className="w-20 h-20 mb-6 flex items-center justify-center bg-[#f6f8fa] rounded-md border border-[#d0d7de]">
@@ -1255,11 +1257,32 @@ function EmptyState() {
       <h3 className="text-base font-semibold text-[#24292f] mb-2">
         스냅샷이 없습니다
       </h3>
-      <p className="text-sm text-[#57606a] text-center max-w-xs">
+      <p className="text-sm text-[#57606a] text-center max-w-xs mb-4">
         선택한 주차에 작성된 스냅샷이 없습니다.
         <br />
-        우측 상단의 &quot;새 스냅샷 작성하기&quot; 버튼으로 시작하세요.
+        새로운 엔트리 작성을 시작하세요.
       </p>
+      {onNewSnapshotClick && (
+        <button
+          onClick={onNewSnapshotClick}
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors bg-[#0969da] text-white border-0 hover:bg-[#0860ca]"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          새 스냅샷 작성하기
+        </button>
+      )}
     </div>
   );
 }
