@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useMemo, useTransition, useEffect } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PlusIcon } from "@/components/common/Icons";
 import { LoadingButton } from "@/components/common/LoadingButton";
@@ -117,6 +117,7 @@ export function FeedbackKanbanView({
         new Promise((resolve) => setTimeout(resolve, 300)),
       ]);
 
+      // 상태 업데이트 후 새로고침
       startTransition(() => {
         router.refresh();
       });
@@ -124,6 +125,12 @@ export function FeedbackKanbanView({
       console.error("Failed to update feedback status:", error);
       setUpdatingFeedbackId(null);
       alert("상태 변경에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      // 성공 여부와 관계없이 로딩 상태 해제
+      // router.refresh() 후 컴포넌트가 다시 렌더링되므로 약간의 지연 후 해제
+      setTimeout(() => {
+        setUpdatingFeedbackId(null);
+      }, 100);
     }
   };
 
@@ -134,13 +141,6 @@ export function FeedbackKanbanView({
       router.refresh();
     });
   };
-
-  // isPending이 false로 바뀌면 로딩 상태 해제
-  useEffect(() => {
-    if (!isPending && updatingFeedbackId) {
-      setUpdatingFeedbackId(null);
-    }
-  }, [isPending, updatingFeedbackId]);
 
   return (
     <div className="flex flex-col bg-white">
