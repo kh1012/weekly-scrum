@@ -145,6 +145,19 @@ export interface DraftBar {
   updatedAtLocal: string;
   /** 사용자가 지정한 레인 (수동 배치) */
   preferredLane?: number;
+  /** Snapshot 전용 필드 */
+  isSnapshot?: boolean;
+  avgProgress?: number; // 평균 진행률 (0-100)
+  metaKey?: string; // 메타 정보 키
+  year?: number;
+  week?: string;
+  past_week?: {
+    tasks?: Array<{ title: string; progress: number }>;
+    progress?: string;
+    next?: string;
+    risk?: string;
+    memo?: string;
+  };
 }
 
 /**

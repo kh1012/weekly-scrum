@@ -90,7 +90,10 @@ export function AlignmentGanttClient({
                 : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            전체 <span className="text-[10px] opacity-80">({stats.plansCount + stats.snapshotsCount})</span>
+            전체{" "}
+            <span className="text-[10px] opacity-80">
+              ({stats.plansCount + stats.snapshotsCount})
+            </span>
           </button>
           <button
             onClick={() => setFilter("plans")}
@@ -100,7 +103,8 @@ export function AlignmentGanttClient({
                 : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            계획 <span className="text-[10px] opacity-80">({stats.plansCount})</span>
+            계획{" "}
+            <span className="text-[10px] opacity-80">({stats.plansCount})</span>
           </button>
           <button
             onClick={() => setFilter("snapshots")}
@@ -110,13 +114,17 @@ export function AlignmentGanttClient({
                 : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            스냅샷 <span className="text-[10px] opacity-80">({stats.snapshotsCount})</span>
+            스냅샷{" "}
+            <span className="text-[10px] opacity-80">
+              ({stats.snapshotsCount})
+            </span>
           </button>
         </div>
 
         {/* 우측 정보 */}
         <div className="text-xs text-gray-500">
-          {filter === "all" && `계획 ${stats.plansCount} · 스냅샷 ${stats.snapshotsCount}`}
+          {filter === "all" &&
+            `계획 ${stats.plansCount} · 스냅샷 ${stats.snapshotsCount}`}
           {filter === "plans" && `계획 ${stats.plansCount}개`}
           {filter === "snapshots" && `스냅샷 ${stats.snapshotsCount}개`}
         </div>

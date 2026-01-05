@@ -348,6 +348,13 @@ export function DraftGanttView({
         deleted: false,
         createdAtLocal: new Date().toISOString(),
         updatedAtLocal: new Date().toISOString(),
+        // Snapshot 전용 필드
+        isSnapshot: (plan as any).isSnapshot,
+        avgProgress: (plan as any).avgProgress,
+        metaKey: (plan as any).metaKey,
+        year: (plan as any).year,
+        week: (plan as any).week,
+        past_week: (plan as any).past_week,
       });
     }
 
