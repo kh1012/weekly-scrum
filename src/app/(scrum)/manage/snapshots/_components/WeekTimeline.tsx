@@ -297,13 +297,16 @@ export function WeekTimeline({
     
     // 3. 스냅샷이 있는 주차들 추출
     const snapshotWeeks: Array<{ year: number; week: number }> = [];
-    snapshotCountByWeek.forEach((_, key) => {
+    console.log('[WeekTimeline] snapshotCountByWeek:', Array.from(snapshotCountByWeek.entries()));
+    snapshotCountByWeek.forEach((count, key) => {
+      console.log('[WeekTimeline] Processing:', key, 'count:', count);
       const [yearStr, weekStr] = key.split('-');
       snapshotWeeks.push({
         year: parseInt(yearStr, 10),
         week: parseInt(weekStr, 10),
       });
     });
+    console.log('[WeekTimeline] snapshotWeeks:', snapshotWeeks);
     
     // 4. 범위 결정: 가장 오래된 스냅샷 주차부터 가장 최신 스냅샷 주차까지
     let startYear = currentISOWeek.year;

@@ -15,8 +15,9 @@ import {
 } from "@/components/common/Icons";
 import type { DraftBar } from "./types";
 
-// localStorage 키
-const POPOVER_SIZE_KEY = "plan-view-popover-size";
+// localStorage 키 (Plans와 Snapshots 별도)
+const PLAN_POPOVER_SIZE_KEY = "plan-view-popover-size";
+const SNAPSHOT_POPOVER_SIZE_KEY = "snapshot-view-popover-size";
 
 const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
   planner: { label: "기획", color: "#f59e0b" },
@@ -53,15 +54,20 @@ export function PlanViewPopover({
 
   // 팝오버 크기 상태 (localStorage에서 불러오기)
   const [size, setSize] = useState(() => {
+    const storageKey = bar.isSnapshot ? SNAPSHOT_POPOVER_SIZE_KEY : PLAN_POPOVER_SIZE_KEY;
+    const defaultSize = bar.isSnapshot 
+      ? { width: 420, height: 600 }  // Snapshot: 더 큰 기본 크기
+      : { width: 360, height: 400 };  // Plan: 기존 크기
+    
     try {
-      const stored = localStorage.getItem(POPOVER_SIZE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         return JSON.parse(stored);
       }
     } catch {
       // localStorage 접근 실패 시 무시
     }
-    return { width: 360, height: 400 }; // 기본 크기
+    return defaultSize;
   });
 
   // 리사이즈 상태
@@ -123,9 +129,10 @@ export function PlanViewPopover({
 
     const handleMouseUp = () => {
       setIsResizing(false);
-      // localStorage에 저장
+      // localStorage에 저장 (Plans와 Snapshots 별도)
+      const storageKey = bar.isSnapshot ? SNAPSHOT_POPOVER_SIZE_KEY : PLAN_POPOVER_SIZE_KEY;
       try {
-        localStorage.setItem(POPOVER_SIZE_KEY, JSON.stringify(size));
+        localStorage.setItem(storageKey, JSON.stringify(size));
       } catch {
         // localStorage 접근 실패 시 무시
       }
