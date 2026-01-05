@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
 import { getCurrentISOWeek } from "@/lib/date/isoWeek";
+import { MySnapshotTimelineSection } from "./MySnapshotTimelineSection";
 
 interface PersonalDashboardProps {
   userName?: string;
@@ -191,26 +192,10 @@ export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData 
 
       {/* 스냅샷 타임라인 섹션 (Full Width) */}
       {userId && workspaceId && (
-        <div className="w-full border-t-2 border-[#d0d7de] bg-[#f6f8fa] py-8">
-          <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 mb-6">
-            <h2 className="text-lg font-semibold text-[#24292f] mb-1">
-              나의 스냅샷 타임라인
-            </h2>
-            <p className="text-sm text-[#57606a]">
-              주차별 스냅샷 엔트리를 Gantt 형태로 시각화하고 연속성을 확인하세요
-            </p>
-          </div>
-          
-          {/* 타임라인 컴포넌트는 여기에 추가될 예정 */}
-          <div className="w-full overflow-x-auto">
-            {/* Placeholder */}
-            <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
-              <div className="bg-white border border-[#d0d7de] rounded-md p-8 text-center text-[#57606a]">
-                타임라인이 곧 추가됩니다...
-              </div>
-            </div>
-          </div>
-        </div>
+        <MySnapshotTimelineWrapper
+          workspaceId={workspaceId}
+          userId={userId}
+        />
       )}
 
       {/* 새 스냅샷 모달 */}
@@ -378,5 +363,33 @@ function ActionCard({
         )}
       </div>
     </button>
+  );
+}
+
+// 타임라인 래퍼 (서버 컴포넌트를 클라이언트에서 사용하기 위한 wrapper)
+function MySnapshotTimelineWrapper({
+  workspaceId,
+  userId,
+}: {
+  workspaceId: string;
+  userId: string;
+}) {
+  return (
+    <div className="w-full border-t-2 border-[#d0d7de] bg-[#f6f8fa] py-8">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 mb-6">
+        <h2 className="text-lg font-semibold text-[#24292f] mb-1">
+          나의 스냅샷 타임라인
+        </h2>
+        <p className="text-sm text-[#57606a]">
+          주차별 스냅샷 엔트리를 Gantt 형태로 시각화하고 연속성을 확인하세요
+        </p>
+      </div>
+
+      <MySnapshotTimelineSection
+        workspaceId={workspaceId}
+        userId={userId}
+        weeksRange={12}
+      />
+    </div>
   );
 }

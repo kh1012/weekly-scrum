@@ -1,0 +1,87 @@
+/**
+ * My Snapshot Timeline Section (서버 컴포넌트)
+ * 
+ * Personal Dashboard에서 사용할 타임라인 섹션
+ * - 데이터 fetching (서버 사이드)
+ * - 클라이언트 컴포넌트로 전달
+ */
+
+import { getMySnapshotEntries } from "@/lib/data/mySnapshotTimeline";
+import { MySnapshotTimeline } from "./MySnapshotTimeline";
+import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
+import { Suspense } from "react";
+
+interface MySnapshotTimelineSectionProps {
+  workspaceId: string;
+  userId: string;
+  /** 주차 범위 (8/12/16) - 기본 12주 */
+  weeksRange?: 8 | 12 | 16;
+}
+
+/**
+ * 현재 주차 기준으로 from/to 계산
+ */
+function calculateWeekRange(weeksRange: number = 12): { fromWeek: string; toWeek: string } {
+  const now = new Date();
+  
+  // ISO 주차 계산
+  const getISOWeek = (date: Date) => {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const jan4 = new Date(target.getFullYear(), 0, 4);
+    const dayDiff = (target.getTime() - jan4.getTime()) / 86400000;
+    const weekNr = 1 + Math.ceil(dayDiff / 7);
+    return { year: target.getFullYear(), week: weekNr };
+  };
+
+  const currentWeek = getISOWeek(now);
+  
+  // 이전 주차들 계산 (weeksRange만큼)
+  const fromDate = new Date(now);
+  fromDate.setDate(fromDate.getDate() - weeksRange * 7);
+  const fromWeek = getISOWeek(fromDate);
+
+  const formatWeek = (year: number, week: number) =>
+    `${year}-W${week.toString().padStart(2, "0")}`;
+
+  return {
+    fromWeek: formatWeek(fromWeek.year, fromWeek.week),
+    toWeek: formatWeek(currentWeek.year, currentWeek.week),
+  };
+}
+
+async function TimelineContent({ workspaceId, userId, weeksRange = 12 }: MySnapshotTimelineSectionProps) {
+  const { fromWeek, toWeek } = calculateWeekRange(weeksRange);
+
+  const entries = await getMySnapshotEntries({
+    workspaceId,
+    userId,
+    fromWeek,
+    toWeek,
+  });
+
+  return <MySnapshotTimeline entries={entries} weeksRange={weeksRange} />;
+}
+
+export function MySnapshotTimelineSection(props: MySnapshotTimelineSectionProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full">
+          <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
+            <div className="bg-white border border-[#d0d7de] rounded-md p-12">
+              <LogoLoadingSpinner
+                title="타임라인을 불러오는 중"
+                description="잠시만 기다려주세요"
+              />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <TimelineContent {...props} />
+    </Suspense>
+  );
+}
+
