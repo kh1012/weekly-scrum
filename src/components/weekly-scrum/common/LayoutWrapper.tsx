@@ -7,6 +7,7 @@ import { NavigationProgress } from "./NavigationProgress";
 import { SideNavigation } from "./Navigation";
 import { Logo } from "./Logo";
 import { TelemetryProvider } from "@/components/telemetry/TelemetryProvider";
+import { usePageVisitTracker } from "@/hooks/usePageVisitTracker";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
 import type { MenuSetting } from "@/lib/data/menuSettings";
 import type { MenuViewCount } from "@/lib/data/menuUsage";
@@ -235,6 +236,13 @@ export function LayoutWrapper({
 }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // 페이지 방문 추적
+  usePageVisitTracker({
+    workspaceId,
+    userId,
+    enabled: !!workspaceId && !!userId,
+  });
 
   // 현재 경로를 localStorage에 저장
   useEffect(() => {
