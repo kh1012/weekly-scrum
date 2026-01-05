@@ -399,9 +399,9 @@ export function CollaborationGraph({
     }, 150);
   }, []);
 
-  // 노드/엣지 변경 시 fitView 재실행
+  // 주차 변경 시 fitView 재실행 (graphNodes, graphEdges 변경 시에만)
   useEffect(() => {
-    if (reactFlowInstance && nodes.length > 0) {
+    if (reactFlowInstance && graphNodes.length > 0) {
       setTimeout(() => {
         reactFlowInstance.fitView({
           padding: 0.15,
@@ -411,7 +411,7 @@ export function CollaborationGraph({
         });
       }, 150);
     }
-  }, [initialNodes, initialEdges, reactFlowInstance]);
+  }, [graphNodes, graphEdges, reactFlowInstance]);
 
   // 노드 클릭 핸들러
   const handleNodeClick = useCallback(
