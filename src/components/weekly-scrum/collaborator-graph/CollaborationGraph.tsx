@@ -19,36 +19,48 @@ import "reactflow/dist/style.css";
 import * as d3 from "d3-force";
 import type { GraphNode, GraphEdge } from "./buildCollabGraph";
 
-// 커스텀 노드 컴포넌트 (하단에만 연결점)
+// 커스텀 노드 컴포넌트 (좌우 중앙에 연결점)
 function CustomNode({ data }: NodeProps) {
+  const nameFontSize = data.nameFontSize || 13;
+  const countFontSize = data.countFontSize || 11;
+  
   return (
     <>
-      {/* 하단 연결점만 */}
+      {/* 왼쪽 연결점 (입력) */}
       <Handle
         type="target"
-        position={Position.Bottom}
+        position={Position.Left}
         style={{
           background: "#d0d7de",
           width: "8px",
           height: "8px",
           border: "2px solid #ffffff",
-          bottom: "-4px",
+          left: "-4px",
         }}
       />
+      {/* 오른쪽 연결점 (출력) */}
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         style={{
           background: "#d0d7de",
           width: "8px",
           height: "8px",
           border: "2px solid #ffffff",
-          bottom: "-4px",
+          right: "-4px",
         }}
       />
       <div className="flex items-center justify-center gap-2 px-3">
-        <div className="font-normal text-[13px] text-[#24292f]">{data.name}</div>
-        <div className="text-[11px] text-[#6e7781] font-normal">
+        <div 
+          className="font-normal text-[#24292f]"
+          style={{ fontSize: `${nameFontSize}px` }}
+        >
+          {data.name}
+        </div>
+        <div 
+          className="text-[#6e7781] font-normal"
+          style={{ fontSize: `${countFontSize}px` }}
+        >
           {data.totalCollabs}
         </div>
       </div>
@@ -140,9 +152,16 @@ export function CollaborationGraph({
       }
     });
 
-    // FigJam 스타일 노드 배치
-    const NODE_WIDTH = 140; // 가로가 긴 직사각형
-    const NODE_HEIGHT = 50;
+    // FigJam 스타일 노드 배치 (크기 동적 조정)
+    const BASE_WIDTH = 100; // 기본 너비
+    const BASE_HEIGHT = 40; // 기본 높이
+    const MAX_WIDTH = 200; // 최대 너비
+    const MAX_HEIGHT = 70; // 최대 높이
+    const BASE_NAME_FONT = 11; // 기본 이름 폰트
+    const MAX_NAME_FONT = 16; // 최대 이름 폰트
+    const BASE_COUNT_FONT = 9; // 기본 횟수 폰트
+    const MAX_COUNT_FONT = 13; // 최대 횟수 폰트
+    
     const HORIZONTAL_GAP = 100; // 노드 간 여유 있는 간격
     const VERTICAL_GAP = 120;
     const TOP_MARGIN = 80;
@@ -151,25 +170,49 @@ export function CollaborationGraph({
     const nodeData: any[] = [];
 
     levels.forEach((levelNodes, levelIndex) => {
-      const y = TOP_MARGIN + levelIndex * (NODE_HEIGHT + VERTICAL_GAP);
-      const levelWidth = levelNodes.length * NODE_WIDTH + (levelNodes.length - 1) * HORIZONTAL_GAP;
+      // 레벨 내 최대 노드 너비 계산 (간격 고려)
+      const maxNodeWidth = Math.max(
+        ...levelNodes.map((node) => {
+          const scale = node.totalCollabs / maxCollabs;
+          return BASE_WIDTH + scale * (MAX_WIDTH - BASE_WIDTH);
+        })
+      );
+      
+      const y = TOP_MARGIN + levelIndex * (maxNodeWidth * 0.5 + VERTICAL_GAP);
+      const levelWidth = levelNodes.reduce((sum, node) => {
+        const scale = node.totalCollabs / maxCollabs;
+        const nodeWidth = BASE_WIDTH + scale * (MAX_WIDTH - BASE_WIDTH);
+        return sum + nodeWidth;
+      }, 0) + (levelNodes.length - 1) * HORIZONTAL_GAP;
+      
       const startX = LEFT_MARGIN + (1400 - levelWidth) / 2; // 중앙 정렬
-
-      levelNodes.forEach((node, nodeIndex) => {
-        const x = startX + nodeIndex * (NODE_WIDTH + HORIZONTAL_GAP);
+      
+      let currentX = startX;
+      levelNodes.forEach((node) => {
+        const scale = node.totalCollabs / maxCollabs;
+        const nodeWidth = BASE_WIDTH + scale * (MAX_WIDTH - BASE_WIDTH);
+        const nodeHeight = BASE_HEIGHT + scale * (MAX_HEIGHT - BASE_HEIGHT);
+        const nameFontSize = BASE_NAME_FONT + scale * (MAX_NAME_FONT - BASE_NAME_FONT);
+        const countFontSize = BASE_COUNT_FONT + scale * (MAX_COUNT_FONT - BASE_COUNT_FONT);
         
         nodeData.push({
           id: node.id,
           label: node.label,
           totalCollabs: node.totalCollabs,
           uniquePartners: node.uniquePartners,
-          x,
+          x: currentX,
           y,
+          width: nodeWidth,
+          height: nodeHeight,
+          nameFontSize,
+          countFontSize,
         });
+        
+        currentX += nodeWidth + HORIZONTAL_GAP;
       });
     });
 
-    // React Flow 노드로 변환 (FigJam 스타일, 커스텀 노드 사용)
+    // React Flow 노드로 변환 (FigJam 스타일, 크기 동적 조정)
     return nodeData.map((node: any) => ({
       id: node.id,
       type: "custom",
@@ -177,10 +220,12 @@ export function CollaborationGraph({
       data: {
         name: node.label,
         totalCollabs: node.totalCollabs,
+        nameFontSize: node.nameFontSize,
+        countFontSize: node.countFontSize,
       },
       style: {
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
+        width: node.width,
+        height: node.height,
         borderRadius: "6px",
         backgroundColor: "#ffffff",
         border: "1px solid #d0d7de",
@@ -192,8 +237,8 @@ export function CollaborationGraph({
         cursor: "pointer",
         transition: "all 0.2s ease",
       },
-      sourcePosition: Position.Bottom,
-      targetPosition: Position.Bottom,
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
     }));
   }, [graphNodes, graphEdges]);
 
