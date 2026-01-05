@@ -174,3 +174,18 @@ export function getWeekOptions(year: number): number[] {
   return Array.from({ length: totalWeeks }, (_, i) => i + 1);
 }
 
+/**
+ * 이전 주차 정보를 반환합니다. (ISO week rollover 처리)
+ * W01의 이전 주 = 이전 연도의 마지막 주
+ */
+export function getPreviousISOWeek(year: number, week: number): { year: number; week: number } {
+  if (week > 1) {
+    return { year, week: week - 1 };
+  }
+  
+  // W01의 이전 주는 이전 연도의 마지막 주
+  const previousYear = year - 1;
+  const weeksInPreviousYear = getWeeksInYear(previousYear);
+  return { year: previousYear, week: weeksInPreviousYear };
+}
+
