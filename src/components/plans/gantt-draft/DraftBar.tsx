@@ -164,9 +164,9 @@ export const DraftBar = memo(function DraftBar({
   const primaryRole = bar.assignees?.[0]?.role;
   const roleColor = primaryRole ? ROLE_CONFIG[primaryRole] : null;
 
-  // Snapshot은 검정색 배경 사용
+  // Snapshot은 연한 회색 배경 사용
   const barColor = isSnapshot
-    ? { color: "#000000", bg: "#1a1a1a", text: "#ffffff" }
+    ? { color: "#9ca3af", bg: "#f3f4f6", text: "#374151" }
     : roleColor || DEFAULT_COLOR;
 
   // 드래그 시작
@@ -342,12 +342,12 @@ export const DraftBar = memo(function DraftBar({
         top: currentTop,
         // Airbnb 스타일: 더 둥근 끝
         borderRadius: 10,
-        // 역할 기반 배경색 (Snapshot은 검정색)
+        // 역할 기반 배경색 (Snapshot은 연한 회색)
         background: isSnapshot
-          ? "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)"
+          ? "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)"
           : barColor.bg,
         border: isSnapshot
-          ? "1px solid #000000"
+          ? "1px solid #d1d5db"
           : `1px solid ${isSelected ? barColor.color : `${barColor.color}30`}`,
         // 호버/선택 시 그림자 & lift 효과
         boxShadow: isSelected
@@ -406,83 +406,80 @@ export const DraftBar = memo(function DraftBar({
 
       {/* 콘텐츠 영역 - Snapshot과 일반 블록 구분 */}
       {isSnapshot ? (
-        /* Snapshot 블록 레이아웃 */
+        /* Snapshot 블록 레이아웃 - 2행 */
         <div
-          className="px-2 py-0.5 flex flex-col justify-center min-w-0 gap-0.5"
+          className="px-2 py-1 flex flex-col justify-center min-w-0 gap-1"
           onMouseDown={(e) => handleMouseDown(e, "move")}
         >
-          {/* 1행: entry 태그 + 타이틀 + 진행률 + 기간 */}
-          <div className="flex items-center gap-1 min-w-0">
-            {/* entry 태그 - 회색 */}
-            <span
-              className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
-              style={{
-                background: "#6b7280",
-                color: "white",
-              }}
-              title="Snapshot Entry"
-            >
-              entry
-            </span>
+          {/* 1행: ENTRY 태그 + 주차 + 기간 + 원형 진행률 */}
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {/* ENTRY 태그 */}
+              <span
+                className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
+                style={{
+                  background: "#9ca3af",
+                  color: "white",
+                }}
+                title="Snapshot Entry"
+              >
+                ENTRY
+              </span>
 
-            {/* 타이틀 */}
-            <span
-              className="truncate text-[11px] font-semibold leading-tight flex-1 min-w-0"
-              style={{ color: barColor.text }}
-              title={bar.title}
-            >
-              {bar.title}
-            </span>
-
-            {/* 진행률 바 (작게) */}
-            {currentWidth > 120 && (
-              <div className="flex items-center gap-1 shrink-0">
-                <div
-                  className="w-12 h-1 rounded-full overflow-hidden"
-                  style={{ background: "rgba(0, 0, 0, 0.2)" }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${avgProgress}%`,
-                      background:
-                        "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
-                    }}
-                  />
-                </div>
+              {/* 주차 + 기간 */}
+              {snapshotYear && snapshotWeek && (
                 <span
-                  className="text-[8px] font-medium w-6 text-right"
-                  style={{ color: "rgba(255, 255, 255, 0.8)" }}
+                  className="text-[10px] font-medium shrink-0"
+                  style={{ color: "#6b7280" }}
                 >
-                  {Math.round(avgProgress)}%
+                  {String(snapshotYear).slice(2)} {snapshotWeek} {dateLabel}
+                </span>
+              )}
+            </div>
+
+            {/* 원형 진행률 */}
+            {currentWidth > 60 && (
+              <div className="relative w-6 h-6 shrink-0">
+                <svg className="w-6 h-6 -rotate-90">
+                  {/* 배경 원 */}
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="2"
+                  />
+                  {/* 진행률 원 */}
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="2"
+                    strokeDasharray={`${(avgProgress / 100) * 62.83} 62.83`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span
+                  className="absolute inset-0 flex items-center justify-center text-[8px] font-bold"
+                  style={{ color: "#6b7280" }}
+                >
+                  {Math.round(avgProgress)}
                 </span>
               </div>
             )}
-
-            {/* 기간 */}
-            {currentWidth > 80 && snapshotYear && snapshotWeek && (
-              <span
-                className="text-[9px] font-medium shrink-0 px-1.5 py-0.5 rounded"
-                style={{
-                  color: "rgba(255, 255, 255, 0.9)",
-                  background: "rgba(0, 0, 0, 0.2)",
-                }}
-              >
-                {snapshotYear} {snapshotWeek}
-              </span>
-            )}
           </div>
 
-          {/* 2행: 타이틀 (작은 화면용) */}
-          {currentWidth <= 120 && (
-            <span
-              className="truncate text-[10px] leading-tight"
-              style={{ color: "rgba(255, 255, 255, 0.8)" }}
-              title={bar.title}
-            >
-              {bar.title}
-            </span>
-          )}
+          {/* 2행: 기능명 */}
+          <span
+            className="truncate text-[11px] font-semibold leading-tight"
+            style={{ color: "#374151" }}
+            title={bar.title}
+          >
+            {bar.title}
+          </span>
         </div>
       ) : (
         /* 일반 블록 레이아웃 */

@@ -320,33 +320,40 @@ export function WeekTimeline({
       const oldest = sortedSnapshots[0];
       const newest = sortedSnapshots[sortedSnapshots.length - 1];
       
-      // 가장 오래된 주차에서 5주 이전까지 포함 (작성 가능하도록)
-      let targetYear = oldest.year;
-      let targetWeek = oldest.week - 5;
+      // 가장 오래된 주차의 시작 날짜를 구한 후 5주(35일) 전 날짜로 이동
+      const oldestJan4 = new Date(Date.UTC(oldest.year, 0, 4));
+      const oldestJan4Day = oldestJan4.getUTCDay() || 7;
+      const oldestWeek1Monday = new Date(oldestJan4);
+      oldestWeek1Monday.setUTCDate(oldestJan4.getUTCDate() - oldestJan4Day + 1);
       
-      // 주차가 음수면 이전 연도로 이동
-      while (targetWeek < 1) {
-        targetYear--;
-        
-        // 이전 연도의 마지막 주차 계산
-        const prevDec31 = new Date(Date.UTC(targetYear, 11, 31));
-        const prevDec31DayOfWeek = (prevDec31.getUTCDay() + 6) % 7;
-        const prevDec31Thursday = new Date(prevDec31);
-        prevDec31Thursday.setUTCDate(prevDec31.getUTCDate() - prevDec31DayOfWeek + 3);
-        
-        const prevLastWeekYear = prevDec31Thursday.getUTCFullYear();
-        const prevJan4 = new Date(Date.UTC(prevLastWeekYear, 0, 4));
-        const prevJan4DayOfWeek = (prevJan4.getUTCDay() + 6) % 7;
-        const prevFirstMonday = new Date(prevJan4);
-        prevFirstMonday.setUTCDate(prevJan4.getUTCDate() - prevJan4DayOfWeek);
-        
-        const prevWeeksInYear = Math.floor((prevDec31Thursday.getTime() - prevFirstMonday.getTime()) / 86400000 / 7) + 1;
-        
-        targetWeek += prevWeeksInYear;
-      }
+      const oldestWeekStart = new Date(oldestWeek1Monday);
+      oldestWeekStart.setUTCDate(oldestWeek1Monday.getUTCDate() + (oldest.week - 1) * 7);
       
-      startYear = targetYear;
-      startWeek = targetWeek;
+      // 5주(35일) 전으로 이동
+      const fiveWeeksBeforeDate = new Date(oldestWeekStart);
+      fiveWeeksBeforeDate.setUTCDate(oldestWeekStart.getUTCDate() - 35);
+      
+      // 해당 날짜가 속한 ISO Week 계산
+      const fiveWeeksBeforeYear = fiveWeeksBeforeDate.getUTCFullYear();
+      const fiveWeeksBeforeMonday = new Date(fiveWeeksBeforeDate);
+      const dayOfWeek = fiveWeeksBeforeDate.getUTCDay() || 7;
+      fiveWeeksBeforeMonday.setUTCDate(fiveWeeksBeforeDate.getUTCDate() - dayOfWeek + 1);
+      
+      // 해당 주의 목요일
+      const thursday = new Date(fiveWeeksBeforeMonday);
+      thursday.setUTCDate(fiveWeeksBeforeMonday.getUTCDate() + 3);
+      
+      // 목요일이 속한 연도가 ISO Week Year
+      const isoYear = thursday.getUTCFullYear();
+      const isoJan4 = new Date(Date.UTC(isoYear, 0, 4));
+      const isoJan4Day = isoJan4.getUTCDay() || 7;
+      const isoWeek1Monday = new Date(isoJan4);
+      isoWeek1Monday.setUTCDate(isoJan4.getUTCDate() - isoJan4Day + 1);
+      
+      const isoWeekNumber = Math.floor((thursday.getTime() - isoWeek1Monday.getTime()) / 86400000 / 7) + 1;
+      
+      startYear = isoYear;
+      startWeek = isoWeekNumber;
       
       // 가장 최신 주차의 다음 주차까지 포함
       // 해당 연도의 마지막 주차 계산
