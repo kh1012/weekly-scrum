@@ -15,6 +15,8 @@ import ReactFlow, {
   Position,
   NodeProps,
   ReactFlowInstance,
+  EdgeProps,
+  getBezierPath,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import * as d3 from "d3-force";
@@ -71,6 +73,75 @@ function CustomNode({ data }: NodeProps) {
 
 const nodeTypes = {
   custom: CustomNode,
+};
+
+// 커스텀 엣지 컴포넌트 (곡률 조정 가능)
+function CustomEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  data,
+}: EdgeProps) {
+  const curvature = data?.curvature ?? 0.5;
+  
+  // 베지어 곡선의 제어점 계산 (곡률에 따라 조정)
+  const distance = Math.sqrt(
+    Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2)
+  );
+  
+  // 곡률에 따라 제어점의 offset 조정
+  const offset = (curvature - 0.5) * distance * 0.8;
+  
+  const [edgePath] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    curvature,
+  });
+
+  // offset이 있으면 path를 수동으로 조정
+  let finalPath = edgePath;
+  if (offset !== 0) {
+    const midX = (sourceX + targetX) / 2;
+    const midY = (sourceY + targetY) / 2;
+    
+    // 수직 방향으로 offset 적용
+    const dx = targetX - sourceX;
+    const dy = targetY - sourceY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const nx = -dy / length; // 수직 방향
+    const ny = dx / length;
+    
+    const controlX = midX + nx * offset;
+    const controlY = midY + ny * offset;
+    
+    finalPath = `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
+  }
+
+  return (
+    <>
+      <path
+        id={id}
+        style={style}
+        className="react-flow__edge-path"
+        d={finalPath}
+        markerEnd={markerEnd}
+      />
+    </>
+  );
+}
+
+const edgeTypes = {
+  custom: CustomEdge,
 };
 
 interface CollaborationGraphProps {
@@ -281,9 +352,19 @@ export function CollaborationGraph({
     });
   }, [graphNodes, graphEdges, selectedNode]);
 
-  // React Flow 엣지 변환 (관계별 색상 적용 + 그라데이션)
+  // React Flow 엣지 변환 (관계별 색상 적용 + 그라데이션 + 곡률 조정)
   const initialEdges: Edge[] = useMemo(() => {
     if (graphEdges.length === 0) return [];
+
+    // 동일한 노드 쌍 간 edge들을 그룹화
+    const edgeGroups = new Map<string, GraphEdge[]>();
+    graphEdges.forEach((edge) => {
+      const key = [edge.source, edge.target].sort().join("-");
+      if (!edgeGroups.has(key)) {
+        edgeGroups.set(key, []);
+      }
+      edgeGroups.get(key)!.push(edge);
+    });
 
     return graphEdges.map((edge) => {
       // 선 두께
@@ -305,11 +386,26 @@ export function CollaborationGraph({
         arrowColor = "#22c55e"; // 초록색
       }
 
+      // 동일한 노드 쌍의 edge가 여러 개인 경우 곡률 조정
+      const groupKey = [edge.source, edge.target].sort().join("-");
+      const group = edgeGroups.get(groupKey) || [];
+      let curvature = 0.5; // 기본 곡률
+
+      if (group.length > 1) {
+        // 여러 edge가 있으면 index에 따라 곡률 조정
+        const index = group.findIndex((e) => e.id === edge.id);
+        const totalEdges = group.length;
+        
+        // 중앙을 기준으로 위아래로 분산 (0.3 ~ 0.7 범위)
+        const step = 0.4 / (totalEdges - 1);
+        curvature = 0.3 + index * step;
+      }
+
       return {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: "default", // 기본 베지어 곡선
+        type: "custom", // 커스텀 엣지 사용
         animated: false,
         style: {
           strokeWidth,
@@ -321,6 +417,9 @@ export function CollaborationGraph({
           color: arrowColor,
           width: 12,
           height: 12,
+        },
+        data: {
+          curvature, // 곡률 데이터 전달
         },
         // 라벨 제거 (깔끔한 디자인)
       };
@@ -490,6 +589,7 @@ export function CollaborationGraph({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
@@ -588,7 +688,7 @@ export function CollaborationGraph({
                   <span className="text-[10px] text-[#57606a]">pair</span>
                 </div>
                 <span className="text-[10px] font-medium text-[#24292f]">
-                  ← {selectedNode.pairIncoming} / → {selectedNode.pairOutgoing}
+                  {selectedNode.pairIncoming + selectedNode.pairOutgoing}회
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -597,7 +697,7 @@ export function CollaborationGraph({
                   <span className="text-[10px] text-[#57606a]">pre</span>
                 </div>
                 <span className="text-[10px] font-medium text-[#24292f]">
-                  ← {selectedNode.preIncoming} / → {selectedNode.preOutgoing}
+                  → {selectedNode.preOutgoing}회
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -606,7 +706,7 @@ export function CollaborationGraph({
                   <span className="text-[10px] text-[#57606a]">post</span>
                 </div>
                 <span className="text-[10px] font-medium text-[#24292f]">
-                  ← {selectedNode.postIncoming} / → {selectedNode.postOutgoing}
+                  ← {selectedNode.postIncoming}회
                 </span>
               </div>
             </div>
