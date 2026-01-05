@@ -1,11 +1,12 @@
 /**
  * Plan View Popover
  * - readOnly 모드에서 Plan 데이터를 보여주는 팝오버
+ * - 리사이즈 가능
  */
 
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   XIcon,
   CalendarIcon,
@@ -13,6 +14,9 @@ import {
   LinkIcon,
 } from "@/components/common/Icons";
 import type { DraftBar } from "./types";
+
+// localStorage 키
+const POPOVER_SIZE_KEY = "plan-view-popover-size";
 
 const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
   planner: { label: "기획", color: "#f59e0b" },
@@ -34,9 +38,26 @@ export function PlanViewPopover({
   onClose,
 }: PlanViewPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
-
+  
   // rowId에서 프로젝트, 모듈, 기능 추출
   const [project, module, feature] = bar.rowId.split("::");
+
+  // 팝오버 크기 상태 (localStorage에서 불러오기)
+  const [size, setSize] = useState(() => {
+    try {
+      const stored = localStorage.getItem(POPOVER_SIZE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch {
+      // localStorage 접근 실패 시 무시
+    }
+    return { width: 360, height: 400 }; // 기본 크기
+  });
+
+  // 리사이즈 상태
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -63,18 +84,63 @@ export function PlanViewPopover({
     };
   }, [onClose]);
 
+  // 리사이즈 핸들러
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    resizeStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height,
+    };
+  }, [size]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeStartRef.current) return;
+
+      const deltaX = e.clientX - resizeStartRef.current.x;
+      const deltaY = e.clientY - resizeStartRef.current.y;
+
+      const newWidth = Math.max(320, Math.min(800, resizeStartRef.current.width + deltaX));
+      const newHeight = Math.max(300, Math.min(800, resizeStartRef.current.height + deltaY));
+
+      setSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      // localStorage에 저장
+      try {
+        localStorage.setItem(POPOVER_SIZE_KEY, JSON.stringify(size));
+      } catch {
+        // localStorage 접근 실패 시 무시
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, size]);
+
   // 위치 계산 (화면 밖으로 나가지 않도록)
   const getPopoverPosition = useCallback(() => {
-    const popoverWidth = 360;
-    const popoverHeight = 400;
     const padding = 16;
 
     let x = anchorPosition.x;
     let y = anchorPosition.y;
 
     // 우측 경계 체크
-    if (x + popoverWidth > window.innerWidth - padding) {
-      x = window.innerWidth - popoverWidth - padding;
+    if (x + size.width > window.innerWidth - padding) {
+      x = window.innerWidth - size.width - padding;
     }
 
     // 좌측 경계 체크
@@ -83,8 +149,8 @@ export function PlanViewPopover({
     }
 
     // 하단 경계 체크
-    if (y + popoverHeight > window.innerHeight - padding) {
-      y = anchorPosition.y - popoverHeight - 8;
+    if (y + size.height > window.innerHeight - padding) {
+      y = anchorPosition.y - size.height - 8;
     }
 
     // 상단 경계 체크
@@ -93,7 +159,7 @@ export function PlanViewPopover({
     }
 
     return { x, y };
-  }, [anchorPosition]);
+  }, [anchorPosition, size]);
 
   const position = getPopoverPosition();
   const hasLinks = bar.links && bar.links.length > 0;
@@ -102,13 +168,16 @@ export function PlanViewPopover({
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 w-[360px] rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150 flex flex-col max-h-[400px]"
+      className="fixed z-50 rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150 flex flex-col"
       style={{
         left: position.x,
         top: position.y,
+        width: size.width,
+        height: size.height,
         background: "white",
         boxShadow:
           "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+        cursor: isResizing ? "nwse-resize" : "default",
       }}
     >
       {/* 헤더 */}
@@ -287,6 +356,29 @@ export function PlanViewPopover({
             추가 정보가 없습니다
           </div>
         )}
+      </div>
+
+      {/* 리사이즈 핸들 */}
+      <div
+        onMouseDown={handleResizeStart}
+        className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize group"
+        style={{ touchAction: "none" }}
+      >
+        {/* 리사이즈 아이콘 */}
+        <div className="absolute bottom-1 right-1 flex flex-col gap-0.5">
+          <div className="flex gap-0.5 justify-end">
+            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
+          </div>
+          <div className="flex gap-0.5 justify-end">
+            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
+            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
+          </div>
+          <div className="flex gap-0.5 justify-end">
+            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
+            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
+            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
+          </div>
+        </div>
       </div>
     </div>
   );
