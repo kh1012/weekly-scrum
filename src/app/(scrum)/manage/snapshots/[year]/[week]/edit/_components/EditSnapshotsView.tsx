@@ -46,6 +46,7 @@ import {
   tempSnapshotToPlainText,
 } from "@/components/weekly-scrum/manage/types";
 import { WorkloadLevelModal } from "@/components/weekly-scrum/manage/WorkloadLevelModal";
+import { LastWeekNextFab } from "@/components/snapshots/LastWeekNextFab";
 import { WeekTimeline } from "../../../../_components/WeekTimeline";
 import {
   updateSnapshotAndEntries,
@@ -1264,6 +1265,13 @@ function EditSnapshotsViewInner({
         </div>,
         document.body
       )}
+
+      {/* 지난 주 Next 참고 플로팅 버튼 */}
+      <LastWeekNextFab
+        workspaceId={workspaceId}
+        year={year}
+        week={week}
+      />
     </div>
   );
 }
