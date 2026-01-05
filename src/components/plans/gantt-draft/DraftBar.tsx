@@ -413,26 +413,26 @@ export const DraftBar = memo(function DraftBar({
         >
           {/* 원형 진행률 - absolute 우측 중앙 */}
           {currentWidth > 60 && (
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7">
-              <svg className="w-7 h-7 -rotate-90">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8">
+              <svg className="w-8 h-8 -rotate-90">
                 {/* 배경 원 */}
                 <circle
-                  cx="14"
-                  cy="14"
-                  r="10"
+                  cx="16"
+                  cy="16"
+                  r="12"
                   fill="none"
                   stroke="#e5e7eb"
                   strokeWidth="4"
                 />
                 {/* 진행률 원 */}
                 <circle
-                  cx="14"
-                  cy="14"
-                  r="10"
+                  cx="16"
+                  cy="16"
+                  r="12"
                   fill="none"
                   stroke="#10b981"
                   strokeWidth="4"
-                  strokeDasharray={`${(avgProgress / 100) * 62.83} 62.83`}
+                  strokeDasharray={`${(avgProgress / 100) * 75.4} 75.4`}
                   strokeLinecap="round"
                 />
               </svg>
@@ -445,28 +445,30 @@ export const DraftBar = memo(function DraftBar({
             </div>
           )}
 
-          {/* 1행: ENTRY 태그 + 주차 + 기간 */}
+          {/* 1행: 주차 태그 + 기간 */}
           <div className="flex items-center gap-1.5 min-w-0 pr-8">
-            {/* ENTRY 태그 */}
-            <span
-              className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
-              style={{
-                background: "#9ca3af",
-                color: "white",
-              }}
-              title="Snapshot Entry"
-            >
-              ENTRY
-            </span>
-
-            {/* 주차 + 기간 */}
+            {/* 주차 태그 */}
             {snapshotYear && snapshotWeek && (
-              <span
-                className="text-[10px] font-medium shrink-0"
-                style={{ color: "#6b7280" }}
-              >
-                {String(snapshotYear).slice(2)} {snapshotWeek} {dateLabel}
-              </span>
+              <>
+                <span
+                  className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
+                  style={{
+                    background: "#9ca3af",
+                    color: "white",
+                  }}
+                  title="Snapshot Entry"
+                >
+                  {String(snapshotYear).slice(2)} {snapshotWeek}
+                </span>
+
+                {/* 기간 */}
+                <span
+                  className="text-[10px] font-medium shrink-0"
+                  style={{ color: "#6b7280" }}
+                >
+                  {dateLabel}
+                </span>
+              </>
             )}
           </div>
 
