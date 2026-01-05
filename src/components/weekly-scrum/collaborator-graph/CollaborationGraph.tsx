@@ -76,7 +76,7 @@ const nodeTypes = {
 interface CollaborationGraphProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  onNodeClick?: (node: GraphNode) => void;
+  onNodeClick?: (node: GraphNode | null) => void;
   onEdgeClick?: (edge: GraphEdge) => void;
   selectedNode?: GraphNode | null;
 }
@@ -435,6 +435,13 @@ export function CollaborationGraph({
     [graphEdges, onEdgeClick]
   );
 
+  // 패널(배경) 클릭 핸들러 - 선택 해제
+  const handlePaneClick = useCallback(() => {
+    if (onNodeClick) {
+      onNodeClick(null);
+    }
+  }, [onNodeClick]);
+
   return (
     <div className="w-full h-full bg-white relative">
       {/* SVG 그라데이션 정의 (전역, ReactFlow 외부) */}
@@ -487,6 +494,7 @@ export function CollaborationGraph({
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
+        onPaneClick={handlePaneClick}
         onInit={onInit}
         connectionMode={ConnectionMode.Loose}
         minZoom={0.2}
@@ -559,8 +567,7 @@ export function CollaborationGraph({
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-[#57606a]">총 협업</span>
               <span className="text-[11px] font-medium text-[#24292f]">
-                ({selectedNode.incomingCount}회 지정됨) (
-                {selectedNode.outgoingCount}회 지정함)
+                {selectedNode.totalCollabs}회
               </span>
             </div>
             <div className="flex items-center justify-between">

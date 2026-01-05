@@ -41,7 +41,7 @@ export function CollaboratorGraphView({
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null);
 
-  const handleNodeClick = useCallback((node: GraphNode) => {
+  const handleNodeClick = useCallback((node: GraphNode | null) => {
     setSelectedNode(node);
     setSelectedEdge(null);
   }, []);
