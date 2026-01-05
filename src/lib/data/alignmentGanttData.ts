@@ -87,6 +87,7 @@ export async function getAlignmentGanttData({
 
     let plans: any[] = [];
     if (assignedPlanIds.length > 0) {
+      // Step 1: Plans 기본 정보 조회
       const { data: plansData, error: plansError } = await supabase
         .from("plans")
         .select(`
@@ -103,12 +104,7 @@ export async function getAlignmentGanttData({
           stage,
           priority,
           custom_feature,
-          custom_module,
-          assignees:plan_assignees(
-            user_id,
-            role,
-            profiles!inner(display_name)
-          )
+          custom_module
         `)
         .eq("workspace_id", workspaceId)
         .in("id", assignedPlanIds)
@@ -117,7 +113,56 @@ export async function getAlignmentGanttData({
       console.log("[Alignment] Plans Data:", plansData);
       console.log("[Alignment] Plans Error:", plansError);
 
-      plans = plansData || [];
+      if (plansError) {
+        console.error("[Alignment] Failed to fetch plans:", plansError);
+        plans = [];
+      } else {
+        plans = plansData || [];
+
+        // Step 2: 해당 Plans의 모든 담당자 조회
+        const { data: allAssigneesData } = await supabase
+          .from("plan_assignees")
+          .select("plan_id, user_id, role")
+          .eq("workspace_id", workspaceId)
+          .in("plan_id", assignedPlanIds);
+
+        // Step 3: 담당자의 프로필 조회
+        const userIds = [...new Set((allAssigneesData || []).map((a) => a.user_id))];
+        let profilesMap = new Map<string, string>();
+
+        if (userIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("user_id, display_name")
+            .in("user_id", userIds);
+
+          for (const p of profilesData || []) {
+            if (p.display_name) {
+              profilesMap.set(p.user_id, p.display_name);
+            }
+          }
+        }
+
+        // Step 4: plan_id별로 담당자 그룹핑
+        const assigneesMap = new Map<string, any[]>();
+        for (const a of allAssigneesData || []) {
+          if (!assigneesMap.has(a.plan_id)) {
+            assigneesMap.set(a.plan_id, []);
+          }
+          assigneesMap.get(a.plan_id)!.push({
+            user_id: a.user_id,
+            role: a.role,
+            profiles: { display_name: profilesMap.get(a.user_id) || null },
+          });
+        }
+
+        // Step 5: Plans에 담당자 정보 추가
+        for (const plan of plans) {
+          plan.assignees = assigneesMap.get(plan.id) || [];
+        }
+
+        console.log("[Alignment] Plans with assignees:", plans);
+      }
     } else {
       console.log("[Alignment] No assigned plan IDs found - skipping plans query");
     }
