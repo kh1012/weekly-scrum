@@ -18,7 +18,7 @@ export function DataOnlyDashboard({
   userName,
   metrics,
 }: DataOnlyDashboardProps) {
-  const { snapshots, plans, usage } = metrics;
+  const { snapshots, plans, usage, recentEntries, domainDistribution, weeklyTrend } = metrics;
 
   // 날짜 포맷팅 (상대 시간)
   const formatRelativeTime = (dateStr: string | null) => {
@@ -319,6 +319,245 @@ export function DataOnlyDashboard({
             </div>
           )}
         </div>
+
+        {/* 최근 스냅샷 엔트리 */}
+        {recentEntries.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-base font-semibold text-[#24292f] mb-3 flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-[#57606a]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              최근 작성한 스냅샷 엔트리
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentEntries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="border border-[#d0d7de] rounded-md p-4 hover:border-[#0969da] hover:shadow-sm transition-all bg-white"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#ddf4ff] text-[#0969da]">
+                      {entry.year} {entry.week}
+                    </span>
+                    <span className="text-xs text-[#57606a]">
+                      {formatRelativeTime(entry.updatedAt)}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-[#24292f] mb-2 line-clamp-1">
+                    {entry.name}
+                  </h3>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-[#57606a]">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                      </svg>
+                      <span className="truncate">{entry.domain}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-[#57606a]">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M7 2a1 1 0 00-.707 1.707L7 4.414v3.758a1 1 0 01-.293.707l-4 4C.817 14.769 2.156 18 4.828 18h10.343c2.673 0 4.012-3.231 2.122-5.121l-4-4A1 1 0 0113 8.172V4.414l.707-.707A1 1 0 0013 2H7zm2 6.172V4h2v4.172a3 3 0 00.879 2.12l1.027 1.028a4 4 0 00-2.171.102l-.47.156a4 4 0 01-2.53 0l-.563-.187a1.993 1.993 0 00-.114-.035l1.063-1.063A3 3 0 009 8.172z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span className="truncate">{entry.project}</span>
+                    </div>
+                    {entry.feature && (
+                      <div className="flex items-center gap-1 text-xs text-[#57606a]">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="truncate">{entry.feature}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 도메인/프로젝트 분포 */}
+        {domainDistribution.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-base font-semibold text-[#24292f] mb-3 flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-[#57606a]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"
+                />
+              </svg>
+              도메인 / 프로젝트 활동 분포
+            </h2>
+            <div className="overflow-hidden border border-[#d0d7de] rounded-md">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#f6f8fa]">
+                    <th className="px-4 py-2 text-left font-semibold text-[#24292f] border-b border-[#d0d7de]">
+                      도메인 / 프로젝트
+                    </th>
+                    <th className="px-4 py-2 text-right font-semibold text-[#24292f] border-b border-[#d0d7de]">
+                      엔트리 수
+                    </th>
+                    <th className="px-4 py-2 text-left font-normal text-[#57606a] border-b border-[#d0d7de] w-48">
+                      비율
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#d0d7de]">
+                  {domainDistribution.map((item) => {
+                    const maxCount = Math.max(...domainDistribution.map((d) => d.count));
+                    const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+                    const totalCount = domainDistribution.reduce((sum, d) => sum + d.count, 0);
+                    const actualPercentage = totalCount > 0 ? (item.count / totalCount) * 100 : 0;
+
+                    return (
+                      <tr key={item.label} className="hover:bg-[#f6f8fa] transition-colors">
+                        <td className="px-4 py-2 text-[#24292f] font-medium">
+                          {item.label}
+                        </td>
+                        <td className="px-4 py-2 text-right text-[#0969da] font-semibold">
+                          {item.count}
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-5 bg-[#f6f8fa] rounded-sm overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-[#0969da] to-[#1f6feb] rounded-sm transition-all"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-[#57606a] w-12 text-right">
+                              {actualPercentage.toFixed(1)}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* 주차별 작성량 추이 */}
+        {weeklyTrend.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-base font-semibold text-[#24292f] mb-3 flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-[#57606a]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              주차별 스냅샷 작성 추이 (최근 8주)
+            </h2>
+            <div className="overflow-hidden border border-[#d0d7de] rounded-md">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#f6f8fa]">
+                    <th className="px-4 py-2 text-left font-semibold text-[#24292f] border-b border-[#d0d7de]">
+                      주차
+                    </th>
+                    <th className="px-4 py-2 text-right font-semibold text-[#24292f] border-b border-[#d0d7de]">
+                      엔트리 수
+                    </th>
+                    <th className="px-4 py-2 text-left font-normal text-[#57606a] border-b border-[#d0d7de] w-64">
+                      추이
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#d0d7de]">
+                  {weeklyTrend.map((item, idx) => {
+                    const maxCount = Math.max(...weeklyTrend.map((w) => w.count), 1);
+                    const barHeight = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+                    const isLatest = idx === weeklyTrend.length - 1;
+
+                    return (
+                      <tr
+                        key={item.week}
+                        className={`hover:bg-[#f6f8fa] transition-colors ${
+                          isLatest ? "bg-[#ddf4ff]/30" : ""
+                        }`}
+                      >
+                        <td className="px-4 py-2">
+                          <span
+                            className={`font-mono text-[#24292f] ${
+                              isLatest ? "font-semibold" : ""
+                            }`}
+                          >
+                            {item.week}
+                          </span>
+                          {isLatest && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#1a7f37] text-white">
+                              최근
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-right">
+                          <span
+                            className={`font-semibold ${
+                              isLatest ? "text-[#1a7f37]" : "text-[#0969da]"
+                            }`}
+                          >
+                            {item.count}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="h-6 bg-[#f6f8fa] rounded-sm overflow-hidden flex items-end">
+                            <div
+                              className={`w-full transition-all rounded-sm ${
+                                isLatest
+                                  ? "bg-gradient-to-t from-[#1a7f37] to-[#2da44e]"
+                                  : "bg-gradient-to-t from-[#0969da] to-[#54aeff]"
+                              }`}
+                              style={{ height: `${barHeight}%` }}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* 최근 활동 (리스트 형태) */}
         <div className="mb-8">

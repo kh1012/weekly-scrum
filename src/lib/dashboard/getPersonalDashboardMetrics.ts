@@ -10,6 +10,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentISOWeek, getPreviousISOWeek } from "@/lib/date/isoWeek";
 
+export interface RecentSnapshotEntry {
+  id: string;
+  name: string;
+  domain: string;
+  project: string;
+  module: string;
+  feature: string;
+  updatedAt: string;
+  year: number;
+  week: string;
+}
+
 export interface PersonalDashboardMetrics {
   snapshots: {
     weeksCount: number;
@@ -29,6 +41,9 @@ export interface PersonalDashboardMetrics {
     visitsByDay14d: { date: string; count: number }[];
     lastVisitAt: string | null;
   };
+  recentEntries: RecentSnapshotEntry[];
+  domainDistribution: { label: string; count: number }[];
+  weeklyTrend: { week: string; count: number }[];
 }
 
 /**
@@ -210,6 +225,93 @@ export async function getPersonalDashboardMetrics({
     console.warn("menu_events table not available:", err);
   }
 
+  // ========================================
+  // D) Additional Data for Enhanced Dashboard
+  // ========================================
+
+  // 1. 최근 스냅샷 엔트리 5개
+  let recentEntries: RecentSnapshotEntry[] = [];
+  if (snapshotIds.length > 0) {
+    const { data: entriesWithDetails } = await supabase
+      .from("snapshot_entries")
+      .select("id, name, domain, project, module, feature, updated_at, created_at, snapshot_id")
+      .in("snapshot_id", snapshotIds)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+
+    if (entriesWithDetails) {
+      recentEntries = entriesWithDetails.map((e) => {
+        const snapshot = snapshots?.find((s) => s.id === e.snapshot_id);
+        return {
+          id: e.id,
+          name: e.name,
+          domain: e.domain,
+          project: e.project,
+          module: e.module || "",
+          feature: e.feature || "",
+          updatedAt: e.updated_at || e.created_at,
+          year: snapshot?.year || 0,
+          week: snapshot?.week || "",
+        };
+      });
+    }
+  }
+
+  // 2. 도메인/프로젝트 분포 (Top 10)
+  const domainMap = new Map<string, number>();
+  if (snapshotIds.length > 0) {
+    const { data: allEntries } = await supabase
+      .from("snapshot_entries")
+      .select("domain, project")
+      .in("snapshot_id", snapshotIds);
+
+    if (allEntries) {
+      for (const entry of allEntries) {
+        const key = entry.domain && entry.project 
+          ? `${entry.domain} / ${entry.project}`
+          : entry.domain || entry.project || "미분류";
+        domainMap.set(key, (domainMap.get(key) || 0) + 1);
+      }
+    }
+  }
+
+  const domainDistribution = Array.from(domainMap.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  // 3. 주차별 엔트리 수 추이 (최근 8주)
+  const weeklyTrend: { week: string; count: number }[] = [];
+  if (snapshots && snapshots.length > 0) {
+    // 주차별 스냅샷 그룹핑
+    const weekMap = new Map<string, string[]>(); // "2025-W01" -> [snapshotIds]
+    for (const snapshot of snapshots) {
+      const weekKey = `${snapshot.year}-${snapshot.week}`;
+      if (!weekMap.has(weekKey)) {
+        weekMap.set(weekKey, []);
+      }
+      weekMap.get(weekKey)!.push(snapshot.id);
+    }
+
+    // 최근 8주 추출
+    const sortedWeeks = Array.from(weekMap.keys()).sort().reverse().slice(0, 8);
+
+    for (const weekKey of sortedWeeks.reverse()) {
+      const weekSnapshotIds = weekMap.get(weekKey) || [];
+      if (weekSnapshotIds.length > 0) {
+        const { count } = await supabase
+          .from("snapshot_entries")
+          .select("*", { count: "exact", head: true })
+          .in("snapshot_id", weekSnapshotIds);
+
+        weeklyTrend.push({
+          week: weekKey,
+          count: count || 0,
+        });
+      }
+    }
+  }
+
   return {
     snapshots: {
       weeksCount: snapshotWeeksCount,
@@ -228,6 +330,9 @@ export async function getPersonalDashboardMetrics({
       visitsByDay14d,
       lastVisitAt,
     },
+    recentEntries,
+    domainDistribution,
+    weeklyTrend,
   };
 }
 
