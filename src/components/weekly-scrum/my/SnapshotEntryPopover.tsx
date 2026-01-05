@@ -128,39 +128,49 @@ export function SnapshotEntryPopover({
         {/* 바디 */}
         <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* Past Week */}
-          {entry.pastWeek?.tasks && entry.pastWeek.tasks.length > 0 && (
+          {entry.pastWeek?.tasks && Array.isArray(entry.pastWeek.tasks) && entry.pastWeek.tasks.length > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-[#24292f] mb-2">
                 지난 주 작업
               </h4>
               <div className="space-y-2">
-                {entry.pastWeek.tasks.map((task, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 p-2 rounded bg-[#f6f8fa]"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-[#24292f]">{task.title}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="h-2 flex-1 bg-white rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#0969da] transition-all"
-                            style={{ width: `${task.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-[#57606a]">
-                          {task.progress}%
-                        </span>
+                {entry.pastWeek.tasks.map((task, idx) => {
+                  // task가 객체인지 문자열인지 확인
+                  const taskTitle = typeof task === 'string' ? task : (task?.title || '제목 없음');
+                  const taskProgress = typeof task === 'object' && task !== null && 'progress' in task 
+                    ? task.progress 
+                    : 100;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 p-2 rounded bg-[#f6f8fa]"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-[#24292f]">{taskTitle}</div>
+                        {typeof task === 'object' && task !== null && 'progress' in task && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="h-2 flex-1 bg-white rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#0969da] transition-all"
+                                style={{ width: `${taskProgress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-[#57606a]">
+                              {taskProgress}%
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
           {/* Risk */}
-          {entry.pastWeek?.risk && entry.pastWeek.risk.length > 0 && (
+          {entry.pastWeek?.risk && Array.isArray(entry.pastWeek.risk) && entry.pastWeek.risk.length > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-[#24292f] mb-2">
                 리스크 내용
@@ -171,7 +181,7 @@ export function SnapshotEntryPopover({
                     key={idx}
                     className="text-sm text-[#57606a] p-2 rounded bg-[#f6f8fa]"
                   >
-                    • {risk}
+                    • {typeof risk === 'string' ? risk : String(risk)}
                   </div>
                 ))}
               </div>
@@ -179,7 +189,7 @@ export function SnapshotEntryPopover({
           )}
 
           {/* This Week */}
-          {entry.thisWeek?.tasks && entry.thisWeek.tasks.length > 0 && (
+          {entry.thisWeek?.tasks && Array.isArray(entry.thisWeek.tasks) && entry.thisWeek.tasks.length > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-[#24292f] mb-2">
                 이번 주 계획
@@ -190,7 +200,7 @@ export function SnapshotEntryPopover({
                     key={idx}
                     className="text-sm text-[#57606a] p-2 rounded bg-[#f6f8fa]"
                   >
-                    • {task}
+                    • {typeof task === 'string' ? task : String(task)}
                   </div>
                 ))}
               </div>

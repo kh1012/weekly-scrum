@@ -27,8 +27,8 @@ import { SnapshotEntryPopover } from "./SnapshotEntryPopover";
 
 // 레이아웃 상수 (Plans Gantt 참고)
 const WEEK_WIDTH = 120; // 주차 열 너비
-const ROW_HEIGHT = 60; // 행 높이
-const HEADER_HEIGHT = 64; // 헤더 높이
+const ROW_HEIGHT = 72; // 행 높이 (증가)
+const HEADER_HEIGHT = 56; // 헤더 높이 (감소)
 const LEFT_COLUMN_WIDTH = 320; // 좌측 메타 열 너비
 
 interface MySnapshotTimelineProps {
@@ -285,16 +285,16 @@ export function MySnapshotTimeline({
           >
             {/* 좌측 헤더 (Meta) */}
             <div
-              className="sticky left-0 z-20 bg-[#f6f8fa] border-r border-[#d0d7de] flex items-center px-4 font-semibold text-sm text-[#24292f]"
+              className="sticky left-0 z-20 bg-[#f6f8fa] border-r border-[#d0d7de] flex items-center px-3 text-[#24292f]"
               style={{ width: LEFT_COLUMN_WIDTH }}
             >
-              <div className="flex-1">
-                <div className="font-semibold">기능 그룹</div>
-                <div className="text-xs text-[#57606a] font-normal mt-0.5">
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-xs">기능 그룹</div>
+                <div className="text-[10px] text-[#57606a] font-normal mt-0.5 truncate">
                   Domain / Project / Module / Feature
                 </div>
               </div>
-              <div className="text-xs text-[#57606a] font-normal">
+              <div className="text-[10px] text-[#57606a] font-normal ml-2">
                 {metaGroups.length}개
               </div>
             </div>
@@ -304,13 +304,13 @@ export function MySnapshotTimeline({
               {weekAxis.map((week) => (
                 <div
                   key={week.weekKey}
-                  className="flex flex-col items-center justify-center border-r border-[#d0d7de] last:border-r-0"
+                  className="flex flex-col items-center justify-center border-r border-[#d0d7de] last:border-r-0 py-1"
                   style={{ width: WEEK_WIDTH }}
                 >
-                  <div className="text-sm font-semibold text-[#24292f]">
+                  <div className="text-xs font-semibold text-[#24292f]">
                     {week.week}
                   </div>
-                  <div className="text-xs text-[#57606a]">{week.year}</div>
+                  <div className="text-[10px] text-[#57606a]">{week.year}</div>
                 </div>
               ))}
             </div>
@@ -396,14 +396,14 @@ export function MySnapshotTimeline({
                   className="sticky left-0 z-10 bg-white border-r border-[#d0d7de] px-3 py-2 flex flex-col justify-center group-hover:bg-[#f6f8fa]"
                   style={{ width: LEFT_COLUMN_WIDTH }}
                 >
-                  <div className="text-sm font-medium text-[#24292f] truncate">
+                  <div className="text-xs font-semibold text-[#24292f] truncate leading-tight">
                     {group.feature}
                   </div>
-                  <div className="text-xs text-[#57606a] truncate mt-0.5">
+                  <div className="text-[10px] text-[#57606a] truncate mt-1 leading-tight">
                     {group.domain} / {group.project}
                     {group.module && ` / ${group.module}`}
                   </div>
-                  <div className="text-xs text-[#8c959f] mt-1">
+                  <div className="text-[10px] text-[#8c959f] mt-1">
                     {group.totalCount}개 엔트리
                   </div>
                 </div>
@@ -639,7 +639,7 @@ function SnapshotBlock({ entries, isSelected, onClick }: SnapshotBlockProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full h-full rounded border-2 bg-white hover:shadow-md transition-all flex flex-col p-2 text-left"
+      className="w-full h-full rounded border-2 bg-white hover:shadow-md transition-all flex flex-col p-1.5 text-left justify-center"
       style={{
         borderColor: isSelected ? "#0969da" : borderColor,
         boxShadow: isSelected
@@ -647,15 +647,17 @@ function SnapshotBlock({ entries, isSelected, onClick }: SnapshotBlockProps) {
           : undefined,
       }}
     >
-      <div className="text-xs font-semibold text-[#24292f] truncate">
+      <div className="text-[10px] font-semibold text-[#24292f] truncate leading-tight">
         {entry.name}
       </div>
       {count > 1 && (
-        <div className="text-xs text-[#57606a] mt-0.5">+{count - 1}개 더</div>
+        <div className="text-[9px] text-[#57606a] mt-0.5 leading-tight">+{count - 1}개 더</div>
       )}
       {entry.pastWeek?.tasks && entry.pastWeek.tasks.length > 0 && (
-        <div className="text-xs text-[#57606a] mt-1 truncate">
-          {entry.pastWeek.tasks[0].title}
+        <div className="text-[9px] text-[#57606a] mt-0.5 truncate leading-tight">
+          {typeof entry.pastWeek.tasks[0] === 'string' 
+            ? entry.pastWeek.tasks[0] 
+            : entry.pastWeek.tasks[0]?.title || ''}
         </div>
       )}
     </button>
