@@ -160,6 +160,9 @@ export const DraftBar = memo(function DraftBar({
   const snapshotYear = (bar as any).year;
   const snapshotWeek = (bar as any).week;
   const authorName = (bar as any).authorName;
+  
+  // Alignment 상태 (Plan only)
+  const alignmentStatus = (bar as any).alignmentStatus as "green" | "orange" | "red" | null;
 
   // 첫 번째 담당자의 역할 기반 색상 (없으면 기본 회색)
   const primaryRole = bar.assignees?.[0]?.role;
@@ -403,6 +406,29 @@ export const DraftBar = memo(function DraftBar({
             }}
           />
         </div>
+      )}
+
+      {/* Alignment 상태 인디케이터 (Plan only) */}
+      {!isSnapshot && alignmentStatus && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+          style={{
+            background:
+              alignmentStatus === "green"
+                ? "rgb(16, 185, 129)" // emerald-500
+                : alignmentStatus === "orange"
+                ? "rgb(251, 146, 60)" // orange-500
+                : "rgb(244, 63, 94)", // rose-500
+            opacity: 0.75,
+          }}
+          title={
+            alignmentStatus === "green"
+              ? "Execution coverage meets expectations"
+              : alignmentStatus === "orange"
+              ? "Execution coverage is below expected range"
+              : "No execution detected within plan window"
+          }
+        />
       )}
 
       {/* 콘텐츠 영역 - Snapshot과 일반 블록 구분 */}

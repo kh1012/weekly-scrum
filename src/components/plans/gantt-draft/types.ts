@@ -166,6 +166,8 @@ export interface DraftBar {
   collaborators?: Array<{ name: string; relations?: string[] }>;
   risks?: string[];
   risk_level?: number;
+  /** Alignment 상태 (Plan only) */
+  alignmentStatus?: "green" | "orange" | "red" | null;
 }
 
 /**

@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft/DraftGanttView";
 import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
+import { calculateAlignmentStatus } from "@/lib/alignment/alignmentStatus";
+import type { DraftBar } from "@/components/plans/gantt-draft/types";
 
 interface AlignmentGanttClientProps {
   workspaceId: string;
@@ -76,8 +78,9 @@ export function AlignmentGanttClient({
   }, [items, filter]);
 
   // AlignmentGanttItem을 InitialPlan 형식으로 변환
-  const initialPlans = filteredItems.map((item) => {
-    const plan = {
+  // (상태 계산은 변환 후에 수행)
+  const initialPlans = useMemo(() => {
+    const plans = filteredItems.map((item) => ({
       id: item.id,
       clientUid: item.id,
       title: item.title,
@@ -91,22 +94,59 @@ export function AlignmentGanttClient({
       stage: item.stage || "in_progress",
       priority: item.priority,
       assignees: item.assignees || [],
-      // Snapshot 전용 데이터 전달
-    isSnapshot: item.type === "snapshot",
-    avgProgress: item.avgProgress,
-    metaKey: item.metaKey,
-    year: item.year,
-    week: item.week,
-    authorName: item.authorName,
-    past_week: item.past_week,
-    this_week: item.this_week,
-    collaborators: item.collaborators,
-    risks: item.risks,
-    risk_level: item.risk_level,
-  };
+      isSnapshot: item.type === "snapshot",
+      avgProgress: item.avgProgress,
+      metaKey: item.metaKey,
+      year: item.year,
+      week: item.week,
+      authorName: item.authorName,
+      authorId: item.authorId,
+      past_week: item.past_week,
+      this_week: item.this_week,
+      collaborators: item.collaborators,
+      risks: item.risks,
+      risk_level: item.risk_level,
+    }));
 
-  return plan;
-  });
+    // Plan bars에 Alignment 상태 계산
+    // (모의 DraftBar 형식으로 변환하여 계산)
+    const mockBars: DraftBar[] = plans.map((p) => ({
+      clientUid: p.id,
+      rowId: `${p.project}::${p.module}::${p.feature}`,
+      serverId: p.id,
+      title: p.title,
+      stage: p.stage,
+      status: p.status as any,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      assignees: p.assignees.map((a) => ({
+        userId: a.userId,
+        role: a.role as any,
+        displayName: a.displayName,
+      })),
+      dirty: false,
+      createdAtLocal: new Date().toISOString(),
+      updatedAtLocal: new Date().toISOString(),
+      isSnapshot: p.isSnapshot,
+      metaKey: p.metaKey,
+      authorId: p.authorId,
+    }));
+
+    // 각 Plan bar에 대해 상태 계산
+    return plans.map((plan, index) => {
+      if (plan.isSnapshot) {
+        return plan;
+      }
+
+      const mockBar = mockBars[index];
+      const statusInfo = calculateAlignmentStatus(mockBar, mockBars);
+
+      return {
+        ...plan,
+        alignmentStatus: statusInfo.status,
+      };
+    });
+  }, [filteredItems]);
 
   // 통계 계산
   const stats = useMemo(() => {

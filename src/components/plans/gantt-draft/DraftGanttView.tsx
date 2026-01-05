@@ -364,6 +364,7 @@ export function DraftGanttView({
         collaborators: (plan as any).collaborators,
         risks: (plan as any).risks,
         risk_level: (plan as any).risk_level,
+        alignmentStatus: (plan as any).alignmentStatus,
       });
     }
 
