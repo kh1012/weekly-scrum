@@ -305,27 +305,61 @@ export function WeekTimeline({
       });
     });
     
-    // 4. 범위 결정: 가장 오래된 스냅샷 주차부터 다음 주차까지
+    // 4. 범위 결정: 가장 오래된 스냅샷 주차부터 가장 최신 스냅샷 주차까지
     let startYear = currentISOWeek.year;
     let startWeek = currentISOWeek.week;
+    let endYear = nextWeek.year;
+    let endWeek = nextWeek.week;
     
     if (snapshotWeeks.length > 0) {
-      // 가장 오래된 주차 찾기
+      // 가장 오래된 주차와 가장 최신 주차 찾기
       const sortedSnapshots = [...snapshotWeeks].sort((a, b) => {
         if (a.year !== b.year) return a.year - b.year;
         return a.week - b.week;
       });
       const oldest = sortedSnapshots[0];
+      const newest = sortedSnapshots[sortedSnapshots.length - 1];
+      
       startYear = oldest.year;
       startWeek = oldest.week;
+      
+      // 가장 최신 주차의 다음 주차까지 포함
+      // 해당 연도의 마지막 주차 계산
+      const newestDec31 = new Date(Date.UTC(newest.year, 11, 31));
+      const newestDec31DayOfWeek = (newestDec31.getUTCDay() + 6) % 7;
+      const newestDec31Thursday = new Date(newestDec31);
+      newestDec31Thursday.setUTCDate(newestDec31.getUTCDate() - newestDec31DayOfWeek + 3);
+      
+      const newestLastWeekYear = newestDec31Thursday.getUTCFullYear();
+      const newestJan4 = new Date(Date.UTC(newestLastWeekYear, 0, 4));
+      const newestJan4DayOfWeek = (newestJan4.getUTCDay() + 6) % 7;
+      const newestFirstMonday = new Date(newestJan4);
+      newestFirstMonday.setUTCDate(newestJan4.getUTCDate() - newestJan4DayOfWeek);
+      
+      const newestWeeksInYear = Math.floor((newestDec31Thursday.getTime() - newestFirstMonday.getTime()) / 86400000 / 7) + 1;
+      
+      if (newest.week < newestWeeksInYear) {
+        endYear = newest.year;
+        endWeek = newest.week + 1;
+      } else {
+        endYear = newest.year + 1;
+        endWeek = 1;
+      }
+      
+      // 현재 주차보다 미래인 경우 현재 주차 +1까지만 표시
+      if (newest.year > currentISOWeek.year || 
+          (newest.year === currentISOWeek.year && newest.week >= currentISOWeek.week)) {
+        endYear = nextWeek.year;
+        endWeek = nextWeek.week;
+      }
     }
     
-    // 5. 시작 주차부터 다음 주차(현재 +1)까지 모든 주차 생성
+    // 5. 시작 주차부터 끝 주차까지 모든 주차 생성
     const allWeeks = generateWeeksBetween(
       startYear,
       startWeek,
-      nextWeek.year,
-      nextWeek.week
+      endYear,
+      endWeek
     );
     
     // 6. 연도별로 그룹화
