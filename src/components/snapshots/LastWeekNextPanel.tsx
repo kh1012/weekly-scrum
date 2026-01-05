@@ -138,7 +138,9 @@ export function LastWeekNextPanel({
                         key={idx}
                         className="flex items-start gap-2 text-sm text-gray-700"
                       >
-                        <span className="text-emerald-500 mt-0.5 shrink-0">•</span>
+                        <span className="text-emerald-500 mt-0.5 shrink-0">
+                          •
+                        </span>
                         <span className="flex-1">{nextItem}</span>
                       </div>
                     ))}
@@ -161,4 +163,3 @@ export function LastWeekNextPanel({
     </>
   );
 }
-

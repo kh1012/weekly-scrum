@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { LastWeekNextPanel } from "./LastWeekNextPanel";
 import type { LastWeekNextItem } from "@/lib/data/lastWeekNext";
 
@@ -20,43 +20,78 @@ export function LastWeekNextFab({
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<LastWeekNextItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isPrefetchedRef = useRef(false);
+  const isLoadingRef = useRef(false);
+  const prefetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 패널 열 때 데이터 fetch
-  useEffect(() => {
-    if (!isOpen) return;
+  // 데이터 fetch 함수 (공통)
+  const fetchData = useCallback(async () => {
+    // 이미 데이터가 있거나 로딩 중이면 skip
+    if (isPrefetchedRef.current || isLoadingRef.current) return;
 
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/snapshots/last-week-next?workspaceId=${encodeURIComponent(
-            workspaceId
-          )}&userId=${encodeURIComponent(userId)}&year=${year}&week=${week}`
-        );
+    isLoadingRef.current = true;
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `/api/snapshots/last-week-next?workspaceId=${encodeURIComponent(
+          workspaceId
+        )}&userId=${encodeURIComponent(userId)}&year=${year}&week=${week}`
+      );
 
-        if (response.ok) {
-          const data = await response.json();
-          setItems(data.items || []);
-        } else {
-          console.error("Failed to fetch last week next");
-          setItems([]);
-        }
-      } catch (error) {
-        console.error("Error fetching last week next:", error);
+      if (response.ok) {
+        const data = await response.json();
+        setItems(data.items || []);
+        isPrefetchedRef.current = true;
+      } else {
+        console.error("Failed to fetch last week next");
         setItems([]);
-      } finally {
-        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching last week next:", error);
+      setItems([]);
+    } finally {
+      isLoadingRef.current = false;
+      setIsLoading(false);
+    }
+  }, [workspaceId, userId, year, week]);
+
+  // 마운트 후 2초 뒤에 백그라운드 prefetch
+  useEffect(() => {
+    prefetchTimeoutRef.current = setTimeout(() => {
+      fetchData();
+    }, 2000);
+
+    return () => {
+      if (prefetchTimeoutRef.current) {
+        clearTimeout(prefetchTimeoutRef.current);
       }
     };
+  }, [fetchData]);
 
-    fetchData();
-  }, [isOpen, workspaceId, userId, year, week]);
+  // 패널 열 때 데이터가 없으면 즉시 fetch
+  useEffect(() => {
+    if (isOpen && !isPrefetchedRef.current && !isLoadingRef.current) {
+      fetchData();
+    }
+  }, [isOpen, fetchData]);
+
+  // 버튼 hover 시 prefetch
+  const handleMouseEnter = useCallback(() => {
+    if (!isPrefetchedRef.current && !isLoadingRef.current) {
+      // hover 시 즉시 prefetch (timeout 취소)
+      if (prefetchTimeoutRef.current) {
+        clearTimeout(prefetchTimeoutRef.current);
+      }
+      fetchData();
+    }
+  }, [fetchData]);
 
   return (
     <>
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(true)}
+        onMouseEnter={handleMouseEnter}
         className="fixed right-5 bottom-5 z-[9997] flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 font-medium text-sm"
         title="지난 주 Next 항목 참고하기"
       >
@@ -86,4 +121,3 @@ export function LastWeekNextFab({
     </>
   );
 }
-

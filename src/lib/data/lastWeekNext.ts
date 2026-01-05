@@ -32,14 +32,18 @@ export async function getLastWeekNext(
   const supabase = await createClient();
 
   // 이전 주차 계산
-  const { year: prevYear, week: prevWeek } = getPreviousISOWeek(currentYear, currentWeek);
+  const { year: prevYear, week: prevWeek } = getPreviousISOWeek(
+    currentYear,
+    currentWeek
+  );
   const prevWeekStartDate = getWeekStartDateString(prevYear, prevWeek);
 
   // 지난 주 스냅샷 엔트리 조회 (현재 사용자가 작성한 것만, this_week.tasks가 있는 것만)
   // snapshot_entries에는 week_start_date가 없으므로 snapshots 테이블과 join
   const { data, error } = await supabase
     .from("snapshot_entries")
-    .select(`
+    .select(
+      `
       id,
       snapshot_id,
       feature,
@@ -48,7 +52,8 @@ export async function getLastWeekNext(
       this_week,
       updated_at,
       snapshots!inner(week_start_date)
-    `)
+    `
+    )
     .eq("workspace_id", workspaceId)
     .eq("author_id", userId)
     .eq("snapshots.week_start_date", prevWeekStartDate)
@@ -67,9 +72,12 @@ export async function getLastWeekNext(
   const filtered = data
     .filter((entry) => {
       const thisWeek = entry.this_week as { tasks?: string[] } | null;
-      if (!thisWeek || !thisWeek.tasks || !Array.isArray(thisWeek.tasks)) return false;
+      if (!thisWeek || !thisWeek.tasks || !Array.isArray(thisWeek.tasks))
+        return false;
       // 빈 문자열이 아닌 tasks 항목이 하나라도 있는지 확인
-      return thisWeek.tasks.some((item) => item && typeof item === "string" && item.trim() !== "");
+      return thisWeek.tasks.some(
+        (item) => item && typeof item === "string" && item.trim() !== ""
+      );
     })
     .map((entry) => {
       const thisWeek = entry.this_week as { tasks: string[] };
@@ -88,4 +96,3 @@ export async function getLastWeekNext(
 
   return filtered;
 }
-

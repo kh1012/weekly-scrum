@@ -106,11 +106,11 @@ function convertEntryToTempSnapshot(
   // 새 DB 스키마: risks, collaborators 별도 컬럼
   // name이 비어있거나 "지정된 이름없음"이면 displayName 사용
   const entryName = entry.name?.trim();
-  const finalName = 
+  const finalName =
     !entryName || entryName === "지정된 이름없음" || entryName === "사용자"
-      ? (displayName || entryName || "")
+      ? displayName || entryName || ""
       : entryName;
-  
+
   return {
     tempId: entry.id,
     isOriginal: true,
@@ -280,7 +280,9 @@ function EditSnapshotsViewInner({
   const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
 
   // 최근 업데이트된 주차 추적 (애니메이션용)
-  const [recentlyUpdatedWeek, setRecentlyUpdatedWeek] = useState<string | null>(null);
+  const [recentlyUpdatedWeek, setRecentlyUpdatedWeek] = useState<string | null>(
+    null
+  );
 
   // 초기 데이터 저장 (변경사항 추적용)
   const initialSnapshotsRef = useRef<TempSnapshot[]>([]);
@@ -312,29 +314,35 @@ function EditSnapshotsViewInner({
 
   // 변경사항 계산 함수
   const calculateChanges = useCallback(() => {
-    if (initialSnapshotsRef.current.length === 0 && deletedEntryIds.length === 0) return 0;
-    
+    if (
+      initialSnapshotsRef.current.length === 0 &&
+      deletedEntryIds.length === 0
+    )
+      return 0;
+
     const initial = initialSnapshotsRef.current;
     const current = tempSnapshots;
     const initialDeleted = initialDeletedEntryIdsRef.current;
-    
+
     // 삭제된 엔트리 개수 변경
-    const deletedChanges = Math.abs(deletedEntryIds.length - initialDeleted.length);
-    
+    const deletedChanges = Math.abs(
+      deletedEntryIds.length - initialDeleted.length
+    );
+
     // 엔트리 개수 변경
     const countChanges = Math.abs(initial.length - current.length);
-    
+
     // 각 엔트리 비교
     let changeCount = 0;
     const initialMap = new Map(initial.map((s) => [s.tempId, s]));
-    
+
     for (const currentSnapshot of current) {
       const initialSnapshot = initialMap.get(currentSnapshot.tempId);
       if (!initialSnapshot) {
         changeCount++;
         continue;
       }
-      
+
       // 각 필드 비교
       if (
         currentSnapshot.name !== initialSnapshot.name ||
@@ -346,7 +354,7 @@ function EditSnapshotsViewInner({
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.tasks 비교
       const currentTasks = JSON.stringify(currentSnapshot.pastWeek.tasks);
       const initialTasks = JSON.stringify(initialSnapshot.pastWeek.tasks);
@@ -354,7 +362,7 @@ function EditSnapshotsViewInner({
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.risk 비교
       const currentRisk = JSON.stringify(currentSnapshot.pastWeek.risk);
       const initialRisk = JSON.stringify(initialSnapshot.pastWeek.risk);
@@ -362,30 +370,41 @@ function EditSnapshotsViewInner({
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.riskLevel 비교
-      if (currentSnapshot.pastWeek.riskLevel !== initialSnapshot.pastWeek.riskLevel) {
+      if (
+        currentSnapshot.pastWeek.riskLevel !==
+        initialSnapshot.pastWeek.riskLevel
+      ) {
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.collaborators 비교
-      const currentCollaborators = JSON.stringify(currentSnapshot.pastWeek.collaborators);
-      const initialCollaborators = JSON.stringify(initialSnapshot.pastWeek.collaborators);
+      const currentCollaborators = JSON.stringify(
+        currentSnapshot.pastWeek.collaborators
+      );
+      const initialCollaborators = JSON.stringify(
+        initialSnapshot.pastWeek.collaborators
+      );
       if (currentCollaborators !== initialCollaborators) {
         changeCount++;
         continue;
       }
-      
+
       // thisWeek.tasks 비교
-      const currentThisWeekTasks = JSON.stringify(currentSnapshot.thisWeek.tasks);
-      const initialThisWeekTasks = JSON.stringify(initialSnapshot.thisWeek.tasks);
+      const currentThisWeekTasks = JSON.stringify(
+        currentSnapshot.thisWeek.tasks
+      );
+      const initialThisWeekTasks = JSON.stringify(
+        initialSnapshot.thisWeek.tasks
+      );
       if (currentThisWeekTasks !== initialThisWeekTasks) {
         changeCount++;
         continue;
       }
     }
-    
+
     return changeCount + deletedChanges + countChanges;
   }, [tempSnapshots, deletedEntryIds]);
 
@@ -532,10 +551,15 @@ function EditSnapshotsViewInner({
       setTempSnapshots((prev) =>
         prev.map((s) => {
           if (s.tempId !== tempId) return s;
-          
+
           // 식별자 필드(tempId, isOriginal, createdAt)는 보호
-          const { tempId: _, isOriginal: __, createdAt: ___, ...safeUpdates } = updates;
-          
+          const {
+            tempId: _,
+            isOriginal: __,
+            createdAt: ___,
+            ...safeUpdates
+          } = updates;
+
           return {
             ...s,
             ...safeUpdates,
@@ -770,7 +794,7 @@ function EditSnapshotsViewInner({
             },
           }));
           initialDeletedEntryIdsRef.current = [...deletedEntryIds];
-          
+
           if (result.deleted) {
             // 엔트리가 모두 삭제되어 스냅샷도 삭제된 경우
             showToast("스냅샷이 삭제되었습니다.", "success");
@@ -778,15 +802,15 @@ function EditSnapshotsViewInner({
             router.push("/manage/snapshots");
           } else {
             showToast("업데이트 완료!", "success");
-            
+
             // 주차별 카운트 갱신
             await fetchSnapshotCounts();
-            
+
             // 애니메이션 효과를 위한 최근 업데이트 주차 설정
             const weekKey = `${year}-${week}`;
             setRecentlyUpdatedWeek(weekKey);
             setTimeout(() => setRecentlyUpdatedWeek(null), 2000);
-            
+
             router.refresh();
           }
         } else {
@@ -1051,8 +1075,83 @@ function EditSnapshotsViewInner({
 
         {isMobile ? (
           <div className="flex-1 flex flex-col min-h-0">
-          {mobileView === "list" ? (
-            <div className="flex-1 bg-white overflow-hidden">
+            {mobileView === "list" ? (
+              <div className="flex-1 bg-white overflow-hidden">
+                <SnapshotCardList
+                  ref={cardListRef}
+                  snapshots={tempSnapshots}
+                  selectedId={selectedId}
+                  onSelectCard={handleSelectCard}
+                  onDeleteCard={handleDeleteCard}
+                  onDuplicateCard={handleDuplicateCard}
+                  onCopyJson={handleCopyCardJson}
+                  onCopyPlainText={handleCopyCardPlainText}
+                  onAddEmpty={handleAddEmpty}
+                  onCopyAllJson={handleCopyAllJson}
+                  onCopyAllPlainText={handleCopyAllPlainText}
+                />
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col bg-white overflow-hidden">
+                {/* 뒤로가기 버튼 */}
+                <div className="shrink-0 px-4 py-3 border-b border-gray-100 bg-white">
+                  <button
+                    onClick={() => setMobileView("list")}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                    목록으로 돌아가기
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                  {selectedSnapshot ? (
+                    <SnapshotEditForm
+                      key={selectedSnapshot.tempId}
+                      snapshot={selectedSnapshot}
+                      onUpdate={(updates) =>
+                        handleUpdateCard(selectedSnapshot.tempId, updates)
+                      }
+                      onFocusSection={setFocusedSection}
+                      activeSection={
+                        focusedSection as
+                          | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
+                          | null
+                      }
+                      compact
+                      singleColumn
+                      hideName
+                      weekInfo={weekInfo}
+                      forceThreeColumn={forceThreeColumn}
+                      onToggleThreeColumn={setForceThreeColumn}
+                      nameOptions={memberNames}
+                    />
+                  ) : (
+                    <EmptyState onAddEmpty={handleAddEmpty} />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* PC: 기존 3열 레이아웃 */
+          <div className="flex-1 flex min-h-0">
+            {/* 좌측: 카드 리스트 */}
+            <div
+              className="border-r border-gray-100 bg-white flex flex-col shrink-0"
+              style={{ width: leftPanelWidth }}
+            >
               <SnapshotCardList
                 ref={cardListRef}
                 snapshots={tempSnapshots}
@@ -1067,143 +1166,68 @@ function EditSnapshotsViewInner({
                 onCopyAllPlainText={handleCopyAllPlainText}
               />
             </div>
-          ) : (
-            <div className="flex-1 flex flex-col bg-white overflow-hidden">
-              {/* 뒤로가기 버튼 */}
-              <div className="shrink-0 px-4 py-3 border-b border-gray-100 bg-white">
-                <button
-                  onClick={() => setMobileView("list")}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  목록으로 돌아가기
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
-                {selectedSnapshot ? (
-                  <SnapshotEditForm
-                    key={selectedSnapshot.tempId}
-                    snapshot={selectedSnapshot}
-                    onUpdate={(updates) =>
-                      handleUpdateCard(selectedSnapshot.tempId, updates)
-                    }
-                    onFocusSection={setFocusedSection}
-                    activeSection={
-                      focusedSection as
-                        | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
-                        | null
-                    }
-                    compact
-                    singleColumn
-                    hideName
-                    weekInfo={weekInfo}
-                    forceThreeColumn={forceThreeColumn}
-                    onToggleThreeColumn={setForceThreeColumn}
-                    nameOptions={memberNames}
-                  />
-                ) : (
-                  <EmptyState onAddEmpty={handleAddEmpty} />
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* PC: 기존 3열 레이아웃 */
-        <div className="flex-1 flex min-h-0">
-          {/* 좌측: 카드 리스트 */}
-          <div
-            className="border-r border-gray-100 bg-white flex flex-col shrink-0"
-            style={{ width: leftPanelWidth }}
-          >
-            <SnapshotCardList
-              ref={cardListRef}
-              snapshots={tempSnapshots}
-              selectedId={selectedId}
-              onSelectCard={handleSelectCard}
-              onDeleteCard={handleDeleteCard}
-              onDuplicateCard={handleDuplicateCard}
-              onCopyJson={handleCopyCardJson}
-              onCopyPlainText={handleCopyCardPlainText}
-              onAddEmpty={handleAddEmpty}
-              onCopyAllJson={handleCopyAllJson}
-              onCopyAllPlainText={handleCopyAllPlainText}
-            />
-          </div>
 
-          <ResizeHandle onResize={handleLeftResize} />
+            <ResizeHandle onResize={handleLeftResize} />
 
-          {/* 중앙: 편집 폼 */}
-          <div
-            className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white"
-            style={{
-              width: forceThreeColumn
-                ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
-                : "100%",
-            }}
-          >
-            {selectedSnapshot ? (
-              <SnapshotEditForm
-                key={selectedSnapshot.tempId}
-                snapshot={selectedSnapshot}
-                onUpdate={(updates) =>
-                  handleUpdateCard(selectedSnapshot.tempId, updates)
-                }
-                onFocusSection={setFocusedSection}
-                activeSection={
-                  focusedSection as
-                    | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
-                    | null
-                }
-                compact
-                singleColumn
-                hideName
-                weekInfo={weekInfo}
-                forceThreeColumn={forceThreeColumn}
-                onToggleThreeColumn={setForceThreeColumn}
-                nameOptions={memberNames}
-                domainOptions={domainOptions}
-                projectOptions={projectOptions}
-                moduleOptions={moduleOptions}
-                featureOptions={featureOptions}
-              />
-            ) : (
-              <EmptyState onAddEmpty={handleAddEmpty} />
-            )}
-          </div>
-
-          {/* 우측: 미리보기 */}
-          {forceThreeColumn && (
-            <>
-              <ResizeHandle onResize={handleEditPreviewResize} />
-              <div className="overflow-hidden min-w-0 flex-1">
-                <PlainTextPreview
+            {/* 중앙: 편집 폼 */}
+            <div
+              className="bg-white overflow-y-auto min-w-0 shrink-0 bg-gradient-to-b from-gray-50 to-white"
+              style={{
+                width: forceThreeColumn
+                  ? `calc((100% - ${leftPanelWidth}px - 12px) * ${editPanelRatio})`
+                  : "100%",
+              }}
+            >
+              {selectedSnapshot ? (
+                <SnapshotEditForm
+                  key={selectedSnapshot.tempId}
                   snapshot={selectedSnapshot}
-                  onCopy={handleCopyCurrentPlainText}
-                  focusedSection={
+                  onUpdate={(updates) =>
+                    handleUpdateCard(selectedSnapshot.tempId, updates)
+                  }
+                  onFocusSection={setFocusedSection}
+                  activeSection={
                     focusedSection as
-                      | import("@/components/weekly-scrum/manage/PlainTextPreview").PreviewSection
+                      | import("@/components/weekly-scrum/manage/SnapshotEditForm").FormSection
                       | null
                   }
-                  onSectionClick={(section) => setFocusedSection(section)}
-                  displayName={displayName}
+                  compact
+                  singleColumn
+                  hideName
+                  weekInfo={weekInfo}
+                  forceThreeColumn={forceThreeColumn}
+                  onToggleThreeColumn={setForceThreeColumn}
+                  nameOptions={memberNames}
+                  domainOptions={domainOptions}
+                  projectOptions={projectOptions}
+                  moduleOptions={moduleOptions}
+                  featureOptions={featureOptions}
                 />
-              </div>
-            </>
-          )}
-        </div>
+              ) : (
+                <EmptyState onAddEmpty={handleAddEmpty} />
+              )}
+            </div>
+
+            {/* 우측: 미리보기 */}
+            {forceThreeColumn && (
+              <>
+                <ResizeHandle onResize={handleEditPreviewResize} />
+                <div className="overflow-hidden min-w-0 flex-1">
+                  <PlainTextPreview
+                    snapshot={selectedSnapshot}
+                    onCopy={handleCopyCurrentPlainText}
+                    focusedSection={
+                      focusedSection as
+                        | import("@/components/weekly-scrum/manage/PlainTextPreview").PreviewSection
+                        | null
+                    }
+                    onSectionClick={(section) => setFocusedSection(section)}
+                    displayName={displayName}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -1225,46 +1249,49 @@ function EditSnapshotsViewInner({
       />
 
       {/* 저장하지 않은 변경사항 확인 모달 */}
-      {showUnsavedChangesModal && typeof window !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              저장하지 않은 변경사항이 있습니다
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              {changeCount}개의 변경사항이 있습니다. 저장하지 않은 정보는 모두 유지되지 않습니다.
-            </p>
-            <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowUnsavedChangesModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  setShowUnsavedChangesModal(false);
-                  navigationProgress.start();
-                  router.push("/manage/snapshots");
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                저장하지 않고 나가기
-              </button>
-              <button
-                onClick={() => {
-                  setShowUnsavedChangesModal(false);
-                  handleSaveClick();
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                저장하기
-              </button>
+      {showUnsavedChangesModal &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                저장하지 않은 변경사항이 있습니다
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                {changeCount}개의 변경사항이 있습니다. 저장하지 않은 정보는 모두
+                유지되지 않습니다.
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowUnsavedChangesModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUnsavedChangesModal(false);
+                    navigationProgress.start();
+                    router.push("/manage/snapshots");
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  저장하지 않고 나가기
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUnsavedChangesModal(false);
+                    handleSaveClick();
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  저장하기
+                </button>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* 지난 주 Next 참고 플로팅 버튼 */}
       <LastWeekNextFab

@@ -171,7 +171,11 @@ function NewSnapshotViewInner({
 
   // 초기 데이터 저장 (editor 모드 진입 시)
   useEffect(() => {
-    if (mode === "editor" && tempSnapshots.length > 0 && initialSnapshotsRef.current.length === 0) {
+    if (
+      mode === "editor" &&
+      tempSnapshots.length > 0 &&
+      initialSnapshotsRef.current.length === 0
+    ) {
       // 깊은 복사로 초기 데이터 저장
       initialSnapshotsRef.current = tempSnapshots.map((s) => ({
         ...s,
@@ -194,26 +198,26 @@ function NewSnapshotViewInner({
   // 변경사항 계산 함수
   const calculateChanges = useCallback(() => {
     if (initialSnapshotsRef.current.length === 0) return 0;
-    
+
     const initial = initialSnapshotsRef.current;
     const current = tempSnapshots;
-    
+
     // 엔트리 개수 변경
     if (initial.length !== current.length) {
       return Math.abs(initial.length - current.length);
     }
-    
+
     // 각 엔트리 비교
     let changeCount = 0;
     const initialMap = new Map(initial.map((s) => [s.tempId, s]));
-    
+
     for (const currentSnapshot of current) {
       const initialSnapshot = initialMap.get(currentSnapshot.tempId);
       if (!initialSnapshot) {
         changeCount++;
         continue;
       }
-      
+
       // 각 필드 비교
       if (
         currentSnapshot.name !== initialSnapshot.name ||
@@ -225,7 +229,7 @@ function NewSnapshotViewInner({
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.tasks 비교
       const currentTasks = JSON.stringify(currentSnapshot.pastWeek.tasks);
       const initialTasks = JSON.stringify(initialSnapshot.pastWeek.tasks);
@@ -233,7 +237,7 @@ function NewSnapshotViewInner({
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.risk 비교
       const currentRisk = JSON.stringify(currentSnapshot.pastWeek.risk);
       const initialRisk = JSON.stringify(initialSnapshot.pastWeek.risk);
@@ -241,30 +245,41 @@ function NewSnapshotViewInner({
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.riskLevel 비교
-      if (currentSnapshot.pastWeek.riskLevel !== initialSnapshot.pastWeek.riskLevel) {
+      if (
+        currentSnapshot.pastWeek.riskLevel !==
+        initialSnapshot.pastWeek.riskLevel
+      ) {
         changeCount++;
         continue;
       }
-      
+
       // pastWeek.collaborators 비교
-      const currentCollaborators = JSON.stringify(currentSnapshot.pastWeek.collaborators);
-      const initialCollaborators = JSON.stringify(initialSnapshot.pastWeek.collaborators);
+      const currentCollaborators = JSON.stringify(
+        currentSnapshot.pastWeek.collaborators
+      );
+      const initialCollaborators = JSON.stringify(
+        initialSnapshot.pastWeek.collaborators
+      );
       if (currentCollaborators !== initialCollaborators) {
         changeCount++;
         continue;
       }
-      
+
       // thisWeek.tasks 비교
-      const currentThisWeekTasks = JSON.stringify(currentSnapshot.thisWeek.tasks);
-      const initialThisWeekTasks = JSON.stringify(initialSnapshot.thisWeek.tasks);
+      const currentThisWeekTasks = JSON.stringify(
+        currentSnapshot.thisWeek.tasks
+      );
+      const initialThisWeekTasks = JSON.stringify(
+        initialSnapshot.thisWeek.tasks
+      );
       if (currentThisWeekTasks !== initialThisWeekTasks) {
         changeCount++;
         continue;
       }
     }
-    
+
     return changeCount;
   }, [tempSnapshots]);
 
@@ -547,10 +562,15 @@ function NewSnapshotViewInner({
       setTempSnapshots((prev) =>
         prev.map((s) => {
           if (s.tempId !== tempId) return s;
-          
+
           // 식별자 필드(tempId, isOriginal, createdAt)는 보호
-          const { tempId: _, isOriginal: __, createdAt: ___, ...safeUpdates } = updates;
-          
+          const {
+            tempId: _,
+            isOriginal: __,
+            createdAt: ___,
+            ...safeUpdates
+          } = updates;
+
           return {
             ...s,
             ...safeUpdates,
@@ -1604,46 +1624,49 @@ function NewSnapshotViewInner({
       />
 
       {/* 저장하지 않은 변경사항 확인 모달 */}
-      {showUnsavedChangesModal && typeof window !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              저장하지 않은 변경사항이 있습니다
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              {changeCount}개의 변경사항이 있습니다. 저장하지 않은 정보는 모두 유지되지 않습니다.
-            </p>
-            <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowUnsavedChangesModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  setShowUnsavedChangesModal(false);
-                  navigationProgress.start();
-                  router.push("/manage/snapshots");
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                저장하지 않고 나가기
-              </button>
-              <button
-                onClick={() => {
-                  setShowUnsavedChangesModal(false);
-                  handleSaveClick();
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                저장하기
-              </button>
+      {showUnsavedChangesModal &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                저장하지 않은 변경사항이 있습니다
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                {changeCount}개의 변경사항이 있습니다. 저장하지 않은 정보는 모두
+                유지되지 않습니다.
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowUnsavedChangesModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUnsavedChangesModal(false);
+                    navigationProgress.start();
+                    router.push("/manage/snapshots");
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  저장하지 않고 나가기
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUnsavedChangesModal(false);
+                    handleSaveClick();
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  저장하기
+                </button>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* 지난 주 Next 참고 플로팅 버튼 */}
       <LastWeekNextFab
