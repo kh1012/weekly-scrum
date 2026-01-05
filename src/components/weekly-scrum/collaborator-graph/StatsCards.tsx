@@ -27,20 +27,26 @@ export function StatsCards({
           </h2>
           <div className="space-y-2.5">
             <div>
-              <div className="text-[11px] text-[#57606a] mb-0.5">선택된 기간</div>
+              <div className="text-[11px] text-[#57606a] mb-0.5">
+                선택된 기간
+              </div>
               <div className="text-xs font-medium text-[#24292f]">
                 {stats.selectedWeekRangeLabel}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <div className="text-[11px] text-[#57606a] mb-0.5">총 협업 횟수</div>
+                <div className="text-[11px] text-[#57606a] mb-0.5">
+                  총 협업 횟수
+                </div>
                 <div className="text-sm font-semibold text-[#0969da]">
                   {stats.totalCollabWeight}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] text-[#57606a] mb-0.5">참여자 수</div>
+                <div className="text-[11px] text-[#57606a] mb-0.5">
+                  참여자 수
+                </div>
                 <div className="text-sm font-semibold text-[#0969da]">
                   {stats.participantCount}
                 </div>
@@ -244,65 +250,6 @@ export function StatsCards({
             </div>
           )}
         </div>
-
-        {/* Selected Node/Edge Info */}
-        {selectedNode && (
-          <div className="w-full bg-[#ddf4ff] rounded-md border border-[#0969da] p-3">
-            <h2 className="text-xs font-semibold text-[#0969da] mb-2.5">
-              선택된 노드
-            </h2>
-            <div className="space-y-2">
-              <div>
-                <div className="text-[11px] text-[#0969da] mb-0.5">이름</div>
-                <div className="text-xs font-medium text-[#24292f]">
-                  {selectedNode.label}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <div className="text-[11px] text-[#0969da] mb-0.5">총 협업</div>
-                  <div className="text-xs font-semibold text-[#24292f]">
-                    {selectedNode.totalCollabs}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[11px] text-[#0969da] mb-0.5">파트너</div>
-                  <div className="text-xs font-semibold text-[#24292f]">
-                    {selectedNode.uniquePartners}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedEdge && (
-          <div className="w-full bg-[#ddf4ff] rounded-md border border-[#0969da] p-3">
-            <h2 className="text-xs font-semibold text-[#0969da] mb-2.5">
-              선택된 엣지
-            </h2>
-            <div className="space-y-2">
-              <div>
-                <div className="text-[11px] text-[#0969da] mb-0.5">협업 관계</div>
-                <div className="text-xs font-medium text-[#24292f]">
-                  {selectedEdge.source} ↔ {selectedEdge.target}
-                </div>
-              </div>
-              <div>
-                <div className="text-[11px] text-[#0969da] mb-0.5">협업 횟수</div>
-                <div className="text-xs font-semibold text-[#24292f]">
-                  {selectedEdge.weight}회
-                </div>
-              </div>
-              <div>
-                <div className="text-[11px] text-[#0969da] mb-0.5">관련 주차</div>
-                <div className="text-[11px] text-[#57606a]">
-                  {selectedEdge.weeks.join(", ")}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       {/* All Collaborators Modal */}
       {isModalOpen && (

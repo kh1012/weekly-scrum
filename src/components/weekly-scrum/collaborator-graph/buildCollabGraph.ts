@@ -6,6 +6,9 @@ export interface GraphNode {
   totalCollabs: number;
   uniquePartners: number;
   authoredCount: number;
+  pairCount: number;
+  preCount: number;
+  postCount: number;
 }
 
 export interface GraphEdge {
@@ -70,6 +73,9 @@ export function buildCollabGraph(
       totalCollabs: number;
       partners: Set<string>;
       authoredCount: number;
+      pairCount: number;
+      preCount: number;
+      postCount: number;
     }
   >();
 
@@ -96,6 +102,9 @@ export function buildCollabGraph(
         totalCollabs: 0,
         partners: new Set(),
         authoredCount: 0,
+        pairCount: 0,
+        preCount: 0,
+        postCount: 0,
       });
     }
 
@@ -115,6 +124,9 @@ export function buildCollabGraph(
           totalCollabs: 0,
           partners: new Set(),
           authoredCount: 0,
+          pairCount: 0,
+          preCount: 0,
+          postCount: 0,
         });
       }
 
@@ -137,10 +149,30 @@ export function buildCollabGraph(
       // 노드 통계 업데이트
       authorNode.totalCollabs += 1;
       authorNode.partners.add(collabId);
+      
+      // 관계별 카운트 업데이트 (작성자 기준)
+      if (collab.relation === "pair") {
+        authorNode.pairCount += 1;
+      } else if (collab.relation === "pre") {
+        authorNode.preCount += 1;
+      } else if (collab.relation === "post") {
+        authorNode.postCount += 1;
+      }
 
       const collabNode = nodeMap.get(collabId)!;
       collabNode.totalCollabs += 1;
       collabNode.partners.add(authorId);
+      
+      // 관계별 카운트 업데이트 (협업자 기준, 반대 관계)
+      if (collab.relation === "pair") {
+        collabNode.pairCount += 1;
+      } else if (collab.relation === "pre") {
+        // 작성자가 pre라면 협업자는 post
+        collabNode.postCount += 1;
+      } else if (collab.relation === "post") {
+        // 작성자가 post라면 협업자는 pre
+        collabNode.preCount += 1;
+      }
     });
   });
 
@@ -152,6 +184,9 @@ export function buildCollabGraph(
       totalCollabs: data.totalCollabs,
       uniquePartners: data.partners.size,
       authoredCount: data.authoredCount,
+      pairCount: data.pairCount,
+      preCount: data.preCount,
+      postCount: data.postCount,
     })
   );
 

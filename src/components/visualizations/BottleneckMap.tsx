@@ -35,10 +35,16 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
   if (bottleneckNodes.length === 0) {
     return (
       <div className="notion-card p-4">
-        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
+        <h3
+          className="text-sm font-semibold mb-3"
+          style={{ color: "var(--notion-text)" }}
+        >
           🚧 병목 현황
         </h3>
-        <div className="flex items-center justify-center h-32 text-sm" style={{ color: "var(--notion-text-secondary)" }}>
+        <div
+          className="flex items-center justify-center h-32 text-sm"
+          style={{ color: "var(--notion-text-secondary)" }}
+        >
           대기 관계가 없습니다.
         </div>
       </div>
@@ -48,20 +54,35 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
   return (
     <div className="notion-card p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
+        <h3
+          className="text-sm font-semibold"
+          style={{ color: "var(--notion-text)" }}
+        >
           🚧 병목 현황 (Waiting-On)
         </h3>
-        <div className="flex items-center gap-2 text-xs" style={{ color: "var(--notion-text-secondary)" }}>
+        <div
+          className="flex items-center gap-2 text-xs"
+          style={{ color: "var(--notion-text-secondary)" }}
+        >
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--notion-red)" }} />
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--notion-red)" }}
+            />
             심각
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--notion-orange)" }} />
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--notion-orange)" }}
+            />
             주의
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ background: "var(--notion-green)" }} />
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--notion-green)" }}
+            />
             정상
           </span>
         </div>
@@ -78,8 +99,12 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
               key={node.name}
               className="cursor-pointer rounded-lg p-2 transition-all"
               style={{
-                background: isSelected ? "var(--notion-bg-secondary)" : "transparent",
-                border: isSelected ? "1px solid var(--notion-border-dark)" : "1px solid transparent",
+                background: isSelected
+                  ? "var(--notion-bg-secondary)"
+                  : "transparent",
+                border: isSelected
+                  ? "1px solid var(--notion-border-dark)"
+                  : "1px solid transparent",
               }}
               onClick={() => setSelectedNode(isSelected ? null : node.name)}
             >
@@ -89,10 +114,16 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
                     className="w-2 h-2 rounded-full"
                     style={{ background: getDomainColor(node.domain) }}
                   />
-                  <span className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: "var(--notion-text)" }}
+                  >
                     {node.name}
                   </span>
-                  <span className="text-xs" style={{ color: "var(--notion-text-tertiary)" }}>
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--notion-text-tertiary)" }}
+                  >
                     {node.domain}
                   </span>
                 </div>
@@ -105,9 +136,12 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
                   </span>
                 </div>
               </div>
-              
+
               {/* 병목 강도 바 */}
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--notion-bg-secondary)" }}>
+              <div
+                className="h-2 rounded-full overflow-hidden"
+                style={{ background: "var(--notion-bg-secondary)" }}
+              >
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
@@ -131,7 +165,10 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
           }}
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="font-semibold text-sm" style={{ color: "var(--notion-text)" }}>
+            <span
+              className="font-semibold text-sm"
+              style={{ color: "var(--notion-text)" }}
+            >
               {selectedNodeData.name} 상세
             </span>
             <button
@@ -146,7 +183,10 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
           <div className="grid grid-cols-2 gap-4">
             {/* 나를 기다리는 사람들 */}
             <div>
-              <div className="text-xs font-medium mb-2" style={{ color: "var(--notion-red)" }}>
+              <div
+                className="text-xs font-medium mb-2"
+                style={{ color: "var(--notion-red)" }}
+              >
                 이 사람을 기다리는 중 ({selectedNodeData.waiters.length}명)
               </div>
               {selectedNodeData.waiters.length > 0 ? (
@@ -165,7 +205,10 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
                   ))}
                 </div>
               ) : (
-                <span className="text-xs" style={{ color: "var(--notion-text-tertiary)" }}>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--notion-text-tertiary)" }}
+                >
                   없음
                 </span>
               )}
@@ -173,7 +216,10 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
 
             {/* 내가 기다리는 사람들 */}
             <div>
-              <div className="text-xs font-medium mb-2" style={{ color: "var(--notion-blue)" }}>
+              <div
+                className="text-xs font-medium mb-2"
+                style={{ color: "var(--notion-blue)" }}
+              >
                 이 사람이 기다리는 중 ({selectedNodeData.blocking.length}명)
               </div>
               {selectedNodeData.blocking.length > 0 ? (
@@ -192,7 +238,10 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
                   ))}
                 </div>
               ) : (
-                <span className="text-xs" style={{ color: "var(--notion-text-tertiary)" }}>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--notion-text-tertiary)" }}
+                >
                   없음
                 </span>
               )}
@@ -202,15 +251,23 @@ export function BottleneckMap({ items }: BottleneckMapProps) {
       )}
 
       {/* 요약 */}
-      <div className="mt-4 pt-3 text-xs" style={{ borderTop: "1px solid var(--notion-border)", color: "var(--notion-text-secondary)" }}>
-        총 {bottleneckNodes.filter((n) => n.inboundCount > 0).length}명이 다른 팀원의 작업을 대기 중입니다.
+      <div
+        className="mt-4 pt-3 text-xs"
+        style={{
+          borderTop: "1px solid var(--notion-border)",
+          color: "var(--notion-text-secondary)",
+        }}
+      >
+        총 {bottleneckNodes.filter((n) => n.inboundCount > 0).length}명이 다른
+        팀원의 작업을 대기 중입니다.
         {bottleneckNodes.filter((n) => n.intensity >= 50).length > 0 && (
           <span style={{ color: "var(--notion-orange)" }}>
-            {" "}주의가 필요한 병목: {bottleneckNodes.filter((n) => n.intensity >= 50).length}건
+            {" "}
+            주의가 필요한 병목:{" "}
+            {bottleneckNodes.filter((n) => n.intensity >= 50).length}건
           </span>
         )}
       </div>
     </div>
   );
 }
-
