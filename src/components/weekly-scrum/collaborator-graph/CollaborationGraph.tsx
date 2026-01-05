@@ -245,7 +245,7 @@ export function CollaborationGraph({
         width: node.width,
         height: node.height,
         borderRadius: "6px",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#f6f8fa",
         border: "1px solid #d0d7de",
         boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
         display: "flex",
@@ -303,7 +303,7 @@ export function CollaborationGraph({
           fontWeight: "400",
         },
         labelBgStyle: {
-          fill: "#f6f8fa",
+          fill: "#ffffff",
           fillOpacity: 1,
         },
         labelBgPadding: [2, 4] as [number, number],
@@ -361,7 +361,7 @@ export function CollaborationGraph({
   const visibleEdges = isLayoutReady ? edges : [];
 
   return (
-    <div className="w-full h-full bg-[#f6f8fa] relative">
+    <div className="w-full h-full bg-white relative">
       <ReactFlow
         nodes={nodes}
         edges={visibleEdges}
