@@ -89,37 +89,51 @@ export function CollaborationGraph({
   const initialNodes: Node[] = useMemo(() => {
     if (graphNodes.length === 0) return [];
 
-    // 엣지 연결 정보 분석하여 계층 구조 생성
-    const nodeConnections = new Map<string, Set<string>>();
+    // 엣지 연결 정보 분석 (방향성 고려)
+    const outgoingEdges = new Map<string, Set<string>>(); // source -> targets
+    const incomingEdges = new Map<string, Set<string>>(); // target -> sources
+    
     graphEdges.forEach((edge) => {
-      if (!nodeConnections.has(edge.source)) {
-        nodeConnections.set(edge.source, new Set());
+      // Outgoing edges
+      if (!outgoingEdges.has(edge.source)) {
+        outgoingEdges.set(edge.source, new Set());
       }
-      if (!nodeConnections.has(edge.target)) {
-        nodeConnections.set(edge.target, new Set());
+      outgoingEdges.get(edge.source)!.add(edge.target);
+      
+      // Incoming edges
+      if (!incomingEdges.has(edge.target)) {
+        incomingEdges.set(edge.target, new Set());
       }
-      nodeConnections.get(edge.source)!.add(edge.target);
-      nodeConnections.get(edge.target)!.add(edge.source);
+      incomingEdges.get(edge.target)!.add(edge.source);
     });
-
-    // totalCollabs 기준으로 내림차순 정렬
-    const sortedNodes = [...graphNodes].sort(
-      (a, b) => b.totalCollabs - a.totalCollabs
-    );
 
     // 최대 협업 횟수 찾기
     const maxCollabs = Math.max(...graphNodes.map((n) => n.totalCollabs), 1);
 
-    // 계층별로 노드 배치 (연결이 많은 순서대로)
+    // 루트 노드 찾기 (incoming edge가 없는 노드들)
+    const rootNodes = graphNodes.filter(
+      (node) => !incomingEdges.has(node.id) || incomingEdges.get(node.id)!.size === 0
+    );
+    
+    // 루트 노드가 없으면 가장 연결이 많은 노드를 루트로 사용
+    if (rootNodes.length === 0) {
+      const maxNode = [...graphNodes].sort((a, b) => b.totalCollabs - a.totalCollabs)[0];
+      rootNodes.push(maxNode);
+    }
+    
+    // 루트 노드들을 totalCollabs 기준으로 정렬
+    rootNodes.sort((a, b) => b.totalCollabs - a.totalCollabs);
+
+    // BFS로 레벨 할당 (루트부터 시작)
     const levels: GraphNode[][] = [];
     const visited = new Set<string>();
-    
-    // 가장 연결이 많은 노드부터 시작하여 BFS로 레벨 할당
     const queue: Array<{ node: GraphNode; level: number }> = [];
-    if (sortedNodes.length > 0) {
-      queue.push({ node: sortedNodes[0], level: 0 });
-      visited.add(sortedNodes[0].id);
-    }
+    
+    // 모든 루트 노드를 레벨 0에 추가
+    rootNodes.forEach((node) => {
+      queue.push({ node, level: 0 });
+      visited.add(node.id);
+    });
 
     while (queue.length > 0) {
       const { node, level } = queue.shift()!;
@@ -129,11 +143,14 @@ export function CollaborationGraph({
       }
       levels[level].push(node);
 
-      // 연결된 노드를 다음 레벨에 추가
-      const connections = nodeConnections.get(node.id) || new Set();
-      const connectedNodes = sortedNodes.filter(
-        (n) => connections.has(n.id) && !visited.has(n.id)
+      // outgoing edges를 따라 다음 레벨로
+      const targets = outgoingEdges.get(node.id) || new Set();
+      const connectedNodes = graphNodes.filter(
+        (n) => targets.has(n.id) && !visited.has(n.id)
       );
+      
+      // 연결된 노드들을 totalCollabs 기준으로 정렬
+      connectedNodes.sort((a, b) => b.totalCollabs - a.totalCollabs);
       
       connectedNodes.forEach((connectedNode) => {
         visited.add(connectedNode.id);
@@ -141,16 +158,13 @@ export function CollaborationGraph({
       });
     }
 
-    // 방문하지 않은 노드를 마지막 레벨에 추가
-    sortedNodes.forEach((node) => {
-      if (!visited.has(node.id)) {
-        const lastLevel = levels.length > 0 ? levels.length : 0;
-        if (!levels[lastLevel]) {
-          levels[lastLevel] = [];
-        }
-        levels[lastLevel].push(node);
-      }
-    });
+    // 방문하지 않은 고립된 노드들을 마지막에 추가
+    const unvisitedNodes = graphNodes.filter((node) => !visited.has(node.id));
+    if (unvisitedNodes.length > 0) {
+      unvisitedNodes.sort((a, b) => b.totalCollabs - a.totalCollabs);
+      const lastLevel = levels.length;
+      levels[lastLevel] = unvisitedNodes;
+    }
 
     // FigJam 스타일 노드 배치 (크기 동적 조정, 좌→우 흐름)
     const BASE_WIDTH = 100; // 기본 너비
@@ -348,14 +362,14 @@ export function CollaborationGraph({
         connectionMode={ConnectionMode.Loose}
         fitView={isLayoutReady}
         fitViewOptions={{
-          padding: 0.2,
-          duration: 400,
-          minZoom: 0.4,
-          maxZoom: 1.2,
+          padding: 0.15,
+          duration: 500,
+          minZoom: 0.3,
+          maxZoom: 1,
         }}
-        minZoom={0.3}
+        minZoom={0.2}
         maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
