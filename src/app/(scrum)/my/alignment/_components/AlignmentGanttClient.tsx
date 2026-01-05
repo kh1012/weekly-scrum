@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
-import { DraftGanttView, type DraftGanttViewRef } from "@/components/plans/gantt-draft/DraftGanttView";
+import { useState, useMemo } from "react";
+import { AlignmentGanttView } from "@/components/weekly-scrum/alignment";
+import { useAlignmentFilter, type FilterType } from "@/components/weekly-scrum/alignment/hooks";
 import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
-import { calculateAlignmentStatus, detectAlignmentMismatches } from "@/lib/alignment/alignmentStatus";
-import type { DraftBar } from "@/components/plans/gantt-draft/types";
-import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
-import { MismatchReviewPanel } from "@/components/weekly-scrum/alignment/MismatchReviewPanel";
 
 interface AlignmentGanttClientProps {
   workspaceId: string;
@@ -20,12 +17,10 @@ interface AlignmentGanttClientProps {
   userName?: string;
 }
 
-type FilterType = "all" | "plans" | "snapshots";
-
 /**
  * Alignment Gantt Client Component
  *
- * DraftGanttView를 활용한 읽기 전용 간트 차트
+ * AlignmentGanttView를 활용한 읽기 전용 간트 차트
  * Plans + Snapshot Entries를 타임라인에서 시각화
  * 필터: 전체보기, 계획만 보기, 스냅샷만 보기
  */
@@ -36,176 +31,12 @@ export function AlignmentGanttClient({
   userName,
 }: AlignmentGanttClientProps) {
   const [filter, setFilter] = useState<FilterType>("all");
-  const ganttRef = useRef<DraftGanttViewRef>(null);
 
-  // 필터링 및 정렬된 items
-  const filteredItems = useMemo(() => {
-    let filtered = items;
-    
-    // 필터링
-    if (filter === "plans") {
-      filtered = items.filter((item) => item.type === "plan");
-    } else if (filter === "snapshots") {
-      filtered = items.filter((item) => item.type === "snapshot");
-    }
-    
-    // 정렬: 같은 모듈 내에서 Plan은 상위, Snapshot은 하위
-    // 1차: domain > project > module > feature
-    // 2차: type (plan -> snapshot)
-    // 3차: 날짜 (start_date)
-    return filtered.sort((a, b) => {
-      // 1. Domain 비교
-      const domainCompare = (a.domain || "").localeCompare(b.domain || "");
-      if (domainCompare !== 0) return domainCompare;
-      
-      // 2. Project 비교
-      const projectCompare = (a.project || "").localeCompare(b.project || "");
-      if (projectCompare !== 0) return projectCompare;
-      
-      // 3. Module 비교
-      const moduleCompare = (a.module || "").localeCompare(b.module || "");
-      if (moduleCompare !== 0) return moduleCompare;
-      
-      // 4. Feature 비교
-      const featureCompare = (a.feature || "").localeCompare(b.feature || "");
-      if (featureCompare !== 0) return featureCompare;
-      
-      // 5. Type 비교 (plan이 먼저)
-      if (a.type !== b.type) {
-        return a.type === "plan" ? -1 : 1;
-      }
-      
-      // 6. 날짜 비교
-      return a.start_date.localeCompare(b.start_date);
-    });
-  }, [items, filter]);
-
-  // AlignmentGanttItem을 InitialPlan 형식으로 변환
-  // (상태 계산은 변환 후에 수행)
-  const initialPlans = useMemo(() => {
-    const plans = filteredItems.map((item) => ({
-      id: item.id,
-      clientUid: item.id,
-      title: item.title,
-      domain: item.domain || "",
-      project: item.project || "",
-      module: item.module || "",
-      feature: item.feature || "",
-      startDate: item.start_date,
-      endDate: item.end_date,
-      status: item.status || "active",
-      stage: item.stage || "in_progress",
-      priority: item.priority,
-      assignees: item.assignees || [],
-      isSnapshot: item.type === "snapshot",
-      avgProgress: item.avgProgress,
-      metaKey: item.metaKey,
-      year: item.year,
-      week: item.week,
-      authorName: item.authorName,
-      authorId: item.authorId,
-      past_week: item.past_week,
-      this_week: item.this_week,
-      collaborators: item.collaborators,
-      risks: item.risks,
-      risk_level: item.risk_level,
-    }));
-
-    // Plan bars에 Alignment 상태 계산
-    // (모의 DraftBar 형식으로 변환하여 계산)
-    const mockBars: DraftBar[] = plans.map((p) => ({
-      clientUid: p.id,
-      rowId: `${p.project}::${p.module}::${p.feature}`,
-      serverId: p.id,
-      title: p.title,
-      stage: p.stage,
-      status: p.status as any,
-      startDate: p.startDate,
-      endDate: p.endDate,
-      assignees: p.assignees.map((a) => ({
-        userId: a.userId,
-        role: a.role as any,
-        displayName: a.displayName,
-      })),
-      dirty: false,
-      createdAtLocal: new Date().toISOString(),
-      updatedAtLocal: new Date().toISOString(),
-      isSnapshot: p.isSnapshot,
-      metaKey: p.metaKey,
-      authorId: p.authorId,
-    }));
-
-    // 각 Plan bar에 대해 상태 계산
-    return plans.map((plan, index) => {
-      if (plan.isSnapshot) {
-        return plan;
-      }
-
-      const mockBar = mockBars[index];
-      const statusInfo = calculateAlignmentStatus(mockBar, mockBars);
-
-      return {
-        ...plan,
-        alignmentStatus: statusInfo.status,
-      };
-    });
-  }, [filteredItems]);
-
-  // 통계 계산
-  const stats = useMemo(() => {
-    const plansCount = items.filter((item) => item.type === "plan").length;
-    const snapshotsCount = items.filter(
-      (item) => item.type === "snapshot"
-    ).length;
-    return { plansCount, snapshotsCount };
-  }, [items]);
-
-  // Mismatch 감지
-  const mismatches = useMemo(() => {
-    const mockBars: DraftBar[] = filteredItems.map((item) => ({
-      clientUid: item.id,
-      rowId: `${item.project}::${item.module}::${item.feature}`,
-      serverId: item.id,
-      title: item.title,
-      stage: item.stage || "in_progress",
-      status: (item.status || "active") as any,
-      startDate: item.start_date,
-      endDate: item.end_date,
-      assignees: (item.assignees || []).map((a) => ({
-        userId: a.userId,
-        role: a.role as any,
-        displayName: a.displayName,
-      })),
-      dirty: false,
-      createdAtLocal: new Date().toISOString(),
-      updatedAtLocal: new Date().toISOString(),
-      isSnapshot: item.type === "snapshot",
-      metaKey: item.metaKey,
-      authorId: item.authorId,
-    }));
-
-    const planBars = mockBars.filter((bar) => !bar.isSnapshot);
-    return detectAlignmentMismatches(planBars, mockBars);
-  }, [filteredItems]);
-
-  const handleFocusMismatch = (mismatch: AlignmentMismatch) => {
-    // Calculate rowId from meta path
-    // mismatch.metaPath format: "Project / Module / Feature"
-    const parts = mismatch.metaPath.split(" / ");
-    const rowId = parts.join("::");
-    
-    // Scroll to the row
-    ganttRef.current?.scrollToRow(rowId, { highlight: true, smooth: true });
-  };
+  // 필터링 및 통계 계산
+  const { filteredItems, stats } = useAlignmentFilter({ items, filter });
 
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Mismatch Review Panel */}
-      <MismatchReviewPanel
-        mismatches={mismatches}
-        onFocusMismatch={handleFocusMismatch}
-      />
-
+    <div className="flex flex-col h-full">
       {/* 필터 바 */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-1.5">
@@ -219,7 +50,7 @@ export function AlignmentGanttClient({
           >
             전체{" "}
             <span className="text-[10px] opacity-80">
-              ({stats.plansCount + stats.snapshotsCount})
+              ({stats.totalCount})
             </span>
           </button>
           <button
@@ -257,18 +88,15 @@ export function AlignmentGanttClient({
         </div>
       </div>
 
-      {/* 간트 차트 */}
+      {/* Alignment Gantt Chart */}
       <div className="flex-1 overflow-hidden">
-        <DraftGanttView
-          ref={ganttRef}
+        <AlignmentGanttView
           workspaceId={workspaceId}
-          initialPlans={initialPlans}
+          items={filteredItems}
           members={members}
-          readOnly={true}
           title={userName ? `${userName}님의 Alignment` : "Alignment"}
           description="계획과 기록을 Align 해봅니다."
-          selectedStages={new Set()}
-          selectedAssignees={new Set()}
+          showMismatchReview={true}
         />
       </div>
     </div>
