@@ -177,6 +177,7 @@ export function AlignmentGanttClient({
           members={members}
           readOnly={true}
           title={userName ? `${userName}님의 Alignment` : "Alignment"}
+          description="계획과 기록을 Align 해봅니다."
           selectedStages={new Set()}
           selectedAssignees={new Set()}
         />

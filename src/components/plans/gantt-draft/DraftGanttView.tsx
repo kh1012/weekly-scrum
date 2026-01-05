@@ -59,6 +59,8 @@ interface DraftGanttViewProps {
   readOnly?: boolean;
   /** 헤더 제목 */
   title?: string;
+  /** 헤더 설명 */
+  description?: string;
   /** 스테이지 필터 상태 */
   selectedStages?: Set<string>;
   /** 스테이지 필터 변경 핸들러 */
@@ -81,6 +83,7 @@ export function DraftGanttView({
   members = [],
   readOnly = false,
   title,
+  description,
   selectedStages = new Set(),
   onStagesChange,
   selectedAssignees = new Set(),
@@ -941,6 +944,7 @@ export function DraftGanttView({
         // 읽기 전용 모드
         readOnly={readOnly}
         title={title}
+        description={description}
         // 필터
         selectedStages={selectedStages}
         onStagesChange={onStagesChange}

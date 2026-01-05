@@ -39,6 +39,8 @@ interface GanttHeaderProps {
   readOnly?: boolean;
   /** 헤더 제목 */
   title?: string;
+  /** 헤더 설명 */
+  description?: string;
   /** 스테이지 필터 상태 */
   selectedStages?: Set<string>;
   /** 스테이지 필터 변경 핸들러 */
@@ -93,6 +95,7 @@ export function GanttHeader({
   onDiscardChanges,
   readOnly = false,
   title,
+  description,
   selectedStages = new Set(),
   onStagesChange,
   selectedAssignees = new Set(),
@@ -337,7 +340,9 @@ export function GanttHeader({
                 <h1 className={`${isMobile ? "text-lg" : "text-xl"} font-bold text-gray-900`}>
                   {title || (readOnly ? "계획" : "계획 관리")}
                 </h1>
-                <p className={`${isMobile ? "text-xs" : "text-sm"} text-gray-500`}>Feature 단위 일정 계획</p>
+                <p className={`${isMobile ? "text-xs" : "text-sm"} text-gray-500`}>
+                  {description || "Feature 단위 일정 계획"}
+                </p>
               </div>
               {/* 마지막 업데이트 시각 표시 (읽기 전용 모드에서만) */}
               {readOnly && maxUpdatedAt && (
