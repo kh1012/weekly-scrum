@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo, useEffect, useState } from "react";
 import ReactFlow, {
   Node,
   Edge,
@@ -77,8 +77,8 @@ export function CollaborationGraph({
       )
       .stop();
 
-    // 시뮬레이션 실행 (100회 반복 - 원형 유지하면서 겹침만 방지)
-    for (let i = 0; i < 100; i++) {
+    // 시뮬레이션 실행 (더 많은 반복으로 안정적인 위치 확보)
+    for (let i = 0; i < 200; i++) {
       simulation.tick();
     }
 
@@ -132,17 +132,24 @@ export function CollaborationGraph({
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: "default",
+        type: "smoothstep", // 부드러운 곡선 엣지
         animated: false,
         style: {
           strokeWidth,
           stroke: "#8c959f",
+          opacity: 0.6,
         },
         label: `${edge.weight}회`,
         labelStyle: {
           fontSize: "10px",
           fill: "#57606a",
           fontWeight: "500",
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+          padding: "2px 4px",
+          borderRadius: "3px",
+        },
+        labelBgStyle: {
+          fill: "rgba(255, 255, 255, 0.8)",
         },
       };
     });
@@ -150,6 +157,26 @@ export function CollaborationGraph({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
+
+  // 노드 위치가 안정화된 후 엣지 표시 및 fitView 실행
+  useEffect(() => {
+    if (nodes.length === 0) return;
+
+    // 노드 위치가 모두 설정되었는지 확인
+    const allNodesPositioned = nodes.every(
+      (node) => node.position.x !== undefined && node.position.y !== undefined
+    );
+
+    if (allNodesPositioned && !isLayoutReady) {
+      // 약간의 지연 후 fitView 실행하여 엣지가 깔끔하게 렌더링되도록
+      const timer = setTimeout(() => {
+        setIsLayoutReady(true);
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [nodes, isLayoutReady]);
 
   // 노드 클릭 핸들러
   const handleNodeClick = useCallback(
@@ -173,23 +200,30 @@ export function CollaborationGraph({
     [graphEdges, onEdgeClick]
   );
 
+  // 레이아웃이 준비된 후에만 엣지 표시
+  const visibleEdges = isLayoutReady ? edges : [];
+
   return (
     <div className="w-full h-full">
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={visibleEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
         connectionMode={ConnectionMode.Loose}
-        fitView
+        fitView={isLayoutReady}
         fitViewOptions={{
           padding: 0.2,
+          duration: 400,
         }}
         minZoom={0.1}
         maxZoom={2}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
       >
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
         <Controls showInteractive={false} />
