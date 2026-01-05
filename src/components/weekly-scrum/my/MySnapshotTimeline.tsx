@@ -11,6 +11,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import type {
   SnapshotTimelineEntry,
 } from "@/lib/data/mySnapshotTimeline";
@@ -22,6 +23,7 @@ import {
   type MetaGroup,
   type ContinuityArrow,
 } from "@/lib/data/snapshotTimelineUtils";
+import { SnapshotEntryPopover } from "./SnapshotEntryPopover";
 
 // 레이아웃 상수 (Plans Gantt 참고)
 const WEEK_WIDTH = 120; // 주차 열 너비
@@ -45,10 +47,15 @@ export function MySnapshotTimeline({
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<SnapshotTimelineEntry | null>(null);
+  const [popoverEntry, setPopoverEntry] = useState<{
+    entry: SnapshotTimelineEntry;
+    position: { x: number; y: number };
+  } | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // 모바일 감지
+  // 마운트 상태 및 모바일 감지
   useEffect(() => {
+    setIsMounted(true);
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -284,9 +291,19 @@ export function MySnapshotTimeline({
                             isSelected={
                               weekEntries.some((e) => e.id === selectedEntryId)
                             }
-                            onClick={() => {
-                              setSelectedEntryId(weekEntries[0].id);
-                              setSelectedEntry(weekEntries[0]);
+                            onClick={(e) => {
+                              const entry = weekEntries[0];
+                              setSelectedEntryId(entry.id);
+                              
+                              // 팝오버 위치 계산
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const x = rect.left + rect.width / 2 - 240; // 팝오버 너비의 절반
+                              const y = rect.bottom + 8;
+                              
+                              setPopoverEntry({
+                                entry,
+                                position: { x: Math.max(16, x), y },
+                              });
                             }}
                           />
                         )}
@@ -299,6 +316,17 @@ export function MySnapshotTimeline({
           </div>
         </div>
       </div>
+
+      {/* 팝오버 (Portal) */}
+      {isMounted && popoverEntry &&
+        createPortal(
+          <SnapshotEntryPopover
+            entry={popoverEntry.entry}
+            position={popoverEntry.position}
+            onClose={() => setPopoverEntry(null)}
+          />,
+          document.body
+        )}
     </div>
   );
 }
@@ -346,7 +374,7 @@ function WeekRangeSelector({ selectedRange, onChange }: WeekRangeSelectorProps) 
 interface SnapshotBlockProps {
   entries: SnapshotTimelineEntry[];
   isSelected: boolean;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 function SnapshotBlock({ entries, isSelected, onClick }: SnapshotBlockProps) {
