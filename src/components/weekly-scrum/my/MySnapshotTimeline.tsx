@@ -37,12 +37,30 @@ interface MySnapshotTimelineProps {
   weeksRange?: 8 | 12 | 16;
   /** 주차 범위 변경 핸들러 */
   onWeeksRangeChange?: (range: 8 | 12 | 16) => void;
+  /** 필터링된 Domain 목록 */
+  selectedDomains?: Set<string>;
+  /** Domain 필터 변경 핸들러 */
+  onDomainsChange?: (domains: Set<string>) => void;
+  /** 필터링된 Project 목록 */
+  selectedProjects?: Set<string>;
+  /** Project 필터 변경 핸들러 */
+  onProjectsChange?: (projects: Set<string>) => void;
+  /** 검색 쿼리 */
+  searchQuery?: string;
+  /** 검색 쿼리 변경 핸들러 */
+  onSearchChange?: (query: string) => void;
 }
 
 export function MySnapshotTimeline({ 
   entries, 
   weeksRange = 12,
   onWeeksRangeChange,
+  selectedDomains = new Set(),
+  onDomainsChange,
+  selectedProjects = new Set(),
+  onProjectsChange,
+  searchQuery = "",
+  onSearchChange,
 }: MySnapshotTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
@@ -62,15 +80,65 @@ export function MySnapshotTimeline({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Week Axis 및 Meta 그룹 계산
-  const weekAxis = useMemo(() => buildWeekAxis(entries), [entries]);
-  const metaGroups = useMemo(() => groupEntriesByMeta(entries), [entries]);
+  // 필터링된 엔트리
+  const filteredEntries = useMemo(() => {
+    let filtered = entries;
+
+    // Domain 필터
+    if (selectedDomains.size > 0) {
+      filtered = filtered.filter((e) => selectedDomains.has(e.domain));
+    }
+
+    // Project 필터
+    if (selectedProjects.size > 0) {
+      filtered = filtered.filter((e) => selectedProjects.has(e.project));
+    }
+
+    // 검색 쿼리
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (e) =>
+          e.domain.toLowerCase().includes(q) ||
+          e.project.toLowerCase().includes(q) ||
+          e.module?.toLowerCase().includes(q) ||
+          e.feature.toLowerCase().includes(q) ||
+          e.name.toLowerCase().includes(q) ||
+          e.pastWeek?.tasks?.some((t) =>
+            t.title.toLowerCase().includes(q)
+          ) ||
+          e.thisWeek?.tasks?.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+
+    return filtered;
+  }, [entries, selectedDomains, selectedProjects, searchQuery]);
+
+  // Week Axis 및 Meta 그룹 계산 (필터링된 엔트리 기준)
+  const weekAxis = useMemo(() => buildWeekAxis(filteredEntries), [filteredEntries]);
+  const metaGroups = useMemo(() => groupEntriesByMeta(filteredEntries), [filteredEntries]);
   const arrows = useMemo(() => computeAllArrows(metaGroups, weekAxis), [metaGroups, weekAxis]);
+
+  // 필터 옵션 (전체 엔트리 기준)
+  const filterOptions = useMemo(() => {
+    const domains = new Set<string>();
+    const projects = new Set<string>();
+
+    entries.forEach((e) => {
+      domains.add(e.domain);
+      projects.add(e.project);
+    });
+
+    return {
+      domains: Array.from(domains).sort(),
+      projects: Array.from(projects).sort(),
+    };
+  }, [entries]);
 
   // 타임라인 전체 너비
   const timelineWidth = weekAxis.length * WEEK_WIDTH;
 
-  if (entries.length === 0) {
+  if (filteredEntries.length === 0 && entries.length === 0) {
     return (
       <div className="w-full">
         <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
@@ -118,7 +186,7 @@ export function MySnapshotTimeline({
   return (
     <div className="w-full" ref={containerRef}>
       {/* 컨트롤 바: 주차 범위 선택 + 필터 + 검색 */}
-      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 mb-4">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 mb-4 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           {onWeeksRangeChange && (
             <WeekRangeSelector
@@ -126,16 +194,83 @@ export function MySnapshotTimeline({
               onChange={onWeeksRangeChange}
             />
           )}
+
+          {/* 검색 */}
+          {onSearchChange && (
+            <div className="flex-1 min-w-[200px] max-w-[320px]">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="엔트리 검색..."
+                className="w-full px-3 py-1.5 text-sm border border-[#d0d7de] rounded-md focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-[#0969da]"
+              />
+            </div>
+          )}
           
           {/* 통계 정보 */}
           <div className="ml-auto flex items-center gap-4 text-sm text-[#57606a]">
             <span>{metaGroups.length}개 기능</span>
             <span>•</span>
-            <span>{entries.length}개 엔트리</span>
+            <span>{filteredEntries.length}개 엔트리</span>
+            {filteredEntries.length < entries.length && (
+              <>
+                <span>•</span>
+                <span className="text-[#0969da]">
+                  (전체 {entries.length}개 중)
+                </span>
+              </>
+            )}
             <span>•</span>
             <span>{weekAxis.length}주간</span>
           </div>
         </div>
+
+        {/* 필터 */}
+        {(onDomainsChange || onProjectsChange) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {onDomainsChange && (
+              <MultiSelectFilter
+                label="Domain"
+                options={filterOptions.domains}
+                selected={selectedDomains}
+                onChange={onDomainsChange}
+              />
+            )}
+
+            {onProjectsChange && (
+              <MultiSelectFilter
+                label="Project"
+                options={filterOptions.projects}
+                selected={selectedProjects}
+                onChange={onProjectsChange}
+              />
+            )}
+
+            {/* 필터 초기화 */}
+            {(selectedDomains.size > 0 || selectedProjects.size > 0 || searchQuery.trim()) && (
+              <button
+                onClick={() => {
+                  onDomainsChange?.(new Set());
+                  onProjectsChange?.(new Set());
+                  onSearchChange?.("");
+                }}
+                className="text-sm text-[#0969da] hover:underline"
+              >
+                필터 초기화
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 필터링 결과 없음 */}
+        {filteredEntries.length === 0 && entries.length > 0 && (
+          <div className="text-center py-4">
+            <p className="text-sm text-[#57606a]">
+              필터 조건에 맞는 엔트리가 없습니다
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -327,6 +462,115 @@ export function MySnapshotTimeline({
           />,
           document.body
         )}
+    </div>
+  );
+}
+
+/**
+ * 다중 선택 필터
+ */
+interface MultiSelectFilterProps {
+  label: string;
+  options: string[];
+  selected: Set<string>;
+  onChange: (selected: Set<string>) => void;
+}
+
+function MultiSelectFilter({
+  label,
+  options,
+  selected,
+  onChange,
+}: MultiSelectFilterProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleOption = (option: string) => {
+    const newSelected = new Set(selected);
+    if (newSelected.has(option)) {
+      newSelected.delete(option);
+    } else {
+      newSelected.add(option);
+    }
+    onChange(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (selected.size === options.length) {
+      onChange(new Set());
+    } else {
+      onChange(new Set(options));
+    }
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-colors ${
+          selected.size > 0
+            ? "bg-[#0969da] text-white border-[#0969da]"
+            : "bg-white text-[#24292f] border-[#d0d7de] hover:bg-[#f6f8fa]"
+        }`}
+      >
+        {label}
+        {selected.size > 0 && ` (${selected.size})`}
+        <svg
+          className={`inline-block ml-1 w-4 h-4 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full mt-1 left-0 z-30 bg-white border border-[#d0d7de] rounded-md shadow-lg overflow-hidden min-w-[200px] max-h-[300px] overflow-y-auto">
+          {/* 전체 선택/해제 */}
+          <button
+            onClick={toggleAll}
+            className="w-full px-3 py-2 text-sm text-left hover:bg-[#f6f8fa] border-b border-[#d0d7de] font-medium text-[#0969da]"
+          >
+            {selected.size === options.length ? "전체 해제" : "전체 선택"}
+          </button>
+
+          {/* 옵션 목록 */}
+          {options.map((option) => (
+            <button
+              key={option}
+              onClick={() => toggleOption(option)}
+              className="w-full px-3 py-2 text-sm text-left hover:bg-[#f6f8fa] flex items-center gap-2"
+            >
+              <input
+                type="checkbox"
+                checked={selected.has(option)}
+                onChange={() => {}}
+                className="w-4 h-4"
+              />
+              <span className="flex-1 truncate">{option}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

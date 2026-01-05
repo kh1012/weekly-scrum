@@ -25,6 +25,9 @@ export function MySnapshotTimelineClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [weeksRange, setWeeksRange] = useState<8 | 12 | 16>(12);
+  const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleWeeksRangeChange = (range: 8 | 12 | 16) => {
     setWeeksRange(range);
@@ -42,6 +45,12 @@ export function MySnapshotTimelineClient({
       entries={entries}
       weeksRange={weeksRange}
       onWeeksRangeChange={handleWeeksRangeChange}
+      selectedDomains={selectedDomains}
+      onDomainsChange={setSelectedDomains}
+      selectedProjects={selectedProjects}
+      onProjectsChange={setSelectedProjects}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
     />
   );
 }
