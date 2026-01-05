@@ -159,6 +159,7 @@ export const DraftBar = memo(function DraftBar({
   const avgProgress = (bar as any).avgProgress || 0;
   const snapshotYear = (bar as any).year;
   const snapshotWeek = (bar as any).week;
+  const authorName = (bar as any).authorName;
 
   // 첫 번째 담당자의 역할 기반 색상 (없으면 기본 회색)
   const primaryRole = bar.assignees?.[0]?.role;
@@ -445,7 +446,7 @@ export const DraftBar = memo(function DraftBar({
             </div>
           )}
 
-          {/* 1행: 주차 태그 + 기간 */}
+          {/* 1행: 주차 태그 + 기간 + 작성자 */}
           <div className="flex items-center gap-1.5 min-w-0 pr-8">
             {/* 주차 태그 */}
             {snapshotYear && snapshotWeek && (
@@ -468,6 +469,21 @@ export const DraftBar = memo(function DraftBar({
                 >
                   {dateLabel}
                 </span>
+
+                {/* 작성자 이름 chip */}
+                {authorName && (
+                  <span
+                    className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0"
+                    style={{
+                      background: "rgba(59, 130, 246, 0.1)",
+                      color: "#1e40af",
+                      border: "1px solid rgba(59, 130, 246, 0.2)",
+                    }}
+                    title={`작성자: ${authorName}`}
+                  >
+                    {authorName}
+                  </span>
+                )}
               </>
             )}
           </div>

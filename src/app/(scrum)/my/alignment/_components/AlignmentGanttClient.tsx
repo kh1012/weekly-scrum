@@ -97,6 +97,7 @@ export function AlignmentGanttClient({
     metaKey: item.metaKey,
     year: item.year,
     week: item.week,
+    authorName: item.authorName,
     past_week: item.past_week,
     this_week: item.this_week,
     collaborators: item.collaborators,

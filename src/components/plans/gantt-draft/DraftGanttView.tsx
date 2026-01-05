@@ -357,6 +357,7 @@ export function DraftGanttView({
         metaKey: (plan as any).metaKey,
         year: (plan as any).year,
         week: (plan as any).week,
+        authorName: (plan as any).authorName,
         past_week: (plan as any).past_week,
         this_week: (plan as any).this_week,
         collaborators: (plan as any).collaborators,

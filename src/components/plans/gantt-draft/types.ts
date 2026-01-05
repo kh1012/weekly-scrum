@@ -151,6 +151,7 @@ export interface DraftBar {
   metaKey?: string; // 메타 정보 키
   year?: number;
   week?: string;
+  authorName?: string; // 작성자 이름
   past_week?: {
     tasks?: Array<{ title: string; progress: number }>;
     progress?: string;

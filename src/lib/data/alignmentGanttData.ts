@@ -38,6 +38,7 @@ export interface AlignmentGanttItem {
   week?: string;
   avgProgress?: number; // 평균 진행률 (0-100)
   metaKey?: string; // 메타 정보 키 (연결 화살표용)
+  authorName?: string; // 작성자 이름
   past_week?: {
     tasks?: Array<{ title: string; progress: number }>;
     progress?: string;
@@ -163,10 +164,16 @@ export async function getAlignmentGanttData({
       }
     }
 
-  // 2. 사용자가 작성한 Snapshot Entries 조회
+  // 2. 사용자가 작성한 Snapshot Entries 조회 (with author profile)
   const { data: snapshots } = await supabase
     .from("snapshots")
-    .select("id, year, week")
+    .select(`
+      id,
+      year,
+      week,
+      author_id,
+      profiles!snapshots_author_id_fkey(display_name, email)
+    `)
     .eq("workspace_id", workspaceId)
     .eq("author_id", userId)
     .order("year", { ascending: true })
@@ -197,9 +204,13 @@ export async function getAlignmentGanttData({
     snapshotEntries = entriesData || [];
   }
 
-  // 3. Snapshot 맵 생성 (snapshot_id -> {year, week})
+  // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName})
   const snapshotMap = new Map(
-    snapshots?.map((s) => [s.id, { year: s.year, week: s.week }]) || []
+    snapshots?.map((s) => {
+      const profile = (s as any).profiles;
+      const authorName = profile?.display_name || profile?.email || "Unknown";
+      return [s.id, { year: s.year, week: s.week, authorName }];
+    }) || []
   );
 
   // 4. Plans를 AlignmentGanttItem 형식으로 변환
@@ -273,6 +284,7 @@ export async function getAlignmentGanttData({
       week: snapshot.week,
       avgProgress, // 평균 진행률 추가
       metaKey, // 메타 키 추가 (연결 화살표용)
+      authorName: snapshot.authorName, // 작성자 이름 추가
       past_week: pastWeek, // Snapshot 상세 정보 추가
       this_week: thisWeek, // NEXT 작업 추가
       collaborators: entry.collaborators || [], // 협업자 추가
