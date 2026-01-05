@@ -10,6 +10,7 @@ import ReactFlow, {
   useEdgesState,
   BackgroundVariant,
   ConnectionMode,
+  MarkerType,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import * as d3 from "d3-force";
@@ -28,74 +29,67 @@ export function CollaborationGraph({
   onNodeClick,
   onEdgeClick,
 }: CollaborationGraphProps) {
-  // React Flow 노드 변환 (원형 배치 + 충돌 방지)
+  // React Flow 노드 변환 (계층적 트리 레이아웃)
   const initialNodes: Node[] = useMemo(() => {
     if (graphNodes.length === 0) return [];
+
+    // totalCollabs 기준으로 내림차순 정렬 (연결이 많은 사람이 위)
+    const sortedNodes = [...graphNodes].sort(
+      (a, b) => b.totalCollabs - a.totalCollabs
+    );
 
     // 최대 totalCollabs 값 찾기 (노드 크기 스케일링용)
     const maxCollabs = Math.max(...graphNodes.map((n) => n.totalCollabs), 1);
 
-    // 노드 데이터 준비
-    const centerX = 500;
-    const centerY = 400;
-    const nodeData = graphNodes.map((node, index) => {
-      const baseSize = 60;
-      const maxSize = 150;
-      const size =
-        baseSize + ((node.totalCollabs / maxCollabs) * (maxSize - baseSize));
+    // 레벨별로 노드 그룹화 (totalCollabs 범위로)
+    const levels: GraphNode[][] = [];
+    const levelThreshold = maxCollabs / 5; // 5개 레벨로 분할
 
-      return {
-        id: node.id,
-        label: node.label,
-        totalCollabs: node.totalCollabs,
-        size,
-        x: centerX + (Math.random() - 0.5) * 200, // 랜덤 초기 위치
-        y: centerY + (Math.random() - 0.5) * 200,
-      };
+    sortedNodes.forEach((node) => {
+      const level = Math.floor((maxCollabs - node.totalCollabs) / levelThreshold);
+      const clampedLevel = Math.min(level, 4); // 최대 5레벨
+      if (!levels[clampedLevel]) {
+        levels[clampedLevel] = [];
+      }
+      levels[clampedLevel].push(node);
     });
 
-    // 엣지 데이터를 d3-force용으로 변환
-    const linkData = graphEdges.map((edge) => ({
-      source: edge.source,
-      target: edge.target,
-      weight: edge.weight,
-    }));
+    // 노드 배치
+    const containerWidth = 1200;
+    const containerHeight = 800;
+    const verticalSpacing = 180;
+    const topMargin = 100;
 
-    // Force-directed layout 시뮬레이션 (엣지 기반 자연스러운 배치)
-    const simulation = d3
-      .forceSimulation(nodeData as any)
-      .force(
-        "link",
-        d3
-          .forceLink(linkData)
-          .id((d: any) => d.id)
-          .distance((d: any) => {
-            // 엣지 weight가 높을수록 가까이
-            return 150 - (d.weight / Math.max(...graphEdges.map((e) => e.weight), 1)) * 50;
-          })
-          .strength(0.7)
-      )
-      .force(
-        "charge",
-        d3.forceManyBody().strength(-800) // 노드 간 반발력
-      )
-      .force("center", d3.forceCenter(centerX, centerY).strength(0.1))
-      .force(
-        "collide",
-        d3.forceCollide().radius((d: any) => d.size / 2 + 40).strength(0.9)
-      )
-      .stop();
+    const nodeData: any[] = [];
 
-    // 시뮬레이션 실행 (충분한 반복으로 안정적인 위치 확보)
-    for (let i = 0; i < 300; i++) {
-      simulation.tick();
-    }
+    levels.forEach((levelNodes, levelIndex) => {
+      const y = topMargin + levelIndex * verticalSpacing;
+      const horizontalSpacing = containerWidth / (levelNodes.length + 1);
+
+      levelNodes.forEach((node, nodeIndex) => {
+        const x = horizontalSpacing * (nodeIndex + 1);
+        
+        const baseSize = 80;
+        const maxSize = 180;
+        const size =
+          baseSize + ((node.totalCollabs / maxCollabs) * (maxSize - baseSize));
+
+        nodeData.push({
+          id: node.id,
+          label: node.label,
+          totalCollabs: node.totalCollabs,
+          size,
+          x,
+          y,
+        });
+      });
+    });
 
     // React Flow 노드로 변환
     return nodeData.map((node: any) => ({
       id: node.id,
       type: "default",
-      position: { x: node.x || centerX, y: node.y || centerY },
+      position: { x: node.x, y: node.y },
       data: {
         label: (
           <div className="text-center">
@@ -109,9 +103,10 @@ export function CollaborationGraph({
       style: {
         width: node.size,
         height: node.size,
-        borderRadius: "50%",
-        backgroundColor: "#ddf4ff",
+        borderRadius: "12px", // 사각형 radius
+        backgroundColor: "#ffffff",
         border: "2px solid #0969da",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -141,25 +136,31 @@ export function CollaborationGraph({
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: "smoothstep", // 부드러운 곡선 엣지
+        type: "default", // 베지어 곡선 엣지
         animated: false,
         style: {
           strokeWidth,
-          stroke: "#8c959f",
-          opacity: 0.6,
+          stroke: "#0969da",
+          opacity: 0.3,
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "#0969da",
+          width: 20,
+          height: 20,
         },
         label: `${edge.weight}회`,
         labelStyle: {
           fontSize: "10px",
-          fill: "#57606a",
-          fontWeight: "500",
-          backgroundColor: "rgba(255, 255, 255, 0.8)",
-          padding: "2px 4px",
-          borderRadius: "3px",
+          fill: "#24292f",
+          fontWeight: "600",
         },
         labelBgStyle: {
-          fill: "rgba(255, 255, 255, 0.8)",
+          fill: "#ffffff",
+          fillOpacity: 0.9,
         },
+        labelBgPadding: [4, 4],
+        labelBgBorderRadius: 4,
       };
     });
   }, [graphEdges]);
@@ -236,7 +237,12 @@ export function CollaborationGraph({
         nodesConnectable={false}
         elementsSelectable={true}
       >
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+        <Background 
+          variant={BackgroundVariant.Lines} 
+          gap={20} 
+          size={0.5}
+          color="#e5e7eb"
+        />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>
