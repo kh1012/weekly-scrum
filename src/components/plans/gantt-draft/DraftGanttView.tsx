@@ -141,7 +141,13 @@ export function DraftGanttView({
   }, []);
 
   // Header 숨기기/보이기 핸들러
-  const handleToggleHeader = useCallback(() => {
+  const handleToggleHeader = useCallback((e?: React.MouseEvent) => {
+    // 이벤트 전파 방지 (편집 모드 종료 방지)
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setIsHeaderHidden((prev) => !prev);
     // GNB도 함께 숨기기/보이기
     const gnb = document.querySelector('header[class*="sticky top-0"]') as HTMLElement;
@@ -756,8 +762,6 @@ export function DraftGanttView({
 
       if (flagSuccess && planSuccess) {
         showToast("success", "자동 저장 완료", undefined);
-        // 페이지 새로고침 (서버 데이터 동기화)
-        router.refresh();
       } else {
         showToast("error", "자동 저장 실패", "수동으로 저장해주세요.");
       }
@@ -1000,7 +1004,7 @@ export function DraftGanttView({
       {/* Floating 복원 버튼 (Header 숨김 시) */}
       {isHeaderHidden && (
         <button
-          onClick={handleToggleHeader}
+          onClick={(e) => handleToggleHeader(e)}
           className="fixed top-4 right-4 z-50 p-3 rounded-full shadow-lg transition-all hover:shadow-xl active:scale-95"
           style={{
             background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",

@@ -834,15 +834,24 @@ export function GanttHeader({
 // 헤더용 버튼 컴포넌트
 interface HeaderButtonProps {
   icon: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   disabled?: boolean;
   tooltip?: string;
 }
 
 function HeaderButton({ icon, onClick, disabled, tooltip }: HeaderButtonProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    // 이벤트 전파 방지 (편집 모드 종료 방지)
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       className="p-2 rounded-lg transition-all hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
       style={{ color: "#6b7280" }}
