@@ -1,6 +1,6 @@
 /**
  * Personal Dashboard Metrics Aggregator
- * 
+ *
  * 서버 사이드에서 개인 메트릭을 집계하여 반환
  * - Snapshot 메트릭
  * - Plan 메트릭
@@ -44,7 +44,11 @@ export interface PersonalDashboardMetrics {
   recentEntries: RecentSnapshotEntry[];
   domainDistribution: { label: string; count: number }[];
   weeklyTrend: { week: string; count: number }[];
-  weeklyProgressTrend: { week: string; avgProgress: number; entryCount: number }[];
+  weeklyProgressTrend: {
+    week: string;
+    avgProgress: number;
+    entryCount: number;
+  }[];
 }
 
 /**
@@ -125,7 +129,8 @@ export async function getPersonalDashboardMetrics({
           new Date(b.updated_at || b.created_at).getTime() -
           new Date(a.updated_at || a.created_at).getTime()
       );
-      lastSnapshotAt = sortedEntries[0].updated_at || sortedEntries[0].created_at;
+      lastSnapshotAt =
+        sortedEntries[0].updated_at || sortedEntries[0].created_at;
     }
   }
 
@@ -209,9 +214,7 @@ export async function getPersonalDashboardMetrics({
       // Visits by Day (최근 14일)
       const dayCounts = new Map<string, number>();
       for (const visit of visits) {
-        const dateStr = new Date(visit.occurred_at)
-          .toISOString()
-          .split("T")[0];
+        const dateStr = new Date(visit.occurred_at).toISOString().split("T")[0];
         dayCounts.set(dateStr, (dayCounts.get(dateStr) || 0) + 1);
       }
       visitsByDay14d = Array.from(dayCounts.entries())
@@ -235,7 +238,9 @@ export async function getPersonalDashboardMetrics({
   if (snapshotIds.length > 0) {
     const { data: entriesWithDetails } = await supabase
       .from("snapshot_entries")
-      .select("id, name, domain, project, module, feature, updated_at, created_at, snapshot_id")
+      .select(
+        "id, name, domain, project, module, feature, updated_at, created_at, snapshot_id"
+      )
       .in("snapshot_id", snapshotIds)
       .order("updated_at", { ascending: false })
       .limit(5);
@@ -268,9 +273,10 @@ export async function getPersonalDashboardMetrics({
 
     if (allEntries) {
       for (const entry of allEntries) {
-        const key = entry.domain && entry.project 
-          ? `${entry.domain} / ${entry.project}`
-          : entry.domain || entry.project || "미분류";
+        const key =
+          entry.domain && entry.project
+            ? `${entry.domain} / ${entry.project}`
+            : entry.domain || entry.project || "미분류";
         domainMap.set(key, (domainMap.get(key) || 0) + 1);
       }
     }
@@ -283,8 +289,12 @@ export async function getPersonalDashboardMetrics({
 
   // 3. 주차별 엔트리 수 추이 (최근 8주)
   const weeklyTrend: { week: string; count: number }[] = [];
-  const weeklyProgressTrend: { week: string; avgProgress: number; entryCount: number }[] = [];
-  
+  const weeklyProgressTrend: {
+    week: string;
+    avgProgress: number;
+    entryCount: number;
+  }[] = [];
+
   if (snapshots && snapshots.length > 0 && snapshotIds.length > 0) {
     // 모든 엔트리를 한 번에 조회 (N+1 쿼리 방지) - past_week 포함
     const { data: allEntriesForTrend } = await supabase
@@ -313,11 +323,14 @@ export async function getPersonalDashboardMetrics({
       }
 
       // 최근 8주 추출 및 집계
-      const sortedWeeks = Array.from(weekMap.keys()).sort().reverse().slice(0, 8);
+      const sortedWeeks = Array.from(weekMap.keys())
+        .sort()
+        .reverse()
+        .slice(0, 8);
 
       for (const weekKey of sortedWeeks.reverse()) {
         const weekSnapshotIds = weekMap.get(weekKey) || [];
-        
+
         // 엔트리 수 계산
         const weekEntries = weekSnapshotIds.flatMap(
           (sid) => snapshotIdToEntries.get(sid) || []
@@ -336,7 +349,7 @@ export async function getPersonalDashboardMetrics({
         for (const entry of weekEntries) {
           const pastWeek = entry.past_week as any;
           const tasks = pastWeek?.tasks || [];
-          
+
           for (const task of tasks) {
             if (typeof task.progress === "number") {
               totalProgress += task.progress;
@@ -380,4 +393,3 @@ export async function getPersonalDashboardMetrics({
     weeklyProgressTrend,
   };
 }
-

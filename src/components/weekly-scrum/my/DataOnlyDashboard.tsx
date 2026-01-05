@@ -1,6 +1,6 @@
 /**
  * Personal Space Dashboard (Data-Only)
- * 
+ *
  * 개인 메트릭 및 사용 데이터를 표시하는 데이터 전용 대시보드
  * 테이블/리스트 중심의 레이아웃 (한눈에 파악 가능)
  */
@@ -30,7 +30,15 @@ export function DataOnlyDashboard({
   userName,
   metrics,
 }: DataOnlyDashboardProps) {
-  const { snapshots, plans, usage, recentEntries, domainDistribution, weeklyTrend, weeklyProgressTrend } = metrics;
+  const {
+    snapshots,
+    plans,
+    usage,
+    recentEntries,
+    domainDistribution,
+    weeklyTrend,
+    weeklyProgressTrend,
+  } = metrics;
 
   // 날짜 포맷팅 (상대 시간)
   const formatRelativeTime = (dateStr: string | null) => {
@@ -202,7 +210,8 @@ export function DataOnlyDashboard({
         {/* 2열 레이아웃 (트렌드 + 경로) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* 안내 문구 (전체 너비) */}
-          {(usage.visitsByDay14d.length > 0 || usage.topRoutes7d.length > 0) && (
+          {(usage.visitsByDay14d.length > 0 ||
+            usage.topRoutes7d.length > 0) && (
             <div className="lg:col-span-2 px-4 py-3 bg-[#ddf4ff] border border-[#54aeff]/30 rounded-md">
               <div className="flex items-start gap-3">
                 <svg
@@ -221,8 +230,13 @@ export function DataOnlyDashboard({
                     메뉴 사용 데이터 안내
                   </p>
                   <p className="text-xs text-[#0969da]/90 leading-relaxed">
-                    이 데이터는 메뉴 기능 개선을 위한 <strong>실험 데이터(PoC)</strong>입니다. 
-                    빠른 의사결정과 반복 개선을 목적으로 수집되며, <strong>개인 평가 등 다른 용도로는 사용되지 않습니다</strong>.
+                    이 데이터는 메뉴 기능 개선을 위한{" "}
+                    <strong>실험 데이터(PoC)</strong>입니다. 빠른 의사결정과
+                    반복 개선을 목적으로 수집되며,{" "}
+                    <strong>
+                      개인 평가 등 다른 용도로는 사용되지 않습니다
+                    </strong>
+                    .
                   </p>
                 </div>
               </div>
@@ -259,9 +273,23 @@ export function DataOnlyDashboard({
                     margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
                   >
                     <defs>
-                      <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0969da" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#0969da" stopOpacity={0} />
+                      <linearGradient
+                        id="colorVisits"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#0969da"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#0969da"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -320,15 +348,21 @@ export function DataOnlyDashboard({
                   <span>
                     총 방문:{" "}
                     <strong className="text-[#0969da] font-semibold">
-                      {usage.visitsByDay14d.reduce((sum, item) => sum + item.count, 0)}회
+                      {usage.visitsByDay14d.reduce(
+                        (sum, item) => sum + item.count,
+                        0
+                      )}
+                      회
                     </strong>
                   </span>
                   <span>
                     일평균:{" "}
                     <strong className="text-[#0969da] font-semibold">
                       {(
-                        usage.visitsByDay14d.reduce((sum, item) => sum + item.count, 0) /
-                        usage.visitsByDay14d.length
+                        usage.visitsByDay14d.reduce(
+                          (sum, item) => sum + item.count,
+                          0
+                        ) / usage.visitsByDay14d.length
                       ).toFixed(1)}
                       회
                     </strong>
@@ -374,7 +408,10 @@ export function DataOnlyDashboard({
                   </thead>
                   <tbody className="divide-y divide-[#d0d7de]">
                     {usage.topRoutes7d.map((route, idx) => (
-                      <tr key={route.path} className="hover:bg-[#f6f8fa] transition-colors">
+                      <tr
+                        key={route.path}
+                        className="hover:bg-[#f6f8fa] transition-colors"
+                      >
                         <td className="px-4 py-2 text-center">
                           <span
                             className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
@@ -431,7 +468,13 @@ export function DataOnlyDashboard({
                   margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
                 >
                   <defs>
-                    <linearGradient id="colorProgress" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="colorProgress"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="5%" stopColor="#1a7f37" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#1a7f37" stopOpacity={0} />
                     </linearGradient>
@@ -483,7 +526,12 @@ export function DataOnlyDashboard({
                     strokeWidth={3}
                     fill="url(#colorProgress)"
                     dot={{ fill: "#1a7f37", r: 5 }}
-                    activeDot={{ r: 7, fill: "#1a7f37", stroke: "#ffffff", strokeWidth: 2 }}
+                    activeDot={{
+                      r: 7,
+                      fill: "#1a7f37",
+                      stroke: "#ffffff",
+                      strokeWidth: 2,
+                    }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -492,8 +540,10 @@ export function DataOnlyDashboard({
                   전체 평균:{" "}
                   <strong className="text-[#1a7f37] font-semibold">
                     {(
-                      weeklyProgressTrend.reduce((sum, item) => sum + item.avgProgress, 0) /
-                      weeklyProgressTrend.length
+                      weeklyProgressTrend.reduce(
+                        (sum, item) => sum + item.avgProgress,
+                        0
+                      ) / weeklyProgressTrend.length
                     ).toFixed(1)}
                     %
                   </strong>
@@ -501,13 +551,19 @@ export function DataOnlyDashboard({
                 <div>
                   최고:{" "}
                   <strong className="text-[#1a7f37] font-semibold">
-                    {Math.max(...weeklyProgressTrend.map((item) => item.avgProgress)).toFixed(1)}%
+                    {Math.max(
+                      ...weeklyProgressTrend.map((item) => item.avgProgress)
+                    ).toFixed(1)}
+                    %
                   </strong>
                 </div>
                 <div>
                   최근 주차:{" "}
                   <strong className="text-[#1a7f37] font-semibold">
-                    {weeklyProgressTrend[weeklyProgressTrend.length - 1]?.avgProgress.toFixed(1) || 0}%
+                    {weeklyProgressTrend[
+                      weeklyProgressTrend.length - 1
+                    ]?.avgProgress.toFixed(1) || 0}
+                    %
                   </strong>
                 </div>
               </div>
@@ -553,13 +609,21 @@ export function DataOnlyDashboard({
                   </h3>
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-xs text-[#57606a]">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <svg
+                        className="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
                         <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                       </svg>
                       <span className="truncate">{entry.domain}</span>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-[#57606a]">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <svg
+                        className="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
                         <path
                           fillRule="evenodd"
                           d="M7 2a1 1 0 00-.707 1.707L7 4.414v3.758a1 1 0 01-.293.707l-4 4C.817 14.769 2.156 18 4.828 18h10.343c2.673 0 4.012-3.231 2.122-5.121l-4-4A1 1 0 0113 8.172V4.414l.707-.707A1 1 0 0013 2H7zm2 6.172V4h2v4.172a3 3 0 00.879 2.12l1.027 1.028a4 4 0 00-2.171.102l-.47.156a4 4 0 01-2.53 0l-.563-.187a1.993 1.993 0 00-.114-.035l1.063-1.063A3 3 0 009 8.172z"
@@ -570,7 +634,11 @@ export function DataOnlyDashboard({
                     </div>
                     {entry.feature && (
                       <div className="flex items-center gap-1 text-xs text-[#57606a]">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
                           <path
                             fillRule="evenodd"
                             d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
@@ -628,13 +696,23 @@ export function DataOnlyDashboard({
                 </thead>
                 <tbody className="divide-y divide-[#d0d7de]">
                   {domainDistribution.map((item) => {
-                    const maxCount = Math.max(...domainDistribution.map((d) => d.count));
-                    const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
-                    const totalCount = domainDistribution.reduce((sum, d) => sum + d.count, 0);
-                    const actualPercentage = totalCount > 0 ? (item.count / totalCount) * 100 : 0;
+                    const maxCount = Math.max(
+                      ...domainDistribution.map((d) => d.count)
+                    );
+                    const percentage =
+                      maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+                    const totalCount = domainDistribution.reduce(
+                      (sum, d) => sum + d.count,
+                      0
+                    );
+                    const actualPercentage =
+                      totalCount > 0 ? (item.count / totalCount) * 100 : 0;
 
                     return (
-                      <tr key={item.label} className="hover:bg-[#f6f8fa] transition-colors">
+                      <tr
+                        key={item.label}
+                        className="hover:bg-[#f6f8fa] transition-colors"
+                      >
                         <td className="px-4 py-2 text-[#24292f] font-medium">
                           {item.label}
                         </td>
@@ -744,7 +822,12 @@ export function DataOnlyDashboard({
                         />
                       );
                     }}
-                    activeDot={{ r: 7, fill: "#0969da", stroke: "#ffffff", strokeWidth: 2 }}
+                    activeDot={{
+                      r: 7,
+                      fill: "#0969da",
+                      stroke: "#ffffff",
+                      strokeWidth: 2,
+                    }}
                   />
                 </LineChart>
               </ResponsiveContainer>

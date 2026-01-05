@@ -70,16 +70,24 @@ export async function getAlignmentGanttData({
 
   try {
     // 1. 사용자에게 할당된 Plans 조회
-    const { data: planAssignees } = await supabase
+    const { data: planAssignees, error: assigneesError } = await supabase
       .from("plan_assignees")
       .select("plan_id, role")
+      .eq("workspace_id", workspaceId) // workspace_id 필터 추가 (중요!)
       .eq("user_id", userId);
 
+    // 디버깅 로그
+    console.log("[Alignment] Workspace ID:", workspaceId);
+    console.log("[Alignment] User ID:", userId);
+    console.log("[Alignment] Plan Assignees:", planAssignees);
+    console.log("[Alignment] Assignees Error:", assigneesError);
+
     const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
+    console.log("[Alignment] Assigned Plan IDs:", assignedPlanIds);
 
     let plans: any[] = [];
     if (assignedPlanIds.length > 0) {
-      const { data: plansData } = await supabase
+      const { data: plansData, error: plansError } = await supabase
         .from("plans")
         .select(`
           id,
@@ -106,7 +114,12 @@ export async function getAlignmentGanttData({
         .in("id", assignedPlanIds)
         .order("start_date", { ascending: true });
 
+      console.log("[Alignment] Plans Data:", plansData);
+      console.log("[Alignment] Plans Error:", plansError);
+
       plans = plansData || [];
+    } else {
+      console.log("[Alignment] No assigned plan IDs found - skipping plans query");
     }
 
   // 2. 사용자가 작성한 Snapshot Entries 조회
