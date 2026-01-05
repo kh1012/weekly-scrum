@@ -52,8 +52,6 @@ export function useCollaborationData(
           };
         });
 
-        console.log("[useCollaborationData] Week filters:", weekFilters);
-
         // 모든 주차의 스냅샷을 병렬로 가져오기
         const snapshotPromises = weekFilters.map(({ year, week }) =>
           supabase
@@ -68,18 +66,15 @@ export function useCollaborationData(
 
         // 모든 스냅샷 수집
         const allSnapshots: Array<{ id: string; year: number; week: string }> = [];
-        snapshotResults.forEach(({ data: snapshots, error: snapshotError }, index) => {
+        snapshotResults.forEach(({ data: snapshots, error: snapshotError }) => {
           if (snapshotError) {
-            console.error("[useCollaborationData] Snapshot error:", snapshotError, "for filter:", weekFilters[index]);
+            console.error("[useCollaborationData] Snapshot error:", snapshotError);
             return;
           }
-          console.log(`[useCollaborationData] Found ${snapshots?.length || 0} snapshots for ${weekFilters[index].year}-${weekFilters[index].week}`);
           if (snapshots && snapshots.length > 0) {
             allSnapshots.push(...snapshots);
           }
         });
-
-        console.log("[useCollaborationData] Total snapshots found:", allSnapshots.length);
 
         // 모든 스냅샷의 엔트리를 병렬로 가져오기
         const entryPromises = allSnapshots.map((snapshot) =>
@@ -168,15 +163,6 @@ export function useCollaborationData(
               allEntries.push(...validEntries);
             }
         });
-
-        console.log("[useCollaborationData] Total entries with collaborators:", allEntries.length);
-        if (allEntries.length > 0) {
-          console.log("[useCollaborationData] Sample entry:", {
-            name: allEntries[0].name,
-            collaboratorsCount: allEntries[0].collaborators.length,
-            collaborators: allEntries[0].collaborators,
-          });
-        }
 
         setEntries(allEntries);
       } catch (err) {

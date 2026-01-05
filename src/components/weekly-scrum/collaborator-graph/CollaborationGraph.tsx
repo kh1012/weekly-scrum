@@ -35,50 +35,59 @@ export function CollaborationGraph({
     // 최대 totalCollabs 값 찾기 (노드 크기 스케일링용)
     const maxCollabs = Math.max(...graphNodes.map((n) => n.totalCollabs), 1);
 
-    // 노드 데이터 준비 (원형 초기 배치)
-    const centerX = 480;
-    const centerY = 482;
+    // 노드 데이터 준비
+    const centerX = 500;
+    const centerY = 400;
     const nodeData = graphNodes.map((node, index) => {
       const baseSize = 60;
       const maxSize = 150;
       const size =
         baseSize + ((node.totalCollabs / maxCollabs) * (maxSize - baseSize));
 
-      // 원형 배치 (초기 위치)
-      const angle = (index / graphNodes.length) * 2 * Math.PI;
-      const radius = Math.max(300, graphNodes.length * 30); // 노드 수에 따라 반경 조정
-
       return {
         id: node.id,
         label: node.label,
         totalCollabs: node.totalCollabs,
         size,
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle),
+        x: centerX + (Math.random() - 0.5) * 200, // 랜덤 초기 위치
+        y: centerY + (Math.random() - 0.5) * 200,
       };
     });
 
-    // 충돌 방지 시뮬레이션만 적용 (원형 배치 유지)
+    // 엣지 데이터를 d3-force용으로 변환
+    const linkData = graphEdges.map((edge) => ({
+      source: edge.source,
+      target: edge.target,
+      weight: edge.weight,
+    }));
+
+    // Force-directed layout 시뮬레이션 (엣지 기반 자연스러운 배치)
     const simulation = d3
       .forceSimulation(nodeData as any)
       .force(
-        "collide",
-        d3.forceCollide().radius((d: any) => d.size / 2 + 30).strength(0.8)
+        "link",
+        d3
+          .forceLink(linkData)
+          .id((d: any) => d.id)
+          .distance((d: any) => {
+            // 엣지 weight가 높을수록 가까이
+            return 150 - (d.weight / Math.max(...graphEdges.map((e) => e.weight), 1)) * 50;
+          })
+          .strength(0.7)
       )
       .force(
-        "radial",
-        d3
-          .forceRadial(
-            (d: any, i: number) => Math.max(300, graphNodes.length * 30),
-            centerX,
-            centerY
-          )
-          .strength(0.3) // 원형 유지 강도
+        "charge",
+        d3.forceManyBody().strength(-800) // 노드 간 반발력
+      )
+      .force("center", d3.forceCenter(centerX, centerY).strength(0.1))
+      .force(
+        "collide",
+        d3.forceCollide().radius((d: any) => d.size / 2 + 40).strength(0.9)
       )
       .stop();
 
-    // 시뮬레이션 실행 (더 많은 반복으로 안정적인 위치 확보)
-    for (let i = 0; i < 200; i++) {
+    // 시뮬레이션 실행 (충분한 반복으로 안정적인 위치 확보)
+    for (let i = 0; i < 300; i++) {
       simulation.tick();
     }
 
@@ -215,12 +224,14 @@ export function CollaborationGraph({
         connectionMode={ConnectionMode.Loose}
         fitView={isLayoutReady}
         fitViewOptions={{
-          padding: 0.2,
-          duration: 400,
+          padding: 0.3,
+          duration: 500,
+          minZoom: 0.5,
+          maxZoom: 1.5,
         }}
-        minZoom={0.1}
-        maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        minZoom={0.3}
+        maxZoom={2.5}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
