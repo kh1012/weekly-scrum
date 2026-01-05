@@ -108,11 +108,21 @@ export function FeedbackKanbanView({
 
     setUpdatingFeedbackId(feedbackId);
 
-    await updateFeedbackStatus(feedbackId, newStatus);
+    try {
+      // 최소 300ms 로딩 표시 보장 (사용자 피드백 개선)
+      await Promise.all([
+        updateFeedbackStatus(feedbackId, newStatus),
+        new Promise(resolve => setTimeout(resolve, 300))
+      ]);
 
-    startTransition(() => {
-      router.refresh();
-    });
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      console.error("Failed to update feedback status:", error);
+      setUpdatingFeedbackId(null);
+      alert("상태 변경에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   // Resolve 모달에서 완료 처리 성공 시

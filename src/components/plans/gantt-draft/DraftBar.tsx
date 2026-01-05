@@ -417,8 +417,8 @@ export const DraftBar = memo(function DraftBar({
               <svg className="w-6 h-6 -rotate-90">
                 {/* 배경 원 */}
                 <circle
-                  cx="12"
-                  cy="12"
+                  cx="14"
+                  cy="14"
                   r="9"
                   fill="none"
                   stroke="#e5e7eb"
@@ -426,8 +426,8 @@ export const DraftBar = memo(function DraftBar({
                 />
                 {/* 진행률 원 */}
                 <circle
-                  cx="12"
-                  cy="12"
+                  cx="14"
+                  cy="14"
                   r="9"
                   fill="none"
                   stroke="#10b981"
