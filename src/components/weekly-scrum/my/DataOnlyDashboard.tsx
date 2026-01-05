@@ -189,6 +189,34 @@ export function DataOnlyDashboard({
 
         {/* 2열 레이아웃 (트렌드 + 경로) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* 안내 문구 (전체 너비) */}
+          {(usage.visitsByDay14d.length > 0 || usage.topRoutes7d.length > 0) && (
+            <div className="lg:col-span-2 px-4 py-3 bg-[#ddf4ff] border border-[#54aeff]/30 rounded-md">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-[#0969da] shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-sm text-[#0969da] font-medium mb-1">
+                    메뉴 사용 데이터 안내
+                  </p>
+                  <p className="text-xs text-[#0969da]/90 leading-relaxed">
+                    이 데이터는 메뉴 기능 개선을 위한 <strong>실험 데이터(PoC)</strong>입니다. 
+                    빠른 의사결정과 반복 개선을 목적으로 수집되며, <strong>개인 평가 등 다른 용도로는 사용되지 않습니다</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 페이지 방문 추이 */}
           {usage.visitsByDay14d.length > 0 && (
             <div>
