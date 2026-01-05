@@ -101,9 +101,7 @@ export async function getAlignmentGanttData({
           start_date,
           end_date,
           status,
-          stage,
-          custom_feature,
-          custom_module
+          stage
         `)
         .eq("workspace_id", workspaceId)
         .in("id", assignedPlanIds)
@@ -214,8 +212,6 @@ export async function getAlignmentGanttData({
     end_date: plan.end_date,
     status: plan.status,
     stage: plan.stage,
-    custom_feature: plan.custom_feature || false,
-    custom_module: plan.custom_module || false,
     assignees: plan.assignees?.map((a: any) => ({
       userId: a.user_id,
       role: a.role,
