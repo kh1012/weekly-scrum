@@ -88,15 +88,15 @@ export function LastWeekNextFab({
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Action Button - GitHub 스타일 */}
       <button
         onClick={() => setIsOpen(true)}
         onMouseEnter={handleMouseEnter}
-        className="fixed right-5 bottom-5 z-[9997] flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 font-medium text-sm"
+        className="fixed right-5 bottom-5 z-[9997] flex items-center gap-2 px-3 py-2 bg-[#0969da] text-white rounded-md shadow-md hover:bg-[#0860ca] hover:shadow-lg transition-all duration-200 font-medium text-xs border border-[#0969da]"
         title="지난 주 Next 항목 참고하기"
       >
         <svg
-          className="w-5 h-5"
+          className="w-4 h-4"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -108,7 +108,7 @@ export function LastWeekNextFab({
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <span className="hidden sm:inline">지난 주 Next 참고</span>
+        <span className="hidden sm:inline">지난 주 Next</span>
       </button>
 
       {/* Panel */}
