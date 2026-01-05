@@ -250,6 +250,33 @@ function SnapshotsMainViewInner({
     projectFilters.size + moduleFilters.size + featureFilters.size;
   const hasActiveFilters = totalFilterCount > 0;
 
+  // 스냅샷 통계 계산
+  const snapshotStats = useMemo(() => {
+    const domains = new Set<string>();
+    const projects = new Set<string>();
+    const modules = new Set<string>();
+    const features = new Set<string>();
+    let totalEntries = 0;
+
+    snapshots.forEach((snapshot) => {
+      snapshot.entries.forEach((entry) => {
+        totalEntries++;
+        if (entry.domain) domains.add(entry.domain);
+        if (entry.project) projects.add(entry.project);
+        if (entry.module) modules.add(entry.module);
+        if (entry.feature) features.add(entry.feature);
+      });
+    });
+
+    return {
+      totalEntries,
+      domainCount: domains.size,
+      projectCount: projects.size,
+      moduleCount: modules.size,
+      featureCount: features.size,
+    };
+  }, [snapshots]);
+
   // 초기 마운트 시 프로그래스바 완료 (이미 로드된 상태이므로)
   useEffect(() => {
     navigationProgress.done();
@@ -822,13 +849,20 @@ function SnapshotsMainViewInner({
           {/* 서브 메뉴 영역 */}
           <div className="shrink-0 relative flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
             {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
-            <div className="hidden lg:flex items-center gap-2 text-sm">
-              <span className="font-semibold text-[#0969da]">
-                {selectedYear}년 W{String(selectedWeek).padStart(2, "0")}
-              </span>
-              <span className="text-[#57606a]">
-                ({snapshots.length}개의 스냅샷)
-              </span>
+            <div className="hidden lg:flex flex-col gap-0.5 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-[#0969da]">
+                  {selectedYear}년 W{String(selectedWeek).padStart(2, "0")}
+                </span>
+                <span className="text-[#57606a]">
+                  총 {snapshotStats.totalEntries}개의 엔트리
+                </span>
+              </div>
+              {snapshotStats.totalEntries > 0 && (
+                <div className="text-xs text-[#8c959f]">
+                  {snapshotStats.domainCount} domains, {snapshotStats.projectCount} projects, {snapshotStats.moduleCount} modules, {snapshotStats.featureCount} features가 기록 되었습니다.
+                </div>
+              )}
             </div>
 
             {/* 모바일: 빈 공간 */}
