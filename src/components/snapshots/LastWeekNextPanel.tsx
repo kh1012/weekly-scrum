@@ -93,7 +93,7 @@ export function LastWeekNextPanel({
       <div
         className="fixed z-[10000] cursor-ew-resize hover:bg-blue-400/30 transition-colors"
         style={{
-          right: `${6 + width}px`,
+          right: `${24 + width}px`,
           bottom: "80px",
           width: "4px",
           height: `${height}px`,
