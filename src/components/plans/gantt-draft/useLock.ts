@@ -65,38 +65,6 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
   const lastActivityRef = useRef<number>(Date.now());
   // 마지막 하트비트 시간
   const lastHeartbeatRef = useRef<number>(Date.now());
-  
-  // Store의 bars/flags 변경 감지하여 활동 기록
-  const bars = useDraftStore((s) => s.bars);
-  const flags = useDraftStore((s) => s.flags);
-  const barsLengthRef = useRef(bars.length);
-  const flagsLengthRef = useRef(flags.length);
-  
-  // bars나 flags가 변경되면 활동 기록
-  useEffect(() => {
-    // 편집 중일 때만 활동 기록
-    if (!isEditing) return;
-    
-    // 초기 로드는 무시 (길이가 0에서 변경되는 경우)
-    const prevBarsLength = barsLengthRef.current;
-    const prevFlagsLength = flagsLengthRef.current;
-    
-    // dirty/deleted 상태 변경도 감지
-    const dirtyBarsCount = bars.filter(b => b.dirty || b.deleted).length;
-    const dirtyFlagsCount = flags.filter(f => f.dirty || f.deleted).length;
-    
-    if (
-      (prevBarsLength > 0 && bars.length !== prevBarsLength) ||
-      (prevFlagsLength > 0 && flags.length !== prevFlagsLength) ||
-      dirtyBarsCount > 0 ||
-      dirtyFlagsCount > 0
-    ) {
-      lastActivityRef.current = Date.now();
-    }
-    
-    barsLengthRef.current = bars.length;
-    flagsLengthRef.current = flags.length;
-  }, [bars, flags, isEditing]);
 
   // refs for callbacks to avoid recreating LockManager
   const setLockStateRef = useRef(setLockState);

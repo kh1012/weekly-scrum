@@ -28,7 +28,7 @@ import {
 } from "@/components/common/Icons";
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
-import { showToast } from "./Toast";
+import { showToast, showInactivityWarningToast } from "./Toast";
 
 interface GanttHeaderProps {
   workspaceId: string;
@@ -153,6 +153,39 @@ export function GanttHeader({
   const changesCount = useDraftStore(
     (s) => s.bars.filter((b) => b.dirty).length + s.flags.filter((f) => f.dirty).length
   );
+
+  // 비활성 경고 토스트 표시
+  const shownWarningsRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!isMyLock || !isEditing || inactivitySeconds === null) {
+      // 편집 종료되거나 락이 없으면 경고 초기화
+      shownWarningsRef.current.clear();
+      return;
+    }
+
+    const INACTIVITY_TIMEOUT = 600; // 10분
+    const remainingSeconds = INACTIVITY_TIMEOUT - inactivitySeconds;
+
+    // 3분 남았을 때 (180초)
+    if (remainingSeconds <= 180 && remainingSeconds > 60 && !shownWarningsRef.current.has(3)) {
+      shownWarningsRef.current.add(3);
+      showInactivityWarningToast(3, () => {
+        recordActivity();
+        extendLockIfNeeded();
+        shownWarningsRef.current.clear(); // 연장 후 경고 초기화
+      });
+    }
+
+    // 1분 남았을 때 (60초)
+    if (remainingSeconds <= 60 && remainingSeconds > 0 && !shownWarningsRef.current.has(1)) {
+      shownWarningsRef.current.add(1);
+      showInactivityWarningToast(1, () => {
+        recordActivity();
+        extendLockIfNeeded();
+        shownWarningsRef.current.clear(); // 연장 후 경고 초기화
+      });
+    }
+  }, [inactivitySeconds, isMyLock, isEditing, recordActivity, extendLockIfNeeded]);
 
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
