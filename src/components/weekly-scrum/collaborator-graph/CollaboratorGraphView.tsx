@@ -253,6 +253,7 @@ export function CollaboratorGraphView({
                   edges={graphData.edges}
                   onNodeClick={handleNodeClick}
                   onEdgeClick={handleEdgeClick}
+                  selectedNode={selectedNode}
                 />
               )}
             </div>

@@ -78,6 +78,7 @@ interface CollaborationGraphProps {
   edges: GraphEdge[];
   onNodeClick?: (node: GraphNode) => void;
   onEdgeClick?: (edge: GraphEdge) => void;
+  selectedNode?: GraphNode | null;
 }
 
 export function CollaborationGraph({
@@ -85,6 +86,7 @@ export function CollaborationGraph({
   edges: graphEdges,
   onNodeClick,
   onEdgeClick,
+  selectedNode,
 }: CollaborationGraphProps) {
   // React Flow 노드 변환 (FigJam 스타일 트리 레이아웃)
   const initialNodes: Node[] = useMemo(() => {
@@ -289,7 +291,7 @@ export function CollaborationGraph({
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: "default", // 베지어 곡선 (부드러운 곡선)
+        type: "smoothstep", // smoothstep으로 변경하여 곡선 강조
         animated: false,
         style: {
           strokeWidth,
@@ -302,18 +304,7 @@ export function CollaborationGraph({
           width: 12,
           height: 12,
         },
-        label: edge.weight > 1 ? `${edge.weight}` : undefined,
-        labelStyle: {
-          fontSize: "10px",
-          fill: "#6e7781",
-          fontWeight: "400",
-        },
-        labelBgStyle: {
-          fill: "#ffffff",
-          fillOpacity: 1,
-        },
-        labelBgPadding: [2, 4] as [number, number],
-        labelBgBorderRadius: 3,
+        // 라벨 제거 (겹치는 엣지를 시각적으로 구분)
       };
     });
   }, [graphEdges]);
@@ -456,6 +447,31 @@ export function CollaborationGraph({
           </div>
         </div>
       </div>
+      
+      {/* 선택된 노드 정보 (우측 하단) */}
+      {selectedNode && (
+        <div className="absolute bottom-4 right-4 w-64 bg-[#ddf4ff] rounded-md border border-[#0969da] p-3 shadow-lg">
+          <div className="text-[11px] font-semibold text-[#24292f] mb-2">선택된 노드</div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#57606a]">이름</span>
+              <span className="text-[11px] font-medium text-[#24292f]">{selectedNode.label}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#57606a]">총 협업</span>
+              <span className="text-[11px] font-medium text-[#24292f]">{selectedNode.totalCollabs}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#57606a]">파트너</span>
+              <span className="text-[11px] font-medium text-[#24292f]">{selectedNode.uniquePartners}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#57606a]">작성</span>
+              <span className="text-[11px] font-medium text-[#24292f]">{selectedNode.authoredCount}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
