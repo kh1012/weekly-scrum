@@ -42,11 +42,12 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
     return `${year}-${month}-${day}`;
   };
 
-  // 브라우저 시간대 기준으로 날짜 범위 생성
+  // 브라우저 시간대 기준으로 날짜 범위 생성 (최대 8주치 데이터 준비)
   const getDateRange = useMemo(() => {
     const today = getTodayInBrowserTimezone();
     const days: string[] = [];
-    const totalDays = weeksToShow * 7;
+    const maxWeeks = 8; // 최대 8주치 데이터 준비
+    const totalDays = maxWeeks * 7;
 
     for (let i = 0; i < totalDays; i++) {
       const date = new Date(today);
@@ -54,7 +55,7 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
       days.push(getDateStringInBrowserTimezone(date));
     }
     return days;
-  }, [weeksToShow]);
+  }, []);
 
   // 날짜별 그룹화 (브라우저 시간대 기준)
   const dailyGroups: DailyGroup[] = useMemo(() => {
@@ -173,7 +174,7 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
                 <p className="text-xs font-semibold text-[#24292f]">
                   {day.dayLabel}{" "}
                   <span className="text-[10px] text-[rgba(140,149,159,1)] font-normal">
-                    {personCount} person, {entryCount} entries
+                    - {personCount} person, {entryCount} entries
                   </span>
                 </p>
               </div>
@@ -211,7 +212,7 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
           onClick={() => setWeeksToShow((prev) => prev + 1)}
           className="w-full px-3 py-2 text-xs font-medium text-[#0969da] hover:bg-[#f6f8fa] rounded-md transition-colors border border-[#d0d7de]"
         >
-          더보기 ({weeksToShow + 1}주차)
+          한 주 더보기 ({weeksToShow + 1}주차)
         </button>
       )}
     </div>
