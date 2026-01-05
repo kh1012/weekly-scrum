@@ -466,7 +466,7 @@ export function PlanViewPopover({
         )}
 
         {/* 정보 없음 표시 (Plans만) */}
-        {!bar.isSnapshot && !hasDescription && !hasLinks && bar.assignees?.length === 0 && (
+        {!bar.isSnapshot && !hasDescription && !hasLinks && (
           <div className="text-sm text-gray-400 text-center py-4">
             추가 정보가 없습니다
           </div>
