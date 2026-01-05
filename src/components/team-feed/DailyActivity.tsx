@@ -59,7 +59,10 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
   // 날짜별 그룹화 (브라우저 시간대 기준)
   const dailyGroups: DailyGroup[] = useMemo(() => {
     return getDateRange.map((date) => {
-      const contributorMap = new Map<string, { personName: string; entryCount: number }>();
+      const contributorMap = new Map<
+        string,
+        { personName: string; entryCount: number }
+      >();
 
       feedItems.forEach((item) => {
         // 브라우저 시간대 기준으로 날짜 변환
@@ -79,11 +82,13 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
         }
       });
 
-      const contributors = Array.from(contributorMap.entries()).map(([personId, data]) => ({
-        personId,
-        personName: data.personName,
-        entryCount: data.entryCount,
-      }));
+      const contributors = Array.from(contributorMap.entries()).map(
+        ([personId, data]) => ({
+          personId,
+          personName: data.personName,
+          entryCount: data.entryCount,
+        })
+      );
 
       // 날짜 포맷팅 (브라우저 시간대 기준)
       const dateObj = new Date(date + "T00:00:00");
@@ -148,7 +153,8 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
           Recent Activity
         </h2>
         <p className="text-[10px] text-[rgba(140,149,159,1)]">
-          Last 7 days - {last7DaysStats.personCount} person, {last7DaysStats.entryCount} entries
+          Last 7 days - {last7DaysStats.personCount} person,{" "}
+          {last7DaysStats.entryCount} entries
         </p>
       </div>
 
@@ -156,13 +162,19 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
       <div className="space-y-3">
         {visibleGroups.map((day) => {
           const personCount = day.contributors.length;
-          const entryCount = day.contributors.reduce((sum, c) => sum + c.entryCount, 0);
+          const entryCount = day.contributors.reduce(
+            (sum, c) => sum + c.entryCount,
+            0
+          );
 
           return (
             <div key={day.date}>
               <div className="mb-2">
                 <p className="text-xs font-semibold text-[#24292f]">
-                  {day.dayLabel} - {personCount} person, {entryCount} entries
+                  {day.dayLabel}{" "}
+                  <span className="text-[10px] text-[rgba(140,149,159,1)] font-normal">
+                    {personCount} person, {entryCount} entries
+                  </span>
                 </p>
               </div>
 
@@ -184,7 +196,9 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-[rgba(140,149,159,1)]">No activity</p>
+                <p className="text-xs text-[rgba(140,149,159,1)]">
+                  No activity
+                </p>
               )}
             </div>
           );
@@ -203,4 +217,3 @@ export function DailyActivity({ feedItems }: DailyActivityProps) {
     </div>
   );
 }
-
