@@ -291,7 +291,7 @@ export function CollaborationGraph({
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: "smoothstep", // smoothstep으로 변경하여 곡선 강조
+        type: "default", // 기본 베지어 곡선
         animated: false,
         style: {
           strokeWidth,
@@ -304,7 +304,7 @@ export function CollaborationGraph({
           width: 12,
           height: 12,
         },
-        // 라벨 제거 (겹치는 엣지를 시각적으로 구분)
+        // 라벨 제거 (깔끔한 디자인)
       };
     });
   }, [graphEdges]);
@@ -498,10 +498,6 @@ export function CollaborationGraph({
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-[#57606a]">파트너</span>
               <span className="text-[11px] font-medium text-[#24292f]">{selectedNode.uniquePartners}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[#57606a]">작성</span>
-              <span className="text-[11px] font-medium text-[#24292f]">{selectedNode.authoredCount}</span>
             </div>
           </div>
         </div>

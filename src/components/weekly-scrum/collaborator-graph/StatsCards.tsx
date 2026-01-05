@@ -258,7 +258,7 @@ export function StatsCards({
                   {selectedNode.label}
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <div className="text-[11px] text-[#0969da] mb-0.5">총 협업</div>
                   <div className="text-xs font-semibold text-[#24292f]">
@@ -269,12 +269,6 @@ export function StatsCards({
                   <div className="text-[11px] text-[#0969da] mb-0.5">파트너</div>
                   <div className="text-xs font-semibold text-[#24292f]">
                     {selectedNode.uniquePartners}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[11px] text-[#0969da] mb-0.5">작성</div>
-                  <div className="text-xs font-semibold text-[#24292f]">
-                    {selectedNode.authoredCount}
                   </div>
                 </div>
               </div>
@@ -390,8 +384,7 @@ export function StatsCards({
                                   {node.label}
                                 </div>
                                 <div className="text-[11px] text-[#57606a] mt-0.5">
-                                  {node.uniquePartners}명과 협업 • 작성{" "}
-                                  {node.authoredCount}건
+                                  {node.uniquePartners}명과 협업
                                 </div>
                               </div>
                             </div>
