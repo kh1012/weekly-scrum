@@ -18,14 +18,10 @@ import { navigationProgress } from "@/components/weekly-scrum/common/NavigationP
 import { LoadingButton } from "@/components/common/LoadingButton";
 import { getCurrentISOWeek, getWeekStartDateString } from "@/lib/date/isoWeek";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
-import { ToastProvider } from "@/components/weekly-scrum/manage/Toast";
+import { NewEntryModal } from "@/components/weekly-scrum/manage/NewEntryModal";
+import { ToastProvider, useToast } from "@/components/weekly-scrum/manage/Toast";
 import type { WorkloadLevel } from "@/lib/supabase/types";
 import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
-import {
-  downloadSnapshotsAsCSV,
-  downloadSnapshotsAsJSON,
-} from "@/lib/utils/exportSnapshot";
-import type { ScrumItem } from "@/types/scrum";
 
 interface SnapshotsMainViewProps {
   userId: string;
@@ -179,10 +175,6 @@ function SnapshotsMainViewInner({
   const [isProjectFilterOpen, setIsProjectFilterOpen] = useState(false);
   const [isModuleFilterOpen, setIsModuleFilterOpen] = useState(false);
   const [isFeatureFilterOpen, setIsFeatureFilterOpen] = useState(false);
-  
-  // Export 드롭다운 상태
-  const [showExportDropdown, setShowExportDropdown] = useState(false);
-  const exportButtonRef = useRef<HTMLDivElement>(null);
 
   // 필터 토글 함수
   const toggleProjectFilter = (project: string) => {
@@ -262,20 +254,6 @@ function SnapshotsMainViewInner({
   useEffect(() => {
     navigationProgress.done();
   }, []);
-  
-  // Export 드롭다운 외부 클릭 시 닫기
-  useEffect(() => {
-    if (!showExportDropdown) return;
-    
-    const handleClickOutside = (e: MouseEvent) => {
-      if (exportButtonRef.current && !exportButtonRef.current.contains(e.target as Node)) {
-        setShowExportDropdown(false);
-      }
-    };
-    
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showExportDropdown]);
 
   // 스냅샷 목록 조회
   const fetchSnapshots = useCallback(async () => {
@@ -351,6 +329,38 @@ function SnapshotsMainViewInner({
 
   // 새로 작성하기 모달 상태
   const [isNewSnapshotModalOpen, setIsNewSnapshotModalOpen] = useState(false);
+  
+  // 새 엔트리 작성 모달 상태
+  const [isNewEntryModalOpen, setIsNewEntryModalOpen] = useState(false);
+  
+  // 사용자 정보 및 메타 옵션 (API로 가져오기)
+  const [displayName, setDisplayName] = useState("");
+  const [memberNames, setMemberNames] = useState<string[]>([]);
+  const [domainOptions, setDomainOptions] = useState<string[]>([]);
+  const [projectOptions, setProjectOptions] = useState<string[]>([]);
+  const [moduleOptions, setModuleOptions] = useState<string[]>([]);
+  const [featureOptions, setFeatureOptions] = useState<string[]>([]);
+  
+  // 사용자 정보 및 메타 옵션 로드
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const response = await fetch(`/api/manage/snapshots/user-data?workspaceId=${workspaceId}&userId=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDisplayName(data.displayName || "");
+          setMemberNames(data.memberNames || []);
+          setDomainOptions(data.domainOptions || []);
+          setProjectOptions(data.projectOptions || []);
+          setModuleOptions(data.moduleOptions || []);
+          setFeatureOptions(data.featureOptions || []);
+        }
+      } catch (error) {
+        console.error("Failed to load user data:", error);
+      }
+    };
+    loadUserData();
+  }, [workspaceId, userId]);
 
   // 기존 데이터 불러오기 선택
   const handleLoadExistingData = (selectedWeekKeys: string[]) => {
@@ -371,40 +381,6 @@ function SnapshotsMainViewInner({
       `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=empty`
     );
   };
-  
-  // 데이터 추출 핸들러
-  const handleExport = useCallback(
-    (format: "csv" | "json") => {
-      // 현재 주차의 전체 스냅샷 데이터를 ScrumItem 형식으로 변환
-      const items: ScrumItem[] = snapshots.flatMap((snapshot) =>
-        snapshot.entries.map((entry) => ({
-          name: "", // 스냅샷에는 이름 정보가 없으므로 빈 문자열
-          domain: entry.domain,
-          project: entry.project,
-          module: entry.module || null,
-          topic: entry.feature || "",
-          plan: "",
-          planPercent: 0,
-          progress: entry.past_week?.tasks?.map((t) => t.title) || [],
-          progressPercent: entry.past_week?.tasks?.[0]?.progress || 0,
-          reason: "",
-          next: entry.this_week?.tasks || [],
-          risk: entry.risks || null,
-          riskLevel: (entry.risk_level ?? null) as 0 | 1 | 2 | 3 | null,
-          collaborators: entry.collaborators,
-        }))
-      );
-
-      const weekString = `W${String(selectedWeek).padStart(2, "0")}`;
-
-      if (format === "csv") {
-        downloadSnapshotsAsCSV(items, selectedYear, weekString);
-      } else if (format === "json") {
-        downloadSnapshotsAsJSON(items, selectedYear, weekString);
-      }
-    },
-    [snapshots, selectedYear, selectedWeek]
-  );
 
   // 모바일: 타임라인 오버레이 상태
   const [isMobileTimelineOpen, setIsMobileTimelineOpen] = useState(false);
@@ -786,52 +762,8 @@ function SnapshotsMainViewInner({
 
               <div className="hidden md:block h-6 w-px bg-[#d0d7de]" />
 
-              {/* 액션 버튼 - PC에서는 아이콘+텍스트, 모바일에서는 텍스트만 */}
+              {/* 액션 버튼 - PC에서는 아이콘+텍스트, 모바일에서는 아이콘만 */}
               <div className="flex items-center gap-2">
-                {/* 데이터 추출 버튼 */}
-                <div ref={exportButtonRef} className="relative">
-                  <button
-                    onClick={() => setShowExportDropdown(!showExportDropdown)}
-                    disabled={snapshots.length === 0}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6] disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="데이터 추출"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span className="hidden md:inline">추출</span>
-                  </button>
-                  
-                  {/* Export 드롭다운 */}
-                  {showExportDropdown && (
-                    <div
-                      className="absolute right-0 top-[calc(100%+4px)] z-50 w-40 rounded-md overflow-hidden animate-fadeIn bg-white border border-[#d0d7de]"
-                      style={{
-                        boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
-                      }}
-                    >
-                      <button
-                        onClick={() => handleExport("csv")}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        CSV로 저장
-                      </button>
-                      <button
-                        onClick={() => handleExport("json")}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                        </svg>
-                        JSON으로 저장
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
                 <LoadingButton
                   onClick={handleEditWeek}
                   disabled={snapshots.length === 0}
@@ -841,7 +773,7 @@ function SnapshotsMainViewInner({
                   size="sm"
                   icon={
                     <svg
-                      className="w-3.5 h-3.5 hidden md:block"
+                      className="w-3.5 h-3.5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -855,8 +787,30 @@ function SnapshotsMainViewInner({
                     </svg>
                   }
                 >
-                  <span className="hidden md:inline">편집하기</span>
-                  <span className="md:hidden">편집</span>
+                  <span className="hidden md:inline">전체 엔트리 편집하기</span>
+                </LoadingButton>
+
+                <LoadingButton
+                  onClick={() => setIsNewEntryModalOpen(true)}
+                  variant="primary"
+                  size="sm"
+                  icon={
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  }
+                >
+                  <span className="hidden md:inline">새 엔트리 작성하기</span>
                 </LoadingButton>
 
                 <LoadingButton
@@ -866,7 +820,7 @@ function SnapshotsMainViewInner({
                   size="sm"
                   icon={
                     <svg
-                      className="w-3.5 h-3.5 hidden md:block"
+                      className="w-3.5 h-3.5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -885,8 +839,7 @@ function SnapshotsMainViewInner({
                       : ""
                   }
                 >
-                  <span className="hidden md:inline">새로 작성하기</span>
-                  <span className="md:hidden">작성</span>
+                  <span className="hidden md:inline">새 스냅샷 작성하기</span>
                 </LoadingButton>
               </div>
             </div>
@@ -1035,6 +988,7 @@ function SnapshotsMainViewInner({
                 onEntryDeleted={handleEntryDeleted}
                 isSelectMode={isSelectMode}
                 onToggleSelectMode={setIsSelectMode}
+                onNewSnapshotClick={() => setIsNewSnapshotModalOpen(true)}
               />
             </div>
 
@@ -1051,7 +1005,7 @@ function SnapshotsMainViewInner({
         </div>
       </div>
 
-      {/* 새로 작성하기 모달 */}
+      {/* 새 스냅샷 작성하기 모달 */}
       <NewSnapshotModal
         isOpen={isNewSnapshotModalOpen}
         onClose={() => setIsNewSnapshotModalOpen(false)}
@@ -1061,6 +1015,27 @@ function SnapshotsMainViewInner({
         onCreateEmpty={handleCreateEmpty}
         workspaceId={workspaceId}
         userId={userId}
+      />
+      
+      {/* 새 엔트리 작성하기 모달 */}
+      <NewEntryModal
+        isOpen={isNewEntryModalOpen}
+        onClose={() => setIsNewEntryModalOpen(false)}
+        year={selectedYear}
+        week={selectedWeek}
+        workspaceId={workspaceId}
+        userId={userId}
+        displayName={displayName}
+        memberNames={memberNames}
+        domainOptions={domainOptions}
+        projectOptions={projectOptions}
+        moduleOptions={moduleOptions}
+        featureOptions={featureOptions}
+        existingSnapshotId={snapshots.length > 0 ? snapshots[0].id : undefined}
+        onSuccess={() => {
+          fetchSnapshots();
+          fetchSnapshotCounts();
+        }}
       />
     </div>
   );
