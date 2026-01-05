@@ -824,11 +824,11 @@ export function GanttHeader({
                   )}
                   
                   {/* 툴팁 (hover 시 표시) */}
-                  <span className="invisible group-hover:visible absolute bottom-full mb-2 px-3 py-1.5 text-xs text-white bg-gray-900 rounded-md whitespace-nowrap shadow-lg z-50 pointer-events-none">
+                  <span className="invisible group-hover:visible absolute top-full mt-2 px-3 py-1.5 text-xs text-white bg-gray-900 rounded-md whitespace-nowrap shadow-lg z-50 pointer-events-none">
                     {autoSaveEnabled
                       ? "자동 저장 켜짐 (90초 비활성 시)"
                       : "자동 저장 꺼짐 (클릭하여 활성화)"}
-                    <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900" />
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-px border-4 border-transparent border-b-gray-900" />
                   </span>
                 </button>
 

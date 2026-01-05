@@ -762,6 +762,8 @@ export function DraftGanttView({
 
       if (flagSuccess && planSuccess) {
         showToast("success", "자동 저장 완료", undefined);
+        // 자동 저장 완료 후 타이머 리셋
+        recordActivity();
       } else {
         showToast("error", "자동 저장 실패", "수동으로 저장해주세요.");
       }
@@ -785,6 +787,7 @@ export function DraftGanttView({
     clearFlagDirtyFlags,
     fetchFlags,
     router,
+    recordActivity,
   ]);
 
   // 변경사항 폐기 핸들러 (토스트는 onStopSuccess에서 처리)
