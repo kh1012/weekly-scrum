@@ -261,7 +261,7 @@ export function CollaborationGraph({
     }));
   }, [graphNodes, graphEdges]);
 
-  // React Flow 엣지 변환 (관계별 색상 적용)
+  // React Flow 엣지 변환 (관계별 색상 적용 + 그라데이션)
   const initialEdges: Edge[] = useMemo(() => {
     if (graphEdges.length === 0) return [];
 
@@ -271,13 +271,18 @@ export function CollaborationGraph({
 
       // 관계별 색상 결정 (work-map과 동일)
       // pair > pre > post 우선순위
-      let strokeColor = "#8c959f"; // 기본 회색
+      let gradientId = "gradient-default"; // 기본 회색
+      let arrowColor = "#8c959f";
+      
       if (edge.relations.includes("pair")) {
-        strokeColor = "#3b82f6"; // 파란색
+        gradientId = "gradient-pair";
+        arrowColor = "#3b82f6"; // 파란색
       } else if (edge.relations.includes("pre")) {
-        strokeColor = "#f59e0b"; // 주황색
+        gradientId = "gradient-pre";
+        arrowColor = "#f59e0b"; // 주황색
       } else if (edge.relations.includes("post")) {
-        strokeColor = "#22c55e"; // 초록색
+        gradientId = "gradient-post";
+        arrowColor = "#22c55e"; // 초록색
       }
 
       return {
@@ -288,12 +293,12 @@ export function CollaborationGraph({
         animated: false,
         style: {
           strokeWidth,
-          stroke: strokeColor,
+          stroke: `url(#${gradientId})`,
           strokeLinecap: "round",
         },
         markerEnd: {
           type: MarkerType.Arrow,
-          color: strokeColor,
+          color: arrowColor,
           width: 12,
           height: 12,
         },
@@ -386,6 +391,35 @@ export function CollaborationGraph({
         elementsSelectable={true}
         proOptions={{ hideAttribution: true }}
       >
+        {/* SVG 그라데이션 정의 (좌→우, opacity 100% → 30%) */}
+        <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+          <defs>
+            {/* pair 그라데이션 (파란색) */}
+            <linearGradient id="gradient-pair" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="1" />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.3" />
+            </linearGradient>
+            
+            {/* pre 그라데이션 (주황색) */}
+            <linearGradient id="gradient-pre" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.3" />
+            </linearGradient>
+            
+            {/* post 그라데이션 (초록색) */}
+            <linearGradient id="gradient-post" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#22c55e" stopOpacity="1" />
+              <stop offset="100%" stopColor="#22c55e" stopOpacity="0.3" />
+            </linearGradient>
+            
+            {/* default 그라데이션 (회색) */}
+            <linearGradient id="gradient-default" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#8c959f" stopOpacity="1" />
+              <stop offset="100%" stopColor="#8c959f" stopOpacity="0.3" />
+            </linearGradient>
+          </defs>
+        </svg>
+        
         <Controls showInteractive={false} />
       </ReactFlow>
       
@@ -394,15 +428,30 @@ export function CollaborationGraph({
         <div className="text-[11px] font-semibold text-[#24292f] mb-2">협업 관계</div>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-0.5 rounded" style={{ backgroundColor: "#3b82f6" }} />
+            <div 
+              className="w-6 h-0.5 rounded" 
+              style={{ 
+                background: "linear-gradient(to right, #3b82f6 0%, rgba(59, 130, 246, 0.3) 100%)" 
+              }} 
+            />
             <span className="text-[10px] text-[#57606a]">pair (실시간 협업)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-0.5 rounded" style={{ backgroundColor: "#f59e0b" }} />
+            <div 
+              className="w-6 h-0.5 rounded" 
+              style={{ 
+                background: "linear-gradient(to right, #f59e0b 0%, rgba(245, 158, 11, 0.3) 100%)" 
+              }} 
+            />
             <span className="text-[10px] text-[#57606a]">pre (선행 협업)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-0.5 rounded" style={{ backgroundColor: "#22c55e" }} />
+            <div 
+              className="w-6 h-0.5 rounded" 
+              style={{ 
+                background: "linear-gradient(to right, #22c55e 0%, rgba(34, 197, 94, 0.3) 100%)" 
+              }} 
+            />
             <span className="text-[10px] text-[#57606a]">post (후행 협업)</span>
           </div>
         </div>
