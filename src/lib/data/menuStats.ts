@@ -3,6 +3,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentISOWeek } from "@/lib/date/isoWeek";
 
 export interface MenuStats {
   feedbacks_count: number;
@@ -111,15 +112,9 @@ export async function getMenuStats(params: {
       }
 
       // 2. 현재 주차 Snapshot Entries 수
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const jan4 = new Date(currentYear, 0, 4);
-      const dayOfWeek = jan4.getDay() || 7;
-      const firstMonday = new Date(jan4);
-      firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
-      const weekDiff = now.getTime() - firstMonday.getTime();
-      const currentWeek = Math.ceil(weekDiff / (7 * 24 * 60 * 60 * 1000));
-      const currentWeekLabel = `W${currentWeek.toString().padStart(2, "0")}`;
+      const currentWeekInfo = getCurrentISOWeek();
+      const currentYear = currentWeekInfo.year;
+      const currentWeekLabel = `W${currentWeekInfo.week.toString().padStart(2, "0")}`;
 
       const { data: currentWeekSnapshots } = await supabase
         .from("snapshots")

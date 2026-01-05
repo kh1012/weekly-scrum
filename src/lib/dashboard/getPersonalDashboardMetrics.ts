@@ -282,31 +282,46 @@ export async function getPersonalDashboardMetrics({
 
   // 3. 주차별 엔트리 수 추이 (최근 8주)
   const weeklyTrend: { week: string; count: number }[] = [];
-  if (snapshots && snapshots.length > 0) {
-    // 주차별 스냅샷 그룹핑
-    const weekMap = new Map<string, string[]>(); // "2025-W01" -> [snapshotIds]
-    for (const snapshot of snapshots) {
-      const weekKey = `${snapshot.year}-${snapshot.week}`;
-      if (!weekMap.has(weekKey)) {
-        weekMap.set(weekKey, []);
+  if (snapshots && snapshots.length > 0 && snapshotIds.length > 0) {
+    // 모든 엔트리를 한 번에 조회 (N+1 쿼리 방지)
+    const { data: allEntriesForTrend } = await supabase
+      .from("snapshot_entries")
+      .select("snapshot_id")
+      .in("snapshot_id", snapshotIds);
+
+    if (allEntriesForTrend) {
+      // 주차별 스냅샷 그룹핑
+      const weekMap = new Map<string, string[]>(); // "2025-W01" -> [snapshotIds]
+      for (const snapshot of snapshots) {
+        const weekKey = `${snapshot.year}-${snapshot.week}`;
+        if (!weekMap.has(weekKey)) {
+          weekMap.set(weekKey, []);
+        }
+        weekMap.get(weekKey)!.push(snapshot.id);
       }
-      weekMap.get(weekKey)!.push(snapshot.id);
-    }
 
-    // 최근 8주 추출
-    const sortedWeeks = Array.from(weekMap.keys()).sort().reverse().slice(0, 8);
+      // 스냅샷 ID -> 엔트리 수 매핑
+      const snapshotIdToCount = new Map<string, number>();
+      for (const entry of allEntriesForTrend) {
+        snapshotIdToCount.set(
+          entry.snapshot_id,
+          (snapshotIdToCount.get(entry.snapshot_id) || 0) + 1
+        );
+      }
 
-    for (const weekKey of sortedWeeks.reverse()) {
-      const weekSnapshotIds = weekMap.get(weekKey) || [];
-      if (weekSnapshotIds.length > 0) {
-        const { count } = await supabase
-          .from("snapshot_entries")
-          .select("*", { count: "exact", head: true })
-          .in("snapshot_id", weekSnapshotIds);
+      // 최근 8주 추출 및 집계
+      const sortedWeeks = Array.from(weekMap.keys()).sort().reverse().slice(0, 8);
+
+      for (const weekKey of sortedWeeks.reverse()) {
+        const weekSnapshotIds = weekMap.get(weekKey) || [];
+        const weekEntryCount = weekSnapshotIds.reduce(
+          (sum, sid) => sum + (snapshotIdToCount.get(sid) || 0),
+          0
+        );
 
         weeklyTrend.push({
           week: weekKey,
-          count: count || 0,
+          count: weekEntryCount,
         });
       }
     }
