@@ -27,7 +27,16 @@ const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 interface PlanViewPopoverProps {
-  bar: DraftBar;
+  bar: DraftBar & {
+    isSnapshot?: boolean;
+    past_week?: {
+      tasks?: Array<{ title: string; progress: number }>;
+      progress?: string;
+      next?: string;
+      risk?: string;
+      memo?: string;
+    };
+  };
   anchorPosition: { x: number; y: number };
   onClose: () => void;
 }
@@ -350,8 +359,107 @@ export function PlanViewPopover({
           </div>
         )}
 
-        {/* 정보 없음 표시 */}
-        {!hasDescription && !hasLinks && bar.assignees?.length === 0 && (
+        {/* Snapshot 정보 */}
+        {bar.isSnapshot && bar.past_week && (
+          <div className="space-y-4 border-t border-gray-200 pt-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <span className="px-2 py-1 bg-gray-600 text-white text-xs font-bold rounded">
+                📸 Snapshot Entry
+              </span>
+            </div>
+
+            {/* Tasks */}
+            {bar.past_week.tasks && bar.past_week.tasks.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">작업 내역</div>
+                <div className="space-y-1.5">
+                  {bar.past_week.tasks.map((task, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 text-sm p-2 rounded-lg"
+                      style={{ background: "#f8fafc" }}
+                    >
+                      <div className="flex-1">{task.title}</div>
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          className="w-20 h-1.5 rounded-full overflow-hidden"
+                          style={{ background: "#e5e7eb" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${task.progress}%`,
+                              background:
+                                "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-600 w-10 text-right">
+                          {task.progress}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Progress */}
+            {bar.past_week.progress && (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">진행 상황</div>
+                <div
+                  className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
+                  style={{ background: "#f8fafc" }}
+                >
+                  {bar.past_week.progress}
+                </div>
+              </div>
+            )}
+
+            {/* Next */}
+            {bar.past_week.next && (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">다음 계획</div>
+                <div
+                  className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
+                  style={{ background: "#f8fafc" }}
+                >
+                  {bar.past_week.next}
+                </div>
+              </div>
+            )}
+
+            {/* Risk */}
+            {bar.past_week.risk && (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">리스크</div>
+                <div
+                  className="text-sm text-red-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
+                  style={{ background: "#fef2f2" }}
+                >
+                  {bar.past_week.risk}
+                </div>
+              </div>
+            )}
+
+            {/* Memo */}
+            {bar.past_week.memo && (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">메모</div>
+                <div
+                  className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
+                  style={{ background: "#f8fafc" }}
+                >
+                  {bar.past_week.memo}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 정보 없음 표시 (Plans만) */}
+        {!bar.isSnapshot && !hasDescription && !hasLinks && bar.assignees?.length === 0 && (
           <div className="text-sm text-gray-400 text-center py-4">
             추가 정보가 없습니다
           </div>

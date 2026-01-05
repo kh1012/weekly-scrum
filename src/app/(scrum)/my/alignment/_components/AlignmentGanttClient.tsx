@@ -65,6 +65,7 @@ export function AlignmentGanttClient({
     metaKey: item.metaKey,
     year: item.year,
     week: item.week,
+    past_week: item.past_week, // Snapshot 상세 정보
   }));
 
   // 통계 계산

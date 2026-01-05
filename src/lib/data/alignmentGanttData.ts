@@ -38,6 +38,13 @@ export interface AlignmentGanttItem {
   week?: string;
   avgProgress?: number; // 평균 진행률 (0-100)
   metaKey?: string; // 메타 정보 키 (연결 화살표용)
+  past_week?: {
+    tasks?: Array<{ title: string; progress: number }>;
+    progress?: string;
+    next?: string;
+    risk?: string;
+    memo?: string;
+  };
 }
 
 export interface AlignmentGanttData {
@@ -255,6 +262,7 @@ export async function getAlignmentGanttData({
       week: snapshot.week,
       avgProgress, // 평균 진행률 추가
       metaKey, // 메타 키 추가 (연결 화살표용)
+      past_week: pastWeek, // Snapshot 상세 정보 추가
       assignees: [],
     };
   });
