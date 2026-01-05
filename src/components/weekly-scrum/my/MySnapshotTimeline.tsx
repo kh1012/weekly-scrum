@@ -33,12 +33,19 @@ interface MySnapshotTimelineProps {
   entries: SnapshotTimelineEntry[];
   /** 주차 범위 (8/12/16) */
   weeksRange?: 8 | 12 | 16;
+  /** 주차 범위 변경 핸들러 */
+  onWeeksRangeChange?: (range: 8 | 12 | 16) => void;
 }
 
-export function MySnapshotTimeline({ entries, weeksRange = 12 }: MySnapshotTimelineProps) {
+export function MySnapshotTimeline({ 
+  entries, 
+  weeksRange = 12,
+  onWeeksRangeChange,
+}: MySnapshotTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<SnapshotTimelineEntry | null>(null);
 
   // 모바일 감지
   useEffect(() => {
@@ -60,6 +67,16 @@ export function MySnapshotTimeline({ entries, weeksRange = 12 }: MySnapshotTimel
     return (
       <div className="w-full">
         <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
+          {/* 주차 범위 선택 UI (빈 상태에도 표시) */}
+          {onWeeksRangeChange && (
+            <div className="mb-4">
+              <WeekRangeSelector
+                selectedRange={weeksRange}
+                onChange={onWeeksRangeChange}
+              />
+            </div>
+          )}
+          
           <div className="bg-white border border-[#d0d7de] rounded-md p-12 text-center">
             <p className="text-[#57606a] mb-2">스냅샷 엔트리가 없습니다</p>
             <p className="text-sm text-[#8c959f]">
@@ -93,6 +110,27 @@ export function MySnapshotTimeline({ entries, weeksRange = 12 }: MySnapshotTimel
   // 데스크톱: Gantt 타임라인
   return (
     <div className="w-full" ref={containerRef}>
+      {/* 컨트롤 바: 주차 범위 선택 + 필터 + 검색 */}
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {onWeeksRangeChange && (
+            <WeekRangeSelector
+              selectedRange={weeksRange}
+              onChange={onWeeksRangeChange}
+            />
+          )}
+          
+          {/* 통계 정보 */}
+          <div className="ml-auto flex items-center gap-4 text-sm text-[#57606a]">
+            <span>{metaGroups.length}개 기능</span>
+            <span>•</span>
+            <span>{entries.length}개 엔트리</span>
+            <span>•</span>
+            <span>{weekAxis.length}주간</span>
+          </div>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <div
           className="relative bg-white border-t border-b border-[#d0d7de]"
@@ -246,9 +284,10 @@ export function MySnapshotTimeline({ entries, weeksRange = 12 }: MySnapshotTimel
                             isSelected={
                               weekEntries.some((e) => e.id === selectedEntryId)
                             }
-                            onClick={() =>
-                              setSelectedEntryId(weekEntries[0].id)
-                            }
+                            onClick={() => {
+                              setSelectedEntryId(weekEntries[0].id);
+                              setSelectedEntry(weekEntries[0]);
+                            }}
                           />
                         )}
                       </div>
@@ -259,6 +298,43 @@ export function MySnapshotTimeline({ entries, weeksRange = 12 }: MySnapshotTimel
             ))}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 주차 범위 선택기
+ */
+interface WeekRangeSelectorProps {
+  selectedRange: 8 | 12 | 16;
+  onChange: (range: 8 | 12 | 16) => void;
+}
+
+function WeekRangeSelector({ selectedRange, onChange }: WeekRangeSelectorProps) {
+  const options: Array<{ value: 8 | 12 | 16; label: string }> = [
+    { value: 8, label: "최근 8주" },
+    { value: 12, label: "최근 12주" },
+    { value: 16, label: "최근 16주" },
+  ];
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-[#57606a]">기간:</span>
+      <div className="flex rounded-md border border-[#d0d7de] overflow-hidden">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => onChange(option.value)}
+            className={`px-3 py-1.5 text-sm font-medium transition-colors border-r border-[#d0d7de] last:border-r-0 ${
+              selectedRange === option.value
+                ? "bg-[#0969da] text-white"
+                : "bg-white text-[#24292f] hover:bg-[#f6f8fa]"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@
  */
 
 import { getMySnapshotEntries } from "@/lib/data/mySnapshotTimeline";
-import { MySnapshotTimeline } from "./MySnapshotTimeline";
+import { MySnapshotTimelineClient } from "./MySnapshotTimelineClient";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import { Suspense } from "react";
 
@@ -61,7 +61,13 @@ async function TimelineContent({ workspaceId, userId, weeksRange = 12 }: MySnaps
     toWeek,
   });
 
-  return <MySnapshotTimeline entries={entries} weeksRange={weeksRange} />;
+  return (
+    <MySnapshotTimelineClient
+      entries={entries}
+      workspaceId={workspaceId}
+      userId={userId}
+    />
+  );
 }
 
 export function MySnapshotTimelineSection(props: MySnapshotTimelineSectionProps) {
