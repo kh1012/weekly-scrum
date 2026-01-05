@@ -5,10 +5,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const workspaceId = searchParams.get("workspaceId");
+    const userId = searchParams.get("userId");
     const yearStr = searchParams.get("year");
     const weekStr = searchParams.get("week");
 
-    if (!workspaceId || !yearStr || !weekStr) {
+    if (!workspaceId || !userId || !yearStr || !weekStr) {
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 }
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const items = await getLastWeekNext(workspaceId, year, week);
+    const items = await getLastWeekNext(workspaceId, userId, year, week);
 
     return NextResponse.json({ items });
   } catch (error) {

@@ -6,12 +6,14 @@ import type { LastWeekNextItem } from "@/lib/data/lastWeekNext";
 
 interface LastWeekNextFabProps {
   workspaceId: string;
+  userId: string;
   year: number;
   week: number;
 }
 
 export function LastWeekNextFab({
   workspaceId,
+  userId,
   year,
   week,
 }: LastWeekNextFabProps) {
@@ -29,7 +31,7 @@ export function LastWeekNextFab({
         const response = await fetch(
           `/api/snapshots/last-week-next?workspaceId=${encodeURIComponent(
             workspaceId
-          )}&year=${year}&week=${week}`
+          )}&userId=${encodeURIComponent(userId)}&year=${year}&week=${week}`
         );
 
         if (response.ok) {
@@ -48,7 +50,7 @@ export function LastWeekNextFab({
     };
 
     fetchData();
-  }, [isOpen, workspaceId, year, week]);
+  }, [isOpen, workspaceId, userId, year, week]);
 
   return (
     <>

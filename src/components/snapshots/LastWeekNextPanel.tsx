@@ -42,13 +42,10 @@ export function LastWeekNextPanel({
 
   return (
     <>
-      {/* Backdrop - 클릭해도 닫히지 않음 */}
-      <div className="fixed inset-0 bg-black/40 z-[9998] transition-opacity" />
-
       {/* Popover Panel - 우측 하단에 고정 */}
       <div
         ref={panelRef}
-        className="fixed right-6 bottom-20 w-[90vw] sm:w-[520px] max-h-[70vh] bg-white rounded-2xl shadow-2xl z-[9999] flex flex-col animate-in zoom-in-95 fade-in duration-200"
+        className="fixed right-6 bottom-20 w-[90vw] sm:w-[520px] max-h-[70vh] bg-white rounded-2xl shadow-2xl z-[9999] flex flex-col animate-in zoom-in-95 fade-in duration-200 border border-gray-200"
       >
         {/* Header */}
         <div className="shrink-0 px-5 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white rounded-t-2xl">

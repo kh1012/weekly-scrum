@@ -1269,6 +1269,7 @@ function EditSnapshotsViewInner({
       {/* 지난 주 Next 참고 플로팅 버튼 */}
       <LastWeekNextFab
         workspaceId={workspaceId}
+        userId={userId}
         year={year}
         week={week}
       />
