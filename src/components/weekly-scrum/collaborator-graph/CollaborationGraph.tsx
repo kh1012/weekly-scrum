@@ -11,10 +11,54 @@ import ReactFlow, {
   BackgroundVariant,
   ConnectionMode,
   MarkerType,
+  Handle,
+  Position,
+  NodeProps,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import * as d3 from "d3-force";
 import type { GraphNode, GraphEdge } from "./buildCollabGraph";
+
+// 커스텀 노드 컴포넌트 (하단에만 연결점)
+function CustomNode({ data }: NodeProps) {
+  return (
+    <>
+      {/* 하단 연결점만 */}
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        style={{
+          background: "#d0d7de",
+          width: "8px",
+          height: "8px",
+          border: "2px solid #ffffff",
+          bottom: "-4px",
+        }}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{
+          background: "#d0d7de",
+          width: "8px",
+          height: "8px",
+          border: "2px solid #ffffff",
+          bottom: "-4px",
+        }}
+      />
+      <div className="flex items-center justify-center gap-2 px-3">
+        <div className="font-normal text-[13px] text-[#24292f]">{data.name}</div>
+        <div className="text-[11px] text-[#6e7781] font-normal">
+          {data.totalCollabs}
+        </div>
+      </div>
+    </>
+  );
+}
+
+const nodeTypes = {
+  custom: CustomNode,
+};
 
 interface CollaborationGraphProps {
   nodes: GraphNode[];
@@ -125,20 +169,14 @@ export function CollaborationGraph({
       });
     });
 
-    // React Flow 노드로 변환 (FigJam 스타일)
+    // React Flow 노드로 변환 (FigJam 스타일, 커스텀 노드 사용)
     return nodeData.map((node: any) => ({
       id: node.id,
-      type: "default",
+      type: "custom",
       position: { x: node.x, y: node.y },
       data: {
-        label: (
-          <div className="flex items-center justify-center gap-2 px-3">
-            <div className="font-normal text-[13px] text-[#24292f]">{node.label}</div>
-            <div className="text-[11px] text-[#6e7781] font-normal">
-              {node.totalCollabs}
-            </div>
-          </div>
-        ),
+        name: node.label,
+        totalCollabs: node.totalCollabs,
       },
       style: {
         width: NODE_WIDTH,
@@ -154,6 +192,8 @@ export function CollaborationGraph({
         cursor: "pointer",
         transition: "all 0.2s ease",
       },
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Bottom,
     }));
   }, [graphNodes, graphEdges]);
 
@@ -169,7 +209,7 @@ export function CollaborationGraph({
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        type: "smoothstep", // FigJam 스타일 부드러운 선
+        type: "default", // 베지어 곡선 (부드러운 곡선)
         animated: false,
         style: {
           strokeWidth,
@@ -251,6 +291,7 @@ export function CollaborationGraph({
       <ReactFlow
         nodes={nodes}
         edges={visibleEdges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
