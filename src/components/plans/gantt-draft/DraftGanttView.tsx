@@ -358,6 +358,7 @@ export function DraftGanttView({
         year: (plan as any).year,
         week: (plan as any).week,
         authorName: (plan as any).authorName,
+        authorId: (plan as any).authorId,
         past_week: (plan as any).past_week,
         this_week: (plan as any).this_week,
         collaborators: (plan as any).collaborators,

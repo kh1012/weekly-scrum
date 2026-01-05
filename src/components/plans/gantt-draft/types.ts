@@ -152,6 +152,7 @@ export interface DraftBar {
   year?: number;
   week?: string;
   authorName?: string; // 작성자 이름
+  authorId?: string; // 작성자 user_id (화살표 연결용)
   past_week?: {
     tasks?: Array<{ title: string; progress: number }>;
     progress?: string;

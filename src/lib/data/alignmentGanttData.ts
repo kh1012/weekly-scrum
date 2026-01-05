@@ -39,6 +39,7 @@ export interface AlignmentGanttItem {
   avgProgress?: number; // 평균 진행률 (0-100)
   metaKey?: string; // 메타 정보 키 (연결 화살표용)
   authorName?: string; // 작성자 이름
+  authorId?: string; // 작성자 user_id (화살표 연결용)
   past_week?: {
     tasks?: Array<{ title: string; progress: number }>;
     progress?: string;
@@ -65,7 +66,270 @@ export interface AlignmentGanttData {
 }
 
 /**
- * Alignment 간트 차트 데이터 조회
+ * Workspace-wide Alignment 간트 차트 데이터 조회
+ * 
+ * 모든 Plans와 모든 사용자의 Snapshot Entries를 조회합니다.
+ * My Alignment와 달리 사용자 필터링을 하지 않습니다.
+ * 
+ * @param workspaceId - 워크스페이스 ID
+ * @returns Plans + 모든 사용자의 Snapshot Entries
+ */
+export async function getWorkspaceAlignmentData({
+  workspaceId,
+}: {
+  workspaceId: string;
+}): Promise<AlignmentGanttData> {
+  const supabase = await createClient();
+
+  try {
+    // 1. 워크스페이스의 모든 Plans 조회
+    const { data: plansData, error: plansError } = await supabase
+      .from("plans")
+      .select(`
+        id,
+        type,
+        title,
+        domain,
+        project,
+        module,
+        feature,
+        start_date,
+        end_date,
+        status,
+        stage
+      `)
+      .eq("workspace_id", workspaceId)
+      .order("start_date", { ascending: true });
+
+    let plans: any[] = [];
+    if (plansError) {
+      console.error("[Workspace Alignment] Failed to fetch plans:", plansError);
+      plans = [];
+    } else {
+      plans = plansData || [];
+
+      // Plan 담당자 조회
+      const planIds = plans.map((p) => p.id);
+      if (planIds.length > 0) {
+        const { data: allAssigneesData } = await supabase
+          .from("plan_assignees")
+          .select("plan_id, user_id, role")
+          .eq("workspace_id", workspaceId)
+          .in("plan_id", planIds);
+
+        const userIds = [...new Set((allAssigneesData || []).map((a) => a.user_id))];
+        let profilesMap = new Map<string, string>();
+
+        if (userIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("user_id, display_name")
+            .in("user_id", userIds);
+
+          for (const p of profilesData || []) {
+            if (p.display_name) {
+              profilesMap.set(p.user_id, p.display_name);
+            }
+          }
+        }
+
+        const assigneesMap = new Map<string, any[]>();
+        for (const a of allAssigneesData || []) {
+          if (!assigneesMap.has(a.plan_id)) {
+            assigneesMap.set(a.plan_id, []);
+          }
+          assigneesMap.get(a.plan_id)!.push({
+            user_id: a.user_id,
+            role: a.role,
+            profiles: { display_name: profilesMap.get(a.user_id) || null },
+          });
+        }
+
+        for (const plan of plans) {
+          plan.assignees = assigneesMap.get(plan.id) || [];
+        }
+      }
+    }
+
+    // 2. 워크스페이스의 모든 Snapshot Entries 조회 (with author profile)
+    const { data: snapshots } = await supabase
+      .from("snapshots")
+      .select(`
+        id,
+        year,
+        week,
+        author_id,
+        profiles!snapshots_author_id_fkey(display_name, email)
+      `)
+      .eq("workspace_id", workspaceId)
+      .order("year", { ascending: true })
+      .order("week", { ascending: true });
+
+    const snapshotIds = snapshots?.map((s) => s.id) || [];
+
+    let snapshotEntries: any[] = [];
+    if (snapshotIds.length > 0) {
+      const { data: entriesData } = await supabase
+        .from("snapshot_entries")
+        .select(`
+          id,
+          snapshot_id,
+          name,
+          domain,
+          project,
+          module,
+          feature,
+          past_week,
+          this_week,
+          collaborators,
+          risks,
+          risk_level
+        `)
+        .in("snapshot_id", snapshotIds);
+
+      snapshotEntries = entriesData || [];
+    }
+
+    // 3. Snapshot 맵 생성
+    const snapshotMap = new Map(
+      snapshots?.map((s) => {
+        const profile = (s as any).profiles;
+        const authorName = profile?.display_name || profile?.email || "Unknown";
+        return [s.id, { year: s.year, week: s.week, authorName, authorId: s.author_id }];
+      }) || []
+    );
+
+    // 4. Plans를 AlignmentGanttItem 형식으로 변환
+    const planItems: AlignmentGanttItem[] = plans.map((plan) => ({
+      id: plan.id,
+      type: "plan",
+      title: plan.title || `${plan.domain} / ${plan.project}`,
+      domain: plan.domain || "",
+      project: plan.project || "",
+      module: plan.module || null,
+      feature: plan.feature || null,
+      start_date: plan.start_date,
+      end_date: plan.end_date,
+      status: plan.status,
+      stage: plan.stage,
+      assignees: plan.assignees?.map((a: any) => ({
+        userId: a.user_id,
+        role: a.role,
+        displayName: a.profiles?.display_name,
+      })) || [],
+    }));
+
+    // 5. Snapshot Entries를 AlignmentGanttItem 형식으로 변환
+    const snapshotItems: AlignmentGanttItem[] = snapshotEntries.map((entry) => {
+      const snapshot = snapshotMap.get(entry.snapshot_id);
+      if (!snapshot) {
+        throw new Error(`Snapshot not found for entry ${entry.id}`);
+      }
+
+      const weekNumber = parseInt(snapshot.week.replace("W", ""), 10);
+      const { weekStart, weekEnd } = getWeekDateRange(snapshot.year, weekNumber);
+
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+
+      const pastWeek = entry.past_week as any;
+      const thisWeek = entry.this_week as any;
+      const tasks = pastWeek?.tasks || [];
+      const avgProgress = tasks.length > 0
+        ? tasks.reduce((sum: number, task: any) => sum + (task.progress || 0), 0) / tasks.length
+        : 0;
+
+      const metaKey = `${entry.domain}::${entry.project}::${entry.module || ""}::${entry.feature || ""}`;
+
+      return {
+        id: `snapshot-${entry.id}`,
+        type: "snapshot",
+        title: entry.feature || entry.module || entry.project,
+        domain: entry.domain || "",
+        project: entry.project || "",
+        module: entry.module || null,
+        feature: entry.feature || null,
+        start_date: formatDate(weekStart),
+        end_date: formatDate(weekEnd),
+        status: "done",
+        stage: "completed",
+        priority: "snapshot",
+        custom_feature: true,
+        custom_module: false,
+        snapshotId: entry.snapshot_id,
+        year: snapshot.year,
+        week: snapshot.week,
+        avgProgress,
+        metaKey,
+        authorName: snapshot.authorName,
+        authorId: snapshot.authorId,
+        past_week: pastWeek,
+        this_week: thisWeek,
+        collaborators: entry.collaborators || [],
+        risks: entry.risks || [],
+        risk_level: entry.risk_level || 0,
+        assignees: [],
+      };
+    });
+
+    // 6. Plans + Snapshots 통합
+    const items = [...planItems, ...snapshotItems].sort((a, b) =>
+      a.start_date.localeCompare(b.start_date)
+    );
+
+    // 7. 워크스페이스 멤버 목록 조회
+    const { data: members } = await supabase
+      .from("workspace_members")
+      .select(`
+        user_id,
+        basic_role,
+        profiles!inner(display_name, email)
+      `)
+      .eq("workspace_id", workspaceId);
+
+    const membersList = members?.map((m: any) => ({
+      userId: m.user_id,
+      displayName: m.profiles?.display_name || m.profiles?.email || m.user_id,
+      email: m.profiles?.email || undefined,
+      basicRole: (m.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null) || null,
+    })) || [];
+
+    return {
+      items,
+      members: membersList,
+    };
+  } catch (error) {
+    console.error("Error fetching workspace alignment data:", error);
+    
+    const { data: members } = await supabase
+      .from("workspace_members")
+      .select(`
+        user_id,
+        basic_role,
+        profiles!inner(display_name, email)
+      `)
+      .eq("workspace_id", workspaceId);
+
+    const membersList = members?.map((m: any) => ({
+      userId: m.user_id,
+      displayName: m.profiles?.display_name || m.profiles?.email || m.user_id,
+      email: m.profiles?.email || undefined,
+      basicRole: (m.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null) || null,
+    })) || [];
+
+    return {
+      items: [],
+      members: membersList,
+    };
+  }
+}
+
+/**
+ * Personal Alignment 간트 차트 데이터 조회
  * 
  * 엣지 케이스 처리:
  * - Plans 없음: 빈 배열 반환
