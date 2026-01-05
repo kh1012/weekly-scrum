@@ -1,0 +1,75 @@
+/**
+ * 지난 주 Next 데이터 조회 유틸리티
+ */
+
+import { createClient } from "@/lib/supabase/server";
+import { getPreviousISOWeek, getWeekStartDateString } from "@/lib/date/isoWeek";
+
+export interface LastWeekNextItem {
+  id: string;
+  entryId: string;
+  feature: string;
+  project: string;
+  module: string;
+  next: string[];
+  updatedAt: string;
+}
+
+/**
+ * 지난 주 Next 항목들을 조회합니다.
+ * @param workspaceId - 워크스페이스 ID
+ * @param currentYear - 현재 연도
+ * @param currentWeek - 현재 주차
+ * @returns 지난 주의 Next 항목 리스트
+ */
+export async function getLastWeekNext(
+  workspaceId: string,
+  currentYear: number,
+  currentWeek: number
+): Promise<LastWeekNextItem[]> {
+  const supabase = await createClient();
+
+  // 이전 주차 계산
+  const { year: prevYear, week: prevWeek } = getPreviousISOWeek(currentYear, currentWeek);
+  const prevWeekStartDate = getWeekStartDateString(prevYear, prevWeek);
+
+  // 지난 주 스냅샷 엔트리 조회 (next가 있는 것만)
+  const { data, error } = await supabase
+    .from("snapshot_entries")
+    .select("id, snapshot_id, feature, project, module, next, updated_at")
+    .eq("workspace_id", workspaceId)
+    .eq("week_start_date", prevWeekStartDate)
+    .not("next", "is", null)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching last week next:", error);
+    return [];
+  }
+
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // 필터링 및 매핑: next 배열이 비어있지 않고, 모든 요소가 빈 문자열이 아닌 경우만
+  const filtered = data
+    .filter((entry) => {
+      if (!entry.next || !Array.isArray(entry.next)) return false;
+      // 빈 문자열이 아닌 next 항목이 하나라도 있는지 확인
+      return entry.next.some((item) => item && typeof item === "string" && item.trim() !== "");
+    })
+    .map((entry) => ({
+      id: entry.id,
+      entryId: entry.id,
+      feature: entry.feature || "Untitled",
+      project: entry.project || "",
+      module: entry.module || "",
+      next: entry.next.filter(
+        (item: unknown) => item && typeof item === "string" && item.trim() !== ""
+      ),
+      updatedAt: entry.updated_at,
+    }));
+
+  return filtered;
+}
+
