@@ -435,7 +435,7 @@ export function DraftTreePanel({
 }: DraftTreePanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // FlagDocPanel 상태
   const [showFlagDoc, setShowFlagDoc] = useState(false);
   const [selectedDocFlag, setSelectedDocFlag] = useState<DraftFlag | null>(
@@ -507,7 +507,7 @@ export function DraftTreePanel({
   }, [setSearchQuery, router, searchParams]);
   const setFilters = useDraftStore((s) => s.setFilters);
   const resetFiltersStore = useDraftStore((s) => s.resetFilters);
-  
+
   // resetFilters 래퍼: URL도 함께 초기화
   const resetFilters = useCallback(() => {
     resetFiltersStore();
@@ -520,32 +520,39 @@ export function DraftTreePanel({
   }, [resetFiltersStore, router, searchParams]);
 
   // URL queryString 업데이트 함수
-  const updateURLFilters = useCallback((newFilters: { projects: string[]; modules: string[]; features: string[] }) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // projects 파라미터 업데이트
-    if (newFilters.projects.length > 0) {
-      params.set("projects", newFilters.projects.join(","));
-    } else {
-      params.delete("projects");
-    }
-    
-    // modules 파라미터 업데이트
-    if (newFilters.modules.length > 0) {
-      params.set("modules", newFilters.modules.join(","));
-    } else {
-      params.delete("modules");
-    }
-    
-    // features 파라미터 업데이트
-    if (newFilters.features.length > 0) {
-      params.set("features", newFilters.features.join(","));
-    } else {
-      params.delete("features");
-    }
-    
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [router, searchParams]);
+  const updateURLFilters = useCallback(
+    (newFilters: {
+      projects: string[];
+      modules: string[];
+      features: string[];
+    }) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      // projects 파라미터 업데이트
+      if (newFilters.projects.length > 0) {
+        params.set("projects", newFilters.projects.join(","));
+      } else {
+        params.delete("projects");
+      }
+
+      // modules 파라미터 업데이트
+      if (newFilters.modules.length > 0) {
+        params.set("modules", newFilters.modules.join(","));
+      } else {
+        params.delete("modules");
+      }
+
+      // features 파라미터 업데이트
+      if (newFilters.features.length > 0) {
+        params.set("features", newFilters.features.join(","));
+      } else {
+        params.delete("features");
+      }
+
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   // 초기 로드 시 URL에서 필터 및 검색어 읽어오기
   useEffect(() => {
@@ -553,27 +560,30 @@ export function DraftTreePanel({
     const urlModules = searchParams.get("modules");
     const urlFeatures = searchParams.get("features");
     const urlSearch = searchParams.get("search");
-    
+
     const urlFilters = {
       projects: urlProjects ? urlProjects.split(",").filter(Boolean) : [],
       modules: urlModules ? urlModules.split(",").filter(Boolean) : [],
       features: urlFeatures ? urlFeatures.split(",").filter(Boolean) : [],
     };
-    
+
     // URL에 필터가 있고 현재 필터와 다르면 적용
     const hasURLFilters = urlProjects || urlModules || urlFeatures;
     if (hasURLFilters) {
       const currentFilters = filters;
-      const isDifferent = 
-        JSON.stringify(currentFilters.projects.sort()) !== JSON.stringify(urlFilters.projects.sort()) ||
-        JSON.stringify(currentFilters.modules.sort()) !== JSON.stringify(urlFilters.modules.sort()) ||
-        JSON.stringify(currentFilters.features.sort()) !== JSON.stringify(urlFilters.features.sort());
-      
+      const isDifferent =
+        JSON.stringify(currentFilters.projects.sort()) !==
+          JSON.stringify(urlFilters.projects.sort()) ||
+        JSON.stringify(currentFilters.modules.sort()) !==
+          JSON.stringify(urlFilters.modules.sort()) ||
+        JSON.stringify(currentFilters.features.sort()) !==
+          JSON.stringify(urlFilters.features.sort());
+
       if (isDifferent) {
         setFilters(urlFilters);
       }
     }
-    
+
     // URL에 검색어가 있고 현재 검색어와 다르면 적용
     if (urlSearch !== null && urlSearch !== searchQuery) {
       setSearchQuery(urlSearch);
@@ -645,7 +655,8 @@ export function DraftTreePanel({
     left: number;
   } | null>(null);
   const [filterSearchQuery, setFilterSearchQuery] = useState("");
-  const [debouncedFilterSearchQuery, setDebouncedFilterSearchQuery] = useState("");
+  const [debouncedFilterSearchQuery, setDebouncedFilterSearchQuery] =
+    useState("");
   const [isFilterSearching, setIsFilterSearching] = useState(false);
   const filterSearchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -756,7 +767,9 @@ export function DraftTreePanel({
     // 담당자 필터 적용
     if (filters.assignees && filters.assignees.length > 0) {
       bars = bars.filter((b) =>
-        b.assignees.some((assignee) => filters.assignees.includes(assignee.userId))
+        b.assignees.some((assignee) =>
+          filters.assignees.includes(assignee.userId)
+        )
       );
     }
 
@@ -774,11 +787,17 @@ export function DraftTreePanel({
     if (filterIndex) {
       // 인덱스를 사용한 고속 필터링
       const barsInView = new Set(activeBars.map((b) => b.clientUid));
-      return filterRowsWithIndex(allRows, barsInView, filterIndex, {
-        projects: filters.projects || [],
-        modules: filters.modules || [],
-        features: filters.features || [],
-      }, searchQuery);
+      return filterRowsWithIndex(
+        allRows,
+        barsInView,
+        filterIndex,
+        {
+          projects: filters.projects || [],
+          modules: filters.modules || [],
+          features: filters.features || [],
+        },
+        searchQuery
+      );
     }
 
     // 폴백: 기존 방식
@@ -854,7 +873,12 @@ export function DraftTreePanel({
   // FlatTree와 nodePositions 계산 (Timeline과 동일)
   // 중요: lane 레이아웃은 전체 bars(allBars) 기준으로 계산하되, 표시는 activeBars만
   const flatNodes = useMemo(
-    () => buildFlatTree(filteredRows, allBars.filter((b) => !b.deleted), expandedNodes),
+    () =>
+      buildFlatTree(
+        filteredRows,
+        allBars.filter((b) => !b.deleted),
+        expandedNodes
+      ),
     [filteredRows, allBars, expandedNodes]
   );
 
@@ -975,7 +999,13 @@ export function DraftTreePanel({
     });
 
     return items;
-  }, [allProjects, allModules, allFeatures, availableModules, availableFeatures]);
+  }, [
+    allProjects,
+    allModules,
+    allFeatures,
+    availableModules,
+    availableFeatures,
+  ]);
 
   // 검색어로 필터링된 항목 목록 (debounced 값 사용)
   const filteredFilterItems = useMemo(() => {
@@ -1335,7 +1365,9 @@ export function DraftTreePanel({
     // feature의 bar 개수 (범위 내 + 필터링된 bar만 카운트)
     const barCount = (() => {
       if (!node.bars) return 0;
-      const visibleBars = node.bars.filter((bar) => activeBarsSet.has(bar.clientUid));
+      const visibleBars = node.bars.filter((bar) =>
+        activeBarsSet.has(bar.clientUid)
+      );
       if (!rangeStart || !rangeEnd) return visibleBars.length;
       return visibleBars.filter((bar) =>
         isDateRangeOverlapping(bar.startDate, bar.endDate, rangeStart, rangeEnd)
@@ -1478,9 +1510,9 @@ export function DraftTreePanel({
         onDragEnd={handleDragEnd}
         className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 ${
           node.type === "project" || node.type === "module" ? "px-2" : "px-3"
-        } ${
-          isSelected ? "" : "hover:translate-x-0.5"
-        } ${isDragging ? "opacity-50" : ""}`}
+        } ${isSelected ? "" : "hover:translate-x-0.5"} ${
+          isDragging ? "opacity-50" : ""
+        }`}
         style={{
           top,
           height,
@@ -1612,7 +1644,11 @@ export function DraftTreePanel({
             />
           ) : (
             <span
-              className={`block text-[13px] truncate transition-colors duration-150 ${
+              className={`block truncate transition-colors duration-150 ${
+                node.type === "project" || node.type === "module"
+                  ? "text-[11px]"
+                  : "text-[13px]"
+              } ${
                 isSelected
                   ? "text-blue-700 font-semibold"
                   : node.type === "project"
@@ -2054,8 +2090,10 @@ export function DraftTreePanel({
                   };
 
                   const getCheckboxColor = () => {
-                    if (item.type === "project") return "text-amber-600 focus:ring-amber-500";
-                    if (item.type === "module") return "text-violet-600 focus:ring-violet-500";
+                    if (item.type === "project")
+                      return "text-amber-600 focus:ring-amber-500";
+                    if (item.type === "module")
+                      return "text-violet-600 focus:ring-violet-500";
                     return "text-emerald-600 focus:ring-emerald-500";
                   };
 
@@ -2064,7 +2102,9 @@ export function DraftTreePanel({
                       return (
                         <FolderIcon
                           className={`w-3 h-3 ${
-                            item.isAvailable ? "text-amber-500" : "text-gray-400"
+                            item.isAvailable
+                              ? "text-amber-500"
+                              : "text-gray-400"
                           }`}
                         />
                       );
@@ -2073,7 +2113,9 @@ export function DraftTreePanel({
                       return (
                         <CubeIcon
                           className={`w-3 h-3 ${
-                            item.isAvailable ? "text-violet-500" : "text-gray-400"
+                            item.isAvailable
+                              ? "text-violet-500"
+                              : "text-gray-400"
                           }`}
                         />
                       );
@@ -2081,7 +2123,9 @@ export function DraftTreePanel({
                     return (
                       <CodeIcon
                         className={`w-3 h-3 ${
-                          item.isAvailable ? "text-emerald-500" : "text-gray-400"
+                          item.isAvailable
+                            ? "text-emerald-500"
+                            : "text-gray-400"
                         }`}
                       />
                     );
