@@ -129,7 +129,7 @@ export function LastWeekNextPanel({
         }}
       >
         {/* Header - GitHub 스타일 */}
-        <div className="shrink-0 px-3 py-2 border-b border-[#d0d7de] bg-[#f6f8fa]">
+        <div className="shrink-0 px-3 py-2 border-b border-[#d0d7de] bg-[#f6f8fa] rounded-t-md">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-[#24292f]">
               지난 주 Next 참고
@@ -229,9 +229,9 @@ export function LastWeekNextPanel({
 
         {/* Footer 안내 - GitHub 스타일 */}
         {!isLoading && items.length > 0 && (
-          <div className="shrink-0 px-3 py-2 border-t border-[#d0d7de] bg-[#f6f8fa]">
+          <div className="shrink-0 px-3 py-2 border-t border-[#d0d7de] bg-[#f6f8fa] rounded-b-md">
             <p className="text-[10px] text-[#57606a] text-center">
-              💡 참고용입니다. 자동으로 복사되지 않습니다.
+              참고용입니다. 자동으로 복사되지 않습니다.
             </p>
           </div>
         )}
