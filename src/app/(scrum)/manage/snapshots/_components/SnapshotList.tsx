@@ -609,14 +609,16 @@ function EntryCard({
               <>
             {/* 펼치기/접기 버튼 */}
             <button
+              type="button"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 setLocalExpanded(!localExpanded);
               }}
               className={`p-1.5 rounded transition-colors ${
                 isExpanded
-                  ? "bg-[#ddf4ff] text-[#0969da]"
-                  : "text-[#57606a] hover:bg-[#f6f8fa]"
+                  ? "text-[#0969da]"
+                  : "bg-[#ddf4ff] text-[#0969da] hover:bg-[#b6e3ff]"
               }`}
             >
               <svg
