@@ -152,8 +152,6 @@ function CustomEdge({
             cy={labelY}
             r="10"
             fill="white"
-            stroke="#d0d7de"
-            strokeWidth="1"
           />
           {/* 텍스트 */}
           <text
