@@ -158,28 +158,32 @@ export async function getPersonalDashboardMetrics({
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-  // user_page_visits 테이블이 존재하는지 확인 (try-catch로 처리)
+  // 기존 menu_events 테이블에서 PAGE_VIEW 이벤트 조회
   try {
-    // 최근 14일 방문 기록 조회
+    // 최근 14일 방문 기록 조회 (PAGE_VIEW만)
     const { data: visits } = await supabase
-      .from("user_page_visits")
-      .select("path, created_at")
+      .from("menu_events")
+      .select("page_path, occurred_at")
       .eq("workspace_id", workspaceId)
       .eq("user_id", userId)
-      .gte("created_at", fourteenDaysAgo.toISOString())
-      .order("created_at", { ascending: false });
+      .eq("event_type", "PAGE_VIEW")
+      .gte("occurred_at", fourteenDaysAgo.toISOString())
+      .order("occurred_at", { ascending: false });
 
     if (visits && visits.length > 0) {
       // 최근 7일 방문 총 횟수
       const visits7d = visits.filter(
-        (v) => new Date(v.created_at) >= sevenDaysAgo
+        (v) => new Date(v.occurred_at) >= sevenDaysAgo
       );
       visits7dTotal = visits7d.length;
 
       // Top 5 Routes (최근 7일)
       const routeCounts = new Map<string, number>();
       for (const visit of visits7d) {
-        routeCounts.set(visit.path, (routeCounts.get(visit.path) || 0) + 1);
+        routeCounts.set(
+          visit.page_path,
+          (routeCounts.get(visit.page_path) || 0) + 1
+        );
       }
       topRoutes7d = Array.from(routeCounts.entries())
         .map(([path, count]) => ({ path, count }))
@@ -189,7 +193,9 @@ export async function getPersonalDashboardMetrics({
       // Visits by Day (최근 14일)
       const dayCounts = new Map<string, number>();
       for (const visit of visits) {
-        const dateStr = new Date(visit.created_at).toISOString().split("T")[0];
+        const dateStr = new Date(visit.occurred_at)
+          .toISOString()
+          .split("T")[0];
         dayCounts.set(dateStr, (dayCounts.get(dateStr) || 0) + 1);
       }
       visitsByDay14d = Array.from(dayCounts.entries())
@@ -197,11 +203,11 @@ export async function getPersonalDashboardMetrics({
         .sort((a, b) => a.date.localeCompare(b.date));
 
       // 마지막 방문 시각
-      lastVisitAt = visits[0].created_at;
+      lastVisitAt = visits[0].occurred_at;
     }
   } catch (err) {
-    // 테이블이 없거나 RLS 오류 시 무시
-    console.warn("user_page_visits table not available:", err);
+    // 테이블 접근 오류 시 무시
+    console.warn("menu_events table not available:", err);
   }
 
   return {
