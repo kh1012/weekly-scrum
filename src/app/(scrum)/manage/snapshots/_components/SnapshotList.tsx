@@ -272,7 +272,7 @@ export function SnapshotList({
               </div>
 
               {/* 버튼 */}
-              <div className="flex gap-3 px-6 pb-6 bg-[#f6f8fa]">
+              <div className="flex gap-3 px-6 pb-6">
                 <button
                   onClick={() => setShowBulkDeleteModal(false)}
                   disabled={isDeleting}
@@ -890,7 +890,7 @@ function EntryCard({
               </div>
 
               {/* 버튼 */}
-              <div className="flex gap-3 px-6 pb-6 bg-[#f6f8fa]">
+              <div className="flex gap-3 px-6 pb-6">
                 <button
                   onClick={handleDeleteCancel}
                   className="flex-1 px-4 py-2 rounded-md text-sm font-medium bg-white border border-[#d0d7de] text-[#24292f] hover:bg-[#f3f4f6] transition-colors"
@@ -1201,7 +1201,7 @@ function EntryRow({
               </div>
 
               {/* 버튼 */}
-              <div className="flex gap-3 px-6 pb-6 bg-[#f6f8fa]">
+              <div className="flex gap-3 px-6 pb-6">
                 <button
                   onClick={handleDeleteCancel}
                   className="flex-1 px-4 py-2 rounded-md text-sm font-medium bg-white border border-[#d0d7de] text-[#24292f] hover:bg-[#f3f4f6] transition-colors"
