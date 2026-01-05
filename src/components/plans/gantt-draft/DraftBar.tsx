@@ -354,10 +354,10 @@ export const DraftBar = memo(function DraftBar({
           ? `0 2px 12px ${barColor.color}25, 0 0 0 2px ${barColor.color}30`
           : isHovered
           ? isSnapshot
-            ? "0 6px 20px rgba(0, 0, 0, 0.3)"
+            ? "0 4px 12px rgba(0, 0, 0, 0.08)"
             : "0 4px 16px rgba(0, 0, 0, 0.1)"
           : isSnapshot
-          ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+          ? "0 1px 3px rgba(0, 0, 0, 0.06)"
           : "0 1px 3px rgba(0, 0, 0, 0.04)",
         // Airbnb 스타일: 호버 시 lift
         transform:
@@ -408,73 +408,71 @@ export const DraftBar = memo(function DraftBar({
       {isSnapshot ? (
         /* Snapshot 블록 레이아웃 - 2행 */
         <div
-          className="px-2 py-1 flex flex-col justify-center min-w-0 gap-1"
+          className="relative px-2 py-1 flex flex-col justify-center min-w-0 gap-1"
           onMouseDown={(e) => handleMouseDown(e, "move")}
         >
-          {/* 1행: ENTRY 태그 + 주차 + 기간 + 원형 진행률 */}
-          <div className="flex items-center justify-between gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0">
-              {/* ENTRY 태그 */}
+          {/* 원형 진행률 - absolute 우측 중앙 */}
+          {currentWidth > 60 && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
+              <svg className="w-6 h-6 -rotate-90">
+                {/* 배경 원 */}
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  fill="none"
+                  stroke="#e5e7eb"
+                  strokeWidth="4"
+                />
+                {/* 진행률 원 */}
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="4"
+                  strokeDasharray={`${(avgProgress / 100) * 56.55} 56.55`}
+                  strokeLinecap="round"
+                />
+              </svg>
               <span
-                className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
-                style={{
-                  background: "#9ca3af",
-                  color: "white",
-                }}
-                title="Snapshot Entry"
+                className="absolute inset-0 flex items-center justify-center text-[8px] font-bold"
+                style={{ color: "#6b7280" }}
               >
-                ENTRY
+                {Math.round(avgProgress)}
               </span>
-
-              {/* 주차 + 기간 */}
-              {snapshotYear && snapshotWeek && (
-                <span
-                  className="text-[10px] font-medium shrink-0"
-                  style={{ color: "#6b7280" }}
-                >
-                  {String(snapshotYear).slice(2)} {snapshotWeek} {dateLabel}
-                </span>
-              )}
             </div>
+          )}
 
-            {/* 원형 진행률 */}
-            {currentWidth > 60 && (
-              <div className="relative w-6 h-6 shrink-0">
-                <svg className="w-6 h-6 -rotate-90">
-                  {/* 배경 원 */}
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="2"
-                  />
-                  {/* 진행률 원 */}
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="2"
-                    strokeDasharray={`${(avgProgress / 100) * 62.83} 62.83`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span
-                  className="absolute inset-0 flex items-center justify-center text-[8px] font-bold"
-                  style={{ color: "#6b7280" }}
-                >
-                  {Math.round(avgProgress)}
-                </span>
-              </div>
+          {/* 1행: ENTRY 태그 + 주차 + 기간 */}
+          <div className="flex items-center gap-1.5 min-w-0 pr-8">
+            {/* ENTRY 태그 */}
+            <span
+              className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
+              style={{
+                background: "#9ca3af",
+                color: "white",
+              }}
+              title="Snapshot Entry"
+            >
+              ENTRY
+            </span>
+
+            {/* 주차 + 기간 */}
+            {snapshotYear && snapshotWeek && (
+              <span
+                className="text-[10px] font-medium shrink-0"
+                style={{ color: "#6b7280" }}
+              >
+                {String(snapshotYear).slice(2)} {snapshotWeek} {dateLabel}
+              </span>
             )}
           </div>
 
           {/* 2행: 기능명 */}
           <span
-            className="truncate text-[11px] font-semibold leading-tight"
+            className="truncate text-[11px] font-semibold leading-tight pr-8"
             style={{ color: "#374151" }}
             title={bar.title}
           >
