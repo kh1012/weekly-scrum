@@ -152,7 +152,7 @@ export function CollaborationGraph({
       }
     });
 
-    // FigJam 스타일 노드 배치 (크기 동적 조정)
+    // FigJam 스타일 노드 배치 (크기 동적 조정, 좌→우 흐름)
     const BASE_WIDTH = 100; // 기본 너비
     const BASE_HEIGHT = 40; // 기본 높이
     const MAX_WIDTH = 200; // 최대 너비
@@ -162,15 +162,15 @@ export function CollaborationGraph({
     const BASE_COUNT_FONT = 9; // 기본 횟수 폰트
     const MAX_COUNT_FONT = 13; // 최대 횟수 폰트
     
-    const HORIZONTAL_GAP = 100; // 노드 간 여유 있는 간격
-    const VERTICAL_GAP = 120;
+    const HORIZONTAL_GAP = 200; // 레벨 간 수평 간격
+    const VERTICAL_GAP = 80; // 노드 간 수직 간격
     const TOP_MARGIN = 80;
     const LEFT_MARGIN = 80;
 
     const nodeData: any[] = [];
 
     levels.forEach((levelNodes, levelIndex) => {
-      // 레벨 내 최대 노드 너비 계산 (간격 고려)
+      // 레벨 내 최대 노드 너비 계산
       const maxNodeWidth = Math.max(
         ...levelNodes.map((node) => {
           const scale = node.totalCollabs / maxCollabs;
@@ -178,16 +178,20 @@ export function CollaborationGraph({
         })
       );
       
-      const y = TOP_MARGIN + levelIndex * (maxNodeWidth * 0.5 + VERTICAL_GAP);
-      const levelWidth = levelNodes.reduce((sum, node) => {
+      // 레벨의 x 좌표 (좌에서 우로)
+      const x = LEFT_MARGIN + levelIndex * (maxNodeWidth + HORIZONTAL_GAP);
+      
+      // 레벨 내 노드들의 총 높이 계산
+      const levelHeight = levelNodes.reduce((sum, node) => {
         const scale = node.totalCollabs / maxCollabs;
-        const nodeWidth = BASE_WIDTH + scale * (MAX_WIDTH - BASE_WIDTH);
-        return sum + nodeWidth;
-      }, 0) + (levelNodes.length - 1) * HORIZONTAL_GAP;
+        const nodeHeight = BASE_HEIGHT + scale * (MAX_HEIGHT - BASE_HEIGHT);
+        return sum + nodeHeight;
+      }, 0) + (levelNodes.length - 1) * VERTICAL_GAP;
       
-      const startX = LEFT_MARGIN + (1400 - levelWidth) / 2; // 중앙 정렬
+      // 레벨 내 노드들을 수직 중앙 정렬
+      const startY = TOP_MARGIN + (800 - levelHeight) / 2;
       
-      let currentX = startX;
+      let currentY = startY;
       levelNodes.forEach((node) => {
         const scale = node.totalCollabs / maxCollabs;
         const nodeWidth = BASE_WIDTH + scale * (MAX_WIDTH - BASE_WIDTH);
@@ -200,15 +204,15 @@ export function CollaborationGraph({
           label: node.label,
           totalCollabs: node.totalCollabs,
           uniquePartners: node.uniquePartners,
-          x: currentX,
-          y,
+          x,
+          y: currentY,
           width: nodeWidth,
           height: nodeHeight,
           nameFontSize,
           countFontSize,
         });
         
-        currentX += nodeWidth + HORIZONTAL_GAP;
+        currentY += nodeHeight + VERTICAL_GAP;
       });
     });
 
