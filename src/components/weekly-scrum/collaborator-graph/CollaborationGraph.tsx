@@ -205,16 +205,21 @@ export function CollaborationGraph({
         return sum + nodeHeight;
       }, 0) + (levelNodes.length - 1) * VERTICAL_GAP;
       
-      // 레벨 내 노드들을 수직 중앙 정렬
-      const startY = TOP_MARGIN + (800 - levelHeight) / 2;
+      // 레벨 내 노드들을 수직 중앙 정렬 + 레벨별 오프셋 (일직선 방지)
+      // 홀수/짝수 레벨에 따라 위아래로 30px 오프셋
+      const levelOffset = (levelIndex % 2) * 30;
+      const startY = TOP_MARGIN + (800 - levelHeight) / 2 + levelOffset;
       
       let currentY = startY;
-      levelNodes.forEach((node) => {
+      levelNodes.forEach((node, nodeIndex) => {
         const scale = node.totalCollabs / maxCollabs;
         const nodeWidth = BASE_WIDTH + scale * (MAX_WIDTH - BASE_WIDTH);
         const nodeHeight = BASE_HEIGHT + scale * (MAX_HEIGHT - BASE_HEIGHT);
         const nameFontSize = BASE_NAME_FONT + scale * (MAX_NAME_FONT - BASE_NAME_FONT);
         const countFontSize = BASE_COUNT_FONT + scale * (MAX_COUNT_FONT - BASE_COUNT_FONT);
+        
+        // 노드별 미세 오프셋 (지그재그 효과)
+        const nodeOffset = (nodeIndex % 2) * 15;
         
         nodeData.push({
           id: node.id,
@@ -222,7 +227,7 @@ export function CollaborationGraph({
           totalCollabs: node.totalCollabs,
           uniquePartners: node.uniquePartners,
           x,
-          y: currentY,
+          y: currentY + nodeOffset,
           width: nodeWidth,
           height: nodeHeight,
           nameFontSize,
