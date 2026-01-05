@@ -102,7 +102,6 @@ export async function getAlignmentGanttData({
           end_date,
           status,
           stage,
-          priority,
           custom_feature,
           custom_module
         `)
@@ -215,7 +214,6 @@ export async function getAlignmentGanttData({
     end_date: plan.end_date,
     status: plan.status,
     stage: plan.stage,
-    priority: plan.priority,
     custom_feature: plan.custom_feature || false,
     custom_module: plan.custom_module || false,
     assignees: plan.assignees?.map((a: any) => ({
