@@ -70,7 +70,9 @@ export function FeedbackKanbanView({
         .filter((f) => f.status === col.status)
         .sort((a, b) => {
           // created_at 기준 내림차순 (최신이 위로)
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
         });
       return acc;
     }, {} as Record<FeedbackStatus, FeedbackWithDetails[]>);
@@ -112,7 +114,7 @@ export function FeedbackKanbanView({
       // 최소 300ms 로딩 표시 보장 (사용자 피드백 개선)
       await Promise.all([
         updateFeedbackStatus(feedbackId, newStatus),
-        new Promise(resolve => setTimeout(resolve, 300))
+        new Promise((resolve) => setTimeout(resolve, 300)),
       ]);
 
       startTransition(() => {
@@ -207,7 +209,7 @@ export function FeedbackKanbanView({
             <div
               key={col.status}
               className="flex flex-col bg-white border border-[#d0d7de] rounded-md overflow-hidden"
-              style={{ minHeight: '400px' }}
+              style={{ minHeight: "400px" }}
             >
               {/* 열 헤더 - GitHub 스타일 */}
               <div className="shrink-0 px-3 py-2 bg-white border-b border-[#d0d7de] flex items-center justify-between">
@@ -220,9 +222,7 @@ export function FeedbackKanbanView({
                     {col.label}
                   </h3>
                 </div>
-                <span
-                  className="px-2 py-0.5 text-xs font-medium text-[#57606a] bg-[#f6f8fa] border border-[#d0d7de] rounded-xl"
-                >
+                <span className="px-2 py-0.5 text-xs font-medium text-[#57606a] bg-[#f6f8fa] border border-[#d0d7de] rounded-xl">
                   {groupedFeedbacks[col.status]?.length || 0}
                 </span>
               </div>
@@ -329,7 +329,7 @@ export function FeedbackKanbanView({
             className="absolute inset-0 bg-black/40"
             onClick={() => setResolvingFeedbackId(null)}
           />
-          
+
           {/* 모달 컨텐츠 */}
           <div className="relative w-full max-w-md bg-white border border-[#d0d7de] rounded-md">
             {/* 헤더 */}
@@ -341,8 +341,18 @@ export function FeedbackKanbanView({
                 onClick={() => setResolvingFeedbackId(null)}
                 className="p-1 text-[#57606a] hover:text-[#24292f] hover:bg-white transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>

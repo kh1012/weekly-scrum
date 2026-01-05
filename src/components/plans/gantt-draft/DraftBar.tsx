@@ -413,13 +413,13 @@ export const DraftBar = memo(function DraftBar({
         >
           {/* 원형 진행률 - absolute 우측 중앙 */}
           {currentWidth > 60 && (
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
-              <svg className="w-6 h-6 -rotate-90">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7">
+              <svg className="w-7 h-7 -rotate-90">
                 {/* 배경 원 */}
                 <circle
                   cx="14"
                   cy="14"
-                  r="9"
+                  r="10"
                   fill="none"
                   stroke="#e5e7eb"
                   strokeWidth="4"
@@ -428,16 +428,16 @@ export const DraftBar = memo(function DraftBar({
                 <circle
                   cx="14"
                   cy="14"
-                  r="9"
+                  r="10"
                   fill="none"
                   stroke="#10b981"
                   strokeWidth="4"
-                  strokeDasharray={`${(avgProgress / 100) * 56.55} 56.55`}
+                  strokeDasharray={`${(avgProgress / 100) * 62.83} 62.83`}
                   strokeLinecap="round"
                 />
               </svg>
               <span
-                className="absolute inset-0 flex items-center justify-center text-[8px] font-bold"
+                className="absolute inset-0 flex items-center justify-center text-[9px] font-bold"
                 style={{ color: "#6b7280" }}
               >
                 {Math.round(avgProgress)}
