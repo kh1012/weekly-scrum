@@ -66,22 +66,33 @@ async function TimelineContent({ workspaceId, userId, weeksRange = 12 }: MySnaps
 
 export function MySnapshotTimelineSection(props: MySnapshotTimelineSectionProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="w-full">
-          <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
-            <div className="bg-white border border-[#d0d7de] rounded-md p-12">
-              <LogoLoadingSpinner
-                title="타임라인을 불러오는 중"
-                description="잠시만 기다려주세요"
-              />
+    <div className="w-full border-t-2 border-[#d0d7de] bg-[#f6f8fa] py-8">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 mb-6">
+        <h2 className="text-lg font-semibold text-[#24292f] mb-1">
+          나의 스냅샷 타임라인
+        </h2>
+        <p className="text-sm text-[#57606a]">
+          주차별 스냅샷 엔트리를 Gantt 형태로 시각화하고 연속성을 확인하세요
+        </p>
+      </div>
+
+      <Suspense
+        fallback={
+          <div className="w-full">
+            <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
+              <div className="bg-white border border-[#d0d7de] rounded-md p-12">
+                <LogoLoadingSpinner
+                  title="타임라인을 불러오는 중"
+                  description="잠시만 기다려주세요"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      }
-    >
-      <TimelineContent {...props} />
-    </Suspense>
+        }
+      >
+        <TimelineContent {...props} />
+      </Suspense>
+    </div>
   );
 }
 

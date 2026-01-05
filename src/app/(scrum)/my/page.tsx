@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { PersonalDashboard } from "@/components/weekly-scrum/my/PersonalDashboard";
+import { MySnapshotTimelineSection } from "@/components/weekly-scrum/my/MySnapshotTimelineSection";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 
 const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
@@ -197,6 +198,15 @@ export default async function MyPage() {
     stats.collaborators = collaboratorNames.size;
   }
 
+  // 타임라인 섹션 (서버 컴포넌트)
+  const timelineSection = user?.id ? (
+    <MySnapshotTimelineSection
+      workspaceId={DEFAULT_WORKSPACE_ID}
+      userId={user.id}
+      weeksRange={12}
+    />
+  ) : null;
+
   return (
     <PersonalDashboard 
       userName={userName}
@@ -205,6 +215,7 @@ export default async function MyPage() {
       hasCurrentWeekData={hasCurrentWeekData}
       workspaceId={DEFAULT_WORKSPACE_ID}
       userId={user?.id}
+      timelineSection={timelineSection}
     />
   );
 }

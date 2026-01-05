@@ -9,12 +9,11 @@
  * - 빠른 접근 카드들
  */
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
 import { getCurrentISOWeek } from "@/lib/date/isoWeek";
-import { MySnapshotTimelineSection } from "./MySnapshotTimelineSection";
 
 interface PersonalDashboardProps {
   userName?: string;
@@ -42,6 +41,8 @@ interface PersonalDashboardProps {
   workspaceId?: string;
   /** 사용자 ID */
   userId?: string;
+  /** 타임라인 섹션 (서버 컴포넌트, children으로 전달) */
+  timelineSection?: ReactNode;
 }
 
 /**
@@ -53,7 +54,7 @@ function formatTrend(value: number, suffix: string = ""): string | undefined {
   return `${sign}${value}${suffix}`;
 }
 
-export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData = false, workspaceId, userId }: PersonalDashboardProps) {
+export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData = false, workspaceId, userId, timelineSection }: PersonalDashboardProps) {
   const router = useRouter();
   const [isNewSnapshotModalOpen, setIsNewSnapshotModalOpen] = useState(false);
   const currentWeek = getCurrentISOWeek();
@@ -191,12 +192,7 @@ export function PersonalDashboard({ userName, stats, trends, hasCurrentWeekData 
       </div>
 
       {/* 스냅샷 타임라인 섹션 (Full Width) */}
-      {userId && workspaceId && (
-        <MySnapshotTimelineWrapper
-          workspaceId={workspaceId}
-          userId={userId}
-        />
-      )}
+      {timelineSection}
 
       {/* 새 스냅샷 모달 */}
       <NewSnapshotModal
@@ -363,33 +359,5 @@ function ActionCard({
         )}
       </div>
     </button>
-  );
-}
-
-// 타임라인 래퍼 (서버 컴포넌트를 클라이언트에서 사용하기 위한 wrapper)
-function MySnapshotTimelineWrapper({
-  workspaceId,
-  userId,
-}: {
-  workspaceId: string;
-  userId: string;
-}) {
-  return (
-    <div className="w-full border-t-2 border-[#d0d7de] bg-[#f6f8fa] py-8">
-      <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 mb-6">
-        <h2 className="text-lg font-semibold text-[#24292f] mb-1">
-          나의 스냅샷 타임라인
-        </h2>
-        <p className="text-sm text-[#57606a]">
-          주차별 스냅샷 엔트리를 Gantt 형태로 시각화하고 연속성을 확인하세요
-        </p>
-      </div>
-
-      <MySnapshotTimelineSection
-        workspaceId={workspaceId}
-        userId={userId}
-        weeksRange={12}
-      />
-    </div>
   );
 }
