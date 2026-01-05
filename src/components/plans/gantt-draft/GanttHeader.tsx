@@ -79,6 +79,11 @@ interface GanttHeaderProps {
   onStopSuccess?: (discardedCount: number) => void;
   /** 헤더 숨기기/보이기 토글 */
   onToggleHeader?: () => void;
+  /** 자동 저장 옵션 */
+  autoSaveEnabled?: boolean;
+  onAutoSaveChange?: (enabled: boolean) => void;
+  /** 자동 저장 상태 */
+  isAutoSaving?: boolean;
 }
 
 export function GanttHeader({
@@ -112,6 +117,9 @@ export function GanttHeader({
   onStartSuccess,
   onStopSuccess,
   onToggleHeader,
+  autoSaveEnabled = false,
+  onAutoSaveChange,
+  isAutoSaving = false,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -734,10 +742,29 @@ export function GanttHeader({
               </button>
             ) : (
               <>
+                {/* 자동 저장 체크박스 */}
+                <label
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group"
+                  title="자동 저장 옵션 켜기"
+                >
+                  <input
+                    type="checkbox"
+                    checked={autoSaveEnabled}
+                    onChange={(e) => onAutoSaveChange?.(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">
+                    자동 저장
+                  </span>
+                  {isAutoSaving && (
+                    <LoadingIcon className="w-3 h-3 text-emerald-600 animate-spin" />
+                  )}
+                </label>
+
                 {/* 저장 */}
                 <button
                   onClick={onCommit}
-                  disabled={!hasUnsavedChanges || isCommitting}
+                  disabled={!hasUnsavedChanges || isCommitting || isAutoSaving}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5"
                   style={{
                     background: hasUnsavedChanges
@@ -749,13 +776,13 @@ export function GanttHeader({
                       : "none",
                   }}
                 >
-                  {isCommitting ? (
+                  {isCommitting || isAutoSaving ? (
                     <LoadingIcon className="w-4 h-4 animate-spin" />
                   ) : (
                     <SaveIcon className="w-4 h-4" />
                   )}
-                  {isCommitting ? "저장 중..." : "저장"}
-                  {hasUnsavedChanges && !isCommitting && changesCount > 0 && (
+                  {isAutoSaving ? "자동 저장 중..." : isCommitting ? "저장 중..." : "저장"}
+                  {hasUnsavedChanges && !isCommitting && !isAutoSaving && changesCount > 0 && (
                     <span
                       className="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
                       style={{ background: "rgba(255,255,255,0.3)" }}

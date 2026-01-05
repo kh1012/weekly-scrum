@@ -93,9 +93,38 @@ export function DraftGanttView({
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showAddRowModal, setShowAddRowModal] = useState(false);
+  
+  // 자동 저장 옵션 (localStorage에서 불러오기)
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('gantt-auto-save-enabled');
+      if (stored === 'true') {
+        setAutoSaveEnabled(true);
+      }
+    } catch {
+      // localStorage 접근 실패 시 무시
+    }
+  }, []);
+  
+  const handleAutoSaveChange = useCallback((enabled: boolean) => {
+    setAutoSaveEnabled(enabled);
+    try {
+      localStorage.setItem('gantt-auto-save-enabled', enabled ? 'true' : 'false');
+      if (enabled) {
+        showToast("success", "자동 저장 활성화", "90초 이상 비활성 시 자동으로 저장됩니다.");
+      } else {
+        showToast("info", "자동 저장 비활성화", "수동으로만 저장됩니다.");
+      }
+    } catch {
+      // localStorage 접근 실패 시 무시
+    }
+  }, []);
 
   // 모바일 감지 (768px 이하)
   const [isMobile, setIsMobile] = useState(false);
@@ -148,11 +177,11 @@ export function DraftGanttView({
   const canRedo = useDraftStore((s) => s.canRedo());
   const undo = useDraftStore((s) => s.undo);
   const redo = useDraftStore((s) => s.redo);
+  const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
   const bars = useDraftStore((s) => s.bars);
   const rows = useDraftStore((s) => s.rows);
   const flags = useDraftStore((s) => s.flags);
   const isEditing = useDraftStore((s) => s.ui.isEditing);
-  const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
   const selectFlag = useDraftStore((s) => s.selectFlag);
   const setFilters = useDraftStore((s) => s.setFilters);
@@ -178,6 +207,8 @@ export function DraftGanttView({
     canEdit,
     extendLockIfNeeded,
     recordActivity,
+    isMyLock,
+    inactivitySeconds,
   } = useLock({
     workspaceId,
     onInactivityTimeout: () => {
@@ -635,6 +666,123 @@ export function DraftGanttView({
     fetchFlags,
   ]);
 
+  // 자동 저장 트리거 (90초 비활성 시)
+  const lastAutoSaveRef = useRef<number>(0);
+  
+  useEffect(() => {
+    if (!autoSaveEnabled || !isMyLock || !hasUnsavedChanges) return;
+    if (inactivitySeconds === null || inactivitySeconds < 90) return;
+    if (isCommitting || isAutoSaving) return;
+
+    // 마지막 자동 저장으로부터 최소 90초 경과 확인 (중복 방지)
+    const now = Date.now();
+    if (now - lastAutoSaveRef.current < 90000) return;
+
+    lastAutoSaveRef.current = now;
+    handleAutoSave();
+  }, [autoSaveEnabled, isMyLock, hasUnsavedChanges, inactivitySeconds, isCommitting, isAutoSaving]);
+
+  // 조용한 자동 저장 (모달 없이)
+  const handleAutoSave = useCallback(async () => {
+    if (!hasUnsavedChanges || isCommitting || isAutoSaving) return;
+
+    const dirtyBars = getDirtyBars();
+    const deletedBars = getDeletedBars();
+    const allBars = [...dirtyBars, ...deletedBars];
+
+    const dirtyFlags = getDirtyFlags();
+    const deletedFlags = getDeletedFlags();
+    const allFlags = [...dirtyFlags, ...deletedFlags];
+
+    if (allBars.length === 0 && allFlags.length === 0) return;
+
+    setIsAutoSaving(true);
+
+    try {
+      let flagSuccess = true;
+      let planSuccess = true;
+
+      // 1. Flags 저장
+      if (allFlags.length > 0) {
+        const flagResult = await commitFlags({
+          workspaceId,
+          flags: allFlags,
+        });
+
+        if (flagResult.success) {
+          clearFlagDirtyFlags();
+          await fetchFlags(workspaceId);
+        } else {
+          flagSuccess = false;
+        }
+      }
+
+      // 2. Plans 저장
+      if (allBars.length > 0) {
+        const payload = {
+          workspaceId,
+          plans: allBars.map((bar) => {
+            const row = rows.find((r) => r.rowId === bar.rowId);
+            return {
+              clientUid: bar.clientUid,
+              serverId: bar.serverId,
+              domain: row?.domain,
+              project: row?.project || "",
+              module: row?.module || "",
+              feature: row?.feature || "",
+              title: bar.title,
+              stage: bar.stage,
+              status: bar.status,
+              start_date: bar.startDate,
+              end_date: bar.endDate,
+              assignees: bar.assignees,
+              description: bar.description,
+              links: bar.links,
+              deleted: bar.deleted || false,
+              order_index: row?.orderIndex ?? 0,
+              lane_hint: bar.preferredLane,
+            };
+          }),
+        };
+
+        const planResult = await commitFeaturePlans(payload);
+
+        if (planResult.success) {
+          clearDirtyFlags();
+        } else {
+          planSuccess = false;
+        }
+      }
+
+      if (flagSuccess && planSuccess) {
+        showToast("success", "자동 저장 완료", undefined);
+        // 페이지 새로고침 (서버 데이터 동기화)
+        router.refresh();
+      } else {
+        showToast("error", "자동 저장 실패", "수동으로 저장해주세요.");
+      }
+    } catch (err) {
+      console.error("[handleAutoSave] Error:", err);
+      showToast("error", "자동 저장 오류", "수동으로 저장해주세요.");
+    } finally {
+      setIsAutoSaving(false);
+    }
+  }, [
+    hasUnsavedChanges,
+    isCommitting,
+    isAutoSaving,
+    getDirtyBars,
+    getDeletedBars,
+    getDirtyFlags,
+    getDeletedFlags,
+    workspaceId,
+    rows,
+    clearDirtyFlags,
+    clearFlagDirtyFlags,
+    fetchFlags,
+    router,
+  ]);
+
   // 변경사항 폐기 핸들러 (토스트는 onStopSuccess에서 처리)
   const handleDiscardChanges = useCallback(() => {
     discardAllChanges();
@@ -803,7 +951,10 @@ export function DraftGanttView({
           setRangeStart(start);
           setRangeEnd(end);
         }}
-          onToggleHeader={handleToggleHeader}
+        onToggleHeader={handleToggleHeader}
+        autoSaveEnabled={autoSaveEnabled}
+        onAutoSaveChange={handleAutoSaveChange}
+        isAutoSaving={isAutoSaving}
         onLockError={(type, lockedByName) => {
           if (type === "locked_by_other") {
             showToast(
