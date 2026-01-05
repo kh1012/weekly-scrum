@@ -744,8 +744,8 @@ export function GanttHeader({
               <>
                 {/* 자동 저장 체크박스 */}
                 <label
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group"
-                  title="자동 저장 옵션 켜기"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group relative"
+                  title="자동 저장 (90초 비활성 시 자동 저장)"
                 >
                   <input
                     type="checkbox"
@@ -753,9 +753,12 @@ export function GanttHeader({
                     onChange={(e) => onAutoSaveChange?.(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                   />
-                  <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">
-                    자동 저장
-                  </span>
+                  {/* 자동 저장 카운트다운 */}
+                  {autoSaveEnabled && inactivitySeconds !== null && inactivitySeconds < 90 && (
+                    <span className="text-[10px] font-mono font-semibold text-emerald-600 tabular-nums">
+                      {90 - inactivitySeconds}초
+                    </span>
+                  )}
                   {isAutoSaving && (
                     <LoadingIcon className="w-3 h-3 text-emerald-600 animate-spin" />
                   )}
