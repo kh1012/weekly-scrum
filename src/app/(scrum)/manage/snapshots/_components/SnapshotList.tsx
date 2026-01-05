@@ -568,7 +568,7 @@ function EntryCard({
             {!isExpanded && avgProgress !== null && (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-[#57606a] w-12 shrink-0">
-                  진행률
+                  평균 진행률
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="w-16 h-1.5 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
@@ -787,7 +787,7 @@ function EntryCard({
 
           {/* Collaborators 표시 (태그 형태) */}
           {collaborators.length > 0 && (
-            <div className="mx-4 mb-3 flex items-start gap-2 text-xs">
+            <div className="mx-4 mb-3 flex items-center gap-2 text-xs">
               <span className="text-[#57606a] font-medium shrink-0">with:</span>
               <div className="flex flex-wrap gap-1.5">
                 {collaborators.map((c, i) => {
