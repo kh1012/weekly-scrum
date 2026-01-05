@@ -14,6 +14,7 @@ export interface GraphEdge {
   target: string;
   weight: number;
   weeks: string[];
+  relations: Array<"pair" | "pre" | "post">;
 }
 
 export interface GraphStats {
@@ -78,6 +79,7 @@ export function buildCollabGraph(
     {
       weight: number;
       weeks: Set<string>;
+      relations: Set<"pair" | "pre" | "post">;
     }
   >();
 
@@ -123,12 +125,14 @@ export function buildCollabGraph(
         edgeMap.set(edgeKey, {
           weight: 0,
           weeks: new Set(),
+          relations: new Set(),
         });
       }
 
       const edge = edgeMap.get(edgeKey)!;
       edge.weight += 1;
       edge.weeks.add(weekKey);
+      edge.relations.add(collab.relation);
 
       // 노드 통계 업데이트
       authorNode.totalCollabs += 1;
@@ -161,6 +165,7 @@ export function buildCollabGraph(
         target,
         weight: data.weight,
         weeks: Array.from(data.weeks),
+        relations: Array.from(data.relations),
       };
     }
   );

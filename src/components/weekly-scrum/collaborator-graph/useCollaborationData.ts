@@ -99,12 +99,57 @@ export function useCollaborationData(
             if (entries) {
               // collaborators가 있는 엔트리만 추가
               const validEntries = entries
-                .map((entry: any) => ({
-                  ...entry,
-                  year: snapshot.year,
-                  week: parseInt(snapshot.week.replace("W", ""), 10),
-                  collaborators: entry.collaborators || [],
-                }))
+                .map((entry: any) => {
+                  // collaborators 데이터 정규화
+                  const rawCollaborators = entry.collaborators || [];
+                  const normalizedCollaborators: CollaboratorEntry[] = [];
+
+                  if (Array.isArray(rawCollaborators)) {
+                    rawCollaborators.forEach((collab: any) => {
+                      if (typeof collab === "string") {
+                        // 문자열인 경우 (name만)
+                        normalizedCollaborators.push({
+                          name: collab,
+                          relation: "pair",
+                        });
+                      } else if (collab && typeof collab === "object") {
+                        const name = collab.name || collab.userName || "";
+                        if (!name) return;
+
+                        // relations 배열이 있는 경우
+                        if (Array.isArray(collab.relations) && collab.relations.length > 0) {
+                          collab.relations.forEach((relation: string) => {
+                            if (["pair", "pre", "post"].includes(relation)) {
+                              normalizedCollaborators.push({
+                                name,
+                                relation: relation as "pair" | "pre" | "post",
+                              });
+                            }
+                          });
+                        } else if (collab.relation && ["pair", "pre", "post"].includes(collab.relation)) {
+                          // relation 단일 값인 경우
+                          normalizedCollaborators.push({
+                            name,
+                            relation: collab.relation as "pair" | "pre" | "post",
+                          });
+                        } else {
+                          // relation이 없는 경우 기본값 pair
+                          normalizedCollaborators.push({
+                            name,
+                            relation: "pair",
+                          });
+                        }
+                      }
+                    });
+                  }
+
+                  return {
+                    ...entry,
+                    year: snapshot.year,
+                    week: parseInt(snapshot.week.replace("W", ""), 10),
+                    collaborators: normalizedCollaborators,
+                  };
+                })
                 .filter(
                   (entry: any) =>
                     entry.collaborators &&
@@ -113,11 +158,6 @@ export function useCollaborationData(
                 );
 
               allEntries.push(...validEntries);
-
-              // 디버그 로그
-              console.log(
-                `[useCollaborationData] Fetched ${entries.length} entries, ${validEntries.length} with collaborators for ${snapshot.year}-${snapshot.week}`
-              );
             }
         });
 
