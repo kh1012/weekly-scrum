@@ -86,9 +86,15 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
     if (entry.risks.length > 0) {
       entry.risks.forEach((risk) => {
         // risk가 객체인 경우 처리 (데이터 불일치 방어)
-        const riskContent = typeof risk === 'string' 
+        let riskContent = typeof risk === 'string' 
           ? risk 
           : (risk as any)?.note || (risk as any)?.title || JSON.stringify(risk);
+        
+        // 빈 문자열인 경우 "empty"로 기본값 설정
+        if (!riskContent || riskContent.trim() === '') {
+          riskContent = 'empty';
+        }
+        
         riskItems.push({ entry, content: riskContent });
       });
     }
@@ -188,8 +194,8 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
         </div>
       )}
 
-      {/* Show Details Button */}
-      {data.entries.length > 0 && (
+      {/* Show Details Button - 2개 이상인 경우에만 표시 */}
+      {data.entries.length > 1 && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#57606a] hover:bg-[#f6f8fa] rounded-md transition-colors border border-[#d0d7de]"
