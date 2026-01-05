@@ -163,11 +163,11 @@ export const DraftBar = memo(function DraftBar({
   // 첫 번째 담당자의 역할 기반 색상 (없으면 기본 회색)
   const primaryRole = bar.assignees?.[0]?.role;
   const roleColor = primaryRole ? ROLE_CONFIG[primaryRole] : null;
-  
+
   // Snapshot은 어두운 색상 사용
   const barColor = isSnapshot
     ? { color: "#1e293b", bg: "#334155", text: "#ffffff" }
-    : (roleColor || DEFAULT_COLOR);
+    : roleColor || DEFAULT_COLOR;
 
   // 드래그 시작
   const handleMouseDown = useCallback(
@@ -332,7 +332,7 @@ export const DraftBar = memo(function DraftBar({
   const currentTop = lane * LANE_HEIGHT + 4 + dragOffset.top;
 
   return (
-      <div
+    <div
       ref={barRef}
       className="absolute flex flex-col justify-center group outline-none"
       style={{
@@ -343,7 +343,7 @@ export const DraftBar = memo(function DraftBar({
         // Airbnb 스타일: 더 둥근 끝
         borderRadius: 10,
         // 역할 기반 배경색 (Snapshot은 어두운 색상)
-        background: isSnapshot 
+        background: isSnapshot
           ? "linear-gradient(135deg, #334155 0%, #475569 100%)"
           : barColor.bg,
         border: isSnapshot
@@ -423,9 +423,9 @@ export const DraftBar = memo(function DraftBar({
             {currentWidth > 80 && snapshotYear && snapshotWeek && (
               <span
                 className="text-[9px] font-medium shrink-0 px-1.5 py-0.5 rounded"
-                style={{ 
+                style={{
                   color: "rgba(255, 255, 255, 0.9)",
-                  background: "rgba(0, 0, 0, 0.2)"
+                  background: "rgba(0, 0, 0, 0.2)",
                 }}
               >
                 {snapshotYear} {snapshotWeek}
@@ -436,12 +436,16 @@ export const DraftBar = memo(function DraftBar({
           {/* 2행: 진행률 바 */}
           {currentWidth > 60 && (
             <div className="flex items-center gap-1.5">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0, 0, 0, 0.2)" }}>
+              <div
+                className="flex-1 h-1.5 rounded-full overflow-hidden"
+                style={{ background: "rgba(0, 0, 0, 0.2)" }}
+              >
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
                     width: `${avgProgress}%`,
-                    background: "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
+                    background:
+                      "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
                   }}
                 />
               </div>
@@ -498,7 +502,8 @@ export const DraftBar = memo(function DraftBar({
                   >
                     {bar.assignees[0]?.displayName ||
                       bar.assignees[0]?.userId?.slice(0, 8)}
-                    {bar.assignees.length > 1 && ` +${bar.assignees.length - 1}`}
+                    {bar.assignees.length > 1 &&
+                      ` +${bar.assignees.length - 1}`}
                   </span>
                 )}
             </div>

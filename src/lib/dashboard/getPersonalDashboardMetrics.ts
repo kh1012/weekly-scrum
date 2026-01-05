@@ -44,6 +44,7 @@ export interface PersonalDashboardMetrics {
   recentEntries: RecentSnapshotEntry[];
   domainDistribution: { label: string; count: number }[];
   weeklyTrend: { week: string; count: number }[];
+  weeklyProgressTrend: { week: string; avgProgress: number; entryCount: number }[];
 }
 
 /**
@@ -282,11 +283,13 @@ export async function getPersonalDashboardMetrics({
 
   // 3. 주차별 엔트리 수 추이 (최근 8주)
   const weeklyTrend: { week: string; count: number }[] = [];
+  const weeklyProgressTrend: { week: string; avgProgress: number; entryCount: number }[] = [];
+  
   if (snapshots && snapshots.length > 0 && snapshotIds.length > 0) {
-    // 모든 엔트리를 한 번에 조회 (N+1 쿼리 방지)
+    // 모든 엔트리를 한 번에 조회 (N+1 쿼리 방지) - past_week 포함
     const { data: allEntriesForTrend } = await supabase
       .from("snapshot_entries")
-      .select("snapshot_id")
+      .select("snapshot_id, past_week")
       .in("snapshot_id", snapshotIds);
 
     if (allEntriesForTrend) {
@@ -300,13 +303,13 @@ export async function getPersonalDashboardMetrics({
         weekMap.get(weekKey)!.push(snapshot.id);
       }
 
-      // 스냅샷 ID -> 엔트리 수 매핑
-      const snapshotIdToCount = new Map<string, number>();
+      // 스냅샷 ID -> 엔트리 매핑
+      const snapshotIdToEntries = new Map<string, any[]>();
       for (const entry of allEntriesForTrend) {
-        snapshotIdToCount.set(
-          entry.snapshot_id,
-          (snapshotIdToCount.get(entry.snapshot_id) || 0) + 1
-        );
+        if (!snapshotIdToEntries.has(entry.snapshot_id)) {
+          snapshotIdToEntries.set(entry.snapshot_id, []);
+        }
+        snapshotIdToEntries.get(entry.snapshot_id)!.push(entry);
       }
 
       // 최근 8주 추출 및 집계
@@ -314,14 +317,40 @@ export async function getPersonalDashboardMetrics({
 
       for (const weekKey of sortedWeeks.reverse()) {
         const weekSnapshotIds = weekMap.get(weekKey) || [];
-        const weekEntryCount = weekSnapshotIds.reduce(
-          (sum, sid) => sum + (snapshotIdToCount.get(sid) || 0),
-          0
+        
+        // 엔트리 수 계산
+        const weekEntries = weekSnapshotIds.flatMap(
+          (sid) => snapshotIdToEntries.get(sid) || []
         );
+        const weekEntryCount = weekEntries.length;
 
         weeklyTrend.push({
           week: weekKey,
           count: weekEntryCount,
+        });
+
+        // 평균 진행률 계산
+        let totalProgress = 0;
+        let taskCount = 0;
+
+        for (const entry of weekEntries) {
+          const pastWeek = entry.past_week as any;
+          const tasks = pastWeek?.tasks || [];
+          
+          for (const task of tasks) {
+            if (typeof task.progress === "number") {
+              totalProgress += task.progress;
+              taskCount++;
+            }
+          }
+        }
+
+        const avgProgress = taskCount > 0 ? totalProgress / taskCount : 0;
+
+        weeklyProgressTrend.push({
+          week: weekKey,
+          avgProgress: Math.round(avgProgress * 10) / 10, // 소수점 1자리
+          entryCount: weekEntryCount,
         });
       }
     }
@@ -348,6 +377,7 @@ export async function getPersonalDashboardMetrics({
     recentEntries,
     domainDistribution,
     weeklyTrend,
+    weeklyProgressTrend,
   };
 }
 

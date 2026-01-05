@@ -8,6 +8,18 @@
 "use client";
 
 import type { PersonalDashboardMetrics } from "@/lib/dashboard/getPersonalDashboardMetrics";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+} from "recharts";
 
 interface DataOnlyDashboardProps {
   userName?: string;
@@ -18,7 +30,7 @@ export function DataOnlyDashboard({
   userName,
   metrics,
 }: DataOnlyDashboardProps) {
-  const { snapshots, plans, usage, recentEntries, domainDistribution, weeklyTrend } = metrics;
+  const { snapshots, plans, usage, recentEntries, domainDistribution, weeklyTrend, weeklyProgressTrend } = metrics;
 
   // 날짜 포맷팅 (상대 시간)
   const formatRelativeTime = (dateStr: string | null) => {
@@ -217,7 +229,7 @@ export function DataOnlyDashboard({
             </div>
           )}
 
-          {/* 페이지 방문 추이 */}
+          {/* 페이지 방문 추이 (꺾은선 그래프) */}
           {usage.visitsByDay14d.length > 0 && (
             <div>
               <h2 className="text-base font-semibold text-[#24292f] mb-3 flex items-center gap-2">
@@ -236,47 +248,92 @@ export function DataOnlyDashboard({
                 </svg>
                 페이지 방문 추이 (최근 14일)
               </h2>
-              <div className="overflow-hidden border border-[#d0d7de] rounded-md">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-[#f6f8fa]">
-                      <th className="px-4 py-2 text-left font-semibold text-[#24292f] border-b border-[#d0d7de]">
-                        날짜
-                      </th>
-                      <th className="px-4 py-2 text-right font-semibold text-[#24292f] border-b border-[#d0d7de]">
-                        방문 횟수
-                      </th>
-                      <th className="px-4 py-2 text-left font-normal text-[#57606a] border-b border-[#d0d7de] w-32">
-                        시각화
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#d0d7de]">
-                    {usage.visitsByDay14d.map((item) => {
-                      const maxCount = Math.max(...usage.visitsByDay14d.map((i) => i.count));
-                      const barWidth = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
-                      
-                      return (
-                        <tr key={item.date} className="hover:bg-[#f6f8fa] transition-colors">
-                          <td className="px-4 py-2 text-[#24292f] font-medium">
-                            {formatDateWithDay(item.date)}
-                          </td>
-                          <td className="px-4 py-2 text-right text-[#0969da] font-semibold">
-                            {item.count}
-                          </td>
-                          <td className="px-4 py-2">
-                            <div className="h-5 bg-[#f6f8fa] rounded-sm overflow-hidden">
-                              <div
-                                className="h-full bg-[#0969da] rounded-sm transition-all"
-                                style={{ width: `${barWidth}%` }}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
+                <ResponsiveContainer width="100%" height={280}>
+                  <AreaChart
+                    data={usage.visitsByDay14d.map((item) => ({
+                      date: formatShortDate(item.date),
+                      fullDate: formatDateWithDay(item.date),
+                      visits: item.count,
+                    }))}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0969da" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#0969da" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: "#57606a", fontSize: 12 }}
+                      tickLine={{ stroke: "#d0d7de" }}
+                      axisLine={{ stroke: "#d0d7de" }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      tick={{ fill: "#57606a", fontSize: 12 }}
+                      tickLine={{ stroke: "#d0d7de" }}
+                      axisLine={{ stroke: "#d0d7de" }}
+                      label={{
+                        value: "방문 횟수",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { fill: "#57606a", fontSize: 12 },
+                      }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #d0d7de",
+                        borderRadius: "6px",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                      }}
+                      labelStyle={{ color: "#24292f", fontWeight: 600 }}
+                      itemStyle={{ color: "#0969da" }}
+                      formatter={(value: number, name: string, props: any) => [
+                        `${value}회`,
+                        "방문 횟수",
+                      ]}
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload[0]) {
+                          return payload[0].payload.fullDate;
+                        }
+                        return label;
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="visits"
+                      stroke="#0969da"
+                      strokeWidth={2.5}
+                      fill="url(#colorVisits)"
+                      dot={{ fill: "#0969da", r: 4 }}
+                      activeDot={{ r: 6, fill: "#0969da" }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+                <div className="mt-3 pt-3 border-t border-[#d0d7de] flex items-center justify-between text-xs text-[#57606a]">
+                  <span>
+                    총 방문:{" "}
+                    <strong className="text-[#0969da] font-semibold">
+                      {usage.visitsByDay14d.reduce((sum, item) => sum + item.count, 0)}회
+                    </strong>
+                  </span>
+                  <span>
+                    일평균:{" "}
+                    <strong className="text-[#0969da] font-semibold">
+                      {(
+                        usage.visitsByDay14d.reduce((sum, item) => sum + item.count, 0) /
+                        usage.visitsByDay14d.length
+                      ).toFixed(1)}
+                      회
+                    </strong>
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -347,6 +404,116 @@ export function DataOnlyDashboard({
             </div>
           )}
         </div>
+
+        {/* 주차별 평균 진행률 추이 (꺾은선 그래프) */}
+        {weeklyProgressTrend.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-base font-semibold text-[#24292f] mb-3 flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-[#57606a]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
+              </svg>
+              주차별 평균 진행률 추이 (최근 8주)
+            </h2>
+            <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart
+                  data={weeklyProgressTrend}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+                >
+                  <defs>
+                    <linearGradient id="colorProgress" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#1a7f37" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#1a7f37" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="week"
+                    tick={{ fill: "#57606a", fontSize: 12 }}
+                    tickLine={{ stroke: "#d0d7de" }}
+                    axisLine={{ stroke: "#d0d7de" }}
+                  />
+                  <YAxis
+                    tick={{ fill: "#57606a", fontSize: 12 }}
+                    tickLine={{ stroke: "#d0d7de" }}
+                    axisLine={{ stroke: "#d0d7de" }}
+                    domain={[0, 100]}
+                    label={{
+                      value: "평균 진행률 (%)",
+                      angle: -90,
+                      position: "insideLeft",
+                      style: { fill: "#57606a", fontSize: 12 },
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #d0d7de",
+                      borderRadius: "6px",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                    }}
+                    labelStyle={{ color: "#24292f", fontWeight: 600 }}
+                    formatter={(value: number, name: string, props: any) => {
+                      const entryCount = props.payload.entryCount;
+                      return [
+                        `${value}% (${entryCount}개 엔트리)`,
+                        "평균 진행률",
+                      ];
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{ paddingTop: "20px" }}
+                    iconType="line"
+                    formatter={() => "태스크 평균 진행률"}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="avgProgress"
+                    stroke="#1a7f37"
+                    strokeWidth={3}
+                    fill="url(#colorProgress)"
+                    dot={{ fill: "#1a7f37", r: 5 }}
+                    activeDot={{ r: 7, fill: "#1a7f37", stroke: "#ffffff", strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="mt-3 pt-3 border-t border-[#d0d7de] grid grid-cols-3 gap-4 text-xs text-[#57606a]">
+                <div>
+                  전체 평균:{" "}
+                  <strong className="text-[#1a7f37] font-semibold">
+                    {(
+                      weeklyProgressTrend.reduce((sum, item) => sum + item.avgProgress, 0) /
+                      weeklyProgressTrend.length
+                    ).toFixed(1)}
+                    %
+                  </strong>
+                </div>
+                <div>
+                  최고:{" "}
+                  <strong className="text-[#1a7f37] font-semibold">
+                    {Math.max(...weeklyProgressTrend.map((item) => item.avgProgress)).toFixed(1)}%
+                  </strong>
+                </div>
+                <div>
+                  최근 주차:{" "}
+                  <strong className="text-[#1a7f37] font-semibold">
+                    {weeklyProgressTrend[weeklyProgressTrend.length - 1]?.avgProgress.toFixed(1) || 0}%
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 최근 스냅샷 엔트리 */}
         {recentEntries.length > 0 && (
@@ -496,7 +663,7 @@ export function DataOnlyDashboard({
           </div>
         )}
 
-        {/* 주차별 작성량 추이 */}
+        {/* 주차별 작성량 추이 (꺾은선 그래프) */}
         {weeklyTrend.length > 0 && (
           <div className="mb-8">
             <h2 className="text-base font-semibold text-[#24292f] mb-3 flex items-center gap-2">
@@ -515,74 +682,96 @@ export function DataOnlyDashboard({
               </svg>
               주차별 스냅샷 작성 추이 (최근 8주)
             </h2>
-            <div className="overflow-hidden border border-[#d0d7de] rounded-md">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[#f6f8fa]">
-                    <th className="px-4 py-2 text-left font-semibold text-[#24292f] border-b border-[#d0d7de]">
-                      주차
-                    </th>
-                    <th className="px-4 py-2 text-right font-semibold text-[#24292f] border-b border-[#d0d7de]">
-                      엔트리 수
-                    </th>
-                    <th className="px-4 py-2 text-left font-normal text-[#57606a] border-b border-[#d0d7de] w-64">
-                      추이
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#d0d7de]">
-                  {weeklyTrend.map((item, idx) => {
-                    const maxCount = Math.max(...weeklyTrend.map((w) => w.count), 1);
-                    const barHeight = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
-                    const isLatest = idx === weeklyTrend.length - 1;
-
-                    return (
-                      <tr
-                        key={item.week}
-                        className={`hover:bg-[#f6f8fa] transition-colors ${
-                          isLatest ? "bg-[#ddf4ff]/30" : ""
-                        }`}
-                      >
-                        <td className="px-4 py-2">
-                          <span
-                            className={`font-mono text-[#24292f] ${
-                              isLatest ? "font-semibold" : ""
-                            }`}
-                          >
-                            {item.week}
-                          </span>
-                          {isLatest && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#1a7f37] text-white">
-                              최근
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2 text-right">
-                          <span
-                            className={`font-semibold ${
-                              isLatest ? "text-[#1a7f37]" : "text-[#0969da]"
-                            }`}
-                          >
-                            {item.count}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2">
-                          <div className="h-6 bg-[#f6f8fa] rounded-sm overflow-hidden flex items-end">
-                            <div
-                              className={`w-full transition-all rounded-sm ${
-                                isLatest
-                                  ? "bg-gradient-to-t from-[#1a7f37] to-[#2da44e]"
-                                  : "bg-gradient-to-t from-[#0969da] to-[#54aeff]"
-                              }`}
-                              style={{ height: `${barHeight}%` }}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart
+                  data={weeklyTrend.map((item, idx) => ({
+                    week: item.week,
+                    count: item.count,
+                    isLatest: idx === weeklyTrend.length - 1,
+                  }))}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="week"
+                    tick={{ fill: "#57606a", fontSize: 12 }}
+                    tickLine={{ stroke: "#d0d7de" }}
+                    axisLine={{ stroke: "#d0d7de" }}
+                  />
+                  <YAxis
+                    tick={{ fill: "#57606a", fontSize: 12 }}
+                    tickLine={{ stroke: "#d0d7de" }}
+                    axisLine={{ stroke: "#d0d7de" }}
+                    label={{
+                      value: "엔트리 수",
+                      angle: -90,
+                      position: "insideLeft",
+                      style: { fill: "#57606a", fontSize: 12 },
+                    }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #d0d7de",
+                      borderRadius: "6px",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                    }}
+                    labelStyle={{ color: "#24292f", fontWeight: 600 }}
+                    formatter={(value: number) => [`${value}개`, "엔트리 수"]}
+                  />
+                  <Legend
+                    wrapperStyle={{ paddingTop: "20px" }}
+                    iconType="line"
+                    formatter={() => "주차별 엔트리 수"}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#0969da"
+                    strokeWidth={3}
+                    dot={(props: any) => {
+                      const { cx, cy, payload } = props;
+                      return (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={payload.isLatest ? 6 : 4}
+                          fill={payload.isLatest ? "#1a7f37" : "#0969da"}
+                          stroke="#ffffff"
+                          strokeWidth={2}
+                        />
+                      );
+                    }}
+                    activeDot={{ r: 7, fill: "#0969da", stroke: "#ffffff", strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="mt-3 pt-3 border-t border-[#d0d7de] grid grid-cols-3 gap-4 text-xs text-[#57606a]">
+                <div>
+                  총 엔트리:{" "}
+                  <strong className="text-[#0969da] font-semibold">
+                    {weeklyTrend.reduce((sum, item) => sum + item.count, 0)}개
+                  </strong>
+                </div>
+                <div>
+                  주평균:{" "}
+                  <strong className="text-[#0969da] font-semibold">
+                    {(
+                      weeklyTrend.reduce((sum, item) => sum + item.count, 0) /
+                      weeklyTrend.length
+                    ).toFixed(1)}
+                    개
+                  </strong>
+                </div>
+                <div>
+                  최근 주차:{" "}
+                  <strong className="text-[#1a7f37] font-semibold">
+                    {weeklyTrend[weeklyTrend.length - 1]?.count || 0}개
+                  </strong>
+                </div>
+              </div>
             </div>
           </div>
         )}

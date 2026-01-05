@@ -20,7 +20,7 @@ type FilterType = "all" | "plans" | "snapshots";
 
 /**
  * Alignment Gantt Client Component
- * 
+ *
  * DraftGanttView를 활용한 읽기 전용 간트 차트
  * Plans + Snapshot Entries를 타임라인에서 시각화
  * 필터: 전체보기, 계획만 보기, 스냅샷만 보기
@@ -70,7 +70,9 @@ export function AlignmentGanttClient({
   // 통계 계산
   const stats = useMemo(() => {
     const plansCount = items.filter((item) => item.type === "plan").length;
-    const snapshotsCount = items.filter((item) => item.type === "snapshot").length;
+    const snapshotsCount = items.filter(
+      (item) => item.type === "snapshot"
+    ).length;
     return { plansCount, snapshotsCount };
   }, [items]);
 
@@ -131,7 +133,9 @@ export function AlignmentGanttClient({
             </span>
           )}
           {filter === "plans" && <span>계획 {stats.plansCount}개</span>}
-          {filter === "snapshots" && <span>스냅샷 {stats.snapshotsCount}개</span>}
+          {filter === "snapshots" && (
+            <span>스냅샷 {stats.snapshotsCount}개</span>
+          )}
         </div>
       </div>
 
@@ -150,4 +154,3 @@ export function AlignmentGanttClient({
     </div>
   );
 }
-
