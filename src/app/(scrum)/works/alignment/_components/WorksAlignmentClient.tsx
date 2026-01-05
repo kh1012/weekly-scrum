@@ -3,8 +3,10 @@
 import { useState, useMemo } from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft/DraftGanttView";
 import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
-import { calculateAlignmentStatus } from "@/lib/alignment/alignmentStatus";
+import { calculateAlignmentStatus, detectAlignmentMismatches } from "@/lib/alignment/alignmentStatus";
 import type { DraftBar } from "@/components/plans/gantt-draft/types";
+import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
+import { MismatchReviewPanel } from "@/components/weekly-scrum/alignment/MismatchReviewPanel";
 
 interface WorksAlignmentClientProps {
   workspaceId: string;
@@ -146,8 +148,47 @@ export function WorksAlignmentClient({
     return { plansCount, snapshotsCount, uniqueAuthors };
   }, [items]);
 
+  // Mismatch 감지
+  const mismatches = useMemo(() => {
+    const mockBars: DraftBar[] = filteredItems.map((item) => ({
+      clientUid: item.id,
+      rowId: `${item.project}::${item.module}::${item.feature}`,
+      serverId: item.id,
+      title: item.title,
+      stage: item.stage || "in_progress",
+      status: (item.status || "active") as any,
+      startDate: item.start_date,
+      endDate: item.end_date,
+      assignees: (item.assignees || []).map((a) => ({
+        userId: a.userId,
+        role: a.role as any,
+        displayName: a.displayName,
+      })),
+      dirty: false,
+      createdAtLocal: new Date().toISOString(),
+      updatedAtLocal: new Date().toISOString(),
+      isSnapshot: item.type === "snapshot",
+      metaKey: item.metaKey,
+      authorId: item.authorId,
+    }));
+
+    const planBars = mockBars.filter((bar) => !bar.isSnapshot);
+    return detectAlignmentMismatches(planBars, mockBars);
+  }, [filteredItems]);
+
+  const handleFocusMismatch = (mismatch: AlignmentMismatch) => {
+    // TODO: Implement timeline scroll and highlight
+    console.log("Focus on mismatch:", mismatch);
+  };
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      {/* Mismatch Review Panel */}
+      <MismatchReviewPanel
+        mismatches={mismatches}
+        onFocusMismatch={handleFocusMismatch}
+      />
+
       {/* 필터 바 */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-1.5">
