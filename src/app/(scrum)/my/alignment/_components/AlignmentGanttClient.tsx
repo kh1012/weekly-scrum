@@ -59,6 +59,12 @@ export function AlignmentGanttClient({
     stage: item.stage || "in_progress",
     priority: item.priority,
     assignees: item.assignees || [],
+    // Snapshot 전용 데이터 전달
+    isSnapshot: item.type === "snapshot",
+    avgProgress: item.avgProgress,
+    metaKey: item.metaKey,
+    year: item.year,
+    week: item.week,
   }));
 
   // 통계 계산

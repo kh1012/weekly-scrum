@@ -36,6 +36,8 @@ export interface AlignmentGanttItem {
   snapshotId?: string;
   year?: number;
   week?: string;
+  avgProgress?: number; // 평균 진행률 (0-100)
+  metaKey?: string; // 메타 정보 키 (연결 화살표용)
 }
 
 export interface AlignmentGanttData {
@@ -129,7 +131,8 @@ export async function getAlignmentGanttData({
         domain,
         project,
         module,
-        feature
+        feature,
+        past_week
       `)
       .in("snapshot_id", snapshotIds);
 
@@ -184,10 +187,20 @@ export async function getAlignmentGanttData({
       return `${year}-${month}-${day}`;
     };
 
+    // 평균 진행률 계산
+    const pastWeek = entry.past_week as any;
+    const tasks = pastWeek?.tasks || [];
+    const avgProgress = tasks.length > 0
+      ? tasks.reduce((sum: number, task: any) => sum + (task.progress || 0), 0) / tasks.length
+      : 0;
+
+    // 메타 정보로 고유 키 생성 (연결 화살표용)
+    const metaKey = `${entry.domain}::${entry.project}::${entry.module || ""}::${entry.feature || ""}`;
+
     return {
       id: `snapshot-${entry.id}`,
       type: "snapshot",
-      title: `📸 ${entry.name}`,
+      title: entry.feature || entry.module || entry.project,
       domain: entry.domain || "",
       project: entry.project || "",
       module: entry.module || null,
@@ -202,13 +215,9 @@ export async function getAlignmentGanttData({
       snapshotId: entry.snapshot_id,
       year: snapshot.year,
       week: snapshot.week,
-      assignees: [
-        {
-          userId,
-          role: "author",
-          displayName: entry.name,
-        },
-      ],
+      avgProgress, // 평균 진행률 추가
+      metaKey, // 메타 키 추가 (연결 화살표용)
+      assignees: [],
     };
   });
 

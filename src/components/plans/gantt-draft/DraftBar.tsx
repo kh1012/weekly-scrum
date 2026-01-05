@@ -154,10 +154,20 @@ export const DraftBar = memo(function DraftBar({
   const [dragOffset, setDragOffset] = useState({ left: 0, width: 0, top: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
+  // Snapshot 블록인지 확인
+  const isSnapshot = (bar as any).isSnapshot === true;
+  const avgProgress = (bar as any).avgProgress || 0;
+  const snapshotYear = (bar as any).year;
+  const snapshotWeek = (bar as any).week;
+
   // 첫 번째 담당자의 역할 기반 색상 (없으면 기본 회색)
   const primaryRole = bar.assignees?.[0]?.role;
   const roleColor = primaryRole ? ROLE_CONFIG[primaryRole] : null;
-  const barColor = roleColor || DEFAULT_COLOR;
+  
+  // Snapshot은 어두운 색상 사용
+  const barColor = isSnapshot
+    ? { color: "#1e293b", bg: "#334155", text: "#ffffff" }
+    : (roleColor || DEFAULT_COLOR);
 
   // 드래그 시작
   const handleMouseDown = useCallback(
@@ -322,7 +332,7 @@ export const DraftBar = memo(function DraftBar({
   const currentTop = lane * LANE_HEIGHT + 4 + dragOffset.top;
 
   return (
-    <div
+      <div
       ref={barRef}
       className="absolute flex flex-col justify-center group outline-none"
       style={{
@@ -332,17 +342,23 @@ export const DraftBar = memo(function DraftBar({
         top: currentTop,
         // Airbnb 스타일: 더 둥근 끝
         borderRadius: 10,
-        // 역할 기반 배경색
-        background: barColor.bg,
-        border: `1px solid ${
-          isSelected ? barColor.color : `${barColor.color}30`
-        }`,
+        // 역할 기반 배경색 (Snapshot은 어두운 색상)
+        background: isSnapshot 
+          ? "linear-gradient(135deg, #334155 0%, #475569 100%)"
+          : barColor.bg,
+        border: isSnapshot
+          ? "1px solid #1e293b"
+          : `1px solid ${isSelected ? barColor.color : `${barColor.color}30`}`,
         // 호버/선택 시 그림자 & lift 효과
         boxShadow: isSelected
           ? `0 2px 12px ${barColor.color}25, 0 0 0 2px ${barColor.color}30`
           : isHovered
-          ? `0 4px 16px rgba(0, 0, 0, 0.1)`
-          : `0 1px 3px rgba(0, 0, 0, 0.04)`,
+          ? isSnapshot
+            ? "0 6px 20px rgba(0, 0, 0, 0.3)"
+            : "0 4px 16px rgba(0, 0, 0, 0.1)"
+          : isSnapshot
+          ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+          : "0 1px 3px rgba(0, 0, 0, 0.04)",
         // Airbnb 스타일: 호버 시 lift
         transform:
           isHovered && !isDragging ? "translateY(-1px)" : "translateY(0)",
@@ -388,74 +404,126 @@ export const DraftBar = memo(function DraftBar({
         </div>
       )}
 
-      {/* 콘텐츠 영역 - 2행 레이아웃 */}
-      <div
-        className="px-2 py-0.5 flex flex-col justify-center min-w-0 gap-0.5"
-        onMouseDown={(e) => handleMouseDown(e, "move")}
-      >
-        {/* 1행: 스테이지 + 담당자 + 기간 */}
-        <div className="flex items-center justify-between gap-1 min-w-0">
-          {/* 좌측 그룹: 스테이지 + 담당자 */}
-          <div className="flex items-center gap-1 min-w-0">
-            {/* 스테이지 이니셜 태그 (항상 표시) */}
-            {bar.stage ? (
+      {/* 콘텐츠 영역 - Snapshot과 일반 블록 구분 */}
+      {isSnapshot ? (
+        /* Snapshot 블록 레이아웃 */
+        <div
+          className="px-2 py-1 flex flex-col justify-center min-w-0 gap-1"
+          onMouseDown={(e) => handleMouseDown(e, "move")}
+        >
+          {/* 1행: 타이틀 + 기간 */}
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <span
+              className="truncate text-[11px] font-semibold leading-tight"
+              style={{ color: barColor.text }}
+              title={bar.title}
+            >
+              {bar.title}
+            </span>
+            {currentWidth > 80 && snapshotYear && snapshotWeek && (
               <span
-                className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
-                style={{
-                  background: barColor.color,
-                  color: "white",
+                className="text-[9px] font-medium shrink-0 px-1.5 py-0.5 rounded"
+                style={{ 
+                  color: "rgba(255, 255, 255, 0.9)",
+                  background: "rgba(0, 0, 0, 0.2)"
                 }}
-                title={bar.stage}
               >
-                {getStageInitial(bar.stage)}
-              </span>
-            ) : (
-              <span
-                className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0"
-                style={{ background: "#e5e7eb", color: "#6b7280" }}
-              >
-                -
+                {snapshotYear} {snapshotWeek}
               </span>
             )}
-
-            {/* 담당자 이름 (너비 > 40, 2칸부터) */}
-            {currentWidth > 40 &&
-              bar.assignees &&
-              bar.assignees.length > 0 && (
-                <span
-                  className="text-[9px] font-medium truncate"
-                  style={{ color: barColor.text, opacity: 0.8 }}
-                  title={bar.assignees
-                    .map((a) => a.displayName || a.userId)
-                    .join(", ")}
-                >
-                  {bar.assignees[0]?.displayName ||
-                    bar.assignees[0]?.userId?.slice(0, 8)}
-                  {bar.assignees.length > 1 && ` +${bar.assignees.length - 1}`}
-                </span>
-              )}
           </div>
 
-          {/* 우측: 기간 표시 (너비 > 120, 3칸부터) */}
-          {currentWidth > 120 && (
-            <span
-              className="text-[9px] font-medium shrink-0"
-              style={{ color: barColor.text, opacity: 0.7 }}
-            >
-              {dateLabel}
-            </span>
+          {/* 2행: 진행률 바 */}
+          {currentWidth > 60 && (
+            <div className="flex items-center gap-1.5">
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0, 0, 0, 0.2)" }}>
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${avgProgress}%`,
+                    background: "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
+                  }}
+                />
+              </div>
+              <span
+                className="text-[9px] font-medium shrink-0"
+                style={{ color: "rgba(255, 255, 255, 0.8)" }}
+              >
+                {Math.round(avgProgress)}%
+              </span>
+            </div>
           )}
         </div>
-
-        {/* 2행: 타이틀 */}
-        <span
-          className="truncate text-[11px] font-medium leading-tight"
-          style={{ color: barColor.text }}
-          title={bar.title}
+      ) : (
+        /* 일반 블록 레이아웃 */
+        <div
+          className="px-2 py-0.5 flex flex-col justify-center min-w-0 gap-0.5"
+          onMouseDown={(e) => handleMouseDown(e, "move")}
         >
-          {bar.title}
-        </span>
-      </div>
+          {/* 1행: 스테이지 + 담당자 + 기간 */}
+          <div className="flex items-center justify-between gap-1 min-w-0">
+            {/* 좌측 그룹: 스테이지 + 담당자 */}
+            <div className="flex items-center gap-1 min-w-0">
+              {/* 스테이지 이니셜 태그 (항상 표시) */}
+              {bar.stage ? (
+                <span
+                  className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
+                  style={{
+                    background: barColor.color,
+                    color: "white",
+                  }}
+                  title={bar.stage}
+                >
+                  {getStageInitial(bar.stage)}
+                </span>
+              ) : (
+                <span
+                  className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0"
+                  style={{ background: "#e5e7eb", color: "#6b7280" }}
+                >
+                  -
+                </span>
+              )}
+
+              {/* 담당자 이름 (너비 > 40, 2칸부터) */}
+              {currentWidth > 40 &&
+                bar.assignees &&
+                bar.assignees.length > 0 && (
+                  <span
+                    className="text-[9px] font-medium truncate"
+                    style={{ color: barColor.text, opacity: 0.8 }}
+                    title={bar.assignees
+                      .map((a) => a.displayName || a.userId)
+                      .join(", ")}
+                  >
+                    {bar.assignees[0]?.displayName ||
+                      bar.assignees[0]?.userId?.slice(0, 8)}
+                    {bar.assignees.length > 1 && ` +${bar.assignees.length - 1}`}
+                  </span>
+                )}
+            </div>
+
+            {/* 우측: 기간 표시 (너비 > 120, 3칸부터) */}
+            {currentWidth > 120 && (
+              <span
+                className="text-[9px] font-medium shrink-0"
+                style={{ color: barColor.text, opacity: 0.7 }}
+              >
+                {dateLabel}
+              </span>
+            )}
+          </div>
+
+          {/* 2행: 타이틀 */}
+          <span
+            className="truncate text-[11px] font-medium leading-tight"
+            style={{ color: barColor.text }}
+            title={bar.title}
+          >
+            {bar.title}
+          </span>
+        </div>
+      )}
 
       {/* 우측 리사이즈 핸들 */}
       {isEditing && (
