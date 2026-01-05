@@ -21,41 +21,41 @@ export function StatsCards({
     <>
       <div className="w-full space-y-4">
         {/* Overview Card */}
-        <div className="w-full bg-white rounded-lg border border-[#d0d7de] p-4">
-          <h2 className="text-sm font-semibold text-[#24292f] mb-3">
+        <div className="w-full bg-white rounded-md border border-[#d0d7de] p-3">
+          <h2 className="text-xs font-semibold text-[#24292f] mb-2.5">
             Overview
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div>
-              <div className="text-xs text-[#57606a] mb-1">선택된 기간</div>
-              <div className="text-sm font-semibold text-[#24292f]">
+              <div className="text-[11px] text-[#57606a] mb-0.5">선택된 기간</div>
+              <div className="text-xs font-medium text-[#24292f]">
                 {stats.selectedWeekRangeLabel}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <div className="text-xs text-[#57606a] mb-1">총 협업 횟수</div>
-                <div className="text-lg font-bold text-[#0969da]">
+                <div className="text-[11px] text-[#57606a] mb-0.5">총 협업 횟수</div>
+                <div className="text-sm font-semibold text-[#0969da]">
                   {stats.totalCollabWeight}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-[#57606a] mb-1">참여자 수</div>
-                <div className="text-lg font-bold text-[#0969da]">
+                <div className="text-[11px] text-[#57606a] mb-0.5">참여자 수</div>
+                <div className="text-sm font-semibold text-[#0969da]">
                   {stats.participantCount}
                 </div>
               </div>
             </div>
             {stats.topCollaborator && (
-              <div className="pt-3 border-t border-[#d0d7de]">
-                <div className="text-xs text-[#57606a] mb-1">
+              <div className="pt-2.5 border-t border-[#d0d7de]">
+                <div className="text-[11px] text-[#57606a] mb-0.5">
                   🏆 최다 협업자
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-[#24292f]">
+                  <div className="text-xs font-medium text-[#24292f]">
                     {stats.topCollaborator.label}
                   </div>
-                  <div className="text-sm font-bold text-[#0969da]">
+                  <div className="text-xs font-semibold text-[#0969da]">
                     {stats.topCollaborator.totalCollabs}회
                   </div>
                 </div>
@@ -65,26 +65,26 @@ export function StatsCards({
         </div>
 
         {/* Top 3 Collaborators Card */}
-        <div className="w-full bg-white rounded-lg border border-[#d0d7de] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[#24292f]">
+        <div className="w-full bg-white rounded-md border border-[#d0d7de] p-3">
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="text-xs font-semibold text-[#24292f]">
               Top 3 Collaborators
             </h2>
             {stats.top3Collaborators.length > 0 && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="text-xs text-[#0969da] hover:underline font-medium"
+                className="text-[11px] text-[#0969da] hover:underline font-normal"
               >
                 더보기
               </button>
             )}
           </div>
           {stats.top3Collaborators.length === 0 ? (
-            <div className="text-center text-xs text-[#57606a] py-4">
+            <div className="text-center text-[11px] text-[#57606a] py-3">
               데이터 없음
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {stats.top3Collaborators.map((collab, index) => {
                 const percentage =
                   stats.totalCollabWeight > 0
@@ -94,9 +94,9 @@ export function StatsCards({
                 return (
                   <div key={collab.id}>
                     <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-xs font-bold ${
+                          className={`text-[11px] font-semibold ${
                             index === 0
                               ? "text-[#0969da]"
                               : index === 1
@@ -106,17 +106,17 @@ export function StatsCards({
                         >
                           #{index + 1}
                         </span>
-                        <span className="text-sm font-medium text-[#24292f]">
+                        <span className="text-xs font-normal text-[#24292f]">
                           {collab.label}
                         </span>
                       </div>
-                      <div className="text-xs text-[#57606a]">
+                      <div className="text-[11px] text-[#57606a]">
                         {collab.totalCollabs}회 ({percentage.toFixed(1)}%)
                       </div>
                     </div>
-                    <div className="w-full bg-[#f6f8fa] rounded-full h-2">
+                    <div className="w-full bg-[#f6f8fa] rounded-full h-1.5">
                       <div
-                        className={`h-2 rounded-full ${
+                        className={`h-1.5 rounded-full ${
                           index === 0
                             ? "bg-[#0969da]"
                             : index === 1
@@ -134,71 +134,72 @@ export function StatsCards({
         </div>
 
         {/* Distribution Card */}
-        <div className="w-full bg-white rounded-lg border border-[#d0d7de] p-4">
-          <h2 className="text-sm font-semibold text-[#24292f] mb-3">
+        <div className="w-full bg-white rounded-md border border-[#d0d7de] p-3">
+          <h2 className="text-xs font-semibold text-[#24292f] mb-2.5">
             Distribution
           </h2>
           {stats.totalCollabWeight === 0 ? (
-            <div className="text-center text-xs text-[#57606a] py-4">
+            <div className="text-center text-[11px] text-[#57606a] py-3">
               데이터 없음
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {/* Donut Chart (Simple SVG) */}
               <div className="flex justify-center">
-                <svg width="120" height="120" viewBox="0 0 120 120">
+                <svg width="100" height="100" viewBox="0 0 100 100">
                   <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
+                    cx="50"
+                    cy="50"
+                    r="40"
                     fill="none"
                     stroke="#f6f8fa"
-                    strokeWidth="20"
+                    strokeWidth="16"
                   />
                   <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
+                    cx="50"
+                    cy="50"
+                    r="40"
                     fill="none"
                     stroke="#0969da"
-                    strokeWidth="20"
+                    strokeWidth="16"
                     strokeDasharray={`${
-                      (stats.distributionData.top1Share / 100) * 314
-                    } 314`}
+                      (stats.distributionData.top1Share / 100) * 251.2
+                    } 251.2`}
                     strokeDashoffset="0"
-                    transform="rotate(-90 60 60)"
+                    transform="rotate(-90 50 50)"
                   />
                   <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
+                    cx="50"
+                    cy="50"
+                    r="40"
                     fill="none"
                     stroke="#57606a"
-                    strokeWidth="20"
+                    strokeWidth="16"
                     strokeDasharray={`${
-                      (stats.distributionData.top3Share / 100) * 314
-                    } 314`}
+                      (stats.distributionData.top3Share / 100) * 251.2
+                    } 251.2`}
                     strokeDashoffset={`${
-                      -(stats.distributionData.top1Share / 100) * 314
+                      -(stats.distributionData.top1Share / 100) * 251.2
                     }`}
-                    transform="rotate(-90 60 60)"
+                    transform="rotate(-90 50 50)"
                   />
                   <text
-                    x="60"
-                    y="60"
+                    x="50"
+                    y="48"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="text-xs font-semibold"
+                    fontSize="11"
+                    fontWeight="600"
                     fill="#24292f"
                   >
                     Top 3
                   </text>
                   <text
-                    x="60"
-                    y="75"
+                    x="50"
+                    y="60"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="text-xs"
+                    fontSize="10"
                     fill="#57606a"
                   >
                     {stats.distributionData.top3Share.toFixed(1)}%
@@ -207,19 +208,19 @@ export function StatsCards({
               </div>
 
               {/* Legend */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#0969da]" />
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#0969da]" />
                     <span className="text-[#57606a]">Top 1</span>
                   </div>
                   <span className="font-medium text-[#24292f]">
                     {stats.distributionData.top1Share.toFixed(1)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#57606a]" />
+                <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#57606a]" />
                     <span className="text-[#57606a]">Top 2-3</span>
                   </div>
                   <span className="font-medium text-[#24292f]">
@@ -230,9 +231,9 @@ export function StatsCards({
                     %
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#f6f8fa] border border-[#d0d7de]" />
+                <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#f6f8fa] border border-[#d0d7de]" />
                     <span className="text-[#57606a]">나머지</span>
                   </div>
                   <span className="font-medium text-[#24292f]">
@@ -246,33 +247,33 @@ export function StatsCards({
 
         {/* Selected Node/Edge Info */}
         {selectedNode && (
-          <div className="w-full bg-[#ddf4ff] rounded-lg border border-[#0969da] p-4">
-            <h2 className="text-sm font-semibold text-[#0969da] mb-3">
+          <div className="w-full bg-[#ddf4ff] rounded-md border border-[#0969da] p-3">
+            <h2 className="text-xs font-semibold text-[#0969da] mb-2.5">
               선택된 노드
             </h2>
             <div className="space-y-2">
               <div>
-                <div className="text-xs text-[#0969da] mb-1">이름</div>
-                <div className="text-sm font-semibold text-[#24292f]">
+                <div className="text-[11px] text-[#0969da] mb-0.5">이름</div>
+                <div className="text-xs font-medium text-[#24292f]">
                   {selectedNode.label}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <div className="text-xs text-[#0969da] mb-1">총 협업</div>
-                  <div className="text-sm font-bold text-[#24292f]">
+                  <div className="text-[11px] text-[#0969da] mb-0.5">총 협업</div>
+                  <div className="text-xs font-semibold text-[#24292f]">
                     {selectedNode.totalCollabs}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-[#0969da] mb-1">파트너</div>
-                  <div className="text-sm font-bold text-[#24292f]">
+                  <div className="text-[11px] text-[#0969da] mb-0.5">파트너</div>
+                  <div className="text-xs font-semibold text-[#24292f]">
                     {selectedNode.uniquePartners}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-[#0969da] mb-1">작성</div>
-                  <div className="text-sm font-bold text-[#24292f]">
+                  <div className="text-[11px] text-[#0969da] mb-0.5">작성</div>
+                  <div className="text-xs font-semibold text-[#24292f]">
                     {selectedNode.authoredCount}
                   </div>
                 </div>
@@ -282,26 +283,26 @@ export function StatsCards({
         )}
 
         {selectedEdge && (
-          <div className="w-full bg-[#ddf4ff] rounded-lg border border-[#0969da] p-4">
-            <h2 className="text-sm font-semibold text-[#0969da] mb-3">
+          <div className="w-full bg-[#ddf4ff] rounded-md border border-[#0969da] p-3">
+            <h2 className="text-xs font-semibold text-[#0969da] mb-2.5">
               선택된 엣지
             </h2>
             <div className="space-y-2">
               <div>
-                <div className="text-xs text-[#0969da] mb-1">협업 관계</div>
-                <div className="text-sm font-semibold text-[#24292f]">
+                <div className="text-[11px] text-[#0969da] mb-0.5">협업 관계</div>
+                <div className="text-xs font-medium text-[#24292f]">
                   {selectedEdge.source} ↔ {selectedEdge.target}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-[#0969da] mb-1">협업 횟수</div>
-                <div className="text-sm font-bold text-[#24292f]">
+                <div className="text-[11px] text-[#0969da] mb-0.5">협업 횟수</div>
+                <div className="text-xs font-semibold text-[#24292f]">
                   {selectedEdge.weight}회
                 </div>
               </div>
               <div>
-                <div className="text-xs text-[#0969da] mb-1">관련 주차</div>
-                <div className="text-xs text-[#57606a]">
+                <div className="text-[11px] text-[#0969da] mb-0.5">관련 주차</div>
+                <div className="text-[11px] text-[#57606a]">
                   {selectedEdge.weeks.join(", ")}
                 </div>
               </div>
@@ -320,8 +321,8 @@ export function StatsCards({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-[#d0d7de]">
-              <h2 className="text-lg font-semibold text-[#24292f]">
+            <div className="flex items-center justify-between p-4 border-b border-[#d0d7de]">
+              <h2 className="text-sm font-semibold text-[#24292f]">
                 전체 협업자 순위
               </h2>
               <button
@@ -329,7 +330,7 @@ export function StatsCards({
                 className="text-[#57606a] hover:text-[#24292f] transition-colors"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -345,13 +346,13 @@ export function StatsCards({
             </div>
 
             {/* Modal Body */}
-            <div className="overflow-y-auto max-h-[calc(80vh-80px)] p-6">
+            <div className="overflow-y-auto max-h-[calc(80vh-64px)] p-4">
               {allNodes.length === 0 ? (
-                <div className="text-center text-sm text-[#57606a] py-8">
+                <div className="text-center text-xs text-[#57606a] py-6">
                   협업 데이터가 없습니다
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {allNodes
                     .sort((a, b) => b.totalCollabs - a.totalCollabs)
                     .map((node, index) => {
@@ -363,16 +364,16 @@ export function StatsCards({
                       return (
                         <div
                           key={node.id}
-                          className={`p-4 rounded-lg border transition-colors ${
+                          className={`p-3 rounded-md border transition-colors ${
                             index < 3
                               ? "border-[#0969da] bg-[#ddf4ff]"
                               : "border-[#d0d7de] bg-white hover:bg-[#f6f8fa]"
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2.5">
                               <span
-                                className={`text-sm font-bold min-w-[2rem] ${
+                                className={`text-xs font-semibold min-w-[1.75rem] ${
                                   index === 0
                                     ? "text-[#0969da]"
                                     : index === 1
@@ -385,27 +386,27 @@ export function StatsCards({
                                 #{index + 1}
                               </span>
                               <div>
-                                <div className="text-sm font-semibold text-[#24292f]">
+                                <div className="text-xs font-medium text-[#24292f]">
                                   {node.label}
                                 </div>
-                                <div className="text-xs text-[#57606a] mt-0.5">
+                                <div className="text-[11px] text-[#57606a] mt-0.5">
                                   {node.uniquePartners}명과 협업 • 작성{" "}
                                   {node.authoredCount}건
                                 </div>
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-sm font-bold text-[#0969da]">
+                              <div className="text-xs font-semibold text-[#0969da]">
                                 {node.totalCollabs}회
                               </div>
-                              <div className="text-xs text-[#57606a]">
+                              <div className="text-[11px] text-[#57606a]">
                                 {percentage.toFixed(1)}%
                               </div>
                             </div>
                           </div>
-                          <div className="w-full bg-[#f6f8fa] rounded-full h-2">
+                          <div className="w-full bg-[#f6f8fa] rounded-full h-1.5">
                             <div
-                              className={`h-2 rounded-full ${
+                              className={`h-1.5 rounded-full ${
                                 index === 0
                                   ? "bg-[#0969da]"
                                   : index === 1

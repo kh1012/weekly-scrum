@@ -36,7 +36,7 @@ export function WeekChecklist({
 
   if (isLoading) {
     return (
-      <div className="text-center text-sm text-[#57606a] py-8">
+      <div className="text-center text-xs text-[#57606a] py-6">
         주차 데이터를 불러오는 중...
       </div>
     );
@@ -44,9 +44,9 @@ export function WeekChecklist({
 
   if (weeks.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-6">
         <svg
-          className="w-12 h-12 mx-auto text-[#d0d7de] mb-3"
+          className="w-10 h-10 mx-auto text-[#d0d7de] mb-2"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -58,10 +58,10 @@ export function WeekChecklist({
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <p className="text-sm text-[#57606a] font-medium">
+        <p className="text-xs text-[#57606a] font-medium">
           스냅샷 데이터가 없습니다
         </p>
-        <p className="text-xs text-[#8c959f] mt-1">
+        <p className="text-[11px] text-[#8c959f] mt-0.5">
           먼저 스냅샷을 작성해주세요
         </p>
       </div>
@@ -71,11 +71,11 @@ export function WeekChecklist({
   return (
     <>
       {/* Quick Select Buttons */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="grid grid-cols-2 gap-1.5 mb-3">
         <button
           onClick={onSelectAll}
           disabled={allSelected}
-          className={`px-3 py-2 text-xs font-medium rounded-md border transition-colors ${
+          className={`px-2.5 py-1.5 text-[11px] font-normal rounded-md border transition-colors ${
             allSelected
               ? "bg-[#f6f8fa] text-[#8c959f] border-[#d0d7de] cursor-not-allowed"
               : "bg-white text-[#24292f] border-[#d0d7de] hover:bg-[#f6f8fa] hover:border-[#0969da]"
@@ -86,7 +86,7 @@ export function WeekChecklist({
         <button
           onClick={onSelectNone}
           disabled={noneSelected}
-          className={`px-3 py-2 text-xs font-medium rounded-md border transition-colors ${
+          className={`px-2.5 py-1.5 text-[11px] font-normal rounded-md border transition-colors ${
             noneSelected
               ? "bg-[#f6f8fa] text-[#8c959f] border-[#d0d7de] cursor-not-allowed"
               : "bg-white text-[#24292f] border-[#d0d7de] hover:bg-[#f6f8fa] hover:border-[#0969da]"
@@ -96,34 +96,34 @@ export function WeekChecklist({
         </button>
         <button
           onClick={onSelectLast4}
-          className="px-3 py-2 text-xs font-medium rounded-md border bg-white text-[#24292f] border-[#d0d7de] hover:bg-[#f6f8fa] hover:border-[#0969da] transition-colors"
+          className="px-2.5 py-1.5 text-[11px] font-normal rounded-md border bg-white text-[#24292f] border-[#d0d7de] hover:bg-[#f6f8fa] hover:border-[#0969da] transition-colors"
         >
           최근 4주
         </button>
         <button
           onClick={onSelectLast8}
-          className="px-3 py-2 text-xs font-medium rounded-md border bg-white text-[#24292f] border-[#d0d7de] hover:bg-[#f6f8fa] hover:border-[#0969da] transition-colors"
+          className="px-2.5 py-1.5 text-[11px] font-normal rounded-md border bg-white text-[#24292f] border-[#d0d7de] hover:bg-[#f6f8fa] hover:border-[#0969da] transition-colors"
         >
           최근 8주
         </button>
       </div>
 
       {/* Week List */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {weeks.map((week) => {
           const isSelected = selectedWeeks.has(week.weekKey);
           return (
             <label
               key={week.weekKey}
-              className={`group flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 p-2.5 rounded-md border cursor-pointer transition-all duration-200 ${
                 isSelected
-                  ? "border-[#0969da] bg-[#ddf4ff] shadow-sm"
+                  ? "border-[#0969da] bg-[#ddf4ff]"
                   : "border-[#d0d7de] bg-white hover:border-[#0969da] hover:bg-[#f6f8fa]"
               }`}
             >
               {/* Checkbox */}
               <div
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                className={`w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
                   isSelected
                     ? "bg-[#0969da] border-[#0969da]"
                     : "border-[#d0d7de] group-hover:border-[#0969da]"
@@ -131,7 +131,7 @@ export function WeekChecklist({
               >
                 {isSelected && (
                   <svg
-                    className="w-3 h-3 text-white"
+                    className="w-2.5 h-2.5 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -154,16 +154,16 @@ export function WeekChecklist({
 
               {/* Week Info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-1.5">
                   <span
-                    className={`text-sm font-semibold ${
+                    className={`text-xs font-medium ${
                       isSelected ? "text-[#0969da]" : "text-[#24292f]"
                     }`}
                   >
                     {week.year} W{String(week.week).padStart(2, "0")}
                   </span>
                   <span
-                    className={`text-xs ${
+                    className={`text-[11px] ${
                       isSelected ? "text-[#0969da]" : "text-[#57606a]"
                     }`}
                   >
@@ -171,7 +171,7 @@ export function WeekChecklist({
                   </span>
                 </div>
                 <div
-                  className={`text-xs mt-0.5 ${
+                  className={`text-[11px] mt-0.5 ${
                     isSelected ? "text-[#0969da]" : "text-[#57606a]"
                   }`}
                 >

@@ -93,8 +93,8 @@ export function CollaborationGraph({
       data: {
         label: (
           <div className="text-center">
-            <div className="font-semibold text-sm">{node.label}</div>
-            <div className="text-xs text-[#57606a] mt-1">
+            <div className="font-medium text-xs">{node.label}</div>
+            <div className="text-[11px] text-[#57606a] mt-0.5">
               {node.totalCollabs}회
             </div>
           </div>
@@ -103,15 +103,15 @@ export function CollaborationGraph({
       style: {
         width: node.size,
         height: node.size,
-        borderRadius: "12px", // 사각형 radius
+        borderRadius: "8px", // 사각형 radius
         backgroundColor: "#ffffff",
-        border: "2px solid #0969da",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        border: "1.5px solid #0969da",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: "12px",
-        fontWeight: "500",
+        fontSize: "11px",
+        fontWeight: "400",
         color: "#24292f",
         cursor: "pointer",
       },
@@ -151,16 +151,16 @@ export function CollaborationGraph({
         },
         label: `${edge.weight}회`,
         labelStyle: {
-          fontSize: "10px",
-          fill: "#24292f",
-          fontWeight: "600",
+          fontSize: "9px",
+          fill: "#57606a",
+          fontWeight: "500",
         },
         labelBgStyle: {
           fill: "#ffffff",
-          fillOpacity: 0.9,
+          fillOpacity: 0.95,
         },
-        labelBgPadding: [4, 4],
-        labelBgBorderRadius: 4,
+        labelBgPadding: [3, 3],
+        labelBgBorderRadius: 3,
       };
     });
   }, [graphEdges]);
