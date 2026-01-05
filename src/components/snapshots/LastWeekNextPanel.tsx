@@ -42,31 +42,28 @@ export function LastWeekNextPanel({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 z-[9998] transition-opacity"
-        onClick={onClose}
-      />
+      {/* Backdrop - 클릭해도 닫히지 않음 */}
+      <div className="fixed inset-0 bg-black/40 z-[9998] transition-opacity" />
 
-      {/* Panel */}
+      {/* Popover Panel - 우측 하단에 고정 */}
       <div
         ref={panelRef}
-        className="fixed right-0 top-0 bottom-0 w-full sm:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-300"
+        className="fixed right-6 bottom-20 w-[90vw] sm:w-[520px] max-h-[70vh] bg-white rounded-2xl shadow-2xl z-[9999] flex flex-col animate-in zoom-in-95 fade-in duration-200"
       >
         {/* Header */}
-        <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="shrink-0 px-5 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white rounded-t-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <h2 className="text-base font-semibold text-gray-900 mb-1">
                 지난 주 Next 참고
               </h2>
-              <p className="text-xs text-gray-500 mt-1">
-                아래는 지난 주에 작성한 Next입니다. 이번 주 카드의 Next를 작성할 때 참고하세요.
+              <p className="text-xs text-gray-500">
+                지난 주에 작성한 Next입니다. 이번 주 카드 작성 시 참고하세요.
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="shrink-0 p-1.5 rounded-lg hover:bg-white/80 transition-colors"
               title="닫기 (ESC)"
             >
               <svg
@@ -87,7 +84,7 @@ export function LastWeekNextPanel({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-5">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -115,14 +112,14 @@ export function LastWeekNextPanel({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all bg-white"
+                  className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all bg-white"
                 >
                   {/* Entry 메타 정보 */}
-                  <div className="mb-3">
+                  <div className="mb-2">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
                         {item.feature}
@@ -138,13 +135,13 @@ export function LastWeekNextPanel({
                   </div>
 
                   {/* Next 리스트 */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {item.next.map((nextItem, idx) => (
                       <div
                         key={idx}
                         className="flex items-start gap-2 text-sm text-gray-700"
                       >
-                        <span className="text-emerald-500 mt-1 shrink-0">•</span>
+                        <span className="text-emerald-500 mt-0.5 shrink-0">•</span>
                         <span className="flex-1">{nextItem}</span>
                       </div>
                     ))}
@@ -157,7 +154,7 @@ export function LastWeekNextPanel({
 
         {/* Footer 안내 */}
         {!isLoading && items.length > 0 && (
-          <div className="shrink-0 px-6 py-3 border-t border-gray-200 bg-gray-50">
+          <div className="shrink-0 px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
             <p className="text-xs text-gray-500 text-center">
               💡 참고용입니다. 자동으로 복사되지 않으며, 직접 작성해주세요.
             </p>

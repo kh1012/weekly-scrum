@@ -33,13 +33,22 @@ export async function getLastWeekNext(
   const { year: prevYear, week: prevWeek } = getPreviousISOWeek(currentYear, currentWeek);
   const prevWeekStartDate = getWeekStartDateString(prevYear, prevWeek);
 
-  // 지난 주 스냅샷 엔트리 조회 (next가 있는 것만)
+  // 지난 주 스냅샷 엔트리 조회 (this_week.tasks가 있는 것만)
+  // snapshot_entries에는 week_start_date가 없으므로 snapshots 테이블과 join
   const { data, error } = await supabase
     .from("snapshot_entries")
-    .select("id, snapshot_id, feature, project, module, next, updated_at")
+    .select(`
+      id,
+      snapshot_id,
+      feature,
+      project,
+      module,
+      this_week,
+      updated_at,
+      snapshots!inner(week_start_date)
+    `)
     .eq("workspace_id", workspaceId)
-    .eq("week_start_date", prevWeekStartDate)
-    .not("next", "is", null)
+    .eq("snapshots.week_start_date", prevWeekStartDate)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -51,24 +60,28 @@ export async function getLastWeekNext(
     return [];
   }
 
-  // 필터링 및 매핑: next 배열이 비어있지 않고, 모든 요소가 빈 문자열이 아닌 경우만
+  // 필터링 및 매핑: this_week.tasks 배열이 비어있지 않고, 모든 요소가 빈 문자열이 아닌 경우만
   const filtered = data
     .filter((entry) => {
-      if (!entry.next || !Array.isArray(entry.next)) return false;
-      // 빈 문자열이 아닌 next 항목이 하나라도 있는지 확인
-      return entry.next.some((item) => item && typeof item === "string" && item.trim() !== "");
+      const thisWeek = entry.this_week as { tasks?: string[] } | null;
+      if (!thisWeek || !thisWeek.tasks || !Array.isArray(thisWeek.tasks)) return false;
+      // 빈 문자열이 아닌 tasks 항목이 하나라도 있는지 확인
+      return thisWeek.tasks.some((item) => item && typeof item === "string" && item.trim() !== "");
     })
-    .map((entry) => ({
-      id: entry.id,
-      entryId: entry.id,
-      feature: entry.feature || "Untitled",
-      project: entry.project || "",
-      module: entry.module || "",
-      next: entry.next.filter(
-        (item: unknown) => item && typeof item === "string" && item.trim() !== ""
-      ),
-      updatedAt: entry.updated_at,
-    }));
+    .map((entry) => {
+      const thisWeek = entry.this_week as { tasks: string[] };
+      return {
+        id: entry.id,
+        entryId: entry.id,
+        feature: entry.feature || "Untitled",
+        project: entry.project || "",
+        module: entry.module || "",
+        next: thisWeek.tasks.filter(
+          (item) => item && typeof item === "string" && item.trim() !== ""
+        ),
+        updatedAt: entry.updated_at,
+      };
+    });
 
   return filtered;
 }
