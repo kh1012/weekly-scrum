@@ -355,6 +355,10 @@ export function DraftGanttView({
         year: (plan as any).year,
         week: (plan as any).week,
         past_week: (plan as any).past_week,
+        this_week: (plan as any).this_week,
+        collaborators: (plan as any).collaborators,
+        risks: (plan as any).risks,
+        risk_level: (plan as any).risk_level,
       });
     }
 
