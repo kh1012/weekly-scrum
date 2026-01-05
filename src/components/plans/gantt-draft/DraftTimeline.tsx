@@ -372,12 +372,12 @@ export function DraftTimeline({
 
     // 스냅샷만 필터링
     const snapshots = activeBars.filter((b) => {
-    const isSnapshot = (b as any).isSnapshot;
-    const hasMetaKey = (b as any).metaKey;
-    return isSnapshot && hasMetaKey;
-  });
+      const isSnapshot = (b as any).isSnapshot;
+      const hasMetaKey = (b as any).metaKey;
+      return isSnapshot && hasMetaKey;
+    });
 
-  if (snapshots.length === 0) return connections;
+    if (snapshots.length === 0) return connections;
 
     // metaKey로 그룹화
     const groupedByMeta = new Map<string, DraftBarType[]>();
@@ -385,20 +385,20 @@ export function DraftTimeline({
       const metaKey = (bar as any).metaKey;
       if (!groupedByMeta.has(metaKey)) {
         groupedByMeta.set(metaKey, []);
-    }
-    groupedByMeta.get(metaKey)!.push(bar);
-  });
+      }
+      groupedByMeta.get(metaKey)!.push(bar);
+    });
 
-  // 각 그룹에서 연속된 엔트리 찾기
+    // 각 그룹에서 연속된 엔트리 찾기
     groupedByMeta.forEach((group, metaKey) => {
       if (group.length < 2) return;
 
-    // 날짜순 정렬
-    const sorted = group.sort((a, b) =>
-      a.startDate.localeCompare(b.startDate)
-    );
+      // 날짜순 정렬
+      const sorted = group.sort((a, b) =>
+        a.startDate.localeCompare(b.startDate)
+      );
 
-    for (let i = 0; i < sorted.length - 1; i++) {
+      for (let i = 0; i < sorted.length - 1; i++) {
         const current = sorted[i];
         const next = sorted[i + 1];
 
@@ -476,15 +476,15 @@ export function DraftTimeline({
         connections.push({
           fromBar: current,
           toBar: next,
-        fromX,
-        fromY,
-        toX,
-        toY,
-      });
-    }
-  });
+          fromX,
+          fromY,
+          toX,
+          toY,
+        });
+      }
+    });
 
-  return connections;
+    return connections;
   }, [activeBars, nodePositions, rangeStart]);
 
   // 초기 flags 로드
@@ -1734,13 +1734,17 @@ export function DraftTimeline({
                 // 화살표 끝 부분의 각도 계산 (베지어 곡선의 끝 부분 접선)
                 const arrowSize = 8;
                 const angle = Math.atan2(dy, dx);
-                
+
                 // V자형 화살표의 두 끝점
                 const arrowAngle = Math.PI / 6; // 30도
-                const arrowX1 = conn.toX - arrowSize * Math.cos(angle - arrowAngle);
-                const arrowY1 = conn.toY - arrowSize * Math.sin(angle - arrowAngle);
-                const arrowX2 = conn.toX - arrowSize * Math.cos(angle + arrowAngle);
-                const arrowY2 = conn.toY - arrowSize * Math.sin(angle + arrowAngle);
+                const arrowX1 =
+                  conn.toX - arrowSize * Math.cos(angle - arrowAngle);
+                const arrowY1 =
+                  conn.toY - arrowSize * Math.sin(angle - arrowAngle);
+                const arrowX2 =
+                  conn.toX - arrowSize * Math.cos(angle + arrowAngle);
+                const arrowY2 =
+                  conn.toY - arrowSize * Math.sin(angle + arrowAngle);
 
                 return (
                   <g key={idx}>

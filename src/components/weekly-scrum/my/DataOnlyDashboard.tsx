@@ -263,14 +263,14 @@ export function DataOnlyDashboard({
                 페이지 방문 추이 (최근 14일)
               </h2>
               <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={220}>
                   <AreaChart
                     data={usage.visitsByDay14d.map((item) => ({
                       date: formatShortDate(item.date),
                       fullDate: formatDateWithDay(item.date),
                       visits: item.count,
                     }))}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                    margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
                   >
                     <defs>
                       <linearGradient
@@ -281,47 +281,46 @@ export function DataOnlyDashboard({
                         y2="1"
                       >
                         <stop
-                          offset="5%"
+                          offset="0%"
                           stopColor="#0969da"
-                          stopOpacity={0.3}
+                          stopOpacity={0.15}
                         />
                         <stop
-                          offset="95%"
+                          offset="100%"
                           stopColor="#0969da"
                           stopOpacity={0}
                         />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <CartesianGrid 
+                      strokeDasharray="0" 
+                      stroke="#e5e7eb" 
+                      opacity={0.3}
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="date"
-                      tick={{ fill: "#57606a", fontSize: 12 }}
-                      tickLine={{ stroke: "#d0d7de" }}
-                      axisLine={{ stroke: "#d0d7de" }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={60}
+                      tick={{ fill: "#57606a", fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      dy={5}
                     />
                     <YAxis
-                      tick={{ fill: "#57606a", fontSize: 12 }}
-                      tickLine={{ stroke: "#d0d7de" }}
-                      axisLine={{ stroke: "#d0d7de" }}
-                      label={{
-                        value: "방문 횟수",
-                        angle: -90,
-                        position: "insideLeft",
-                        style: { fill: "#57606a", fontSize: 12 },
-                      }}
+                      tick={{ fill: "#57606a", fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={30}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #d0d7de",
+                        backgroundColor: "rgba(31, 35, 40, 0.95)",
+                        border: "none",
                         borderRadius: "6px",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+                        padding: "8px 12px",
                       }}
-                      labelStyle={{ color: "#24292f", fontWeight: 600 }}
-                      itemStyle={{ color: "#0969da" }}
+                      labelStyle={{ color: "#f6f8fa", fontWeight: 600, fontSize: 12 }}
+                      itemStyle={{ color: "#58a6ff", fontSize: 12 }}
                       formatter={(value: number, name: string, props: any) => [
                         `${value}회`,
                         "방문 횟수",
@@ -332,15 +331,16 @@ export function DataOnlyDashboard({
                         }
                         return label;
                       }}
+                      cursor={{ stroke: "#d0d7de", strokeWidth: 1, strokeDasharray: "3 3" }}
                     />
                     <Area
                       type="monotone"
                       dataKey="visits"
                       stroke="#0969da"
-                      strokeWidth={2.5}
+                      strokeWidth={1.5}
                       fill="url(#colorVisits)"
-                      dot={{ fill: "#0969da", r: 4 }}
-                      activeDot={{ r: 6, fill: "#0969da" }}
+                      dot={false}
+                      activeDot={{ r: 3, fill: "#0969da", strokeWidth: 2, stroke: "#ffffff" }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -462,10 +462,10 @@ export function DataOnlyDashboard({
               주차별 평균 진행률 추이 (최근 8주)
             </h2>
             <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart
                   data={weeklyProgressTrend}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+                  margin={{ top: 5, right: 5, left: -15, bottom: 5 }}
                 >
                   <defs>
                     <linearGradient
@@ -475,37 +475,40 @@ export function DataOnlyDashboard({
                       x2="0"
                       y2="1"
                     >
-                      <stop offset="5%" stopColor="#1a7f37" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#1a7f37" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#1a7f37" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#1a7f37" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <CartesianGrid 
+                    strokeDasharray="0" 
+                    stroke="#e5e7eb" 
+                    opacity={0.3}
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="week"
-                    tick={{ fill: "#57606a", fontSize: 12 }}
-                    tickLine={{ stroke: "#d0d7de" }}
-                    axisLine={{ stroke: "#d0d7de" }}
+                    tick={{ fill: "#57606a", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    dy={5}
                   />
                   <YAxis
-                    tick={{ fill: "#57606a", fontSize: 12 }}
-                    tickLine={{ stroke: "#d0d7de" }}
-                    axisLine={{ stroke: "#d0d7de" }}
+                    tick={{ fill: "#57606a", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
                     domain={[0, 100]}
-                    label={{
-                      value: "평균 진행률 (%)",
-                      angle: -90,
-                      position: "insideLeft",
-                      style: { fill: "#57606a", fontSize: 12 },
-                    }}
+                    width={35}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #d0d7de",
+                      backgroundColor: "rgba(31, 35, 40, 0.95)",
+                      border: "none",
                       borderRadius: "6px",
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+                      padding: "8px 12px",
                     }}
-                    labelStyle={{ color: "#24292f", fontWeight: 600 }}
+                    labelStyle={{ color: "#f6f8fa", fontWeight: 600, fontSize: 12 }}
+                    itemStyle={{ color: "#56d364", fontSize: 12 }}
                     formatter={(value: number, name: string, props: any) => {
                       const entryCount = props.payload.entryCount;
                       return [
@@ -513,27 +516,23 @@ export function DataOnlyDashboard({
                         "평균 진행률",
                       ];
                     }}
+                    cursor={{ stroke: "#d0d7de", strokeWidth: 1, strokeDasharray: "3 3" }}
                   />
-                  <Legend
-                    wrapperStyle={{ paddingTop: "20px" }}
-                    iconType="line"
-                    formatter={() => "태스크 평균 진행률"}
-                  />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="avgProgress"
                     stroke="#1a7f37"
-                    strokeWidth={3}
+                    strokeWidth={1.5}
                     fill="url(#colorProgress)"
-                    dot={{ fill: "#1a7f37", r: 5 }}
+                    dot={false}
                     activeDot={{
-                      r: 7,
+                      r: 3,
                       fill: "#1a7f37",
                       stroke: "#ffffff",
                       strokeWidth: 2,
                     }}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
               <div className="mt-3 pt-3 border-t border-[#d0d7de] grid grid-cols-3 gap-4 text-xs text-[#57606a]">
                 <div>
@@ -761,75 +760,75 @@ export function DataOnlyDashboard({
               주차별 스냅샷 작성 추이 (최근 8주)
             </h2>
             <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart
                   data={weeklyTrend.map((item, idx) => ({
                     week: item.week,
                     count: item.count,
                     isLatest: idx === weeklyTrend.length - 1,
                   }))}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+                  margin={{ top: 5, right: 5, left: -15, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <defs>
+                    <linearGradient
+                      id="colorSnapshot"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#0969da" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#0969da" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid 
+                    strokeDasharray="0" 
+                    stroke="#e5e7eb" 
+                    opacity={0.3}
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="week"
-                    tick={{ fill: "#57606a", fontSize: 12 }}
-                    tickLine={{ stroke: "#d0d7de" }}
-                    axisLine={{ stroke: "#d0d7de" }}
+                    tick={{ fill: "#57606a", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    dy={5}
                   />
                   <YAxis
-                    tick={{ fill: "#57606a", fontSize: 12 }}
-                    tickLine={{ stroke: "#d0d7de" }}
-                    axisLine={{ stroke: "#d0d7de" }}
-                    label={{
-                      value: "엔트리 수",
-                      angle: -90,
-                      position: "insideLeft",
-                      style: { fill: "#57606a", fontSize: 12 },
-                    }}
+                    tick={{ fill: "#57606a", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
                     allowDecimals={false}
+                    width={35}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #d0d7de",
+                      backgroundColor: "rgba(31, 35, 40, 0.95)",
+                      border: "none",
                       borderRadius: "6px",
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+                      padding: "8px 12px",
                     }}
-                    labelStyle={{ color: "#24292f", fontWeight: 600 }}
+                    labelStyle={{ color: "#f6f8fa", fontWeight: 600, fontSize: 12 }}
+                    itemStyle={{ color: "#58a6ff", fontSize: 12 }}
                     formatter={(value: number) => [`${value}개`, "엔트리 수"]}
+                    cursor={{ stroke: "#d0d7de", strokeWidth: 1, strokeDasharray: "3 3" }}
                   />
-                  <Legend
-                    wrapperStyle={{ paddingTop: "20px" }}
-                    iconType="line"
-                    formatter={() => "주차별 엔트리 수"}
-                  />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="count"
                     stroke="#0969da"
-                    strokeWidth={3}
-                    dot={(props: any) => {
-                      const { cx, cy, payload } = props;
-                      return (
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r={payload.isLatest ? 6 : 4}
-                          fill={payload.isLatest ? "#1a7f37" : "#0969da"}
-                          stroke="#ffffff"
-                          strokeWidth={2}
-                        />
-                      );
-                    }}
+                    strokeWidth={1.5}
+                    fill="url(#colorSnapshot)"
+                    dot={false}
                     activeDot={{
-                      r: 7,
+                      r: 3,
                       fill: "#0969da",
                       stroke: "#ffffff",
                       strokeWidth: 2,
                     }}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
               <div className="mt-3 pt-3 border-t border-[#d0d7de] grid grid-cols-3 gap-4 text-xs text-[#57606a]">
                 <div>
