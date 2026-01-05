@@ -14,6 +14,7 @@ import ReactFlow, {
   Handle,
   Position,
   NodeProps,
+  ReactFlowInstance,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import * as d3 from "d3-force";
@@ -314,26 +315,35 @@ export function CollaborationGraph({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [isLayoutReady, setIsLayoutReady] = useState(false);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
-  // 노드 위치가 안정화된 후 엣지 표시 및 fitView 실행
+  // React Flow 초기화 시 fitView 실행
+  const onInit = useCallback((instance: ReactFlowInstance) => {
+    setReactFlowInstance(instance);
+    // 약간의 지연 후 fitView 실행 (DOM 렌더링 완료 대기)
+    setTimeout(() => {
+      instance.fitView({
+        padding: 0.15,
+        duration: 500,
+        minZoom: 0.3,
+        maxZoom: 1,
+      });
+    }, 150);
+  }, []);
+
+  // 노드/엣지 변경 시 fitView 재실행
   useEffect(() => {
-    if (nodes.length === 0) return;
-
-    // 노드 위치가 모두 설정되었는지 확인
-    const allNodesPositioned = nodes.every(
-      (node) => node.position.x !== undefined && node.position.y !== undefined
-    );
-
-    if (allNodesPositioned && !isLayoutReady) {
-      // 약간의 지연 후 fitView 실행하여 엣지가 깔끔하게 렌더링되도록
-      const timer = setTimeout(() => {
-        setIsLayoutReady(true);
-      }, 100);
-
-      return () => clearTimeout(timer);
+    if (reactFlowInstance && nodes.length > 0) {
+      setTimeout(() => {
+        reactFlowInstance.fitView({
+          padding: 0.15,
+          duration: 500,
+          minZoom: 0.3,
+          maxZoom: 1,
+        });
+      }, 150);
     }
-  }, [nodes, isLayoutReady]);
+  }, [initialNodes, initialEdges, reactFlowInstance]);
 
   // 노드 클릭 핸들러
   const handleNodeClick = useCallback(
@@ -357,30 +367,20 @@ export function CollaborationGraph({
     [graphEdges, onEdgeClick]
   );
 
-  // 레이아웃이 준비된 후에만 엣지 표시
-  const visibleEdges = isLayoutReady ? edges : [];
-
   return (
     <div className="w-full h-full bg-white relative">
       <ReactFlow
         nodes={nodes}
-        edges={visibleEdges}
+        edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
+        onInit={onInit}
         connectionMode={ConnectionMode.Loose}
-        fitView={isLayoutReady}
-        fitViewOptions={{
-          padding: 0.15,
-          duration: 500,
-          minZoom: 0.3,
-          maxZoom: 1,
-        }}
         minZoom={0.2}
         maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
