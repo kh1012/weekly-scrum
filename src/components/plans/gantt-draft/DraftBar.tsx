@@ -408,18 +408,58 @@ export const DraftBar = memo(function DraftBar({
       {isSnapshot ? (
         /* Snapshot 블록 레이아웃 */
         <div
-          className="px-2 py-1 flex flex-col justify-center min-w-0 gap-1"
+          className="px-2 py-0.5 flex flex-col justify-center min-w-0 gap-0.5"
           onMouseDown={(e) => handleMouseDown(e, "move")}
         >
-          {/* 1행: 타이틀 + 기간 */}
-          <div className="flex items-center justify-between gap-2 min-w-0">
+          {/* 1행: entry 태그 + 타이틀 + 진행률 + 기간 */}
+          <div className="flex items-center gap-1 min-w-0">
+            {/* entry 태그 */}
             <span
-              className="truncate text-[11px] font-semibold leading-tight"
+              className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
+              style={{
+                background: barColor.color,
+                color: "white",
+              }}
+              title="Snapshot Entry"
+            >
+              entry
+            </span>
+
+            {/* 타이틀 */}
+            <span
+              className="truncate text-[11px] font-semibold leading-tight flex-1 min-w-0"
               style={{ color: barColor.text }}
               title={bar.title}
             >
               {bar.title}
             </span>
+
+            {/* 진행률 바 (작게) */}
+            {currentWidth > 120 && (
+              <div className="flex items-center gap-1 shrink-0">
+                <div
+                  className="w-12 h-1 rounded-full overflow-hidden"
+                  style={{ background: "rgba(0, 0, 0, 0.2)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${avgProgress}%`,
+                      background:
+                        "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
+                    }}
+                  />
+                </div>
+                <span
+                  className="text-[8px] font-medium w-6 text-right"
+                  style={{ color: "rgba(255, 255, 255, 0.8)" }}
+                >
+                  {Math.round(avgProgress)}%
+                </span>
+              </div>
+            )}
+
+            {/* 기간 */}
             {currentWidth > 80 && snapshotYear && snapshotWeek && (
               <span
                 className="text-[9px] font-medium shrink-0 px-1.5 py-0.5 rounded"
@@ -433,29 +473,15 @@ export const DraftBar = memo(function DraftBar({
             )}
           </div>
 
-          {/* 2행: 진행률 바 */}
-          {currentWidth > 60 && (
-            <div className="flex items-center gap-1.5">
-              <div
-                className="flex-1 h-1.5 rounded-full overflow-hidden"
-                style={{ background: "rgba(0, 0, 0, 0.2)" }}
-              >
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${avgProgress}%`,
-                    background:
-                      "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
-                  }}
-                />
-              </div>
-              <span
-                className="text-[9px] font-medium shrink-0"
-                style={{ color: "rgba(255, 255, 255, 0.8)" }}
-              >
-                {Math.round(avgProgress)}%
-              </span>
-            </div>
+          {/* 2행: 타이틀 (작은 화면용) */}
+          {currentWidth <= 120 && (
+            <span
+              className="truncate text-[10px] leading-tight"
+              style={{ color: "rgba(255, 255, 255, 0.8)" }}
+              title={bar.title}
+            >
+              {bar.title}
+            </span>
           )}
         </div>
       ) : (
