@@ -1741,18 +1741,33 @@ export function SnapshotEditForm({
   activeSection,
   weekInfo,
   nameOptions = NAME_OPTIONS as unknown as string[],
-  domainOptions = DOMAIN_OPTIONS as unknown as string[],
-  projectOptions = PROJECT_OPTIONS as unknown as string[],
+  domainOptions: domainOptionsProp,
+  projectOptions: projectOptionsProp,
   moduleOptions: moduleOptionsProp,
-  featureOptions = FEATURE_OPTIONS as unknown as string[],
+  featureOptions: featureOptionsProp,
   forceThreeColumn = false,
   onToggleThreeColumn,
 }: SnapshotEditFormProps) {
-  const moduleOptions = moduleOptionsProp || (
-    snapshot.project && MODULE_OPTIONS[snapshot.project]
-      ? MODULE_OPTIONS[snapshot.project]
-      : ALL_MODULE_OPTIONS
-  ) as unknown as string[];
+  // 빈 배열이거나 undefined일 때 기본값 사용
+  const domainOptions = (domainOptionsProp && domainOptionsProp.length > 0)
+    ? domainOptionsProp
+    : (DOMAIN_OPTIONS as unknown as string[]);
+  
+  const projectOptions = (projectOptionsProp && projectOptionsProp.length > 0)
+    ? projectOptionsProp
+    : (PROJECT_OPTIONS as unknown as string[]);
+  
+  const featureOptions = (featureOptionsProp && featureOptionsProp.length > 0)
+    ? featureOptionsProp
+    : (FEATURE_OPTIONS as unknown as string[]);
+  
+  const moduleOptions = moduleOptionsProp && moduleOptionsProp.length > 0
+    ? moduleOptionsProp
+    : (
+        snapshot.project && MODULE_OPTIONS[snapshot.project]
+          ? MODULE_OPTIONS[snapshot.project]
+          : ALL_MODULE_OPTIONS
+      ) as unknown as string[];
 
   const handleMetaChange = useCallback(
     (field: keyof TempSnapshot, value: string) => {

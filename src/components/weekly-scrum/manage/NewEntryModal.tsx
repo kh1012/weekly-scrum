@@ -233,16 +233,16 @@ export function NewEntryModal({
             <SnapshotEditForm
               snapshot={entry}
               onUpdate={handleUpdate}
-                onFocusSection={(section) => setFocusedSection(section)}
-                activeSection={focusedSection}
+              onFocusSection={(section) => setFocusedSection(section)}
+              activeSection={focusedSection}
               compact
               singleColumn
               hideName
-              nameOptions={memberNames}
-              domainOptions={domainOptions}
-              projectOptions={projectOptions}
-              moduleOptions={moduleOptions}
-              featureOptions={featureOptions}
+              nameOptions={memberNames && memberNames.length > 0 ? memberNames : undefined}
+              domainOptions={domainOptions && domainOptions.length > 0 ? domainOptions : undefined}
+              projectOptions={projectOptions && projectOptions.length > 0 ? projectOptions : undefined}
+              moduleOptions={moduleOptions && moduleOptions.length > 0 ? moduleOptions : undefined}
+              featureOptions={featureOptions && featureOptions.length > 0 ? featureOptions : undefined}
               forceThreeColumn={forceThreeColumn}
               onToggleThreeColumn={setForceThreeColumn}
             />
