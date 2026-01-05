@@ -313,9 +313,43 @@ export function CollaborationGraph({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
-  // React Flow 초기화 시 fitView 실행
+  // React Flow 초기화 시 fitView 실행 및 gradient 주입
   const onInit = useCallback((instance: ReactFlowInstance) => {
     setReactFlowInstance(instance);
+    
+    // ReactFlow의 SVG에 gradient 주입
+    const reactFlowSvg = document.querySelector('.react-flow__renderer svg');
+    if (reactFlowSvg) {
+      let defs = reactFlowSvg.querySelector('defs');
+      if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        reactFlowSvg.insertBefore(defs, reactFlowSvg.firstChild);
+      }
+      
+      // gradient가 이미 존재하는지 확인
+      if (!defs.querySelector('#gradient-pair')) {
+        const gradients = `
+          <linearGradient id="gradient-pair" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="1" />
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.3" />
+          </linearGradient>
+          <linearGradient id="gradient-pre" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="1" />
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3" />
+          </linearGradient>
+          <linearGradient id="gradient-post" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#22c55e" stop-opacity="1" />
+            <stop offset="100%" stop-color="#22c55e" stop-opacity="0.3" />
+          </linearGradient>
+          <linearGradient id="gradient-default" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#8c959f" stop-opacity="1" />
+            <stop offset="100%" stop-color="#8c959f" stop-opacity="0.3" />
+          </linearGradient>
+        `;
+        defs.innerHTML = gradients;
+      }
+    }
+    
     // 약간의 지연 후 fitView 실행 (DOM 렌더링 완료 대기)
     setTimeout(() => {
       instance.fitView({
@@ -365,6 +399,35 @@ export function CollaborationGraph({
 
   return (
     <div className="w-full h-full bg-white relative">
+      {/* SVG 그라데이션 정의 (전역, ReactFlow 외부) */}
+      <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
+        <defs>
+          {/* pair 그라데이션 (파란색) */}
+          <linearGradient id="gradient-pair" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#3b82f6" stopOpacity="1" />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.3" />
+          </linearGradient>
+          
+          {/* pre 그라데이션 (주황색) */}
+          <linearGradient id="gradient-pre" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.3" />
+          </linearGradient>
+          
+          {/* post 그라데이션 (초록색) */}
+          <linearGradient id="gradient-post" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22c55e" stopOpacity="1" />
+            <stop offset="100%" stopColor="#22c55e" stopOpacity="0.3" />
+          </linearGradient>
+          
+          {/* default 그라데이션 (회색) */}
+          <linearGradient id="gradient-default" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#8c959f" stopOpacity="1" />
+            <stop offset="100%" stopColor="#8c959f" stopOpacity="0.3" />
+          </linearGradient>
+        </defs>
+      </svg>
+      
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -382,35 +445,6 @@ export function CollaborationGraph({
         elementsSelectable={true}
         proOptions={{ hideAttribution: true }}
       >
-        {/* SVG 그라데이션 정의 (좌→우, opacity 100% → 30%) */}
-        <svg style={{ position: 'absolute', width: 0, height: 0 }}>
-          <defs>
-            {/* pair 그라데이션 (파란색) */}
-            <linearGradient id="gradient-pair" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="1" />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.3" />
-            </linearGradient>
-            
-            {/* pre 그라데이션 (주황색) */}
-            <linearGradient id="gradient-pre" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
-              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.3" />
-            </linearGradient>
-            
-            {/* post 그라데이션 (초록색) */}
-            <linearGradient id="gradient-post" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#22c55e" stopOpacity="1" />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity="0.3" />
-            </linearGradient>
-            
-            {/* default 그라데이션 (회색) */}
-            <linearGradient id="gradient-default" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#8c959f" stopOpacity="1" />
-              <stop offset="100%" stopColor="#8c959f" stopOpacity="0.3" />
-            </linearGradient>
-          </defs>
-        </svg>
-        
         <Controls showInteractive={false} />
       </ReactFlow>
       
