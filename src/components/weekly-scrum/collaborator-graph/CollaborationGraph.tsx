@@ -75,7 +75,7 @@ const nodeTypes = {
   custom: CustomNode,
 };
 
-// 커스텀 엣지 컴포넌트 (곡률 조정 가능)
+// 커스텀 엣지 컴포넌트 (곡률 조정 가능 + 라벨 표시)
 function CustomEdge({
   id,
   sourceX,
@@ -89,6 +89,7 @@ function CustomEdge({
   data,
 }: EdgeProps) {
   const curvature = data?.curvature ?? 0.5;
+  const weight = data?.weight ?? 0;
   
   // 베지어 곡선의 제어점 계산 (곡률에 따라 조정)
   const distance = Math.sqrt(
@@ -110,6 +111,9 @@ function CustomEdge({
 
   // offset이 있으면 path를 수동으로 조정
   let finalPath = edgePath;
+  let labelX = (sourceX + targetX) / 2;
+  let labelY = (sourceY + targetY) / 2;
+  
   if (offset !== 0) {
     const midX = (sourceX + targetX) / 2;
     const midY = (sourceY + targetY) / 2;
@@ -125,6 +129,10 @@ function CustomEdge({
     const controlY = midY + ny * offset;
     
     finalPath = `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`;
+    
+    // 라벨 위치를 베지어 곡선의 중점(t=0.5)에 배치
+    labelX = 0.25 * sourceX + 0.5 * controlX + 0.25 * targetX;
+    labelY = 0.25 * sourceY + 0.5 * controlY + 0.25 * targetY;
   }
 
   return (
@@ -136,6 +144,34 @@ function CustomEdge({
         d={finalPath}
         markerEnd={markerEnd}
       />
+      {weight > 0 && (
+        <g>
+          {/* 배경 원 */}
+          <circle
+            cx={labelX}
+            cy={labelY}
+            r="10"
+            fill="white"
+            stroke="#d0d7de"
+            strokeWidth="1"
+          />
+          {/* 텍스트 */}
+          <text
+            x={labelX}
+            y={labelY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            style={{
+              fontSize: "9px",
+              fontWeight: 600,
+              fill: "#24292f",
+              pointerEvents: "none",
+            }}
+          >
+            {weight}
+          </text>
+        </g>
+      )}
     </>
   );
 }
@@ -420,8 +456,8 @@ export function CollaborationGraph({
         },
         data: {
           curvature, // 곡률 데이터 전달
+          weight: edge.weight, // 협업 횟수 전달
         },
-        // 라벨 제거 (깔끔한 디자인)
       };
     });
   }, [graphEdges]);
@@ -697,7 +733,7 @@ export function CollaborationGraph({
                   <span className="text-[10px] text-[#57606a]">pre</span>
                 </div>
                 <span className="text-[10px] font-medium text-[#24292f]">
-                  → {selectedNode.preOutgoing}회
+                  {selectedNode.preOutgoing}회
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -706,7 +742,7 @@ export function CollaborationGraph({
                   <span className="text-[10px] text-[#57606a]">post</span>
                 </div>
                 <span className="text-[10px] font-medium text-[#24292f]">
-                  ← {selectedNode.postIncoming}회
+                  {selectedNode.postIncoming}회
                 </span>
               </div>
             </div>
