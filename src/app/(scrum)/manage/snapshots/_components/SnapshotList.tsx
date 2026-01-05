@@ -540,32 +540,30 @@ function EntryCard({
       {/* 헤더 - 메타 정보 문자열 형태 */}
       <div className={`px-4 pt-3 pb-4 ${isSelectMode ? "pl-12" : ""}`}>
         <div className="flex items-start justify-between gap-3">
-          {/* 경로 표시 (문자열 형태) */}
-          <div className="flex-1 min-w-0 flex flex-col gap-2">
-            {/* Domain / Project / Module / Feature */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[#24292f]">
+          {/* 경로 표시 (3줄로 구분) */}
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            {/* 1. Domain */}
+            {entry.domain && (
+              <div className="text-xs font-medium text-[#24292f]">
                 {entry.domain}
-                {entry.project && (
-                  <>
-                    <span className="text-[#57606a] mx-1.5">/</span>
-                    {entry.project}
-                  </>
+              </div>
+            )}
+            {/* 2. Project / Module */}
+            {(entry.project || entry.module) && (
+              <div className="text-xs font-medium text-[#57606a]">
+                {entry.project}
+                {entry.project && entry.module && (
+                  <span className="mx-1.5">/</span>
                 )}
-                {entry.module && (
-                  <>
-                    <span className="text-[#57606a] mx-1.5">/</span>
-                    {entry.module}
-                  </>
-                )}
-                {entry.feature && (
-                  <>
-                    <span className="text-[#57606a] mx-1.5">/</span>
-                    <span className="text-[#0969da]">{entry.feature}</span>
-                  </>
-                )}
-              </span>
-            </div>
+                {entry.module}
+              </div>
+            )}
+            {/* 3. Feature */}
+            {entry.feature && (
+              <div className="text-xs font-medium text-[#0969da]">
+                {entry.feature}
+              </div>
+            )}
             {/* 진행률 (접힌 상태에서만 표시 - 확장 시 상세 내용에서 표시됨) */}
             {!isExpanded && avgProgress !== null && (
               <div className="flex items-center gap-1.5">
