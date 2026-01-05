@@ -247,7 +247,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
       },
       {
         key: "my-alignment",
-        label: "Alignment",
+        label: "My Alignment",
         href: "/my/alignment",
         icon: Icons.clipboardList,
       },

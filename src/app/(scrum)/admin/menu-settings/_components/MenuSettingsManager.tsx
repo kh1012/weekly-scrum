@@ -50,7 +50,7 @@ const ALL_MENUS = [
   }, // Navigation.tsx와 일치
   {
     key: "my-alignment",
-    label: "Alignment",
+    label: "My Alignment",
     category: "Personal Space",
     group: "personal",
   }, // Navigation.tsx와 일치
