@@ -20,6 +20,7 @@ const MENU_MAP: Record<string, { group: string; key: string }> = {
   "/work-map": { group: "works", key: "work-map" },
   "/works/collaborator-graph": { group: "works", key: "collaborator-graph" },
   "/my": { group: "personal", key: "my-dashboard" }, // Navigation.tsx와 일치
+  "/my/alignment": { group: "personal", key: "my-alignment" }, // Navigation.tsx와 일치
   "/admin": { group: "admin", key: "admin-dashboard" }, // Navigation.tsx와 일치
   "/admin/snapshots": { group: "admin", key: "admin-snapshots" },
   "/admin/meta-options": { group: "admin", key: "admin-meta-options" }, // Navigation.tsx와 일치

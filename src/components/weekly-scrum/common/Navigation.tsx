@@ -244,6 +244,12 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         icon: Icons.house,
       },
       {
+        key: "my-alignment",
+        label: "Alignment",
+        href: "/my/alignment",
+        icon: Icons.clipboardList,
+      },
+      {
         key: "my-snapshots",
         label: "Snapshot Management",
         href: "/manage/snapshots",

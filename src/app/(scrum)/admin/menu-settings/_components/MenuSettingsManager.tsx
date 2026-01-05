@@ -49,6 +49,12 @@ const ALL_MENUS = [
     group: "personal",
   }, // Navigation.tsx와 일치
   {
+    key: "my-alignment",
+    label: "Alignment",
+    category: "Personal Space",
+    group: "personal",
+  }, // Navigation.tsx와 일치
+  {
     key: "my-snapshots",
     label: "Snapshot Management",
     category: "Personal Space",
