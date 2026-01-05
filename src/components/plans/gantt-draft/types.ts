@@ -158,6 +158,12 @@ export interface DraftBar {
     risk?: string;
     memo?: string;
   };
+  this_week?: {
+    tasks?: string[];
+  };
+  collaborators?: Array<{ name: string; relations?: string[] }>;
+  risks?: string[];
+  risk_level?: number;
 }
 
 /**

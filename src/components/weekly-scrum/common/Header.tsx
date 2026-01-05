@@ -165,8 +165,8 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <Logo className="w-7 h-7" />
-            <div className="hidden sm:flex flex-col">
-              <span className="text-[#24292f] font-semibold text-base leading-tight">
+            <div className="hidden sm:flex flex-col gap-1">
+              <span className="text-[#24292f] font-semibold text-sm leading-tight">
                 Weekly Scrum
               </span>
               {(() => {

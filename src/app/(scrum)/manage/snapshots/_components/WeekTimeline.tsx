@@ -26,30 +26,50 @@ interface WeekTimelineProps {
 // ISO 8601 주차 계산 (정확한 계산)
 function getCurrentISOWeek(): { year: number; week: number } {
   const now = new Date();
-  const target = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  
+  const target = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  );
+
   // ISO 8601: 주는 월요일부터 시작, 연도의 첫 주는 목요일을 포함하는 주
   const dayOfWeek = (target.getUTCDay() + 6) % 7; // Monday = 0, Sunday = 6
-  
+
   // 이번 주의 목요일로 이동
   const thursday = new Date(target);
   thursday.setUTCDate(target.getUTCDate() - dayOfWeek + 3);
-  
+
   // 목요일이 속한 연도가 ISO 주차의 연도
   const year = thursday.getUTCFullYear();
-  
+
   // 해당 연도의 1월 4일 (항상 첫 번째 주에 포함)
   const jan4 = new Date(Date.UTC(year, 0, 4));
   const jan4DayOfWeek = (jan4.getUTCDay() + 6) % 7;
-  
+
   // 첫 번째 주의 월요일
   const firstMonday = new Date(jan4);
   firstMonday.setUTCDate(jan4.getUTCDate() - jan4DayOfWeek);
-  
+
   // 주차 계산
-  const weekNumber = Math.floor((thursday.getTime() - firstMonday.getTime()) / 86400000 / 7) + 1;
-  
+  const weekNumber =
+    Math.floor((thursday.getTime() - firstMonday.getTime()) / 86400000 / 7) + 1;
+
   return { year, week: weekNumber };
+}
+
+// 특정 연도의 ISO 주차 수 계산
+function getWeeksInYear(year: number): number {
+  // ISO 8601: 해당 연도의 마지막 주차를 정확히 계산
+  // 53주가 되는 조건:
+  // 1. 1월 1일이 목요일이거나
+  // 2. 윤년이고 1월 1일이 수요일인 경우
+
+  const jan1 = new Date(Date.UTC(year, 0, 1));
+  const jan1Day = jan1.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+
+  const weeksInYear =
+    jan1Day === 4 ? 53 : isLeapYear && jan1Day === 3 ? 53 : 52;
+
+  return weeksInYear;
 }
 
 // 날짜 범위 계산 (ISO 주차)
@@ -83,50 +103,36 @@ function generateWeeksBetween(
   endWeek: number
 ): Array<{ year: number; week: number }> {
   const weeks: Array<{ year: number; week: number }> = [];
-  
+
   let currentYear = startYear;
   let currentWeek = startWeek;
-  
+
   // 안전장치: 무한 루프 방지 (최대 200주)
   let iterations = 0;
   const MAX_ITERATIONS = 200;
-  
+
   while (iterations < MAX_ITERATIONS) {
     // 종료 조건 확인
-    if (currentYear > endYear || (currentYear === endYear && currentWeek > endWeek)) {
+    if (
+      currentYear > endYear ||
+      (currentYear === endYear && currentWeek > endWeek)
+    ) {
       break;
     }
-    
+
     weeks.push({ year: currentYear, week: currentWeek });
-    
-    // 해당 연도의 마지막 주차 계산 (ISO 8601)
-    const dec31 = new Date(Date.UTC(currentYear, 11, 31));
-    const dec31DayOfWeek = (dec31.getUTCDay() + 6) % 7;
-    const dec31Thursday = new Date(dec31);
-    dec31Thursday.setUTCDate(dec31.getUTCDate() - dec31DayOfWeek + 3);
-    
-    // 12월 31일의 목요일이 속한 연도
-    const lastWeekYear = dec31Thursday.getUTCFullYear();
-    
-    // 그 연도의 1월 4일
-    const jan4 = new Date(Date.UTC(lastWeekYear, 0, 4));
-    const jan4DayOfWeek = (jan4.getUTCDay() + 6) % 7;
-    const firstMonday = new Date(jan4);
-    firstMonday.setUTCDate(jan4.getUTCDate() - jan4DayOfWeek);
-    
-    // 마지막 주차 계산
-    const weeksInYear = Math.floor((dec31Thursday.getTime() - firstMonday.getTime()) / 86400000 / 7) + 1;
-    
+
     // 다음 주차로 이동
     currentWeek++;
+    const weeksInYear = getWeeksInYear(currentYear);
     if (currentWeek > weeksInYear) {
       currentWeek = 1;
       currentYear++;
     }
-    
+
     iterations++;
   }
-  
+
   return weeks;
 }
 
@@ -151,7 +157,7 @@ export function WeekTimeline({
 
   // 전체 주차에 대해 스냅샷 엔트리가 1개라도 있는지 확인
   const hasAnySnapshotEntries = useMemo(() => {
-    return Array.from(snapshotCountByWeek.values()).some(count => count > 0);
+    return Array.from(snapshotCountByWeek.values()).some((count) => count > 0);
   }, [snapshotCountByWeek]);
 
   // 다중 선택 모드 시작
@@ -179,7 +185,6 @@ export function WeekTimeline({
     });
   };
 
-
   // 다중 주차 데이터 내보내기
   const exportMultipleWeeks = async () => {
     if (selectedWeeks.size === 0) {
@@ -197,28 +202,28 @@ export function WeekTimeline({
     try {
       // 선택된 주차들의 데이터 가져오기
       const weeksData = [];
-      
+
       for (const weekKey of Array.from(selectedWeeks)) {
-        const [yearStr, weekStr] = weekKey.split('-');
+        const [yearStr, weekStr] = weekKey.split("-");
         const weekYear = parseInt(yearStr, 10);
         const weekNum = parseInt(weekStr, 10);
-        
+
         // ISO 주차의 시작 날짜 계산
         const jan4 = new Date(Date.UTC(weekYear, 0, 4));
         const jan4Day = jan4.getUTCDay() || 7;
         const week1Monday = new Date(jan4);
         week1Monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
-        
+
         const startDate = new Date(week1Monday);
         startDate.setUTCDate(week1Monday.getUTCDate() + (weekNum - 1) * 7);
-        
-        const weekStartDate = startDate.toISOString().split('T')[0];
-        
+
+        const weekStartDate = startDate.toISOString().split("T")[0];
+
         // API 호출
         const response = await fetch(
           `/api/manage/snapshots?workspaceId=${workspaceId}&userId=${userId}&weekStartDate=${weekStartDate}`
         );
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data.snapshots && data.snapshots.length > 0) {
@@ -247,11 +252,15 @@ export function WeekTimeline({
       };
 
       const content = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+      const blob = new Blob([content], {
+        type: "application/json;charset=utf-8",
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `snapshots_${weeksData.length}weeks_${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `snapshots_${weeksData.length}weeks_${
+        new Date().toISOString().split("T")[0]
+      }.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -270,47 +279,38 @@ export function WeekTimeline({
   const groupedWeeks = useMemo(() => {
     // 1. 현재 ISO 주차 계산
     const currentISOWeek = getCurrentISOWeek();
-    
+
     // 2. 다음 주차 계산 (현재 주차 +1)
     const nextWeek = { ...currentISOWeek };
-    
-    // 해당 연도의 마지막 주차 계산 (ISO 8601)
-    const dec31 = new Date(Date.UTC(currentISOWeek.year, 11, 31));
-    const dec31DayOfWeek = (dec31.getUTCDay() + 6) % 7;
-    const dec31Thursday = new Date(dec31);
-    dec31Thursday.setUTCDate(dec31.getUTCDate() - dec31DayOfWeek + 3);
-    
-    const lastWeekYear = dec31Thursday.getUTCFullYear();
-    const jan4 = new Date(Date.UTC(lastWeekYear, 0, 4));
-    const jan4DayOfWeek = (jan4.getUTCDay() + 6) % 7;
-    const firstMonday = new Date(jan4);
-    firstMonday.setUTCDate(jan4.getUTCDate() - jan4DayOfWeek);
-    
-    const weeksInYear = Math.floor((dec31Thursday.getTime() - firstMonday.getTime()) / 86400000 / 7) + 1;
-    
-    if (currentISOWeek.week < weeksInYear) {
+    const weeksInCurrentYear = getWeeksInYear(currentISOWeek.year);
+
+    if (currentISOWeek.week < weeksInCurrentYear) {
       nextWeek.week = currentISOWeek.week + 1;
     } else {
       nextWeek.year = currentISOWeek.year + 1;
       nextWeek.week = 1;
     }
-    
-    // 3. 스냅샷이 있는 주차들 추출
+
+    // 3. 스냅샷이 있는 주차들 추출 (유효한 주차만)
     const snapshotWeeks: Array<{ year: number; week: number }> = [];
     snapshotCountByWeek.forEach((_, key) => {
-      const [yearStr, weekStr] = key.split('-');
-      snapshotWeeks.push({
-        year: parseInt(yearStr, 10),
-        week: parseInt(weekStr, 10),
-      });
+      const [yearStr, weekStr] = key.split("-");
+      const year = parseInt(yearStr, 10);
+      const week = parseInt(weekStr, 10);
+
+      // 해당 연도의 최대 주차 수를 초과하는 주차는 제외
+      const maxWeeks = getWeeksInYear(year);
+      if (week <= maxWeeks) {
+        snapshotWeeks.push({ year, week });
+      }
     });
-    
+
     // 4. 범위 결정: 가장 오래된 스냅샷 주차부터 가장 최신 스냅샷 주차까지
     let startYear = currentISOWeek.year;
     let startWeek = currentISOWeek.week;
     let endYear = nextWeek.year;
     let endWeek = nextWeek.week;
-    
+
     if (snapshotWeeks.length > 0) {
       // 가장 오래된 주차와 가장 최신 주차 찾기
       const sortedSnapshots = [...snapshotWeeks].sort((a, b) => {
@@ -319,57 +319,52 @@ export function WeekTimeline({
       });
       const oldest = sortedSnapshots[0];
       const newest = sortedSnapshots[sortedSnapshots.length - 1];
-      
+
       // 가장 오래된 주차의 시작 날짜를 구한 후 5주(35일) 전 날짜로 이동
       const oldestJan4 = new Date(Date.UTC(oldest.year, 0, 4));
       const oldestJan4Day = oldestJan4.getUTCDay() || 7;
       const oldestWeek1Monday = new Date(oldestJan4);
       oldestWeek1Monday.setUTCDate(oldestJan4.getUTCDate() - oldestJan4Day + 1);
-      
+
       const oldestWeekStart = new Date(oldestWeek1Monday);
-      oldestWeekStart.setUTCDate(oldestWeek1Monday.getUTCDate() + (oldest.week - 1) * 7);
-      
+      oldestWeekStart.setUTCDate(
+        oldestWeek1Monday.getUTCDate() + (oldest.week - 1) * 7
+      );
+
       // 5주(35일) 전으로 이동
       const fiveWeeksBeforeDate = new Date(oldestWeekStart);
       fiveWeeksBeforeDate.setUTCDate(oldestWeekStart.getUTCDate() - 35);
-      
+
       // 해당 날짜가 속한 ISO Week 계산
       const fiveWeeksBeforeYear = fiveWeeksBeforeDate.getUTCFullYear();
       const fiveWeeksBeforeMonday = new Date(fiveWeeksBeforeDate);
       const dayOfWeek = fiveWeeksBeforeDate.getUTCDay() || 7;
-      fiveWeeksBeforeMonday.setUTCDate(fiveWeeksBeforeDate.getUTCDate() - dayOfWeek + 1);
-      
+      fiveWeeksBeforeMonday.setUTCDate(
+        fiveWeeksBeforeDate.getUTCDate() - dayOfWeek + 1
+      );
+
       // 해당 주의 목요일
       const thursday = new Date(fiveWeeksBeforeMonday);
       thursday.setUTCDate(fiveWeeksBeforeMonday.getUTCDate() + 3);
-      
+
       // 목요일이 속한 연도가 ISO Week Year
       const isoYear = thursday.getUTCFullYear();
       const isoJan4 = new Date(Date.UTC(isoYear, 0, 4));
       const isoJan4Day = isoJan4.getUTCDay() || 7;
       const isoWeek1Monday = new Date(isoJan4);
       isoWeek1Monday.setUTCDate(isoJan4.getUTCDate() - isoJan4Day + 1);
-      
-      const isoWeekNumber = Math.floor((thursday.getTime() - isoWeek1Monday.getTime()) / 86400000 / 7) + 1;
-      
+
+      const isoWeekNumber =
+        Math.floor(
+          (thursday.getTime() - isoWeek1Monday.getTime()) / 86400000 / 7
+        ) + 1;
+
       startYear = isoYear;
       startWeek = isoWeekNumber;
-      
+
       // 가장 최신 주차의 다음 주차까지 포함
-      // 해당 연도의 마지막 주차 계산
-      const newestDec31 = new Date(Date.UTC(newest.year, 11, 31));
-      const newestDec31DayOfWeek = (newestDec31.getUTCDay() + 6) % 7;
-      const newestDec31Thursday = new Date(newestDec31);
-      newestDec31Thursday.setUTCDate(newestDec31.getUTCDate() - newestDec31DayOfWeek + 3);
-      
-      const newestLastWeekYear = newestDec31Thursday.getUTCFullYear();
-      const newestJan4 = new Date(Date.UTC(newestLastWeekYear, 0, 4));
-      const newestJan4DayOfWeek = (newestJan4.getUTCDay() + 6) % 7;
-      const newestFirstMonday = new Date(newestJan4);
-      newestFirstMonday.setUTCDate(newestJan4.getUTCDate() - newestJan4DayOfWeek);
-      
-      const newestWeeksInYear = Math.floor((newestDec31Thursday.getTime() - newestFirstMonday.getTime()) / 86400000 / 7) + 1;
-      
+      const newestWeeksInYear = getWeeksInYear(newest.year);
+
       if (newest.week < newestWeeksInYear) {
         endYear = newest.year;
         endWeek = newest.week + 1;
@@ -377,15 +372,18 @@ export function WeekTimeline({
         endYear = newest.year + 1;
         endWeek = 1;
       }
-      
+
       // 현재 주차보다 미래인 경우 현재 주차 +1까지만 표시
-      if (newest.year > currentISOWeek.year || 
-          (newest.year === currentISOWeek.year && newest.week >= currentISOWeek.week)) {
+      if (
+        newest.year > currentISOWeek.year ||
+        (newest.year === currentISOWeek.year &&
+          newest.week >= currentISOWeek.week)
+      ) {
         endYear = nextWeek.year;
         endWeek = nextWeek.week;
       }
     }
-    
+
     // 5. 시작 주차부터 끝 주차까지 모든 주차 생성
     const allWeeks = generateWeeksBetween(
       startYear,
@@ -393,16 +391,19 @@ export function WeekTimeline({
       endYear,
       endWeek
     );
-    
+
     // 6. 연도별로 그룹화
-    const weeksByYear = new Map<number, Array<{ year: number; week: number }>>();
+    const weeksByYear = new Map<
+      number,
+      Array<{ year: number; week: number }>
+    >();
     allWeeks.forEach((w) => {
       if (!weeksByYear.has(w.year)) {
         weeksByYear.set(w.year, []);
       }
       weeksByYear.get(w.year)!.push(w);
     });
-    
+
     // 7. 연도별로 정렬하고 각 연도의 주차도 정렬 (최신이 위로)
     return Array.from(weeksByYear.entries())
       .sort(([a], [b]) => b - a) // 연도 내림차순
@@ -410,7 +411,7 @@ export function WeekTimeline({
         year: y,
         weeks: weeks.sort((a, b) => b.week - a.week), // 주차 내림차순
       }))
-      .filter(group => group.weeks.length > 0);
+      .filter((group) => group.weeks.length > 0);
   }, [snapshotCountByWeek, year, week]);
 
   const handleWeekSelect = (selectedYear: number, selectedWeek: number) => {
@@ -442,7 +443,9 @@ export function WeekTimeline({
             // 다중 선택 모드
             <>
               <div>
-                <h2 className="text-base md:text-lg font-semibold text-[#24292f]">주차 선택</h2>
+                <h2 className="text-base md:text-lg font-semibold text-[#24292f]">
+                  주차 선택
+                </h2>
                 <p className="text-xs text-[#57606a]">
                   내보낼 주차를 선택하세요
                 </p>
@@ -459,7 +462,7 @@ export function WeekTimeline({
                       viewBox="0 0 640 640"
                       fill="currentColor"
                     >
-                      <path d="M344 170.6C362.9 161.6 376 142.3 376 120C376 89.1 350.9 64 320 64C289.1 64 264 89.1 264 120C264 142.3 277.1 161.6 296 170.6L296 269.4C293.2 270.7 290.5 272.3 288 274.1L207.9 228.3C209.5 207.5 199.3 186.7 180 175.5C153.2 160 119 169.2 103.5 196C88 222.8 97.2 257 124 272.5C125.3 273.3 126.6 274 128 274.6L128 365.4C126.7 366 125.3 366.7 124 367.5C97.2 383 88 417.2 103.5 444C119 470.8 153.2 480 180 464.5C199.3 453.4 209.4 432.5 207.8 411.7L258.3 382.8C246.8 371.6 238.4 357.2 234.5 341.1L184 370.1C181.4 368.3 178.8 366.8 176 365.4L176 274.6C178.8 273.3 181.5 271.7 184 269.9L264.1 315.7C264 317.1 263.9 318.5 263.9 320C263.9 342.3 277 361.6 295.9 370.6L295.9 469.4C277 478.4 263.9 497.7 263.9 520C263.9 550.9 289 576 319.9 576C350.8 576 375.9 550.9 375.9 520C375.9 497.7 362.8 478.4 343.9 469.4L343.9 370.6C346.7 369.3 349.4 367.7 351.9 365.9L432 411.7C430.4 432.5 440.6 453.3 459.8 464.5C486.6 480 520.8 470.8 536.3 444C551.8 417.2 542.6 383 515.8 367.5C514.5 366.7 513.1 366 511.8 365.4L511.8 274.6C513.2 274 514.5 273.3 515.8 272.5C542.6 257 551.8 222.8 536.3 196C520.8 169.2 486.8 160 460 175.5C440.7 186.6 430.6 207.5 432.2 228.3L381.6 257.2C393.1 268.4 401.5 282.8 405.4 298.9L456 269.9C458.6 271.7 461.2 273.2 464 274.6L464 365.4C461.2 366.7 458.5 368.3 456 370L375.9 324.2C376 322.8 376.1 321.4 376.1 319.9C376.1 297.6 363 278.3 344.1 269.3L344.1 170.5z"/>
+                      <path d="M344 170.6C362.9 161.6 376 142.3 376 120C376 89.1 350.9 64 320 64C289.1 64 264 89.1 264 120C264 142.3 277.1 161.6 296 170.6L296 269.4C293.2 270.7 290.5 272.3 288 274.1L207.9 228.3C209.5 207.5 199.3 186.7 180 175.5C153.2 160 119 169.2 103.5 196C88 222.8 97.2 257 124 272.5C125.3 273.3 126.6 274 128 274.6L128 365.4C126.7 366 125.3 366.7 124 367.5C97.2 383 88 417.2 103.5 444C119 470.8 153.2 480 180 464.5C199.3 453.4 209.4 432.5 207.8 411.7L258.3 382.8C246.8 371.6 238.4 357.2 234.5 341.1L184 370.1C181.4 368.3 178.8 366.8 176 365.4L176 274.6C178.8 273.3 181.5 271.7 184 269.9L264.1 315.7C264 317.1 263.9 318.5 263.9 320C263.9 342.3 277 361.6 295.9 370.6L295.9 469.4C277 478.4 263.9 497.7 263.9 520C263.9 550.9 289 576 319.9 576C350.8 576 375.9 550.9 375.9 520C375.9 497.7 362.8 478.4 343.9 469.4L343.9 370.6C346.7 369.3 349.4 367.7 351.9 365.9L432 411.7C430.4 432.5 440.6 453.3 459.8 464.5C486.6 480 520.8 470.8 536.3 444C551.8 417.2 542.6 383 515.8 367.5C514.5 366.7 513.1 366 511.8 365.4L511.8 274.6C513.2 274 514.5 273.3 515.8 272.5C542.6 257 551.8 222.8 536.3 196C520.8 169.2 486.8 160 460 175.5C440.7 186.6 430.6 207.5 432.2 228.3L381.6 257.2C393.1 268.4 401.5 282.8 405.4 298.9L456 269.9C458.6 271.7 461.2 273.2 464 274.6L464 365.4C461.2 366.7 458.5 368.3 456 370L375.9 324.2C376 322.8 376.1 321.4 376.1 319.9C376.1 297.6 363 278.3 344.1 269.3L344.1 170.5z" />
                     </svg>
                   ) : (
                     <>
@@ -497,10 +500,10 @@ export function WeekTimeline({
             // 일반 모드
             <>
               <div>
-                <h2 className="text-base md:text-lg font-semibold text-[#24292f]">주차 선택</h2>
-                <p className="text-xs text-[#57606a]">
-                  주차별 스냅샷 조회
-                </p>
+                <h2 className="text-base md:text-lg font-semibold text-[#24292f]">
+                  주차 선택
+                </h2>
+                <p className="text-xs text-[#57606a]">주차별 스냅샷 조회</p>
               </div>
 
               {/* 데이터 내보내기 버튼 */}
@@ -536,41 +539,45 @@ export function WeekTimeline({
       {/* 주차 리스트 */}
       <div className="flex-1 overflow-y-auto w-full">
         {groupedWeeks.map((group, groupIndex) => (
-        <div key={group.year} className="py-2">
-          {/* 연도 헤더 */}
-          <div className="px-3 py-1 mb-1">
-            <h3 className="text-xs font-semibold text-[#57606a]">
-              {group.year}
-            </h3>
-          </div>
+          <div key={group.year} className="py-2">
+            {/* 연도 헤더 */}
+            <div className="px-3 py-1 mb-1">
+              <h3 className="text-xs font-semibold text-[#57606a]">
+                {group.year}
+              </h3>
+            </div>
 
-          {/* 주차 리스트 */}
-          <div className="flex flex-col gap-0.5 px-2">
-            {group.weeks.map((weekData) => {
-              const isSelected = weekData.year === year && weekData.week === week;
-              const dateRange = getWeekDateRange(weekData.year, weekData.week);
-              const weekKey = `${weekData.year}-${weekData.week}`;
-              const snapshotCount = snapshotCountByWeek.get(weekKey) || 0;
-              const isDisabled = disableEmptyWeeks && snapshotCount === 0;
+            {/* 주차 리스트 */}
+            <div className="flex flex-col gap-0.5 px-2">
+              {group.weeks.map((weekData) => {
+                const isSelected =
+                  weekData.year === year && weekData.week === week;
+                const dateRange = getWeekDateRange(
+                  weekData.year,
+                  weekData.week
+                );
+                const weekKey = `${weekData.year}-${weekData.week}`;
+                const snapshotCount = snapshotCountByWeek.get(weekKey) || 0;
+                const isDisabled = disableEmptyWeeks && snapshotCount === 0;
 
-              const isWeekSelected = selectedWeeks.has(weekKey);
+                const isWeekSelected = selectedWeeks.has(weekKey);
 
-              return (
-                <button
-                  key={`${weekData.year}-${weekData.week}`}
-                  onClick={() => {
-                    if (isMultiSelectMode) {
-                      if (!isDisabled) {
-                        toggleWeekSelection(weekKey);
+                return (
+                  <button
+                    key={`${weekData.year}-${weekData.week}`}
+                    onClick={() => {
+                      if (isMultiSelectMode) {
+                        if (!isDisabled) {
+                          toggleWeekSelection(weekKey);
+                        }
+                      } else {
+                        if (!isDisabled) {
+                          handleWeekSelect(weekData.year, weekData.week);
+                        }
                       }
-                    } else {
-                      if (!isDisabled) {
-                        handleWeekSelect(weekData.year, weekData.week);
-                      }
-                    }
-                  }}
-                  disabled={isDisabled}
-                  className={`
+                    }}
+                    disabled={isDisabled}
+                    className={`
                     flex items-center gap-2 px-2 py-1.5 rounded-md
                     transition-colors duration-150
                     ${
@@ -587,91 +594,91 @@ export function WeekTimeline({
                         : "hover:bg-[#f6f8fa] text-[#24292f]"
                     }
                   `}
-                >
-                  {/* 다중 선택 모드: 체크박스 */}
-                  {isMultiSelectMode && (
-                    <div
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                        isWeekSelected
-                          ? "bg-blue-600 border-blue-600"
-                          : "border-gray-300 bg-white"
-                      }`}
-                    >
-                      {isWeekSelected && (
-                        <svg
-                          className="w-3 h-3 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={3}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 주차 정보 */}
-                  <div className="flex-1 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium">
-                        W{String(weekData.week).padStart(2, "0")}
-                      </span>
-                      <span
-                        className={`text-[10px] ${
-                          isMultiSelectMode
-                            ? isWeekSelected
-                              ? "text-blue-600"
-                              : "text-[#57606a]"
-                            : isSelected
-                            ? "text-white/70"
-                            : "text-[#57606a]"
+                  >
+                    {/* 다중 선택 모드: 체크박스 */}
+                    {isMultiSelectMode && (
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                          isWeekSelected
+                            ? "bg-blue-600 border-blue-600"
+                            : "border-gray-300 bg-white"
                         }`}
                       >
-                        {dateRange}
+                        {isWeekSelected && (
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={3}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 주차 정보 */}
+                    <div className="flex-1 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium">
+                          W{String(weekData.week).padStart(2, "0")}
+                        </span>
+                        <span
+                          className={`text-[10px] ${
+                            isMultiSelectMode
+                              ? isWeekSelected
+                                ? "text-blue-600"
+                                : "text-[#57606a]"
+                              : isSelected
+                              ? "text-white/70"
+                              : "text-[#57606a]"
+                          }`}
+                        >
+                          {dateRange}
+                        </span>
+                      </div>
+                      {/* 스냅샷 개수 항상 표시 */}
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-all duration-300 ${
+                          recentlyUpdatedWeek === weekKey
+                            ? "animate-[pulse-scale_0.6s_ease-in-out]"
+                            : ""
+                        } ${
+                          isMultiSelectMode
+                            ? isWeekSelected
+                              ? "bg-blue-600 text-white"
+                              : snapshotCount > 0
+                              ? "bg-[#ddf4ff] text-[#0969da]"
+                              : "bg-[#f6f8fa] text-[#57606a]"
+                            : snapshotCount > 0
+                            ? isSelected
+                              ? "bg-white/20 text-white"
+                              : "bg-[#ddf4ff] text-[#0969da]"
+                            : isSelected
+                            ? "bg-white/10 text-white/70"
+                            : "bg-[#f6f8fa] text-[#57606a]"
+                        }`}
+                        style={
+                          recentlyUpdatedWeek === weekKey
+                            ? {
+                                animation: "pulse-scale 0.6s ease-in-out",
+                              }
+                            : undefined
+                        }
+                      >
+                        {snapshotCount}
                       </span>
                     </div>
-                    {/* 스냅샷 개수 항상 표시 */}
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-all duration-300 ${
-                        recentlyUpdatedWeek === weekKey
-                          ? "animate-[pulse-scale_0.6s_ease-in-out]"
-                          : ""
-                      } ${
-                        isMultiSelectMode
-                          ? isWeekSelected
-                            ? "bg-blue-600 text-white"
-                            : snapshotCount > 0
-                            ? "bg-[#ddf4ff] text-[#0969da]"
-                            : "bg-[#f6f8fa] text-[#57606a]"
-                          : snapshotCount > 0
-                          ? isSelected
-                            ? "bg-white/20 text-white"
-                            : "bg-[#ddf4ff] text-[#0969da]"
-                          : isSelected
-                          ? "bg-white/10 text-white/70"
-                          : "bg-[#f6f8fa] text-[#57606a]"
-                      }`}
-                      style={
-                        recentlyUpdatedWeek === weekKey
-                          ? {
-                              animation: "pulse-scale 0.6s ease-in-out",
-                            }
-                          : undefined
-                      }
-                    >
-                      {snapshotCount}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
         ))}
 
         {groupedWeeks.length === 0 && (
@@ -696,4 +703,3 @@ export function WeekTimeline({
     </div>
   );
 }
-

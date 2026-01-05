@@ -220,7 +220,9 @@ export function DraftTimeline({
     // 담당자 필터 적용
     if (filters.assignees && filters.assignees.length > 0) {
       bars = bars.filter((b) =>
-        b.assignees.some((assignee) => filters.assignees.includes(assignee.userId))
+        b.assignees.some((assignee) =>
+          filters.assignees.includes(assignee.userId)
+        )
       );
     }
 
@@ -238,11 +240,17 @@ export function DraftTimeline({
     if (filterIndex) {
       // 인덱스를 사용한 고속 필터링
       const barsInView = new Set(activeBars.map((b) => b.clientUid));
-      return filterRowsWithIndex(allRows, barsInView, filterIndex, {
-        projects: filters.projects || [],
-        modules: filters.modules || [],
-        features: filters.features || [],
-      }, searchQuery);
+      return filterRowsWithIndex(
+        allRows,
+        barsInView,
+        filterIndex,
+        {
+          projects: filters.projects || [],
+          modules: filters.modules || [],
+          features: filters.features || [],
+        },
+        searchQuery
+      );
     }
 
     // 폴백: 기존 방식
@@ -351,6 +359,134 @@ export function DraftTimeline({
     return last.top + last.height;
   }, [nodePositions]);
 
+  // 연속된 스냅샷 엔트리 연결 정보 계산
+  const snapshotConnections = useMemo(() => {
+    const connections: Array<{
+      fromBar: DraftBarType;
+      toBar: DraftBarType;
+      fromX: number;
+      fromY: number;
+      toX: number;
+      toY: number;
+    }> = [];
+
+    // 스냅샷만 필터링
+    const snapshots = activeBars.filter((b) => {
+    const isSnapshot = (b as any).isSnapshot;
+    const hasMetaKey = (b as any).metaKey;
+    return isSnapshot && hasMetaKey;
+  });
+
+  if (snapshots.length === 0) return connections;
+
+    // metaKey로 그룹화
+    const groupedByMeta = new Map<string, DraftBarType[]>();
+    snapshots.forEach((bar) => {
+      const metaKey = (bar as any).metaKey;
+      if (!groupedByMeta.has(metaKey)) {
+        groupedByMeta.set(metaKey, []);
+    }
+    groupedByMeta.get(metaKey)!.push(bar);
+  });
+
+  // 각 그룹에서 연속된 엔트리 찾기
+    groupedByMeta.forEach((group, metaKey) => {
+      if (group.length < 2) return;
+
+    // 날짜순 정렬
+    const sorted = group.sort((a, b) =>
+      a.startDate.localeCompare(b.startDate)
+    );
+
+    for (let i = 0; i < sorted.length - 1; i++) {
+        const current = sorted[i];
+        const next = sorted[i + 1];
+
+        // 각 바의 위치 정보 가져오기
+        const currentNode = nodePositions.find(
+          (pos) =>
+            pos.node.type === "feature" && pos.node.row?.rowId === current.rowId
+        );
+        const nextNode = nodePositions.find(
+          (pos) =>
+            pos.node.type === "feature" && pos.node.row?.rowId === next.rowId
+        );
+
+        if (!currentNode || !nextNode) continue;
+
+        // 바의 레인 정보 가져오기
+        const currentRowBars = activeBars.filter(
+          (b) => b.rowId === current.rowId
+        );
+        const nextRowBars = activeBars.filter((b) => b.rowId === next.rowId);
+
+        const currentBarsWithLane = assignLanesToBars(currentRowBars);
+        const nextBarsWithLane = assignLanesToBars(nextRowBars);
+
+        const currentLayout = currentBarsWithLane.find(
+          (l) => l.clientUid === current.clientUid
+        );
+        const nextLayout = nextBarsWithLane.find(
+          (l) => l.clientUid === next.clientUid
+        );
+
+        if (!currentLayout || !nextLayout) continue;
+
+        // rangeStart를 자정으로 정규화
+        const rangeStartMidnight = new Date(
+          rangeStart.getFullYear(),
+          rangeStart.getMonth(),
+          rangeStart.getDate()
+        );
+
+        // 각 바의 X 위치 계산
+        const currentStartDate = parseLocalDate(current.startDate);
+        const nextStartDate = parseLocalDate(next.startDate);
+
+        const currentStartOffset = Math.round(
+          (currentStartDate.getTime() - rangeStartMidnight.getTime()) /
+            (1000 * 60 * 60 * 24)
+        );
+        const nextStartOffset = Math.round(
+          (nextStartDate.getTime() - rangeStartMidnight.getTime()) /
+            (1000 * 60 * 60 * 24)
+        );
+
+        const currentEndDate = parseLocalDate(current.endDate);
+        const currentEndOffset = Math.round(
+          (currentEndDate.getTime() - rangeStartMidnight.getTime()) /
+            (1000 * 60 * 60 * 24)
+        );
+
+        const currentLeft = currentStartOffset * DAY_WIDTH;
+        const currentWidth =
+          (currentEndOffset - currentStartOffset + 1) * DAY_WIDTH;
+        const nextLeft = nextStartOffset * DAY_WIDTH;
+
+        // 화살표 시작점: 현재 바의 오른쪽 끝 중앙
+        const fromX = currentLeft + currentWidth;
+        const fromY =
+          currentNode.top + currentLayout.lane * LANE_HEIGHT + LANE_HEIGHT / 2;
+
+        // 화살표 끝점: 다음 바의 왼쪽 시작 중앙
+        const toX = nextLeft;
+        const toY =
+          nextNode.top + nextLayout.lane * LANE_HEIGHT + LANE_HEIGHT / 2;
+
+        connections.push({
+          fromBar: current,
+          toBar: next,
+        fromX,
+        fromY,
+        toX,
+        toY,
+      });
+    }
+  });
+
+  return connections;
+  }, [activeBars, nodePositions, rangeStart]);
+
   // 초기 flags 로드
   useEffect(() => {
     if (workspaceId) {
@@ -382,7 +518,7 @@ export function DraftTimeline({
   const handleFlagScroll = useCallback(() => {
     if (flagLaneRef.current && containerRef.current) {
       const scrollLeft = flagLaneRef.current.scrollLeft;
-      
+
       // 타임라인과 헤더 동기화
       containerRef.current.scrollLeft = scrollLeft;
       if (headerRef.current) {
@@ -853,7 +989,10 @@ export function DraftTimeline({
         // newLaneIndex 미만의 레인: 현재 위치 고정 (preferredLane 설정)
         else {
           // preferredLane이 없거나, 현재 레인과 다른 경우 현재 레인으로 고정
-          if (barWithLane.preferredLane === undefined || barWithLane.preferredLane !== currentLane) {
+          if (
+            barWithLane.preferredLane === undefined ||
+            barWithLane.preferredLane !== currentLane
+          ) {
             updateBar(barWithLane.clientUid, {
               preferredLane: currentLane,
             });
@@ -1427,116 +1566,118 @@ export function DraftTimeline({
                 {nodeBars
                   .filter((bar) => activeBarsSet.has(bar.clientUid)) // 필터링된 bars만 렌더링
                   .map((bar) => {
-                  const barStart = parseLocalDate(bar.startDate);
-                  const barEnd = parseLocalDate(bar.endDate);
+                    const barStart = parseLocalDate(bar.startDate);
+                    const barEnd = parseLocalDate(bar.endDate);
 
-                  // rangeStart도 자정으로 정규화하여 비교
-                  const rangeStartMidnight = new Date(
-                    rangeStart.getFullYear(),
-                    rangeStart.getMonth(),
-                    rangeStart.getDate()
-                  );
+                    // rangeStart도 자정으로 정규화하여 비교
+                    const rangeStartMidnight = new Date(
+                      rangeStart.getFullYear(),
+                      rangeStart.getMonth(),
+                      rangeStart.getDate()
+                    );
 
-                  const startOffset = Math.round(
-                    (barStart.getTime() - rangeStartMidnight.getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  );
-                  const endOffset = Math.round(
-                    (barEnd.getTime() - rangeStartMidnight.getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  );
+                    const startOffset = Math.round(
+                      (barStart.getTime() - rangeStartMidnight.getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    );
+                    const endOffset = Math.round(
+                      (barEnd.getTime() - rangeStartMidnight.getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    );
 
-                  const left = startOffset * DAY_WIDTH;
-                  const width = (endOffset - startOffset + 1) * DAY_WIDTH;
+                    const left = startOffset * DAY_WIDTH;
+                    const width = (endOffset - startOffset + 1) * DAY_WIDTH;
 
-                  // 현재 row의 스크롤 보정된 절대 Y offset 계산
-                  // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
-                  const containerTop =
-                    containerRef.current?.getBoundingClientRect().top || 0;
-                  const scrollTop = containerRef.current?.scrollTop || 0;
-                  const rowTopOffset = containerTop + top - scrollTop;
+                    // 현재 row의 스크롤 보정된 절대 Y offset 계산
+                    // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
+                    const containerTop =
+                      containerRef.current?.getBoundingClientRect().top || 0;
+                    const scrollTop = containerRef.current?.scrollTop || 0;
+                    const rowTopOffset = containerTop + top - scrollTop;
 
-                  return (
-                    <DraftBar
-                      key={bar.clientUid}
-                      bar={bar}
-                      left={left}
-                      width={width}
-                      lane={bar.lane}
-                      isSelected={bar.clientUid === selectedBarId}
-                      isEditing={isEditing}
-                      onSelect={() => selectBar(bar.clientUid)}
-                      onDoubleClick={(e?: React.MouseEvent) => {
-                        // 읽기전용 모드 또는 편집 모드가 아닌 경우: 팝오버 표시
-                        if (readOnly || !isEditing) {
-                          const rect = (
-                            e?.currentTarget as HTMLElement
-                          )?.getBoundingClientRect();
-                          setViewPopover({
-                            bar,
-                            position: {
-                              x: rect
-                                ? rect.left + rect.width / 2
-                                : e?.clientX || 0,
-                              y: rect ? rect.bottom + 8 : (e?.clientY || 0) + 8,
-                            },
-                          });
-                        } else {
-                          // 편집 모드: EditPlanModal 표시
-                          setShowEditModal(bar);
-                        }
-                      }}
-                      dayWidth={DAY_WIDTH}
-                      rangeStart={rangeStart}
-                      onDragDateChange={onDragDateChange}
-                      onClearHover={() => setHoverInfo(null)}
-                      rowTopOffset={rowTopOffset}
-                      onMoveComplete={(absoluteY: number) => {
-                        // 마우스 절대 Y 위치로 타겟 Row 찾기
-                        // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
-                        const containerRect =
-                          containerRef.current?.getBoundingClientRect();
-                        if (!containerRect) return;
-
-                        // 스크롤 보정된 상대 Y 계산
-                        // containerRect.top은 이미 헤더/플래그 아래이므로 추가 오프셋 불필요
-                        const currentScrollTop =
-                          containerRef.current?.scrollTop || 0;
-                        const relativeY =
-                          absoluteY - containerRect.top + currentScrollTop;
-
-                        // nodePositions에서 타겟 row 찾기
-                        let targetNode = null;
-                        for (const pos of nodePositions) {
-                          if (
-                            pos.node.type === "feature" &&
-                            pos.node.row &&
-                            relativeY >= pos.top &&
-                            relativeY < pos.top + pos.height
-                          ) {
-                            targetNode = pos.node;
-                            break;
+                    return (
+                      <DraftBar
+                        key={bar.clientUid}
+                        bar={bar}
+                        left={left}
+                        width={width}
+                        lane={bar.lane}
+                        isSelected={bar.clientUid === selectedBarId}
+                        isEditing={isEditing}
+                        onSelect={() => selectBar(bar.clientUid)}
+                        onDoubleClick={(e?: React.MouseEvent) => {
+                          // 읽기전용 모드 또는 편집 모드가 아닌 경우: 팝오버 표시
+                          if (readOnly || !isEditing) {
+                            const rect = (
+                              e?.currentTarget as HTMLElement
+                            )?.getBoundingClientRect();
+                            setViewPopover({
+                              bar,
+                              position: {
+                                x: rect
+                                  ? rect.left + rect.width / 2
+                                  : e?.clientX || 0,
+                                y: rect
+                                  ? rect.bottom + 8
+                                  : (e?.clientY || 0) + 8,
+                              },
+                            });
+                          } else {
+                            // 편집 모드: EditPlanModal 표시
+                            setShowEditModal(bar);
                           }
-                        }
+                        }}
+                        dayWidth={DAY_WIDTH}
+                        rangeStart={rangeStart}
+                        onDragDateChange={onDragDateChange}
+                        onClearHover={() => setHoverInfo(null)}
+                        rowTopOffset={rowTopOffset}
+                        onMoveComplete={(absoluteY: number) => {
+                          // 마우스 절대 Y 위치로 타겟 Row 찾기
+                          // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
+                          const containerRect =
+                            containerRef.current?.getBoundingClientRect();
+                          if (!containerRect) return;
 
-                        // 타겟이 현재 row와 다르면 이동
-                        if (
-                          targetNode &&
-                          targetNode.row &&
-                          targetNode.row.rowId !== bar.rowId
-                        ) {
-                          moveBarToRow(
-                            bar.clientUid,
-                            targetNode.row.project,
-                            targetNode.row.module,
-                            targetNode.row.feature,
-                            targetNode.row.domain
-                          );
-                        }
-                      }}
-                    />
-                  );
-                })}
+                          // 스크롤 보정된 상대 Y 계산
+                          // containerRect.top은 이미 헤더/플래그 아래이므로 추가 오프셋 불필요
+                          const currentScrollTop =
+                            containerRef.current?.scrollTop || 0;
+                          const relativeY =
+                            absoluteY - containerRect.top + currentScrollTop;
+
+                          // nodePositions에서 타겟 row 찾기
+                          let targetNode = null;
+                          for (const pos of nodePositions) {
+                            if (
+                              pos.node.type === "feature" &&
+                              pos.node.row &&
+                              relativeY >= pos.top &&
+                              relativeY < pos.top + pos.height
+                            ) {
+                              targetNode = pos.node;
+                              break;
+                            }
+                          }
+
+                          // 타겟이 현재 row와 다르면 이동
+                          if (
+                            targetNode &&
+                            targetNode.row &&
+                            targetNode.row.rowId !== bar.rowId
+                          ) {
+                            moveBarToRow(
+                              bar.clientUid,
+                              targetNode.row.project,
+                              targetNode.row.module,
+                              targetNode.row.feature,
+                              targetNode.row.domain
+                            );
+                          }
+                        }}
+                      />
+                    );
+                  })}
 
                 {/* 드래그 프리뷰 - Airbnb 스타일, 개별 레인 지원 */}
                 {dragCreate?.rowId === row.rowId && dragPreview && (
@@ -1572,6 +1713,59 @@ export function DraftTimeline({
                 borderRadius: 6,
               }}
             />
+          )}
+
+          {/* 스냅샷 엔트리 연결 화살표 */}
+          {snapshotConnections.length > 0 && (
+            <svg
+              className="absolute top-0 left-0 pointer-events-none"
+              style={{
+                width: totalWidth,
+                height: totalHeight,
+                zIndex: 2,
+              }}
+            >
+              {snapshotConnections.map((conn, idx) => {
+                // 화살표 경로 계산 (베지어 곡선)
+                const dx = conn.toX - conn.fromX;
+                const dy = conn.toY - conn.fromY;
+                const midX = conn.fromX + dx / 2;
+
+                // 화살표 끝 부분의 각도 계산 (베지어 곡선의 끝 부분 접선)
+                const arrowSize = 8;
+                const angle = Math.atan2(dy, dx);
+                
+                // V자형 화살표의 두 끝점
+                const arrowAngle = Math.PI / 6; // 30도
+                const arrowX1 = conn.toX - arrowSize * Math.cos(angle - arrowAngle);
+                const arrowY1 = conn.toY - arrowSize * Math.sin(angle - arrowAngle);
+                const arrowX2 = conn.toX - arrowSize * Math.cos(angle + arrowAngle);
+                const arrowY2 = conn.toY - arrowSize * Math.sin(angle + arrowAngle);
+
+                return (
+                  <g key={idx}>
+                    {/* 메인 연결선 */}
+                    <path
+                      d={`M ${conn.fromX} ${conn.fromY} C ${midX} ${conn.fromY}, ${midX} ${conn.toY}, ${conn.toX} ${conn.toY}`}
+                      stroke="#9ca3af"
+                      strokeWidth="1.5"
+                      fill="none"
+                      opacity="0.5"
+                    />
+                    {/* V자형 화살표 */}
+                    <path
+                      d={`M ${arrowX1} ${arrowY1} L ${conn.toX} ${conn.toY} L ${arrowX2} ${arrowY2}`}
+                      stroke="#9ca3af"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      opacity="0.5"
+                    />
+                  </g>
+                );
+              })}
+            </svg>
           )}
         </div>
       </div>
@@ -1729,9 +1923,7 @@ export function DraftTimeline({
                   <div className="text-sm font-medium text-gray-900">
                     레인 삭제
                   </div>
-                  <div className="text-xs text-gray-500">
-                    현재 레인 제거
-                  </div>
+                  <div className="text-xs text-gray-500">현재 레인 제거</div>
                 </div>
               </button>
             </div>

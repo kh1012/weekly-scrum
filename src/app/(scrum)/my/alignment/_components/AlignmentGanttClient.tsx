@@ -33,40 +33,79 @@ export function AlignmentGanttClient({
 }: AlignmentGanttClientProps) {
   const [filter, setFilter] = useState<FilterType>("all");
 
-  // 필터링된 items
+  // 필터링 및 정렬된 items
   const filteredItems = useMemo(() => {
+    let filtered = items;
+    
+    // 필터링
     if (filter === "plans") {
-      return items.filter((item) => item.type === "plan");
+      filtered = items.filter((item) => item.type === "plan");
+    } else if (filter === "snapshots") {
+      filtered = items.filter((item) => item.type === "snapshot");
     }
-    if (filter === "snapshots") {
-      return items.filter((item) => item.type === "snapshot");
-    }
-    return items; // "all"
+    
+    // 정렬: 같은 모듈 내에서 Plan은 상위, Snapshot은 하위
+    // 1차: domain > project > module > feature
+    // 2차: type (plan -> snapshot)
+    // 3차: 날짜 (start_date)
+    return filtered.sort((a, b) => {
+      // 1. Domain 비교
+      const domainCompare = (a.domain || "").localeCompare(b.domain || "");
+      if (domainCompare !== 0) return domainCompare;
+      
+      // 2. Project 비교
+      const projectCompare = (a.project || "").localeCompare(b.project || "");
+      if (projectCompare !== 0) return projectCompare;
+      
+      // 3. Module 비교
+      const moduleCompare = (a.module || "").localeCompare(b.module || "");
+      if (moduleCompare !== 0) return moduleCompare;
+      
+      // 4. Feature 비교
+      const featureCompare = (a.feature || "").localeCompare(b.feature || "");
+      if (featureCompare !== 0) return featureCompare;
+      
+      // 5. Type 비교 (plan이 먼저)
+      if (a.type !== b.type) {
+        return a.type === "plan" ? -1 : 1;
+      }
+      
+      // 6. 날짜 비교
+      return a.start_date.localeCompare(b.start_date);
+    });
   }, [items, filter]);
 
   // AlignmentGanttItem을 InitialPlan 형식으로 변환
-  const initialPlans = filteredItems.map((item) => ({
-    id: item.id,
-    clientUid: item.id,
-    title: item.title,
-    domain: item.domain || "",
-    project: item.project || "",
-    module: item.module || "",
-    feature: item.feature || "",
-    startDate: item.start_date,
-    endDate: item.end_date,
-    status: item.status || "active",
-    stage: item.stage || "in_progress",
-    priority: item.priority,
-    assignees: item.assignees || [],
-    // Snapshot 전용 데이터 전달
-    isSnapshot: item.type === "snapshot",
-    avgProgress: item.avgProgress,
-    metaKey: item.metaKey,
-    year: item.year,
-    week: item.week,
-    past_week: item.past_week, // Snapshot 상세 정보
-  }));
+  const initialPlans = filteredItems.map((item) => {
+    const plan = {
+      id: item.id,
+      clientUid: item.id,
+      title: item.title,
+      domain: item.domain || "",
+      project: item.project || "",
+      module: item.module || "",
+      feature: item.feature || "",
+      startDate: item.start_date,
+      endDate: item.end_date,
+      status: item.status || "active",
+      stage: item.stage || "in_progress",
+      priority: item.priority,
+      assignees: item.assignees || [],
+      // Snapshot 전용 데이터 전달
+      isSnapshot: item.type === "snapshot",
+      avgProgress: item.avgProgress,
+      metaKey: item.metaKey,
+      year: item.year,
+      week: item.week,
+      past_week: item.past_week,
+      this_week: item.this_week,
+      collaborators: item.collaborators,
+    risks: item.risks,
+    risk_level: item.risk_level,
+  };
+
+  return plan;
+  });
 
   // 통계 계산
   const stats = useMemo(() => {

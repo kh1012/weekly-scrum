@@ -37,6 +37,12 @@ interface PlanViewPopoverProps {
       risk?: string;
       memo?: string;
     };
+    this_week?: {
+      tasks?: string[];
+    };
+    collaborators?: Array<{ name: string; relations?: string[] }>;
+    risks?: string[];
+    risk_level?: number;
   };
   anchorPosition: { x: number; y: number };
   onClose: () => void;
@@ -48,17 +54,19 @@ export function PlanViewPopover({
   onClose,
 }: PlanViewPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
-  
+
   // rowId에서 프로젝트, 모듈, 기능 추출
   const [project, module, feature] = bar.rowId.split("::");
 
   // 팝오버 크기 상태 (localStorage에서 불러오기)
   const [size, setSize] = useState(() => {
-    const storageKey = bar.isSnapshot ? SNAPSHOT_POPOVER_SIZE_KEY : PLAN_POPOVER_SIZE_KEY;
-    const defaultSize = bar.isSnapshot 
-      ? { width: 420, height: 600 }  // Snapshot: 더 큰 기본 크기
-      : { width: 360, height: 400 };  // Plan: 기존 크기
-    
+    const storageKey = bar.isSnapshot
+      ? SNAPSHOT_POPOVER_SIZE_KEY
+      : PLAN_POPOVER_SIZE_KEY;
+    const defaultSize = bar.isSnapshot
+      ? { width: 420, height: 600 } // Snapshot: 더 큰 기본 크기
+      : { width: 360, height: 400 }; // Plan: 기존 크기
+
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
@@ -72,7 +80,12 @@ export function PlanViewPopover({
 
   // 리사이즈 상태
   const [isResizing, setIsResizing] = useState(false);
-  const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const resizeStartRef = useRef<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -100,17 +113,20 @@ export function PlanViewPopover({
   }, [onClose]);
 
   // 리사이즈 핸들러
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsResizing(true);
-    resizeStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      width: size.width,
-      height: size.height,
-    };
-  }, [size]);
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsResizing(true);
+      resizeStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        width: size.width,
+        height: size.height,
+      };
+    },
+    [size]
+  );
 
   useEffect(() => {
     if (!isResizing) return;
@@ -121,8 +137,14 @@ export function PlanViewPopover({
       const deltaX = e.clientX - resizeStartRef.current.x;
       const deltaY = e.clientY - resizeStartRef.current.y;
 
-      const newWidth = Math.max(320, Math.min(800, resizeStartRef.current.width + deltaX));
-      const newHeight = Math.max(300, Math.min(800, resizeStartRef.current.height + deltaY));
+      const newWidth = Math.max(
+        320,
+        Math.min(800, resizeStartRef.current.width + deltaX)
+      );
+      const newHeight = Math.max(
+        300,
+        Math.min(800, resizeStartRef.current.height + deltaY)
+      );
 
       setSize({ width: newWidth, height: newHeight });
     };
@@ -130,7 +152,9 @@ export function PlanViewPopover({
     const handleMouseUp = () => {
       setIsResizing(false);
       // localStorage에 저장 (Plans와 Snapshots 별도)
-      const storageKey = bar.isSnapshot ? SNAPSHOT_POPOVER_SIZE_KEY : PLAN_POPOVER_SIZE_KEY;
+      const storageKey = bar.isSnapshot
+        ? SNAPSHOT_POPOVER_SIZE_KEY
+        : PLAN_POPOVER_SIZE_KEY;
       try {
         localStorage.setItem(storageKey, JSON.stringify(size));
       } catch {
@@ -241,12 +265,32 @@ export function PlanViewPopover({
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <span className="font-medium text-gray-700">{project}</span>
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-3 h-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
           <span className="font-medium text-gray-700">{module}</span>
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-3 h-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
           <span className="font-medium text-gray-900">{feature}</span>
         </div>
@@ -378,7 +422,9 @@ export function PlanViewPopover({
             {/* Tasks */}
             {bar.past_week.tasks && bar.past_week.tasks.length > 0 && (
               <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">작업 내역</div>
+                <div className="text-sm font-semibold text-gray-700">
+                  PROGRESS
+                </div>
                 <div className="space-y-1.5">
                   {bar.past_week.tasks.map((task, idx) => (
                     <div
@@ -414,7 +460,9 @@ export function PlanViewPopover({
             {/* Progress */}
             {bar.past_week.progress && (
               <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">진행 상황</div>
+                <div className="text-sm font-semibold text-gray-700">
+                  진행 상황
+                </div>
                 <div
                   className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
                   style={{ background: "#f8fafc" }}
@@ -425,9 +473,25 @@ export function PlanViewPopover({
             )}
 
             {/* Next */}
-            {bar.past_week.next && (
+            {bar.this_week?.tasks && bar.this_week.tasks.length > 0 ? (
               <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">다음 계획</div>
+                <div className="text-sm font-semibold text-gray-700">NEXT</div>
+                <ul className="space-y-1.5">
+                  {bar.this_week.tasks.map((task, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-sm p-2 rounded-lg"
+                      style={{ background: "#f8fafc" }}
+                    >
+                      <span className="text-gray-400 mt-0.5">•</span>
+                      <span className="flex-1 text-gray-700">{task}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : bar.past_week?.next ? (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">NEXT</div>
                 <div
                   className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
                   style={{ background: "#f8fafc" }}
@@ -435,17 +499,111 @@ export function PlanViewPopover({
                   {bar.past_week.next}
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Risk */}
-            {bar.past_week.risk && (
+            {(bar.risks && bar.risks.length > 0) || bar.risk_level ? (
               <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">리스크</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-semibold text-gray-700">
+                    RISK
+                  </div>
+                  {bar.risk_level && bar.risk_level > 0 && (
+                    <span
+                      className={`px-2 py-0.5 text-xs font-medium rounded ${
+                        bar.risk_level >= 3
+                          ? "bg-red-100 text-red-600 border border-red-200"
+                          : bar.risk_level >= 2
+                          ? "bg-orange-100 text-orange-600 border border-orange-200"
+                          : "bg-yellow-100 text-yellow-600 border border-yellow-200"
+                      }`}
+                    >
+                      Lv.{bar.risk_level}
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="text-sm text-gray-700 leading-relaxed p-3 rounded-lg"
+                  style={{ background: "#fef2f2" }}
+                >
+                  {bar.risks && bar.risks.length > 0 ? (
+                    <ul className="space-y-1">
+                      {bar.risks.map((risk, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span className="flex-1 text-red-600">{risk}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-red-600">미정</span>
+                  )}
+                </div>
+              </div>
+            ) : bar.past_week?.risk ? (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">RISK</div>
                 <div
                   className="text-sm text-red-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
                   style={{ background: "#fef2f2" }}
                 >
                   {bar.past_week.risk}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Collaborators (WITH) */}
+            {bar.collaborators && bar.collaborators.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">WITH</div>
+                <div className="flex flex-wrap gap-2">
+                  {bar.collaborators.map((c, i) => {
+                    const relation = c.relations?.[0];
+                    const styles = {
+                      pair: {
+                        bg: "#f3e8ff",
+                        text: "#7c3aed",
+                        label: "페어",
+                        border: "#d8b4fe",
+                      },
+                      pre: {
+                        bg: "#dbeafe",
+                        text: "#2563eb",
+                        label: "선행",
+                        border: "#93c5fd",
+                      },
+                      post: {
+                        bg: "#d1fae5",
+                        text: "#059669",
+                        label: "후행",
+                        border: "#6ee7b7",
+                      },
+                    };
+                    const style = styles[relation as keyof typeof styles] || {
+                      bg: "#f3f4f6",
+                      text: "#6b7280",
+                      label: "",
+                      border: "#d1d5db",
+                    };
+                    return (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium"
+                        style={{
+                          backgroundColor: style.bg,
+                          color: style.text,
+                          border: `1px solid ${style.border}`,
+                        }}
+                      >
+                        {c.name}
+                        {style.label && (
+                          <span className="opacity-75 text-xs">
+                            ({style.label})
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -482,4 +640,3 @@ export function PlanViewPopover({
     </div>
   );
 }
-

@@ -1241,7 +1241,7 @@ function NewSnapshotViewInner({
                 router.push("/manage/snapshots");
               }
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all shrink-0 relative"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all shrink-0"
           >
             <svg
               className="w-4 h-4"
@@ -1261,7 +1261,7 @@ function NewSnapshotViewInner({
             </span>
             <span className="text-xs font-medium sm:hidden">목록</span>
             {changeCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gray-500 text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gray-500 text-white text-[9px] font-bold">
                 {changeCount > 99 ? "99+" : changeCount}
               </span>
             )}

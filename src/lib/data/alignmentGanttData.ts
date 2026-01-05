@@ -45,6 +45,12 @@ export interface AlignmentGanttItem {
     risk?: string;
     memo?: string;
   };
+  this_week?: {
+    tasks?: string[];
+  };
+  collaborators?: Array<{ name: string; relations?: string[] }>;
+  risks?: string[];
+  risk_level?: number;
 }
 
 export interface AlignmentGanttData {
@@ -180,7 +186,11 @@ export async function getAlignmentGanttData({
         project,
         module,
         feature,
-        past_week
+        past_week,
+        this_week,
+        collaborators,
+        risks,
+        risk_level
       `)
       .in("snapshot_id", snapshotIds);
 
@@ -234,6 +244,7 @@ export async function getAlignmentGanttData({
 
     // 평균 진행률 계산
     const pastWeek = entry.past_week as any;
+    const thisWeek = entry.this_week as any;
     const tasks = pastWeek?.tasks || [];
     const avgProgress = tasks.length > 0
       ? tasks.reduce((sum: number, task: any) => sum + (task.progress || 0), 0) / tasks.length
@@ -263,6 +274,10 @@ export async function getAlignmentGanttData({
       avgProgress, // 평균 진행률 추가
       metaKey, // 메타 키 추가 (연결 화살표용)
       past_week: pastWeek, // Snapshot 상세 정보 추가
+      this_week: thisWeek, // NEXT 작업 추가
+      collaborators: entry.collaborators || [], // 협업자 추가
+      risks: entry.risks || [], // 리스크 목록 추가
+      risk_level: entry.risk_level || 0, // 리스크 레벨 추가
       assignees: [],
     };
   });
