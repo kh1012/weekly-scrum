@@ -16,6 +16,7 @@ import {
   useEffect,
   Suspense,
 } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import { LoadingButton } from "@/components/common/LoadingButton";
@@ -279,6 +280,115 @@ function EditSnapshotsViewInner({
 
   // 최근 업데이트된 주차 추적 (애니메이션용)
   const [recentlyUpdatedWeek, setRecentlyUpdatedWeek] = useState<string | null>(null);
+
+  // 초기 데이터 저장 (변경사항 추적용)
+  const initialSnapshotsRef = useRef<TempSnapshot[]>([]);
+  const initialDeletedEntryIdsRef = useRef<string[]>([]);
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+
+  // 초기 데이터 저장 (컴포넌트 마운트 시 또는 스냅샷 변경 시)
+  useEffect(() => {
+    if (tempSnapshots.length > 0) {
+      // 깊은 복사로 초기 데이터 저장
+      initialSnapshotsRef.current = tempSnapshots.map((s) => ({
+        ...s,
+        pastWeek: {
+          ...s.pastWeek,
+          tasks: s.pastWeek.tasks.map((t) => ({ ...t })),
+          risk: s.pastWeek.risk ? [...s.pastWeek.risk] : null,
+          collaborators: s.pastWeek.collaborators.map((c) => ({
+            ...c,
+            relations: c.relations ? [...c.relations] : undefined,
+          })),
+        },
+        thisWeek: {
+          tasks: [...s.thisWeek.tasks],
+        },
+      }));
+      initialDeletedEntryIdsRef.current = [...deletedEntryIds];
+    }
+  }, [selectedSnapshotId]); // 스냅샷 변경 시에만 초기화
+
+  // 변경사항 계산 함수
+  const calculateChanges = useCallback(() => {
+    if (initialSnapshotsRef.current.length === 0 && deletedEntryIds.length === 0) return 0;
+    
+    const initial = initialSnapshotsRef.current;
+    const current = tempSnapshots;
+    const initialDeleted = initialDeletedEntryIdsRef.current;
+    
+    // 삭제된 엔트리 개수 변경
+    const deletedChanges = Math.abs(deletedEntryIds.length - initialDeleted.length);
+    
+    // 엔트리 개수 변경
+    const countChanges = Math.abs(initial.length - current.length);
+    
+    // 각 엔트리 비교
+    let changeCount = 0;
+    const initialMap = new Map(initial.map((s) => [s.tempId, s]));
+    
+    for (const currentSnapshot of current) {
+      const initialSnapshot = initialMap.get(currentSnapshot.tempId);
+      if (!initialSnapshot) {
+        changeCount++;
+        continue;
+      }
+      
+      // 각 필드 비교
+      if (
+        currentSnapshot.name !== initialSnapshot.name ||
+        currentSnapshot.domain !== initialSnapshot.domain ||
+        currentSnapshot.project !== initialSnapshot.project ||
+        currentSnapshot.module !== initialSnapshot.module ||
+        currentSnapshot.feature !== initialSnapshot.feature
+      ) {
+        changeCount++;
+        continue;
+      }
+      
+      // pastWeek.tasks 비교
+      const currentTasks = JSON.stringify(currentSnapshot.pastWeek.tasks);
+      const initialTasks = JSON.stringify(initialSnapshot.pastWeek.tasks);
+      if (currentTasks !== initialTasks) {
+        changeCount++;
+        continue;
+      }
+      
+      // pastWeek.risk 비교
+      const currentRisk = JSON.stringify(currentSnapshot.pastWeek.risk);
+      const initialRisk = JSON.stringify(initialSnapshot.pastWeek.risk);
+      if (currentRisk !== initialRisk) {
+        changeCount++;
+        continue;
+      }
+      
+      // pastWeek.riskLevel 비교
+      if (currentSnapshot.pastWeek.riskLevel !== initialSnapshot.pastWeek.riskLevel) {
+        changeCount++;
+        continue;
+      }
+      
+      // pastWeek.collaborators 비교
+      const currentCollaborators = JSON.stringify(currentSnapshot.pastWeek.collaborators);
+      const initialCollaborators = JSON.stringify(initialSnapshot.pastWeek.collaborators);
+      if (currentCollaborators !== initialCollaborators) {
+        changeCount++;
+        continue;
+      }
+      
+      // thisWeek.tasks 비교
+      const currentThisWeekTasks = JSON.stringify(currentSnapshot.thisWeek.tasks);
+      const initialThisWeekTasks = JSON.stringify(initialSnapshot.thisWeek.tasks);
+      if (currentThisWeekTasks !== initialThisWeekTasks) {
+        changeCount++;
+        continue;
+      }
+    }
+    
+    return changeCount + deletedChanges + countChanges;
+  }, [tempSnapshots, deletedEntryIds]);
+
+  const changeCount = calculateChanges();
 
   // 주차별 스냅샷 갯수 조회
   const fetchSnapshotCounts = useCallback(async () => {
@@ -602,6 +712,23 @@ function EditSnapshotsViewInner({
 
         if (result.success) {
           setShowWorkloadModal(false);
+          // 저장 후 초기 데이터 업데이트
+          initialSnapshotsRef.current = tempSnapshots.map((s) => ({
+            ...s,
+            pastWeek: {
+              ...s.pastWeek,
+              tasks: s.pastWeek.tasks.map((t) => ({ ...t })),
+              risk: s.pastWeek.risk ? [...s.pastWeek.risk] : null,
+              collaborators: s.pastWeek.collaborators.map((c) => ({
+                ...c,
+                relations: c.relations ? [...c.relations] : undefined,
+              })),
+            },
+            thisWeek: {
+              tasks: [...s.thisWeek.tasks],
+            },
+          }));
+          initialDeletedEntryIdsRef.current = [];
           showToast("신규 등록 완료!", "success");
           router.refresh();
         } else {
@@ -625,6 +752,24 @@ function EditSnapshotsViewInner({
 
         if (result.success) {
           setShowWorkloadModal(false);
+          // 저장 후 초기 데이터 업데이트
+          initialSnapshotsRef.current = tempSnapshots.map((s) => ({
+            ...s,
+            pastWeek: {
+              ...s.pastWeek,
+              tasks: s.pastWeek.tasks.map((t) => ({ ...t })),
+              risk: s.pastWeek.risk ? [...s.pastWeek.risk] : null,
+              collaborators: s.pastWeek.collaborators.map((c) => ({
+                ...c,
+                relations: c.relations ? [...c.relations] : undefined,
+              })),
+            },
+            thisWeek: {
+              tasks: [...s.thisWeek.tasks],
+            },
+          }));
+          initialDeletedEntryIdsRef.current = [...deletedEntryIds];
+          
           if (result.deleted) {
             // 엔트리가 모두 삭제되어 스냅샷도 삭제된 경우
             showToast("스냅샷이 삭제되었습니다.", "success");
@@ -751,10 +896,14 @@ function EditSnapshotsViewInner({
               {/* 목록으로 버튼 */}
               <button
                 onClick={() => {
-                  navigationProgress.start();
-                  router.push("/manage/snapshots");
+                  if (changeCount > 0) {
+                    setShowUnsavedChangesModal(true);
+                  } else {
+                    navigationProgress.start();
+                    router.push("/manage/snapshots");
+                  }
                 }}
-                className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                className="flex items-center gap-1.5 px-2 md:px-2.5 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all relative"
               >
                 <svg
                   className="w-4 h-4"
@@ -772,6 +921,11 @@ function EditSnapshotsViewInner({
                 <span className="text-xs font-medium hidden sm:inline">
                   목록으로
                 </span>
+                {changeCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gray-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {changeCount > 99 ? "99+" : changeCount}
+                  </span>
+                )}
               </button>
 
               {/* 모바일: 주차 선택 버튼 */}
@@ -1068,6 +1222,48 @@ function EditSnapshotsViewInner({
         required={false}
         confirmText="적용"
       />
+
+      {/* 저장하지 않은 변경사항 확인 모달 */}
+      {showUnsavedChangesModal && typeof window !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              저장하지 않은 변경사항이 있습니다
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              {changeCount}개의 변경사항이 있습니다. 저장하지 않은 정보는 모두 유지되지 않습니다.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowUnsavedChangesModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setShowUnsavedChangesModal(false);
+                  navigationProgress.start();
+                  router.push("/manage/snapshots");
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                저장하지 않고 나가기
+              </button>
+              <button
+                onClick={() => {
+                  setShowUnsavedChangesModal(false);
+                  handleSaveClick();
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                저장하기
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
