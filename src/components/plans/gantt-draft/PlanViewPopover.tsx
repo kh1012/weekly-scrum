@@ -361,24 +361,17 @@ export function PlanViewPopover({
       {/* 리사이즈 핸들 */}
       <div
         onMouseDown={handleResizeStart}
-        className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize group"
+        className="absolute bottom-0 right-0 w-8 h-8 cursor-nwse-resize group flex items-end justify-end"
         style={{ touchAction: "none" }}
       >
-        {/* 리사이즈 아이콘 */}
-        <div className="absolute bottom-1 right-1 flex flex-col gap-0.5">
-          <div className="flex gap-0.5 justify-end">
-            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
-          </div>
-          <div className="flex gap-0.5 justify-end">
-            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
-            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
-          </div>
-          <div className="flex gap-0.5 justify-end">
-            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
-            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
-            <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-gray-400 transition-colors" />
-          </div>
-        </div>
+        {/* 리사이즈 아이콘 - 직각 삼각형 화살표 */}
+        <svg
+          className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors mb-1 mr-1"
+          fill="currentColor"
+          viewBox="0 0 16 16"
+        >
+          <path d="M16 16V10h-2v3.586L10.414 10H14V8H8v6h2v-3.586L13.586 14H10v2h6z" />
+        </svg>
       </div>
     </div>
   );
