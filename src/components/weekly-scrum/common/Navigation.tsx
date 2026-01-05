@@ -330,6 +330,41 @@ function getNavCategories(role: WorkspaceRole): NavCategory[] {
   });
 }
 
+/**
+ * pathname으로부터 breadcrumb 정보 추출
+ * 예: "/team-feed" -> { category: "Works", menu: "Team Feed" }
+ */
+export function getBreadcrumbFromPath(pathname: string): {
+  category: string | null;
+  menu: string | null;
+} {
+  // 각 카테고리와 메뉴를 순회하며 매칭되는 것 찾기
+  for (const category of BASE_NAV_CATEGORIES) {
+    for (const item of category.items) {
+      // 정확히 일치하는 경우
+      if (pathname === item.href || pathname === item.href + "/") {
+        return {
+          category: category.label,
+          menu: item.label,
+        };
+      }
+      // 하위 경로인 경우 (예: /admin/plans/123 -> Plans Management)
+      if (item.href !== "/" && pathname.startsWith(item.href + "/")) {
+        return {
+          category: category.label,
+          menu: item.label,
+        };
+      }
+    }
+  }
+
+  // 매칭되지 않는 경우
+  return {
+    category: null,
+    menu: null,
+  };
+}
+
 function useIsActive() {
   const pathname = usePathname();
 

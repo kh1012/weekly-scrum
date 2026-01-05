@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { SideNavigation } from "./Navigation";
+import { SideNavigation, getBreadcrumbFromPath } from "./Navigation";
 import { WeekSelector } from "./WeekSelector";
 import { ExpandableFilters } from "./ExpandableFilters";
 import { UserProfile } from "./UserProfile";
@@ -154,15 +154,28 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
             </svg>
           </button>
 
-          {/* 로고 */}
+          {/* 로고 & Breadcrumb */}
           <Link
             href="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <Logo className="w-7 h-7" />
-            <span className="hidden sm:block text-[#24292f] font-semibold text-base">
-              Weekly Scrum
-            </span>
+            <div className="hidden sm:flex flex-col">
+              <span className="text-[#24292f] font-semibold text-base leading-tight">
+                Weekly Scrum
+              </span>
+              {(() => {
+                const breadcrumb = getBreadcrumbFromPath(pathname);
+                if (breadcrumb.category && breadcrumb.menu) {
+                  return (
+                    <span className="text-[#57606a] text-xs leading-tight">
+                      {breadcrumb.category} / {breadcrumb.menu}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </div>
           </Link>
 
           {/* 구분선 */}
