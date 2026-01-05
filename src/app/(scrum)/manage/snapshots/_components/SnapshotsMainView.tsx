@@ -119,8 +119,8 @@ function SnapshotsMainViewInner({
   // 뷰 모드
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // 전체 펼치기/접기 상태
-  const [allExpanded, setAllExpanded] = useState(false);
+  // 전체 펼치기/접기 상태 (기본값: 펼침)
+  const [allExpanded, setAllExpanded] = useState(true);
 
   // 선택 모드 상태
   const [isSelectMode, setIsSelectMode] = useState(false);

@@ -537,55 +537,35 @@ function EntryCard({
         </div>
       )}
 
-      {/* 헤더 - 메타 태그 세로 정렬 */}
+      {/* 헤더 - 메타 정보 문자열 형태 */}
       <div className={`px-4 pt-3 pb-4 ${isSelectMode ? "pl-12" : ""}`}>
         <div className="flex items-start justify-between gap-3">
-          {/* 세로 방향 메타 정보 */}
+          {/* 경로 표시 (문자열 형태) */}
           <div className="flex-1 min-w-0 flex flex-col gap-2">
-            {/* Domain */}
-            {entry.domain && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
-                  Domain
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
-                  {entry.domain}
-                </span>
-              </div>
-            )}
-            {/* Project */}
-            {entry.project && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
-                  Project
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
-                  {entry.project}
-                </span>
-              </div>
-            )}
-            {/* Module */}
-            {entry.module && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
-                  Module
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
-                  {entry.module}
-                </span>
-              </div>
-            )}
-            {/* Feature */}
-            {entry.feature && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
-                  Feature
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f6f8fa] text-[#24292f] border border-[#d0d7de]">
-                  {entry.feature}
-                </span>
-              </div>
-            )}
+            {/* Domain / Project / Module / Feature */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-[#24292f]">
+                {entry.domain}
+                {entry.project && (
+                  <>
+                    <span className="text-[#57606a] mx-1.5">/</span>
+                    {entry.project}
+                  </>
+                )}
+                {entry.module && (
+                  <>
+                    <span className="text-[#57606a] mx-1.5">/</span>
+                    {entry.module}
+                  </>
+                )}
+                {entry.feature && (
+                  <>
+                    <span className="text-[#57606a] mx-1.5">/</span>
+                    <span className="text-[#0969da]">{entry.feature}</span>
+                  </>
+                )}
+              </span>
+            </div>
             {/* 진행률 (접힌 상태에서만 표시 - 확장 시 상세 내용에서 표시됨) */}
             {!isExpanded && avgProgress !== null && (
               <div className="flex items-center gap-1.5">
