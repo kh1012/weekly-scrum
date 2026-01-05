@@ -62,6 +62,8 @@ interface DraftTimelineProps {
   onScrollChange?: (scrollTop: number) => void;
   /** 가로 스크롤바 높이 변경 콜백 (TreePanel 하단 정렬용) */
   onScrollbarHeightChange?: (height: number) => void;
+  /** 하이라이트할 Row ID (timeline focus용) */
+  highlightedRowId?: string | null;
 }
 
 interface DragCreateState {
@@ -87,6 +89,7 @@ export function DraftTimeline({
   scrollTop: externalScrollTop,
   onScrollChange,
   onScrollbarHeightChange,
+  highlightedRowId,
 }: DraftTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -1480,18 +1483,23 @@ export function DraftTimeline({
             const row = node.row;
             const nodeBars = node.bars || [];
             const isRowSelected = row.rowId === selectedRowId;
+            const isFocused = row.rowId === highlightedRowId;
 
             return (
               <div
                 key={node.id}
-                className="absolute left-0 cursor-crosshair"
+                className={`absolute left-0 cursor-crosshair ${isFocused ? "animate-pulse-subtle" : ""}`}
                 style={{
                   top,
                   height,
                   width: totalWidth,
+                  // Timeline focus 하이라이트
+                  background: isFocused
+                    ? "rgba(251, 146, 60, 0.08)"
+                    : "transparent",
                   // 선택된 행 강조 - 파란색 얇은 라인
-                  borderTop: isRowSelected ? "1px solid #3b82f6" : "none",
-                  borderBottom: isRowSelected ? "1px solid #3b82f6" : "none",
+                  borderTop: isRowSelected ? "1px solid #3b82f6" : isFocused ? "1px solid rgba(251, 146, 60, 0.3)" : "none",
+                  borderBottom: isRowSelected ? "1px solid #3b82f6" : isFocused ? "1px solid rgba(251, 146, 60, 0.3)" : "none",
                 }}
                 onMouseDown={(e) => {
                   // 클릭 위치에서 laneIndex 계산 (merge된 레인 지원)

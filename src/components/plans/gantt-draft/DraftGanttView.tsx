@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDraftStore, createRowId } from "./store";
 import { useLock } from "./useLock";
@@ -25,6 +25,7 @@ import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
 import { GanttSkeleton } from "./GanttSkeleton";
+import { buildFlatTree, calculateNodePositions, ROW_HEIGHT } from "./laneLayout";
 
 interface InitialAssignee {
   userId: string;
@@ -77,7 +78,11 @@ interface DraftGanttViewProps {
   updatedByName?: string;
 }
 
-export function DraftGanttView({
+export interface DraftGanttViewRef {
+  scrollToRow: (rowId: string, options?: { highlight?: boolean; smooth?: boolean }) => void;
+}
+
+export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>(function DraftGanttView({
   workspaceId,
   initialPlans = [],
   members = [],
@@ -91,7 +96,7 @@ export function DraftGanttView({
   isFilterLoading = false,
   maxUpdatedAt,
   updatedByName,
-}: DraftGanttViewProps) {
+}, ref) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -177,6 +182,9 @@ export function DraftGanttView({
   const timelineRef = useRef<HTMLDivElement>(null);
   const [timelineScrollbarHeight, setTimelineScrollbarHeight] = useState(0);
 
+  // Row 하이라이트 상태 (timeline focus용)
+  const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
+
   const hydrate = useDraftStore((s) => s.hydrate);
   const clearDirtyFlags = useDraftStore((s) => s.clearDirtyFlags);
   const getDirtyBars = useDraftStore((s) => s.getDirtyBars);
@@ -194,6 +202,50 @@ export function DraftGanttView({
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
   const selectFlag = useDraftStore((s) => s.selectFlag);
   const setFilters = useDraftStore((s) => s.setFilters);
+
+  // Expose scrollToRow method via ref
+  useImperativeHandle(ref, () => ({
+    scrollToRow: (rowId: string, options?: { highlight?: boolean; smooth?: boolean }) => {
+      const targetRow = rows.find((r) => r.rowId === rowId);
+      if (!targetRow) {
+        console.warn(`Row not found: ${rowId}`);
+        return;
+      }
+
+      // Build tree and calculate positions (all nodes expanded for position calculation)
+      const allExpanded = new Set(rows.map((r) => r.project));
+      rows.forEach((r) => {
+        if (r.module) allExpanded.add(`${r.project}::${r.module}`);
+      });
+      const flatTree = buildFlatTree(rows, bars, allExpanded);
+      const nodePositions = calculateNodePositions(flatTree);
+
+      // Find the target node position
+      const targetNode = nodePositions.find((pos) => pos.node.row?.rowId === rowId);
+      if (!targetNode) {
+        console.warn(`Node position not found: ${rowId}`);
+        return;
+      }
+
+      // Scroll to the target row (centered if possible)
+      const viewportHeight = timelineRef.current?.clientHeight || 600;
+      const targetScrollTop = Math.max(
+        0,
+        targetNode.top - viewportHeight / 2 + ROW_HEIGHT / 2
+      );
+
+      setCommonScrollTop(targetScrollTop);
+
+      // Apply highlight effect
+      if (options?.highlight !== false) {
+        setHighlightedRowId(rowId);
+        // Clear highlight after animation
+        setTimeout(() => {
+          setHighlightedRowId(null);
+        }, 2000);
+      }
+    },
+  }), [rows, bars, timelineRef]);
 
   // 필터를 store에 동기화
   useEffect(() => {
@@ -1133,6 +1185,7 @@ export function DraftGanttView({
                 rangeEnd={rangeEnd}
                 workspaceId={workspaceId}
                 timelineScrollbarHeight={timelineScrollbarHeight}
+                highlightedRowId={highlightedRowId}
               />
             </div>
           </>
@@ -1156,6 +1209,7 @@ export function DraftGanttView({
             scrollTop={commonScrollTop}
             onScroll={setCommonScrollTop}
             timelineScrollbarHeight={timelineScrollbarHeight}
+            highlightedRowId={highlightedRowId}
           />
         )}
 
@@ -1169,6 +1223,7 @@ export function DraftGanttView({
           members={members}
           workspaceId={workspaceId}
           onDragDateChange={setDragDateInfo}
+          highlightedRowId={highlightedRowId}
           onAction={extendLockIfNeeded}
           scrollTop={commonScrollTop}
           onScrollChange={setCommonScrollTop}
@@ -1216,4 +1271,4 @@ export function DraftGanttView({
       />
     </div>
   );
-}
+});

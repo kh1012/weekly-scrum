@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { DraftGanttView } from "@/components/plans/gantt-draft/DraftGanttView";
+import { useState, useMemo, useRef } from "react";
+import { DraftGanttView, type DraftGanttViewRef } from "@/components/plans/gantt-draft/DraftGanttView";
 import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
 import { calculateAlignmentStatus, detectAlignmentMismatches } from "@/lib/alignment/alignmentStatus";
 import type { DraftBar } from "@/components/plans/gantt-draft/types";
@@ -36,6 +36,7 @@ export function AlignmentGanttClient({
   userName,
 }: AlignmentGanttClientProps) {
   const [filter, setFilter] = useState<FilterType>("all");
+  const ganttRef = useRef<DraftGanttViewRef>(null);
 
   // 필터링 및 정렬된 items
   const filteredItems = useMemo(() => {
@@ -188,9 +189,13 @@ export function AlignmentGanttClient({
   }, [filteredItems]);
 
   const handleFocusMismatch = (mismatch: AlignmentMismatch) => {
-    // TODO: Implement timeline scroll and highlight
-    // For now, just log
-    console.log("Focus on mismatch:", mismatch);
+    // Calculate rowId from meta path
+    // mismatch.metaPath format: "Project / Module / Feature"
+    const parts = mismatch.metaPath.split(" / ");
+    const rowId = parts.join("::");
+    
+    // Scroll to the row
+    ganttRef.current?.scrollToRow(rowId, { highlight: true, smooth: true });
   };
 
   return (
@@ -255,6 +260,7 @@ export function AlignmentGanttClient({
       {/* 간트 차트 */}
       <div className="flex-1 overflow-hidden">
         <DraftGanttView
+          ref={ganttRef}
           workspaceId={workspaceId}
           initialPlans={initialPlans}
           members={members}

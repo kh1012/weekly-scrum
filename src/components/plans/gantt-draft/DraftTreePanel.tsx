@@ -404,6 +404,8 @@ interface DraftTreePanelProps {
   workspaceId?: string;
   /** 타임라인 가로 스크롤바 높이 (하단 정렬용) */
   timelineScrollbarHeight?: number;
+  /** 하이라이트할 Row ID (timeline focus용) */
+  highlightedRowId?: string | null;
 }
 
 /**
@@ -432,6 +434,7 @@ export function DraftTreePanel({
   rangeEnd,
   workspaceId,
   timelineScrollbarHeight = 0,
+  highlightedRowId,
 }: DraftTreePanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1427,6 +1430,9 @@ export function DraftTreePanel({
     // 현재 노드가 강조 중인지 확인
     const isHighlighted = highlightDateRange?.nodeId === node.id;
 
+    // Timeline focus로 인한 하이라이트 확인
+    const isFocused = node.row?.rowId === highlightedRowId;
+
     const handleDoubleClick = (e: React.MouseEvent) => {
       if (!isEditing) return;
       e.stopPropagation();
@@ -1512,11 +1518,13 @@ export function DraftTreePanel({
           node.type === "project" || node.type === "module" ? "px-2" : "px-3"
         } ${isSelected ? "" : "hover:translate-x-0.5"} ${
           isDragging ? "opacity-50" : ""
-        }`}
+        } ${isFocused ? "animate-pulse-subtle" : ""}`}
         style={{
           top,
           height,
-          background: isSelected
+          background: isFocused
+            ? "linear-gradient(90deg, rgba(251, 146, 60, 0.2) 0%, rgba(251, 146, 60, 0.1) 100%)"
+            : isSelected
             ? "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)"
             : bgStyle,
           borderTop: showDropBefore ? "2px solid #3b82f6" : undefined,
