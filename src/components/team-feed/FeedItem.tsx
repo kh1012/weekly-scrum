@@ -186,7 +186,9 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
           <h4 className="text-xs font-semibold text-[#24292f] mb-2">Risk</h4>
           <ul className="space-y-1.5">
             {riskItems.map((item, idx) => (
-              <li key={idx} className="text-xs text-[#57606a] leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+              <li key={idx} className={`text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 ${
+                item.content === 'empty' ? 'text-[#d0d7de]' : 'text-[#57606a]'
+              }`}>
                 {highlightText(item.content, searchQuery)}
               </li>
             ))}
@@ -269,13 +271,21 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
               {entry.risks.length > 0 && (
                 <div>
                   <p className="text-[11px] font-semibold text-[#24292f] mb-1.5">Risk</p>
-                  <ul className="space-y-1 text-[#57606a]">
+                  <ul className="space-y-1">
                     {entry.risks.map((risk, idx) => {
-                      const riskText = typeof risk === 'string' 
+                      let riskText = typeof risk === 'string' 
                         ? risk 
                         : (risk as any)?.note || (risk as any)?.title || JSON.stringify(risk);
+                      
+                      // 빈 문자열인 경우 "empty"로 기본값 설정
+                      if (!riskText || riskText.trim() === '') {
+                        riskText = 'empty';
+                      }
+                      
                       return (
-                        <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                        <li key={idx} className={`text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 ${
+                          riskText === 'empty' ? 'text-[#d0d7de]' : 'text-[#57606a]'
+                        }`}>
                           {highlightText(riskText, searchQuery)}
                         </li>
                       );
