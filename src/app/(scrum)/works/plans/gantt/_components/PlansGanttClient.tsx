@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition, useMemo } from "react";
+import { useCallback, useTransition, useMemo, useEffect, useState } from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
+import { useDraftStore } from "@/components/plans/gantt-draft/store";
 import type { WorkspaceMemberOption } from "@/components/plans/gantt-draft/CreatePlanModal";
 
 interface InitialAssignee {
@@ -35,6 +36,8 @@ interface PlansGanttClientProps {
   members: WorkspaceMemberOption[];
   initialStages: string[];
   initialAssignees: string[];
+  initialViewMode: "detailed" | "summarized";
+  initialEnableAlignmentCheck: boolean;
   maxUpdatedAt?: string;
   updatedByName?: string;
 }
@@ -45,6 +48,8 @@ export function PlansGanttClient({
   members,
   initialStages,
   initialAssignees,
+  initialViewMode,
+  initialEnableAlignmentCheck,
   maxUpdatedAt,
   updatedByName,
 }: PlansGanttClientProps) {
@@ -54,6 +59,15 @@ export function PlansGanttClient({
 
   const selectedStages = useMemo(() => new Set(initialStages), [initialStages]);
   const selectedAssignees = useMemo(() => new Set(initialAssignees), [initialAssignees]);
+  
+  const setViewMode = useDraftStore((s) => s.setViewMode);
+  const viewMode = useDraftStore((s) => s.ui.viewMode);
+  const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(initialEnableAlignmentCheck);
+
+  // 초기 로드 시 URL의 viewMode를 store에 설정
+  useEffect(() => {
+    setViewMode(initialViewMode);
+  }, [initialViewMode, setViewMode]);
 
   const handleStagesChange = useCallback(
     (stages: Set<string>) => {
@@ -85,6 +99,35 @@ export function PlansGanttClient({
     [router, searchParams]
   );
 
+  // viewMode 변경 감지 및 querystring 업데이트
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const currentViewMode = params.get("viewMode");
+    
+    if (viewMode !== initialViewMode) {
+      if (viewMode === "summarized") {
+        params.set("viewMode", "summarized");
+      } else {
+        params.delete("viewMode"); // detailed가 기본값이므로 제거
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [viewMode, initialViewMode, router, searchParams]);
+
+  const handleEnableAlignmentCheckChange = useCallback(
+    (enabled: boolean) => {
+      setEnableAlignmentCheck(enabled);
+      const params = new URLSearchParams(searchParams.toString());
+      if (enabled) {
+        params.set("enableAlignmentCheck", "true");
+      } else {
+        params.delete("enableAlignmentCheck");
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
   return (
     <DraftGanttView
       workspaceId={workspaceId}
@@ -99,6 +142,8 @@ export function PlansGanttClient({
       isFilterLoading={isPending}
       maxUpdatedAt={maxUpdatedAt}
       updatedByName={updatedByName}
+      enableAlignmentCheck={enableAlignmentCheck}
+      onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}
     />
   );
 }

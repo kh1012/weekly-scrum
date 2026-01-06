@@ -12,6 +12,7 @@ export type FilterType = "all" | "plans" | "snapshots";
 interface UseAlignmentFilterOptions {
   items: AlignmentGanttItem[];
   filter: FilterType;
+  selectedAssignees?: Set<string>;
 }
 
 /**
@@ -25,7 +26,7 @@ interface UseAlignmentFilterOptions {
  * 5. Type (plan → snapshot)
  * 6. Start Date
  */
-export function useAlignmentFilter({ items, filter }: UseAlignmentFilterOptions) {
+export function useAlignmentFilter({ items, filter, selectedAssignees }: UseAlignmentFilterOptions) {
   const filteredItems = useMemo(() => {
     let filtered = items;
     
@@ -64,13 +65,30 @@ export function useAlignmentFilter({ items, filter }: UseAlignmentFilterOptions)
     });
   }, [items, filter]);
 
-  // 통계 계산
+  // 통계 계산 (담당자 필터 반영)
   const stats = useMemo(() => {
-    const plansCount = items.filter((item) => item.type === "plan").length;
-    const snapshotsCount = items.filter((item) => item.type === "snapshot").length;
+    // 담당자 필터가 적용된 경우
+    let itemsForStats = items;
+    
+    if (selectedAssignees && selectedAssignees.size > 0) {
+      itemsForStats = items.filter((item) => {
+        if (item.type === "plan") {
+          // Plan: assignees 배열에 선택된 userId가 포함되어 있는지 확인
+          return item.assignees?.some((assignee) =>
+            selectedAssignees.has(assignee.userId)
+          );
+        } else {
+          // Snapshot: authorId가 선택된 userId와 일치하는지 확인
+          return item.authorId && selectedAssignees.has(item.authorId);
+        }
+      });
+    }
+    
+    const plansCount = itemsForStats.filter((item) => item.type === "plan").length;
+    const snapshotsCount = itemsForStats.filter((item) => item.type === "snapshot").length;
     // authorId를 우선 사용하고, 없으면 authorName 사용 (더 정확한 중복 제거)
     const uniqueAuthors = new Set(
-      items
+      itemsForStats
         .filter((item) => item.type === "snapshot" && (item.authorId || item.authorName))
         .map((item) => item.authorId || item.authorName)
     ).size;
@@ -79,9 +97,9 @@ export function useAlignmentFilter({ items, filter }: UseAlignmentFilterOptions)
       plansCount,
       snapshotsCount,
       uniqueAuthors,
-      totalCount: items.length,
+      totalCount: itemsForStats.length,
     };
-  }, [items]);
+  }, [items, selectedAssignees]);
 
   return {
     filteredItems,

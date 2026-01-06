@@ -96,6 +96,8 @@ interface DraftBarProps {
   rowTopOffset?: number;
   /** 드래그 완료 시 절대 Y 위치 콜백 (다른 Row 이동용) */
   onMoveComplete?: (absoluteY: number) => void;
+  /** 같은 row의 다른 bars (겹침 감지용) */
+  rowBars?: BarWithLane[];
 }
 
 type DragMode = "move" | "resize-left" | "resize-right" | null;
@@ -149,6 +151,7 @@ export const DraftBar = memo(function DraftBar({
   onClearHover,
   rowTopOffset,
   onMoveComplete,
+  rowBars = [],
 }: DraftBarProps) {
   const updateBar = useDraftStore((s) => s.updateBar);
   const deleteBar = useDraftStore((s) => s.deleteBar);
@@ -255,11 +258,38 @@ export const DraftBar = memo(function DraftBar({
               onMoveComplete(absoluteY);
             }
 
+            // 겹침 처리: 같은 row의 다른 bars 중 타겟 레인에서 겹치는 블록 찾기
+            const conflictingBars = rowBars.filter((otherBar) => {
+              // 자기 자신은 제외
+              if (otherBar.clientUid === bar.clientUid) return false;
+              // 타겟 레인에 있는 블록만 확인
+              if (otherBar.lane !== newPreferredLane) return false;
+              
+              // 기간 겹침 검사
+              const otherStart = new Date(otherBar.startDate).getTime();
+              const otherEnd = new Date(otherBar.endDate).getTime();
+              const currentStart = new Date(newDates.startDate).getTime();
+              const currentEnd = new Date(newDates.endDate).getTime();
+              
+              // 겹치는지 확인: A.end >= B.start && A.start <= B.end
+              return !(currentEnd < otherStart || currentStart > otherEnd);
+            });
+
+            // 먼저 드래그 중인 블록을 타겟 레인에 배치
             updateBar(bar.clientUid, {
               startDate: newDates.startDate,
               endDate: newDates.endDate,
               preferredLane: newPreferredLane,
             });
+
+            // 겹치는 블록들을 한 칸 아래로 밀기
+            if (conflictingBars.length > 0) {
+              conflictingBars.forEach((conflictBar) => {
+                updateBar(conflictBar.clientUid, {
+                  preferredLane: newPreferredLane + 1,
+                });
+              });
+            }
           } else if (mode === "resize-left") {
             const newDates = calculateResizedDates(
               bar,
@@ -295,7 +325,7 @@ export const DraftBar = memo(function DraftBar({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [isEditing, bar, updateBar, dayWidth, rangeStart, lane, onDragDateChange]
+    [isEditing, bar, updateBar, dayWidth, rangeStart, lane, onDragDateChange, onMoveComplete, rowTopOffset, rowBars]
   );
 
   // 클릭 핸들링

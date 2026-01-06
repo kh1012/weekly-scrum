@@ -37,8 +37,12 @@ export function WorksAlignmentClient({
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
   const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(false);
 
-  // 필터링 및 통계 계산
-  const { filteredItems, stats } = useAlignmentFilter({ items, filter });
+  // 필터링 및 통계 계산 (담당자 필터 반영)
+  const { filteredItems, stats } = useAlignmentFilter({ 
+    items, 
+    filter,
+    selectedAssignees 
+  });
 
   // 담당자 필터 적용 (클라이언트에서 한 번만)
   const assigneeFilteredItems = useMemo(() => {

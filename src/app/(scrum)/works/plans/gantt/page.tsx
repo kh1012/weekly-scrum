@@ -10,7 +10,12 @@ import { PlansGanttClient } from "./_components/PlansGanttClient";
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 
 interface PageProps {
-  searchParams: Promise<{ stages?: string; assignees?: string }>;
+  searchParams: Promise<{ 
+    stages?: string; 
+    assignees?: string;
+    viewMode?: string;
+    enableAlignmentCheck?: string;
+  }>;
 }
 
 /**
@@ -24,6 +29,8 @@ export default async function PlansPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const initialStages = params.stages ? params.stages.split(",").filter(Boolean) : [];
   const initialAssignees = params.assignees ? params.assignees.split(",").filter(Boolean) : [];
+  const initialViewMode = params.viewMode === "summarized" ? "summarized" : "detailed";
+  const initialEnableAlignmentCheck = params.enableAlignmentCheck === "true";
 
   // 초기 데이터 조회 (병렬)
   const [result, workspaceMembers, maxUpdatedAtResult] = await Promise.all([
@@ -55,6 +62,8 @@ export default async function PlansPage({ searchParams }: PageProps) {
       members={members}
       initialStages={initialStages}
       initialAssignees={initialAssignees}
+      initialViewMode={initialViewMode}
+      initialEnableAlignmentCheck={initialEnableAlignmentCheck}
       maxUpdatedAt={maxUpdatedAt}
       updatedByName={updatedByName}
     />

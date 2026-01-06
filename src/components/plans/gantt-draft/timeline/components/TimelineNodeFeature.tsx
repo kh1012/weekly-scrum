@@ -263,6 +263,7 @@ export function TimelineNodeFeature({
               onDragDateChange={onDragDateChange}
               onClearHover={() => setHoverInfo(null)}
               rowTopOffset={rowTopOffset}
+              rowBars={nodeBars}
               onMoveComplete={(absoluteY: number) => {
                 // 마우스 절대 Y 위치로 타겟 Row 찾기
                 // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴

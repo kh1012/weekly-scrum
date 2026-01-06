@@ -17,7 +17,12 @@ import { AdminPlansGanttClient } from "./_components/AdminPlansGanttClient";
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 
 interface PageProps {
-  searchParams: Promise<{ stages?: string; assignees?: string }>;
+  searchParams: Promise<{ 
+    stages?: string; 
+    assignees?: string;
+    viewMode?: string;
+    enableAlignmentCheck?: string;
+  }>;
 }
 
 export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
@@ -25,6 +30,8 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const initialStages = params.stages ? params.stages.split(",").filter(Boolean) : [];
   const initialAssignees = params.assignees ? params.assignees.split(",").filter(Boolean) : [];
+  const initialViewMode = params.viewMode === "summarized" ? "summarized" : "detailed";
+  const initialEnableAlignmentCheck = params.enableAlignmentCheck === "true";
 
   // 권한 확인과 데이터 조회를 병렬로 실행
   const [hasAccess, result, workspaceMembers, maxUpdatedAtResult] =
@@ -76,6 +83,8 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
       members={members}
       initialStages={initialStages}
       initialAssignees={initialAssignees}
+      initialViewMode={initialViewMode}
+      initialEnableAlignmentCheck={initialEnableAlignmentCheck}
       maxUpdatedAt={maxUpdatedAt}
       updatedByName={updatedByName}
     />
