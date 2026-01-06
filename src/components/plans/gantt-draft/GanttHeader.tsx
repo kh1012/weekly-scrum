@@ -323,6 +323,14 @@ export function GanttHeader({
     new Set(selectedAssignees)
   );
 
+  // Members 리스트를 안정화 (displayName으로 정렬하여 메모이제이션)
+  const sortedMembers = useMemo(() => {
+    if (!members || members.length === 0) return [];
+    return [...members].sort((a, b) => 
+      a.displayName.localeCompare(b.displayName, 'ko-KR')
+    );
+  }, [members]);
+
   // 드롭다운이 열릴 때만 부모 상태로 초기화
   useEffect(() => {
     if (showStagesFilter) {
@@ -778,7 +786,7 @@ export function GanttHeader({
             )}
 
             {/* 담당자 필터 */}
-            {onAssigneesChange && members && members.length > 0 && (
+            {onAssigneesChange && sortedMembers.length > 0 && (
               <div className="relative" ref={assigneesFilterRef}>
                 <button
                   onClick={() => {
@@ -817,7 +825,7 @@ export function GanttHeader({
                 {showAssigneesFilter && (
                   <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[200px] z-50 overflow-hidden">
                     <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
-                      {members.map((member) => (
+                      {sortedMembers.map((member) => (
                         <label
                           key={member.userId}
                           className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
@@ -871,7 +879,7 @@ export function GanttHeader({
           {/* 구분선 (데스크톱에서만) */}
           {!isMobile &&
             (onStagesChange ||
-              (onAssigneesChange && members && members.length > 0)) && (
+              (onAssigneesChange && sortedMembers.length > 0)) && (
               <div className="w-px h-5 bg-gray-200" />
             )}
 
