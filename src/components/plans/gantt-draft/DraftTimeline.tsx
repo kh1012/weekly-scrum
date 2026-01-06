@@ -350,25 +350,36 @@ export function DraftTimeline({
         onViewDetails={() => {
           if (!state.blockContextMenu) return;
 
+          const mouseX = state.blockContextMenu.position.x;
+          const mouseY = state.blockContextMenu.position.y;
+          
+          // 팝오버 예상 높이 (실제 팝오버 높이에 따라 조정 가능)
+          const ESTIMATED_POPOVER_HEIGHT = 400;
+          const SPACING = 8; // 마우스 커서와의 간격
+          
+          // 화면 높이 확인
+          const viewportHeight = window.innerHeight;
+          const spaceBelow = viewportHeight - mouseY;
+          
+          // 아래 공간이 충분한지 확인
+          const shouldShowBelow = spaceBelow >= ESTIMATED_POPOVER_HEIGHT + SPACING;
+
           if (state.blockContextMenu.type === "moduleSummary") {
             // 모듈 요약 블록: ModuleSummaryPopover 열기
             const node = state.blockContextMenu.data;
-            // 임시 rect 생성 (마우스 위치 기준)
-            const rect = new DOMRect(
-              state.blockContextMenu.position.x,
-              state.blockContextMenu.position.y,
-              0,
-              0
-            );
+            // 마우스 위치 기준으로 rect 생성
+            const yPosition = shouldShowBelow ? mouseY + SPACING : mouseY - SPACING;
+            const rect = new DOMRect(mouseX, yPosition, 0, 0);
             state.setModuleSummaryPopover({ node, anchorRect: rect });
           } else if (state.blockContextMenu.type === "bar") {
             // 계획 블록: PlanViewPopover 열기
             const bar = state.blockContextMenu.data;
+            const yPosition = shouldShowBelow ? mouseY + SPACING : mouseY - SPACING;
             state.setViewPopover({
               bar,
               position: {
-                x: state.blockContextMenu.position.x,
-                y: state.blockContextMenu.position.y + 8,
+                x: mouseX,
+                y: yPosition,
               },
             });
           }

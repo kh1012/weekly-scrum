@@ -226,8 +226,13 @@ export function TimelineNodeFeature({
               readOnly={readOnly}
               onSelect={() => selectBar(bar.clientUid)}
               onDoubleClick={(e?: React.MouseEvent) => {
-                // 읽기전용 모드 또는 편집 모드가 아닌 경우: 팝오버 표시
-                if (readOnly || !isEditing) {
+                // 읽기모드: 아무 동작도 하지 않음 (컨텍스트 메뉴로만 접근)
+                if (readOnly) {
+                  return;
+                }
+                
+                // 편집모드가 아닌 경우: 팝오버 표시
+                if (!isEditing) {
                   const rect = (
                     e?.currentTarget as HTMLElement
                   )?.getBoundingClientRect();
