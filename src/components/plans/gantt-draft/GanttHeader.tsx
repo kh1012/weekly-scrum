@@ -443,7 +443,7 @@ export function GanttHeader({
     <>
       {/* 자동 저장 체크 아이콘 애니메이션 스타일 */}
       <style dangerouslySetInnerHTML={{ __html: AUTO_SAVE_STYLES }} />
-      
+
       <div
         className={`${
           isMobile
@@ -1053,7 +1053,9 @@ export function GanttHeader({
                     >
                       <CheckIcon className="w-8 h-8" />
                     </div>
-                  ) : autoSaveEnabled && inactivitySeconds !== null && inactivitySeconds >= 90 ? (
+                  ) : autoSaveEnabled &&
+                    inactivitySeconds !== null &&
+                    inactivitySeconds >= 90 ? (
                     // 90초 도달 시 로딩 스피너 표시
                     <LoadingIcon className="w-8 h-8 text-emerald-600 animate-spin" />
                   ) : isAutoSaving ? (

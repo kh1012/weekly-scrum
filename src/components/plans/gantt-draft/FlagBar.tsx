@@ -104,28 +104,56 @@ export const FlagBar = memo(function FlagBar({
         const daysDelta = Math.round(deltaX / dayWidth);
         const laneDelta = Math.round(deltaY / FLAG_LANE_HEIGHT);
 
-        // X축 이동 (날짜 변경)
-        if (daysDelta !== 0 && mode === "move") {
+        if (mode === "move" && (Math.abs(deltaX) > 5 || Math.abs(laneDelta) >= 1)) {
+          // 새로운 날짜 계산
           const originalStart = parseLocalDate(flag.startDate);
           const originalEnd = parseLocalDate(flag.endDate);
-
           const newStart = new Date(originalStart);
           newStart.setDate(newStart.getDate() + daysDelta);
           const newEnd = new Date(originalEnd);
           newEnd.setDate(newEnd.getDate() + daysDelta);
 
-          updateFlagLocal(flag.clientId, {
-            startDate: formatDate(newStart),
-            endDate: formatDate(newEnd),
-          });
-        }
+          const newStartDate = formatDate(newStart);
+          const newEndDate = formatDate(newEnd);
 
-        // Y축 이동 (레인 스왑)
-        if (laneDelta !== 0 && mode === "move" && onSwapOrder) {
-          const targetLane = laneIndex + laneDelta;
-          // 범위 체크
-          if (targetLane >= 0 && targetLane < laneCount) {
-            onSwapOrder(targetLane);
+          // 새로운 레인 계산
+          const targetLane = Math.max(0, Math.min(laneIndex + laneDelta, laneCount - 1));
+
+          // 겹침 처리: 타겟 레인에서 새로운 날짜 범위와 겹치는 flag 찾기
+          const conflictingItems = allItems.filter((otherItem) => {
+            // 자기 자신은 제외
+            if (otherItem.flagId === flag.clientId) return false;
+            // 타겟 레인에 있는 flag만 확인
+            if (otherItem.laneIndex !== targetLane) return false;
+
+            // 기간 겹침 검사
+            const otherStart = new Date(otherItem.startDate).getTime();
+            const otherEnd = new Date(otherItem.endDate).getTime();
+            const currentStart = new Date(newStartDate).getTime();
+            const currentEnd = new Date(newEndDate).getTime();
+
+            // 겹치는지 확인: A.end >= B.start && A.start <= B.end
+            return !(currentEnd < otherStart || currentStart > otherEnd);
+          });
+
+          // 먼저 드래그 중인 flag를 타겟 레인에 배치 (날짜 + 레인 동시 업데이트)
+          updateFlagLocal(flag.clientId, {
+            startDate: newStartDate,
+            endDate: newEndDate,
+            laneHint: targetLane,
+          });
+
+          // 겹치는 flag들을 타겟 레인 바로 아래로 밀기
+          if (conflictingItems.length > 0) {
+            const flags = useDraftStore.getState().flags;
+            conflictingItems.forEach((conflictItem) => {
+              const conflictFlag = flags.find((f) => f.clientId === conflictItem.flagId);
+              if (conflictFlag) {
+                updateFlagLocal(conflictFlag.clientId, {
+                  laneHint: targetLane + 1,
+                });
+              }
+            });
           }
         }
 
