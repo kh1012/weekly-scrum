@@ -328,13 +328,15 @@ export function GanttHeader({
     if (showStagesFilter) {
       setLocalStages(new Set(selectedStages));
     }
-  }, [showStagesFilter, selectedStages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showStagesFilter]);
 
   useEffect(() => {
     if (showAssigneesFilter) {
       setLocalAssignees(new Set(selectedAssignees));
     }
-  }, [showAssigneesFilter, selectedAssignees]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAssigneesFilter]);
 
   // 스테이지 목록과 색상
   const STAGES = [
@@ -767,7 +769,7 @@ export function GanttHeader({
                         }}
                         className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
                       >
-                        적용
+                        적용 {localStages.size > 0 && `(${localStages.size})`}
                       </button>
                     </div>
                   </div>
@@ -857,7 +859,7 @@ export function GanttHeader({
                         }}
                         className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-emerald-500 rounded hover:bg-emerald-600 transition-colors"
                       >
-                        적용
+                        적용 {localAssignees.size > 0 && `(${localAssignees.size})`}
                       </button>
                     </div>
                   </div>
