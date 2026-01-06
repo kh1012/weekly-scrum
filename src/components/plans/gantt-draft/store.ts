@@ -1471,9 +1471,20 @@ export const selectVisibleBars = (state: DraftState): DraftBar[] => {
     if (!rowIds.has(bar.rowId)) return false;
 
     // 스테이지 필터
-    const { stages } = state.ui.filters;
+    const { stages, assignees } = state.ui.filters;
     if (stages.length > 0 && !stages.includes(bar.stage)) {
       return false;
+    }
+
+    // 담당자 필터 (assignees 배열에 선택된 userId가 포함되어 있는지 확인)
+    if (assignees.length > 0) {
+      const barAssigneeIds = bar.assignees.map((a) => a.userId);
+      const hasMatchingAssignee = assignees.some((userId) =>
+        barAssigneeIds.includes(userId)
+      );
+      if (!hasMatchingAssignee) {
+        return false;
+      }
     }
 
     return true;

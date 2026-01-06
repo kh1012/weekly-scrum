@@ -209,7 +209,7 @@ export function useTimelineData({
       );
     }
     return nodes;
-  }, [rows, allBars, expandedNodes, filters.features, filters.modules, viewMode]);
+  }, [rows, filteredActiveBars, expandedNodes, filters.features, filters.modules, viewMode]);
 
   // 노드별 위치 계산
   const nodePositions = useMemo(
