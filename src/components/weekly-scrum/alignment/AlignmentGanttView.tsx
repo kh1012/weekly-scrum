@@ -84,6 +84,12 @@ export function AlignmentGanttView({
    * AlignmentGanttItem을 InitialPlan 형식으로 변환하고 Status 계산
    */
   const { initialPlans, mismatches } = useMemo(() => {
+    console.log('[AlignmentGanttView] 🔄 Converting items to InitialPlan:', {
+      total: items.length,
+      plans: items.filter(i => i.type === 'plan').length,
+      snapshots: items.filter(i => i.type === 'snapshot').length,
+    });
+    
     // 1. AlignmentGanttItem → InitialPlan 변환
     const plans = items.map((item) => {
       const plan = {
@@ -201,6 +207,13 @@ export function AlignmentGanttView({
       const planBars = mockBars.filter((bar) => !bar.isSnapshot && bar.startDate >= coverageCheckStartDate);
       detectedMismatches = detectAlignmentMismatches(planBars, mockBars);
     }
+
+    console.log('[AlignmentGanttView] ✅ Final conversion result:', {
+      initialPlans: plansWithStatus.length,
+      plans: plansWithStatus.filter(p => !p.isSnapshot).length,
+      snapshots: plansWithStatus.filter(p => p.isSnapshot).length,
+      mismatches: detectedMismatches.length,
+    });
 
     return {
       initialPlans: plansWithStatus,

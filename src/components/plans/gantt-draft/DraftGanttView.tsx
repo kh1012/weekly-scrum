@@ -390,7 +390,16 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
 
   // 초기 데이터 로드
   useEffect(() => {
-    if (initialPlans.length === 0) return;
+    if (initialPlans.length === 0) {
+      console.log('[DraftGanttView] ⚠️ No initial plans provided');
+      return;
+    }
+
+    console.log('[DraftGanttView] 🔄 Loading initial plans:', {
+      total: initialPlans.length,
+      plans: initialPlans.filter(p => !p.isSnapshot).length,
+      snapshots: initialPlans.filter(p => p.isSnapshot).length,
+    });
 
     const rowMap = new Map<string, DraftRow>();
     const loadedBars: DraftBar[] = [];
@@ -413,7 +422,7 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
 
       // 디버그: 스냅샷 정보 확인
       if (plan.isSnapshot) {
-        console.log('[DraftGanttView] Loading snapshot entry:', {
+        console.log('[DraftGanttView] 📸 Loading snapshot entry:', {
           id: plan.id,
           title: plan.title,
           year: plan.year,
@@ -467,6 +476,13 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
     const sortedRows = Array.from(rowMap.values()).sort(
       (a, b) => a.orderIndex - b.orderIndex
     );
+
+    console.log('[DraftGanttView] ✅ Hydrating store:', {
+      rows: sortedRows.length,
+      bars: loadedBars.length,
+      planBars: loadedBars.filter(b => !b.isSnapshot).length,
+      snapshotBars: loadedBars.filter(b => b.isSnapshot).length,
+    });
 
     hydrate(sortedRows, loadedBars);
   }, [initialPlans, hydrate]);

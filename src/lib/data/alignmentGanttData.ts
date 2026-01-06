@@ -82,6 +82,8 @@ export async function getWorkspaceAlignmentData({
   const supabase = await createClient();
 
   try {
+    console.log('[getWorkspaceAlignmentData] 📊 Starting data fetch for workspace:', workspaceId);
+    
     // 1. 워크스페이스의 모든 Plans 조회
     const { data: plansData, error: plansError } = await supabase
       .from("plans")
@@ -100,6 +102,8 @@ export async function getWorkspaceAlignmentData({
       `)
       .eq("workspace_id", workspaceId)
       .order("start_date", { ascending: true });
+    
+    console.log('[getWorkspaceAlignmentData] 📋 Plans fetched:', plansData?.length || 0);
 
     let plans: any[] = [];
     if (plansError) {
@@ -165,6 +169,8 @@ export async function getWorkspaceAlignmentData({
       .order("year", { ascending: true })
       .order("week", { ascending: true });
 
+    console.log('[getWorkspaceAlignmentData] 📸 Snapshots fetched:', snapshots?.length || 0);
+
     const snapshotIds = snapshots?.map((s) => s.id) || [];
 
     let snapshotEntries: any[] = [];
@@ -188,6 +194,23 @@ export async function getWorkspaceAlignmentData({
         .in("snapshot_id", snapshotIds);
 
       snapshotEntries = entriesData || [];
+      console.log('[getWorkspaceAlignmentData] 📦 Snapshot entries fetched:', snapshotEntries.length);
+      
+      // 샘플 엔트리 로그 (첫 3개)
+      if (snapshotEntries.length > 0) {
+        console.log('[getWorkspaceAlignmentData] 📦 Sample entries:', 
+          snapshotEntries.slice(0, 3).map(e => ({
+            id: e.id,
+            snapshot_id: e.snapshot_id,
+            domain: e.domain,
+            project: e.project,
+            module: e.module,
+            feature: e.feature,
+          }))
+        );
+      }
+    } else {
+      console.log('[getWorkspaceAlignmentData] ⚠️ No snapshots found, skipping entries query');
     }
 
     // 3. Snapshot 맵 생성
@@ -281,6 +304,12 @@ export async function getWorkspaceAlignmentData({
       a.start_date.localeCompare(b.start_date)
     );
 
+    console.log('[getWorkspaceAlignmentData] ✅ Final items:', {
+      total: items.length,
+      plans: planItems.length,
+      snapshots: snapshotItems.length,
+    });
+
     // 7. 워크스페이스 멤버 목록 조회
     const { data: members } = await supabase
       .from("workspace_members")
@@ -347,6 +376,8 @@ export async function getAlignmentGanttData({
   const supabase = await createClient();
 
   try {
+    console.log('[getAlignmentGanttData] 📊 Starting data fetch for user:', userId);
+    
     // 1. 사용자에게 할당된 Plans 조회
     const { data: planAssignees } = await supabase
       .from("plan_assignees")
@@ -355,6 +386,7 @@ export async function getAlignmentGanttData({
       .eq("user_id", userId);
 
     const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
+    console.log('[getAlignmentGanttData] 👤 User assigned to plans:', assignedPlanIds.length);
 
     let plans: any[] = [];
     if (assignedPlanIds.length > 0) {
@@ -443,6 +475,8 @@ export async function getAlignmentGanttData({
     .order("year", { ascending: true })
     .order("week", { ascending: true });
 
+  console.log('[getAlignmentGanttData] 📸 User snapshots fetched:', snapshots?.length || 0);
+
   const snapshotIds = snapshots?.map((s) => s.id) || [];
 
   let snapshotEntries: any[] = [];
@@ -466,6 +500,23 @@ export async function getAlignmentGanttData({
       .in("snapshot_id", snapshotIds);
 
     snapshotEntries = entriesData || [];
+    console.log('[getAlignmentGanttData] 📦 User snapshot entries fetched:', snapshotEntries.length);
+    
+    // 샘플 엔트리 로그 (첫 3개)
+    if (snapshotEntries.length > 0) {
+      console.log('[getAlignmentGanttData] 📦 Sample entries:', 
+        snapshotEntries.slice(0, 3).map(e => ({
+          id: e.id,
+          snapshot_id: e.snapshot_id,
+          domain: e.domain,
+          project: e.project,
+          module: e.module,
+          feature: e.feature,
+        }))
+      );
+    }
+  } else {
+    console.log('[getAlignmentGanttData] ⚠️ No snapshots found for user, skipping entries query');
   }
 
   // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName, authorId})
@@ -563,6 +614,12 @@ export async function getAlignmentGanttData({
   const items = [...planItems, ...snapshotItems].sort((a, b) =>
     a.start_date.localeCompare(b.start_date)
   );
+
+  console.log('[getAlignmentGanttData] ✅ Final items:', {
+    total: items.length,
+    plans: planItems.length,
+    snapshots: snapshotItems.length,
+  });
 
   // 7. 워크스페이스 멤버 목록 조회 (DraftGanttView에서 필요)
   const { data: members } = await supabase
