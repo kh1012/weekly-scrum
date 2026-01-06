@@ -152,12 +152,22 @@ export function GanttHeader({
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
 
+  // 필터 활성화 여부 확인
+  const hasActiveFilters = selectedStages.size > 0 || selectedAssignees.size > 0;
+
   // 실행 커버리지 검토 활성화 시 Detailed 뷰로 강제 전환
   useEffect(() => {
     if (enableAlignmentCheck && viewMode === "summarized") {
       startTransition(() => setViewMode("detailed"));
     }
   }, [enableAlignmentCheck, viewMode, setViewMode]);
+
+  // 필터 활성화 시 Detailed 뷰로 강제 전환
+  useEffect(() => {
+    if (hasActiveFilters && viewMode === "summarized") {
+      startTransition(() => setViewMode("detailed"));
+    }
+  }, [hasActiveFilters, viewMode, setViewMode]);
 
   // URL 복사 핸들러
   const handleCopyURL = useCallback(async () => {
@@ -400,15 +410,17 @@ export function GanttHeader({
               </button>
               <button
                 onClick={() => startTransition(() => setViewMode("summarized"))}
-                disabled={isPending || enableAlignmentCheck}
+                disabled={isPending || enableAlignmentCheck || hasActiveFilters}
                 className={`px-2 py-1 text-xs font-medium rounded transition-all ${
                   viewMode === "summarized"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
-                } ${isPending || enableAlignmentCheck ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${isPending || enableAlignmentCheck || hasActiveFilters ? "opacity-50 cursor-not-allowed" : ""}`}
                 title={
                   enableAlignmentCheck
                     ? "실행 커버리지 검토 활성화 중에는 요약 보기를 사용할 수 없습니다"
+                    : hasActiveFilters
+                    ? "필터 활성화 중에는 요약 보기를 사용할 수 없습니다"
                     : "요약 보기 (모듈별)"
                 }
               >
@@ -568,13 +580,22 @@ export function GanttHeader({
             {onStagesChange && (
               <div className="relative" ref={stagesFilterRef}>
                 <button
-                  onClick={() => setShowStagesFilter(!showStagesFilter)}
+                  onClick={() => {
+                    if (viewMode !== "summarized") {
+                      setShowStagesFilter(!showStagesFilter);
+                    }
+                  }}
+                  disabled={viewMode === "summarized"}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     selectedStages.size > 0
                       ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
                       : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                  title="스테이지 필터"
+                  } ${viewMode === "summarized" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  title={
+                    viewMode === "summarized"
+                      ? "요약 보기에서는 필터를 사용할 수 없습니다. 상세 보기로 전환해주세요."
+                      : "스테이지 필터"
+                  }
                 >
                   <span>스테이지</span>
                   {selectedStages.size > 0 && (
@@ -649,13 +670,22 @@ export function GanttHeader({
             {onAssigneesChange && members && members.length > 0 && (
               <div className="relative" ref={assigneesFilterRef}>
                 <button
-                  onClick={() => setShowAssigneesFilter(!showAssigneesFilter)}
+                  onClick={() => {
+                    if (viewMode !== "summarized") {
+                      setShowAssigneesFilter(!showAssigneesFilter);
+                    }
+                  }}
+                  disabled={viewMode === "summarized"}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     selectedAssignees.size > 0
                       ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                       : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                  title="담당자 필터"
+                  } ${viewMode === "summarized" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  title={
+                    viewMode === "summarized"
+                      ? "요약 보기에서는 필터를 사용할 수 없습니다. 상세 보기로 전환해주세요."
+                      : "담당자 필터"
+                  }
                 >
                   <span>담당자</span>
                   {selectedAssignees.size > 0 && (
