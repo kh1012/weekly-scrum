@@ -1,6 +1,6 @@
 /**
  * Mismatch Review Panel
- * 
+ *
  * Floating button + popover for reviewing alignment mismatches
  * - RED and ORANGE status plans only
  * - Neutral, non-judgmental tone
@@ -85,7 +85,7 @@ export function MismatchReviewPanel({
           </svg>
           {mismatches.length > 0 && (
             <span
-              className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full"
+              className="absolute -top-2 -right-2 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full"
               style={{
                 background: "#ef4444",
                 color: "white",
@@ -221,4 +221,3 @@ export function MismatchReviewPanel({
     </>
   );
 }
-

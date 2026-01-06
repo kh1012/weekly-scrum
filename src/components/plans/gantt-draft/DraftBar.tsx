@@ -440,10 +440,10 @@ export const DraftBar = memo(function DraftBar({
         </div>
       )}
 
-      {/* Alignment 상태 인디케이터 (Plan only) */}
+      {/* Alignment 상태 인디케이터 (Plan only) - 우측 상단 원형 */}
       {!isSnapshot && alignmentStatus && (
         <div
-          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+          className="absolute right-1 top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10"
           style={{
             background:
               alignmentStatus === "green"
@@ -451,7 +451,6 @@ export const DraftBar = memo(function DraftBar({
                 : alignmentStatus === "orange"
                 ? "rgb(251, 146, 60)" // orange-500
                 : "rgb(244, 63, 94)", // rose-500
-            opacity: 0.75,
           }}
           title={
             alignmentStatus === "green"
