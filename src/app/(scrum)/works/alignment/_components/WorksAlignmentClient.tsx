@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   AlignmentGanttView,
   AlignmentFilterBar,
@@ -40,6 +40,22 @@ export function WorksAlignmentClient({
   // 필터링 및 통계 계산
   const { filteredItems, stats } = useAlignmentFilter({ items, filter });
 
+  // 담당자 필터 적용 (클라이언트에서 한 번만)
+  const assigneeFilteredItems = useMemo(() => {
+    if (selectedAssignees.size === 0) {
+      return filteredItems;
+    }
+
+    return filteredItems.filter((item) => {
+      // Snapshot인 경우
+      if (item.type === "snapshot") {
+        return item.authorId && selectedAssignees.has(item.authorId);
+      }
+      // Plan인 경우
+      return item.assignees?.some((a) => selectedAssignees.has(a.userId)) || false;
+    });
+  }, [filteredItems, selectedAssignees]);
+
   return (
     <div className="flex flex-col h-full">
       {/* 필터 바 */}
@@ -54,7 +70,7 @@ export function WorksAlignmentClient({
       <div className="flex-1 overflow-hidden">
         <AlignmentGanttView
           workspaceId={workspaceId}
-          items={filteredItems}
+          items={assigneeFilteredItems}
           members={members}
           title="Workspace Alignment"
           description="전체 계획과 실행 기록을 확인합니다."

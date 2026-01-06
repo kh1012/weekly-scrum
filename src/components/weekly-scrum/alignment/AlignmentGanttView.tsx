@@ -117,50 +117,8 @@ export function AlignmentGanttView({
       return plan;
     });
 
-    // 2. 담당자 필터 적용 (plans 배열 필터링)
-    let filteredPlans = plans;
-    if (selectedAssignees && selectedAssignees.size > 0) {
-      console.log('[AlignmentGanttView] 담당자 필터 적용:', {
-        selectedAssignees: Array.from(selectedAssignees),
-        totalPlans: plans.length,
-        planCount: plans.filter(p => !p.isSnapshot).length,
-        snapshotCount: plans.filter(p => p.isSnapshot).length,
-        samplePlan: plans.find(p => !p.isSnapshot),
-        sampleSnapshot: plans.find(p => p.isSnapshot),
-      });
-
-      filteredPlans = plans.filter((plan) => {
-        // Snapshot인 경우: authorId가 선택된 담당자에 포함되는지 확인
-        if (plan.isSnapshot) {
-          const matched = plan.authorId && selectedAssignees.has(plan.authorId);
-          console.log('[AlignmentGanttView] Snapshot 필터:', {
-            title: plan.title,
-            authorId: plan.authorId,
-            authorName: plan.authorName,
-            matched,
-          });
-          return matched;
-        }
-        // Plan인 경우: assignees 중 하나라도 선택된 담당자에 포함되는지 확인
-        const matched = plan.assignees.some((assignee) => selectedAssignees.has(assignee.userId));
-        if (matched) {
-          console.log('[AlignmentGanttView] Plan 필터 통과:', {
-            title: plan.title,
-            assignees: plan.assignees.map(a => ({ userId: a.userId, displayName: a.displayName })),
-          });
-        }
-        return matched;
-      });
-
-      console.log('[AlignmentGanttView] 필터 적용 후:', {
-        totalFiltered: filteredPlans.length,
-        planCount: filteredPlans.filter(p => !p.isSnapshot).length,
-        snapshotCount: filteredPlans.filter(p => p.isSnapshot).length,
-      });
-    }
-
-    // 3. DraftBar 형식으로 변환 (Status 계산용)
-    const mockBars: DraftBar[] = filteredPlans.map((p) => ({
+    // 2. DraftBar 형식으로 변환 (Status 계산용)
+    const mockBars: DraftBar[] = plans.map((p) => ({
       clientUid: p.id,
       rowId: `${p.project}::${p.module}::${p.feature}`,
       serverId: p.id,
@@ -182,8 +140,8 @@ export function AlignmentGanttView({
       authorId: p.authorId,
     }));
 
-    // 4. Plan bars에 대해 Alignment 상태 계산
-    const plansWithStatus = filteredPlans.map((plan, index) => {
+    // 3. Plan bars에 대해 Alignment 상태 계산
+    const plansWithStatus = plans.map((plan, index) => {
       if (plan.isSnapshot) {
         return plan;
       }
@@ -209,7 +167,7 @@ export function AlignmentGanttView({
       };
     });
 
-    // 5. Mismatch 검출 (커버리지 검증이 활성화되고 기간 필터를 통과한 경우만)
+    // 4. Mismatch 검출 (커버리지 검증이 활성화되고 기간 필터를 통과한 경우만)
     let detectedMismatches: any[] = [];
     if (enableAlignmentCheck) {
       const planBars = mockBars.filter((bar) => !bar.isSnapshot && bar.startDate >= coverageCheckStartDate);
@@ -220,7 +178,7 @@ export function AlignmentGanttView({
       initialPlans: plansWithStatus,
       mismatches: detectedMismatches,
     };
-  }, [items, selectedAssignees, enableAlignmentCheck, coverageCheckStartDate]);
+  }, [items, enableAlignmentCheck, coverageCheckStartDate]);
 
   /**
    * Mismatch 클릭 시 Timeline Focus 핸들러
