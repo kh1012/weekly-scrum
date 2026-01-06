@@ -164,22 +164,25 @@ export async function getWorkspaceAlignmentData({
       .order("week", { ascending: true });
 
     // Author 정보를 별도로 조회
-    let authorProfiles = new Map<string, { display_name?: string; email?: string }>();
+    let authorProfiles = new Map<string, { display_name?: string; email?: string; user_id: string }>();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [...new Set(snapshots.map((s) => s.author_id))];
+      const authorIds = [...new Set(snapshots.map((s) => s.author_id).filter(Boolean))];
 
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, email")
-        .in("user_id", authorIds);
+      if (authorIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, email")
+          .in("user_id", authorIds);
 
-      if (!profilesError) {
-        profiles?.forEach((p) => {
-          authorProfiles.set(p.user_id, {
-            display_name: p.display_name,
-            email: p.email,
+        if (!profilesError) {
+          profiles?.forEach((p) => {
+            authorProfiles.set(p.user_id, {
+              display_name: p.display_name,
+              email: p.email,
+              user_id: p.user_id,
+            });
           });
-        });
+        }
       }
     }
 
@@ -208,6 +211,25 @@ export async function getWorkspaceAlignmentData({
         .in("snapshot_id", snapshotIds);
 
       snapshotEntries = entriesData || [];
+
+      // snapshot_entries의 name으로 user_id를 찾기 위한 추가 프로필 조회
+      const entryNames = [...new Set(snapshotEntries.map((e) => e.name).filter(Boolean))];
+      if (entryNames.length > 0) {
+        const { data: nameProfiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, email")
+          .in("display_name", entryNames);
+
+        nameProfiles?.forEach((p) => {
+          if (p.display_name && !authorProfiles.has(p.user_id)) {
+            authorProfiles.set(p.display_name, {
+              display_name: p.display_name,
+              email: p.email,
+              user_id: p.user_id,
+            });
+          }
+        });
+      }
     }
 
     // 3. Snapshot 맵 생성
@@ -280,6 +302,15 @@ export async function getWorkspaceAlignmentData({
 
       // entry.name을 우선 사용하고, 없으면 snapshot.authorName 사용
       const authorName = entry.name?.trim() || snapshot.authorName || "Unknown";
+      
+      // authorId 결정: snapshot.authorId 우선, 없으면 authorName으로 찾기
+      let authorId = snapshot.authorId;
+      if (!authorId && authorName) {
+        const profileByName = authorProfiles.get(authorName);
+        if (profileByName) {
+          authorId = profileByName.user_id;
+        }
+      }
 
       return {
         id: `snapshot-${entry.id}`,
@@ -302,7 +333,7 @@ export async function getWorkspaceAlignmentData({
         avgProgress,
         metaKey,
         authorName,
-        authorId: snapshot.authorId,
+        authorId,
         past_week: pastWeek,
         this_week: thisWeek,
         collaborators: entry.collaborators || [],
@@ -463,22 +494,25 @@ export async function getAlignmentGanttData({
     .order("week", { ascending: true });
 
     // Author 정보를 별도로 조회
-    let authorProfiles = new Map<string, { display_name?: string; email?: string }>();
+    let authorProfiles = new Map<string, { display_name?: string; email?: string; user_id: string }>();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [...new Set(snapshots.map((s) => s.author_id))];
+      const authorIds = [...new Set(snapshots.map((s) => s.author_id).filter(Boolean))];
 
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, email")
-        .in("user_id", authorIds);
+      if (authorIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, email")
+          .in("user_id", authorIds);
 
-      if (!profilesError) {
-        profiles?.forEach((p) => {
-          authorProfiles.set(p.user_id, {
-            display_name: p.display_name,
-            email: p.email,
+        if (!profilesError) {
+          profiles?.forEach((p) => {
+            authorProfiles.set(p.user_id, {
+              display_name: p.display_name,
+              email: p.email,
+              user_id: p.user_id,
+            });
           });
-        });
+        }
       }
     }
 
@@ -507,6 +541,25 @@ export async function getAlignmentGanttData({
       .in("snapshot_id", snapshotIds);
 
     snapshotEntries = entriesData || [];
+
+    // snapshot_entries의 name으로 user_id를 찾기 위한 추가 프로필 조회
+    const entryNames = [...new Set(snapshotEntries.map((e) => e.name).filter(Boolean))];
+    if (entryNames.length > 0) {
+      const { data: nameProfiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, email")
+        .in("display_name", entryNames);
+
+      nameProfiles?.forEach((p) => {
+        if (p.display_name && !authorProfiles.has(p.user_id)) {
+          authorProfiles.set(p.display_name, {
+            display_name: p.display_name,
+            email: p.email,
+            user_id: p.user_id,
+          });
+        }
+      });
+    }
   }
 
   // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName, authorId})
@@ -584,6 +637,15 @@ export async function getAlignmentGanttData({
 
     // entry.name을 우선 사용하고, 없으면 snapshot.authorName 사용
     const authorName = entry.name?.trim() || snapshot.authorName || "Unknown";
+    
+    // authorId 결정: snapshot.authorId 우선, 없으면 authorName으로 찾기
+    let authorId = snapshot.authorId;
+    if (!authorId && authorName) {
+      const profileByName = authorProfiles.get(authorName);
+      if (profileByName) {
+        authorId = profileByName.user_id;
+      }
+    }
 
     return {
       id: `snapshot-${entry.id}`,
@@ -606,7 +668,7 @@ export async function getAlignmentGanttData({
       avgProgress, // 평균 진행률 추가
       metaKey, // 메타 키 추가 (연결 화살표용)
       authorName, // 작성자 이름 추가 (entry.name 우선 사용)
-      authorId: snapshot.authorId, // 작성자 ID 추가 (화살표 연결용)
+      authorId, // 작성자 ID 추가 (화살표 연결용, fallback 로직 적용)
       past_week: pastWeek, // Snapshot 상세 정보 추가
       this_week: thisWeek, // NEXT 작업 추가
       collaborators: entry.collaborators || [], // 협업자 추가
