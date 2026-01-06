@@ -8,7 +8,14 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback, useTransition } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  useTransition,
+} from "react";
 import { useDraftStore } from "./store";
 import { useLock } from "./useLock";
 import { useIsMac } from "./useOS";
@@ -153,7 +160,8 @@ export function GanttHeader({
   const modKey = isMac ? "⌘" : "Ctrl";
 
   // 필터 활성화 여부 확인
-  const hasActiveFilters = selectedStages.size > 0 || selectedAssignees.size > 0;
+  const hasActiveFilters =
+    selectedStages.size > 0 || selectedAssignees.size > 0;
 
   // 실행 커버리지 검토 활성화 시 Detailed 뷰로 강제 전환
   useEffect(() => {
@@ -415,7 +423,11 @@ export function GanttHeader({
                   viewMode === "summarized"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
-                } ${isPending || enableAlignmentCheck || hasActiveFilters ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${
+                  isPending || enableAlignmentCheck || hasActiveFilters
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
                 title={
                   enableAlignmentCheck
                     ? "실행 커버리지 검토 활성화 중에는 요약 보기를 사용할 수 없습니다"
@@ -432,13 +444,19 @@ export function GanttHeader({
           {/* Alignment 커버리지 검토 토글 (ReadOnly 모드일 때만) */}
           {readOnly && onEnableAlignmentCheckChange && (
             <button
-              onClick={() => onEnableAlignmentCheckChange(!enableAlignmentCheck)}
+              onClick={() =>
+                onEnableAlignmentCheckChange(!enableAlignmentCheck)
+              }
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 enableAlignmentCheck
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
-              title={enableAlignmentCheck ? "실행 커버리지 검토 비활성화" : "실행 커버리지 검토 활성화"}
+              title={
+                enableAlignmentCheck
+                  ? "실행 커버리지 검토 비활성화"
+                  : "실행 커버리지 검토 활성화"
+              }
             >
               <CheckIcon
                 size={14}
@@ -569,13 +587,15 @@ export function GanttHeader({
         {/* 중앙: 필터 + 기간 설정 + 보조 액션 */}
         <div
           className={`${
-            isMobile
-              ? "flex flex-col gap-2 w-full"
-              : "flex items-center gap-3"
+            isMobile ? "flex flex-col gap-2 w-full" : "flex items-center gap-3"
           }`}
         >
           {/* 필터 섹션 (윗줄) */}
-          <div className={`flex items-center gap-3 ${isMobile ? "w-full justify-center" : ""}`}>
+          <div
+            className={`flex items-center gap-3 ${
+              isMobile ? "w-full justify-center" : ""
+            }`}
+          >
             {/* 스테이지 필터 */}
             {onStagesChange && (
               <div className="relative" ref={stagesFilterRef}>
@@ -590,7 +610,11 @@ export function GanttHeader({
                     selectedStages.size > 0
                       ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
                       : "text-gray-600 hover:bg-gray-100"
-                  } ${viewMode === "summarized" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  } ${
+                    viewMode === "summarized"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
                   title={
                     viewMode === "summarized"
                       ? "요약 보기에서는 필터를 사용할 수 없습니다. 상세 보기로 전환해주세요."
@@ -680,7 +704,11 @@ export function GanttHeader({
                     selectedAssignees.size > 0
                       ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                       : "text-gray-600 hover:bg-gray-100"
-                  } ${viewMode === "summarized" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  } ${
+                    viewMode === "summarized"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
                   title={
                     viewMode === "summarized"
                       ? "요약 보기에서는 필터를 사용할 수 없습니다. 상세 보기로 전환해주세요."
@@ -754,13 +782,18 @@ export function GanttHeader({
           </div>
 
           {/* 구분선 (데스크톱에서만) */}
-          {!isMobile && (onStagesChange ||
-            (onAssigneesChange && members && members.length > 0)) && (
-            <div className="w-px h-5 bg-gray-200" />
-          )}
+          {!isMobile &&
+            (onStagesChange ||
+              (onAssigneesChange && members && members.length > 0)) && (
+              <div className="w-px h-5 bg-gray-200" />
+            )}
 
           {/* 날짜/액션 섹션 (아래줄) */}
-          <div className={`flex items-center gap-3 ${isMobile ? "w-full justify-center" : ""}`}>
+          <div
+            className={`flex items-center gap-3 ${
+              isMobile ? "w-full justify-center" : ""
+            }`}
+          >
             {/* 기간 설정 버튼 */}
             <div className="relative" ref={rangePopoverRef}>
               <button
@@ -803,7 +836,8 @@ export function GanttHeader({
               <div
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
                 style={{
-                  background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
                   color: "white",
                   boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)",
                 }}
@@ -888,7 +922,11 @@ export function GanttHeader({
 
         {/* 우측: 주요 액션 버튼 - 읽기 전용에서는 숨김 */}
         {!readOnly && (
-          <div className={`flex items-center gap-3 ${isMobile ? "w-full justify-center" : ""}`}>
+          <div
+            className={`flex items-center gap-3 ${
+              isMobile ? "w-full justify-center" : ""
+            }`}
+          >
             {!isEditing ? (
               <button
                 onClick={handleStartEditing}

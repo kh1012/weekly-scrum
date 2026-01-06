@@ -156,26 +156,77 @@ export async function getWorkspaceAlignmentData({
     }
 
     // 2. 워크스페이스의 모든 Snapshot Entries 조회 (with author profile)
-    const { data: snapshots } = await supabase
+    console.log('[getWorkspaceAlignmentData] 🔍 Querying snapshots with:', {
+      workspace_id: workspaceId,
+      table: 'snapshots'
+    });
+
+    // 전체 데이터 확인
+    const { count: totalCount } = await supabase
+      .from("snapshots")
+      .select("*", { count: "exact", head: true });
+    console.log('[getWorkspaceAlignmentData] 📊 Total snapshots in DB:', totalCount);
+
+    // 실제 쿼리
+    const { data: snapshots, error: snapshotsError } = await supabase
       .from("snapshots")
       .select(`
         id,
         year,
         week,
         author_id,
+        workspace_id,
         profiles!snapshots_author_id_fkey(display_name, email)
       `)
       .eq("workspace_id", workspaceId)
       .order("year", { ascending: true })
       .order("week", { ascending: true });
 
+    if (snapshotsError) {
+      console.error('[getWorkspaceAlignmentData] ❌ Snapshots query error:', snapshotsError);
+    }
+
     console.log('[getWorkspaceAlignmentData] 📸 Snapshots fetched:', snapshots?.length || 0);
+
+    // 샘플 데이터 로그
+    if (snapshots && snapshots.length > 0) {
+      console.log('[getWorkspaceAlignmentData] 📸 Sample snapshots:', 
+        snapshots.slice(0, 3).map(s => ({
+          id: s.id,
+          year: s.year,
+          week: s.week,
+          author_id: s.author_id,
+          workspace_id: (s as any).workspace_id
+        }))
+      );
+    }
+
+    // Fallback: workspace_id로 필터링했을 때 결과가 0개면 조건 없이 재시도
+    if (!snapshots || snapshots.length === 0) {
+      console.log('[getWorkspaceAlignmentData] 🔄 Retrying without workspace_id filter...');
+      
+      const { data: allSnapshots, count } = await supabase
+        .from("snapshots")
+        .select("workspace_id, year, week", { count: "exact" })
+        .limit(10);
+        
+      console.log('[getWorkspaceAlignmentData] 📊 Available snapshots:', {
+        total: count,
+        workspaces: [...new Set(allSnapshots?.map(s => s.workspace_id))],
+        sample: allSnapshots?.slice(0, 3)
+      });
+    }
 
     const snapshotIds = snapshots?.map((s) => s.id) || [];
 
     let snapshotEntries: any[] = [];
     if (snapshotIds.length > 0) {
-      const { data: entriesData } = await supabase
+      console.log('[getWorkspaceAlignmentData] 🔍 Querying entries with snapshot_ids:', {
+        count: snapshotIds.length,
+        ids: snapshotIds.slice(0, 5)
+      });
+
+      const { data: entriesData, error: entriesError } = await supabase
         .from("snapshot_entries")
         .select(`
           id,
@@ -192,6 +243,10 @@ export async function getWorkspaceAlignmentData({
           risk_level
         `)
         .in("snapshot_id", snapshotIds);
+
+      if (entriesError) {
+        console.error('[getWorkspaceAlignmentData] ❌ Entries query error:', entriesError);
+      }
 
       snapshotEntries = entriesData || [];
       console.log('[getWorkspaceAlignmentData] 📦 Snapshot entries fetched:', snapshotEntries.length);
@@ -461,13 +516,28 @@ export async function getAlignmentGanttData({
     }
 
   // 2. 사용자가 작성한 Snapshot Entries 조회 (with author profile)
-  const { data: snapshots } = await supabase
+  console.log('[getAlignmentGanttData] 🔍 Querying user snapshots with:', {
+    workspace_id: workspaceId,
+    user_id: userId,
+    table: 'snapshots'
+  });
+
+  // 전체 데이터 확인 (해당 사용자)
+  const { count: userTotalCount } = await supabase
+    .from("snapshots")
+    .select("*", { count: "exact", head: true })
+    .eq("author_id", userId);
+  console.log('[getAlignmentGanttData] 📊 Total user snapshots in DB:', userTotalCount);
+
+  // 실제 쿼리
+  const { data: snapshots, error: snapshotsError } = await supabase
     .from("snapshots")
     .select(`
       id,
       year,
       week,
       author_id,
+      workspace_id,
       profiles!snapshots_author_id_fkey(display_name, email)
     `)
     .eq("workspace_id", workspaceId)
@@ -475,13 +545,66 @@ export async function getAlignmentGanttData({
     .order("year", { ascending: true })
     .order("week", { ascending: true });
 
+  if (snapshotsError) {
+    console.error('[getAlignmentGanttData] ❌ Snapshots query error:', snapshotsError);
+  }
+
   console.log('[getAlignmentGanttData] 📸 User snapshots fetched:', snapshots?.length || 0);
+
+  // 샘플 데이터 로그
+  if (snapshots && snapshots.length > 0) {
+    console.log('[getAlignmentGanttData] 📸 Sample user snapshots:', 
+      snapshots.slice(0, 3).map(s => ({
+        id: s.id,
+        year: s.year,
+        week: s.week,
+        author_id: s.author_id,
+        workspace_id: (s as any).workspace_id
+      }))
+    );
+  }
+
+  // Fallback: 조건으로 필터링했을 때 결과가 0개면 조건 완화하여 재확인
+  if (!snapshots || snapshots.length === 0) {
+    console.log('[getAlignmentGanttData] 🔄 Retrying with relaxed filters...');
+    
+    // 1. 해당 workspace의 모든 snapshots 확인
+    const { data: workspaceSnapshots, count: workspaceCount } = await supabase
+      .from("snapshots")
+      .select("author_id, year, week", { count: "exact" })
+      .eq("workspace_id", workspaceId)
+      .limit(10);
+    
+    console.log('[getAlignmentGanttData] 📊 Workspace snapshots:', {
+      total: workspaceCount,
+      authors: [...new Set(workspaceSnapshots?.map(s => s.author_id))],
+      sample: workspaceSnapshots?.slice(0, 3)
+    });
+
+    // 2. 해당 사용자의 다른 workspace snapshots 확인
+    const { data: userOtherSnapshots, count: userOtherCount } = await supabase
+      .from("snapshots")
+      .select("workspace_id, year, week", { count: "exact" })
+      .eq("author_id", userId)
+      .limit(10);
+    
+    console.log('[getAlignmentGanttData] 📊 User snapshots in other workspaces:', {
+      total: userOtherCount,
+      workspaces: [...new Set(userOtherSnapshots?.map(s => s.workspace_id))],
+      sample: userOtherSnapshots?.slice(0, 3)
+    });
+  }
 
   const snapshotIds = snapshots?.map((s) => s.id) || [];
 
   let snapshotEntries: any[] = [];
   if (snapshotIds.length > 0) {
-    const { data: entriesData } = await supabase
+    console.log('[getAlignmentGanttData] 🔍 Querying entries with snapshot_ids:', {
+      count: snapshotIds.length,
+      ids: snapshotIds.slice(0, 5)
+    });
+
+    const { data: entriesData, error: entriesError } = await supabase
       .from("snapshot_entries")
       .select(`
         id,
@@ -498,6 +621,10 @@ export async function getAlignmentGanttData({
         risk_level
       `)
       .in("snapshot_id", snapshotIds);
+
+    if (entriesError) {
+      console.error('[getAlignmentGanttData] ❌ Entries query error:', entriesError);
+    }
 
     snapshotEntries = entriesData || [];
     console.log('[getAlignmentGanttData] 📦 User snapshot entries fetched:', snapshotEntries.length);
