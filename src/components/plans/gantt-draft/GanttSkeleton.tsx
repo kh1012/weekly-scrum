@@ -11,16 +11,13 @@ import { TREE_WIDTH } from "./DraftTreePanel";
 interface GanttSkeletonProps {
   /** 스켈레톤 타입 */
   type: "detailed" | "summarized";
-  /** 컨테이너 높이 */
+  /** 컨테이너 높이 (deprecated - inset-0 사용으로 자동 높이) */
   height?: number;
 }
 
-export function GanttSkeleton({ type, height = 600 }: GanttSkeletonProps) {
+export function GanttSkeleton({ type }: GanttSkeletonProps) {
   return (
-    <div
-      className="absolute inset-0 flex w-full overflow-hidden bg-white z-50"
-      style={{ height }}
-    >
+    <div className="absolute inset-0 flex w-full h-full overflow-hidden bg-white z-50">
       {/* 트리 패널 스켈레톤 */}
       <div
         className="flex-shrink-0 border-r border-gray-200 bg-white"
