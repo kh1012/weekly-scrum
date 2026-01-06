@@ -753,12 +753,7 @@ export function GanttHeader({
                   </div>
                 )}
               </div>
-            )}
-
-            {/* [DEBUG] 담당자 필터 조건 확인 */}
-            <div className="px-2 py-1 text-[10px] text-red-600 bg-red-50 rounded border border-red-200">
-              Debug: members={members?.length || 0}, hasCallback={!!onAssigneesChange}
-            </div>
+              )}
 
             {/* 담당자 필터 */}
             {onAssigneesChange && members && members.length > 0 && (

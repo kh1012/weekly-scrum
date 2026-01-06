@@ -120,10 +120,29 @@ export function AlignmentGanttView({
     // 2. 담당자 필터 적용 (plans 배열 필터링)
     let filteredPlans = plans;
     if (selectedAssignees && selectedAssignees.size > 0) {
+      // authorName으로 userId를 찾기 위한 맵 생성
+      const nameToUserIdMap = new Map<string, string>();
+      members.forEach((member) => {
+        if (member.displayName) {
+          nameToUserIdMap.set(member.displayName, member.userId);
+        }
+      });
+
       filteredPlans = plans.filter((plan) => {
-        // Snapshot인 경우: authorId가 선택된 담당자에 포함되는지 확인
+        // Snapshot인 경우: authorId 또는 authorName으로 매칭
         if (plan.isSnapshot) {
-          return plan.authorId && selectedAssignees.has(plan.authorId);
+          // authorId가 있으면 직접 확인
+          if (plan.authorId && selectedAssignees.has(plan.authorId)) {
+            return true;
+          }
+          // authorId가 없으면 authorName으로 userId 찾아서 확인
+          if (!plan.authorId && plan.authorName) {
+            const userId = nameToUserIdMap.get(plan.authorName);
+            if (userId && selectedAssignees.has(userId)) {
+              return true;
+            }
+          }
+          return false;
         }
         // Plan인 경우: assignees 중 하나라도 선택된 담당자에 포함되는지 확인
         return plan.assignees.some((assignee) => selectedAssignees.has(assignee.userId));
