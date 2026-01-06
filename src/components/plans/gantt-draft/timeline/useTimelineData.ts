@@ -193,8 +193,8 @@ export function useTimelineData({
     // viewMode에 따라 다른 트리 빌드 함수 사용
     const nodes =
       viewMode === "summarized"
-        ? buildSummarizedTree(rows, allBars, expandedNodes)
-        : buildFlatTree(rows, allBars, expandedNodes);
+        ? buildSummarizedTree(rows, filteredActiveBars, expandedNodes)
+        : buildFlatTree(rows, filteredActiveBars, expandedNodes);
 
     // 기능 필터: feature 노드만 반환 (detailed 모드에서만 적용)
     if (viewMode === "detailed" && filters.features.length > 0) {

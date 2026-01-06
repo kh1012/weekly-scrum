@@ -904,12 +904,12 @@ export function DraftTreePanel({
   // 중요: lane 레이아웃은 전체 bars(allBars) 기준으로 계산하되, 표시는 activeBars만
   const flatNodes = useMemo(() => {
     // viewMode에 따라 다른 트리 빌드 함수 사용
-    const activeBarsOnly = allBars.filter((b) => !b.deleted);
+    // activeBars는 이미 필터링된 bars (삭제되지 않은 것 + 스테이지/담당자 필터 적용)
     if (viewMode === "summarized") {
-      return buildSummarizedTree(filteredRows, activeBarsOnly, expandedNodes);
+      return buildSummarizedTree(filteredRows, activeBars, expandedNodes);
     }
-    return buildFlatTree(filteredRows, activeBarsOnly, expandedNodes);
-  }, [filteredRows, allBars, expandedNodes, viewMode]);
+    return buildFlatTree(filteredRows, activeBars, expandedNodes);
+  }, [filteredRows, activeBars, expandedNodes, viewMode]);
 
   // 필터 레벨에 따라 노드 필터링 (상위 레벨 숨김) + top 재계산
   const visibleNodePositions = useMemo(() => {

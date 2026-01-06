@@ -119,10 +119,11 @@ function mergeConsecutiveEntries(entryBars: DraftBar[]): DraftBar[] {
         const lastEnd = new Date(lastEndDate);
         const nextStart = new Date(next.startDate);
         
-        // 이전 엔트리의 endDate 다음날부터 7일 이내에 시작하면 연속으로 간주
+        // 이전 엔트리의 endDate 다음날부터 2일 이내에 시작하면 연속으로 간주
+        // (바로 이어지거나 하루 정도 공백만 허용, 1주 건너뛴 경우 제외)
         const daysDiff = Math.ceil((nextStart.getTime() - lastEnd.getTime()) / (1000 * 60 * 60 * 24));
         
-        if (daysDiff >= 0 && daysDiff <= 8) {
+        if (daysDiff >= 0 && daysDiff <= 2) {
           // 연속된 엔트리
           consecutiveEntries.push(next);
           lastEndDate = next.endDate;
