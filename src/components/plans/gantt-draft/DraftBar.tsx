@@ -509,13 +509,41 @@ export const DraftBar = memo(function DraftBar({
                 ? "rgb(251, 146, 60)" // orange-500
                 : "rgb(244, 63, 94)", // rose-500
           }}
-          title={
-            alignmentStatus === "green"
-              ? `실행 현황: 계획 대비 양호 (예상 범위 내)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
-              : alignmentStatus === "orange"
-              ? `실행 현황: 계획 대비 부족 (예상 범위 이하)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
-              : `실행 현황: 계획 기간 내 실행 기록 없음\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
-          }
+          title={(() => {
+            const baseInfo =
+              alignmentStatus === "green"
+                ? `실행 현황: 계획 대비 양호 (예상 범위 내)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
+                : alignmentStatus === "orange"
+                ? `실행 현황: 계획 대비 부족 (예상 범위 이하)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
+                : `실행 현황: 계획 기간 내 실행 기록 없음\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`;
+
+            // 디버그 정보가 있으면 추가
+            if (bar.alignmentDebugInfo) {
+              const debug = bar.alignmentDebugInfo;
+              let debugInfo = `\n\n[상세 정보]\nPlan MetaKey: ${debug.planMetaKey}\n기간: ${debug.planDateRange}`;
+              
+              if (debug.matchingSnapshots.length > 0) {
+                debugInfo += `\n\n✓ 매칭된 스냅샷 (${debug.matchingSnapshots.length}개):`;
+                debug.matchingSnapshots.forEach((s, i) => {
+                  debugInfo += `\n  ${i + 1}. ${s.startDate} - ${s.metaKey}`;
+                });
+              }
+              
+              if (debug.filteredOutSnapshots.length > 0) {
+                debugInfo += `\n\n✗ 필터링된 스냅샷 (${debug.filteredOutSnapshots.length}개):`;
+                debug.filteredOutSnapshots.slice(0, 5).forEach((s, i) => {
+                  debugInfo += `\n  ${i + 1}. ${s.startDate} - ${s.reason}`;
+                });
+                if (debug.filteredOutSnapshots.length > 5) {
+                  debugInfo += `\n  ... 외 ${debug.filteredOutSnapshots.length - 5}개`;
+                }
+              }
+              
+              return baseInfo + debugInfo;
+            }
+            
+            return baseInfo;
+          })()}
         />
       )}
 

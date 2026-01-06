@@ -118,6 +118,10 @@ interface DraftGanttViewProps {
   onEnableAlignmentCheckChange?: (enabled: boolean) => void;
   /** 뷰 모드 변경 핸들러 */
   onViewModeChange?: (mode: "detailed" | "summarized") => void;
+  /** 데이터 새로고침 핸들러 */
+  onRefreshData?: () => void;
+  /** 데이터 새로고침 중 상태 */
+  isRefreshing?: boolean;
 }
 
 export interface DraftGanttViewRef {
@@ -149,6 +153,8 @@ export const DraftGanttView = forwardRef<
     enableAlignmentCheck = false,
     onEnableAlignmentCheckChange,
     onViewModeChange,
+    onRefreshData,
+    isRefreshing = false,
   },
   ref
 ) {
@@ -1158,6 +1164,9 @@ export const DraftGanttView = forwardRef<
           // 뷰 모드 변경 콜백
           onViewModeChangeStart={handleViewModeChangeStart}
           onViewModeChange={onViewModeChange}
+          // 데이터 새로고침
+          onRefreshData={onRefreshData}
+          isRefreshing={isRefreshing}
           onLockError={(type, lockedByName) => {
             if (type === "locked_by_other") {
               showToast(

@@ -26,6 +26,7 @@ import {
   ChevronDownIcon,
   CopyIcon,
   CheckIcon,
+  RefreshIcon,
 } from "@/components/common/Icons";
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
@@ -100,6 +101,10 @@ interface GanttHeaderProps {
   onViewModeChangeStart?: () => void;
   /** 뷰 모드 변경 핸들러 (store + URL 업데이트) */
   onViewModeChange?: (mode: "detailed" | "summarized") => void;
+  /** 데이터 새로고침 핸들러 */
+  onRefreshData?: () => void;
+  /** 데이터 새로고침 중 상태 */
+  isRefreshing?: boolean;
 }
 
 // 스타일 태그 (체크 아이콘 애니메이션)
@@ -151,6 +156,8 @@ export function GanttHeader({
   onEnableAlignmentCheckChange,
   onViewModeChangeStart,
   onViewModeChange,
+  onRefreshData,
+  isRefreshing = false,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -541,29 +548,46 @@ export function GanttHeader({
 
           {/* Alignment 커버리지 검토 토글 (ReadOnly 모드일 때만) */}
           {readOnly && onEnableAlignmentCheckChange && (
-            <button
-              onClick={() =>
-                onEnableAlignmentCheckChange(!enableAlignmentCheck)
-              }
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                enableAlignmentCheck
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-              title={
-                enableAlignmentCheck
-                  ? "실행 커버리지 검토 비활성화"
-                  : "실행 커버리지 검토 활성화"
-              }
-            >
-              <CheckIcon
-                size={14}
-                className={`transition-colors ${
-                  enableAlignmentCheck ? "text-white" : "text-gray-400"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  onEnableAlignmentCheckChange(!enableAlignmentCheck)
+                }
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  enableAlignmentCheck
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
-              />
-              <span>실행 커버리지 검토</span>
-            </button>
+                title={
+                  enableAlignmentCheck
+                    ? "실행 커버리지 검토 비활성화"
+                    : "실행 커버리지 검토 활성화"
+                }
+              >
+                <CheckIcon
+                  size={14}
+                  className={`transition-colors ${
+                    enableAlignmentCheck ? "text-white" : "text-gray-400"
+                  }`}
+                />
+                <span>실행 커버리지 검토</span>
+              </button>
+              
+              {/* 데이터 새로고침 버튼 */}
+              {onRefreshData && (
+                <button
+                  onClick={onRefreshData}
+                  disabled={isRefreshing}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="데이터 새로고침"
+                >
+                  <RefreshIcon
+                    size={16}
+                    className={`${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                </button>
+              )}
+            </div>
           )}
 
           {/* 마지막 업데이트 시각 표시 (읽기 전용 모드에서만) */}

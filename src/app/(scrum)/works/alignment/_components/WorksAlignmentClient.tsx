@@ -53,6 +53,7 @@ export function WorksAlignmentClient({
   const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(
     initialEnableAlignmentCheck
   );
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
 
@@ -131,6 +132,16 @@ export function WorksAlignmentClient({
     [router, searchParams]
   );
 
+  // 데이터 새로고침 핸들러
+  const handleRefreshData = useCallback(() => {
+    setIsRefreshing(true);
+    router.refresh();
+    // 새로고침이 완료되면 상태 리셋 (약간의 지연 후)
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
+  }, [router]);
+
   // 담당자 필터 적용 (클라이언트에서 한 번만)
   const assigneeFilteredItems = useMemo(() => {
     if (selectedAssignees.size === 0) {
@@ -171,6 +182,8 @@ export function WorksAlignmentClient({
           onViewModeChange={handleViewModeChange}
           enableAlignmentCheck={enableAlignmentCheck}
           onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}
+          onRefreshData={handleRefreshData}
+          isRefreshing={isRefreshing}
         />
       </div>
     </div>

@@ -59,6 +59,12 @@ export interface AlignmentGanttViewProps {
   
   /** Coverage check start date (YYYY-MM-DD, default: 2025-01-12) */
   coverageCheckStartDate?: string;
+  
+  /** 데이터 새로고침 핸들러 */
+  onRefreshData?: () => void;
+  
+  /** 데이터 새로고침 중 상태 */
+  isRefreshing?: boolean;
 }
 
 /**
@@ -81,6 +87,8 @@ export function AlignmentGanttView({
   enableAlignmentCheck = false,
   onEnableAlignmentCheckChange,
   coverageCheckStartDate = "2025-01-12",
+  onRefreshData,
+  isRefreshing = false,
 }: AlignmentGanttViewProps) {
   const ganttRef = useRef<DraftGanttViewRef>(null);
 
@@ -168,6 +176,7 @@ export function AlignmentGanttView({
         alignmentStatus: statusInfo.status,
         alignmentActualCount: statusInfo.actualCount,
         alignmentExpectedCount: statusInfo.expectedCount,
+        alignmentDebugInfo: statusInfo.debugInfo,
       };
     });
 
@@ -219,6 +228,8 @@ export function AlignmentGanttView({
         selectedAssignees={selectedAssignees || new Set()}
         onAssigneesChange={onAssigneesChange}
         onViewModeChange={onViewModeChange}
+        onRefreshData={onRefreshData}
+        isRefreshing={isRefreshing}
         enableAlignmentCheck={enableAlignmentCheck}
         onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
       />

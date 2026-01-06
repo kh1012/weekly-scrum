@@ -172,6 +172,22 @@ export interface DraftBar {
   alignmentActualCount?: number;
   /** Alignment 예상 실행 횟수 */
   alignmentExpectedCount?: number;
+  /** Alignment 디버그 정보 (Plan only) */
+  alignmentDebugInfo?: {
+    planMetaKey: string;
+    planDateRange: string;
+    matchingSnapshots: Array<{
+      metaKey: string;
+      startDate: string;
+      authorId?: string;
+    }>;
+    filteredOutSnapshots: Array<{
+      metaKey: string;
+      startDate: string;
+      authorId?: string;
+      reason: string;
+    }>;
+  };
   /** 연속된 엔트리가 병합된 블록인지 표시 (Snapshot only) */
   isMerged?: boolean;
   /** 병합된 주차 정보 배열 (Snapshot only) */

@@ -15,6 +15,21 @@ export interface AlignmentStatusInfo {
   actualCount: number;
   expectedCount: number;
   explanation: string;
+  debugInfo?: {
+    planMetaKey: string;
+    planDateRange: string;
+    matchingSnapshots: Array<{
+      metaKey: string;
+      startDate: string;
+      authorId?: string;
+    }>;
+    filteredOutSnapshots: Array<{
+      metaKey: string;
+      startDate: string;
+      authorId?: string;
+      reason: string;
+    }>;
+  };
 }
 
 /**
@@ -94,20 +109,56 @@ export function calculateAlignmentStatus(
   // Plan window 주차 수 계산
   const expectedCount = getWeeksInPlanWindow(plan.startDate, plan.endDate);
 
+  // 디버그 정보 수집
+  const filteredOutSnapshots: Array<{
+    metaKey: string;
+    startDate: string;
+    authorId?: string;
+    reason: string;
+  }> = [];
+
   // Plan window 내의 snapshot entries 필터링
   const matchingSnapshots = allBars.filter((bar) => {
     // Snapshot이 아니면 제외
     if (!(bar as any).isSnapshot) return false;
 
+    const snapshotMetaKey = (bar as any).metaKey || "";
+    const snapshotAuthorId = (bar as any).authorId;
+
     // userId가 지정되었으면 해당 사용자만 필터링
-    if (userId && (bar as any).authorId !== userId) return false;
+    if (userId && snapshotAuthorId !== userId) {
+      filteredOutSnapshots.push({
+        metaKey: snapshotMetaKey,
+        startDate: bar.startDate,
+        authorId: snapshotAuthorId,
+        reason: `Author mismatch (expected: ${userId})`,
+      });
+      return false;
+    }
 
     // Meta key 일치 확인
-    const snapshotMetaKey = (bar as any).metaKey || "";
-    if (!metaMatches(planMetaKey, snapshotMetaKey)) return false;
+    if (!metaMatches(planMetaKey, snapshotMetaKey)) {
+      filteredOutSnapshots.push({
+        metaKey: snapshotMetaKey,
+        startDate: bar.startDate,
+        authorId: snapshotAuthorId,
+        reason: `MetaKey mismatch (expected: ${planMetaKey})`,
+      });
+      return false;
+    }
 
     // Plan window 내에 있는지 확인
-    return isWithinPlanWindow(bar.startDate, plan.startDate, plan.endDate);
+    if (!isWithinPlanWindow(bar.startDate, plan.startDate, plan.endDate)) {
+      filteredOutSnapshots.push({
+        metaKey: snapshotMetaKey,
+        startDate: bar.startDate,
+        authorId: snapshotAuthorId,
+        reason: `Out of date range (plan: ${plan.startDate} ~ ${plan.endDate})`,
+      });
+      return false;
+    }
+
+    return true;
   });
 
   const actualCount = matchingSnapshots.length;
@@ -133,6 +184,16 @@ export function calculateAlignmentStatus(
     actualCount,
     expectedCount,
     explanation,
+    debugInfo: {
+      planMetaKey,
+      planDateRange: `${plan.startDate} ~ ${plan.endDate}`,
+      matchingSnapshots: matchingSnapshots.map((bar) => ({
+        metaKey: (bar as any).metaKey || "",
+        startDate: bar.startDate,
+        authorId: (bar as any).authorId,
+      })),
+      filteredOutSnapshots,
+    },
   };
 }
 

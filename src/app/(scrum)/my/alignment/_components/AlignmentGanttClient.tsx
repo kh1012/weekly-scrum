@@ -49,6 +49,7 @@ export function AlignmentGanttClient({
   const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(
     initialEnableAlignmentCheck
   );
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
 
@@ -105,6 +106,16 @@ export function AlignmentGanttClient({
     [router, searchParams]
   );
 
+  // 데이터 새로고침 핸들러
+  const handleRefreshData = useCallback(() => {
+    setIsRefreshing(true);
+    router.refresh();
+    // 새로고침이 완료되면 상태 리셋 (약간의 지연 후)
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
+  }, [router]);
+
   // 필터링 및 통계 계산 (개인 페이지는 담당자 필터 없음)
   const { filteredItems, stats } = useAlignmentFilter({ 
     items, 
@@ -134,6 +145,8 @@ export function AlignmentGanttClient({
           onViewModeChange={handleViewModeChange}
           enableAlignmentCheck={enableAlignmentCheck}
           onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}
+          onRefreshData={handleRefreshData}
+          isRefreshing={isRefreshing}
         />
       </div>
     </div>
