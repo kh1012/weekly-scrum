@@ -18,7 +18,7 @@ interface GanttSkeletonProps {
 export function GanttSkeleton({ type, height = 600 }: GanttSkeletonProps) {
   return (
     <div
-      className="flex w-full overflow-hidden"
+      className="absolute inset-0 flex w-full overflow-hidden bg-white z-50"
       style={{ height }}
     >
       {/* 트리 패널 스켈레톤 */}
@@ -178,19 +178,19 @@ export function GanttSkeleton({ type, height = 600 }: GanttSkeletonProps) {
             // Summarized 모드: 모듈별 요약 바 형태 (더 넓고 두꺼운 바)
             <>
               <div className="flex items-center gap-4 mt-2">
-                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "45%" }} />
+                <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "45%" }} />
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "38%" }} />
+                <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "38%" }} />
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "52%" }} />
+                <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "52%" }} />
               </div>
               <div className="mt-6 flex items-center gap-4">
-                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "42%" }} />
+                <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "42%" }} />
               </div>
               <div className="flex items-center gap-4">
-                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "48%" }} />
+                <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "48%" }} />
               </div>
             </>
           )}
@@ -280,13 +280,13 @@ export function TimelineSkeleton({ type }: { type: "detailed" | "summarized" }) 
       ) : (
         <>
           <div className="flex items-center gap-4 mt-2">
-            <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "45%" }} />
+            <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "45%" }} />
           </div>
           <div className="flex items-center gap-4">
-            <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "38%" }} />
+            <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "38%" }} />
           </div>
           <div className="flex items-center gap-4">
-            <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "52%" }} />
+            <div className="h-9 bg-gray-200 rounded-lg" style={{ width: "52%" }} />
           </div>
         </>
       )}

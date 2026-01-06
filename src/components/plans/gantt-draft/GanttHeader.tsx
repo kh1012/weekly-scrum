@@ -420,21 +420,14 @@ export function GanttHeader({
           {readOnly && onEnableAlignmentCheckChange && (
             <button
               onClick={() => onEnableAlignmentCheckChange(!enableAlignmentCheck)}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-gray-100"
-              title="기능 켜기/끄기"
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                enableAlignmentCheck
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+              title={enableAlignmentCheck ? "실행 커버리지 검토 비활성화" : "실행 커버리지 검토 활성화"}
             >
-              <span className="text-gray-600">실행 커버리지 검토</span>
-              <div
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  enableAlignmentCheck ? "bg-blue-600" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                    enableAlignmentCheck ? "translate-x-[1.125rem]" : "translate-x-1"
-                  }`}
-                />
-              </div>
+              실행 커버리지 검토
             </button>
           )}
 
