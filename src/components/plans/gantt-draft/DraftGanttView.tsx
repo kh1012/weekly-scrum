@@ -187,6 +187,7 @@ export const DraftGanttView = forwardRef<
 
   // 자동 저장 옵션 (localStorage에서 불러오기)
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [autoSaveSuccess, setAutoSaveSuccess] = useState(false);
 
   useEffect(() => {
     try {
@@ -842,12 +843,13 @@ export const DraftGanttView = forwardRef<
     fetchFlags,
   ]);
 
-  // 자동 저장 트리거 (90초 비활성 시)
+  // 자동 저장 트리거 (정확히 90초 비활성 시)
   const lastAutoSaveRef = useRef<number>(0);
 
   useEffect(() => {
     if (!autoSaveEnabled || !isMyLock || !hasUnsavedChanges) return;
-    if (inactivitySeconds === null || inactivitySeconds < 90) return;
+    // 정확히 90초가 되었을 때만 실행
+    if (inactivitySeconds !== 90) return;
     if (isCommitting || isAutoSaving) return;
 
     // 마지막 자동 저장으로부터 최소 90초 경과 확인 (중복 방지)
@@ -939,8 +941,12 @@ export const DraftGanttView = forwardRef<
 
       if (flagSuccess && planSuccess) {
         showToast("success", "자동 저장 완료", undefined);
-        // 자동 저장 완료 후 타이머 리셋
-        recordActivity();
+        // 성공 플래그 설정 (체크 아이콘 표시용)
+        setAutoSaveSuccess(true);
+        // 1.5초 후 플래그 해제
+        setTimeout(() => {
+          setAutoSaveSuccess(false);
+        }, 1500);
       } else {
         showToast("error", "자동 저장 실패", "수동으로 저장해주세요.");
       }
@@ -948,6 +954,8 @@ export const DraftGanttView = forwardRef<
       showToast("error", "자동 저장 오류", "수동으로 저장해주세요.");
     } finally {
       setIsAutoSaving(false);
+      // 자동 저장 완료 후 타이머 즉시 리셋 (finally에서 실행하여 성공/실패 관계없이 리셋)
+      recordActivity();
     }
   }, [
     hasUnsavedChanges,
@@ -1146,6 +1154,7 @@ export const DraftGanttView = forwardRef<
           autoSaveEnabled={autoSaveEnabled}
           onAutoSaveChange={handleAutoSaveChange}
           isAutoSaving={isAutoSaving}
+          autoSaveSuccess={autoSaveSuccess}
           // 뷰 모드 변경 콜백
           onViewModeChangeStart={handleViewModeChangeStart}
           onViewModeChange={onViewModeChange}

@@ -90,6 +90,8 @@ interface GanttHeaderProps {
   onAutoSaveChange?: (enabled: boolean) => void;
   /** 자동 저장 상태 */
   isAutoSaving?: boolean;
+  /** 자동 저장 성공 플래그 (체크 아이콘 표시용) */
+  autoSaveSuccess?: boolean;
   /** Alignment 커버리지 검토 활성화 여부 */
   enableAlignmentCheck?: boolean;
   /** Alignment 커버리지 검토 활성화 변경 핸들러 */
@@ -99,6 +101,15 @@ interface GanttHeaderProps {
   /** 뷰 모드 변경 핸들러 (store + URL 업데이트) */
   onViewModeChange?: (mode: "detailed" | "summarized") => void;
 }
+
+// 스타일 태그 (체크 아이콘 애니메이션)
+const AUTO_SAVE_STYLES = `
+  @keyframes scale-bounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+`;
 
 export function GanttHeader({
   workspaceId,
@@ -135,6 +146,7 @@ export function GanttHeader({
   autoSaveEnabled = false,
   onAutoSaveChange,
   isAutoSaving = false,
+  autoSaveSuccess = false,
   enableAlignmentCheck = false,
   onEnableAlignmentCheckChange,
   onViewModeChangeStart,
@@ -429,6 +441,9 @@ export function GanttHeader({
 
   return (
     <>
+      {/* 자동 저장 체크 아이콘 애니메이션 스타일 */}
+      <style dangerouslySetInnerHTML={{ __html: AUTO_SAVE_STYLES }} />
+      
       <div
         className={`${
           isMobile
@@ -1028,7 +1043,21 @@ export function GanttHeader({
                       : "자동 저장 비활성화 (클릭하여 활성화)"
                   }
                 >
-                  {isAutoSaving ? (
+                  {autoSaveSuccess ? (
+                    // 저장 완료: 체크 아이콘 (스케일 애니메이션)
+                    <div
+                      className="text-emerald-600"
+                      style={{
+                        animation: "scale-bounce 0.6s ease-out",
+                      }}
+                    >
+                      <CheckIcon className="w-8 h-8" />
+                    </div>
+                  ) : autoSaveEnabled && inactivitySeconds !== null && inactivitySeconds >= 90 ? (
+                    // 90초 도달 시 로딩 스피너 표시
+                    <LoadingIcon className="w-8 h-8 text-emerald-600 animate-spin" />
+                  ) : isAutoSaving ? (
+                    // 저장 중: 로딩 스피너
                     <LoadingIcon className="w-8 h-8 text-emerald-600 animate-spin" />
                   ) : autoSaveEnabled ? (
                     <>
