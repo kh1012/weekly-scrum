@@ -282,11 +282,18 @@ export const DraftBar = memo(function DraftBar({
               preferredLane: newPreferredLane,
             });
 
-            // 겹치는 블록들을 한 칸 아래로 밀기
+            // 겹치는 블록들을 가장 아래 레인으로 밀기
             if (conflictingBars.length > 0) {
+              // 현재 row의 모든 bars 중 최대 lane 찾기
+              const maxLane = Math.max(
+                ...rowBars.map((b) => b.lane),
+                newPreferredLane
+              );
+              
+              // 겹치는 블록들을 최대 레인 + 1로 이동 (항상 가장 아래에 새 레인 추가)
               conflictingBars.forEach((conflictBar) => {
                 updateBar(conflictBar.clientUid, {
-                  preferredLane: newPreferredLane + 1,
+                  preferredLane: maxLane + 1,
                 });
               });
             }

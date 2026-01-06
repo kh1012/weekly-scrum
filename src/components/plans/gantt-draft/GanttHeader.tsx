@@ -103,6 +103,8 @@ interface GanttHeaderProps {
   onEnableAlignmentCheckChange?: (enabled: boolean) => void;
   /** 뷰 모드 변경 시작 콜백 */
   onViewModeChangeStart?: () => void;
+  /** 뷰 모드 변경 핸들러 (store + URL 업데이트) */
+  onViewModeChange?: (mode: "detailed" | "summarized") => void;
 }
 
 export function GanttHeader({
@@ -143,6 +145,7 @@ export function GanttHeader({
   enableAlignmentCheck = false,
   onEnableAlignmentCheckChange,
   onViewModeChangeStart,
+  onViewModeChange,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -370,7 +373,11 @@ export function GanttHeader({
           onViewModeChangeStart?.();
           setIsViewModeChanging(true);
           requestAnimationFrame(() => {
-            setViewMode("detailed");
+            if (onViewModeChange) {
+              onViewModeChange("detailed");
+            } else {
+              setViewMode("detailed");
+            }
           });
         }
         onStartSuccess?.();
@@ -441,12 +448,18 @@ export function GanttHeader({
                     setIsViewModeChanging(true);
                     // 다음 프레임에서 뷰 모드 변경
                     requestAnimationFrame(() => {
-                      startTransition(() => setViewMode("detailed"));
+                      startTransition(() => {
+                        if (onViewModeChange) {
+                          onViewModeChange("detailed");
+                        } else {
+                          setViewMode("detailed");
+                        }
+                      });
                     });
                   }
                 }}
                 disabled={isPending || isViewModeChanging}
-                className={`px-2 py-1 text-xs font-medium rounded transition-all ${
+                className={`px-2.5 py-1.5 text-xs font-medium rounded transition-all ${
                   viewMode === "detailed"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
@@ -471,7 +484,13 @@ export function GanttHeader({
                     setIsViewModeChanging(true);
                     // 다음 프레임에서 뷰 모드 변경
                     requestAnimationFrame(() => {
-                      startTransition(() => setViewMode("summarized"));
+                      startTransition(() => {
+                        if (onViewModeChange) {
+                          onViewModeChange("summarized");
+                        } else {
+                          setViewMode("summarized");
+                        }
+                      });
                     });
                   }
                 }}
@@ -481,7 +500,7 @@ export function GanttHeader({
                   enableAlignmentCheck ||
                   hasActiveFilters
                 }
-                className={`px-2 py-1 text-xs font-medium rounded transition-all ${
+                className={`px-2.5 py-1.5 text-xs font-medium rounded transition-all ${
                   viewMode === "summarized"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
@@ -671,7 +690,7 @@ export function GanttHeader({
                     }
                   }}
                   disabled={viewMode === "summarized"}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     selectedStages.size > 0
                       ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
                       : "text-gray-600 hover:bg-gray-100"
@@ -753,7 +772,7 @@ export function GanttHeader({
                   </div>
                 )}
               </div>
-              )}
+            )}
 
             {/* 담당자 필터 */}
             {onAssigneesChange && members && members.length > 0 && (
@@ -765,7 +784,7 @@ export function GanttHeader({
                     }
                   }}
                   disabled={viewMode === "summarized"}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     selectedAssignees.size > 0
                       ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                       : "text-gray-600 hover:bg-gray-100"

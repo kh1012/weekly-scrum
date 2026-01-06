@@ -116,6 +116,8 @@ interface DraftGanttViewProps {
   enableAlignmentCheck?: boolean;
   /** Alignment 커버리지 검토 활성화 변경 핸들러 */
   onEnableAlignmentCheckChange?: (enabled: boolean) => void;
+  /** 뷰 모드 변경 핸들러 */
+  onViewModeChange?: (mode: "detailed" | "summarized") => void;
 }
 
 export interface DraftGanttViewRef {
@@ -146,6 +148,7 @@ export const DraftGanttView = forwardRef<
     updatedByName,
     enableAlignmentCheck = false,
     onEnableAlignmentCheckChange,
+    onViewModeChange,
   },
   ref
 ) {
@@ -1145,6 +1148,7 @@ export const DraftGanttView = forwardRef<
           isAutoSaving={isAutoSaving}
           // 뷰 모드 변경 콜백
           onViewModeChangeStart={handleViewModeChangeStart}
+          onViewModeChange={onViewModeChange}
           onLockError={(type, lockedByName) => {
             if (type === "locked_by_other") {
               showToast(

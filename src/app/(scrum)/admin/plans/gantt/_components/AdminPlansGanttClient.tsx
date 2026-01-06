@@ -60,14 +60,13 @@ export function AdminPlansGanttClient({
   const selectedStages = useMemo(() => new Set(initialStages), [initialStages]);
   const selectedAssignees = useMemo(() => new Set(initialAssignees), [initialAssignees]);
   
-  const setViewMode = useDraftStore((s) => s.setViewMode);
-  const viewMode = useDraftStore((s) => s.ui.viewMode);
+  const setViewModeStore = useDraftStore((s) => s.setViewMode);
   const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(initialEnableAlignmentCheck);
 
   // 초기 로드 시 URL의 viewMode를 store에 설정
   useEffect(() => {
-    setViewMode(initialViewMode);
-  }, [initialViewMode, setViewMode]);
+    setViewModeStore(initialViewMode);
+  }, [initialViewMode, setViewModeStore]);
 
   const handleStagesChange = useCallback(
     (stages: Set<string>) => {
@@ -99,20 +98,20 @@ export function AdminPlansGanttClient({
     [router, searchParams]
   );
 
-  // viewMode 변경 감지 및 querystring 업데이트
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    const currentViewMode = params.get("viewMode");
-    
-    if (viewMode !== initialViewMode) {
-      if (viewMode === "summarized") {
+  // viewMode 변경 핸들러 (store + URL 동시 업데이트)
+  const handleViewModeChange = useCallback(
+    (mode: "detailed" | "summarized") => {
+      setViewModeStore(mode);
+      const params = new URLSearchParams(searchParams.toString());
+      if (mode === "summarized") {
         params.set("viewMode", "summarized");
       } else {
         params.delete("viewMode"); // detailed가 기본값이므로 제거
       }
       router.replace(`?${params.toString()}`, { scroll: false });
-    }
-  }, [viewMode, initialViewMode, router, searchParams]);
+    },
+    [setViewModeStore, router, searchParams]
+  );
 
   const handleEnableAlignmentCheckChange = useCallback(
     (enabled: boolean) => {
@@ -142,6 +141,7 @@ export function AdminPlansGanttClient({
       updatedByName={updatedByName}
       enableAlignmentCheck={enableAlignmentCheck}
       onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}
+      onViewModeChange={handleViewModeChange}
     />
   );
 }
