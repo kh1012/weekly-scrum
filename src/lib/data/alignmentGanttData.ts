@@ -8,6 +8,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getWeekDateRange } from "@/lib/date/isoWeek";
+import { listWorkspaceMembers } from "./members";
 
 /**
  * 간트 차트용 Plan 인터페이스 (Plans + Snapshot Entries 통합)
@@ -317,53 +318,30 @@ export async function getWorkspaceAlignmentData({
     );
 
     // 7. 워크스페이스 멤버 목록 조회
-    const { data: members } = await supabase
-      .from("workspace_members")
-      .select(
-        `
-        user_id,
-        basic_role,
-        profiles!inner(display_name, email)
-      `
-      )
-      .eq("workspace_id", workspaceId);
-
-    const membersList =
-      members?.map((m: any) => ({
+    const workspaceMembers = await listWorkspaceMembers({ workspaceId });
+    
+    const membersList = workspaceMembers.map((m) => ({
       userId: m.user_id,
-      displayName: m.profiles?.display_name || m.profiles?.email || m.user_id,
-      email: m.profiles?.email || undefined,
-        basicRole:
-          (m.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null) ||
-          null,
-    })) || [];
+      displayName: m.display_name || m.email || m.user_id,
+      email: m.email || undefined,
+      basicRole: m.basic_role,
+    }));
 
     return {
       items,
       members: membersList,
     };
   } catch (error) {
-    const supabase = await createClient();
-    const { data: members } = await supabase
-      .from("workspace_members")
-      .select(
-        `
-        user_id,
-        basic_role,
-        profiles!inner(display_name, email)
-      `
-      )
-      .eq("workspace_id", workspaceId);
-
-    const membersList =
-      members?.map((m: any) => ({
+    console.error("[getWorkspaceAlignmentData] Error:", error);
+    
+    // 에러 발생 시에도 멤버 목록은 조회 시도
+    const workspaceMembers = await listWorkspaceMembers({ workspaceId });
+    const membersList = workspaceMembers.map((m) => ({
       userId: m.user_id,
-      displayName: m.profiles?.display_name || m.profiles?.email || m.user_id,
-      email: m.profiles?.email || undefined,
-        basicRole:
-          (m.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null) ||
-          null,
-    })) || [];
+      displayName: m.display_name || m.email || m.user_id,
+      email: m.email || undefined,
+      basicRole: m.basic_role,
+    }));
 
     return {
       items: [],
@@ -644,54 +622,30 @@ export async function getAlignmentGanttData({
   );
 
   // 7. 워크스페이스 멤버 목록 조회 (DraftGanttView에서 필요)
-  const { data: members } = await supabase
-    .from("workspace_members")
-      .select(
-        `
-      user_id,
-      basic_role,
-      profiles!inner(display_name, email)
-    `
-      )
-    .eq("workspace_id", workspaceId);
-
-    const membersList =
-      members?.map((m: any) => ({
+  const workspaceMembers = await listWorkspaceMembers({ workspaceId });
+  
+  const membersList = workspaceMembers.map((m) => ({
     userId: m.user_id,
-    displayName: m.profiles?.display_name || m.profiles?.email || m.user_id,
-    email: m.profiles?.email || undefined,
-        basicRole:
-          (m.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null) ||
-          null,
-  })) || [];
+    displayName: m.display_name || m.email || m.user_id,
+    email: m.email || undefined,
+    basicRole: m.basic_role,
+  }));
 
-    return {
-      items,
-      members: membersList,
-    };
+  return {
+    items,
+    members: membersList,
+  };
   } catch (error) {
-    // 에러 발생 시 빈 데이터 반환 (앱이 크래시되지 않도록)
-    const supabase = await createClient();
-    const { data: members } = await supabase
-      .from("workspace_members")
-      .select(
-        `
-        user_id,
-        basic_role,
-        profiles!inner(display_name, email)
-      `
-      )
-      .eq("workspace_id", workspaceId);
-
-    const membersList =
-      members?.map((m: any) => ({
+    console.error("[getAlignmentGanttData] Error:", error);
+    
+    // 에러 발생 시에도 멤버 목록은 조회 시도
+    const workspaceMembers = await listWorkspaceMembers({ workspaceId });
+    const membersList = workspaceMembers.map((m) => ({
       userId: m.user_id,
-      displayName: m.profiles?.display_name || m.profiles?.email || m.user_id,
-      email: m.profiles?.email || undefined,
-        basicRole:
-          (m.basic_role as "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null) ||
-          null,
-    })) || [];
+      displayName: m.display_name || m.email || m.user_id,
+      email: m.email || undefined,
+      basicRole: m.basic_role,
+    }));
 
     return {
       items: [],

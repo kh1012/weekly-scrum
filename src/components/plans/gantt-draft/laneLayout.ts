@@ -82,8 +82,36 @@ function getDuration(start: string, end: string): number {
  * bars를 lane에 배치
  * - preferredLane이 있으면 우선 사용 (겹치지 않으면)
  * - 가장 위(lane=0)부터 시도, 겹치면 다음 lane
+ * - 플랜과 엔트리를 분리된 레인에 배치 (플랜 레인 아래에 엔트리 레인)
  */
 export function assignLanesToBars(bars: DraftBar[]): BarWithLane[] {
+  if (bars.length === 0) return [];
+
+  // 플랜과 엔트리 분리
+  const planBars = bars.filter((b) => !b.isSnapshot);
+  const entryBars = bars.filter((b) => b.isSnapshot);
+
+  // 플랜 bars 처리 (기존 로직)
+  const planResult = assignBarsToLanes(planBars, 0);
+
+  // 플랜의 최대 레인 수 계산
+  const maxPlanLane = planResult.length > 0 
+    ? Math.max(...planResult.map((b) => b.lane)) + 1 
+    : 0;
+
+  // 엔트리 bars 처리 (플랜 레인 수만큼 오프셋)
+  const entryResult = assignBarsToLanes(entryBars, maxPlanLane);
+
+  // 결과 합치기
+  return [...planResult, ...entryResult];
+}
+
+/**
+ * 주어진 bars를 레인에 배치하는 헬퍼 함수
+ * @param bars 배치할 bars
+ * @param laneOffset 레인 시작 오프셋
+ */
+function assignBarsToLanes(bars: DraftBar[], laneOffset: number): BarWithLane[] {
   if (bars.length === 0) return [];
 
   // preferredLane이 있는 bars 먼저 처리, 그 다음 시작일 순
@@ -159,7 +187,8 @@ export function assignLanesToBars(bars: DraftBar[]): BarWithLane[] {
     }
 
     lanes[assignedLane].push({ start: bar.startDate, end: bar.endDate });
-    result.push({ ...bar, lane: assignedLane });
+    // laneOffset을 적용하여 최종 레인 번호 결정
+    result.push({ ...bar, lane: assignedLane + laneOffset });
   }
 
   return result;

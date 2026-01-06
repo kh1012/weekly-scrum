@@ -14,6 +14,7 @@ export interface MenuStats {
   collaborations_count: number;
   my_entries_count: number;
   alignment_count: number;
+  workspace_alignment_count: number;
 }
 
 /**
@@ -136,6 +137,9 @@ export async function getMenuStats(params: {
       }
     }
 
+    // Workspace-wide alignment count (전체 Plans + 전체 Snapshot Entries)
+    const workspaceAlignmentCount = (plansCount || 0) + (totalEntriesCount || 0);
+
     return {
       feedbacks_count: feedbacksCount || 0,
       snapshots_count: uniqueSnapshots,
@@ -145,6 +149,7 @@ export async function getMenuStats(params: {
       collaborations_count: totalCollaborations,
       my_entries_count: myEntriesCount,
       alignment_count: alignmentCount,
+      workspace_alignment_count: workspaceAlignmentCount,
     };
   } catch (error) {
     console.error("[menuStats] Error fetching menu stats:", error);
@@ -157,6 +162,7 @@ export async function getMenuStats(params: {
       collaborations_count: 0,
       my_entries_count: 0,
       alignment_count: 0,
+      workspace_alignment_count: 0,
     };
   }
 }

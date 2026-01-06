@@ -58,12 +58,9 @@ export function AlignmentFilterBar({
           <span className="text-[10px] opacity-80">({stats.totalCount})</span>
         </button>
         <button
-          onClick={() => onFilterChange("plans")}
-          className={`px-2.5 py-1 text-xs font-medium rounded transition-all duration-150 ${
-            filter === "plans"
-              ? "bg-[#0969da] text-white"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
+          disabled
+          className="px-2.5 py-1 text-xs font-medium rounded transition-all duration-150 opacity-50 cursor-not-allowed text-gray-400"
+          title="계획 탭은 현재 비활성화되어 있습니다"
         >
           계획{" "}
           <span className="text-[10px] opacity-80">({stats.plansCount})</span>
