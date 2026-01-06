@@ -95,6 +95,8 @@ interface DraftGanttViewProps {
   onAssigneesChange?: (assignees: Set<string>) => void;
   /** 필터 로딩 중 상태 */
   isFilterLoading?: boolean;
+  /** 뷰 모드 전환 중 상태 */
+  isViewModeChanging?: boolean;
   /** Plans 최대 updated_at (마지막 업데이트 시각) */
   maxUpdatedAt?: string;
   /** 마지막 업데이트한 사용자 이름 */
@@ -121,6 +123,7 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   selectedAssignees = new Set(),
   onAssigneesChange,
   isFilterLoading = false,
+  isViewModeChanging = false,
   maxUpdatedAt,
   updatedByName,
   enableAlignmentCheck = false,
@@ -134,6 +137,24 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showAddRowModal, setShowAddRowModal] = useState(false);
+  const [isInternalViewModeChanging, setIsInternalViewModeChanging] = useState(false);
+  
+  // ViewMode 변경 감지 및 스켈레톤 표시
+  const viewMode = useDraftStore((s) => s.ui.viewMode);
+  const prevViewModeRef = useRef(viewMode);
+  
+  useEffect(() => {
+    if (prevViewModeRef.current !== viewMode) {
+      setIsInternalViewModeChanging(true);
+      const timer = setTimeout(() => {
+        setIsInternalViewModeChanging(false);
+      }, 400); // 400ms 동안 스켈레톤 표시
+      
+      prevViewModeRef.current = viewMode;
+      
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode]);
   
   // 자동 저장 옵션 (localStorage에서 불러오기)
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
@@ -1170,8 +1191,10 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
 
       {/* 메인 영역 - border 없이 꽉 차게 */}
       <div className="flex flex-1 overflow-hidden bg-white relative">
-        {/* 필터 로딩 스켈레톤 (테이블 영역만) */}
-        {isFilterLoading && <GanttSkeleton type="detailed" />}
+        {/* 필터 로딩 & 뷰 모드 전환 스켈레톤 (테이블 영역만) */}
+        {(isFilterLoading || isViewModeChanging || isInternalViewModeChanging) && (
+          <GanttSkeleton type={viewMode === "summarized" ? "summarized" : "detailed"} />
+        )}
 
         {/* 모바일: 트리 패널 토글 버튼 (readOnly일 때는 숨김) */}
         {isMobile && !readOnly && (
