@@ -164,6 +164,8 @@ export const DraftBar = memo(function DraftBar({
   const snapshotYear = bar.year;
   const snapshotWeek = bar.week;
   const authorName = bar.authorName;
+  const isMerged = bar.isMerged || false;
+  const mergedWeeks = bar.mergedWeeks || [];
   
   // Alignment 상태 (Plan only)
   const alignmentStatus = bar.alignmentStatus as "green" | "orange" | "red" | null;
@@ -484,11 +486,11 @@ export const DraftBar = memo(function DraftBar({
             </div>
           )}
 
-          {/* 1행: 주차 태그 + 기간 + 작성자 */}
+          {/* 1행: 주차 태그 + 작성자 + 병합 표시 */}
           <div className="flex items-center gap-1.5 min-w-0 pr-8">
-            {/* 주차 태그 */}
             {snapshotYear && snapshotWeek && (
               <>
+                {/* 주차 태그 (병합된 경우 범위 표시) */}
                 <span
                   className="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0"
                   style={{
@@ -497,29 +499,28 @@ export const DraftBar = memo(function DraftBar({
                   }}
                   title="Snapshot Entry"
                 >
-                  {String(snapshotYear).slice(2)} {snapshotWeek}
+                  {isMerged && mergedWeeks.length > 0
+                    ? `${String(mergedWeeks[0].year).slice(2)} ${mergedWeeks[0].week}-${mergedWeeks[mergedWeeks.length - 1].week}`
+                    : `${String(snapshotYear).slice(2)} ${snapshotWeek}`}
                 </span>
 
-                {/* 기간 */}
-                <span
-                  className="text-[10px] font-medium shrink-0"
-                  style={{ color: "#6b7280" }}
-                >
-                  {dateLabel}
-                </span>
-
-                {/* 작성자 이름 chip (GitHub 스타일) */}
+                {/* 작성자 이름 (단순 텍스트) */}
                 {authorName && (
                   <span
-                    className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0"
-                    style={{
-                      background: "#f6f8fa",
-                      color: "#24292f",
-                      border: "1px solid #d0d7de",
-                    }}
-                    title={`작성자: ${authorName}`}
+                    className="text-[10px] font-medium shrink-0"
+                    style={{ color: "#374151" }}
                   >
                     {authorName}
+                  </span>
+                )}
+
+                {/* 병합 표시 */}
+                {isMerged && (
+                  <span
+                    className="text-[9px] font-medium shrink-0"
+                    style={{ color: "#10b981" }}
+                  >
+                    ✓ 결합됨
                   </span>
                 )}
               </>

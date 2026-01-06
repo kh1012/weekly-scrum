@@ -524,17 +524,6 @@ export const DraftGanttView = forwardRef<
       (a, b) => a.orderIndex - b.orderIndex
     );
 
-    console.log('[DraftGanttView] Hydrate 시작:', {
-      initialPlansCount: initialPlans.length,
-      sortedRowsCount: sortedRows.length,
-      loadedBarsCount: loadedBars.length,
-      snapshotBarsCount: loadedBars.filter(b => b.isSnapshot).length,
-      planBarsCount: loadedBars.filter(b => !b.isSnapshot).length,
-      sampleRow: sortedRows[0],
-      sampleBar: loadedBars[0],
-      sampleSnapshotBar: loadedBars.find(b => b.isSnapshot),
-    });
-
     hydrate(sortedRows, loadedBars);
   }, [initialPlans, hydrate]);
 

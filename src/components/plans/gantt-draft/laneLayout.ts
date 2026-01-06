@@ -79,6 +79,89 @@ function getDuration(start: string, end: string): number {
 }
 
 /**
+ * 연속된 스냅샷 엔트리를 병합하는 헬퍼 함수
+ * - metaKey + authorId가 같은 엔트리를 그룹화
+ * - 각 그룹 내에서 연속된 엔트리를 하나로 병합
+ */
+function mergeConsecutiveEntries(entryBars: DraftBar[]): DraftBar[] {
+  if (entryBars.length === 0) return [];
+
+  // metaKey + authorId로 그룹화
+  const groupedByMetaAndAuthor = new Map<string, DraftBar[]>();
+  
+  for (const bar of entryBars) {
+    const metaKey = bar.metaKey || "";
+    const authorId = bar.authorId || "unknown";
+    const groupKey = `${metaKey}::${authorId}`;
+    
+    if (!groupedByMetaAndAuthor.has(groupKey)) {
+      groupedByMetaAndAuthor.set(groupKey, []);
+    }
+    groupedByMetaAndAuthor.get(groupKey)!.push(bar);
+  }
+
+  const mergedEntries: DraftBar[] = [];
+
+  // 각 그룹별로 연속된 엔트리 병합
+  for (const group of groupedByMetaAndAuthor.values()) {
+    // startDate 기준 정렬
+    const sorted = [...group].sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+    let i = 0;
+    while (i < sorted.length) {
+      const current = sorted[i];
+      const consecutiveEntries = [current];
+      let lastEndDate = current.endDate;
+
+      // 연속된 엔트리 찾기
+      for (let j = i + 1; j < sorted.length; j++) {
+        const next = sorted[j];
+        const lastEnd = new Date(lastEndDate);
+        const nextStart = new Date(next.startDate);
+        
+        // 이전 엔트리의 endDate 다음날부터 7일 이내에 시작하면 연속으로 간주
+        const daysDiff = Math.ceil((nextStart.getTime() - lastEnd.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff >= 0 && daysDiff <= 8) {
+          // 연속된 엔트리
+          consecutiveEntries.push(next);
+          lastEndDate = next.endDate;
+        } else {
+          // 연속성 끊김
+          break;
+        }
+      }
+
+      // 연속된 엔트리가 2개 이상이면 병합
+      if (consecutiveEntries.length >= 2) {
+        const firstEntry = consecutiveEntries[0];
+        const lastEntry = consecutiveEntries[consecutiveEntries.length - 1];
+        
+        const mergedWeeks = consecutiveEntries.map((entry) => ({
+          year: entry.year || 0,
+          week: entry.week || "",
+        }));
+
+        // 병합된 엔트리 생성
+        mergedEntries.push({
+          ...firstEntry,
+          endDate: lastEntry.endDate,
+          isMerged: true,
+          mergedWeeks,
+        });
+      } else {
+        // 연속되지 않은 단일 엔트리는 그대로 유지
+        mergedEntries.push(current);
+      }
+
+      i += consecutiveEntries.length;
+    }
+  }
+
+  return mergedEntries;
+}
+
+/**
  * bars를 lane에 배치
  * - preferredLane이 있으면 우선 사용 (겹치지 않으면)
  * - 가장 위(lane=0)부터 시도, 겹치면 다음 lane
@@ -91,6 +174,9 @@ export function assignLanesToBars(bars: DraftBar[]): BarWithLane[] {
   const planBars = bars.filter((b) => !b.isSnapshot);
   const entryBars = bars.filter((b) => b.isSnapshot);
 
+  // 엔트리 bars 병합 처리
+  const mergedEntryBars = mergeConsecutiveEntries(entryBars);
+
   // 플랜 bars 처리 (기존 로직)
   const planResult = assignBarsToLanes(planBars, 0);
 
@@ -99,8 +185,8 @@ export function assignLanesToBars(bars: DraftBar[]): BarWithLane[] {
     ? Math.max(...planResult.map((b) => b.lane)) + 1 
     : 0;
 
-  // 엔트리 bars 처리 (플랜 레인 수만큼 오프셋)
-  const entryResult = assignBarsToLanes(entryBars, maxPlanLane);
+  // 병합된 엔트리 bars 처리 (플랜 레인 수만큼 오프셋)
+  const entryResult = assignBarsToLanes(mergedEntryBars, maxPlanLane);
 
   // 결과 합치기
   return [...planResult, ...entryResult];
