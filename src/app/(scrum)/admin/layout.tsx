@@ -21,7 +21,7 @@ export default async function AdminLayout({
     return (
       <AccessDenied
         requiredRole="관리자(Admin) 또는 매니저(Manager)"
-        backHref="/work-map"
+        backHref="/works/work-map"
         backLabel="Work Map으로 돌아가기"
       />
     );

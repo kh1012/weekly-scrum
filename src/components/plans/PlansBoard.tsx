@@ -262,7 +262,7 @@ export function PlansBoard({
   // URL 파라미터 빌드 함수
   const buildUrlWithParams = useCallback(
     (newMonth: string, newFilters: FilterState) => {
-      const basePath = mode === "admin" ? "/admin/plans" : "/plans";
+      const basePath = mode === "admin" ? "/admin/plans" : "/works/plans";
       const params = new URLSearchParams();
 
       params.set("month", newMonth);
@@ -951,7 +951,7 @@ export function PlansBoard({
               {isAdmin && (
                 <>
                   <Link
-                    href="/plans/gantt"
+                    href="/works/plans/gantt"
                     className="text-[10px] px-2 py-1 rounded font-medium transition-colors hover:opacity-80"
                     style={{
                       background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",

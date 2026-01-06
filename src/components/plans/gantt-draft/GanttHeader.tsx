@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, useTransition } from "react";
 import { useDraftStore } from "./store";
 import { useLock } from "./useLock";
 import { useIsMac } from "./useOS";
@@ -74,7 +74,10 @@ interface GanttHeaderProps {
   /** 커스텀 범위 설정 */
   onCustomRangeChange?: (startDate: Date, endDate: Date) => void;
   /** 락 관련 오류 콜백 */
-  onLockError?: (type: "locked_by_other" | "unknown", lockedByName?: string) => void;
+  onLockError?: (
+    type: "locked_by_other" | "unknown",
+    lockedByName?: string
+  ) => void;
   /** 작업 시작 성공 콜백 */
   onStartSuccess?: () => void;
   /** 작업 종료 성공 콜백 (폐기된 변경사항 개수 전달) */
@@ -135,6 +138,10 @@ export function GanttHeader({
     inactivitySeconds,
   } = useLock({ workspaceId });
 
+  const viewMode = useDraftStore((s) => s.ui.viewMode);
+  const setViewMode = useDraftStore((s) => s.setViewMode);
+  const [isPending, startTransition] = useTransition();
+
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
 
@@ -162,7 +169,9 @@ export function GanttHeader({
   const isEditing = useDraftStore((s) => s.ui.isEditing);
   // 계획(bars) + 깃발(flags) 변경사항 개수
   const changesCount = useDraftStore(
-    (s) => s.bars.filter((b) => b.dirty).length + s.flags.filter((f) => f.dirty).length
+    (s) =>
+      s.bars.filter((b) => b.dirty).length +
+      s.flags.filter((f) => f.dirty).length
   );
 
   // 비활성 경고 토스트 표시
@@ -178,7 +187,11 @@ export function GanttHeader({
     const remainingSeconds = INACTIVITY_TIMEOUT - inactivitySeconds;
 
     // 3분 남았을 때 (180초)
-    if (remainingSeconds <= 180 && remainingSeconds > 60 && !shownWarningsRef.current.has(3)) {
+    if (
+      remainingSeconds <= 180 &&
+      remainingSeconds > 60 &&
+      !shownWarningsRef.current.has(3)
+    ) {
       shownWarningsRef.current.add(3);
       showInactivityWarningToast(3, () => {
         recordActivity();
@@ -188,7 +201,11 @@ export function GanttHeader({
     }
 
     // 1분 남았을 때 (60초)
-    if (remainingSeconds <= 60 && remainingSeconds > 0 && !shownWarningsRef.current.has(1)) {
+    if (
+      remainingSeconds <= 60 &&
+      remainingSeconds > 0 &&
+      !shownWarningsRef.current.has(1)
+    ) {
       shownWarningsRef.current.add(1);
       showInactivityWarningToast(1, () => {
         recordActivity();
@@ -196,7 +213,13 @@ export function GanttHeader({
         shownWarningsRef.current.clear(); // 연장 후 경고 초기화
       });
     }
-  }, [inactivitySeconds, isMyLock, isEditing, recordActivity, extendLockIfNeeded]);
+  }, [
+    inactivitySeconds,
+    isMyLock,
+    isEditing,
+    recordActivity,
+    extendLockIfNeeded,
+  ]);
 
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
@@ -210,8 +233,12 @@ export function GanttHeader({
   const assigneesFilterRef = useRef<HTMLDivElement>(null);
 
   // 필터 로컬 상태 (드롭다운 내부에서만 사용)
-  const [localStages, setLocalStages] = useState<Set<string>>(new Set(selectedStages));
-  const [localAssignees, setLocalAssignees] = useState<Set<string>>(new Set(selectedAssignees));
+  const [localStages, setLocalStages] = useState<Set<string>>(
+    new Set(selectedStages)
+  );
+  const [localAssignees, setLocalAssignees] = useState<Set<string>>(
+    new Set(selectedAssignees)
+  );
 
   // 드롭다운이 열릴 때만 부모 상태로 초기화
   useEffect(() => {
@@ -281,6 +308,10 @@ export function GanttHeader({
     try {
       const success = await startEditing();
       if (success) {
+        // 편집 모드 시작 시 Summarized 뷰면 Detailed로 전환
+        if (viewMode === "summarized") {
+          setViewMode("detailed");
+        }
         onStartSuccess?.();
       } else {
         if (lockState.isLocked && !lockState.isMyLock) {
@@ -321,8 +352,8 @@ export function GanttHeader({
     <>
       <div
         className={`${
-          isMobile && readOnly 
-            ? "flex flex-col items-center gap-3 px-4 py-3" 
+          isMobile
+            ? "flex flex-col gap-3 px-4 py-3"
             : "flex items-center justify-between px-5 py-4"
         } border-b transition-all duration-300`}
         style={{
@@ -332,35 +363,59 @@ export function GanttHeader({
           borderColor: isEditing ? "rgba(16, 185, 129, 0.2)" : "#e5e7eb",
         }}
       >
-        {/* 좌측: 제목 + 락 상태 */}
-        <div className={`flex items-center gap-4 ${isMobile && readOnly ? "justify-center" : ""}`}>
-          <div className={isMobile && readOnly ? "text-center" : ""}>
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className={`${isMobile ? "text-lg" : "text-xl"} font-bold text-gray-900`}>
-                  {title || (readOnly ? "계획" : "계획 관리")}
-                </h1>
-                <p className={`${isMobile ? "text-xs" : "text-sm"} text-gray-500`}>
-                  {description || "Feature 단위 일정 계획"}
-                </p>
-              </div>
-              {/* 마지막 업데이트 시각 표시 (읽기 전용 모드에서만) */}
-              {readOnly && maxUpdatedAt && (
-                <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-500 bg-gray-50">
-                  <span>Updated</span>
+        {/* 좌측: View Mode Toggle + 마지막 업데이트 */}
+        <div
+          className={`flex items-center gap-4 ${
+            isMobile ? "w-full justify-center" : ""
+          }`}
+        >
+          {/* View Mode Toggle (ReadOnly 모드 또는 작업 시작 전에만 표시) */}
+          {(readOnly || !isEditing) && (
+            <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+              <button
+                onClick={() => startTransition(() => setViewMode("detailed"))}
+                disabled={isPending}
+                className={`px-2 py-1 text-xs font-medium rounded transition-all ${
+                  viewMode === "detailed"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-800"
+                } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                title="상세 보기 (기능별)"
+              >
+                Detailed
+              </button>
+              <button
+                onClick={() => startTransition(() => setViewMode("summarized"))}
+                disabled={isPending}
+                className={`px-2 py-1 text-xs font-medium rounded transition-all ${
+                  viewMode === "summarized"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-800"
+                } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                title="요약 보기 (모듈별)"
+              >
+                Summarized
+              </button>
+            </div>
+          )}
+
+          {/* 마지막 업데이트 시각 표시 (읽기 전용 모드에서만) */}
+          {readOnly && maxUpdatedAt && (
+            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-500 bg-gray-50">
+              <span>Updated</span>
+              <span className="font-semibold text-gray-700">
+                {formatRelativeTime(maxUpdatedAt)}
+              </span>
+              {updatedByName && (
+                <>
+                  <span>by</span>
                   <span className="font-semibold text-gray-700">
-                    {formatRelativeTime(maxUpdatedAt)}
+                    {updatedByName}
                   </span>
-                  {updatedByName && (
-                    <>
-                      <span>by</span>
-                      <span className="font-semibold text-gray-700">{updatedByName}</span>
-                    </>
-                  )}
-                </div>
+                </>
               )}
             </div>
-          </div>
+          )}
 
           {/* 락 상태 - 읽기 전용에서는 숨김 */}
           {!readOnly && <div className="h-8 w-px bg-gray-200" />}
@@ -379,22 +434,32 @@ export function GanttHeader({
                     style={{ color: "#059669" }}
                   >
                     <LockClosedIcon className="w-3 h-3 flex-shrink-0" />
-                    <span>편집 중 · 갱신 {String(nextHeartbeatSeconds ?? 0).padStart(2, "0")}초</span>
+                    <span>
+                      편집 중 · 갱신{" "}
+                      {String(nextHeartbeatSeconds ?? 0).padStart(2, "0")}초
+                    </span>
                   </div>
                   {/* 2행: 비활성 시간 */}
                   <div
                     className="flex items-center gap-1 text-[10px] font-medium mt-0.5"
                     style={{
-                      color: inactivitySeconds !== null && inactivitySeconds > 540 
-                        ? "#dc2626" 
-                        : inactivitySeconds !== null && inactivitySeconds > 300 
-                          ? "#d97706" 
+                      color:
+                        inactivitySeconds !== null && inactivitySeconds > 540
+                          ? "#dc2626"
+                          : inactivitySeconds !== null &&
+                            inactivitySeconds > 300
+                          ? "#d97706"
                           : "#6b7280",
                     }}
                     title="10분간 활동이 없으면 자동으로 편집이 종료됩니다"
                   >
                     <span className="ml-[18px]">
-                      비활성 {inactivitySeconds !== null ? `${Math.floor(inactivitySeconds / 60)}:${String(inactivitySeconds % 60).padStart(2, "0")}` : "0:00"}
+                      비활성{" "}
+                      {inactivitySeconds !== null
+                        ? `${Math.floor(inactivitySeconds / 60)}:${String(
+                            inactivitySeconds % 60
+                          ).padStart(2, "0")}`
+                        : "0:00"}
                     </span>
                     <span className="opacity-50">/ 10:00</span>
                   </div>
@@ -425,7 +490,7 @@ export function GanttHeader({
                   onMouseLeave={() => setIsExtendPressed(false)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-shrink-0 active:scale-95"
                   title="비활성 시간 초기화 및 락 연장"
-                  style={{ 
+                  style={{
                     color: "#059669",
                     background: "rgba(16, 185, 129, 0.1)",
                     border: "1px solid rgba(16, 185, 129, 0.3)",
@@ -451,289 +516,318 @@ export function GanttHeader({
         </div>
 
         {/* 중앙: 필터 + 기간 설정 + 보조 액션 */}
-        <div className={`flex items-center gap-3 ${isMobile && readOnly ? "justify-center" : ""}`}>
-          {/* 스테이지 필터 */}
-          {onStagesChange && (
-            <div className="relative" ref={stagesFilterRef}>
-              <button
-                onClick={() => setShowStagesFilter(!showStagesFilter)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  selectedStages.size > 0
-                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-                title="스테이지 필터"
-              >
-                <span>스테이지</span>
-                {selectedStages.size > 0 && (
-                  <span className="px-1.5 py-0.5 text-xs font-bold rounded-full bg-blue-500 text-white">
-                    {selectedStages.size}
-                  </span>
-                )}
-                <ChevronDownIcon
-                  className={`w-3 h-3 transition-transform ${
-                    showStagesFilter ? "rotate-180" : ""
+        <div
+          className={`${
+            isMobile
+              ? "flex flex-col gap-2 w-full"
+              : "flex items-center gap-3"
+          }`}
+        >
+          {/* 필터 섹션 (윗줄) */}
+          <div className={`flex items-center gap-3 ${isMobile ? "w-full justify-center" : ""}`}>
+            {/* 스테이지 필터 */}
+            {onStagesChange && (
+              <div className="relative" ref={stagesFilterRef}>
+                <button
+                  onClick={() => setShowStagesFilter(!showStagesFilter)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    selectedStages.size > 0
+                      ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      : "text-gray-600 hover:bg-gray-100"
                   }`}
-                />
-              </button>
-              {showStagesFilter && (
-                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
-                  <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
-                    {STAGES.map((stage) => (
-                      <label
-                        key={stage.name}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
+                  title="스테이지 필터"
+                >
+                  <span>스테이지</span>
+                  {selectedStages.size > 0 && (
+                    <span className="px-1.5 py-0.5 text-xs font-bold rounded-full bg-blue-500 text-white">
+                      {selectedStages.size}
+                    </span>
+                  )}
+                  <ChevronDownIcon
+                    className={`w-3 h-3 transition-transform ${
+                      showStagesFilter ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {showStagesFilter && (
+                  <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
+                    <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
+                      {STAGES.map((stage) => (
+                        <label
+                          key={stage.name}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={localStages.has(stage.name)}
+                            onChange={(e) => {
+                              const newStages = new Set(localStages);
+                              if (e.target.checked) {
+                                newStages.add(stage.name);
+                              } else {
+                                newStages.delete(stage.name);
+                              }
+                              setLocalStages(newStages);
+                            }}
+                            className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: stage.color }}
+                          />
+                          <span className="text-xs text-gray-700 flex-1">
+                            {stage.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {/* 액션 버튼 */}
+                    <div className="border-t border-gray-200 p-2 flex gap-2">
+                      <button
+                        onClick={() => {
+                          setLocalStages(new Set());
+                        }}
+                        className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
                       >
-                        <input
-                          type="checkbox"
-                          checked={localStages.has(stage.name)}
-                          onChange={(e) => {
-                            const newStages = new Set(localStages);
-                            if (e.target.checked) {
-                              newStages.add(stage.name);
-                            } else {
-                              newStages.delete(stage.name);
-                            }
-                            setLocalStages(newStages);
-                          }}
-                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: stage.color }}
-                        />
-                        <span className="text-xs text-gray-700 flex-1">{stage.name}</span>
-                      </label>
-                    ))}
+                        초기화
+                      </button>
+                      <button
+                        onClick={() => {
+                          onStagesChange(localStages);
+                          setShowStagesFilter(false);
+                        }}
+                        className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                      >
+                        적용
+                      </button>
+                    </div>
                   </div>
-                  {/* 액션 버튼 */}
-                  <div className="border-t border-gray-200 p-2 flex gap-2">
-                    <button
-                      onClick={() => {
-                        setLocalStages(new Set());
-                      }}
-                      className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
-                    >
-                      초기화
-                    </button>
-                    <button
-                      onClick={() => {
-                        onStagesChange(localStages);
-                        setShowStagesFilter(false);
-                      }}
-                      className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
-                    >
-                      적용
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 담당자 필터 */}
-          {onAssigneesChange && members && members.length > 0 && (
-            <div className="relative" ref={assigneesFilterRef}>
-              <button
-                onClick={() => setShowAssigneesFilter(!showAssigneesFilter)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  selectedAssignees.size > 0
-                    ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-                title="담당자 필터"
-              >
-                <span>담당자</span>
-                {selectedAssignees.size > 0 && (
-                  <span className="px-1.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500 text-white">
-                    {selectedAssignees.size}
-                  </span>
                 )}
-                <ChevronDownIcon
-                  className={`w-3 h-3 transition-transform ${
-                    showAssigneesFilter ? "rotate-180" : ""
+              </div>
+            )}
+
+            {/* 담당자 필터 */}
+            {onAssigneesChange && members && members.length > 0 && (
+              <div className="relative" ref={assigneesFilterRef}>
+                <button
+                  onClick={() => setShowAssigneesFilter(!showAssigneesFilter)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    selectedAssignees.size > 0
+                      ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                      : "text-gray-600 hover:bg-gray-100"
                   }`}
-                />
-              </button>
-              {showAssigneesFilter && (
-                <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[200px] z-50 overflow-hidden">
-                  <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
-                    {members.map((member) => (
-                      <label
-                        key={member.userId}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
+                  title="담당자 필터"
+                >
+                  <span>담당자</span>
+                  {selectedAssignees.size > 0 && (
+                    <span className="px-1.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500 text-white">
+                      {selectedAssignees.size}
+                    </span>
+                  )}
+                  <ChevronDownIcon
+                    className={`w-3 h-3 transition-transform ${
+                      showAssigneesFilter ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {showAssigneesFilter && (
+                  <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[200px] z-50 overflow-hidden">
+                    <div className="p-2 space-y-1 max-h-[240px] overflow-y-auto">
+                      {members.map((member) => (
+                        <label
+                          key={member.userId}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={localAssignees.has(member.userId)}
+                            onChange={(e) => {
+                              const newAssignees = new Set(localAssignees);
+                              if (e.target.checked) {
+                                newAssignees.add(member.userId);
+                              } else {
+                                newAssignees.delete(member.userId);
+                              }
+                              setLocalAssignees(newAssignees);
+                            }}
+                            className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-xs text-gray-700">
+                            {member.displayName}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {/* 액션 버튼 */}
+                    <div className="border-t border-gray-200 p-2 flex gap-2">
+                      <button
+                        onClick={() => {
+                          setLocalAssignees(new Set());
+                        }}
+                        className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
                       >
-                        <input
-                          type="checkbox"
-                          checked={localAssignees.has(member.userId)}
-                          onChange={(e) => {
-                            const newAssignees = new Set(localAssignees);
-                            if (e.target.checked) {
-                              newAssignees.add(member.userId);
-                            } else {
-                              newAssignees.delete(member.userId);
-                            }
-                            setLocalAssignees(newAssignees);
-                          }}
-                          className="w-3.5 h-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                        />
-                        <span className="text-xs text-gray-700">{member.displayName}</span>
-                      </label>
-                    ))}
+                        초기화
+                      </button>
+                      <button
+                        onClick={() => {
+                          onAssigneesChange(localAssignees);
+                          setShowAssigneesFilter(false);
+                        }}
+                        className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-emerald-500 rounded hover:bg-emerald-600 transition-colors"
+                      >
+                        적용
+                      </button>
+                    </div>
                   </div>
-                  {/* 액션 버튼 */}
-                  <div className="border-t border-gray-200 p-2 flex gap-2">
-                    <button
-                      onClick={() => {
-                        setLocalAssignees(new Set());
-                      }}
-                      className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
-                    >
-                      초기화
-                    </button>
-                    <button
-                      onClick={() => {
-                        onAssigneesChange(localAssignees);
-                        setShowAssigneesFilter(false);
-                      }}
-                      className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-emerald-500 rounded hover:bg-emerald-600 transition-colors"
-                    >
-                      적용
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {(onStagesChange || (onAssigneesChange && members && members.length > 0)) && (
-            <div className="w-px h-5 bg-gray-200" />
-          )}
-
-          {/* 기간 설정 버튼 */}
-          <div className="relative" ref={rangePopoverRef}>
-            <button
-              onClick={() => setShowRangePopover(!showRangePopover)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-gray-100"
-              style={{ color: "#374151" }}
-            >
-              <CalendarIcon className="w-4 h-4 text-blue-500" />
-              <span>{formatRangeLabel()}</span>
-              <ChevronDownIcon
-                className={`w-3 h-3 transition-transform ${
-                  showRangePopover ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {/* 기간 설정 팝오버 */}
-            {showRangePopover && (
-              <RangePopover
-                rangeMonths={rangeMonths}
-                rangeStart={rangeStart}
-                rangeEnd={rangeEnd}
-                onRangeMonthsChange={(months) => {
-                  onRangeMonthsChange?.(months);
-                  setShowRangePopover(false);
-                }}
-                onCustomRangeChange={(start, end) => {
-                  onCustomRangeChange?.(start, end);
-                  setShowRangePopover(false);
-                }}
-                onClose={() => setShowRangePopover(false)}
-              />
+                )}
+              </div>
             )}
           </div>
 
-          <div className="w-px h-5 bg-gray-200" />
+          {/* 구분선 (데스크톱에서만) */}
+          {!isMobile && (onStagesChange ||
+            (onAssigneesChange && members && members.length > 0)) && (
+            <div className="w-px h-5 bg-gray-200" />
+          )}
 
-          {/* 보조 액션 */}
-          {dragInfo ? (
-            <div
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                color: "white",
-                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)",
-              }}
-            >
-              <span className="text-xs opacity-80">📅</span>
-              <span>{dragInfo.startDate}</span>
-              <span className="opacity-60">→</span>
-              <span>{dragInfo.endDate}</span>
-            </div>
-          ) : (
-            <>
-              {/* Undo/Redo (편집 모드일 때만) */}
-              {isEditing && (
-                <>
-                  <HeaderButton
-                    icon={<UndoIcon className="w-4 h-4" />}
-                    onClick={onUndo}
-                    disabled={!canUndo}
-                    tooltip="실행 취소 (⌘Z)"
-                  />
-                  <HeaderButton
-                    icon={<RedoIcon className="w-4 h-4" />}
-                    onClick={onRedo}
-                    disabled={!canRedo}
-                    tooltip="다시 실행 (⌘⇧Z)"
-                  />
-                  <div className="w-px h-5 bg-gray-200 mx-1" />
-                </>
-              )}
-
-              {/* 커맨드 팔레트 */}
+          {/* 날짜/액션 섹션 (아래줄) */}
+          <div className={`flex items-center gap-3 ${isMobile ? "w-full justify-center" : ""}`}>
+            {/* 기간 설정 버튼 */}
+            <div className="relative" ref={rangePopoverRef}>
               <button
-                onClick={onOpenCommandPalette}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium font-mono transition-all hover:bg-gray-100"
-                style={{ color: "#6b7280" }}
+                onClick={() => setShowRangePopover(!showRangePopover)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-gray-100"
+                style={{ color: "#374151" }}
               >
-                <span className="opacity-70">{modKey}</span>
-                {!isMac && <span className="opacity-50">+</span>}
-                <span>K</span>
+                <CalendarIcon className="w-4 h-4 text-blue-500" />
+                <span>{formatRangeLabel()}</span>
+                <ChevronDownIcon
+                  className={`w-3 h-3 transition-transform ${
+                    showRangePopover ? "rotate-180" : ""
+                  }`}
+                />
               </button>
 
-              {/* URL 복사 버튼 */}
-              <HeaderButton
-                icon={<CopyIcon className="w-4 h-4" />}
-                onClick={handleCopyURL}
-                tooltip="URL 복사"
-              />
+              {/* 기간 설정 팝오버 */}
+              {showRangePopover && (
+                <RangePopover
+                  rangeMonths={rangeMonths}
+                  rangeStart={rangeStart}
+                  rangeEnd={rangeEnd}
+                  onRangeMonthsChange={(months) => {
+                    onRangeMonthsChange?.(months);
+                    setShowRangePopover(false);
+                  }}
+                  onCustomRangeChange={(start, end) => {
+                    onCustomRangeChange?.(start, end);
+                    setShowRangePopover(false);
+                  }}
+                  onClose={() => setShowRangePopover(false)}
+                />
+              )}
+            </div>
 
-              {/* 도움말 - 읽기 전용에서는 숨김 */}
-              {!readOnly && onOpenHelp && (
+            <div className="w-px h-5 bg-gray-200" />
+
+            {/* 보조 액션 */}
+            {dragInfo ? (
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
+                style={{
+                  background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                  color: "white",
+                  boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)",
+                }}
+              >
+                <span className="text-xs opacity-80">📅</span>
+                <span>{dragInfo.startDate}</span>
+                <span className="opacity-60">→</span>
+                <span>{dragInfo.endDate}</span>
+              </div>
+            ) : (
+              <>
+                {/* Undo/Redo (편집 모드일 때만) */}
+                {isEditing && (
+                  <>
+                    <HeaderButton
+                      icon={<UndoIcon className="w-4 h-4" />}
+                      onClick={onUndo}
+                      disabled={!canUndo}
+                      tooltip="실행 취소 (⌘Z)"
+                    />
+                    <HeaderButton
+                      icon={<RedoIcon className="w-4 h-4" />}
+                      onClick={onRedo}
+                      disabled={!canRedo}
+                      tooltip="다시 실행 (⌘⇧Z)"
+                    />
+                    <div className="w-px h-5 bg-gray-200 mx-1" />
+                  </>
+                )}
+
+                {/* 커맨드 팔레트 */}
+                <button
+                  onClick={onOpenCommandPalette}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium font-mono transition-all hover:bg-gray-100"
+                  style={{ color: "#6b7280" }}
+                >
+                  <span className="opacity-70">{modKey}</span>
+                  {!isMac && <span className="opacity-50">+</span>}
+                  <span>K</span>
+                </button>
+
+                {/* URL 복사 버튼 */}
                 <HeaderButton
-                  icon={<HelpIcon className="w-4 h-4" />}
-                  onClick={onOpenHelp}
-                  tooltip="도움말 (?)"
+                  icon={<CopyIcon className="w-4 h-4" />}
+                  onClick={handleCopyURL}
+                  tooltip="URL 복사"
                 />
-              )}
-              {onToggleHeader && (
-                <HeaderButton
-                  icon={
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  }
-                  onClick={onToggleHeader}
-                  tooltip="헤더 숨기기 (👁️‍🗨️)"
-                />
-              )}
-            </>
-          )}
+
+                {/* 도움말 - 읽기 전용에서는 숨김 */}
+                {!readOnly && onOpenHelp && (
+                  <HeaderButton
+                    icon={<HelpIcon className="w-4 h-4" />}
+                    onClick={onOpenHelp}
+                    tooltip="도움말 (?)"
+                  />
+                )}
+                {onToggleHeader && (
+                  <HeaderButton
+                    icon={
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    }
+                    onClick={onToggleHeader}
+                    tooltip="헤더 숨기기 (👁️‍🗨️)"
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* 우측: 주요 액션 버튼 - 읽기 전용에서는 숨김 */}
         {!readOnly && (
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-3 ${isMobile ? "w-full justify-center" : ""}`}>
             {!isEditing ? (
               <button
                 onClick={handleStartEditing}
                 disabled={isStarting || (lockState.isLocked && !isMyLock)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5"
                 style={{
-                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                   color: "white",
                   boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
                 }}
@@ -764,7 +858,10 @@ export function GanttHeader({
                       {/* 활성화 상태: 카운트다운 표시 */}
                       {inactivitySeconds !== null && (
                         <>
-                          <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 36 36">
+                          <svg
+                            className="w-8 h-8 transform -rotate-90"
+                            viewBox="0 0 36 36"
+                          >
                             {/* 배경 원 */}
                             <circle
                               cx="18"
@@ -827,7 +924,7 @@ export function GanttHeader({
                       </div>
                     </>
                   )}
-                  
+
                   {/* 툴팁 (hover 시 표시) */}
                   <span className="invisible group-hover:visible absolute top-full mt-2 px-3 py-1.5 text-xs text-white bg-gray-900 rounded-md whitespace-nowrap shadow-lg z-50 pointer-events-none">
                     {autoSaveEnabled
@@ -857,15 +954,22 @@ export function GanttHeader({
                   ) : (
                     <SaveIcon className="w-4 h-4" />
                   )}
-                  {isAutoSaving ? "자동 저장 중..." : isCommitting ? "저장 중..." : "저장"}
-                  {hasUnsavedChanges && !isCommitting && !isAutoSaving && changesCount > 0 && (
-                    <span
-                      className="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
-                      style={{ background: "rgba(255,255,255,0.3)" }}
-                    >
-                      {changesCount}
-                    </span>
-                  )}
+                  {isAutoSaving
+                    ? "자동 저장 중..."
+                    : isCommitting
+                    ? "저장 중..."
+                    : "저장"}
+                  {hasUnsavedChanges &&
+                    !isCommitting &&
+                    !isAutoSaving &&
+                    changesCount > 0 && (
+                      <span
+                        className="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
+                        style={{ background: "rgba(255,255,255,0.3)" }}
+                      >
+                        {changesCount}
+                      </span>
+                    )}
                 </button>
 
                 {/* 작업 종료 */}
@@ -1053,7 +1157,7 @@ function RangePopover({
   const [activeTab, setActiveTab] = useState<"preset" | "custom">(
     isCustomMode ? "custom" : "preset"
   );
-  
+
   // 초기값 설정 (undefined/null 체크, 0도 유효한 값으로 처리)
   const [customStartYear, setCustomStartYear] = useState(
     rangeStart ? rangeStart.getFullYear() : new Date().getFullYear()
@@ -1070,12 +1174,15 @@ function RangePopover({
 
   const currentYear = new Date().getFullYear();
   // 현재 연도 기준 -1년 ~ +2년 범위 제공
-  const yearOptions = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map(
-    (y) => ({
-      value: y,
-      label: `${y}년`,
-    })
-  );
+  const yearOptions = [
+    currentYear - 1,
+    currentYear,
+    currentYear + 1,
+    currentYear + 2,
+  ].map((y) => ({
+    value: y,
+    label: `${y}년`,
+  }));
   const monthOptions = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
     label: `${i + 1}월`,

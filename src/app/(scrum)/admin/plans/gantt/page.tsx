@@ -37,7 +37,7 @@ export default async function AdminPlansGanttPage({ searchParams }: PageProps) {
 
   // 권한 없으면 리다이렉트
   if (!hasAccess) {
-    redirect("/plans");
+    redirect("/works/plans");
   }
 
   const initialPlans = result.success ? result.plans || [] : [];

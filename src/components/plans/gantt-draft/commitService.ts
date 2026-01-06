@@ -290,8 +290,8 @@ export async function commitFeaturePlans(
     });
 
     // 경로 재검증
-    revalidatePath("/plans");
-    revalidatePath("/plans/gantt");
+    revalidatePath("/works/plans");
+    revalidatePath("/works/plans/gantt");
     revalidatePath("/admin/plans");
 
     return {
@@ -674,8 +674,8 @@ export async function commitFlags(payload: {
     }
 
     // 경로 재검증
-    revalidatePath("/plans");
-    revalidatePath("/plans/gantt");
+    revalidatePath("/works/plans");
+    revalidatePath("/works/plans/gantt");
     revalidatePath("/admin/plans");
 
     return {

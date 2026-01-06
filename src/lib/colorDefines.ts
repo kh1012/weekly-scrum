@@ -208,3 +208,26 @@ export function getDomainColor(domain: string): { bg: string; text: string; bord
   return DOMAIN_COLORS[normalized] ?? getHashBasedColor(normalized);
 }
 
+/**
+ * 모듈 요약 바 색상 팔레트 (파스텔톤)
+ */
+export const MODULE_SUMMARY_COLORS = [
+  { bg: "#E0F2F1", border: "#4DB6AC", text: "#00695C" }, // 민트
+  { bg: "#F3E5F5", border: "#AB47BC", text: "#6A1B9A" }, // 라벤더
+  { bg: "#FFE0B2", border: "#FF9800", text: "#E65100" }, // 복숭아
+  { bg: "#E1F5FE", border: "#03A9F4", text: "#01579B" }, // 하늘색
+  { bg: "#FFF9C4", border: "#FBC02D", text: "#F57F17" }, // 레몬
+  { bg: "#FFEBEE", border: "#EF5350", text: "#B71C1C" }, // 핑크
+  { bg: "#E8F5E9", border: "#66BB6A", text: "#1B5E20" }, // 연두
+  { bg: "#FFF3E0", border: "#FFA726", text: "#E65100" }, // 주황
+] as const;
+
+/**
+ * 모듈명 해시 기반 색상 선택
+ */
+export function getModuleColor(moduleName: string): { bg: string; border: string; text: string } {
+  const hash = hashString(moduleName);
+  const index = hash % MODULE_SUMMARY_COLORS.length;
+  return MODULE_SUMMARY_COLORS[index];
+}
+

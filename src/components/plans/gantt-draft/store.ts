@@ -73,6 +73,7 @@ const initialUIState: DraftUIState = {
   expandedNodes: [],
   highlightDateRange: null,
   lastActivityAt: undefined,
+  viewMode: "detailed",
 };
 
 /**
@@ -205,6 +206,8 @@ interface DraftActions {
   collapseAllNodes: () => void;
   /** 특정 레벨까지만 펼치기 (0: 프로젝트만, 1: 모듈까지, 2: 기능까지) */
   expandToLevel: (level: 0 | 1 | 2) => void;
+  /** 뷰 모드 설정 */
+  setViewMode: (mode: "detailed" | "summarized") => void;
 
   // === Undo/Redo ===
   /** Undo */
@@ -253,7 +256,19 @@ interface DraftActions {
   /** Flag 수정 (로컬 상태만 변경) */
   updateFlagLocal: (
     clientId: string,
-    updates: Partial<Pick<DraftFlag, "title" | "startDate" | "endDate" | "orderIndex" | "color" | "laneHint" | "description" | "links">>
+    updates: Partial<
+      Pick<
+        DraftFlag,
+        | "title"
+        | "startDate"
+        | "endDate"
+        | "orderIndex"
+        | "color"
+        | "laneHint"
+        | "description"
+        | "links"
+      >
+    >
   ) => void;
   /** Flag 삭제 (로컬 상태만 변경, soft delete) */
   deleteFlag: (clientId: string) => void;
@@ -414,12 +429,12 @@ export const useDraftStore = create<DraftStore>()(
           .map((rowId, idx) => {
             const row = state.rows.find((r) => r.rowId === rowId);
             if (!row) return null;
-            
+
             // orderIndex가 변경된 경우 추적
             if (row.orderIndex !== idx) {
               changedRowIds.add(rowId);
             }
-            
+
             return { ...row, orderIndex: idx };
           })
           .filter((r): r is DraftRow => r !== null);
@@ -767,7 +782,11 @@ export const useDraftStore = create<DraftStore>()(
         if (barIndex === -1) return;
 
         const prevBar = state.bars[barIndex];
-        const newRowId = createRowId(targetProject, targetModule, targetFeature);
+        const newRowId = createRowId(
+          targetProject,
+          targetModule,
+          targetFeature
+        );
 
         // 이미 같은 row면 무시
         if (prevBar.rowId === newRowId) return;
@@ -938,7 +957,13 @@ export const useDraftStore = create<DraftStore>()(
           ui: {
             ...get().ui,
             searchQuery: "",
-            filters: { projects: [], modules: [], features: [], stages: [], assignees: [] },
+            filters: {
+              projects: [],
+              modules: [],
+              features: [],
+              stages: [],
+              assignees: [],
+            },
           },
         });
       },
@@ -957,6 +982,10 @@ export const useDraftStore = create<DraftStore>()(
 
       recordActivity: () => {
         set({ ui: { ...get().ui, lastActivityAt: new Date().toISOString() } });
+      },
+
+      setViewMode: (mode) => {
+        set({ ui: { ...get().ui, viewMode: mode } });
       },
 
       // === Undo/Redo ===
@@ -1095,7 +1124,9 @@ export const useDraftStore = create<DraftStore>()(
       hasUnsavedChanges: () => {
         const state = get();
         // bars 또는 flags 중 하나라도 dirty가 있으면 true
-        return state.bars.some((b) => b.dirty) || state.flags.some((f) => f.dirty);
+        return (
+          state.bars.some((b) => b.dirty) || state.flags.some((f) => f.dirty)
+        );
       },
 
       discardAllChanges: () => {
@@ -1202,19 +1233,23 @@ export const useDraftStore = create<DraftStore>()(
 
       selectFlag: (id) => {
         const state = get();
-        const flag = id ? state.flags.find((f) => f.clientId === id && !f.deleted) : null;
-        
+        const flag = id
+          ? state.flags.find((f) => f.clientId === id && !f.deleted)
+          : null;
+
         set({
           selectedFlagId: id,
           ui: {
             ...state.ui,
             selectedBarId: undefined,
-            highlightDateRange: flag ? {
-              startDate: flag.startDate,
-              endDate: flag.endDate,
-              type: "flag" as const,
-              color: flag.color || "#ef4444",
-            } : null,
+            highlightDateRange: flag
+              ? {
+                  startDate: flag.startDate,
+                  endDate: flag.endDate,
+                  type: "flag" as const,
+                  color: flag.color || "#ef4444",
+                }
+              : null,
           },
         });
       },
@@ -1356,10 +1391,13 @@ export const useDraftStore = create<DraftStore>()(
           zoom: state.ui.zoom,
           filters: state.ui.filters,
           searchQuery: state.ui.searchQuery,
+          viewMode: state.ui.viewMode,
         },
       }),
       merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<DraftState & FlagState> | undefined;
+        const persisted = persistedState as
+          | Partial<DraftState & FlagState>
+          | undefined;
         return {
           ...currentState,
           rows: persisted?.rows ?? currentState.rows,
@@ -1371,6 +1409,7 @@ export const useDraftStore = create<DraftStore>()(
             filters: persisted?.ui?.filters ?? currentState.ui.filters,
             searchQuery:
               persisted?.ui?.searchQuery ?? currentState.ui.searchQuery,
+            viewMode: persisted?.ui?.viewMode ?? currentState.ui.viewMode,
           },
         };
       },

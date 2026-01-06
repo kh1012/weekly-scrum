@@ -87,7 +87,7 @@ export function TeamFeedClient({
       }
 
       startTransition(() => {
-        router.push(`/team-feed?${params.toString()}`);
+        router.push(`/works/team-feed?${params.toString()}`);
       });
       setIsFilterPanelOpen(false);
     },
@@ -96,7 +96,7 @@ export function TeamFeedClient({
 
   const handleResetFilters = useCallback(() => {
     startTransition(() => {
-      router.push("/team-feed");
+      router.push("/works/team-feed");
     });
     setIsFilterPanelOpen(false);
     setSearchInput("");

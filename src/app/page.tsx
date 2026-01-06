@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getLastVisitedPage } from "@/components/weekly-scrum/common/LayoutWrapper";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
-const DEFAULT_PAGE = "/work-map";
+const DEFAULT_PAGE = "/works/work-map";
 
 export default function Home() {
   const router = useRouter();

@@ -216,6 +216,8 @@ export interface DraftUIState {
   highlightDateRange?: HighlightDateRange | null;
   /** 마지막 활동 시간 (ISO 문자열) - 비활성 타임아웃 계산용 */
   lastActivityAt?: string;
+  /** 뷰 모드 (detailed: 기능별 상세, summarized: 모듈별 요약) */
+  viewMode: "detailed" | "summarized";
 }
 
 /**

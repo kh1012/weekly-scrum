@@ -65,33 +65,53 @@ export function AlignmentGanttView({
    */
   const { initialPlans, mismatches } = useMemo(() => {
     // 1. AlignmentGanttItem → InitialPlan 변환
-    const plans = items.map((item) => ({
-      id: item.id,
-      clientUid: item.id,
-      title: item.title,
-      domain: item.domain || "",
-      project: item.project || "",
-      module: item.module || "",
-      feature: item.feature || "",
-      startDate: item.start_date,
-      endDate: item.end_date,
-      status: item.status || "active",
-      stage: item.stage || "in_progress",
-      priority: item.priority,
-      assignees: item.assignees || [],
-      isSnapshot: item.type === "snapshot",
-      avgProgress: item.avgProgress,
-      metaKey: item.metaKey,
-      year: item.year,
-      week: item.week,
-      authorName: item.authorName,
-      authorId: item.authorId,
-      past_week: item.past_week,
-      this_week: item.this_week,
-      collaborators: item.collaborators,
-      risks: item.risks,
-      risk_level: item.risk_level,
-    }));
+    const plans = items.map((item) => {
+      const plan = {
+        id: item.id,
+        clientUid: item.id,
+        title: item.title,
+        domain: item.domain || "",
+        project: item.project || "",
+        module: item.module || "",
+        feature: item.feature || "",
+        startDate: item.start_date,
+        endDate: item.end_date,
+        status: item.status || "active",
+        stage: item.stage || "in_progress",
+        priority: item.priority,
+        assignees: item.assignees || [],
+        isSnapshot: item.type === "snapshot",
+        avgProgress: item.avgProgress,
+        metaKey: item.metaKey,
+        year: item.year,
+        week: item.week,
+        authorName: item.authorName,
+        authorId: item.authorId,
+        past_week: item.past_week,
+        this_week: item.this_week,
+        collaborators: item.collaborators,
+        risks: item.risks,
+        risk_level: item.risk_level,
+      };
+
+      // 디버그: 스냅샷 아이템 확인
+      if (item.type === "snapshot") {
+        console.log('[AlignmentGanttView] Converting snapshot item to InitialPlan:', {
+          id: item.id,
+          title: item.title,
+          year: item.year,
+          week: item.week,
+          authorName: item.authorName,
+          authorId: item.authorId,
+          hasPastWeek: !!item.past_week,
+          hasThisWeek: !!item.this_week,
+          pastWeekTasks: item.past_week?.tasks?.length || 0,
+          thisWeekTasks: item.this_week?.tasks?.length || 0,
+        });
+      }
+
+      return plan;
+    });
 
     // 2. DraftBar 형식으로 변환 (Status 계산용)
     const mockBars: DraftBar[] = plans.map((p) => ({

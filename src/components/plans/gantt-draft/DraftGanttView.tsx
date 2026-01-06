@@ -50,6 +50,29 @@ interface InitialPlan {
   orderIndex?: number; // 트리 순서
   laneHint?: number; // 사용자 지정 레인
   assignees?: InitialAssignee[];
+  /** Snapshot 전용 필드 */
+  isSnapshot?: boolean;
+  avgProgress?: number; // 평균 진행률 (0-100)
+  metaKey?: string; // 메타 정보 키
+  year?: number;
+  week?: string;
+  authorName?: string; // 작성자 이름
+  authorId?: string; // 작성자 user_id (화살표 연결용)
+  past_week?: {
+    tasks?: Array<{ title: string; progress: number }>;
+    progress?: string;
+    next?: string;
+    risk?: string;
+    memo?: string;
+  };
+  this_week?: {
+    tasks?: string[];
+  };
+  collaborators?: Array<{ name: string; relations?: string[] }>;
+  risks?: string[];
+  risk_level?: number;
+  /** Alignment 상태 (Plan only) */
+  alignmentStatus?: "green" | "orange" | "red" | null;
 }
 
 interface DraftGanttViewProps {
@@ -382,6 +405,20 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
         });
       }
 
+      // 디버그: 스냅샷 정보 확인
+      if (plan.isSnapshot) {
+        console.log('[DraftGanttView] Loading snapshot entry:', {
+          id: plan.id,
+          title: plan.title,
+          year: plan.year,
+          week: plan.week,
+          authorName: plan.authorName,
+          authorId: plan.authorId,
+          hasPastWeek: !!plan.past_week,
+          hasThisWeek: !!plan.this_week,
+        });
+      }
+
       loadedBars.push({
         clientUid: plan.clientUid,
         rowId,
@@ -404,19 +441,19 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
         createdAtLocal: new Date().toISOString(),
         updatedAtLocal: new Date().toISOString(),
         // Snapshot 전용 필드
-        isSnapshot: (plan as any).isSnapshot,
-        avgProgress: (plan as any).avgProgress,
-        metaKey: (plan as any).metaKey,
-        year: (plan as any).year,
-        week: (plan as any).week,
-        authorName: (plan as any).authorName,
-        authorId: (plan as any).authorId,
-        past_week: (plan as any).past_week,
-        this_week: (plan as any).this_week,
-        collaborators: (plan as any).collaborators,
-        risks: (plan as any).risks,
-        risk_level: (plan as any).risk_level,
-        alignmentStatus: (plan as any).alignmentStatus,
+        isSnapshot: plan.isSnapshot,
+        avgProgress: plan.avgProgress,
+        metaKey: plan.metaKey,
+        year: plan.year,
+        week: plan.week,
+        authorName: plan.authorName,
+        authorId: plan.authorId,
+        past_week: plan.past_week,
+        this_week: plan.this_week,
+        collaborators: plan.collaborators,
+        risks: plan.risks,
+        risk_level: plan.risk_level,
+        alignmentStatus: plan.alignmentStatus,
       });
     }
 
@@ -1109,7 +1146,7 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
       {/* 메인 영역 - border 없이 꽉 차게 */}
       <div className="flex flex-1 overflow-hidden bg-white relative">
         {/* 필터 로딩 스켈레톤 (테이블 영역만) */}
-        {isFilterLoading && <GanttSkeleton />}
+        {isFilterLoading && <GanttSkeleton type="detailed" />}
 
         {/* 모바일: 트리 패널 토글 버튼 (readOnly일 때는 숨김) */}
         {isMobile && !readOnly && (

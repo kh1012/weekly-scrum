@@ -468,12 +468,12 @@ export async function getAlignmentGanttData({
     snapshotEntries = entriesData || [];
   }
 
-  // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName})
+  // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName, authorId})
   const snapshotMap = new Map(
     snapshots?.map((s) => {
       const profile = (s as any).profiles;
       const authorName = profile?.display_name || profile?.email || "Unknown";
-      return [s.id, { year: s.year, week: s.week, authorName }];
+      return [s.id, { year: s.year, week: s.week, authorName, authorId: s.author_id }];
     }) || []
   );
 
@@ -549,6 +549,7 @@ export async function getAlignmentGanttData({
       avgProgress, // 평균 진행률 추가
       metaKey, // 메타 키 추가 (연결 화살표용)
       authorName: snapshot.authorName, // 작성자 이름 추가
+      authorId: snapshot.authorId, // 작성자 ID 추가 (화살표 연결용)
       past_week: pastWeek, // Snapshot 상세 정보 추가
       this_week: thisWeek, // NEXT 작업 추가
       collaborators: entry.collaborators || [], // 협업자 추가

@@ -206,19 +206,19 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
       {
         key: "team-feed",
         label: "Team Feed",
-        href: "/team-feed",
+        href: "/works/team-feed",
         icon: Icons.users,
       },
       {
         key: "plans",
         label: "Plans",
-        href: "/plans/gantt",
+        href: "/works/plans/gantt",
         icon: Icons.calendarDays,
       },
       {
         key: "snapshots",
         label: "Snapshots",
-        href: "/snapshots",
+        href: "/works/snapshots",
         icon: Icons.cameraRetro,
       },
       {
@@ -230,7 +230,7 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
       {
         key: "work-map",
         label: "Work Map",
-        href: "/work-map",
+        href: "/works/work-map",
         icon: Icons.mapLocation,
       },
       {
@@ -344,23 +344,36 @@ export function getBreadcrumbFromPath(pathname: string): {
   category: string | null;
   menu: string | null;
 } {
-  // 각 카테고리와 메뉴를 순회하며 매칭되는 것 찾기
+  // 모든 메뉴 아이템을 하나의 배열로 모으고 경로 길이 내림차순 정렬
+  const allItems: Array<{
+    category: string;
+    item: NavItem;
+  }> = [];
+
   for (const category of BASE_NAV_CATEGORIES) {
     for (const item of category.items) {
-      // 정확히 일치하는 경우
-      if (pathname === item.href || pathname === item.href + "/") {
-        return {
-          category: category.label,
-          menu: item.label,
-        };
-      }
-      // 하위 경로인 경우 (예: /admin/plans/123 -> Plans Management)
-      if (item.href !== "/" && pathname.startsWith(item.href + "/")) {
-        return {
-          category: category.label,
-          menu: item.label,
-        };
-      }
+      allItems.push({ category: category.label, item });
+    }
+  }
+
+  // 경로 길이로 정렬 (긴 경로가 먼저)
+  allItems.sort((a, b) => b.item.href.length - a.item.href.length);
+
+  // 매칭 찾기
+  for (const { category, item } of allItems) {
+    // 정확히 일치하는 경우
+    if (pathname === item.href || pathname === item.href + "/") {
+      return {
+        category,
+        menu: item.label,
+      };
+    }
+    // 하위 경로인 경우 (예: /admin/plans/123 -> Plans Management)
+    if (item.href !== "/" && pathname.startsWith(item.href + "/")) {
+      return {
+        category,
+        menu: item.label,
+      };
     }
   }
 
@@ -546,10 +559,10 @@ export const SideNavigation = memo(function SideNavigation({
   useEffect(() => {
     // 주요 메뉴들을 미리 prefetch
     const priorityRoutes = [
-      "/team-feed",
-      "/snapshots",
-      "/plans/gantt",
-      "/work-map",
+      "/works/team-feed",
+      "/works/snapshots",
+      "/works/plans/gantt",
+      "/works/work-map",
       "/my",
     ];
 

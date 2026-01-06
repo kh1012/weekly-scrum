@@ -80,8 +80,10 @@ interface DraftBarProps {
   lane: number;
   isSelected: boolean;
   isEditing: boolean;
+  readOnly?: boolean;
   onSelect: () => void;
   onDoubleClick?: (e?: React.MouseEvent) => void;
+  onContextMenu?: (e: React.MouseEvent, bar: BarWithLane) => void;
   dayWidth: number;
   rangeStart: Date;
   /** 드래그 중 기간 정보 콜백 */
@@ -137,8 +139,10 @@ export const DraftBar = memo(function DraftBar({
   lane,
   isSelected,
   isEditing,
+  readOnly = false,
   onSelect,
   onDoubleClick,
+  onContextMenu,
   dayWidth,
   rangeStart,
   onDragDateChange,
@@ -155,14 +159,32 @@ export const DraftBar = memo(function DraftBar({
   const [isHovered, setIsHovered] = useState(false);
 
   // Snapshot 블록인지 확인
-  const isSnapshot = (bar as any).isSnapshot === true;
-  const avgProgress = (bar as any).avgProgress || 0;
-  const snapshotYear = (bar as any).year;
-  const snapshotWeek = (bar as any).week;
-  const authorName = (bar as any).authorName;
+  const isSnapshot = bar.isSnapshot === true;
+  const avgProgress = bar.avgProgress || 0;
+  const snapshotYear = bar.year;
+  const snapshotWeek = bar.week;
+  const authorName = bar.authorName;
+  
+  // 디버그: 스냅샷 정보 확인 (초기 렌더링 시 한 번만)
+  const hasLoggedRef = useRef(false);
+  if (isSnapshot && !hasLoggedRef.current) {
+    console.log('[DraftBar] Rendering snapshot entry:', {
+      clientUid: bar.clientUid,
+      title: bar.title,
+      year: snapshotYear,
+      week: snapshotWeek,
+      authorName: authorName,
+      authorId: bar.authorId,
+      hasPastWeek: !!bar.past_week,
+      hasThisWeek: !!bar.this_week,
+      pastWeekTasks: bar.past_week?.tasks?.length || 0,
+      thisWeekTasks: bar.this_week?.tasks?.length || 0,
+    });
+    hasLoggedRef.current = true;
+  }
   
   // Alignment 상태 (Plan only)
-  const alignmentStatus = (bar as any).alignmentStatus as "green" | "orange" | "red" | null;
+  const alignmentStatus = bar.alignmentStatus as "green" | "orange" | "red" | null;
 
   // 첫 번째 담당자의 역할 기반 색상 (없으면 기본 회색)
   const primaryRole = bar.assignees?.[0]?.role;
@@ -346,23 +368,25 @@ export const DraftBar = memo(function DraftBar({
         top: currentTop,
         // Airbnb 스타일: 더 둥근 끝
         borderRadius: 10,
-        // 역할 기반 배경색 (Snapshot은 연한 회색)
+        // Snapshot은 강조된 스타일, Plan은 더 투명하게
         background: isSnapshot
-          ? "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)"
-          : barColor.bg,
+          ? "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)" // 더 진한 파란 그라데이션
+          : barColor.bg.replace(/[\d.]+\)$/, '0.06)'), // Plan 배경을 더 투명하게 (0.12 → 0.06)
         border: isSnapshot
-          ? "1px solid #d1d5db"
-          : `1px solid ${isSelected ? barColor.color : `${barColor.color}30`}`,
-        // 호버/선택 시 그림자 & lift 효과
+          ? "2px solid #0284c7" // 두꺼운 파란 테두리
+          : `1px solid ${isSelected ? barColor.color : `${barColor.color}20`}`, // Plan 테두리를 더 투명하게
+        // 호버/선택 시 그림자 & lift 효과 (Snapshot이 더 강함)
         boxShadow: isSelected
-          ? `0 2px 12px ${barColor.color}25, 0 0 0 2px ${barColor.color}30`
+          ? isSnapshot
+            ? "0 4px 20px rgba(2, 132, 199, 0.3), 0 0 0 3px rgba(2, 132, 199, 0.2)" // Snapshot 선택 시 더 강한 그림자
+            : `0 2px 12px ${barColor.color}20, 0 0 0 2px ${barColor.color}20` // Plan 선택 시 더 약한 그림자
           : isHovered
           ? isSnapshot
-            ? "0 4px 12px rgba(0, 0, 0, 0.08)"
-            : "0 4px 16px rgba(0, 0, 0, 0.1)"
+            ? "0 6px 16px rgba(0, 0, 0, 0.12)" // Snapshot 호버 시 강한 그림자
+            : "0 2px 8px rgba(0, 0, 0, 0.06)" // Plan 호버 시 약한 그림자
           : isSnapshot
-          ? "0 1px 3px rgba(0, 0, 0, 0.06)"
-          : "0 1px 3px rgba(0, 0, 0, 0.04)",
+          ? "0 2px 6px rgba(0, 0, 0, 0.08)" // Snapshot 기본 그림자
+          : "0 1px 2px rgba(0, 0, 0, 0.03)", // Plan 기본 그림자 (거의 투명)
         // Airbnb 스타일: 호버 시 lift
         transform:
           isHovered && !isDragging ? "translateY(-1px)" : "translateY(0)",
@@ -379,6 +403,14 @@ export const DraftBar = memo(function DraftBar({
       }}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
+      onContextMenu={(e) => {
+        // 읽기모드일 때만 우클릭 메뉴 열기
+        if (readOnly && onContextMenu) {
+          e.preventDefault();
+          e.stopPropagation();
+          onContextMenu(e, bar);
+        }
+      }}
       onMouseEnter={() => {
         setIsHovered(true);
         onClearHover?.();

@@ -1,107 +1,295 @@
 /**
- * Gantt 차트 스켈레톤 로딩 UI
- * - 필터 적용 중 표시
- * - 트리와 타임라인 영역 모방
+ * GanttSkeleton 컴포넌트
+ * - viewMode 전환 시 표시되는 스켈레톤 UI
+ * - 트리 패널과 타임라인 영역을 포함
  */
 
 "use client";
 
 import { TREE_WIDTH } from "./DraftTreePanel";
 
-export function GanttSkeleton() {
+interface GanttSkeletonProps {
+  /** 스켈레톤 타입 */
+  type: "detailed" | "summarized";
+  /** 컨테이너 높이 */
+  height?: number;
+}
+
+export function GanttSkeleton({ type, height = 600 }: GanttSkeletonProps) {
   return (
-    <div className="absolute inset-0 z-50 flex bg-white">
-      {/* 트리 스켈레톤 */}
+    <div
+      className="flex w-full overflow-hidden"
+      style={{ height }}
+    >
+      {/* 트리 패널 스켈레톤 */}
       <div
-        className="flex-shrink-0 border-r border-gray-200 overflow-hidden"
+        className="flex-shrink-0 border-r border-gray-200 bg-white"
         style={{ width: TREE_WIDTH }}
       >
-        {/* 헤더 영역 */}
-        <div className="h-[76px] border-b border-gray-200 p-2 space-y-2">
-          <div className="h-8 bg-gray-100 rounded-lg animate-pulse" />
-          <div className="h-8 bg-gray-100 rounded-lg animate-pulse" />
-        </div>
+        <div className="p-4 space-y-3 animate-pulse">
+          {type === "detailed" ? (
+            // Detailed 모드: 프로젝트 > 모듈 > 기능 계층 구조
+            <>
+              {/* 프로젝트 1 */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded" />
+                  <div className="h-4 bg-gray-200 rounded w-32" />
+                </div>
+                {/* 모듈 1-1 */}
+                <div className="ml-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-28" />
+                  </div>
+                  {/* 기능 1-1-1 */}
+                  <div className="ml-4 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-200 rounded" />
+                      <div className="h-3 bg-gray-200 rounded w-24" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-200 rounded" />
+                      <div className="h-3 bg-gray-200 rounded w-28" />
+                    </div>
+                  </div>
+                </div>
+                {/* 모듈 1-2 */}
+                <div className="ml-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-24" />
+                  </div>
+                  {/* 기능 1-2-1 */}
+                  <div className="ml-4 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-200 rounded" />
+                      <div className="h-3 bg-gray-200 rounded w-20" />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        {/* 트리 아이템 */}
-        <div className="p-2 space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 px-3 py-2 animate-pulse"
-              style={{ marginLeft: (i % 3) * 16 }}
-            >
-              <div className="w-4 h-4 bg-gray-200 rounded" />
-              <div
-                className="h-4 bg-gray-200 rounded"
-                style={{ width: `${60 + Math.random() * 80}%` }}
-              />
-            </div>
-          ))}
+              {/* 프로젝트 2 */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded" />
+                  <div className="h-4 bg-gray-200 rounded w-36" />
+                </div>
+                {/* 모듈 2-1 */}
+                <div className="ml-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-32" />
+                  </div>
+                  {/* 기능 2-1-1 */}
+                  <div className="ml-4 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-200 rounded" />
+                      <div className="h-3 bg-gray-200 rounded w-26" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-200 rounded" />
+                      <div className="h-3 bg-gray-200 rounded w-24" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-200 rounded" />
+                      <div className="h-3 bg-gray-200 rounded w-28" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            // Summarized 모드: 프로젝트 > 모듈 만 표시
+            <>
+              {/* 프로젝트 1 */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded" />
+                  <div className="h-4 bg-gray-200 rounded w-32" />
+                </div>
+                {/* 모듈 1-1 */}
+                <div className="ml-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-28" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-24" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-30" />
+                  </div>
+                </div>
+              </div>
+
+              {/* 프로젝트 2 */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded" />
+                  <div className="h-4 bg-gray-200 rounded w-36" />
+                </div>
+                {/* 모듈 2-1 */}
+                <div className="ml-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-32" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded" />
+                    <div className="h-3.5 bg-gray-200 rounded w-26" />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* 타임라인 스켈레톤 */}
-      <div className="flex-1 overflow-hidden">
-        {/* 헤더 영역 */}
-        <div className="h-[76px] border-b border-gray-200">
-          {/* 월 헤더 */}
-          <div className="h-[38px] border-b border-gray-100 flex">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex-1 border-r border-gray-100 p-2 flex items-center justify-center"
-              >
-                <div className="h-5 w-20 bg-gray-100 rounded animate-pulse" />
+      <div className="flex-1 bg-white overflow-hidden">
+        <div className="p-4 space-y-3 animate-pulse">
+          {type === "detailed" ? (
+            // Detailed 모드: 여러 개의 바 형태
+            <>
+              <div className="flex items-center gap-4">
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "20%" }} />
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "15%" }} />
               </div>
-            ))}
-          </div>
-          {/* 날짜 헤더 */}
-          <div className="h-[38px] flex overflow-hidden">
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-10 border-r border-gray-100 p-1 flex flex-col items-center justify-center"
-              >
-                <div className="h-2 w-6 bg-gray-100 rounded animate-pulse mb-1" />
-                <div className="h-3 w-8 bg-gray-100 rounded animate-pulse" />
+              <div className="flex items-center gap-4">
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "25%" }} />
               </div>
-            ))}
-          </div>
+              <div className="flex items-center gap-4">
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "18%" }} />
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "22%" }} />
+              </div>
+              <div className="mt-6 flex items-center gap-4">
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "30%" }} />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "20%" }} />
+                <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "25%" }} />
+              </div>
+            </>
+          ) : (
+            // Summarized 모드: 모듈별 요약 바 형태 (더 넓고 두꺼운 바)
+            <>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "45%" }} />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "38%" }} />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "52%" }} />
+              </div>
+              <div className="mt-6 flex items-center gap-4">
+                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "42%" }} />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "48%" }} />
+              </div>
+            </>
+          )}
         </div>
-
-        {/* 타임라인 바 영역 */}
-        <div className="p-4 space-y-4">
-          {Array.from({ length: 8 }).map((_, rowIndex) => (
-            <div key={rowIndex} className="relative h-12">
-              {/* 랜덤한 위치와 길이의 바 스켈레톤 */}
-              {Array.from({ length: Math.floor(Math.random() * 2) + 1 }).map(
-                (_, barIndex) => {
-                  const left = Math.random() * 60;
-                  const width = 10 + Math.random() * 25;
-                  return (
-                    <div
-                      key={barIndex}
-                      className="absolute h-10 bg-gradient-to-r from-gray-200 to-gray-100 rounded-lg animate-pulse"
-                      style={{
-                        left: `${left}%`,
-                        width: `${width}%`,
-                        top: barIndex * 12,
-                      }}
-                    >
-                      <div className="p-2 space-y-1">
-                        <div className="h-2 bg-gray-300/50 rounded w-1/3" />
-                        <div className="h-2 bg-gray-300/50 rounded w-2/3" />
-                      </div>
-                    </div>
-                  );
-                }
-              )}
-            </div>
-          ))}
-        </div>
-
       </div>
     </div>
   );
 }
 
+/**
+ * 트리 패널 전용 스켈레톤 (개별 사용 가능)
+ */
+export function TreePanelSkeleton({ type }: { type: "detailed" | "summarized" }) {
+  return (
+    <div className="p-4 space-y-3 animate-pulse">
+      {type === "detailed" ? (
+        <>
+          {/* Detailed 모드 스켈레톤 (위와 동일) */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gray-200 rounded" />
+              <div className="h-4 bg-gray-200 rounded w-32" />
+            </div>
+            <div className="ml-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gray-200 rounded" />
+                <div className="h-3.5 bg-gray-200 rounded w-28" />
+              </div>
+              <div className="ml-4 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gray-200 rounded" />
+                  <div className="h-3 bg-gray-200 rounded w-24" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gray-200 rounded" />
+                  <div className="h-3 bg-gray-200 rounded w-28" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Summarized 모드 스켈레톤 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gray-200 rounded" />
+              <div className="h-4 bg-gray-200 rounded w-32" />
+            </div>
+            <div className="ml-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gray-200 rounded" />
+                <div className="h-3.5 bg-gray-200 rounded w-28" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gray-200 rounded" />
+                <div className="h-3.5 bg-gray-200 rounded w-24" />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 타임라인 전용 스켈레톤 (개별 사용 가능)
+ */
+export function TimelineSkeleton({ type }: { type: "detailed" | "summarized" }) {
+  return (
+    <div className="p-4 space-y-3 animate-pulse">
+      {type === "detailed" ? (
+        <>
+          <div className="flex items-center gap-4">
+            <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "20%" }} />
+            <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "15%" }} />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "25%" }} />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "18%" }} />
+            <div className="h-10 bg-gray-200 rounded-lg" style={{ width: "22%" }} />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "45%" }} />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "38%" }} />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-9 bg-purple-100 rounded-lg border-2 border-purple-300" style={{ width: "52%" }} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

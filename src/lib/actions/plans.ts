@@ -120,7 +120,7 @@ export async function createPlanAction(
     }
 
     revalidatePath("/admin/plans");
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true, planId: plan.id };
   } catch (err) {
@@ -192,7 +192,7 @@ export async function updatePlanAction(
 
     revalidatePath("/admin/plans");
     revalidatePath(`/admin/plans/${id}`);
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true, planId: id };
   } catch (err) {
@@ -221,7 +221,7 @@ export async function deletePlanAction(planId: string): Promise<ActionResult> {
     });
 
     revalidatePath("/admin/plans");
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true };
   } catch (err) {
@@ -266,7 +266,7 @@ export async function updatePlanTitleAction(
 
     revalidatePath("/admin/plans");
     revalidatePath(`/admin/plans/${planId}`);
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true };
   } catch (err) {
@@ -316,7 +316,7 @@ export async function movePlanAction(
 
     revalidatePath("/admin/plans");
     revalidatePath(`/admin/plans/${planId}`);
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true, planId };
   } catch (err) {
@@ -357,7 +357,7 @@ export async function updatePlanStatusAction(
 
     revalidatePath("/admin/plans");
     revalidatePath(`/admin/plans/${planId}`);
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true };
   } catch (err) {
@@ -398,7 +398,7 @@ export async function updatePlanStageAction(
 
     revalidatePath("/admin/plans");
     revalidatePath(`/admin/plans/${planId}`);
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true };
   } catch (err) {
@@ -477,7 +477,7 @@ export async function duplicatePlanAction(
     });
 
     revalidatePath("/admin/plans");
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true, planId: newPlan.id };
   } catch (err) {
@@ -546,7 +546,7 @@ export async function createDraftPlanAtCellAction(
     });
 
     revalidatePath("/admin/plans");
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true, planId: plan.id };
   } catch (err) {
@@ -613,7 +613,7 @@ export async function quickCreatePlanAction(
     });
 
     revalidatePath("/admin/plans");
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true, planId: plan.id };
   } catch (err) {
@@ -670,7 +670,7 @@ export async function resizePlanAction(
 
     revalidatePath("/admin/plans");
     revalidatePath(`/admin/plans/${input.planId}`);
-    revalidatePath("/plans");
+    revalidatePath("/works/plans");
 
     return { success: true, planId: input.planId };
   } catch (err) {

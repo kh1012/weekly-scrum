@@ -33,18 +33,16 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/manage" ||
     pathname === "/manage/" ||
     pathname.startsWith("/manage/snapshots");
-  // 캘린더 페이지인지 확인
-  const isCalendarPage = pathname === "/calendar" || pathname === "/calendar/";
   // Admin Dashboard 페이지인지 확인
   const isAdminDashboard = pathname === "/admin" || pathname === "/admin/";
   // Admin 하위 페이지인지 확인
   const isAdminSubPage = pathname.startsWith("/admin/") && !isAdminDashboard;
   // Plans 페이지인지 확인
   const isPlansPage =
-    pathname === "/plans" ||
-    pathname === "/plans/" ||
+    pathname === "/works/plans" ||
+    pathname === "/works/plans/" ||
     pathname.startsWith("/admin/plans") ||
-    pathname.startsWith("/plans/gantt");
+    pathname.startsWith("/works/plans/gantt");
   // Feedbacks 페이지인지 확인
   const isFeedbacksPage =
     pathname === "/feedbacks" ||
@@ -57,9 +55,9 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname.startsWith("/admin/meta-options/");
   // Team Feed 페이지인지 확인
   const isTeamFeedPage =
-    pathname === "/team-feed" ||
-    pathname === "/team-feed/" ||
-    pathname.startsWith("/team-feed/");
+    pathname === "/works/team-feed" ||
+    pathname === "/works/team-feed/" ||
+    pathname.startsWith("/works/team-feed/");
   // Releases 페이지인지 확인
   const isReleasesPage =
     pathname === "/releases" ||
@@ -76,16 +74,19 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
   const isAlignmentPage =
     pathname === "/my/alignment" ||
     pathname === "/my/alignment/" ||
-    pathname.startsWith("/my/alignment/");
+    pathname.startsWith("/my/alignment/") ||
+    pathname === "/works/alignment" ||
+    pathname === "/works/alignment/" ||
+    pathname.startsWith("/works/alignment/");
 
   // Snapshots/Work-map 페이지 여부 (페이지 내부에 통합 필터 있음)
   const hasInternalFilters =
-    pathname === "/snapshots" ||
-    pathname === "/snapshots/" ||
-    pathname.startsWith("/snapshots/") ||
-    pathname === "/work-map" ||
-    pathname === "/work-map/" ||
-    pathname.startsWith("/work-map/");
+    pathname === "/works/snapshots" ||
+    pathname === "/works/snapshots/" ||
+    pathname.startsWith("/works/snapshots/") ||
+    pathname === "/works/work-map" ||
+    pathname === "/works/work-map/" ||
+    pathname.startsWith("/works/work-map/");
 
   // 최소 GNB 모드
   const isMinimalGnb =
@@ -104,7 +105,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
   // GNB 컴포넌트 완전 숨김
   const hideAllControls = isMinimalGnb;
   // 주차 선택기 숨김
-  const hideWeekSelector = isMinimalGnb || isCalendarPage || hasInternalFilters;
+  const hideWeekSelector = isMinimalGnb || hasInternalFilters;
   // 필터 숨김 (최소 GNB 모드 + 페이지 내부에 필터가 있는 경우)
   const hideFilters = isMinimalGnb || hasInternalFilters;
 

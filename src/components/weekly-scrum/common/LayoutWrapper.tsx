@@ -33,36 +33,33 @@ interface LayoutWrapperProps {
 
 // max-w-full을 적용할 페이지 경로
 const FULL_WIDTH_PAGES = [
-  "/matrix",
-  "/quadrant",
-  "/work-map",
+  "/works/work-map",
   "/works/collaborator-graph",
-  "/snapshots",
+  "/works/snapshots",
   "/manage",
   "/manage/snapshots",
-  "/calendar",
   "/my",
   "/admin",
-  "/plans",
-  "/team-feed",
+  "/works/plans",
+  "/works/team-feed",
 ];
 
 // 동적 경로 패턴 (하위 경로 모두 포함)
 const FULL_WIDTH_DYNAMIC_PATTERNS = [
   "/manage/snapshots/",
   "/admin/",
-  "/plans/gantt",
+  "/works/plans/gantt",
   "/feedbacks",
-  "/team-feed",
+  "/works/team-feed",
   "/my/alignment",
+  "/works/alignment",
 ];
 
 // padding 없는 페이지 경로
 const NO_PADDING_PAGES = [
-  "/calendar",
   "/my",
   "/feedbacks",
-  "/team-feed",
+  "/works/team-feed",
   "/works/collaborator-graph",
   "/admin/meta-options",
   "/manage/snapshots",
@@ -71,11 +68,12 @@ const NO_PADDING_PAGES = [
 // padding 없는 동적 경로 패턴
 const NO_PADDING_DYNAMIC_PATTERNS = [
   "/manage/snapshots/",
-  "/plans/gantt",
+  "/works/plans/gantt",
   "/admin/plans/gantt",
   "/admin",
   "/feedbacks",
   "/my/alignment",
+  "/works/alignment",
 ];
 
 // localStorage 키
@@ -83,19 +81,11 @@ const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
 
 // 저장 대상 페이지 목록 (복원 가능한 페이지)
 const SAVEABLE_PAGES = [
-  "/work-map",
-  "/snapshots",
-  "/cards",
-  "/matrix",
-  "/quadrant",
-  "/summary",
-  "/collaboration",
-  "/projects",
-  "/risks",
+  "/works/work-map",
+  "/works/snapshots",
   "/my",
-  "/report",
   "/releases",
-  "/team-feed",
+  "/works/team-feed",
 ];
 
 export function getLastVisitedPage(): string | null {

@@ -7,10 +7,18 @@
 
 "use client";
 
-import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import {
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useTransition,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useDraftStore } from "./store";
+import { TreePanelSkeleton } from "./GanttSkeleton";
 import {
   FolderIcon,
   CubeIcon,
@@ -29,6 +37,7 @@ import {
 import { AddRowModal } from "./AddRowModal";
 import {
   buildFlatTree,
+  buildSummarizedTree,
   calculateNodePositions,
   getNodeDateRange,
   ROW_HEIGHT,
@@ -598,6 +607,7 @@ export function DraftTreePanel({
   const deleteRow = useDraftStore((s) => s.deleteRow);
   const addRow = useDraftStore((s) => s.addRow);
   const expandedNodesArray = useDraftStore((s) => s.ui.expandedNodes);
+  const viewMode = useDraftStore((s) => s.ui.viewMode);
   const toggleNodeStore = useDraftStore((s) => s.toggleNode);
   const expandAllNodes = useDraftStore((s) => s.expandAllNodes);
   const collapseAllNodes = useDraftStore((s) => s.collapseAllNodes);
@@ -607,6 +617,23 @@ export function DraftTreePanel({
 
   // 외부에서 관리되지 않는 경우 로컬 상태 사용
   const [localShowAddRowModal, setLocalShowAddRowModal] = useState(false);
+
+  // viewMode 변경 시 스켈레톤 표시 상태
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const prevViewModeRef = useRef(viewMode);
+
+  // viewMode 변경 감지 및 스켈레톤 표시
+  useEffect(() => {
+    if (prevViewModeRef.current !== viewMode) {
+      setShowSkeleton(true);
+      // 트리 계산 후 스켈레톤 숨김 (약간의 딜레이)
+      const timer = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 200); // 200ms 후 스켈레톤 숨김
+      prevViewModeRef.current = viewMode;
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode]);
 
   // Flags 관련 상태
   const flags = useDraftStore((s) => s.flags);
@@ -875,19 +902,18 @@ export function DraftTreePanel({
 
   // FlatTree와 nodePositions 계산 (Timeline과 동일)
   // 중요: lane 레이아웃은 전체 bars(allBars) 기준으로 계산하되, 표시는 activeBars만
-  const flatNodes = useMemo(
-    () =>
-      buildFlatTree(
-        filteredRows,
-        allBars.filter((b) => !b.deleted),
-        expandedNodes
-      ),
-    [filteredRows, allBars, expandedNodes]
-  );
+  const flatNodes = useMemo(() => {
+    // viewMode에 따라 다른 트리 빌드 함수 사용
+    const activeBarsOnly = allBars.filter((b) => !b.deleted);
+    if (viewMode === "summarized") {
+      return buildSummarizedTree(filteredRows, activeBarsOnly, expandedNodes);
+    }
+    return buildFlatTree(filteredRows, activeBarsOnly, expandedNodes);
+  }, [filteredRows, allBars, expandedNodes, viewMode]);
 
   // 필터 레벨에 따라 노드 필터링 (상위 레벨 숨김) + top 재계산
   const visibleNodePositions = useMemo(() => {
-    const allPositions = calculateNodePositions(flatNodes);
+    const allPositions = calculateNodePositions(flatNodes, viewMode);
 
     // 필터가 없으면 모든 노드 표시
     if (filterLevel === -1) return allPositions;
@@ -906,7 +932,7 @@ export function DraftTreePanel({
       currentTop += pos.height;
       return newPos;
     });
-  }, [flatNodes, filterLevel]);
+  }, [flatNodes, filterLevel, viewMode]);
 
   const nodePositions = visibleNodePositions;
 
@@ -1030,9 +1056,11 @@ export function DraftTreePanel({
 
   const toggleNode = useCallback(
     (nodeId: string) => {
+      // Summarized 모드에서는 토글 불가
+      if (viewMode === "summarized") return;
       toggleNodeStore(nodeId);
     },
-    [toggleNodeStore]
+    [toggleNodeStore, viewMode]
   );
 
   const toggleProjectFilter = (project: string) => {
@@ -1597,19 +1625,19 @@ export function DraftTreePanel({
           <div style={{ width: node.depth * 14 }} className="flex-shrink-0" />
         )}
 
-        {/* 확장/접기 화살표 */}
+        {/* 확장/접기 화살표 (Summarized 모드에서는 숨김) */}
         <div
           className={`flex items-center gap-1 flex-shrink-0 ${
-            hasChildren ? "cursor-pointer" : ""
+            hasChildren && viewMode !== "summarized" ? "cursor-pointer" : ""
           }`}
           onClick={(e) => {
             e.stopPropagation();
-            if (hasChildren) {
+            if (hasChildren && viewMode !== "summarized") {
               handleClick();
             }
           }}
         >
-          {hasChildren ? (
+          {hasChildren && viewMode !== "summarized" ? (
             <div className="w-4 h-4 flex items-center justify-center transition-all duration-150">
               {isExpanded ? (
                 <ChevronDownIcon className="w-3 h-3 text-gray-500" />
@@ -2196,50 +2224,58 @@ export function DraftTreePanel({
         }}
         onScroll={handleScroll}
       >
-        <div className="relative" style={{ height: totalHeight }}>
-          {nodePositions.map((pos) => renderNode(pos))}
-        </div>
-
-        {/* 검색 결과 없음 - Airbnb 스타일 */}
-        {searchQuery && nodePositions.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 px-4">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
-              style={{
-                background: "linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)",
-              }}
-            >
-              <SearchIcon className="w-6 h-6 text-gray-400" />
+        {showSkeleton ? (
+          <TreePanelSkeleton type={viewMode} />
+        ) : (
+          <>
+            <div className="relative" style={{ height: totalHeight }}>
+              {nodePositions.map((pos) => renderNode(pos))}
             </div>
-            <span className="text-sm font-medium text-gray-500">
-              검색 결과 없음
-            </span>
-            <span className="text-xs text-gray-400 mt-1">
-              다른 검색어를 시도해보세요
-            </span>
-          </div>
-        )}
 
-        {/* 빈 상태 - Airbnb 스타일 */}
-        {!searchQuery && nodePositions.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 px-4">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
-              style={{
-                background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-              }}
-            >
-              <FolderIcon className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-sm font-medium text-gray-600">
-              기능이 없습니다
-            </span>
-            <span className="text-xs text-gray-400 mt-1 text-center">
-              {isEditing
-                ? "상단의 + 버튼으로 새 기능을 추가하세요"
-                : "작업 시작 후 기능을 추가할 수 있습니다"}
-            </span>
-          </div>
+            {/* 검색 결과 없음 - Airbnb 스타일 */}
+            {searchQuery && nodePositions.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 px-4">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)",
+                  }}
+                >
+                  <SearchIcon className="w-6 h-6 text-gray-400" />
+                </div>
+                <span className="text-sm font-medium text-gray-500">
+                  검색 결과 없음
+                </span>
+                <span className="text-xs text-gray-400 mt-1">
+                  다른 검색어를 시도해보세요
+                </span>
+              </div>
+            )}
+
+            {/* 빈 상태 - Airbnb 스타일 */}
+            {!searchQuery && nodePositions.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 px-4">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                  }}
+                >
+                  <FolderIcon className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-600">
+                  기능이 없습니다
+                </span>
+                <span className="text-xs text-gray-400 mt-1 text-center">
+                  {isEditing
+                    ? "상단의 + 버튼으로 새 기능을 추가하세요"
+                    : "작업 시작 후 기능을 추가할 수 있습니다"}
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
 

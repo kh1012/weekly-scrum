@@ -7,74 +7,34 @@
 
 "use client";
 
-import { useMemo, useRef, useState, useCallback, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useRef, useCallback } from "react";
 import { useDraftStore } from "./store";
-import {
-  buildFlatTree,
-  calculateNodePositions,
-  formatDate,
-  xToDate,
-  parseLocalDate,
-  getNodeDateRange,
-  assignLanesToBars,
-  LANE_HEIGHT,
-  ROW_HEIGHT,
-} from "./laneLayout";
-import { DraftBar } from "./DraftBar";
-import { CreatePlanModal, WorkspaceMemberOption } from "./CreatePlanModal";
-import { EditPlanModal } from "./EditPlanModal";
-import { PlusIcon, TrashIcon } from "@/components/common/Icons";
-import type {
-  DraftRow,
-  DraftBar as DraftBarType,
-  PlanStatus,
-  DraftAssignee,
-  PlanLink,
-  DraftFlag,
-} from "./types";
-import { FlagLane, FLAG_LANE_HEIGHT } from "./FlagLane";
+import { FlagLane } from "./FlagLane";
 import { packFlagsIntoLanes } from "./flagLayout";
-import { CreateFlagModal } from "./CreateFlagModal";
-import { EditFlagModal } from "./EditFlagModal";
-import { PlanViewPopover } from "./PlanViewPopover";
-import { filterBarsWithIndex, filterRowsWithIndex } from "./filterCache";
+import { ROW_HEIGHT, LANE_HEIGHT } from "./laneLayout";
+import { DAY_WIDTH, HEADER_HEIGHT } from "./timeline/timelineTypes";
+import type { DraftTimelineProps } from "./timeline/timelineTypes";
 
-const DAY_WIDTH = 40;
-const HEADER_HEIGHT = 76; // 38px + 38px (월 + 일, TreePanel 헤더와 동일)
+// State & Hooks
+import { useTimelineState } from "./timeline/useTimelineState";
+import { useTimelineData } from "./timeline/useTimelineData";
+import { useTimelineDragCreate } from "./timeline/useTimelineDragCreate";
+import { useTimelineScroll } from "./timeline/useTimelineScroll";
+import { useTimelineKeyboard } from "./timeline/useTimelineKeyboard";
+import { useTimelineLaneActions } from "./timeline/useTimelineLaneActions";
+import { useTimelineEffects } from "./timeline/useTimelineEffects";
 
-interface DraftTimelineProps {
-  rangeStart: Date;
-  rangeEnd: Date;
-  isEditing: boolean;
-  isAdmin?: boolean;
-  readOnly?: boolean;
-  members?: WorkspaceMemberOption[];
-  workspaceId?: string;
-  /** 드래그 중 기간 정보 콜백 (FloatingDock 표시용) */
-  onDragDateChange?: (
-    info: { startDate: string; endDate: string } | null
-  ) => void;
-  /** 액션 발생 시 락 연장 (남은 시간이 절반 이하일 때) */
-  onAction?: () => void;
-  /** 외부 스크롤 동기화용 (TreePanel에서 전달) */
-  scrollTop?: number;
-  onScrollChange?: (scrollTop: number) => void;
-  /** 가로 스크롤바 높이 변경 콜백 (TreePanel 하단 정렬용) */
-  onScrollbarHeightChange?: (height: number) => void;
-  /** 하이라이트할 Row ID (timeline focus용) */
-  highlightedRowId?: string | null;
-}
-
-interface DragCreateState {
-  rowId: string;
-  startDate: Date;
-  endDate: Date;
-  project: string;
-  module: string;
-  feature: string;
-  laneIndex: number; // 드래그 시작한 레인 인덱스
-}
+// Components
+import { TimelineHeader } from "./timeline/components/TimelineHeader";
+import { TimelineGridLines } from "./timeline/components/TimelineGridLines";
+import { TimelineHighlight } from "./timeline/components/TimelineHighlight";
+import { TimelineNodes } from "./timeline/components/TimelineNodes";
+import { TimelineHoverPreview } from "./timeline/components/TimelineHoverPreview";
+import { SnapshotConnections } from "./timeline/components/SnapshotConnections";
+import { TimelineModals } from "./timeline/components/TimelineModals";
+import { TimelineLaneMenu } from "./timeline/components/TimelineLaneMenu";
+import { TimelineDeleteLaneModal } from "./timeline/components/TimelineDeleteLaneModal";
+import { BlockContextMenu } from "./timeline/components/BlockContextMenu";
 
 export function DraftTimeline({
   rangeStart,
@@ -95,841 +55,101 @@ export function DraftTimeline({
   const headerRef = useRef<HTMLDivElement>(null);
   const flagLaneRef = useRef<HTMLDivElement>(null);
 
-  // Flag 모달 상태
-  const [showCreateFlagModal, setShowCreateFlagModal] = useState(false);
-  const [editingFlag, setEditingFlag] = useState<DraftFlag | null>(null);
+  // State
+  const state = useTimelineState();
 
-  // Flag 스크롤 동기화를 위한 scrollLeft 상태
-  const [headerScrollLeft, setHeaderScrollLeft] = useState(0);
-  // 호버 정보 - 개별 레인에 스냅
-  const [hoverInfo, setHoverInfo] = useState<{
-    rowId: string;
-    date: Date;
-    x: number; // 스냅된 x 좌표
-    laneIndex: number; // 개별 레인 인덱스
-    nodeTop: number; // 노드 상단 y 좌표
-    nodeHeight: number; // 노드 전체 높이
-  } | null>(null);
-
-  // 드래그 생성 상태
-  const [dragCreate, setDragCreate] = useState<{
-    isActive: boolean; // 드래그 모드 활성화 여부
-    isDragging: boolean; // threshold 초과 후 실제 드래그 중
-    startX: number;
-    currentX: number;
-    rowId: string;
-    row: DraftRow;
-    laneIndex: number; // merge된 레인의 인덱스
-  } | null>(null);
-
-  const [showCreateModal, setShowCreateModal] =
-    useState<DragCreateState | null>(null);
-  const [showEditModal, setShowEditModal] = useState<DraftBarType | null>(null);
-
-  // readOnly 모드에서 Plan 보기 팝오버 상태
-  const [viewPopover, setViewPopover] = useState<{
-    bar: DraftBarType;
-    position: { x: number; y: number };
-  } | null>(null);
-
-  // 휠 클릭 스크롤 상태
-  const [middleClickScroll, setMiddleClickScroll] = useState<{
-    isActive: boolean;
-    startX: number;
-    startY: number;
-    scrollLeft: number;
-    scrollTop: number;
-  } | null>(null);
-
-  // 레인 컨텍스트 메뉴 상태
-  const [laneContextMenu, setLaneContextMenu] = useState<{
-    rowId: string;
-    laneIndex: number;
-    position: { x: number; y: number };
-  } | null>(null);
-
-  // 레인 삭제 확인 모달 상태
-  const [deleteLaneConfirm, setDeleteLaneConfirm] = useState<{
-    rowId: string;
-    laneIndex: number;
-    visibleBarsCount: number;
-  } | null>(null);
-
+  // Store
   const allRows = useDraftStore((s) => s.rows);
   const allBars = useDraftStore((s) => s.bars);
   const searchQuery = useDraftStore((s) => s.ui.searchQuery);
   const filters = useDraftStore((s) => s.ui.filters);
   const filterIndex = useDraftStore((s) => s.filterIndex);
   const expandedNodesArray = useDraftStore((s) => s.ui.expandedNodes);
+  const viewMode = useDraftStore((s) => s.ui.viewMode);
   const addBar = useDraftStore((s) => s.addBar);
-  const addRow = useDraftStore((s) => s.addRow);
   const selectedBarId = useDraftStore((s) => s.ui.selectedBarId);
   const selectedRowId = useDraftStore((s) => s.ui.selectedRowId);
   const selectBar = useDraftStore((s) => s.selectBar);
   const deleteBar = useDraftStore((s) => s.deleteBar);
   const updateBar = useDraftStore((s) => s.updateBar);
   const moveBarToRow = useDraftStore((s) => s.moveBarToRow);
-
-  // Flag 관련
   const flags = useDraftStore((s) => s.flags);
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
   const selectFlag = useDraftStore((s) => s.selectFlag);
   const deleteFlagAction = useDraftStore((s) => s.deleteFlag);
   const fetchFlags = useDraftStore((s) => s.fetchFlags);
   const clearPendingFlag = useDraftStore((s) => s.clearPendingFlag);
-
-  // Flag Lane 높이 계산 (FlagLane과 동기화)
-  const { laneCount: flagLaneCount, items: flagItems } = useMemo(
-    () =>
-      packFlagsIntoLanes({
-        flags,
-        rangeStart,
-        rangeEnd,
-        dayWidth: DAY_WIDTH,
-      }),
-    [flags, rangeStart, rangeEnd]
-  );
-  const flagLaneHeight = Math.max(1, flagLaneCount) * FLAG_LANE_HEIGHT;
-
-  // 기간 강조 표시
   const highlightDateRange = useDraftStore((s) => s.ui.highlightDateRange);
   const setHighlightDateRange = useDraftStore((s) => s.setHighlightDateRange);
 
-  // Set으로 변환 (빠른 조회용)
-  const expandedNodes = useMemo(
-    () => new Set(expandedNodesArray),
-    [expandedNodesArray]
-  );
-
-  // 활성 bars (삭제되지 않은 것들 + 필터 적용)
-  // 인덱스가 있으면 고속 필터링, 없으면 기존 방식
-  const activeBars = useMemo(() => {
-    if (filterIndex) {
-      // 인덱스를 사용한 고속 필터링
-      return filterBarsWithIndex(allBars, filterIndex, {
-        stages: filters.stages || [],
-        assignees: filters.assignees || [],
-      });
-    }
-
-    // 폴백: 기존 방식
-    let bars = allBars.filter((b) => !b.deleted);
-
-    // 스테이지 필터 적용
-    if (filters.stages && filters.stages.length > 0) {
-      bars = bars.filter((b) => filters.stages.includes(b.stage));
-    }
-
-    // 담당자 필터 적용
-    if (filters.assignees && filters.assignees.length > 0) {
-      bars = bars.filter((b) =>
-        b.assignees.some((assignee) =>
-          filters.assignees.includes(assignee.userId)
-        )
-      );
-    }
-
-    return bars;
-  }, [allBars, filterIndex, filters.stages, filters.assignees]);
-
-  // activeBars를 Set으로 변환 (빠른 조회용)
-  const activeBarsSet = useMemo(
-    () => new Set(activeBars.map((b) => b.clientUid)),
-    [activeBars]
-  );
-
-  // 필터링된 rows (useMemo로 캐싱)
-  const rows = useMemo(() => {
-    if (filterIndex) {
-      // 인덱스를 사용한 고속 필터링
-      const barsInView = new Set(activeBars.map((b) => b.clientUid));
-      return filterRowsWithIndex(
-        allRows,
-        barsInView,
-        filterIndex,
-        {
-          projects: filters.projects || [],
-          modules: filters.modules || [],
-          features: filters.features || [],
-        },
-        searchQuery
-      );
-    }
-
-    // 폴백: 기존 방식
-    return allRows.filter((row) => {
-      // 로컬에서 생성된 row는 bars 없이도 표시
-      // 서버에서 로드된 row는 bars가 있어야 표시
-      if (!row.isLocal) {
-        const hasBars = activeBars.some((b) => b.rowId === row.rowId);
-        if (!hasBars) return false;
-      }
-
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const match =
-          row.project.toLowerCase().includes(q) ||
-          row.module.toLowerCase().includes(q) ||
-          row.feature.toLowerCase().includes(q);
-        if (!match) return false;
-      }
-      if (
-        filters.projects.length > 0 &&
-        !filters.projects.includes(row.project)
-      ) {
-        return false;
-      }
-      if (filters.modules.length > 0 && !filters.modules.includes(row.module)) {
-        return false;
-      }
-
-      if (
-        filters.features.length > 0 &&
-        !filters.features.includes(row.feature)
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [allRows, activeBars, filterIndex, searchQuery, filters]);
-
-  // 날짜 배열 생성 (rangeStart ~ rangeEnd)
-  const days = useMemo(() => {
-    const result: Date[] = [];
-    const current = new Date(rangeStart);
-    while (current <= rangeEnd) {
-      result.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-    return result;
-  }, [rangeStart, rangeEnd]);
-
-  // 월 구분선 (첫 번째 날 기준)
-  const months = useMemo(() => {
-    const result: { month: string; days: number }[] = [];
-    let currentMonth = "";
-    let currentDays = 0;
-
-    for (const day of days) {
-      const monthStr = `${day.getFullYear()}년 ${day.getMonth() + 1}월`;
-      if (monthStr !== currentMonth) {
-        if (currentMonth) {
-          result.push({ month: currentMonth, days: currentDays });
-        }
-        currentMonth = monthStr;
-        currentDays = 1;
-      } else {
-        currentDays++;
-      }
-    }
-    if (currentMonth) {
-      result.push({ month: currentMonth, days: currentDays });
-    }
-    return result;
-  }, [days]);
-
-  const totalWidth = days.length * DAY_WIDTH;
-
-  // 트리 구조 기반 노드 리스트 (좌측 트리와 동기화)
-  // 중요: lane 레이아웃은 전체 bars(allBars) 기준으로 계산하되, 렌더링은 activeBars만
-  const flatNodes = useMemo(() => {
-    const nodes = buildFlatTree(rows, allBars, expandedNodes);
-
-    // 기능 필터: feature 노드만 반환
-    if (filters.features.length > 0) {
-      return nodes.filter((node) => node.type === "feature");
-    }
-    // 모듈 필터: module, feature 노드만 반환 (project 제외)
-    if (filters.modules.length > 0) {
-      return nodes.filter(
-        (node) => node.type === "module" || node.type === "feature"
-      );
-    }
-    return nodes;
-  }, [rows, allBars, expandedNodes, filters.features, filters.modules]);
-
-  // 노드별 위치 계산
-  const nodePositions = useMemo(
-    () => calculateNodePositions(flatNodes),
-    [flatNodes]
-  );
-
-  // 총 높이 계산
-  const totalHeight = useMemo(() => {
-    if (nodePositions.length === 0) return 0;
-    const last = nodePositions[nodePositions.length - 1];
-    return last.top + last.height;
-  }, [nodePositions]);
-
-  // 연속된 스냅샷 엔트리 연결 정보 계산
-  const snapshotConnections = useMemo(() => {
-    const connections: Array<{
-      fromBar: DraftBarType;
-      toBar: DraftBarType;
-      fromX: number;
-      fromY: number;
-      toX: number;
-      toY: number;
-    }> = [];
-
-    // 스냅샷만 필터링
-    const snapshots = activeBars.filter((b) => {
-      const isSnapshot = (b as any).isSnapshot;
-      const hasMetaKey = (b as any).metaKey;
-      return isSnapshot && hasMetaKey;
-    });
-
-    if (snapshots.length === 0) return connections;
-
-    // metaKey로 그룹화
-    const groupedByMeta = new Map<string, DraftBarType[]>();
-    snapshots.forEach((bar) => {
-      const metaKey = (bar as any).metaKey;
-      if (!groupedByMeta.has(metaKey)) {
-        groupedByMeta.set(metaKey, []);
-      }
-      groupedByMeta.get(metaKey)!.push(bar);
-    });
-
-    // 각 그룹에서 연속된 엔트리 찾기
-    groupedByMeta.forEach((group, metaKey) => {
-      if (group.length < 2) return;
-
-      // 날짜순 정렬
-      const sorted = group.sort((a, b) =>
-        a.startDate.localeCompare(b.startDate)
-      );
-
-      for (let i = 0; i < sorted.length - 1; i++) {
-        const current = sorted[i];
-        const next = sorted[i + 1];
-
-        // 각 바의 위치 정보 가져오기
-        const currentNode = nodePositions.find(
-          (pos) =>
-            pos.node.type === "feature" && pos.node.row?.rowId === current.rowId
-        );
-        const nextNode = nodePositions.find(
-          (pos) =>
-            pos.node.type === "feature" && pos.node.row?.rowId === next.rowId
-        );
-
-        if (!currentNode || !nextNode) continue;
-
-        // 바의 레인 정보 가져오기
-        const currentRowBars = activeBars.filter(
-          (b) => b.rowId === current.rowId
-        );
-        const nextRowBars = activeBars.filter((b) => b.rowId === next.rowId);
-
-        const currentBarsWithLane = assignLanesToBars(currentRowBars);
-        const nextBarsWithLane = assignLanesToBars(nextRowBars);
-
-        const currentLayout = currentBarsWithLane.find(
-          (l) => l.clientUid === current.clientUid
-        );
-        const nextLayout = nextBarsWithLane.find(
-          (l) => l.clientUid === next.clientUid
-        );
-
-        if (!currentLayout || !nextLayout) continue;
-
-        // rangeStart를 자정으로 정규화
-        const rangeStartMidnight = new Date(
-          rangeStart.getFullYear(),
-          rangeStart.getMonth(),
-          rangeStart.getDate()
-        );
-
-        // 각 바의 X 위치 계산
-        const currentStartDate = parseLocalDate(current.startDate);
-        const nextStartDate = parseLocalDate(next.startDate);
-
-        const currentStartOffset = Math.round(
-          (currentStartDate.getTime() - rangeStartMidnight.getTime()) /
-            (1000 * 60 * 60 * 24)
-        );
-        const nextStartOffset = Math.round(
-          (nextStartDate.getTime() - rangeStartMidnight.getTime()) /
-            (1000 * 60 * 60 * 24)
-        );
-
-        const currentEndDate = parseLocalDate(current.endDate);
-        const currentEndOffset = Math.round(
-          (currentEndDate.getTime() - rangeStartMidnight.getTime()) /
-            (1000 * 60 * 60 * 24)
-        );
-
-        const currentLeft = currentStartOffset * DAY_WIDTH;
-        const currentWidth =
-          (currentEndOffset - currentStartOffset + 1) * DAY_WIDTH;
-        const nextLeft = nextStartOffset * DAY_WIDTH;
-
-        // 화살표 시작점: 현재 바의 오른쪽 끝 중앙
-        const fromX = currentLeft + currentWidth;
-        const fromY =
-          currentNode.top + currentLayout.lane * LANE_HEIGHT + LANE_HEIGHT / 2;
-
-        // 화살표 끝점: 다음 바의 왼쪽 시작 중앙
-        const toX = nextLeft;
-        const toY =
-          nextNode.top + nextLayout.lane * LANE_HEIGHT + LANE_HEIGHT / 2;
-
-        connections.push({
-          fromBar: current,
-          toBar: next,
-          fromX,
-          fromY,
-          toX,
-          toY,
-        });
-      }
-    });
-
-    return connections;
-  }, [activeBars, nodePositions, rangeStart]);
-
-  // 초기 flags 로드
-  useEffect(() => {
-    if (workspaceId) {
-      fetchFlags(workspaceId);
-    }
-  }, [workspaceId, fetchFlags]);
-
-  // 헤더 스크롤 동기화 (FlagLane 포함)
-  const handleScroll = useCallback(() => {
-    if (containerRef.current) {
-      const scrollLeft = containerRef.current.scrollLeft;
-      const scrollTop = containerRef.current.scrollTop;
-
-      // 가로 스크롤 동기화
-      if (headerRef.current) {
-        headerRef.current.scrollLeft = scrollLeft;
-      }
-      if (flagLaneRef.current) {
-        flagLaneRef.current.scrollLeft = scrollLeft;
-      }
-      setHeaderScrollLeft(scrollLeft);
-
-      // 세로 스크롤 동기화 (TreePanel과)
-      onScrollChange?.(scrollTop);
-    }
-  }, [onScrollChange]);
-
-  // Flag 영역 스크롤 시 타임라인 동기화 (양방향)
-  const handleFlagScroll = useCallback(() => {
-    if (flagLaneRef.current && containerRef.current) {
-      const scrollLeft = flagLaneRef.current.scrollLeft;
-
-      // 타임라인과 헤더 동기화
-      containerRef.current.scrollLeft = scrollLeft;
-      if (headerRef.current) {
-        headerRef.current.scrollLeft = scrollLeft;
-      }
-      setHeaderScrollLeft(scrollLeft);
-    }
-  }, []);
-
-  // 오늘로 스크롤하는 함수
-  const scrollToToday = useCallback(
-    (smooth = true) => {
-      if (!containerRef.current) return;
-
-      const today = new Date();
-      const daysDiff = Math.floor(
-        (today.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      const totalDays = days.length;
-
-      // 오늘이 범위 내에 있으면 스크롤
-      if (daysDiff >= 0 && daysDiff < totalDays) {
-        const scrollX =
-          daysDiff * DAY_WIDTH -
-          containerRef.current.clientWidth / 2 +
-          DAY_WIDTH / 2;
-        containerRef.current.scrollTo({
-          left: Math.max(0, scrollX),
-          behavior: smooth ? "smooth" : "instant",
-        });
-      }
-    },
-    [rangeStart, days.length]
-  );
-
-  // 외부 scrollTop 동기화 (TreePanel에서 전달)
-  useEffect(() => {
-    if (externalScrollTop !== undefined && containerRef.current) {
-      if (containerRef.current.scrollTop !== externalScrollTop) {
-        containerRef.current.scrollTop = externalScrollTop;
-      }
-    }
-  }, [externalScrollTop]);
-
-  // 가로 스크롤바 높이 감지 및 전달
-  useEffect(() => {
-    const checkScrollbarHeight = () => {
-      if (containerRef.current && onScrollbarHeightChange) {
-        const hasHorizontalScrollbar =
-          containerRef.current.scrollWidth > containerRef.current.clientWidth;
-        const scrollbarHeight = hasHorizontalScrollbar
-          ? containerRef.current.offsetHeight -
-            containerRef.current.clientHeight
-          : 0;
-        onScrollbarHeightChange(scrollbarHeight);
-      }
-    };
-
-    // 초기 체크
-    checkScrollbarHeight();
-
-    // 리사이즈 시 재체크
-    const resizeObserver = new ResizeObserver(checkScrollbarHeight);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [onScrollbarHeightChange]);
-
-  // 초기 로드 시 오늘로 스크롤
-  useEffect(() => {
-    // 약간의 지연 후 스크롤 (레이아웃 완료 후)
-    const timer = setTimeout(() => {
-      scrollToToday(false); // 초기에는 부드러운 애니메이션 없이
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 오늘로 이동 이벤트 핸들러
-  useEffect(() => {
-    const handleScrollToToday = () => {
-      scrollToToday(true);
-    };
-
-    window.addEventListener("gantt:scroll-to-today", handleScrollToToday);
-    return () =>
-      window.removeEventListener("gantt:scroll-to-today", handleScrollToToday);
-  }, [scrollToToday]);
-
-  // Epic으로 스크롤하는 함수 (날짜 범위 중앙으로 수평 스크롤)
-  const scrollToDateRange = useCallback(
-    (startDateStr: string, endDateStr: string, smooth = true) => {
-      if (!containerRef.current) return;
-
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-
-      // 시작일과 종료일의 중간 날짜 계산
-      const midTime = (startDate.getTime() + endDate.getTime()) / 2;
-      const midDate = new Date(midTime);
-
-      // rangeStart 기준으로 일수 차이 계산
-      const daysDiff = Math.floor(
-        (midDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      const totalDays = days.length;
-
-      // 범위 내에 있으면 스크롤
-      if (daysDiff >= 0 && daysDiff < totalDays) {
-        const scrollX =
-          daysDiff * DAY_WIDTH -
-          containerRef.current.clientWidth / 2 +
-          DAY_WIDTH / 2;
-        containerRef.current.scrollTo({
-          left: Math.max(0, scrollX),
-          behavior: smooth ? "smooth" : "instant",
-        });
-      }
-    },
-    [rangeStart, days.length]
-  );
-
-  // Epic 스크롤 이벤트 핸들러
-  useEffect(() => {
-    const handleScrollToEpic = (
-      e: CustomEvent<{ rowId: string; startDate: string; endDate: string }>
-    ) => {
-      const { startDate, endDate } = e.detail;
-      scrollToDateRange(startDate, endDate, true);
-    };
-
-    window.addEventListener(
-      "gantt:scroll-to-epic",
-      handleScrollToEpic as EventListener
-    );
-    return () =>
-      window.removeEventListener(
-        "gantt:scroll-to-epic",
-        handleScrollToEpic as EventListener
-      );
-  }, [scrollToDateRange]);
-
-  // Flag 스크롤 이벤트 핸들러
-  useEffect(() => {
-    const handleScrollToFlag = (
-      e: CustomEvent<{ flagId: string; startDate: string; endDate: string }>
-    ) => {
-      const { startDate, endDate } = e.detail;
-      scrollToDateRange(startDate, endDate, true);
-    };
-
-    window.addEventListener(
-      "gantt:scroll-to-flag",
-      handleScrollToFlag as EventListener
-    );
-    return () =>
-      window.removeEventListener(
-        "gantt:scroll-to-flag",
-        handleScrollToFlag as EventListener
-      );
-  }, [scrollToDateRange]);
-
-  // 드래그 상태를 ref로 관리 (성능 최적화 - 렌더링 최소화)
-  const dragCreateRef = useRef(dragCreate);
-  dragCreateRef.current = dragCreate;
-
-  // Drag create 핸들링 - 일 단위로 스냅
-  const handleMouseDown = useCallback(
-    (
-      e: React.MouseEvent,
-      rowId: string,
-      row: DraftRow,
-      laneIndex: number = 0
-    ) => {
-      // 좌클릭만 허용
-      if (e.button !== 0) return;
-
-      // 편집 모드가 아니면 무시
-      if (!isEditing) {
-        return;
-      }
-
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const rawX =
-        e.clientX - rect.left + (containerRef.current?.scrollLeft || 0);
-      // 일 단위로 스냅 (클릭한 셀의 시작점)
-      const snappedX = Math.floor(rawX / DAY_WIDTH) * DAY_WIDTH;
-
-      // 호버 프리뷰 숨기기
-      setHoverInfo(null);
-
-      // 액션 발생 - 락 연장 트리거
-      onAction?.();
-
-      // mouse down 시 바로 프리뷰 표시 (파란색 블록)
-      setDragCreate({
-        isActive: true,
-        isDragging: false,
-        startX: snappedX,
-        currentX: snappedX,
-        rowId,
-        row,
-        laneIndex,
-      });
-    },
-    [isEditing, onAction]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      const current = dragCreateRef.current;
-      if (!current?.isActive) return;
-
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const rawX =
-        e.clientX - rect.left + (containerRef.current?.scrollLeft || 0);
-      // 일 단위로 스냅 (드래그 중에도 셀 경계에 맞춤)
-      const snappedX = Math.floor(rawX / DAY_WIDTH) * DAY_WIDTH;
-
-      // 같은 위치면 업데이트 안함 (성능 최적화)
-      if (snappedX === current.currentX) return;
-
-      const distance = Math.abs(snappedX - current.startX);
-      const shouldDrag = distance >= DAY_WIDTH; // 1일 이상 이동 시 드래그
-
-      setDragCreate((prev) =>
-        prev
-          ? {
-              ...prev,
-              currentX: snappedX,
-              isDragging: shouldDrag || prev.isDragging,
-            }
-          : null
-      );
-    },
-    [] // 의존성 제거 - ref 사용으로 최신 상태 참조
-  );
-
-  const handleMouseUp = useCallback(() => {
-    // 휠 클릭 스크롤 종료
-    if (middleClickScroll?.isActive) {
-      setMiddleClickScroll(null);
-      return;
-    }
-
-    if (!dragCreate?.isActive) return;
-
-    const startX = Math.min(dragCreate.startX, dragCreate.currentX);
-    const endX = Math.max(dragCreate.startX, dragCreate.currentX);
-
-    // 드래그 모드인 경우: 범위 선택
-    if (dragCreate.isDragging) {
-      const startDate = xToDate(startX, rangeStart, DAY_WIDTH);
-      const endDate = xToDate(endX, rangeStart, DAY_WIDTH);
-
-      setShowCreateModal({
-        rowId: dragCreate.rowId,
-        startDate,
-        endDate,
-        project: dragCreate.row.project,
-        module: dragCreate.row.module,
-        feature: dragCreate.row.feature,
-        laneIndex: dragCreate.laneIndex,
-      });
-    } else {
-      // 클릭인 경우: 1일짜리 기간 즉시 생성
-      const clickDate = xToDate(dragCreate.startX, rangeStart, DAY_WIDTH);
-
-      setShowCreateModal({
-        rowId: dragCreate.rowId,
-        startDate: clickDate,
-        endDate: clickDate, // 같은 날짜 = 1일
-        project: dragCreate.row.project,
-        module: dragCreate.row.module,
-        feature: dragCreate.row.feature,
-        laneIndex: dragCreate.laneIndex,
-      });
-    }
-
-    setDragCreate(null);
-  }, [dragCreate, rangeStart, middleClickScroll]);
-
-  // 휠 클릭 스크롤 시작
-  const handleMiddleClickStart = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 1 || !containerRef.current) return; // 휠 클릭(middle button)이 아니면 종료
-
-      e.preventDefault();
-
-      // 호버 프리뷰 숨기기
-      setHoverInfo(null);
-
-      setMiddleClickScroll({
-        isActive: true,
-        startX: e.clientX,
-        startY: e.clientY,
-        scrollLeft: containerRef.current.scrollLeft,
-        scrollTop: containerRef.current.scrollTop,
-      });
-    },
-    []
-  );
-
-  // 휠 클릭 스크롤 이동
-  const handleMiddleClickMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!middleClickScroll?.isActive || !containerRef.current) return;
-
-      const deltaX = middleClickScroll.startX - e.clientX;
-      const deltaY = middleClickScroll.startY - e.clientY;
-
-      containerRef.current.scrollLeft = middleClickScroll.scrollLeft + deltaX;
-      containerRef.current.scrollTop = middleClickScroll.scrollTop + deltaY;
-    },
-    [middleClickScroll]
-  );
-
-  const handleCellLeave = useCallback(() => {
-    setHoverInfo(null);
-  }, []);
-
-  // 생성 모달 완료
-  const handleCreatePlan = useCallback(
-    (data: {
-      title: string;
-      stage: string;
-      status: PlanStatus;
-      assignees: DraftAssignee[];
-      description?: string;
-      links?: PlanLink[];
-    }) => {
-      if (!showCreateModal) return;
-
-      addBar({
-        rowId: showCreateModal.rowId,
-        title: data.title,
-        stage: data.stage,
-        status: data.status,
-        startDate: formatDate(showCreateModal.startDate),
-        endDate: formatDate(showCreateModal.endDate),
-        assignees: data.assignees,
-        description: data.description,
-        links: data.links,
-        preferredLane: showCreateModal.laneIndex,
-      });
-
-      setShowCreateModal(null);
-    },
-    [showCreateModal, addBar]
-  );
-
-  // 드래그 프리뷰 계산 - isActive이면 표시 (마우스 다운 즉시)
-  const dragPreview = useMemo(() => {
-    if (!dragCreate?.isActive) return null;
-
-    const startX = Math.min(dragCreate.startX, dragCreate.currentX);
-    const endX = Math.max(dragCreate.startX, dragCreate.currentX);
-    // 너비는 끝점 + 1일 너비 (포함)
-    const width = endX - startX + DAY_WIDTH;
-
-    return { left: startX, width };
-  }, [dragCreate]);
-
-  // 전역 키보드 이벤트 (Delete/Backspace)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isEditing) return;
-
-      // 입력 필드에서는 무시
-      if (
-        (e.target as HTMLElement).tagName === "INPUT" ||
-        (e.target as HTMLElement).tagName === "TEXTAREA"
-      ) {
-        return;
-      }
-
-      if (e.key === "Delete" || e.key === "Backspace") {
-        e.preventDefault();
-        // Flag 선택 시 flag 삭제
-        if (selectedFlagId) {
-          deleteFlagAction(selectedFlagId);
-          selectFlag(null);
-          setHighlightDateRange(null); // 기간 강조도 함께 해제
-        }
-        // Bar 선택 시 bar 삭제
-        else if (selectedBarId) {
-          deleteBar(selectedBarId);
-          selectBar(undefined);
-        }
-      } else if (e.key === "Escape") {
-        selectBar(undefined);
-        selectFlag(null);
-        clearPendingFlag();
-        setHighlightDateRange(null); // 기간 강조 해제
-        setLaneContextMenu(null); // 컨텍스트 메뉴 닫기
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
+  // Data calculations
+  const data = useTimelineData({
+    rangeStart,
+    rangeEnd,
+    allRows,
+    allBars,
+    activeBars: state.dragCreate?.isActive ? [] : allBars.filter((b) => !b.deleted),
+    searchQuery,
+    filters,
+    filterIndex: filterIndex || null,
+    expandedNodesArray,
+    viewMode,
+  });
+
+  // Flag Lane 높이 계산
+  const { laneCount: flagLaneCount, items: flagItems } = packFlagsIntoLanes({
+    flags,
+    rangeStart,
+    rangeEnd,
+    dayWidth: 40,
+  });
+  const flagLaneHeight = Math.max(1, flagLaneCount) * 32; // FLAG_LANE_HEIGHT
+
+  // Drag create logic
+  const dragLogic = useTimelineDragCreate({
+    isEditing,
+    rangeStart,
+    dragCreate: state.dragCreate,
+    setDragCreate: state.setDragCreate,
+    setHoverInfo: state.setHoverInfo,
+    setShowCreateModal: state.setShowCreateModal,
+    containerRef,
+    onAction,
+    addBar,
+    middleClickScroll: state.middleClickScroll,
+    setMiddleClickScroll: state.setMiddleClickScroll,
+  });
+
+  // Scroll logic
+  const scrollLogic = useTimelineScroll({
+    containerRef,
+    headerRef,
+    flagLaneRef,
+    rangeStart,
+    days: data.days,
+    setHeaderScrollLeft: state.setHeaderScrollLeft,
+    setHoverInfo: state.setHoverInfo,
+    setMiddleClickScroll: state.setMiddleClickScroll,
+    middleClickScroll: state.middleClickScroll,
+    onScrollChange,
+  });
+
+  // Lane actions
+  const laneActions = useTimelineLaneActions({
+    rows: data.rows,
+    activeBars: data.filteredActiveBars,
+    rangeStart,
+    rangeEnd,
+    laneContextMenu: state.laneContextMenu,
+    deleteLaneConfirm: state.deleteLaneConfirm,
+    updateBar,
+    setLaneContextMenu: state.setLaneContextMenu,
+    setDeleteLaneConfirm: state.setDeleteLaneConfirm,
+    onAction,
+  });
+
+  // Keyboard events
+  useTimelineKeyboard({
     isEditing,
     selectedBarId,
     selectedFlagId,
@@ -939,289 +159,77 @@ export function DraftTimeline({
     selectFlag,
     clearPendingFlag,
     setHighlightDateRange,
-  ]);
+    setLaneContextMenu: state.setLaneContextMenu,
+  });
 
-  // 레인 컨텍스트 메뉴 외부 클릭 시 닫기
-  useEffect(() => {
-    if (!laneContextMenu) return;
+  // Effects
+  useTimelineEffects({
+    workspaceId,
+    fetchFlags,
+    externalScrollTop,
+    containerRef,
+    onScrollbarHeightChange,
+    scrollToToday: scrollLogic.scrollToToday,
+    scrollToDateRange: scrollLogic.scrollToDateRange,
+  });
 
-    const handleClickOutside = (e: MouseEvent) => {
-      setLaneContextMenu(null);
-    };
-
-    const handleContextMenu = (e: MouseEvent) => {
-      setLaneContextMenu(null);
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("contextmenu", handleContextMenu);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, [laneContextMenu]);
-
-  // 레인 추가 핸들러
-  const handleAddLane = useCallback(
-    (position: "above" | "below") => {
-      if (!laneContextMenu) return;
-
-      const { rowId, laneIndex } = laneContextMenu;
-      const row = rows.find((r) => r.rowId === rowId);
-      if (!row) return;
-
-      // 해당 row의 bars 가져오기
-      const rowBars = activeBars.filter((b) => b.rowId === rowId);
-
-      // 현재 bars의 실제 레인 인덱스 계산 (assignLanesToBars 사용)
-      const barsWithLane = assignLanesToBars(rowBars);
-
-      // 새로운 레인 인덱스 계산
-      const newLaneIndex = position === "above" ? laneIndex : laneIndex + 1;
-
-      // 각 bar의 실제 레인 인덱스를 확인하고 preferredLane 설정
-      barsWithLane.forEach((barWithLane) => {
-        const currentLane = barWithLane.lane;
-
-        // newLaneIndex 이상의 레인: 1 증가
-        if (currentLane >= newLaneIndex) {
-          updateBar(barWithLane.clientUid, {
-            preferredLane: currentLane + 1,
-          });
-        }
-        // newLaneIndex 미만의 레인: 현재 위치 고정 (preferredLane 설정)
-        else {
-          // preferredLane이 없거나, 현재 레인과 다른 경우 현재 레인으로 고정
-          if (
-            barWithLane.preferredLane === undefined ||
-            barWithLane.preferredLane !== currentLane
-          ) {
-            updateBar(barWithLane.clientUid, {
-              preferredLane: currentLane,
-            });
-          }
-        }
-      });
-
-      setLaneContextMenu(null);
-      onAction?.();
-    },
-    [laneContextMenu, rows, activeBars, updateBar, onAction]
-  );
-
-  // 레인 삭제 핸들러
-  const handleDeleteLane = useCallback(() => {
-    if (!laneContextMenu) return;
-
-    const { rowId, laneIndex } = laneContextMenu;
-    const row = rows.find((r) => r.rowId === rowId);
-    if (!row) return;
-
-    // 해당 row의 bars 가져오기
-    const rowBars = activeBars.filter((b) => b.rowId === rowId);
-
-    // 현재 bars의 실제 레인 인덱스 계산
-    const barsWithLane = assignLanesToBars(rowBars);
-
-    // 삭제할 레인에 있는 bars 확인
-    const barsInLane = barsWithLane.filter((b) => b.lane === laneIndex);
-
-    // 현재 보이는 날짜 범위에 있는 bars가 있는지 확인
-    const visibleBars = barsInLane.filter((bar) => {
-      const barStart = parseLocalDate(bar.startDate);
-      const barEnd = parseLocalDate(bar.endDate);
-      return barStart <= rangeEnd && barEnd >= rangeStart;
-    });
-
-    if (visibleBars.length > 0) {
-      // 모달 표시
-      setDeleteLaneConfirm({
-        rowId,
-        laneIndex,
-        visibleBarsCount: visibleBars.length,
-      });
-      setLaneContextMenu(null);
-      return;
-    }
-
-    // bars가 없으면 바로 삭제
-    performDeleteLane(rowId, laneIndex, barsWithLane, barsInLane);
-  }, [laneContextMenu, rows, activeBars, rangeStart, rangeEnd]);
-
-  // 레인 삭제 실행
-  const performDeleteLane = useCallback(
-    (
-      rowId: string,
-      laneIndex: number,
-      barsWithLane: ReturnType<typeof assignLanesToBars>,
-      barsInLane: ReturnType<typeof assignLanesToBars>
-    ) => {
-      // 삭제할 레인의 bars의 preferredLane 제거
-      barsInLane.forEach((bar) => {
-        updateBar(bar.clientUid, {
-          preferredLane: undefined,
-        });
-      });
-
-      // laneIndex보다 큰 레인의 bars의 preferredLane을 1 감소
-      barsWithLane.forEach((barWithLane) => {
-        const currentLane = barWithLane.lane;
-        if (currentLane > laneIndex) {
-          updateBar(barWithLane.clientUid, {
-            preferredLane: currentLane - 1,
-          });
-        }
-      });
-
-      setLaneContextMenu(null);
-      setDeleteLaneConfirm(null);
-      onAction?.();
-    },
-    [updateBar, onAction]
-  );
-
-  // 레인 삭제 확인 핸들러
-  const handleConfirmDeleteLane = useCallback(() => {
-    if (!deleteLaneConfirm) return;
-
-    const { rowId, laneIndex } = deleteLaneConfirm;
-    const rowBars = activeBars.filter((b) => b.rowId === rowId);
-    const barsWithLane = assignLanesToBars(rowBars);
-    const barsInLane = barsWithLane.filter((b) => b.lane === laneIndex);
-
-    performDeleteLane(rowId, laneIndex, barsWithLane, barsInLane);
-  }, [deleteLaneConfirm, activeBars, performDeleteLane]);
+  const handleCellLeave = useCallback(() => {
+    state.setHoverInfo(null);
+  }, [state]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* 헤더 영역 (가로 스크롤 동기화) - Airbnb 스타일 */}
-      <div
-        ref={headerRef}
-        className="flex-shrink-0 overflow-hidden"
-        style={{
-          height: HEADER_HEIGHT,
-          background: "linear-gradient(180deg, #f8f9fa 0%, #f3f4f6 100%)",
-        }}
-      >
-        {/* 하단 border - 별도 div로 처리 */}
-        <div
-          className="absolute left-0 right-0 bottom-0 z-10"
-          style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
-        />
-        <div className="relative" style={{ width: totalWidth, height: "100%" }}>
-          {/* 월 헤더 - Airbnb 스타일 */}
-          <div className="absolute top-0 left-0 flex" style={{ height: 38 }}>
-            {/* 하단 border - 별도 div로 처리 */}
-            <div
-              className="absolute left-0 right-0 bottom-0"
-              style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.06)" }}
-            />
-            {months.map((m, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-center text-xs font-semibold tracking-wide"
-                style={{
-                  width: m.days * DAY_WIDTH,
-                  borderRight: "1px solid rgba(0, 0, 0, 0.06)",
-                  color: "#374151",
-                  background: "transparent",
-                }}
-              >
-                {m.month}
-              </div>
-            ))}
-          </div>
+      {/* 헤더 영역 */}
+      <TimelineHeader
+        headerRef={headerRef}
+        totalWidth={data.totalWidth}
+        months={data.months}
+        days={data.days}
+      />
 
-          {/* 일 헤더 - Airbnb 스타일 */}
-          <div className="absolute left-0 flex" style={{ top: 38, height: 38 }}>
-            {days.map((day, idx) => {
-              const isToday = day.toDateString() === new Date().toDateString();
-              const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-              const isMonday = day.getDay() === 1;
-
-              return (
-                <div
-                  key={idx}
-                  className="flex flex-col items-center justify-center text-xs transition-colors duration-100"
-                  style={{
-                    width: DAY_WIDTH,
-                    borderRight: "1px solid rgba(0, 0, 0, 0.04)",
-                    borderLeft: isMonday
-                      ? "2px solid rgba(0, 0, 0, 0.08)"
-                      : "none",
-                    background: isToday
-                      ? "linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%)"
-                      : isWeekend
-                      ? "rgba(0, 0, 0, 0.02)"
-                      : "transparent",
-                    color: isToday
-                      ? "#2563eb"
-                      : isWeekend
-                      ? "#9ca3af"
-                      : "#6b7280",
-                  }}
-                >
-                  <span
-                    className={`font-semibold ${
-                      isToday ? "text-blue-600" : ""
-                    }`}
-                  >
-                    {day.getDate()}
-                  </span>
-                  <span className="text-[9px] font-medium opacity-70">
-                    {["일", "월", "화", "수", "목", "금", "토"][day.getDay()]}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Flag Lane - 헤더 아래 오버레이 */}
+      {/* Flag Lane */}
       <div
         ref={flagLaneRef}
         className="flex-shrink-0 overflow-x-auto scrollbar-hide relative"
         style={{
-          scrollbarWidth: "none", // Firefox
-          msOverflowStyle: "none", // IE/Edge
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
         }}
-        onScroll={handleFlagScroll}
+        onScroll={scrollLogic.handleFlagScroll}
       >
         <FlagLane
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
-          dayWidth={DAY_WIDTH}
-          totalWidth={totalWidth}
+          dayWidth={40}
+          totalWidth={data.totalWidth}
           isEditing={isEditing}
-          scrollLeft={headerScrollLeft}
-          onOpenCreateModal={() => setShowCreateFlagModal(true)}
-          onOpenEditModal={(flag) => setEditingFlag(flag)}
+          scrollLeft={state.headerScrollLeft}
+          onOpenCreateModal={() => state.setShowCreateFlagModal(true)}
+          onOpenEditModal={(flag) => state.setEditingFlag(flag)}
         />
       </div>
 
-      {/* 그리드 영역 - Airbnb 스타일 */}
+      {/* 그리드 영역 */}
       <div
         ref={containerRef}
         className="flex-1 overflow-x-auto overflow-y-auto relative timeline-scrollbar"
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           minHeight: 0,
-          cursor: middleClickScroll?.isActive ? "move" : undefined,
+          cursor: state.middleClickScroll?.isActive ? "move" : undefined,
         }}
-        onScroll={handleScroll}
-        onMouseDown={handleMiddleClickStart}
+        onScroll={scrollLogic.handleScroll}
+        onMouseDown={scrollLogic.handleMiddleClickStart}
         onMouseMove={(e) => {
-          handleMiddleClickMove(e);
-          handleMouseMove(e);
+          scrollLogic.handleMiddleClickMove(e);
+          dragLogic.handleMouseMove(e);
         }}
-        onMouseUp={handleMouseUp}
+        onMouseUp={dragLogic.handleMouseUp}
         onMouseLeave={() => {
-          handleMouseUp();
+          dragLogic.handleMouseUp();
           handleCellLeave();
         }}
         onClick={(e) => {
-          // 빈 영역 클릭 시 선택 및 강조 해제
           if (e.target === e.currentTarget) {
             selectBar(undefined);
             selectFlag(null);
@@ -1231,805 +239,142 @@ export function DraftTimeline({
       >
         <div
           className="relative"
-          style={{ width: totalWidth, height: totalHeight }}
+          style={{ width: data.totalWidth, height: data.totalHeight }}
         >
-          {/* 기간 강조 표시 오버레이 */}
-          {highlightDateRange &&
-            (() => {
-              const highlightStart = parseLocalDate(
-                highlightDateRange.startDate
-              );
-              const highlightEnd = parseLocalDate(highlightDateRange.endDate);
+          {/* 기간 강조 표시 */}
+          <TimelineHighlight
+            highlightDateRange={highlightDateRange || null}
+            rangeStart={rangeStart}
+            days={data.days}
+            flagItems={flagItems}
+            flagLaneHeight={flagLaneHeight}
+            nodePositions={data.nodePositions}
+          />
 
-              const rangeStartMidnight = new Date(
-                rangeStart.getFullYear(),
-                rangeStart.getMonth(),
-                rangeStart.getDate()
-              );
+          {/* 그리드 라인 */}
+          <TimelineGridLines
+            days={data.days}
+            rangeStart={rangeStart}
+            nodePositions={data.nodePositions}
+          />
 
-              const startOffset = Math.round(
-                (highlightStart.getTime() - rangeStartMidnight.getTime()) /
-                  (1000 * 60 * 60 * 24)
-              );
-              const endOffset = Math.round(
-                (highlightEnd.getTime() - rangeStartMidnight.getTime()) /
-                  (1000 * 60 * 60 * 24)
-              );
+          {/* 노드 렌더링 */}
+          <TimelineNodes
+            nodePositions={data.nodePositions}
+            viewMode={viewMode}
+            totalWidth={data.totalWidth}
+            rangeStart={rangeStart}
+            days={data.days}
+            flags={flags}
+            rows={data.rows}
+            activeBars={data.filteredActiveBars}
+            activeBarsSet={data.activeBarsSet}
+            filters={filters}
+            selectedBarId={selectedBarId}
+            selectedRowId={selectedRowId}
+            highlightedRowId={highlightedRowId}
+            isEditing={isEditing}
+            readOnly={readOnly}
+            containerRef={containerRef}
+            dragCreate={state.dragCreate}
+            dragPreview={dragLogic.dragPreview}
+            middleClickScroll={state.middleClickScroll}
+            onMouseDown={dragLogic.handleMouseDown}
+            setHoverInfo={state.setHoverInfo}
+            setLaneContextMenu={state.setLaneContextMenu}
+            selectBar={selectBar}
+            setViewPopover={state.setViewPopover}
+            setShowEditModal={state.setShowEditModal}
+            setModuleSummaryPopover={state.setModuleSummaryPopover}
+            setBlockContextMenu={state.setBlockContextMenu}
+            onDragDateChange={onDragDateChange}
+            moveBarToRow={moveBarToRow}
+          />
 
-              // 범위 밖이면 표시하지 않음
-              if (endOffset < 0 || startOffset >= days.length) return null;
+          {/* 호버 프리뷰 */}
+          <TimelineHoverPreview
+            isEditing={isEditing}
+            dragCreateIsActive={!!state.dragCreate?.isActive}
+            hoverInfo={state.hoverInfo}
+          />
 
-              const clampedStartOffset = Math.max(0, startOffset);
-              const clampedEndOffset = Math.min(days.length - 1, endOffset);
-
-              const highlightLeft = clampedStartOffset * DAY_WIDTH;
-              const highlightWidth =
-                (clampedEndOffset - clampedStartOffset + 1) * DAY_WIDTH;
-              const highlightColor =
-                highlightDateRange.color ||
-                (highlightDateRange.type === "flag" ? "#ef4444" : "#3b82f6");
-
-              // 라벨 위치 계산
-              const isFlag = highlightDateRange.type === "flag";
-              let labelTop = 8; // 기본값
-
-              if (isFlag) {
-                // Flag 선택: 해당 FlagBar가 있는 레인 바로 아래
-                const flagItem = flagItems.find(
-                  (item) => item.flagId === highlightDateRange.nodeId
-                );
-                if (flagItem) {
-                  // 해당 레인의 하단 위치 (laneIndex는 0부터 시작)
-                  labelTop = (flagItem.laneIndex + 1) * FLAG_LANE_HEIGHT;
-                } else {
-                  // 못 찾으면 전체 FlagLane 높이 사용
-                  labelTop = flagLaneHeight;
-                }
-              } else if (highlightDateRange.nodeId) {
-                // 노드 선택: 해당 노드의 레인 상단에 표시
-                const nodePos = nodePositions.find(
-                  (p) => p.node.id === highlightDateRange.nodeId
-                );
-                if (nodePos) {
-                  labelTop = nodePos.top + 4; // 레인 상단에서 약간 아래
-                }
-              }
-
-              return (
-                <>
-                  {/* 기간 강조 배경 - z-index 낮게 */}
-                  <div
-                    className="absolute top-0 h-full pointer-events-none"
-                    style={{
-                      left: highlightLeft,
-                      width: highlightWidth,
-                      background: `linear-gradient(180deg, ${highlightColor}15 0%, ${highlightColor}08 50%, ${highlightColor}15 100%)`,
-                      borderLeft: `2px solid ${highlightColor}60`,
-                      borderRight: `2px solid ${highlightColor}60`,
-                      zIndex: 1,
-                    }}
-                  />
-                  {/* 기간 라벨 - z-index 높게 */}
-                  <div
-                    className="absolute px-2 py-1 text-[10px] font-bold whitespace-nowrap pointer-events-none"
-                    style={{
-                      left: highlightLeft + highlightWidth / 2,
-                      top: labelTop,
-                      transform: "translateX(-50%)",
-                      background: highlightColor,
-                      color: "white",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                      zIndex: 100,
-                      // Flag: 둥근 모서리 전체, 노드: 하단만 둥근 모서리
-                      borderRadius: isFlag ? "6px" : "0 0 6px 6px",
-                    }}
-                  >
-                    {highlightDateRange.startDate === highlightDateRange.endDate
-                      ? highlightDateRange.startDate
-                      : `${highlightDateRange.startDate} ~ ${highlightDateRange.endDate}`}
-                  </div>
-                </>
-              );
-            })()}
-
-          {/* 그리드 라인 - Airbnb 스타일 */}
-          <div className="absolute inset-0 pointer-events-none">
-            {/* 수직선 (일별) */}
-            {days.map((day, idx) => {
-              const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-              const isMonday = day.getDay() === 1;
-
-              return (
-                <div
-                  key={idx}
-                  className="absolute top-0 h-full transition-colors duration-100"
-                  style={{
-                    left: idx * DAY_WIDTH,
-                    width: DAY_WIDTH,
-                    background: isWeekend
-                      ? "rgba(0, 0, 0, 0.015)"
-                      : "transparent",
-                    borderRight: "1px solid rgba(0, 0, 0, 0.04)",
-                    borderLeft: isMonday
-                      ? "2px solid rgba(0, 0, 0, 0.08)"
-                      : "none",
-                  }}
-                />
-              );
-            })}
-
-            {/* 수평선 (노드별) */}
-            {nodePositions.map(({ node, top, height }) => (
-              <div
-                key={node.id}
-                className="absolute left-0 w-full"
-                style={{
-                  top: top + height,
-                  borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
-                }}
-              />
-            ))}
-
-            {/* 오늘 표시선 - Airbnb 스타일 */}
-            {(() => {
-              const today = new Date();
-              const daysDiff = Math.floor(
-                (today.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
-              );
-              if (daysDiff >= 0 && daysDiff < days.length) {
-                return (
-                  <div
-                    className="absolute top-0 h-full z-10"
-                    style={{
-                      left: daysDiff * DAY_WIDTH + DAY_WIDTH / 2 - 1,
-                      width: 2,
-                      background:
-                        "linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)",
-                      boxShadow: "0 0 8px rgba(59, 130, 246, 0.4)",
-                    }}
-                  />
-                );
-              }
-              return null;
-            })()}
-          </div>
-
-          {/* 노드 영역 (클릭 가능) - Airbnb 스타일 */}
-          {nodePositions.map(({ node, top, height }) => {
-            // feature 노드만 bar 렌더링
-            if (node.type !== "feature" || !node.row) {
-              // 기능 필터가 적용된 경우: 프로젝트/모듈 행 숨김
-              // 모듈 필터가 적용된 경우: 프로젝트 행 숨김
-              const hasFeatureFilter = filters.features.length > 0;
-              const hasModuleFilter = filters.modules.length > 0;
-
-              if (hasFeatureFilter) return null;
-              if (hasModuleFilter && node.type === "project") return null;
-
-              // project/module 노드는 하위 bars의 기간 범위를 표시 (접혀도 유지)
-              const dateRange = getNodeDateRange(node, rows, activeBars);
-
-              // rangeStart를 자정으로 정규화
-              const rangeStartMidnight = new Date(
-                rangeStart.getFullYear(),
-                rangeStart.getMonth(),
-                rangeStart.getDate()
-              );
-
-              let rangeBarLeft = 0;
-              let rangeBarWidth = 0;
-
-              if (dateRange) {
-                const minStartDate = parseLocalDate(dateRange.minStart);
-                const maxEndDate = parseLocalDate(dateRange.maxEnd);
-
-                const startOffset = Math.round(
-                  (minStartDate.getTime() - rangeStartMidnight.getTime()) /
-                    (1000 * 60 * 60 * 24)
-                );
-                const endOffset = Math.round(
-                  (maxEndDate.getTime() - rangeStartMidnight.getTime()) /
-                    (1000 * 60 * 60 * 24)
-                );
-
-                rangeBarLeft = startOffset * DAY_WIDTH;
-                rangeBarWidth = (endOffset - startOffset + 1) * DAY_WIDTH;
-              }
-
-              return (
-                <div
-                  key={node.id}
-                  className="absolute left-0"
-                  style={{
-                    top,
-                    height,
-                    width: totalWidth,
-                    background:
-                      node.type === "project"
-                        ? "linear-gradient(90deg, rgba(251, 191, 36, 0.06) 0%, rgba(251, 191, 36, 0.02) 100%)"
-                        : node.type === "module"
-                        ? "linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(139, 92, 246, 0.01) 100%)"
-                        : "transparent",
-                  }}
-                >
-                  {/* 하위 feature들의 기간 범위 표시 - Airbnb 스타일 */}
-                  {dateRange && (
-                    <div
-                      className="absolute rounded-lg transition-all duration-200"
-                      style={{
-                        left: rangeBarLeft,
-                        width: rangeBarWidth,
-                        top: (height - 10) / 2,
-                        height: 10,
-                        background:
-                          node.type === "project"
-                            ? "linear-gradient(90deg, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.08) 100%)"
-                            : "linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.06) 100%)",
-                        border:
-                          node.type === "project"
-                            ? "1px dashed rgba(245, 158, 11, 0.5)"
-                            : "1px dashed rgba(139, 92, 246, 0.4)",
-                        boxShadow:
-                          node.type === "project"
-                            ? "0 1px 3px rgba(245, 158, 11, 0.1)"
-                            : "0 1px 3px rgba(139, 92, 246, 0.08)",
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            }
-
-            const row = node.row;
-            const nodeBars = node.bars || [];
-            const isRowSelected = row.rowId === selectedRowId;
-            const isFocused = row.rowId === highlightedRowId;
-
-            return (
-              <div
-                key={node.id}
-                className={`absolute left-0 cursor-crosshair ${isFocused ? "animate-pulse-subtle" : ""}`}
-                style={{
-                  top,
-                  height,
-                  width: totalWidth,
-                  // Timeline focus 하이라이트
-                  background: isFocused
-                    ? "rgba(251, 146, 60, 0.08)"
-                    : "transparent",
-                  // 선택된 행 강조 - 파란색 얇은 라인
-                  borderTop: isRowSelected ? "1px solid #3b82f6" : isFocused ? "1px solid rgba(251, 146, 60, 0.3)" : "none",
-                  borderBottom: isRowSelected ? "1px solid #3b82f6" : isFocused ? "1px solid rgba(251, 146, 60, 0.3)" : "none",
-                }}
-                onMouseDown={(e) => {
-                  // 클릭 위치에서 laneIndex 계산 (merge된 레인 지원)
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const relativeY = e.clientY - rect.top;
-                  const laneIndex = Math.floor(relativeY / LANE_HEIGHT);
-                  handleMouseDown(e, row.rowId, row, laneIndex);
-                }}
-                onMouseMove={(e) => {
-                  // 편집 모드이고, 드래그 중이 아니고, 휠 클릭 스크롤 중이 아닐 때만 호버 프리뷰 표시
-                  if (
-                    isEditing &&
-                    !dragCreate?.isActive &&
-                    !middleClickScroll?.isActive
-                  ) {
-                    const rect = containerRef.current?.getBoundingClientRect();
-                    const nodeRect = e.currentTarget.getBoundingClientRect();
-                    if (rect) {
-                      const x =
-                        e.clientX -
-                        rect.left +
-                        (containerRef.current?.scrollLeft || 0);
-                      // 일 단위로 스냅
-                      const snappedX = Math.floor(x / DAY_WIDTH) * DAY_WIDTH;
-                      const dayIndex = Math.floor(x / DAY_WIDTH);
-
-                      // 개별 레인 인덱스 계산
-                      const relativeY = e.clientY - nodeRect.top;
-                      const laneIndex = Math.floor(relativeY / LANE_HEIGHT);
-
-                      // 스냅된 위치가 변경된 경우에만 상태 업데이트 (성능 최적화)
-                      if (dayIndex >= 0 && dayIndex < days.length) {
-                        setHoverInfo((prev) => {
-                          // 같은 위치 및 레인이면 업데이트 안함
-                          if (
-                            prev?.rowId === row.rowId &&
-                            prev?.x === snappedX &&
-                            prev?.laneIndex === laneIndex
-                          ) {
-                            return prev;
-                          }
-                          return {
-                            rowId: row.rowId,
-                            date: days[dayIndex],
-                            x: snappedX,
-                            laneIndex,
-                            nodeTop: top,
-                            nodeHeight: height,
-                          };
-                        });
-                      }
-                    }
-                  }
-                }}
-                onMouseLeave={() => {
-                  setHoverInfo(null);
-                }}
-                onContextMenu={(e) => {
-                  if (!isEditing) return;
-                  e.preventDefault();
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const relativeY = e.clientY - rect.top;
-                  const laneIndex = Math.floor(relativeY / LANE_HEIGHT);
-                  setLaneContextMenu({
-                    rowId: row.rowId,
-                    laneIndex,
-                    position: { x: e.clientX, y: e.clientY },
-                  });
-                }}
-              >
-                {/* Bars */}
-                {nodeBars
-                  .filter((bar) => activeBarsSet.has(bar.clientUid)) // 필터링된 bars만 렌더링
-                  .map((bar) => {
-                    const barStart = parseLocalDate(bar.startDate);
-                    const barEnd = parseLocalDate(bar.endDate);
-
-                    // rangeStart도 자정으로 정규화하여 비교
-                    const rangeStartMidnight = new Date(
-                      rangeStart.getFullYear(),
-                      rangeStart.getMonth(),
-                      rangeStart.getDate()
-                    );
-
-                    const startOffset = Math.round(
-                      (barStart.getTime() - rangeStartMidnight.getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    );
-                    const endOffset = Math.round(
-                      (barEnd.getTime() - rangeStartMidnight.getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    );
-
-                    const left = startOffset * DAY_WIDTH;
-                    const width = (endOffset - startOffset + 1) * DAY_WIDTH;
-
-                    // 현재 row의 스크롤 보정된 절대 Y offset 계산
-                    // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
-                    const containerTop =
-                      containerRef.current?.getBoundingClientRect().top || 0;
-                    const scrollTop = containerRef.current?.scrollTop || 0;
-                    const rowTopOffset = containerTop + top - scrollTop;
-
-                    return (
-                      <DraftBar
-                        key={bar.clientUid}
-                        bar={bar}
-                        left={left}
-                        width={width}
-                        lane={bar.lane}
-                        isSelected={bar.clientUid === selectedBarId}
-                        isEditing={isEditing}
-                        onSelect={() => selectBar(bar.clientUid)}
-                        onDoubleClick={(e?: React.MouseEvent) => {
-                          // 읽기전용 모드 또는 편집 모드가 아닌 경우: 팝오버 표시
-                          if (readOnly || !isEditing) {
-                            const rect = (
-                              e?.currentTarget as HTMLElement
-                            )?.getBoundingClientRect();
-                            setViewPopover({
-                              bar,
-                              position: {
-                                x: rect
-                                  ? rect.left + rect.width / 2
-                                  : e?.clientX || 0,
-                                y: rect
-                                  ? rect.bottom + 8
-                                  : (e?.clientY || 0) + 8,
-                              },
-                            });
-                          } else {
-                            // 편집 모드: EditPlanModal 표시
-                            setShowEditModal(bar);
-                          }
-                        }}
-                        dayWidth={DAY_WIDTH}
-                        rangeStart={rangeStart}
-                        onDragDateChange={onDragDateChange}
-                        onClearHover={() => setHoverInfo(null)}
-                        rowTopOffset={rowTopOffset}
-                        onMoveComplete={(absoluteY: number) => {
-                          // 마우스 절대 Y 위치로 타겟 Row 찾기
-                          // containerRef는 그리드 영역(헤더/플래그 아래)을 가리킴
-                          const containerRect =
-                            containerRef.current?.getBoundingClientRect();
-                          if (!containerRect) return;
-
-                          // 스크롤 보정된 상대 Y 계산
-                          // containerRect.top은 이미 헤더/플래그 아래이므로 추가 오프셋 불필요
-                          const currentScrollTop =
-                            containerRef.current?.scrollTop || 0;
-                          const relativeY =
-                            absoluteY - containerRect.top + currentScrollTop;
-
-                          // nodePositions에서 타겟 row 찾기
-                          let targetNode = null;
-                          for (const pos of nodePositions) {
-                            if (
-                              pos.node.type === "feature" &&
-                              pos.node.row &&
-                              relativeY >= pos.top &&
-                              relativeY < pos.top + pos.height
-                            ) {
-                              targetNode = pos.node;
-                              break;
-                            }
-                          }
-
-                          // 타겟이 현재 row와 다르면 이동
-                          if (
-                            targetNode &&
-                            targetNode.row &&
-                            targetNode.row.rowId !== bar.rowId
-                          ) {
-                            moveBarToRow(
-                              bar.clientUid,
-                              targetNode.row.project,
-                              targetNode.row.module,
-                              targetNode.row.feature,
-                              targetNode.row.domain
-                            );
-                          }
-                        }}
-                      />
-                    );
-                  })}
-
-                {/* 드래그 프리뷰 - Airbnb 스타일, 개별 레인 지원 */}
-                {dragCreate?.rowId === row.rowId && dragPreview && (
-                  <div
-                    className="absolute rounded-lg pointer-events-none transition-all duration-100"
-                    style={{
-                      left: dragPreview.left,
-                      top: dragCreate.laneIndex * LANE_HEIGHT + 4,
-                      width: dragPreview.width,
-                      height: LANE_HEIGHT - 8,
-                      background:
-                        "linear-gradient(90deg, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%)",
-                      border: "2px dashed #3b82f6",
-                      boxShadow: "0 2px 8px rgba(59, 130, 246, 0.2)",
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
-
-          {/* 호버 시 기간 프리뷰 블록 - 개별 레인에 스냅, 연한 회색 */}
-          {isEditing && !dragCreate?.isActive && hoverInfo && (
-            <div
-              className="absolute pointer-events-none z-10"
-              style={{
-                left: hoverInfo.x,
-                top: hoverInfo.nodeTop + hoverInfo.laneIndex * LANE_HEIGHT + 4,
-                width: DAY_WIDTH,
-                height: LANE_HEIGHT - 8,
-                background: "rgba(156, 163, 175, 0.15)",
-                border: "1px dashed rgba(156, 163, 175, 0.4)",
-                borderRadius: 6,
-              }}
-            />
-          )}
-
-          {/* 스냅샷 엔트리 연결 화살표 */}
-          {snapshotConnections.length > 0 && (
-            <svg
-              className="absolute top-0 left-0 pointer-events-none"
-              style={{
-                width: totalWidth,
-                height: totalHeight,
-                zIndex: 2,
-              }}
-            >
-              {snapshotConnections.map((conn, idx) => {
-                // 화살표 경로 계산 (베지어 곡선)
-                const dx = conn.toX - conn.fromX;
-                const dy = conn.toY - conn.fromY;
-                const midX = conn.fromX + dx / 2;
-
-                // 화살표 끝 부분의 각도 계산 (베지어 곡선의 끝 부분 접선)
-                const arrowSize = 8;
-                const angle = Math.atan2(dy, dx);
-
-                // V자형 화살표의 두 끝점
-                const arrowAngle = Math.PI / 6; // 30도
-                const arrowX1 =
-                  conn.toX - arrowSize * Math.cos(angle - arrowAngle);
-                const arrowY1 =
-                  conn.toY - arrowSize * Math.sin(angle - arrowAngle);
-                const arrowX2 =
-                  conn.toX - arrowSize * Math.cos(angle + arrowAngle);
-                const arrowY2 =
-                  conn.toY - arrowSize * Math.sin(angle + arrowAngle);
-
-                return (
-                  <g key={idx}>
-                    {/* 메인 연결선 */}
-                    <path
-                      d={`M ${conn.fromX} ${conn.fromY} C ${midX} ${conn.fromY}, ${midX} ${conn.toY}, ${conn.toX} ${conn.toY}`}
-                      stroke="#9ca3af"
-                      strokeWidth="1.5"
-                      fill="none"
-                      opacity="0.5"
-                    />
-                    {/* V자형 화살표 */}
-                    <path
-                      d={`M ${arrowX1} ${arrowY1} L ${conn.toX} ${conn.toY} L ${arrowX2} ${arrowY2}`}
-                      stroke="#9ca3af"
-                      strokeWidth="1.5"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      opacity="0.5"
-                    />
-                  </g>
-                );
-              })}
-            </svg>
-          )}
+          {/* 스냅샷 연결 */}
+          <SnapshotConnections
+            connections={data.snapshotConnections}
+            totalWidth={data.totalWidth}
+            totalHeight={data.totalHeight}
+          />
         </div>
       </div>
 
-      {/* 생성 모달 */}
-      {showCreateModal && (
-        <CreatePlanModal
-          isOpen={true}
-          onClose={() => setShowCreateModal(null)}
-          onCreate={handleCreatePlan}
-          defaultValues={{
-            project: showCreateModal.project,
-            module: showCreateModal.module,
-            feature: showCreateModal.feature,
-            startDate: formatDate(showCreateModal.startDate),
-            endDate: formatDate(showCreateModal.endDate),
-          }}
-          members={members}
-          activeFilters={{
-            stages: filters.stages,
-            assignees: filters.assignees,
-          }}
-        />
-      )}
-
-      {/* 수정 모달 */}
-      {showEditModal && (
-        <EditPlanModal
-          isOpen={true}
-          onClose={() => setShowEditModal(null)}
-          onSave={(data) => {
-            updateBar(showEditModal.clientUid, {
-              title: data.title,
-              stage: data.stage,
-              status: data.status,
-              assignees: data.assignees,
-              description: data.description,
-              links: data.links,
-            });
-            setShowEditModal(null);
-          }}
-          onDelete={() => {
-            deleteBar(showEditModal.clientUid);
-            setShowEditModal(null);
-          }}
-          bar={showEditModal}
-          members={members}
-          activeFilters={{
-            stages: filters.stages,
-            assignees: filters.assignees,
-          }}
-        />
-      )}
-
-      {/* Flag 생성 모달 */}
-      <CreateFlagModal
-        isOpen={showCreateFlagModal}
-        onClose={() => setShowCreateFlagModal(false)}
+      {/* 모달들 */}
+      <TimelineModals
+        showCreateModal={state.showCreateModal}
+        showEditModal={state.showEditModal}
+        showCreateFlagModal={state.showCreateFlagModal}
+        editingFlag={state.editingFlag}
+        viewPopover={state.viewPopover}
+        moduleSummaryPopover={state.moduleSummaryPopover}
+        flags={flags}
+        members={members}
         workspaceId={workspaceId}
+        filters={filters}
+        setShowCreateModal={state.setShowCreateModal}
+        setShowEditModal={state.setShowEditModal}
+        setShowCreateFlagModal={state.setShowCreateFlagModal}
+        setEditingFlag={state.setEditingFlag}
+        setViewPopover={state.setViewPopover}
+        setModuleSummaryPopover={state.setModuleSummaryPopover}
+        onCreatePlan={dragLogic.handleCreatePlan}
+        updateBar={updateBar}
+        deleteBar={deleteBar}
       />
 
-      {/* Flag 수정 모달 */}
-      <EditFlagModal
-        isOpen={editingFlag !== null}
-        onClose={() => setEditingFlag(null)}
-        flag={editingFlag}
+      {/* 레인 컨텍스트 메뉴 */}
+      <TimelineLaneMenu
+        laneContextMenu={state.laneContextMenu}
+        onAddLane={laneActions.handleAddLane}
+        onDeleteLane={laneActions.handleDeleteLane}
       />
 
-      {/* readOnly 모드: Plan 보기 팝오버 */}
-      {viewPopover && (
-        <PlanViewPopover
-          bar={viewPopover.bar}
-          anchorPosition={viewPopover.position}
-          onClose={() => setViewPopover(null)}
-        />
-      )}
+      {/* 레인 삭제 확인 모달 */}
+      <TimelineDeleteLaneModal
+        deleteLaneConfirm={state.deleteLaneConfirm}
+        onConfirm={laneActions.handleConfirmDeleteLane}
+        onCancel={() => state.setDeleteLaneConfirm(null)}
+      />
 
-      {/* 레인 컨텍스트 메뉴 - Airbnb 스타일 */}
-      {laneContextMenu &&
-        createPortal(
-          <div
-            className="fixed z-[10000] rounded-xl overflow-hidden"
-            style={{
-              left: laneContextMenu.position.x,
-              top: laneContextMenu.position.y,
-              minWidth: 200,
-              background: "white",
-              border: "1px solid rgba(0, 0, 0, 0.08)",
-              boxShadow:
-                "0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)",
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div className="py-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddLane("below");
-                }}
-                className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
-                style={{
-                  background: "transparent",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 group-hover:bg-blue-100 transition-colors">
-                  <PlusIcon className="w-4 h-4 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">
-                    레인 추가
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    아래에 새로운 레인 생성
-                  </div>
-                </div>
-              </button>
+      {/* 블록 컨텍스트 메뉴 */}
+      <BlockContextMenu
+        position={state.blockContextMenu?.position || null}
+        onViewDetails={() => {
+          if (!state.blockContextMenu) return;
 
-              <div
-                className="mx-3 my-2"
-                style={{
-                  height: 1,
-                  background:
-                    "linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.08) 50%, transparent 100%)",
-                }}
-              />
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteLane();
-                }}
-                className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
-                style={{
-                  background: "transparent",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.02) 100%)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50 group-hover:bg-red-100 transition-colors">
-                  <TrashIcon className="w-4 h-4 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">
-                    레인 삭제
-                  </div>
-                  <div className="text-xs text-gray-500">현재 레인 제거</div>
-                </div>
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* 레인 삭제 확인 모달 - Airbnb 스타일 */}
-      {deleteLaneConfirm &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
-            style={{ background: "rgba(0, 0, 0, 0.5)" }}
-            onClick={() => setDeleteLaneConfirm(null)}
-          >
-            <div
-              className="relative w-full max-w-md rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-              style={{
-                background: "white",
-                boxShadow:
-                  "0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* 헤더 */}
-              <div
-                className="px-6 py-5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                    <TrashIcon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      레인 삭제 확인
-                    </h3>
-                    <p className="text-sm text-white/80">
-                      {deleteLaneConfirm.visibleBarsCount}개의 계획이 있습니다
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 내용 */}
-              <div className="p-6">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  이 레인에는 현재{" "}
-                  <span className="font-bold text-red-600">
-                    {deleteLaneConfirm.visibleBarsCount}개의 계획
-                  </span>
-                  이 있습니다.
-                  <br />
-                  <br />
-                  레인을 삭제하면 해당 계획들은 다른 레인으로 자동 재배치됩니다.
-                  <br />
-                  계속하시겠습니까?
-                </p>
-              </div>
-
-              {/* 버튼 */}
-              <div
-                className="flex gap-3 px-6 pb-6"
-                style={{ background: "#f9fafb" }}
-              >
-                <button
-                  onClick={() => setDeleteLaneConfirm(null)}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95"
-                  style={{
-                    background: "white",
-                    border: "1px solid #e5e7eb",
-                    color: "#6b7280",
-                  }}
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleConfirmDeleteLane}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-white transition-all duration-150 active:scale-95 shadow-lg hover:shadow-xl"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                  }}
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+          if (state.blockContextMenu.type === "moduleSummary") {
+            // 모듈 요약 블록: ModuleSummaryPopover 열기
+            const node = state.blockContextMenu.data;
+            // 임시 rect 생성 (마우스 위치 기준)
+            const rect = new DOMRect(
+              state.blockContextMenu.position.x,
+              state.blockContextMenu.position.y,
+              0,
+              0
+            );
+            state.setModuleSummaryPopover({ node, anchorRect: rect });
+          } else if (state.blockContextMenu.type === "bar") {
+            // 계획 블록: PlanViewPopover 열기
+            const bar = state.blockContextMenu.data;
+            state.setViewPopover({
+              bar,
+              position: {
+                x: state.blockContextMenu.position.x,
+                y: state.blockContextMenu.position.y + 8,
+              },
+            });
+          }
+        }}
+        onClose={() => state.setBlockContextMenu(null)}
+      />
     </div>
   );
 }

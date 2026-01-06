@@ -11,14 +11,14 @@
 // SNB menu mapping (Navigation.tsx의 키와 일치하도록 수정)
 const MENU_MAP: Record<string, { group: string; key: string }> = {
   "/feedbacks": { group: "community", key: "feedbacks" },
-  "/team-feed": { group: "works", key: "team-feed" },
-  "/plans/gantt": { group: "works", key: "plans" },
+  "/works/team-feed": { group: "works", key: "team-feed" },
+  "/works/plans/gantt": { group: "works", key: "plans" },
   "/admin/plans": { group: "admin", key: "admin-plans" },
   "/admin/plans/gantt": { group: "admin", key: "admin-plans" },
-  "/snapshots": { group: "works", key: "snapshots" },
+  "/works/snapshots": { group: "works", key: "snapshots" },
   "/manage/snapshots": { group: "personal", key: "my-snapshots" }, // Navigation.tsx와 일치
   "/works/alignment": { group: "works", key: "alignment" },
-  "/work-map": { group: "works", key: "work-map" },
+  "/works/work-map": { group: "works", key: "work-map" },
   "/works/collaborator-graph": { group: "works", key: "collaborator-graph" },
   "/my": { group: "personal", key: "my-dashboard" }, // Navigation.tsx와 일치
   "/my/alignment": { group: "personal", key: "my-alignment" }, // Navigation.tsx와 일치
