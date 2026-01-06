@@ -47,6 +47,15 @@ export interface AlignmentGanttViewProps {
   
   /** Assignee filter change handler (optional) */
   onAssigneesChange?: (assignees: Set<string>) => void;
+  
+  /** Enable alignment coverage check (default: false) */
+  enableAlignmentCheck?: boolean;
+  
+  /** Enable alignment coverage check change handler */
+  onEnableAlignmentCheckChange?: (enabled: boolean) => void;
+  
+  /** Coverage check start date (YYYY-MM-DD, default: 2025-01-12) */
+  coverageCheckStartDate?: string;
 }
 
 /**
@@ -65,6 +74,9 @@ export function AlignmentGanttView({
   showMismatchReview = true,
   selectedAssignees,
   onAssigneesChange,
+  enableAlignmentCheck = false,
+  onEnableAlignmentCheckChange,
+  coverageCheckStartDate = "2025-01-12",
 }: AlignmentGanttViewProps) {
   const ganttRef = useRef<DraftGanttViewRef>(null);
 
@@ -162,24 +174,39 @@ export function AlignmentGanttView({
         return plan;
       }
 
+      // 커버리지 검증이 비활성화되어 있으면 alignment 정보 추가하지 않음
+      if (!enableAlignmentCheck) {
+        return plan;
+      }
+
+      // 기간 필터: coverageCheckStartDate 이전 계획은 검증하지 않음
+      if (plan.startDate < coverageCheckStartDate) {
+        return plan;
+      }
+
       const mockBar = mockBars[index];
       const statusInfo = calculateAlignmentStatus(mockBar, mockBars);
 
       return {
         ...plan,
         alignmentStatus: statusInfo.status,
+        alignmentActualCount: statusInfo.actualCount,
+        alignmentExpectedCount: statusInfo.expectedCount,
       };
     });
 
-    // 4. Mismatch 검출
-    const planBars = mockBars.filter((bar) => !bar.isSnapshot);
-    const detectedMismatches = detectAlignmentMismatches(planBars, mockBars);
+    // 4. Mismatch 검출 (커버리지 검증이 활성화되고 기간 필터를 통과한 경우만)
+    let detectedMismatches: any[] = [];
+    if (enableAlignmentCheck) {
+      const planBars = mockBars.filter((bar) => !bar.isSnapshot && bar.startDate >= coverageCheckStartDate);
+      detectedMismatches = detectAlignmentMismatches(planBars, mockBars);
+    }
 
     return {
       initialPlans: plansWithStatus,
       mismatches: detectedMismatches,
     };
-  }, [items, selectedAssignees]);
+  }, [items, selectedAssignees, enableAlignmentCheck, coverageCheckStartDate]);
 
   /**
    * Mismatch 클릭 시 Timeline Focus 핸들러
@@ -215,6 +242,8 @@ export function AlignmentGanttView({
         selectedStages={new Set()}
         selectedAssignees={selectedAssignees || new Set()}
         onAssigneesChange={onAssigneesChange}
+        enableAlignmentCheck={enableAlignmentCheck}
+        onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
       />
     </div>
   );

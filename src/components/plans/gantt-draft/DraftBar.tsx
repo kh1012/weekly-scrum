@@ -454,10 +454,10 @@ export const DraftBar = memo(function DraftBar({
           }}
           title={
             alignmentStatus === "green"
-              ? "실행 현황: 계획 대비 양호 (예상 범위 내)"
+              ? `실행 현황: 계획 대비 양호 (예상 범위 내)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
               : alignmentStatus === "orange"
-              ? "실행 현황: 계획 대비 부족 (예상 범위 이하)"
-              : "실행 현황: 계획 기간 내 실행 기록 없음"
+              ? `실행 현황: 계획 대비 부족 (예상 범위 이하)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
+              : `실행 현황: 계획 기간 내 실행 기록 없음\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
           }
         />
       )}

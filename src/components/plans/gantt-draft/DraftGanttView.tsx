@@ -99,6 +99,10 @@ interface DraftGanttViewProps {
   maxUpdatedAt?: string;
   /** 마지막 업데이트한 사용자 이름 */
   updatedByName?: string;
+  /** Alignment 커버리지 검토 활성화 여부 */
+  enableAlignmentCheck?: boolean;
+  /** Alignment 커버리지 검토 활성화 변경 핸들러 */
+  onEnableAlignmentCheckChange?: (enabled: boolean) => void;
 }
 
 export interface DraftGanttViewRef {
@@ -119,6 +123,8 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   isFilterLoading = false,
   maxUpdatedAt,
   updatedByName,
+  enableAlignmentCheck = false,
+  onEnableAlignmentCheckChange,
 }, ref) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1047,6 +1053,9 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
         // 마지막 업데이트 시각
         maxUpdatedAt={maxUpdatedAt}
         updatedByName={updatedByName}
+        // Alignment 커버리지 검토
+        enableAlignmentCheck={enableAlignmentCheck}
+        onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
         // 중앙 액션 props
         onUndo={undo}
         onRedo={redo}

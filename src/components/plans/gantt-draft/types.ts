@@ -168,6 +168,10 @@ export interface DraftBar {
   risk_level?: number;
   /** Alignment 상태 (Plan only) */
   alignmentStatus?: "green" | "orange" | "red" | null;
+  /** Alignment 실제 실행 횟수 */
+  alignmentActualCount?: number;
+  /** Alignment 예상 실행 횟수 */
+  alignmentExpectedCount?: number;
 }
 
 /**

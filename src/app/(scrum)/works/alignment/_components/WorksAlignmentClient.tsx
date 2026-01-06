@@ -35,6 +35,7 @@ export function WorksAlignmentClient({
 }: WorksAlignmentClientProps) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
+  const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(false);
 
   // 필터링 및 통계 계산
   const { filteredItems, stats } = useAlignmentFilter({ items, filter });
@@ -57,9 +58,11 @@ export function WorksAlignmentClient({
           members={members}
           title="Workspace Alignment"
           description="전체 계획과 실행 기록을 확인합니다."
-          showMismatchReview={true}
+          showMismatchReview={enableAlignmentCheck}
           selectedAssignees={selectedAssignees}
           onAssigneesChange={setSelectedAssignees}
+          enableAlignmentCheck={enableAlignmentCheck}
+          onEnableAlignmentCheckChange={setEnableAlignmentCheck}
         />
       </div>
     </div>

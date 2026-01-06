@@ -89,6 +89,10 @@ interface GanttHeaderProps {
   onAutoSaveChange?: (enabled: boolean) => void;
   /** 자동 저장 상태 */
   isAutoSaving?: boolean;
+  /** Alignment 커버리지 검토 활성화 여부 */
+  enableAlignmentCheck?: boolean;
+  /** Alignment 커버리지 검토 활성화 변경 핸들러 */
+  onEnableAlignmentCheckChange?: (enabled: boolean) => void;
 }
 
 export function GanttHeader({
@@ -126,6 +130,8 @@ export function GanttHeader({
   autoSaveEnabled = false,
   onAutoSaveChange,
   isAutoSaving = false,
+  enableAlignmentCheck = false,
+  onEnableAlignmentCheckChange,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -397,6 +403,28 @@ export function GanttHeader({
                 Summarized
               </button>
             </div>
+          )}
+
+          {/* Alignment 커버리지 검토 토글 (ReadOnly 모드일 때만) */}
+          {readOnly && onEnableAlignmentCheckChange && (
+            <button
+              onClick={() => onEnableAlignmentCheckChange(!enableAlignmentCheck)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-gray-100"
+              title="기능 켜기/끄기"
+            >
+              <span className="text-gray-600">실행 커버리지 검토</span>
+              <div
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  enableAlignmentCheck ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    enableAlignmentCheck ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </div>
+            </button>
           )}
 
           {/* 마지막 업데이트 시각 표시 (읽기 전용 모드에서만) */}
