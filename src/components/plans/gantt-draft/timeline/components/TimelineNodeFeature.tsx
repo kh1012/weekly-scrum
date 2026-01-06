@@ -183,22 +183,6 @@ export function TimelineNodeFeature({
     >
       {/* Bars */}
       {(() => {
-        // 디버깅: 스냅샷 엔트리 필터링 전후 확인
-        const snapshotBars = nodeBars.filter((b) => b.isSnapshot);
-        if (snapshotBars.length > 0) {
-          console.log('[TimelineNodeFeature] Snapshot bars in this row:', {
-            rowId: row.rowId,
-            totalBars: nodeBars.length,
-            snapshotBars: snapshotBars.length,
-            snapshotDetails: snapshotBars.map((b) => ({
-              clientUid: b.clientUid,
-              title: b.title,
-              dates: `${b.startDate} - ${b.endDate}`,
-              inActiveSet: activeBarsSet.has(b.clientUid),
-            })),
-          });
-        }
-
         return nodeBars
           .filter((bar) => activeBarsSet.has(bar.clientUid)) // 필터링된 bars만 렌더링
           .map((bar) => {

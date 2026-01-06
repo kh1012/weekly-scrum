@@ -84,12 +84,6 @@ export function AlignmentGanttView({
    * AlignmentGanttItem을 InitialPlan 형식으로 변환하고 Status 계산
    */
   const { initialPlans, mismatches } = useMemo(() => {
-    console.log('[AlignmentGanttView] 🔄 Converting items to InitialPlan:', {
-      total: items.length,
-      plans: items.filter(i => i.type === 'plan').length,
-      snapshots: items.filter(i => i.type === 'snapshot').length,
-    });
-    
     // 1. AlignmentGanttItem → InitialPlan 변환
     const plans = items.map((item) => {
       const plan = {
@@ -119,22 +113,6 @@ export function AlignmentGanttView({
         risks: item.risks,
         risk_level: item.risk_level,
       };
-
-      // 디버그: 스냅샷 아이템 확인
-      if (item.type === "snapshot") {
-        console.log('[AlignmentGanttView] Converting snapshot item to InitialPlan:', {
-          id: item.id,
-          title: item.title,
-          year: item.year,
-          week: item.week,
-          authorName: item.authorName,
-          authorId: item.authorId,
-          hasPastWeek: !!item.past_week,
-          hasThisWeek: !!item.this_week,
-          pastWeekTasks: item.past_week?.tasks?.length || 0,
-          thisWeekTasks: item.this_week?.tasks?.length || 0,
-        });
-      }
 
       return plan;
     });
@@ -207,13 +185,6 @@ export function AlignmentGanttView({
       const planBars = mockBars.filter((bar) => !bar.isSnapshot && bar.startDate >= coverageCheckStartDate);
       detectedMismatches = detectAlignmentMismatches(planBars, mockBars);
     }
-
-    console.log('[AlignmentGanttView] ✅ Final conversion result:', {
-      initialPlans: plansWithStatus.length,
-      plans: plansWithStatus.filter(p => !p.isSnapshot).length,
-      snapshots: plansWithStatus.filter(p => p.isSnapshot).length,
-      mismatches: detectedMismatches.length,
-    });
 
     return {
       initialPlans: plansWithStatus,

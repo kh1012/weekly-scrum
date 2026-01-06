@@ -87,21 +87,6 @@ export function useTimelineData({
   const activeBarsSet = useMemo(() => {
     const set = new Set(filteredActiveBars.map((b) => b.clientUid));
     
-    // 디버깅: 스냅샷 엔트리 필터링 결과 확인
-    const snapshotBars = filteredActiveBars.filter((b) => b.isSnapshot);
-    if (snapshotBars.length > 0) {
-      console.log('[useTimelineData] Filtered snapshot bars:', {
-        total: filteredActiveBars.length,
-        snapshots: snapshotBars.length,
-        snapshotDetails: snapshotBars.map((b) => ({
-          clientUid: b.clientUid,
-          title: b.title,
-          rowId: b.rowId,
-          dates: `${b.startDate} - ${b.endDate}`,
-        })),
-      });
-    }
-    
     return set;
   }, [filteredActiveBars]);
 

@@ -258,7 +258,6 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
     scrollToRow: (rowId: string, options?: { highlight?: boolean; smooth?: boolean }) => {
       const targetRow = rows.find((r) => r.rowId === rowId);
       if (!targetRow) {
-        console.warn(`Row not found: ${rowId}`);
         return;
       }
 
@@ -273,7 +272,6 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
       // Find the target node position
       const targetNode = nodePositions.find((pos) => pos.node.row?.rowId === rowId);
       if (!targetNode) {
-        console.warn(`Node position not found: ${rowId}`);
         return;
       }
 
@@ -412,15 +410,8 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   // 초기 데이터 로드
   useEffect(() => {
     if (initialPlans.length === 0) {
-      console.log('[DraftGanttView] ⚠️ No initial plans provided');
       return;
     }
-
-    console.log('[DraftGanttView] 🔄 Loading initial plans:', {
-      total: initialPlans.length,
-      plans: initialPlans.filter(p => !p.isSnapshot).length,
-      snapshots: initialPlans.filter(p => p.isSnapshot).length,
-    });
 
     const rowMap = new Map<string, DraftRow>();
     const loadedBars: DraftBar[] = [];
@@ -438,20 +429,6 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
           domain: plan.domain,
           orderIndex: plan.orderIndex ?? rowMap.size,
           expanded: true,
-        });
-      }
-
-      // 디버그: 스냅샷 정보 확인
-      if (plan.isSnapshot) {
-        console.log('[DraftGanttView] 📸 Loading snapshot entry:', {
-          id: plan.id,
-          title: plan.title,
-          year: plan.year,
-          week: plan.week,
-          authorName: plan.authorName,
-          authorId: plan.authorId,
-          hasPastWeek: !!plan.past_week,
-          hasThisWeek: !!plan.this_week,
         });
       }
 
@@ -497,13 +474,6 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
     const sortedRows = Array.from(rowMap.values()).sort(
       (a, b) => a.orderIndex - b.orderIndex
     );
-
-    console.log('[DraftGanttView] ✅ Hydrating store:', {
-      rows: sortedRows.length,
-      bars: loadedBars.length,
-      planBars: loadedBars.filter(b => !b.isSnapshot).length,
-      snapshotBars: loadedBars.filter(b => b.isSnapshot).length,
-    });
 
     hydrate(sortedRows, loadedBars);
   }, [initialPlans, hydrate]);
@@ -791,7 +761,6 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
         }
       }
     } catch (err) {
-      console.error("[handleCommit] Error:", err);
       // 현재 진행 중인 단계를 에러로 표시
       setSaveSteps((prev) =>
         prev.map((s) =>
@@ -917,7 +886,6 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
         showToast("error", "자동 저장 실패", "수동으로 저장해주세요.");
       }
     } catch (err) {
-      console.error("[handleAutoSave] Error:", err);
       showToast("error", "자동 저장 오류", "수동으로 저장해주세요.");
     } finally {
       setIsAutoSaving(false);

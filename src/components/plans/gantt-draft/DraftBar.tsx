@@ -165,24 +165,6 @@ export const DraftBar = memo(function DraftBar({
   const snapshotWeek = bar.week;
   const authorName = bar.authorName;
   
-  // 디버그: 스냅샷 정보 확인 (초기 렌더링 시 한 번만)
-  const hasLoggedRef = useRef(false);
-  if (isSnapshot && !hasLoggedRef.current) {
-    console.log('[DraftBar] Rendering snapshot entry:', {
-      clientUid: bar.clientUid,
-      title: bar.title,
-      year: snapshotYear,
-      week: snapshotWeek,
-      authorName: authorName,
-      authorId: bar.authorId,
-      hasPastWeek: !!bar.past_week,
-      hasThisWeek: !!bar.this_week,
-      pastWeekTasks: bar.past_week?.tasks?.length || 0,
-      thisWeekTasks: bar.this_week?.tasks?.length || 0,
-    });
-    hasLoggedRef.current = true;
-  }
-  
   // Alignment 상태 (Plan only)
   const alignmentStatus = bar.alignmentStatus as "green" | "orange" | "red" | null;
 

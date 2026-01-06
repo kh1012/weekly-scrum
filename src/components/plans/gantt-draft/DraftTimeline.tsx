@@ -86,7 +86,7 @@ export function DraftTimeline({
   const data = useTimelineData({
     rangeStart,
     rangeEnd,
-    allRows,
+        allRows,
     allBars,
     activeBars: state.dragCreate?.isActive ? [] : allBars.filter((b) => !b.deleted),
     searchQuery,
@@ -171,7 +171,7 @@ export function DraftTimeline({
     onScrollbarHeightChange,
     scrollToToday: scrollLogic.scrollToToday,
     scrollToDateRange: scrollLogic.scrollToDateRange,
-  });
+          });
 
   const handleCellLeave = useCallback(() => {
     state.setHoverInfo(null);
@@ -249,7 +249,7 @@ export function DraftTimeline({
             flagItems={flagItems}
             flagLaneHeight={flagLaneHeight}
             nodePositions={data.nodePositions}
-          />
+                  />
 
           {/* 그리드 라인 */}
           <TimelineGridLines
@@ -263,7 +263,7 @@ export function DraftTimeline({
             nodePositions={data.nodePositions}
             viewMode={viewMode}
             totalWidth={data.totalWidth}
-            rangeStart={rangeStart}
+                        rangeStart={rangeStart}
             days={data.days}
             flags={flags}
             rows={data.rows}
@@ -287,25 +287,25 @@ export function DraftTimeline({
             setShowEditModal={state.setShowEditModal}
             setModuleSummaryPopover={state.setModuleSummaryPopover}
             setBlockContextMenu={state.setBlockContextMenu}
-            onDragDateChange={onDragDateChange}
+                        onDragDateChange={onDragDateChange}
             moveBarToRow={moveBarToRow}
-          />
+                      />
 
           {/* 호버 프리뷰 */}
           <TimelineHoverPreview
             isEditing={isEditing}
             dragCreateIsActive={!!state.dragCreate?.isActive}
             hoverInfo={state.hoverInfo}
-          />
+            />
 
           {/* 스냅샷 연결 */}
           <SnapshotConnections
             connections={data.snapshotConnections}
             totalWidth={data.totalWidth}
             totalHeight={data.totalHeight}
-          />
+                    />
         </div>
-      </div>
+        </div>
 
       {/* 모달들 */}
       <TimelineModals
@@ -316,7 +316,7 @@ export function DraftTimeline({
         viewPopover={state.viewPopover}
         moduleSummaryPopover={state.moduleSummaryPopover}
         flags={flags}
-        members={members}
+          members={members}
         workspaceId={workspaceId}
         filters={filters}
         setShowCreateModal={state.setShowCreateModal}
@@ -328,7 +328,7 @@ export function DraftTimeline({
         onCreatePlan={dragLogic.handleCreatePlan}
         updateBar={updateBar}
         deleteBar={deleteBar}
-      />
+        />
 
       {/* 레인 컨텍스트 메뉴 */}
       <TimelineLaneMenu
@@ -385,7 +385,7 @@ export function DraftTimeline({
           }
         }}
         onClose={() => state.setBlockContextMenu(null)}
-      />
+        />
     </div>
   );
 }

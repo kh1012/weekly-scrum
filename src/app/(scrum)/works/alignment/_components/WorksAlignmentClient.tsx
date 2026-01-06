@@ -37,21 +37,8 @@ export function WorksAlignmentClient({
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
   const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(false);
 
-  console.log('[WorksAlignmentClient] 🔄 Received items:', {
-    total: items.length,
-    plans: items.filter(i => i.type === 'plan').length,
-    snapshots: items.filter(i => i.type === 'snapshot').length,
-  });
-
   // 필터링 및 통계 계산
   const { filteredItems, stats } = useAlignmentFilter({ items, filter });
-  
-  console.log('[WorksAlignmentClient] 🔍 After filter:', {
-    filter,
-    filteredTotal: filteredItems.length,
-    filteredPlans: filteredItems.filter(i => i.type === 'plan').length,
-    filteredSnapshots: filteredItems.filter(i => i.type === 'snapshot').length,
-  });
 
   return (
     <div className="flex flex-col h-full">

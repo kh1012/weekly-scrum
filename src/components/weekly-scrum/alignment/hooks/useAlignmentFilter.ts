@@ -68,10 +68,11 @@ export function useAlignmentFilter({ items, filter }: UseAlignmentFilterOptions)
   const stats = useMemo(() => {
     const plansCount = items.filter((item) => item.type === "plan").length;
     const snapshotsCount = items.filter((item) => item.type === "snapshot").length;
+    // authorId를 우선 사용하고, 없으면 authorName 사용 (더 정확한 중복 제거)
     const uniqueAuthors = new Set(
       items
-        .filter((item) => item.type === "snapshot" && item.authorName)
-        .map((item) => item.authorName)
+        .filter((item) => item.type === "snapshot" && (item.authorId || item.authorName))
+        .map((item) => item.authorId || item.authorName)
     ).size;
     
     return {
