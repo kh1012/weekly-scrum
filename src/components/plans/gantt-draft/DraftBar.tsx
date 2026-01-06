@@ -258,23 +258,6 @@ export const DraftBar = memo(function DraftBar({
               onMoveComplete(absoluteY);
             }
 
-            // 겹침 처리: 같은 row의 다른 bars 중 타겟 레인에서 겹치는 블록 찾기
-            const conflictingBars = rowBars.filter((otherBar) => {
-              // 자기 자신은 제외
-              if (otherBar.clientUid === bar.clientUid) return false;
-              // 타겟 레인에 있는 블록만 확인
-              if (otherBar.lane !== newPreferredLane) return false;
-              
-              // 기간 겹침 검사
-              const otherStart = new Date(otherBar.startDate).getTime();
-              const otherEnd = new Date(otherBar.endDate).getTime();
-              const currentStart = new Date(newDates.startDate).getTime();
-              const currentEnd = new Date(newDates.endDate).getTime();
-              
-              // 겹치는지 확인: A.end >= B.start && A.start <= B.end
-              return !(currentEnd < otherStart || currentStart > otherEnd);
-            });
-
             // 먼저 드래그 중인 블록을 타겟 레인에 배치
             updateBar(bar.clientUid, {
               startDate: newDates.startDate,
@@ -282,16 +265,75 @@ export const DraftBar = memo(function DraftBar({
               preferredLane: newPreferredLane,
             });
 
-            // 겹치는 블록들을 타겟 레인 바로 아래로 밀기
-            if (conflictingBars.length > 0) {
-              // 겹침 당한 블록들을 타겟 레인(newPreferredLane) 바로 아래(+1)로 이동
-              // 즉, 확장 레인이 타겟 레인 바로 아래에 생성됨
-              conflictingBars.forEach((conflictBar) => {
-                updateBar(conflictBar.clientUid, {
-                  preferredLane: newPreferredLane + 1,
+            // 겹침 처리: 연쇄적으로 충돌 해결
+            // 레인별로 블록 그룹화 (현재 레인 기준)
+            const barsByLane = new Map<number, typeof rowBars>();
+            rowBars.forEach((b) => {
+              if (b.clientUid === bar.clientUid) return; // 드래그 블록 제외
+              const lane = b.preferredLane ?? b.lane;
+              if (!barsByLane.has(lane)) {
+                barsByLane.set(lane, []);
+              }
+              barsByLane.get(lane)!.push(b);
+            });
+
+            // 타겟 레인부터 아래로 순회하며 연쇄적으로 밀기
+            const maxLane = Math.max(...Array.from(barsByLane.keys()), newPreferredLane);
+            const blocksToMove = new Map<string, number>(); // clientUid -> 새 레인
+            
+            for (let currentLane = newPreferredLane; currentLane <= maxLane + 1; currentLane++) {
+              const barsInCurrentLane = barsByLane.get(currentLane) || [];
+              
+              // 이 레인에 이동해야 할 블록이 있는지 확인 (이전 단계에서 밀린 블록)
+              const incomingBars = Array.from(blocksToMove.entries())
+                .filter(([_, targetLane]) => targetLane === currentLane)
+                .map(([clientUid, _]) => rowBars.find((b) => b.clientUid === clientUid)!)
+                .filter(Boolean);
+              
+              // 드래그 블록이 이 레인에 배치되는지 확인
+              const isDraggedBarHere = currentLane === newPreferredLane;
+              
+              // 현재 레인에 있는 블록들 중 날짜가 겹치는 것이 있는지 확인
+              const hasConflict = barsInCurrentLane.some((existingBar) => {
+                // 이미 이동 예정인 블록은 제외
+                if (blocksToMove.has(existingBar.clientUid)) return false;
+                
+                const existingStart = new Date(existingBar.startDate).getTime();
+                const existingEnd = new Date(existingBar.endDate).getTime();
+                
+                // 드래그 블록과의 충돌 검사
+                if (isDraggedBarHere) {
+                  const dragStart = new Date(newDates.startDate).getTime();
+                  const dragEnd = new Date(newDates.endDate).getTime();
+                  if (!(dragEnd < existingStart || dragStart > existingEnd)) {
+                    return true;
+                  }
+                }
+                
+                // 위에서 밀려온 블록들과의 충돌 검사
+                return incomingBars.some((incomingBar) => {
+                  const incomingStart = new Date(incomingBar.startDate).getTime();
+                  const incomingEnd = new Date(incomingBar.endDate).getTime();
+                  return !(incomingEnd < existingStart || incomingStart > existingEnd);
                 });
               });
+              
+              // 충돌이 있으면 현재 레인의 블록들을 한 칸 아래로 이동 예약
+              if (hasConflict) {
+                barsInCurrentLane.forEach((b) => {
+                  if (!blocksToMove.has(b.clientUid)) {
+                    blocksToMove.set(b.clientUid, currentLane + 1);
+                  }
+                });
+              }
             }
+            
+            // 예약된 모든 블록 이동 실행
+            blocksToMove.forEach((newLane, clientUid) => {
+              updateBar(clientUid, {
+                preferredLane: newLane,
+              });
+            });
           } else if (mode === "resize-left") {
             const newDates = calculateResizedDates(
               bar,

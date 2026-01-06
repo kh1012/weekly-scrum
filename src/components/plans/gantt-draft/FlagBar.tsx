@@ -119,23 +119,6 @@ export const FlagBar = memo(function FlagBar({
           // 새로운 레인 계산
           const targetLane = Math.max(0, Math.min(laneIndex + laneDelta, laneCount - 1));
 
-          // 겹침 처리: 타겟 레인에서 새로운 날짜 범위와 겹치는 flag 찾기
-          const conflictingItems = allItems.filter((otherItem) => {
-            // 자기 자신은 제외
-            if (otherItem.flagId === flag.clientId) return false;
-            // 타겟 레인에 있는 flag만 확인
-            if (otherItem.laneIndex !== targetLane) return false;
-
-            // 기간 겹침 검사
-            const otherStart = new Date(otherItem.startDate).getTime();
-            const otherEnd = new Date(otherItem.endDate).getTime();
-            const currentStart = new Date(newStartDate).getTime();
-            const currentEnd = new Date(newEndDate).getTime();
-
-            // 겹치는지 확인: A.end >= B.start && A.start <= B.end
-            return !(currentEnd < otherStart || currentStart > otherEnd);
-          });
-
           // 먼저 드래그 중인 flag를 타겟 레인에 배치 (날짜 + 레인 동시 업데이트)
           updateFlagLocal(flag.clientId, {
             startDate: newStartDate,
@@ -143,18 +126,77 @@ export const FlagBar = memo(function FlagBar({
             laneHint: targetLane,
           });
 
-          // 겹치는 flag들을 타겟 레인 바로 아래로 밀기
-          if (conflictingItems.length > 0) {
-            const flags = useDraftStore.getState().flags;
-            conflictingItems.forEach((conflictItem) => {
-              const conflictFlag = flags.find((f) => f.clientId === conflictItem.flagId);
-              if (conflictFlag) {
-                updateFlagLocal(conflictFlag.clientId, {
-                  laneHint: targetLane + 1,
-                });
+          // 겹침 처리: 연쇄적으로 충돌 해결
+          const flags = useDraftStore.getState().flags;
+          
+          // 레인별로 flag 아이템 그룹화
+          const itemsByLane = new Map<number, typeof allItems>();
+          allItems.forEach((item) => {
+            if (item.flagId === flag.clientId) return; // 드래그 flag 제외
+            const lane = item.laneIndex;
+            if (!itemsByLane.has(lane)) {
+              itemsByLane.set(lane, []);
+            }
+            itemsByLane.get(lane)!.push(item);
+          });
+
+          // 타겟 레인부터 아래로 순회하며 연쇄적으로 밀기
+          const maxLane = Math.max(...Array.from(itemsByLane.keys()), targetLane);
+          const flagsToMove = new Map<string, number>(); // flagId -> 새 레인
+          
+          for (let currentLane = targetLane; currentLane <= maxLane + 1; currentLane++) {
+            const itemsInCurrentLane = itemsByLane.get(currentLane) || [];
+            
+            // 이 레인에 이동해야 할 flag가 있는지 확인 (이전 단계에서 밀린 flag)
+            const incomingItems = Array.from(flagsToMove.entries())
+              .filter(([_, targetLn]) => targetLn === currentLane)
+              .map(([flagId, _]) => allItems.find((item) => item.flagId === flagId)!)
+              .filter(Boolean);
+            
+            // 드래그 flag가 이 레인에 배치되는지 확인
+            const isDraggedFlagHere = currentLane === targetLane;
+            
+            // 현재 레인에 있는 flag들 중 날짜가 겹치는 것이 있는지 확인
+            const hasConflict = itemsInCurrentLane.some((existingItem) => {
+              // 이미 이동 예정인 flag는 제외
+              if (flagsToMove.has(existingItem.flagId)) return false;
+              
+              const existingStart = new Date(existingItem.startDate).getTime();
+              const existingEnd = new Date(existingItem.endDate).getTime();
+              
+              // 드래그 flag와의 충돌 검사
+              if (isDraggedFlagHere) {
+                const dragStart = new Date(newStartDate).getTime();
+                const dragEnd = new Date(newEndDate).getTime();
+                if (!(dragEnd < existingStart || dragStart > existingEnd)) {
+                  return true;
+                }
               }
+              
+              // 위에서 밀려온 flag들과의 충돌 검사
+              return incomingItems.some((incomingItem) => {
+                const incomingStart = new Date(incomingItem.startDate).getTime();
+                const incomingEnd = new Date(incomingItem.endDate).getTime();
+                return !(incomingEnd < existingStart || incomingStart > existingEnd);
+              });
             });
+            
+            // 충돌이 있으면 현재 레인의 flag들을 한 칸 아래로 이동 예약
+            if (hasConflict) {
+              itemsInCurrentLane.forEach((item) => {
+                if (!flagsToMove.has(item.flagId)) {
+                  flagsToMove.set(item.flagId, currentLane + 1);
+                }
+              });
+            }
           }
+          
+          // 예약된 모든 flag 이동 실행
+          flagsToMove.forEach((newLane, flagId) => {
+            updateFlagLocal(flagId, {
+              laneHint: newLane,
+            });
+          });
         }
 
         // 리사이즈 처리
