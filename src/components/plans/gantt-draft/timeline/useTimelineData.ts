@@ -73,11 +73,16 @@ export function useTimelineData({
 
     // 담당자 필터 적용
     if (filters.assignees && filters.assignees.length > 0) {
-      bars = bars.filter((b) =>
-        b.assignees.some((assignee) =>
+      bars = bars.filter((b) => {
+        // Snapshot인 경우: authorId로 필터링
+        if (b.isSnapshot) {
+          return b.authorId && filters.assignees.includes(b.authorId);
+        }
+        // Plan인 경우: assignees로 필터링
+        return b.assignees.some((assignee) =>
           filters.assignees.includes(assignee.userId)
-        )
-      );
+        );
+      });
     }
 
     return bars;

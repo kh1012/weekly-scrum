@@ -53,11 +53,22 @@ export function buildFilterIndex(
     }
 
     // 담당자별 인덱싱
-    for (const assignee of bar.assignees) {
-      if (!byAssignee.has(assignee.userId)) {
-        byAssignee.set(assignee.userId, new Set());
+    if (bar.isSnapshot) {
+      // Snapshot인 경우: authorId로 인덱싱
+      if (bar.authorId) {
+        if (!byAssignee.has(bar.authorId)) {
+          byAssignee.set(bar.authorId, new Set());
+        }
+        byAssignee.get(bar.authorId)!.add(barId);
       }
-      byAssignee.get(assignee.userId)!.add(barId);
+    } else {
+      // Plan인 경우: assignees로 인덱싱
+      for (const assignee of bar.assignees) {
+        if (!byAssignee.has(assignee.userId)) {
+          byAssignee.set(assignee.userId, new Set());
+        }
+        byAssignee.get(assignee.userId)!.add(barId);
+      }
     }
 
     // rowId별 인덱싱
