@@ -25,6 +25,7 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   CopyIcon,
+  CheckIcon,
 } from "@/components/common/Icons";
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
@@ -420,14 +421,20 @@ export function GanttHeader({
           {readOnly && onEnableAlignmentCheckChange && (
             <button
               onClick={() => onEnableAlignmentCheckChange(!enableAlignmentCheck)}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 enableAlignmentCheck
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
               title={enableAlignmentCheck ? "실행 커버리지 검토 비활성화" : "실행 커버리지 검토 활성화"}
             >
-              실행 커버리지 검토
+              <CheckIcon
+                size={14}
+                className={`transition-colors ${
+                  enableAlignmentCheck ? "text-white" : "text-gray-400"
+                }`}
+              />
+              <span>실행 커버리지 검토</span>
             </button>
           )}
 
