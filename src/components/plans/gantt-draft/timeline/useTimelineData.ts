@@ -99,7 +99,8 @@ export function useTimelineData({
   const rows = useMemo(() => {
     if (filterIndex) {
       // 인덱스를 사용한 고속 필터링
-      const barsInView = new Set(activeBars.map((b) => b.clientUid));
+      // filteredActiveBars 사용 (담당자/스테이지 필터 반영)
+      const barsInView = new Set(filteredActiveBars.map((b) => b.clientUid));
       return filterRowsWithIndex(
         allRows,
         barsInView,
@@ -118,7 +119,8 @@ export function useTimelineData({
       // 로컬에서 생성된 row는 bars 없이도 표시
       // 서버에서 로드된 row는 bars가 있어야 표시
       if (!row.isLocal) {
-        const hasBars = activeBars.some((b) => b.rowId === row.rowId);
+        // filteredActiveBars 사용 (담당자/스테이지 필터 반영)
+        const hasBars = filteredActiveBars.some((b) => b.rowId === row.rowId);
         if (!hasBars) return false;
       }
 
@@ -149,7 +151,7 @@ export function useTimelineData({
 
       return true;
     });
-  }, [allRows, activeBars, filterIndex, searchQuery, filters]);
+  }, [allRows, filteredActiveBars, filterIndex, searchQuery, filters]);
 
   // 날짜 배열 생성 (rangeStart ~ rangeEnd)
   const days = useMemo(() => {

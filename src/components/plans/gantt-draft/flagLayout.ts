@@ -156,10 +156,18 @@ export function packFlagsIntoLanes(args: {
     }
   }
 
-  // 2단계: laneHint 없는 flags를 orderIndex 순서로 greedy 배치
+  // 2단계: laneHint 없는 flags를 createdAtLocal 순서로 greedy 배치
+  // 먼저 생성된 flag가 위쪽 레인에 배치됨 (겹침 시 나중 것이 아래로)
   const sortedNoHintFlags = [...noHintFlags].sort((a, b) => {
-    const orderCompare = a.flag.orderIndex - b.flag.orderIndex;
-    if (orderCompare !== 0) return orderCompare;
+    // 생성 시간 순서 (먼저 생성된 것 우선)
+    const createdCompare = a.flag.createdAtLocal.localeCompare(b.flag.createdAtLocal);
+    if (createdCompare !== 0) return createdCompare;
+    
+    // 동일 생성 시간이면 시작일 순
+    const startCompare = a.flag.startDate.localeCompare(b.flag.startDate);
+    if (startCompare !== 0) return startCompare;
+    
+    // clientId로 tie-breaking
     return a.flag.clientId.localeCompare(b.flag.clientId);
   });
 

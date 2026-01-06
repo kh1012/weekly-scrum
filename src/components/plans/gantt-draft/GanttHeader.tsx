@@ -8,13 +8,7 @@
 
 "use client";
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-  useCallback,
-} from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useDraftStore } from "./store";
 import { useLock } from "./useLock";
 import { useIsMac } from "./useOS";
@@ -174,7 +168,7 @@ export function GanttHeader({
     // viewMode가 실제로 변경된 경우
     if (prevViewModeRef.current !== viewMode) {
       prevViewModeRef.current = viewMode;
-      
+
       // 2프레임 대기하여 렌더링이 완전히 완료되도록 보장
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -195,7 +189,13 @@ export function GanttHeader({
         setViewMode("detailed");
       }
     }
-  }, [enableAlignmentCheck, viewMode, setViewMode, onViewModeChange, onViewModeChangeStart]);
+  }, [
+    enableAlignmentCheck,
+    viewMode,
+    setViewMode,
+    onViewModeChange,
+    onViewModeChangeStart,
+  ]);
 
   // 필터 활성화 시 Detailed 뷰로 강제 전환
   useEffect(() => {
@@ -208,7 +208,13 @@ export function GanttHeader({
         setViewMode("detailed");
       }
     }
-  }, [hasActiveFilters, viewMode, setViewMode, onViewModeChange, onViewModeChangeStart]);
+  }, [
+    hasActiveFilters,
+    viewMode,
+    setViewMode,
+    onViewModeChange,
+    onViewModeChangeStart,
+  ]);
 
   // URL 복사 핸들러
   const handleCopyURL = useCallback(async () => {
@@ -462,11 +468,7 @@ export function GanttHeader({
                   viewMode === "detailed"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
-                } ${
-                  isViewModeChanging
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
+                } ${isViewModeChanging ? "opacity-50 cursor-not-allowed" : ""}`}
                 title="상세 보기 (기능별)"
               >
                 Detailed
@@ -488,18 +490,14 @@ export function GanttHeader({
                   }
                 }}
                 disabled={
-                  isViewModeChanging ||
-                  enableAlignmentCheck ||
-                  hasActiveFilters
+                  isViewModeChanging || enableAlignmentCheck || hasActiveFilters
                 }
                 className={`px-2.5 py-1.5 text-xs font-medium rounded transition-all ${
                   viewMode === "summarized"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
                 } ${
-                  isViewModeChanging ||
-                  enableAlignmentCheck ||
-                  hasActiveFilters
+                  isViewModeChanging || enableAlignmentCheck || hasActiveFilters
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}

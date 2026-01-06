@@ -78,7 +78,7 @@ export function FlagLane({
   const effectiveLaneCount = Math.max(1, laneCount);
   const totalHeight = effectiveLaneCount * FLAG_LANE_HEIGHT;
 
-  // 레인 스왑 핸들러: 드래그 블록을 기준으로 위치 이동, 충돌 시 밀어내기
+  // 레인 스왑 핸들러: 드래그로 다른 레인으로 이동 시 겹침 처리
   const handleSwapOrder = useCallback(
     (flagId: string, currentLaneIndex: number, targetLaneIndex: number) => {
       const currentItem = items.find((item) => item.flagId === flagId);
@@ -100,22 +100,21 @@ export function FlagLane({
       });
 
       if (conflictingItems.length > 0) {
-        // 충돌이 있는 경우: 드래그 블록을 타겟 레인에 배치하고, 충돌하는 블록들을 한 칸 아래로 밀기
-        
-        // 1. 드래그 중인 블록을 타겟 레인에 배치
+        // 충돌 발생: 드래그 블록을 타겟 레인에 배치
         updateFlagLocal(currentFlag.clientId, {
           laneHint: targetLaneIndex,
         });
 
-        // 2. 충돌하는 블록들을 한 칸 아래로 밀기 (재귀적으로 밀림 처리)
+        // 겹침 당한 블록들을 각각의 현재 레인 바로 아래로 이동
         conflictingItems.forEach((conflictItem) => {
           const conflictFlag = flags.find((f) => f.clientId === conflictItem.flagId);
-          if (conflictFlag) {
-            // 한 칸 아래 레인으로 이동
-            updateFlagLocal(conflictFlag.clientId, {
-              laneHint: targetLaneIndex + 1,
-            });
-          }
+          if (!conflictFlag) return;
+
+          // 겹침 당한 블록의 현재 레인(targetLaneIndex) 바로 아래에 확장 레인 추가
+          // 즉, targetLaneIndex + 1로 이동
+          updateFlagLocal(conflictFlag.clientId, {
+            laneHint: targetLaneIndex + 1,
+          });
         });
       } else {
         // 빈 레인으로 이동: laneHint 설정하여 해당 레인에 고정
