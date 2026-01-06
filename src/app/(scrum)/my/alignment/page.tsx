@@ -12,6 +12,7 @@ interface PageProps {
   searchParams: Promise<{
     filter?: string;
     enableAlignmentCheck?: string;
+    viewMode?: string;
   }>;
 }
 
@@ -39,6 +40,7 @@ export default async function AlignmentPage({ searchParams }: PageProps) {
     ? params.filter 
     : "all";
   const initialEnableAlignmentCheck = params.enableAlignmentCheck === "true";
+  const initialViewMode = params.viewMode === "summarized" ? "summarized" : "detailed";
 
   // 사용자 정보 조회
   const { data: profile } = await supabase
@@ -63,6 +65,7 @@ export default async function AlignmentPage({ searchParams }: PageProps) {
       userName={userName}
       initialFilter={initialFilter}
       initialEnableAlignmentCheck={initialEnableAlignmentCheck}
+      initialViewMode={initialViewMode}
     />
   );
 }

@@ -13,6 +13,7 @@ interface PageProps {
     filter?: string;
     assignees?: string;
     enableAlignmentCheck?: string;
+    viewMode?: string;
   }>;
 }
 
@@ -40,6 +41,7 @@ export default async function WorksAlignmentPage({ searchParams }: PageProps) {
     : "all";
   const initialAssignees = params.assignees ? params.assignees.split(",").filter(Boolean) : [];
   const initialEnableAlignmentCheck = params.enableAlignmentCheck === "true";
+  const initialViewMode = params.viewMode === "summarized" ? "summarized" : "detailed";
 
   // Workspace-wide Alignment 데이터 조회
   const { items, members } = await getWorkspaceAlignmentData({
@@ -54,6 +56,7 @@ export default async function WorksAlignmentPage({ searchParams }: PageProps) {
       initialFilter={initialFilter}
       initialAssignees={initialAssignees}
       initialEnableAlignmentCheck={initialEnableAlignmentCheck}
+      initialViewMode={initialViewMode}
     />
   );
 }

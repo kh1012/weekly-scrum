@@ -37,7 +37,6 @@ interface AdminPlansGanttClientProps {
   initialStages: string[];
   initialAssignees: string[];
   initialViewMode: "detailed" | "summarized";
-  initialEnableAlignmentCheck: boolean;
   maxUpdatedAt?: string;
   updatedByName?: string;
 }
@@ -49,7 +48,6 @@ export function AdminPlansGanttClient({
   initialStages,
   initialAssignees,
   initialViewMode,
-  initialEnableAlignmentCheck,
   maxUpdatedAt,
   updatedByName,
 }: AdminPlansGanttClientProps) {
@@ -61,7 +59,6 @@ export function AdminPlansGanttClient({
   const selectedAssignees = useMemo(() => new Set(initialAssignees), [initialAssignees]);
   
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
-  const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(initialEnableAlignmentCheck);
 
   // 초기 로드 시 URL의 viewMode를 store에 설정
   useEffect(() => {
@@ -113,20 +110,6 @@ export function AdminPlansGanttClient({
     [setViewModeStore, router, searchParams]
   );
 
-  const handleEnableAlignmentCheckChange = useCallback(
-    (enabled: boolean) => {
-      setEnableAlignmentCheck(enabled);
-      const params = new URLSearchParams(searchParams.toString());
-      if (enabled) {
-        params.set("enableAlignmentCheck", "true");
-      } else {
-        params.delete("enableAlignmentCheck");
-      }
-      router.replace(`?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams]
-  );
-
   return (
     <DraftGanttView
       workspaceId={workspaceId}
@@ -139,8 +122,6 @@ export function AdminPlansGanttClient({
       isFilterLoading={isPending}
       maxUpdatedAt={maxUpdatedAt}
       updatedByName={updatedByName}
-      enableAlignmentCheck={enableAlignmentCheck}
-      onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}
       onViewModeChange={handleViewModeChange}
     />
   );

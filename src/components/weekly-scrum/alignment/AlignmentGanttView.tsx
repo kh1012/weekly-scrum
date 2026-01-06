@@ -48,6 +48,9 @@ export interface AlignmentGanttViewProps {
   /** Assignee filter change handler (optional) */
   onAssigneesChange?: (assignees: Set<string>) => void;
   
+  /** View mode change handler (optional) */
+  onViewModeChange?: (mode: "detailed" | "summarized") => void;
+  
   /** Enable alignment coverage check (default: false) */
   enableAlignmentCheck?: boolean;
   
@@ -74,6 +77,7 @@ export function AlignmentGanttView({
   showMismatchReview = true,
   selectedAssignees,
   onAssigneesChange,
+  onViewModeChange,
   enableAlignmentCheck = false,
   onEnableAlignmentCheckChange,
   coverageCheckStartDate = "2025-01-12",
@@ -214,6 +218,7 @@ export function AlignmentGanttView({
         selectedStages={new Set()}
         selectedAssignees={selectedAssignees || new Set()}
         onAssigneesChange={onAssigneesChange}
+        onViewModeChange={onViewModeChange}
         enableAlignmentCheck={enableAlignmentCheck}
         onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
       />
