@@ -35,7 +35,6 @@ export function AlignmentGanttClient({
   userName,
 }: AlignmentGanttClientProps) {
   const [filter, setFilter] = useState<FilterType>("all");
-  const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
   const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(false);
 
   // 필터링 및 통계 계산
@@ -51,7 +50,7 @@ export function AlignmentGanttClient({
         showUniqueAuthors={false}
       />
 
-      {/* Alignment Gantt Chart */}
+      {/* Alignment Gantt Chart - 개인 페이지는 담당자 필터 없음 */}
       <div className="flex-1 overflow-hidden">
         <AlignmentGanttView
           workspaceId={workspaceId}
@@ -60,8 +59,6 @@ export function AlignmentGanttClient({
           title={userName ? `${userName}님의 Alignment` : "Alignment"}
           description="계획과 기록을 Align 해봅니다."
           showMismatchReview={enableAlignmentCheck}
-          selectedAssignees={selectedAssignees}
-          onAssigneesChange={setSelectedAssignees}
           enableAlignmentCheck={enableAlignmentCheck}
           onEnableAlignmentCheckChange={setEnableAlignmentCheck}
         />

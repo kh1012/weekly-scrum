@@ -120,32 +120,42 @@ export function AlignmentGanttView({
     // 2. 담당자 필터 적용 (plans 배열 필터링)
     let filteredPlans = plans;
     if (selectedAssignees && selectedAssignees.size > 0) {
-      // authorName으로 userId를 찾기 위한 맵 생성
-      const nameToUserIdMap = new Map<string, string>();
-      members.forEach((member) => {
-        if (member.displayName) {
-          nameToUserIdMap.set(member.displayName, member.userId);
-        }
+      console.log('[AlignmentGanttView] 담당자 필터 적용:', {
+        selectedAssignees: Array.from(selectedAssignees),
+        totalPlans: plans.length,
+        planCount: plans.filter(p => !p.isSnapshot).length,
+        snapshotCount: plans.filter(p => p.isSnapshot).length,
+        samplePlan: plans.find(p => !p.isSnapshot),
+        sampleSnapshot: plans.find(p => p.isSnapshot),
       });
 
       filteredPlans = plans.filter((plan) => {
-        // Snapshot인 경우: authorId 또는 authorName으로 매칭
+        // Snapshot인 경우: authorId가 선택된 담당자에 포함되는지 확인
         if (plan.isSnapshot) {
-          // authorId가 있으면 직접 확인
-          if (plan.authorId && selectedAssignees.has(plan.authorId)) {
-            return true;
-          }
-          // authorId가 없으면 authorName으로 userId 찾아서 확인
-          if (!plan.authorId && plan.authorName) {
-            const userId = nameToUserIdMap.get(plan.authorName);
-            if (userId && selectedAssignees.has(userId)) {
-              return true;
-            }
-          }
-          return false;
+          const matched = plan.authorId && selectedAssignees.has(plan.authorId);
+          console.log('[AlignmentGanttView] Snapshot 필터:', {
+            title: plan.title,
+            authorId: plan.authorId,
+            authorName: plan.authorName,
+            matched,
+          });
+          return matched;
         }
         // Plan인 경우: assignees 중 하나라도 선택된 담당자에 포함되는지 확인
-        return plan.assignees.some((assignee) => selectedAssignees.has(assignee.userId));
+        const matched = plan.assignees.some((assignee) => selectedAssignees.has(assignee.userId));
+        if (matched) {
+          console.log('[AlignmentGanttView] Plan 필터 통과:', {
+            title: plan.title,
+            assignees: plan.assignees.map(a => ({ userId: a.userId, displayName: a.displayName })),
+          });
+        }
+        return matched;
+      });
+
+      console.log('[AlignmentGanttView] 필터 적용 후:', {
+        totalFiltered: filteredPlans.length,
+        planCount: filteredPlans.filter(p => !p.isSnapshot).length,
+        snapshotCount: filteredPlans.filter(p => p.isSnapshot).length,
       });
     }
 

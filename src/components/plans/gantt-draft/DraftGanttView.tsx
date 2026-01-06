@@ -524,8 +524,22 @@ export const DraftGanttView = forwardRef<
       (a, b) => a.orderIndex - b.orderIndex
     );
 
+    console.log('[DraftGanttView] Hydrate 직전:', {
+      totalRows: sortedRows.length,
+      totalBars: loadedBars.length,
+      snapshotBars: loadedBars.filter(b => b.isSnapshot).length,
+      planBars: loadedBars.filter(b => !b.isSnapshot).length,
+      sampleSnapshotBar: loadedBars.find(b => b.isSnapshot),
+    });
+
     hydrate(sortedRows, loadedBars);
-  }, [initialPlans, hydrate]);
+
+    console.log('[DraftGanttView] Hydrate 완료 - store 상태:', {
+      storeRowsCount: rows.length,
+      storeBarsCount: bars.length,
+      storeSnapshotBars: bars.filter(b => b.isSnapshot).length,
+    });
+  }, [initialPlans, hydrate, rows.length, bars.length]);
 
   // 마지막 업데이트 시각 토스트 표시 (페이지 진입 시 한 번만)
   const hasShownToastRef = useRef(false);
