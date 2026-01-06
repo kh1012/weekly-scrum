@@ -151,6 +151,13 @@ export function GanttHeader({
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
 
+  // 실행 커버리지 검토 활성화 시 Detailed 뷰로 강제 전환
+  useEffect(() => {
+    if (enableAlignmentCheck && viewMode === "summarized") {
+      startTransition(() => setViewMode("detailed"));
+    }
+  }, [enableAlignmentCheck, viewMode, setViewMode]);
+
   // URL 복사 핸들러
   const handleCopyURL = useCallback(async () => {
     try {
@@ -392,13 +399,17 @@ export function GanttHeader({
               </button>
               <button
                 onClick={() => startTransition(() => setViewMode("summarized"))}
-                disabled={isPending}
+                disabled={isPending || enableAlignmentCheck}
                 className={`px-2 py-1 text-xs font-medium rounded transition-all ${
                   viewMode === "summarized"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
-                } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-                title="요약 보기 (모듈별)"
+                } ${isPending || enableAlignmentCheck ? "opacity-50 cursor-not-allowed" : ""}`}
+                title={
+                  enableAlignmentCheck
+                    ? "실행 커버리지 검토 활성화 중에는 요약 보기를 사용할 수 없습니다"
+                    : "요약 보기 (모듈별)"
+                }
               >
                 Summarized
               </button>
@@ -419,8 +430,8 @@ export function GanttHeader({
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    enableAlignmentCheck ? "translate-x-5" : "translate-x-0.5"
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                    enableAlignmentCheck ? "translate-x-[1.125rem]" : "translate-x-1"
                   }`}
                 />
               </div>
