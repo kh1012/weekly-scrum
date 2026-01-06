@@ -172,9 +172,9 @@ export const DraftBar = memo(function DraftBar({
   const primaryRole = bar.assignees?.[0]?.role;
   const roleColor = primaryRole ? ROLE_CONFIG[primaryRole] : null;
 
-  // Snapshot은 연한 회색 배경 사용
+  // Snapshot은 하얀색 배경에 검정 border 사용
   const barColor = isSnapshot
-    ? { color: "#9ca3af", bg: "#f3f4f6", text: "#374151" }
+    ? { color: "#000000", bg: "#ffffff", text: "#000000" }
     : roleColor || DEFAULT_COLOR;
 
   // 드래그 시작
@@ -350,25 +350,24 @@ export const DraftBar = memo(function DraftBar({
         top: currentTop,
         // Airbnb 스타일: 더 둥근 끝
         borderRadius: 10,
-        // Snapshot은 강조된 스타일, Plan은 더 투명하게
+        // Snapshot은 하얀색 배경, Plan은 투명하게
         background: isSnapshot
-          ? "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)" // 더 진한 파란 그라데이션
+          ? "#ffffff" // 하얀색 배경
           : barColor.bg.replace(/[\d.]+\)$/, '0.06)'), // Plan 배경을 더 투명하게 (0.12 → 0.06)
+        // Snapshot은 검정 1px 테두리, Plan은 투명하게
         border: isSnapshot
-          ? "2px solid #0284c7" // 두꺼운 파란 테두리
+          ? "1px solid #000000" // 검정 테두리
           : `1px solid ${isSelected ? barColor.color : `${barColor.color}20`}`, // Plan 테두리를 더 투명하게
-        // 호버/선택 시 그림자 & lift 효과 (Snapshot이 더 강함)
-        boxShadow: isSelected
-          ? isSnapshot
-            ? "0 4px 20px rgba(2, 132, 199, 0.3), 0 0 0 3px rgba(2, 132, 199, 0.2)" // Snapshot 선택 시 더 강한 그림자
-            : `0 2px 12px ${barColor.color}20, 0 0 0 2px ${barColor.color}20` // Plan 선택 시 더 약한 그림자
-          : isHovered
-          ? isSnapshot
-            ? "0 6px 16px rgba(0, 0, 0, 0.12)" // Snapshot 호버 시 강한 그림자
-            : "0 2px 8px rgba(0, 0, 0, 0.06)" // Plan 호버 시 약한 그림자
-          : isSnapshot
-          ? "0 2px 6px rgba(0, 0, 0, 0.08)" // Snapshot 기본 그림자
-          : "0 1px 2px rgba(0, 0, 0, 0.03)", // Plan 기본 그림자 (거의 투명)
+        // 호버/선택 시 그림자 & lift 효과
+        boxShadow: isSnapshot
+          ? (isSelected
+              ? "0 0 0 3px rgba(59, 130, 246, 0.3), 0 2px 6px rgba(0, 0, 0, 0.1)" // 선택 시 포커스 링 + 기본 그림자
+              : "0 2px 6px rgba(0, 0, 0, 0.1)") // 항상 그림자 표시
+          : (isSelected
+              ? `0 2px 12px ${barColor.color}20, 0 0 0 2px ${barColor.color}20` // Plan 선택 시 더 약한 그림자
+              : isHovered
+              ? "0 2px 8px rgba(0, 0, 0, 0.06)" // Plan 호버 시 약한 그림자
+              : "0 1px 2px rgba(0, 0, 0, 0.03)"), // Plan 기본 그림자 (거의 투명)
         // Airbnb 스타일: 호버 시 lift
         transform:
           isHovered && !isDragging ? "translateY(-1px)" : "translateY(0)",
@@ -509,14 +508,14 @@ export const DraftBar = memo(function DraftBar({
                   {dateLabel}
                 </span>
 
-                {/* 작성자 이름 chip */}
+                {/* 작성자 이름 chip (GitHub 스타일) */}
                 {authorName && (
                   <span
                     className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0"
                     style={{
-                      background: "rgba(59, 130, 246, 0.1)",
-                      color: "#1e40af",
-                      border: "1px solid rgba(59, 130, 246, 0.2)",
+                      background: "#f6f8fa",
+                      color: "#24292f",
+                      border: "1px solid #d0d7de",
                     }}
                     title={`작성자: ${authorName}`}
                   >
@@ -574,8 +573,9 @@ export const DraftBar = memo(function DraftBar({
                     <span
                       className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0 truncate"
                       style={{ 
-                        background: "#e5e7eb", 
-                        color: "#374151",
+                        background: "#f6f8fa", 
+                        color: "#24292f",
+                        border: "1px solid #d0d7de",
                       }}
                       title={`작성자: ${authorName}`}
                     >

@@ -117,8 +117,21 @@ export function AlignmentGanttView({
       return plan;
     });
 
-    // 2. DraftBar 형식으로 변환 (Status 계산용)
-    let mockBars: DraftBar[] = plans.map((p) => ({
+    // 2. 담당자 필터 적용 (plans 배열 필터링)
+    let filteredPlans = plans;
+    if (selectedAssignees && selectedAssignees.size > 0) {
+      filteredPlans = plans.filter((plan) => {
+        // Snapshot인 경우: authorId가 선택된 담당자에 포함되는지 확인
+        if (plan.isSnapshot) {
+          return plan.authorId && selectedAssignees.has(plan.authorId);
+        }
+        // Plan인 경우: assignees 중 하나라도 선택된 담당자에 포함되는지 확인
+        return plan.assignees.some((assignee) => selectedAssignees.has(assignee.userId));
+      });
+    }
+
+    // 3. DraftBar 형식으로 변환 (Status 계산용)
+    const mockBars: DraftBar[] = filteredPlans.map((p) => ({
       clientUid: p.id,
       rowId: `${p.project}::${p.module}::${p.feature}`,
       serverId: p.id,
@@ -139,21 +152,9 @@ export function AlignmentGanttView({
       metaKey: p.metaKey,
       authorId: p.authorId,
     }));
-    
-    // 담당자 필터가 적용된 경우, 관련 bars만 필터링
-    if (selectedAssignees && selectedAssignees.size > 0) {
-      mockBars = mockBars.filter((bar) => {
-        // Snapshot인 경우: authorId가 선택된 담당자에 포함되는지 확인
-        if (bar.isSnapshot) {
-          return bar.authorId && selectedAssignees.has(bar.authorId);
-        }
-        // Plan인 경우: assignees 중 하나라도 선택된 담당자에 포함되는지 확인
-        return bar.assignees.some((assignee) => selectedAssignees.has(assignee.userId));
-      });
-    }
 
-    // 3. Plan bars에 대해 Alignment 상태 계산
-    const plansWithStatus = plans.map((plan, index) => {
+    // 4. Plan bars에 대해 Alignment 상태 계산
+    const plansWithStatus = filteredPlans.map((plan, index) => {
       if (plan.isSnapshot) {
         return plan;
       }
@@ -179,7 +180,7 @@ export function AlignmentGanttView({
       };
     });
 
-    // 4. Mismatch 검출 (커버리지 검증이 활성화되고 기간 필터를 통과한 경우만)
+    // 5. Mismatch 검출 (커버리지 검증이 활성화되고 기간 필터를 통과한 경우만)
     let detectedMismatches: any[] = [];
     if (enableAlignmentCheck) {
       const planBars = mockBars.filter((bar) => !bar.isSnapshot && bar.startDate >= coverageCheckStartDate);

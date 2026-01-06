@@ -8,7 +8,14 @@
 
 "use client";
 
-import { useEffect, useCallback, useState, useRef, forwardRef, useImperativeHandle } from "react";
+import {
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDraftStore, createRowId } from "./store";
 import { useLock } from "./useLock";
@@ -25,7 +32,11 @@ import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
 import { GanttSkeleton } from "./GanttSkeleton";
-import { buildFlatTree, calculateNodePositions, ROW_HEIGHT } from "./laneLayout";
+import {
+  buildFlatTree,
+  calculateNodePositions,
+  ROW_HEIGHT,
+} from "./laneLayout";
 
 interface InitialAssignee {
   userId: string;
@@ -108,27 +119,36 @@ interface DraftGanttViewProps {
 }
 
 export interface DraftGanttViewRef {
-  scrollToRow: (rowId: string, options?: { highlight?: boolean; smooth?: boolean }) => void;
+  scrollToRow: (
+    rowId: string,
+    options?: { highlight?: boolean; smooth?: boolean }
+  ) => void;
 }
 
-export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>(function DraftGanttView({
-  workspaceId,
-  initialPlans = [],
-  members = [],
-  readOnly = false,
-  title,
-  description,
-  selectedStages = new Set(),
-  onStagesChange,
-  selectedAssignees = new Set(),
-  onAssigneesChange,
-  isFilterLoading = false,
-  isViewModeChanging = false,
-  maxUpdatedAt,
-  updatedByName,
-  enableAlignmentCheck = false,
-  onEnableAlignmentCheckChange,
-}, ref) {
+export const DraftGanttView = forwardRef<
+  DraftGanttViewRef,
+  DraftGanttViewProps
+>(function DraftGanttView(
+  {
+    workspaceId,
+    initialPlans = [],
+    members = [],
+    readOnly = false,
+    title,
+    description,
+    selectedStages = new Set(),
+    onStagesChange,
+    selectedAssignees = new Set(),
+    onAssigneesChange,
+    isFilterLoading = false,
+    isViewModeChanging = false,
+    maxUpdatedAt,
+    updatedByName,
+    enableAlignmentCheck = false,
+    onEnableAlignmentCheckChange,
+  },
+  ref
+) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -137,45 +157,58 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showAddRowModal, setShowAddRowModal] = useState(false);
-  const [isInternalViewModeChanging, setIsInternalViewModeChanging] = useState(false);
-  
+  const [isInternalViewModeChanging, setIsInternalViewModeChanging] =
+    useState(false);
+
   // ViewMode 변경 감지 및 스켈레톤 표시
   const viewMode = useDraftStore((s) => s.ui.viewMode);
   const prevViewModeRef = useRef(viewMode);
-  
+
+  // 뷰 모드 변경 시작 핸들러
+  const handleViewModeChangeStart = useCallback(() => {
+    setIsInternalViewModeChanging(true);
+  }, []);
+
+  // 뷰 모드 변경 완료 감지 및 로딩 상태 해제
   useEffect(() => {
     if (prevViewModeRef.current !== viewMode) {
-      setIsInternalViewModeChanging(true);
+      prevViewModeRef.current = viewMode;
+      // 뷰 모드가 변경되면 약간의 딜레이 후 로딩 상태 해제
       const timer = setTimeout(() => {
         setIsInternalViewModeChanging(false);
-      }, 400); // 400ms 동안 스켈레톤 표시
-      
-      prevViewModeRef.current = viewMode;
-      
+      }, 300); // 300ms 동안 스켈레톤 표시
+
       return () => clearTimeout(timer);
     }
   }, [viewMode]);
-  
+
   // 자동 저장 옵션 (localStorage에서 불러오기)
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
-  
+
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('gantt-auto-save-enabled');
-      if (stored === 'true') {
+      const stored = localStorage.getItem("gantt-auto-save-enabled");
+      if (stored === "true") {
         setAutoSaveEnabled(true);
       }
     } catch {
       // localStorage 접근 실패 시 무시
     }
   }, []);
-  
+
   const handleAutoSaveChange = useCallback((enabled: boolean) => {
     setAutoSaveEnabled(enabled);
     try {
-      localStorage.setItem('gantt-auto-save-enabled', enabled ? 'true' : 'false');
+      localStorage.setItem(
+        "gantt-auto-save-enabled",
+        enabled ? "true" : "false"
+      );
       if (enabled) {
-        showToast("success", "자동 저장 활성화", "90초 이상 비활성 시 자동으로 저장됩니다.");
+        showToast(
+          "success",
+          "자동 저장 활성화",
+          "90초 이상 비활성 시 자동으로 저장됩니다."
+        );
       } else {
         showToast("info", "자동 저장 비활성화", "수동으로만 저장됩니다.");
       }
@@ -199,20 +232,25 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   }, []);
 
   // Header 숨기기/보이기 핸들러
-  const handleToggleHeader = useCallback((e?: React.MouseEvent) => {
-    // 이벤트 전파 방지 (편집 모드 종료 방지)
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    setIsHeaderHidden((prev) => !prev);
-    // GNB도 함께 숨기기/보이기
-    const gnb = document.querySelector('header[class*="sticky top-0"]') as HTMLElement;
-    if (gnb) {
-      gnb.style.display = isHeaderHidden ? '' : 'none';
-    }
-  }, [isHeaderHidden]);
+  const handleToggleHeader = useCallback(
+    (e?: React.MouseEvent) => {
+      // 이벤트 전파 방지 (편집 모드 종료 방지)
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      setIsHeaderHidden((prev) => !prev);
+      // GNB도 함께 숨기기/보이기
+      const gnb = document.querySelector(
+        'header[class*="sticky top-0"]'
+      ) as HTMLElement;
+      if (gnb) {
+        gnb.style.display = isHeaderHidden ? "" : "none";
+      }
+    },
+    [isHeaderHidden]
+  );
 
   // 저장 진행 상태 모달
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -254,46 +292,55 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   const setFilters = useDraftStore((s) => s.setFilters);
 
   // Expose scrollToRow method via ref
-  useImperativeHandle(ref, () => ({
-    scrollToRow: (rowId: string, options?: { highlight?: boolean; smooth?: boolean }) => {
-      const targetRow = rows.find((r) => r.rowId === rowId);
-      if (!targetRow) {
-        return;
-      }
+  useImperativeHandle(
+    ref,
+    () => ({
+      scrollToRow: (
+        rowId: string,
+        options?: { highlight?: boolean; smooth?: boolean }
+      ) => {
+        const targetRow = rows.find((r) => r.rowId === rowId);
+        if (!targetRow) {
+          return;
+        }
 
-      // Build tree and calculate positions (all nodes expanded for position calculation)
-      const allExpanded = new Set(rows.map((r) => r.project));
-      rows.forEach((r) => {
-        if (r.module) allExpanded.add(`${r.project}::${r.module}`);
-      });
-      const flatTree = buildFlatTree(rows, bars, allExpanded);
-      const nodePositions = calculateNodePositions(flatTree);
+        // Build tree and calculate positions (all nodes expanded for position calculation)
+        const allExpanded = new Set(rows.map((r) => r.project));
+        rows.forEach((r) => {
+          if (r.module) allExpanded.add(`${r.project}::${r.module}`);
+        });
+        const flatTree = buildFlatTree(rows, bars, allExpanded);
+        const nodePositions = calculateNodePositions(flatTree);
 
-      // Find the target node position
-      const targetNode = nodePositions.find((pos) => pos.node.row?.rowId === rowId);
-      if (!targetNode) {
-        return;
-      }
+        // Find the target node position
+        const targetNode = nodePositions.find(
+          (pos) => pos.node.row?.rowId === rowId
+        );
+        if (!targetNode) {
+          return;
+        }
 
-      // Scroll to the target row (centered if possible)
-      const viewportHeight = timelineRef.current?.clientHeight || 600;
-      const targetScrollTop = Math.max(
-        0,
-        targetNode.top - viewportHeight / 2 + ROW_HEIGHT / 2
-      );
+        // Scroll to the target row (centered if possible)
+        const viewportHeight = timelineRef.current?.clientHeight || 600;
+        const targetScrollTop = Math.max(
+          0,
+          targetNode.top - viewportHeight / 2 + ROW_HEIGHT / 2
+        );
 
-      setCommonScrollTop(targetScrollTop);
+        setCommonScrollTop(targetScrollTop);
 
-      // Apply highlight effect
-      if (options?.highlight !== false) {
-        setHighlightedRowId(rowId);
-        // Clear highlight after animation
-        setTimeout(() => {
-          setHighlightedRowId(null);
-        }, 2000);
-      }
-    },
-  }), [rows, bars, timelineRef]);
+        // Apply highlight effect
+        if (options?.highlight !== false) {
+          setHighlightedRowId(rowId);
+          // Clear highlight after animation
+          setTimeout(() => {
+            setHighlightedRowId(null);
+          }, 2000);
+        }
+      },
+    }),
+    [rows, bars, timelineRef]
+  );
 
   // 필터를 store에 동기화
   useEffect(() => {
@@ -391,7 +438,9 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
     if (hasInitializedFlagRef.current) return;
     const urlFlagId = searchParams.get("flagId");
     if (urlFlagId && flags.length > 0) {
-      const flagExists = flags.some((f) => f.clientId === urlFlagId && !f.deleted);
+      const flagExists = flags.some(
+        (f) => f.clientId === urlFlagId && !f.deleted
+      );
       if (flagExists && selectedFlagId !== urlFlagId) {
         selectFlag(urlFlagId);
         hasInitializedFlagRef.current = true;
@@ -792,7 +841,7 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
 
   // 자동 저장 트리거 (90초 비활성 시)
   const lastAutoSaveRef = useRef<number>(0);
-  
+
   useEffect(() => {
     if (!autoSaveEnabled || !isMyLock || !hasUnsavedChanges) return;
     if (inactivitySeconds === null || inactivitySeconds < 90) return;
@@ -804,7 +853,14 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
 
     lastAutoSaveRef.current = now;
     handleAutoSave();
-  }, [autoSaveEnabled, isMyLock, hasUnsavedChanges, inactivitySeconds, isCommitting, isAutoSaving]);
+  }, [
+    autoSaveEnabled,
+    isMyLock,
+    hasUnsavedChanges,
+    inactivitySeconds,
+    isCommitting,
+    isAutoSaving,
+  ]);
 
   // 조용한 자동 저장 (모달 없이)
   const handleAutoSave = useCallback(async () => {
@@ -1036,93 +1092,99 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
   }
 
   return (
-    <div className={`flex flex-col bg-white ${isHeaderHidden ? 'fixed inset-0 z-40' : 'h-full'}`}>
+    <div
+      className={`flex flex-col bg-white ${
+        isHeaderHidden ? "fixed inset-0 z-40" : "h-full"
+      }`}
+    >
       {/* 헤더 - Airbnb 스타일 (보조 액션 포함) */}
       {!isHeaderHidden && (
-      <GanttHeader
-        workspaceId={workspaceId}
-        onCommit={handleCommit}
-        isCommitting={isCommitting}
-        onDiscardChanges={handleDiscardChanges}
-        // 읽기 전용 모드
-        readOnly={readOnly}
-        title={title}
-        description={description}
-        // 필터
-        selectedStages={selectedStages}
-        onStagesChange={onStagesChange}
-        selectedAssignees={selectedAssignees}
-        onAssigneesChange={onAssigneesChange}
-        members={members}
-        isFilterLoading={isFilterLoading}
-        // 마지막 업데이트 시각
-        maxUpdatedAt={maxUpdatedAt}
-        updatedByName={updatedByName}
-        // Alignment 커버리지 검토
-        enableAlignmentCheck={enableAlignmentCheck}
-        onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
-        // 중앙 액션 props
-        onUndo={undo}
-        onRedo={redo}
-        onOpenCommandPalette={() => setShowCommandPalette(true)}
-        onOpenHelp={readOnly ? undefined : () => setShowHelp(true)}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        dragInfo={dragDateInfo}
-        // 기간 범위 props
-        rangeMonths={rangeMonths}
-        onRangeMonthsChange={setRangeMonths}
-        rangeStart={rangeStart}
-        rangeEnd={rangeEnd}
-        onCustomRangeChange={(start, end) => {
-          setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
-          setRangeStart(start);
-          setRangeEnd(end);
-        }}
-        onToggleHeader={handleToggleHeader}
-        autoSaveEnabled={autoSaveEnabled}
-        onAutoSaveChange={handleAutoSaveChange}
-        isAutoSaving={isAutoSaving}
-        onLockError={(type, lockedByName) => {
-          if (type === "locked_by_other") {
-            showToast(
-              "warning",
-              "편집할 수 없음",
-              `현재 ${
-                lockedByName || "다른 사용자"
-              }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
-            );
-          } else {
-            showToast(
-              "error",
-              "작업을 시작할 수 없습니다",
-              "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
-            );
-          }
-        }}
-        onStartSuccess={() => {
-          showToast(
-            "success",
-            "편집 모드 시작",
-            "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
-          );
-        }}
-        onStopSuccess={(discardedCount) => {
-          if (discardedCount > 0) {
-            showToast(
-              "info",
-              "작업 종료",
-              `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
-            );
-          } else {
+        <GanttHeader
+          workspaceId={workspaceId}
+          onCommit={handleCommit}
+          isCommitting={isCommitting}
+          onDiscardChanges={handleDiscardChanges}
+          // 읽기 전용 모드
+          readOnly={readOnly}
+          title={title}
+          description={description}
+          // 필터
+          selectedStages={selectedStages}
+          onStagesChange={onStagesChange}
+          selectedAssignees={selectedAssignees}
+          onAssigneesChange={onAssigneesChange}
+          members={members}
+          isFilterLoading={isFilterLoading}
+          // 마지막 업데이트 시각
+          maxUpdatedAt={maxUpdatedAt}
+          updatedByName={updatedByName}
+          // Alignment 커버리지 검토
+          enableAlignmentCheck={enableAlignmentCheck}
+          onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
+          // 중앙 액션 props
+          onUndo={undo}
+          onRedo={redo}
+          onOpenCommandPalette={() => setShowCommandPalette(true)}
+          onOpenHelp={readOnly ? undefined : () => setShowHelp(true)}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          dragInfo={dragDateInfo}
+          // 기간 범위 props
+          rangeMonths={rangeMonths}
+          onRangeMonthsChange={setRangeMonths}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          onCustomRangeChange={(start, end) => {
+            setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
+            setRangeStart(start);
+            setRangeEnd(end);
+          }}
+          onToggleHeader={handleToggleHeader}
+          autoSaveEnabled={autoSaveEnabled}
+          onAutoSaveChange={handleAutoSaveChange}
+          isAutoSaving={isAutoSaving}
+          // 뷰 모드 변경 콜백
+          onViewModeChangeStart={handleViewModeChangeStart}
+          onLockError={(type, lockedByName) => {
+            if (type === "locked_by_other") {
+              showToast(
+                "warning",
+                "편집할 수 없음",
+                `현재 ${
+                  lockedByName || "다른 사용자"
+                }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
+              );
+            } else {
+              showToast(
+                "error",
+                "작업을 시작할 수 없습니다",
+                "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
+              );
+            }
+          }}
+          onStartSuccess={() => {
             showToast(
               "success",
-              "작업 종료",
-              "작업이 정상적으로 종료되었습니다."
+              "편집 모드 시작",
+              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
             );
-          }
-        }}
-      />
+          }}
+          onStopSuccess={(discardedCount) => {
+            if (discardedCount > 0) {
+              showToast(
+                "info",
+                "작업 종료",
+                `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
+              );
+            } else {
+              showToast(
+                "success",
+                "작업 종료",
+                "작업이 정상적으로 종료되었습니다."
+              );
+            }
+          }}
+        />
       )}
 
       {/* Floating 복원 버튼 (Header 숨김 시) */}
@@ -1160,8 +1222,12 @@ export const DraftGanttView = forwardRef<DraftGanttViewRef, DraftGanttViewProps>
       {/* 메인 영역 - border 없이 꽉 차게 */}
       <div className="flex flex-1 overflow-hidden bg-white relative">
         {/* 필터 로딩 & 뷰 모드 전환 스켈레톤 (테이블 영역만) */}
-        {(isFilterLoading || isViewModeChanging || isInternalViewModeChanging) && (
-          <GanttSkeleton type={viewMode === "summarized" ? "summarized" : "detailed"} />
+        {(isFilterLoading ||
+          isViewModeChanging ||
+          isInternalViewModeChanging) && (
+          <GanttSkeleton
+            type={viewMode === "summarized" ? "summarized" : "detailed"}
+          />
         )}
 
         {/* 모바일: 트리 패널 토글 버튼 (readOnly일 때는 숨김) */}

@@ -101,6 +101,8 @@ interface GanttHeaderProps {
   enableAlignmentCheck?: boolean;
   /** Alignment 커버리지 검토 활성화 변경 핸들러 */
   onEnableAlignmentCheckChange?: (enabled: boolean) => void;
+  /** 뷰 모드 변경 시작 콜백 */
+  onViewModeChangeStart?: () => void;
 }
 
 export function GanttHeader({
@@ -140,6 +142,7 @@ export function GanttHeader({
   isAutoSaving = false,
   enableAlignmentCheck = false,
   onEnableAlignmentCheckChange,
+  onViewModeChangeStart,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -155,6 +158,7 @@ export function GanttHeader({
   const viewMode = useDraftStore((s) => s.ui.viewMode);
   const setViewMode = useDraftStore((s) => s.setViewMode);
   const [isPending, startTransition] = useTransition();
+  const [isViewModeChanging, setIsViewModeChanging] = useState(false);
 
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
@@ -163,19 +167,40 @@ export function GanttHeader({
   const hasActiveFilters =
     selectedStages.size > 0 || selectedAssignees.size > 0;
 
+  // 뷰 모드 변경 완료 시 로딩 상태 해제
+  const prevViewModeRef = useRef(viewMode);
+  useEffect(() => {
+    if (prevViewModeRef.current !== viewMode) {
+      prevViewModeRef.current = viewMode;
+      // 뷰 모드가 변경되면 로딩 상태 해제 (약간의 딜레이 후)
+      const timer = setTimeout(() => {
+        setIsViewModeChanging(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode]);
+
   // 실행 커버리지 검토 활성화 시 Detailed 뷰로 강제 전환
   useEffect(() => {
     if (enableAlignmentCheck && viewMode === "summarized") {
-      startTransition(() => setViewMode("detailed"));
+      onViewModeChangeStart?.();
+      setIsViewModeChanging(true);
+      requestAnimationFrame(() => {
+        startTransition(() => setViewMode("detailed"));
+      });
     }
-  }, [enableAlignmentCheck, viewMode, setViewMode]);
+  }, [enableAlignmentCheck, viewMode, setViewMode, onViewModeChangeStart]);
 
   // 필터 활성화 시 Detailed 뷰로 강제 전환
   useEffect(() => {
     if (hasActiveFilters && viewMode === "summarized") {
-      startTransition(() => setViewMode("detailed"));
+      onViewModeChangeStart?.();
+      setIsViewModeChanging(true);
+      requestAnimationFrame(() => {
+        startTransition(() => setViewMode("detailed"));
+      });
     }
-  }, [hasActiveFilters, viewMode, setViewMode]);
+  }, [hasActiveFilters, viewMode, setViewMode, onViewModeChangeStart]);
 
   // URL 복사 핸들러
   const handleCopyURL = useCallback(async () => {
@@ -342,7 +367,11 @@ export function GanttHeader({
       if (success) {
         // 편집 모드 시작 시 Summarized 뷰면 Detailed로 전환
         if (viewMode === "summarized") {
-          setViewMode("detailed");
+          onViewModeChangeStart?.();
+          setIsViewModeChanging(true);
+          requestAnimationFrame(() => {
+            setViewMode("detailed");
+          });
         }
         onStartSuccess?.();
       } else {
@@ -405,26 +434,62 @@ export function GanttHeader({
           {(readOnly || !isEditing) && (
             <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
               <button
-                onClick={() => startTransition(() => setViewMode("detailed"))}
-                disabled={isPending}
+                onClick={() => {
+                  if (viewMode !== "detailed") {
+                    // 즉시 로딩 상태 설정 (부모에게 알림)
+                    onViewModeChangeStart?.();
+                    setIsViewModeChanging(true);
+                    // 다음 프레임에서 뷰 모드 변경
+                    requestAnimationFrame(() => {
+                      startTransition(() => setViewMode("detailed"));
+                    });
+                  }
+                }}
+                disabled={isPending || isViewModeChanging}
                 className={`px-2 py-1 text-xs font-medium rounded transition-all ${
                   viewMode === "detailed"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
-                } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${
+                  isPending || isViewModeChanging
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
                 title="상세 보기 (기능별)"
               >
                 Detailed
               </button>
               <button
-                onClick={() => startTransition(() => setViewMode("summarized"))}
-                disabled={isPending || enableAlignmentCheck || hasActiveFilters}
+                onClick={() => {
+                  if (
+                    viewMode !== "summarized" &&
+                    !enableAlignmentCheck &&
+                    !hasActiveFilters
+                  ) {
+                    // 즉시 로딩 상태 설정 (부모에게 알림)
+                    onViewModeChangeStart?.();
+                    setIsViewModeChanging(true);
+                    // 다음 프레임에서 뷰 모드 변경
+                    requestAnimationFrame(() => {
+                      startTransition(() => setViewMode("summarized"));
+                    });
+                  }
+                }}
+                disabled={
+                  isPending ||
+                  isViewModeChanging ||
+                  enableAlignmentCheck ||
+                  hasActiveFilters
+                }
                 className={`px-2 py-1 text-xs font-medium rounded transition-all ${
                   viewMode === "summarized"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-800"
                 } ${
-                  isPending || enableAlignmentCheck || hasActiveFilters
+                  isPending ||
+                  isViewModeChanging ||
+                  enableAlignmentCheck ||
+                  hasActiveFilters
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}

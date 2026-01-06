@@ -79,6 +79,10 @@ export function TimelineNodeSummary({
         featureCount={summary.featureCount}
         features={summary.features}
         assignees={summary.uniqueAssignees}
+        authors={summary.uniqueAuthors}
+        avgProgress={summary.avgProgress}
+        isEntryOnly={summary.isEntryOnly}
+        isMixed={summary.isMixed}
         left={barPosition.left}
         width={barPosition.width}
         onClick={(e) => {

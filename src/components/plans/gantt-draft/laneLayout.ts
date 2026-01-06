@@ -28,6 +28,15 @@ export interface FlatTreeNode {
       displayName?: string;
       role: string;
     }>;
+    uniqueAuthors: Array<{
+      userId: string;
+      displayName?: string;
+    }>;
+    avgProgress?: number;
+    entryCount: number;
+    planCount: number;
+    isEntryOnly: boolean;
+    isMixed: boolean;
   };
 }
 
@@ -577,6 +586,16 @@ export function buildSummarizedTree(
         string,
         { userId: string; displayName?: string; role: string }
       >();
+      const authorSet = new Map<
+        string,
+        { userId: string; displayName?: string }
+      >();
+      
+      // 진행률 및 entry/plan 카운트
+      let progressSum = 0;
+      let progressCount = 0;
+      let entryCount = 0;
+      let planCount = 0;
 
       for (const row of features) {
         // 기능명 수집
@@ -592,6 +611,29 @@ export function buildSummarizedTree(
             maxEndDate = bar.endDate;
           }
 
+          // entry/plan 카운트
+          if (bar.isSnapshot) {
+            entryCount++;
+            
+            // entry 작성자 수집
+            if (bar.authorId) {
+              if (!authorSet.has(bar.authorId)) {
+                authorSet.set(bar.authorId, {
+                  userId: bar.authorId,
+                  displayName: bar.authorName,
+                });
+              }
+            }
+            
+            // 진행률 수집
+            if (bar.avgProgress !== undefined && bar.avgProgress !== null) {
+              progressSum += bar.avgProgress;
+              progressCount++;
+            }
+          } else {
+            planCount++;
+          }
+
           // 담당자 수집 (중복 제거)
           for (const assignee of bar.assignees) {
             if (!assigneeSet.has(assignee.userId)) {
@@ -604,6 +646,11 @@ export function buildSummarizedTree(
           }
         }
       }
+
+      // 평균 진행률 계산
+      const avgProgress = progressCount > 0 ? progressSum / progressCount : undefined;
+      const isEntryOnly = entryCount > 0 && planCount === 0;
+      const isMixed = entryCount > 0 && planCount > 0;
 
       // 모듈 노드 (요약 정보 포함)
       result.push({
@@ -619,6 +666,12 @@ export function buildSummarizedTree(
           startDate: minStartDate || "",
           endDate: maxEndDate || "",
           uniqueAssignees: Array.from(assigneeSet.values()),
+          uniqueAuthors: Array.from(authorSet.values()),
+          avgProgress,
+          entryCount,
+          planCount,
+          isEntryOnly,
+          isMixed,
         },
       });
     }
