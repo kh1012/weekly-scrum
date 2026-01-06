@@ -454,10 +454,10 @@ export const DraftBar = memo(function DraftBar({
           }}
           title={
             alignmentStatus === "green"
-              ? "Execution coverage meets expectations"
+              ? "실행 현황: 계획 대비 양호 (예상 범위 내)"
               : alignmentStatus === "orange"
-              ? "Execution coverage is below expected range"
-              : "No execution detected within plan window"
+              ? "실행 현황: 계획 대비 부족 (예상 범위 이하)"
+              : "실행 현황: 계획 기간 내 실행 기록 없음"
           }
         />
       )}

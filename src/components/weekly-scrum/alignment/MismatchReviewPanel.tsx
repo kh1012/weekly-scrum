@@ -151,13 +151,13 @@ export function MismatchReviewPanel({
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ background: "#ef4444" }}
-                        title="No execution detected"
+                        title="실행 기록 없음"
                       />
                     ) : (
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ background: "#f59e0b" }}
-                        title="Insufficient coverage"
+                        title="실행 커버리지 부족"
                       />
                     )}
                   </div>
@@ -178,8 +178,8 @@ export function MismatchReviewPanel({
                 {/* Explanation */}
                 <div className="text-xs text-gray-500 ml-5 leading-relaxed">
                   {mismatch.status === "red"
-                    ? "No execution snapshot detected within the planned period."
-                    : "Execution snapshots exist, but coverage is below the expected range."}
+                    ? "계획 기간 내 실행 기록이 없습니다."
+                    : "실행 기록은 있으나 예상 범위보다 부족합니다."}
                 </div>
 
                 {/* Coverage Stats */}
