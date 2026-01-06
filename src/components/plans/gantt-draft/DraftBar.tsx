@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useCallback, useRef, useState, memo } from "react";
+import { useCallback, useRef, useState, memo, useEffect } from "react";
 import { useDraftStore } from "./store";
 import {
   calculateMovedDates,
@@ -160,6 +160,8 @@ export const DraftBar = memo(function DraftBar({
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragOffset, setDragOffset] = useState({ left: 0, width: 0, top: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [showAlignmentPopover, setShowAlignmentPopover] = useState(false);
+  const alignmentPopoverRef = useRef<HTMLDivElement>(null);
 
   // Snapshot 블록인지 확인
   const isSnapshot = bar.isSnapshot === true;
@@ -181,6 +183,25 @@ export const DraftBar = memo(function DraftBar({
   const barColor = isSnapshot
     ? { color: "#000000", bg: "#ffffff", text: "#000000" }
     : roleColor || DEFAULT_COLOR;
+
+  // Alignment popover 외부 클릭 감지
+  useEffect(() => {
+    if (!showAlignmentPopover) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        alignmentPopoverRef.current &&
+        !alignmentPopoverRef.current.contains(event.target as Node)
+      ) {
+        setShowAlignmentPopover(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAlignmentPopover]);
 
   // 드래그 시작
   const handleMouseDown = useCallback(
@@ -499,52 +520,179 @@ export const DraftBar = memo(function DraftBar({
 
       {/* Alignment 상태 인디케이터 (Plan only) - 우측 상단 원형 */}
       {!isSnapshot && alignmentStatus && (
-        <div
-          className="absolute right-1 top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10"
-          style={{
-            background:
-              alignmentStatus === "green"
-                ? "rgb(16, 185, 129)" // emerald-500
-                : alignmentStatus === "orange"
-                ? "rgb(251, 146, 60)" // orange-500
-                : "rgb(244, 63, 94)", // rose-500
-          }}
-          title={(() => {
-            const baseInfo =
-              alignmentStatus === "green"
-                ? `실행 현황: 계획 대비 양호 (예상 범위 내)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
-                : alignmentStatus === "orange"
-                ? `실행 현황: 계획 대비 부족 (예상 범위 이하)\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`
-                : `실행 현황: 계획 기간 내 실행 기록 없음\n실행 ${bar.alignmentActualCount || 0}회 / 예상 ${bar.alignmentExpectedCount || 0}회`;
+        <div className="absolute right-1 top-1 z-10">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAlignmentPopover(!showAlignmentPopover);
+            }}
+            className="w-3 h-3 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
+            style={{
+              background:
+                alignmentStatus === "green"
+                  ? "rgb(16, 185, 129)" // emerald-500
+                  : alignmentStatus === "orange"
+                  ? "rgb(251, 146, 60)" // orange-500
+                  : "rgb(244, 63, 94)", // rose-500
+            }}
+            title="클릭하여 상세 정보 확인"
+          />
 
-            // 디버그 정보가 있으면 추가
-            if (bar.alignmentDebugInfo) {
-              const debug = bar.alignmentDebugInfo;
-              let debugInfo = `\n\n[상세 정보]\nPlan MetaKey: ${debug.planMetaKey}\n기간: ${debug.planDateRange}`;
-              
-              if (debug.matchingSnapshots.length > 0) {
-                debugInfo += `\n\n✓ 매칭된 스냅샷 (${debug.matchingSnapshots.length}개):`;
-                debug.matchingSnapshots.forEach((s, i) => {
-                  debugInfo += `\n  ${i + 1}. ${s.startDate} - ${s.metaKey}`;
-                });
-              }
-              
-              if (debug.filteredOutSnapshots.length > 0) {
-                debugInfo += `\n\n✗ 필터링된 스냅샷 (${debug.filteredOutSnapshots.length}개):`;
-                debug.filteredOutSnapshots.slice(0, 5).forEach((s, i) => {
-                  debugInfo += `\n  ${i + 1}. ${s.startDate} - ${s.reason}`;
-                });
-                if (debug.filteredOutSnapshots.length > 5) {
-                  debugInfo += `\n  ... 외 ${debug.filteredOutSnapshots.length - 5}개`;
-                }
-              }
-              
-              return baseInfo + debugInfo;
-            }
-            
-            return baseInfo;
-          })()}
-        />
+          {/* Alignment Debug Popover */}
+          {showAlignmentPopover && (
+            <div
+              ref={alignmentPopoverRef}
+              className="absolute top-6 right-0 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    실행 커버리지 상세 정보
+                  </h3>
+                  <button
+                    onClick={() => setShowAlignmentPopover(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 max-h-96 overflow-y-auto">
+                {/* Status */}
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        background:
+                          alignmentStatus === "green"
+                            ? "rgb(16, 185, 129)"
+                            : alignmentStatus === "orange"
+                            ? "rgb(251, 146, 60)"
+                            : "rgb(244, 63, 94)",
+                      }}
+                    />
+                    <span className="text-sm font-medium text-gray-900">
+                      {alignmentStatus === "green"
+                        ? "양호 (예상 범위 내)"
+                        : alignmentStatus === "orange"
+                        ? "부족 (예상 범위 이하)"
+                        : "실행 기록 없음"}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    실행 {bar.alignmentActualCount || 0}회 / 예상{" "}
+                    {bar.alignmentExpectedCount || 0}회
+                  </div>
+                </div>
+
+                {/* Debug Info */}
+                {bar.alignmentDebugInfo && (
+                  <>
+                    {/* Plan Info */}
+                    <div className="mb-4">
+                      <h4 className="text-xs font-semibold text-gray-700 mb-2">
+                        계획 정보
+                      </h4>
+                      <div className="bg-gray-50 rounded p-2 space-y-1">
+                        <div className="text-xs text-gray-600">
+                          <span className="font-medium">MetaKey:</span>{" "}
+                          <span className="font-mono">
+                            {bar.alignmentDebugInfo.planMetaKey}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          <span className="font-medium">기간:</span>{" "}
+                          {bar.alignmentDebugInfo.planDateRange}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Matching Snapshots */}
+                    {bar.alignmentDebugInfo.matchingSnapshots.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-xs font-semibold text-emerald-700 mb-2">
+                          ✓ 매칭된 스냅샷 ({bar.alignmentDebugInfo.matchingSnapshots.length}
+                          개)
+                        </h4>
+                        <div className="space-y-1">
+                          {bar.alignmentDebugInfo.matchingSnapshots.map((s, i) => (
+                            <div
+                              key={i}
+                              className="bg-emerald-50 rounded p-2 text-xs"
+                            >
+                              <div className="font-medium text-emerald-900">
+                                {i + 1}. {s.startDate}
+                              </div>
+                              <div className="text-emerald-700 font-mono text-[10px]">
+                                {s.metaKey}
+                              </div>
+                              {s.authorId && (
+                                <div className="text-emerald-600 text-[10px]">
+                                  Author: {s.authorId}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Filtered Out Snapshots */}
+                    {bar.alignmentDebugInfo.filteredOutSnapshots.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-red-700 mb-2">
+                          ✗ 필터링된 스냅샷 (
+                          {bar.alignmentDebugInfo.filteredOutSnapshots.length}개)
+                        </h4>
+                        <div className="space-y-1">
+                          {bar.alignmentDebugInfo.filteredOutSnapshots
+                            .slice(0, 10)
+                            .map((s, i) => (
+                              <div
+                                key={i}
+                                className="bg-red-50 rounded p-2 text-xs"
+                              >
+                                <div className="font-medium text-red-900">
+                                  {i + 1}. {s.startDate}
+                                </div>
+                                <div className="text-red-700 font-mono text-[10px]">
+                                  {s.metaKey}
+                                </div>
+                                {s.authorId && (
+                                  <div className="text-red-600 text-[10px]">
+                                    Author: {s.authorId}
+                                  </div>
+                                )}
+                                <div className="text-red-800 text-[10px] mt-1 font-medium">
+                                  → {s.reason}
+                                </div>
+                              </div>
+                            ))}
+                          {bar.alignmentDebugInfo.filteredOutSnapshots.length >
+                            10 && (
+                            <div className="text-xs text-gray-500 text-center py-1">
+                              ... 외{" "}
+                              {bar.alignmentDebugInfo.filteredOutSnapshots.length -
+                                10}
+                              개
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* 콘텐츠 영역 - Snapshot과 일반 블록 구분 */}
