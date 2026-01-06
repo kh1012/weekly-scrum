@@ -180,19 +180,10 @@ export async function getWorkspaceAlignmentData({
       totalCount
     );
 
-    // 실제 쿼리
+    // 실제 쿼리 (profiles 조인 제거 - foreign key 문제)
     const { data: snapshots, error: snapshotsError } = await supabase
       .from("snapshots")
-      .select(
-        `
-        id,
-        year,
-        week,
-        author_id,
-        workspace_id,
-        profiles!snapshots_author_id_fkey(display_name, email)
-      `
-      )
+      .select("id, year, week, author_id, workspace_id")
       .eq("workspace_id", workspaceId)
       .order("year", { ascending: true })
       .order("week", { ascending: true });
@@ -218,8 +209,39 @@ export async function getWorkspaceAlignmentData({
       snapshots?.length || 0
     );
 
-    // 샘플 데이터 로그
+    // Author 정보를 별도로 조회
+    let authorProfiles = new Map<string, { display_name?: string; email?: string }>();
     if (snapshots && snapshots.length > 0) {
+      const authorIds = [...new Set(snapshots.map((s) => s.author_id))];
+      console.log(
+        "[getWorkspaceAlignmentData] 👤 Fetching author profiles:",
+        authorIds.length
+      );
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", authorIds);
+
+      if (profilesError) {
+        console.error(
+          "[getWorkspaceAlignmentData] ❌ Profiles query error:",
+          JSON.stringify(profilesError, null, 2)
+        );
+      } else {
+        profiles?.forEach((p) => {
+          authorProfiles.set(p.id, {
+            display_name: p.display_name,
+            email: p.email,
+          });
+        });
+        console.log(
+          "[getWorkspaceAlignmentData] ✅ Author profiles fetched:",
+          authorProfiles.size
+        );
+      }
+
+      // 샘플 데이터 로그
       console.log(
         "[getWorkspaceAlignmentData] 📸 Sample snapshots:",
         snapshots.slice(0, 3).map((s) => ({
@@ -228,6 +250,7 @@ export async function getWorkspaceAlignmentData({
           week: s.week,
           author_id: s.author_id,
           workspace_id: (s as any).workspace_id,
+          author_name: authorProfiles.get(s.author_id)?.display_name,
         }))
       );
     }
@@ -373,7 +396,7 @@ export async function getWorkspaceAlignmentData({
     // 3. Snapshot 맵 생성
     const snapshotMap = new Map(
       snapshots?.map((s) => {
-        const profile = (s as any).profiles;
+        const profile = authorProfiles.get(s.author_id);
         const authorName = profile?.display_name || profile?.email || "Unknown";
         return [
           s.id,
@@ -667,19 +690,10 @@ export async function getAlignmentGanttData({
       userTotalCount
     );
 
-    // 실제 쿼리
+    // 실제 쿼리 (profiles 조인 제거 - foreign key 문제)
     const { data: snapshots, error: snapshotsError } = await supabase
       .from("snapshots")
-      .select(
-        `
-      id,
-      year,
-      week,
-      author_id,
-      workspace_id,
-      profiles!snapshots_author_id_fkey(display_name, email)
-    `
-      )
+      .select("id, year, week, author_id, workspace_id")
       .eq("workspace_id", workspaceId)
       .eq("author_id", userId)
       .order("year", { ascending: true })
@@ -706,8 +720,39 @@ export async function getAlignmentGanttData({
       snapshots?.length || 0
     );
 
-    // 샘플 데이터 로그
+    // Author 정보를 별도로 조회
+    let authorProfiles = new Map<string, { display_name?: string; email?: string }>();
     if (snapshots && snapshots.length > 0) {
+      const authorIds = [...new Set(snapshots.map((s) => s.author_id))];
+      console.log(
+        "[getAlignmentGanttData] 👤 Fetching author profiles:",
+        authorIds.length
+      );
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", authorIds);
+
+      if (profilesError) {
+        console.error(
+          "[getAlignmentGanttData] ❌ Profiles query error:",
+          JSON.stringify(profilesError, null, 2)
+        );
+      } else {
+        profiles?.forEach((p) => {
+          authorProfiles.set(p.id, {
+            display_name: p.display_name,
+            email: p.email,
+          });
+        });
+        console.log(
+          "[getAlignmentGanttData] ✅ Author profiles fetched:",
+          authorProfiles.size
+        );
+      }
+
+      // 샘플 데이터 로그
       console.log(
         "[getAlignmentGanttData] 📸 Sample user snapshots:",
         snapshots.slice(0, 3).map((s) => ({
@@ -716,6 +761,7 @@ export async function getAlignmentGanttData({
           week: s.week,
           author_id: s.author_id,
           workspace_id: (s as any).workspace_id,
+          author_name: authorProfiles.get(s.author_id)?.display_name,
         }))
       );
     }
@@ -883,7 +929,7 @@ export async function getAlignmentGanttData({
     // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName, authorId})
     const snapshotMap = new Map(
       snapshots?.map((s) => {
-        const profile = (s as any).profiles;
+        const profile = authorProfiles.get(s.author_id);
         const authorName = profile?.display_name || profile?.email || "Unknown";
         return [
           s.id,
