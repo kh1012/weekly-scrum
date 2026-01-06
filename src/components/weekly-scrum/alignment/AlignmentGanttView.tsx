@@ -41,6 +41,12 @@ export interface AlignmentGanttViewProps {
   
   /** Show mismatch review panel (default: true) */
   showMismatchReview?: boolean;
+  
+  /** Selected assignees for filtering (optional) */
+  selectedAssignees?: Set<string>;
+  
+  /** Assignee filter change handler (optional) */
+  onAssigneesChange?: (assignees: Set<string>) => void;
 }
 
 /**
@@ -57,6 +63,8 @@ export function AlignmentGanttView({
   title,
   description = "계획과 기록을 Align 해봅니다.",
   showMismatchReview = true,
+  selectedAssignees,
+  onAssigneesChange,
 }: AlignmentGanttViewProps) {
   const ganttRef = useRef<DraftGanttViewRef>(null);
 
@@ -114,7 +122,7 @@ export function AlignmentGanttView({
     });
 
     // 2. DraftBar 형식으로 변환 (Status 계산용)
-    const mockBars: DraftBar[] = plans.map((p) => ({
+    let mockBars: DraftBar[] = plans.map((p) => ({
       clientUid: p.id,
       rowId: `${p.project}::${p.module}::${p.feature}`,
       serverId: p.id,
@@ -135,6 +143,18 @@ export function AlignmentGanttView({
       metaKey: p.metaKey,
       authorId: p.authorId,
     }));
+    
+    // 담당자 필터가 적용된 경우, 관련 bars만 필터링
+    if (selectedAssignees && selectedAssignees.size > 0) {
+      mockBars = mockBars.filter((bar) => {
+        // Snapshot인 경우: authorId가 선택된 담당자에 포함되는지 확인
+        if (bar.isSnapshot) {
+          return bar.authorId && selectedAssignees.has(bar.authorId);
+        }
+        // Plan인 경우: assignees 중 하나라도 선택된 담당자에 포함되는지 확인
+        return bar.assignees.some((assignee) => selectedAssignees.has(assignee.userId));
+      });
+    }
 
     // 3. Plan bars에 대해 Alignment 상태 계산
     const plansWithStatus = plans.map((plan, index) => {
@@ -159,7 +179,7 @@ export function AlignmentGanttView({
       initialPlans: plansWithStatus,
       mismatches: detectedMismatches,
     };
-  }, [items]);
+  }, [items, selectedAssignees]);
 
   /**
    * Mismatch 클릭 시 Timeline Focus 핸들러
@@ -193,7 +213,8 @@ export function AlignmentGanttView({
         title={title}
         description={description}
         selectedStages={new Set()}
-        selectedAssignees={new Set()}
+        selectedAssignees={selectedAssignees || new Set()}
+        onAssigneesChange={onAssigneesChange}
       />
     </div>
   );

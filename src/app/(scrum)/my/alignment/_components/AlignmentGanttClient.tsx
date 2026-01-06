@@ -35,6 +35,7 @@ export function AlignmentGanttClient({
   userName,
 }: AlignmentGanttClientProps) {
   const [filter, setFilter] = useState<FilterType>("all");
+  const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
 
   // 필터링 및 통계 계산
   const { filteredItems, stats } = useAlignmentFilter({ items, filter });
@@ -58,6 +59,8 @@ export function AlignmentGanttClient({
           title={userName ? `${userName}님의 Alignment` : "Alignment"}
           description="계획과 기록을 Align 해봅니다."
           showMismatchReview={true}
+          selectedAssignees={selectedAssignees}
+          onAssigneesChange={setSelectedAssignees}
         />
       </div>
     </div>
