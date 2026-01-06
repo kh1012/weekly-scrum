@@ -8,6 +8,13 @@ import { AlignmentGanttClient } from "./_components/AlignmentGanttClient";
 
 const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
+interface PageProps {
+  searchParams: Promise<{
+    filter?: string;
+    enableAlignmentCheck?: string;
+  }>;
+}
+
 /**
  * Alignment Page
  * 
@@ -17,7 +24,7 @@ const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
  * - 사용자 개인 관점의 Plans + Snapshot Entries
  * - 읽기 전용 비교 뷰
  */
-export default async function AlignmentPage() {
+export default async function AlignmentPage({ searchParams }: PageProps) {
   const supabase = await createClient();
   
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,6 +32,13 @@ export default async function AlignmentPage() {
   if (!user) {
     redirect("/login");
   }
+
+  // searchParams에서 필터 파라미터 확인
+  const params = await searchParams;
+  const initialFilter = (params.filter === "plans" || params.filter === "snapshots") 
+    ? params.filter 
+    : "all";
+  const initialEnableAlignmentCheck = params.enableAlignmentCheck === "true";
 
   // 사용자 정보 조회
   const { data: profile } = await supabase
@@ -47,6 +61,8 @@ export default async function AlignmentPage() {
       items={items}
       members={members}
       userName={userName}
+      initialFilter={initialFilter}
+      initialEnableAlignmentCheck={initialEnableAlignmentCheck}
     />
   );
 }

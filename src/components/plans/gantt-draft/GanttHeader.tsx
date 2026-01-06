@@ -570,9 +570,6 @@ export function GanttHeader({
             </div>
           )}
 
-          {/* 락 상태 - 읽기 전용에서는 숨김 */}
-          {!readOnly && <div className="h-8 w-px bg-gray-200" />}
-
           {!readOnly && lockState.isLocked ? (
             <div className="flex items-center gap-2">
               {/* 편집 상태 영역 - 2줄, 고정폭 */}

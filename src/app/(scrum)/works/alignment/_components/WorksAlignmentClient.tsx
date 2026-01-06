@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlignmentGanttView,
   AlignmentFilterBar,
@@ -18,6 +19,9 @@ interface WorksAlignmentClientProps {
     email?: string;
     basicRole?: "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null;
   }>;
+  initialFilter: FilterType;
+  initialAssignees: string[];
+  initialEnableAlignmentCheck: boolean;
 }
 
 /**
@@ -32,10 +36,20 @@ export function WorksAlignmentClient({
   workspaceId,
   items,
   members,
+  initialFilter,
+  initialAssignees,
+  initialEnableAlignmentCheck,
 }: WorksAlignmentClientProps) {
-  const [filter, setFilter] = useState<FilterType>("all");
-  const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
-  const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
+  const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(
+    new Set(initialAssignees)
+  );
+  const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(
+    initialEnableAlignmentCheck
+  );
 
   // 필터링 및 통계 계산 (담당자 필터 반영)
   const { filteredItems, stats } = useAlignmentFilter({ 
@@ -43,6 +57,51 @@ export function WorksAlignmentClient({
     filter,
     selectedAssignees 
   });
+
+  // filter 변경 핸들러 (querystring 업데이트)
+  const handleFilterChange = useCallback(
+    (newFilter: FilterType) => {
+      setFilter(newFilter);
+      const params = new URLSearchParams(searchParams.toString());
+      if (newFilter === "all") {
+        params.delete("filter");
+      } else {
+        params.set("filter", newFilter);
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  // 담당자 필터 변경 핸들러 (querystring 업데이트)
+  const handleAssigneesChange = useCallback(
+    (assignees: Set<string>) => {
+      setSelectedAssignees(assignees);
+      const params = new URLSearchParams(searchParams.toString());
+      if (assignees.size > 0) {
+        params.set("assignees", Array.from(assignees).join(","));
+      } else {
+        params.delete("assignees");
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  // enableAlignmentCheck 변경 핸들러 (querystring 업데이트)
+  const handleEnableAlignmentCheckChange = useCallback(
+    (enabled: boolean) => {
+      setEnableAlignmentCheck(enabled);
+      const params = new URLSearchParams(searchParams.toString());
+      if (enabled) {
+        params.set("enableAlignmentCheck", "true");
+      } else {
+        params.delete("enableAlignmentCheck");
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   // 담당자 필터 적용 (클라이언트에서 한 번만)
   const assigneeFilteredItems = useMemo(() => {
@@ -65,7 +124,7 @@ export function WorksAlignmentClient({
       {/* 필터 바 */}
       <AlignmentFilterBar
         filter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={handleFilterChange}
         stats={stats}
         showUniqueAuthors={true}
       />
@@ -80,9 +139,9 @@ export function WorksAlignmentClient({
           description="전체 계획과 실행 기록을 확인합니다."
           showMismatchReview={enableAlignmentCheck}
           selectedAssignees={selectedAssignees}
-          onAssigneesChange={setSelectedAssignees}
+          onAssigneesChange={handleAssigneesChange}
           enableAlignmentCheck={enableAlignmentCheck}
-          onEnableAlignmentCheckChange={setEnableAlignmentCheck}
+          onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}
         />
       </div>
     </div>

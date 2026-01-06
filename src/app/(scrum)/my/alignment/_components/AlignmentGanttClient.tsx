@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlignmentGanttView,
   AlignmentFilterBar,
@@ -19,6 +20,8 @@ interface AlignmentGanttClientProps {
     basicRole?: "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null;
   }>;
   userName?: string;
+  initialFilter: FilterType;
+  initialEnableAlignmentCheck: boolean;
 }
 
 /**
@@ -33,9 +36,46 @@ export function AlignmentGanttClient({
   items,
   members,
   userName,
+  initialFilter,
+  initialEnableAlignmentCheck,
 }: AlignmentGanttClientProps) {
-  const [filter, setFilter] = useState<FilterType>("all");
-  const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
+  const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(
+    initialEnableAlignmentCheck
+  );
+
+  // filter 변경 핸들러 (querystring 업데이트)
+  const handleFilterChange = useCallback(
+    (newFilter: FilterType) => {
+      setFilter(newFilter);
+      const params = new URLSearchParams(searchParams.toString());
+      if (newFilter === "all") {
+        params.delete("filter");
+      } else {
+        params.set("filter", newFilter);
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  // enableAlignmentCheck 변경 핸들러 (querystring 업데이트)
+  const handleEnableAlignmentCheckChange = useCallback(
+    (enabled: boolean) => {
+      setEnableAlignmentCheck(enabled);
+      const params = new URLSearchParams(searchParams.toString());
+      if (enabled) {
+        params.set("enableAlignmentCheck", "true");
+      } else {
+        params.delete("enableAlignmentCheck");
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   // 필터링 및 통계 계산
   const { filteredItems, stats } = useAlignmentFilter({ items, filter });
@@ -45,7 +85,7 @@ export function AlignmentGanttClient({
       {/* 필터 바 */}
       <AlignmentFilterBar
         filter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={handleFilterChange}
         stats={stats}
         showUniqueAuthors={false}
       />
@@ -60,7 +100,7 @@ export function AlignmentGanttClient({
           description="계획과 기록을 Align 해봅니다."
           showMismatchReview={enableAlignmentCheck}
           enableAlignmentCheck={enableAlignmentCheck}
-          onEnableAlignmentCheckChange={setEnableAlignmentCheck}
+          onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}
         />
       </div>
     </div>
