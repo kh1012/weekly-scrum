@@ -25,7 +25,13 @@ import { GanttHeader } from "./GanttHeader";
 import { CommandPalette } from "./CommandPalette";
 import { HelpModal } from "./HelpModal";
 // FloatingDock은 GanttHeader로 통합됨
-import { showToast, ToastContainer } from "./Toast";
+import {
+  showToast,
+  showLoadingToast,
+  updateToastToSuccess,
+  updateToastToError,
+  ToastContainer,
+} from "./Toast";
 import { SaveProgressModal, SaveStep, LogEntry } from "./SaveProgressModal";
 import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
@@ -1070,23 +1076,23 @@ export const DraftGanttView = forwardRef<
 
   const handleExportPNG = useCallback(
     async (quality: "low" | "normal" | "high" = "normal") => {
+      const qualityLabels = {
+        low: "저품질",
+        normal: "기본",
+        high: "고품질",
+      };
+
+      // 로딩 토스트 표시
+      const toastId = showLoadingToast(
+        `PNG 생성 중 (${qualityLabels[quality]})`,
+        "잠시만 기다려주세요..."
+      );
+
       try {
         // ganttContainerRef 사용 (Timeline만, Header 제외)
         if (!ganttContainerRef.current) {
           throw new Error("Export 컨테이너를 찾을 수 없습니다.");
         }
-
-        const qualityLabels = {
-          low: "저품질",
-          normal: "기본",
-          high: "고품질",
-        };
-
-        showToast(
-          "info",
-          `PNG 생성 중 (${qualityLabels[quality]})`,
-          "잠시만 기다려주세요..."
-        );
 
         await exportPNG(ganttContainerRef.current, {
           filename: `gantt-screenshot-${Date.now()}`,
@@ -1096,11 +1102,17 @@ export const DraftGanttView = forwardRef<
           },
         });
 
-        showToast("success", "PNG Export 완료", "이미지가 다운로드되었습니다.");
+        // 성공으로 업데이트
+        updateToastToSuccess(
+          toastId,
+          "PNG Export 완료",
+          "이미지가 다운로드되었습니다."
+        );
       } catch (error) {
         console.error("PNG Export 실패:", error);
-        showToast(
-          "error",
+        // 에러로 업데이트
+        updateToastToError(
+          toastId,
           "Export 실패",
           error instanceof Error ? error.message : "알 수 없는 오류"
         );
@@ -1111,23 +1123,23 @@ export const DraftGanttView = forwardRef<
 
   const handleExportSVG = useCallback(
     async (quality: "low" | "normal" | "high" = "normal") => {
+      const qualityLabels = {
+        low: "저품질",
+        normal: "기본",
+        high: "고품질",
+      };
+
+      // 로딩 토스트 표시
+      const toastId = showLoadingToast(
+        `SVG 생성 중 (${qualityLabels[quality]})`,
+        "잠시만 기다려주세요..."
+      );
+
       try {
         // ganttContainerRef 사용 (Timeline만, Header 제외)
         if (!ganttContainerRef.current) {
           throw new Error("Export 컨테이너를 찾을 수 없습니다.");
         }
-
-        const qualityLabels = {
-          low: "저품질",
-          normal: "기본",
-          high: "고품질",
-        };
-
-        showToast(
-          "info",
-          `SVG 생성 중 (${qualityLabels[quality]})`,
-          "잠시만 기다려주세요..."
-        );
 
         await exportSVG(ganttContainerRef.current, {
           filename: `gantt-export-${Date.now()}`,
@@ -1137,11 +1149,17 @@ export const DraftGanttView = forwardRef<
           },
         });
 
-        showToast("success", "SVG Export 완료", "파일이 다운로드되었습니다.");
+        // 성공으로 업데이트
+        updateToastToSuccess(
+          toastId,
+          "SVG Export 완료",
+          "파일이 다운로드되었습니다."
+        );
       } catch (error) {
         console.error("SVG Export 실패:", error);
-        showToast(
-          "error",
+        // 에러로 업데이트
+        updateToastToError(
+          toastId,
           "Export 실패",
           error instanceof Error ? error.message : "알 수 없는 오류"
         );

@@ -194,6 +194,9 @@ export function GanttHeader({
   const [showMismatchPopover, setShowMismatchPopover] = useState(false);
   const mismatchButtonRef = useRef<HTMLButtonElement>(null);
   const mismatchPopoverRef = useRef<HTMLDivElement>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set()
+  );
 
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
@@ -257,6 +260,28 @@ export function GanttHeader({
     };
   }, [showMismatchPopover]);
 
+  // Mismatches를 프로젝트 > 모듈로 그룹화
+  const groupedMismatches = useMemo(() => {
+    const groups = new Map<
+      string,
+      { key: string; label: string; items: AlignmentMismatch[] }
+    >();
+
+    mismatches?.forEach((mismatch) => {
+      const parts = mismatch.metaPath.split(" / ");
+      const groupLabel =
+        parts.length >= 2 ? `${parts[0]} / ${parts[1]}` : parts[0];
+      const groupKey = groupLabel;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, { key: groupKey, label: groupLabel, items: [] });
+      }
+      groups.get(groupKey)!.items.push(mismatch);
+    });
+
+    return Array.from(groups.values());
+  }, [mismatches]);
+
   // Mismatch 클릭 핸들러
   const handleMismatchClick = useCallback(
     (mismatch: AlignmentMismatch) => {
@@ -265,6 +290,30 @@ export function GanttHeader({
     },
     [onFocusMismatch]
   );
+
+  // 그룹 토글 핸들러
+  const toggleGroup = useCallback((groupKey: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) {
+        next.delete(groupKey);
+      } else {
+        next.add(groupKey);
+      }
+      return next;
+    });
+  }, []);
+
+  // 전체 펼치기/접기 핸들러
+  const toggleAllGroups = useCallback(() => {
+    if (collapsedGroups.size === groupedMismatches.length) {
+      // 모두 접혀있으면 모두 펼치기
+      setCollapsedGroups(new Set());
+    } else {
+      // 하나라도 펼쳐져 있으면 모두 접기
+      setCollapsedGroups(new Set(groupedMismatches.map((group) => group.key)));
+    }
+  }, [collapsedGroups.size, groupedMismatches]);
 
   // 필터 활성화 시 Detailed 뷰로 강제 전환
   useEffect(() => {
@@ -702,9 +751,25 @@ export function GanttHeader({
                       {/* Header */}
                       <div className="px-4 py-3 border-b border-gray-200">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-gray-800">
-                            실행 커버리지 검토
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-gray-800">
+                              실행 커버리지 검토
+                            </h3>
+                            <button
+                              onClick={toggleAllGroups}
+                              className="text-xs text-gray-500 hover:text-gray-700 transition-colors px-2 py-0.5 rounded hover:bg-gray-100"
+                              title={
+                                collapsedGroups.size ===
+                                groupedMismatches.length
+                                  ? "전체 펼치기"
+                                  : "전체 접기"
+                              }
+                            >
+                              {collapsedGroups.size === groupedMismatches.length
+                                ? "전체 펼치기"
+                                : "전체 접기"}
+                            </button>
+                          </div>
                           <button
                             onClick={() => setShowMismatchPopover(false)}
                             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -730,95 +795,127 @@ export function GanttHeader({
                         </p>
                       </div>
 
-                      {/* Mismatch List */}
+                      {/* Mismatch List (Grouped) */}
                       <div className="flex-1 overflow-y-auto">
-                        {mismatches.map((mismatch, index) => {
-                          // 날짜 차이 계산
-                          const startDate = new Date(mismatch.planStartDate);
-                          const endDate = new Date(mismatch.planEndDate);
-                          const daysDiff = Math.ceil(
-                            (endDate.getTime() - startDate.getTime()) /
-                              (1000 * 60 * 60 * 24)
-                          );
+                        {groupedMismatches.map((group) => {
+                          const isCollapsed = collapsedGroups.has(group.key);
 
                           return (
-                            <button
-                              key={`${mismatch.planId}-${index}`}
-                              onClick={() => handleMismatchClick(mismatch)}
-                              className="w-full px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
-                            >
-                              {/* 1줄: [Plan Block] + 상태 아이콘 + 메타 경로 */}
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600 bg-blue-50 rounded border border-blue-200">
-                                  Plan Block
-                                </span>
-                                <div className="shrink-0">
-                                  {mismatch.status === "red" ? (
-                                    <div
-                                      className="w-3 h-3 rounded-full"
-                                      style={{ background: "#ef4444" }}
-                                      title="실행 기록 없음"
+                            <div key={group.key}>
+                              {/* Group Header */}
+                              <button
+                                onClick={() => toggleGroup(group.key)}
+                                className="w-full px-4 py-2 bg-gray-50 border-b border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <svg
+                                    className={`w-4 h-4 text-gray-500 transition-transform ${
+                                      isCollapsed ? "" : "rotate-90"
+                                    }`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5l7 7-7 7"
                                     />
-                                  ) : (
-                                    <div
-                                      className="w-3 h-3 rounded-full"
-                                      style={{ background: "#f59e0b" }}
-                                      title="실행 커버리지 부족"
-                                    />
-                                  )}
+                                  </svg>
+                                  <span className="text-xs font-semibold text-gray-700">
+                                    {group.label}
+                                  </span>
                                 </div>
-                                <span className="text-xs font-medium text-gray-700 truncate">
-                                  {mismatch.metaPath}
+                                <span className="text-xs text-gray-500">
+                                  {group.items.length}개
                                 </span>
-                              </div>
+                              </button>
 
-                              {/* 2줄: 타이틀 */}
-                              {mismatch.planTitle && (
-                                <div className="text-xs text-gray-600 ml-[75px] mb-1.5 truncate">
-                                  {mismatch.planTitle}
-                                </div>
-                              )}
+                              {/* Group Items */}
+                              {!isCollapsed &&
+                                group.items.map((mismatch, index) => {
+                                  // 날짜 차이 계산
+                                  const startDate = new Date(
+                                    mismatch.planStartDate
+                                  );
+                                  const endDate = new Date(
+                                    mismatch.planEndDate
+                                  );
+                                  const daysDiff = Math.ceil(
+                                    (endDate.getTime() - startDate.getTime()) /
+                                      (1000 * 60 * 60 * 24)
+                                  );
 
-                              {/* 3줄: 검토 결과 (상세) */}
-                              <div className="text-xs text-gray-500 ml-[75px] mb-1.5 leading-relaxed">
-                                {mismatch.status === "red" ? (
-                                  <>
-                                    현재 계획은{" "}
-                                    <span className="font-medium">
-                                      {mismatch.planStartDate} ~{" "}
-                                      {mismatch.planEndDate}
-                                    </span>{" "}
-                                    ({daysDiff}d)로 수립되어 있으나, 해당 기간 내
-                                    실행 기록이 없습니다.
-                                  </>
-                                ) : (
-                                  <>
-                                    현재 계획은{" "}
-                                    <span className="font-medium">
-                                      {mismatch.planStartDate} ~{" "}
-                                      {mismatch.planEndDate}
-                                    </span>{" "}
-                                    ({daysDiff}d)로 수립되어 있으며, 실행 기록은
-                                    있으나 예상 범위보다 부족합니다. (실행{" "}
-                                    {mismatch.actualCount}회 / 예상{" "}
-                                    {mismatch.expectedCount}회)
-                                  </>
-                                )}
-                              </div>
+                                  return (
+                                    <button
+                                      key={`${mismatch.planId}-${index}`}
+                                      onClick={() =>
+                                        handleMismatchClick(mismatch)
+                                      }
+                                      className="w-full px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
+                                    >
+                                      {/* 1줄: [Plan Block] + 메타 경로 + 통계 (우측) */}
+                                      <div className="flex items-center justify-between gap-2 mb-1">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600 bg-blue-50 rounded border border-blue-200">
+                                            Plan Block
+                                          </span>
+                                          <span className="text-xs font-medium text-gray-700 truncate">
+                                            {mismatch.metaPath}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0 text-[10px] text-gray-400">
+                                          <span>
+                                            실행 {mismatch.actualCount} / 예상{" "}
+                                            {mismatch.expectedCount}
+                                          </span>
+                                          <span>•</span>
+                                          <span>
+                                            {mismatch.planStartDate} ~{" "}
+                                            {mismatch.planEndDate}
+                                          </span>
+                                        </div>
+                                      </div>
 
-                              {/* 4줄: 통계 */}
-                              <div className="flex items-center gap-3 ml-[75px] text-[10px] text-gray-400">
-                                <span>
-                                  실행 {mismatch.actualCount} / 예상{" "}
-                                  {mismatch.expectedCount}
-                                </span>
-                                <span>•</span>
-                                <span>
-                                  {mismatch.planStartDate} ~{" "}
-                                  {mismatch.planEndDate}
-                                </span>
-                              </div>
-                            </button>
+                                      {/* 2줄: 타이틀 */}
+                                      {mismatch.planTitle && (
+                                        <div className="text-xs text-gray-600 ml-[65px] mb-1.5 truncate">
+                                          {mismatch.planTitle}
+                                        </div>
+                                      )}
+
+                                      {/* 3줄: 검토 결과 (상세) */}
+                                      <div className="text-xs text-gray-500 ml-[65px] leading-relaxed">
+                                        {mismatch.status === "red" ? (
+                                          <>
+                                            현재 계획은{" "}
+                                            <span className="font-medium">
+                                              {mismatch.planStartDate} ~{" "}
+                                              {mismatch.planEndDate}
+                                            </span>{" "}
+                                            ({daysDiff}d)로 수립되어 있으나,
+                                            해당 기간 내 실행 기록이 없습니다.
+                                          </>
+                                        ) : (
+                                          <>
+                                            현재 계획은{" "}
+                                            <span className="font-medium">
+                                              {mismatch.planStartDate} ~{" "}
+                                              {mismatch.planEndDate}
+                                            </span>{" "}
+                                            ({daysDiff}d)로 수립되어 있으며,
+                                            실행 기록은 있으나 예상 범위보다
+                                            부족합니다. (실행{" "}
+                                            {mismatch.actualCount}회 / 예상{" "}
+                                            {mismatch.expectedCount}회)
+                                          </>
+                                        )}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                            </div>
                           );
                         })}
                       </div>

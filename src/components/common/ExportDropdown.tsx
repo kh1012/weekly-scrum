@@ -227,7 +227,7 @@ export function ExportDropdown({
         {/* 드롭다운 메뉴 - GitHub 스타일 */}
         {isOpen && !isExporting && (
           <div
-            className="absolute top-full right-0 mt-2 pt-2 rounded-md border border-gray-200 bg-white min-w-[280px] z-50 overflow-hidden"
+            className="absolute top-full right-0 mt-2 py-2 rounded-md border border-gray-200 bg-white min-w-[280px] z-50 overflow-hidden"
             style={{
               boxShadow:
                 "0 8px 24px rgba(140, 149, 159, 0.2), 0 0 1px rgba(27, 31, 35, 0.1)",

@@ -110,37 +110,67 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
 }
 
 /**
- * 텍스트 요소의 여백 스타일 디버깅 (최대 5개만 출력)
+ * 타임라인 블록과 텍스트 요소의 스타일 디버깅
  */
-function debugTextPadding(element: HTMLElement, maxSamples: number = 5): void {
-  let count = 0;
+function debugTimelineBlocks(element: HTMLElement): void {
+  const timelineBlockSamples: any[] = [];
+  const textSamples: any[] = [];
+
+  // #region agent log
+  // 타임라인 블록 찾기 (가설 F, G)
   const queue: HTMLElement[] = [element];
-
-  console.log("[debugTextPadding] 텍스트 요소 여백 분석:");
-
-  while (queue.length > 0 && count < maxSamples) {
+  
+  while (queue.length > 0) {
     const el = queue.shift()!;
-
-    // 텍스트가 있는 요소만 체크 (SPAN, DIV with text)
-    if (
-      el.textContent &&
-      el.textContent.trim() &&
-      (el.tagName === "SPAN" || el.tagName === "DIV")
-    ) {
-      const computed = window.getComputedStyle(el);
-      console.log(
-        `  ${el.tagName}.${el.className.split(" ")[0] || "(no-class)"}:`,
-        {
-          text: el.textContent.substring(0, 20) + "...",
-          lineHeight: computed.lineHeight,
-          padding: `${computed.paddingTop} ${computed.paddingRight} ${computed.paddingBottom} ${computed.paddingLeft}`,
-          margin: `${computed.marginTop} ${computed.marginRight} ${computed.marginBottom} ${computed.marginLeft}`,
-          fontSize: computed.fontSize,
-        }
-      );
-      count++;
+    const computed = window.getComputedStyle(el);
+    
+    // 1. absolute positioned 블록 찾기 (타임라인 블록)
+    if (computed.position === "absolute" && timelineBlockSamples.length < 3) {
+      const rect = el.getBoundingClientRect();
+      timelineBlockSamples.push({
+        tag: el.tagName,
+        className: el.className.split(" ").slice(0, 2).join(" "),
+        position: computed.position,
+        top: computed.top,
+        left: computed.left,
+        transform: computed.transform,
+        offsetTop: el.offsetTop,
+        offsetLeft: el.offsetLeft,
+        offsetHeight: el.offsetHeight,
+        paddingTop: computed.paddingTop,
+        paddingBottom: computed.paddingBottom,
+        marginTop: computed.marginTop,
+        marginBottom: computed.marginBottom,
+        display: computed.display,
+        alignItems: computed.alignItems,
+        justifyContent: computed.justifyContent
+      });
     }
-
+    
+    // 2. 텍스트 요소 찾기 (SPAN with text)
+    if (el.tagName === "SPAN" && el.textContent && el.textContent.trim() && textSamples.length < 5) {
+      const parent = el.parentElement;
+      const parentComputed = parent ? window.getComputedStyle(parent) : null;
+      
+      textSamples.push({
+        tag: el.tagName,
+        className: el.className.split(" ").slice(0, 2).join(" "),
+        text: el.textContent.substring(0, 30),
+        fontSize: computed.fontSize,
+        lineHeight: computed.lineHeight,
+        verticalAlign: computed.verticalAlign,
+        paddingTop: computed.paddingTop,
+        paddingBottom: computed.paddingBottom,
+        marginTop: computed.marginTop,
+        marginBottom: computed.marginBottom,
+        offsetHeight: el.offsetHeight,
+        parentDisplay: parentComputed?.display,
+        parentAlignItems: parentComputed?.alignItems,
+        parentPaddingTop: parentComputed?.paddingTop,
+        parentPaddingBottom: parentComputed?.paddingBottom
+      });
+    }
+    
     // 자식 추가
     for (const child of Array.from(el.children)) {
       if (child instanceof HTMLElement) {
@@ -148,6 +178,21 @@ function debugTextPadding(element: HTMLElement, maxSamples: number = 5): void {
       }
     }
   }
+
+  fetch("http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "imageExporter.ts:debugTimelineBlocks",
+      message: "Timeline blocks and text elements analysis",
+      data: { timelineBlocks: timelineBlockSamples, textElements: textSamples },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "padding-debug",
+      hypothesisId: "F,G,H",
+    }),
+  }).catch(() => {});
+  // #endregion
 }
 
 /**
@@ -205,9 +250,64 @@ function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
       client: `${element.clientWidth}×${element.clientHeight}`,
     };
 
+    // #region agent log
+    // LOG 3: overflow 변경 전 상태 (가설 C, D)
+    const beforeOverflowChange = {
+      tag: element.tagName,
+      className: element.className.split(" ")[0],
+      depth,
+      before: {
+        offsetHeight: element.offsetHeight,
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+        computedHeight: computedStyle.height,
+        computedMaxHeight: computedStyle.maxHeight,
+        computedFlex: computedStyle.flex,
+        overflow: computedStyle.overflow,
+      },
+    };
+    // #endregion
+
     element.style.setProperty("overflow", "visible", "important");
     element.style.setProperty("overflow-x", "visible", "important");
     element.style.setProperty("overflow-y", "visible", "important");
+
+    // #region agent log
+    // LOG 4: overflow 변경 후 상태 (가설 C)
+    const afterComputedStyle = window.getComputedStyle(element);
+    const afterOverflowChange = {
+      tag: element.tagName,
+      className: element.className.split(" ")[0],
+      depth,
+      after: {
+        offsetHeight: element.offsetHeight,
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+        computedHeight: afterComputedStyle.height,
+        overflow: afterComputedStyle.overflow,
+      },
+      heightChanged:
+        element.offsetHeight !== beforeOverflowChange.before.offsetHeight,
+    };
+    if (depth <= 1 || afterOverflowChange.heightChanged) {
+      fetch(
+        "http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "imageExporter.ts:fixOverflow",
+            message: "Overflow change",
+            data: { before: beforeOverflowChange, after: afterOverflowChange },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "post-fix",
+            hypothesisId: "C,D",
+          }),
+        }
+      ).catch(() => {});
+    }
+    // #endregion
 
     console.log(
       `${indent}[fixOverflow] ${element.tagName}.${
@@ -299,8 +399,55 @@ export async function exportPNG(
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
-          // Phase 0: 텍스트 요소의 여백 디버깅 (수정 전 상태)
-          debugTextPadding(clonedEl, 3);
+          // #region agent log
+          // LOG 1: 초기 상태 측정 (가설 A, B)
+          const initialState = {
+            topContainer: {
+              offsetHeight: clonedEl.offsetHeight,
+              scrollHeight: clonedEl.scrollHeight,
+              clientHeight: clonedEl.clientHeight,
+              computedHeight: window.getComputedStyle(clonedEl).height,
+            },
+            children: Array.from(clonedEl.children)
+              .map((child, idx) => {
+                if (child instanceof HTMLElement) {
+                  const computed = window.getComputedStyle(child);
+                  return {
+                    idx,
+                    tag: child.tagName,
+                    className: child.className.split(" ")[0],
+                    offsetHeight: child.offsetHeight,
+                    scrollHeight: child.scrollHeight,
+                    clientHeight: child.clientHeight,
+                    computedHeight: computed.height,
+                    computedMaxHeight: computed.maxHeight,
+                    computedFlex: computed.flex,
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean),
+          };
+          fetch(
+            "http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "imageExporter.ts:onclone-initial",
+                message: "Initial state before fixOverflow",
+                data: initialState,
+                timestamp: Date.now(),
+                sessionId: "debug-session",
+                runId: "post-fix",
+                hypothesisId: "A,B",
+              }),
+            }
+          ).catch(() => {});
+          // #endregion
+
+          // Phase 0: 타임라인 블록과 텍스트 요소의 스타일 디버깅
+          debugTimelineBlocks(clonedEl);
 
           // Phase 1: Timeline의 실제 콘텐츠 width 찾기
           const timelineWidth = findTimelineContentWidth(clonedEl);
@@ -322,9 +469,160 @@ export async function exportPNG(
           // Phase 3: 스크롤 컨테이너의 overflow만 visible로 변경
           // (truncate, ellipsis 요소는 건너뛰어서 스타일 보존)
           fixOverflowForExport(clonedEl);
-          console.log(
-            "[PNG Export] fixOverflowForExport 완료 (높이는 원래대로 유지)"
-          );
+          console.log("[PNG Export] fixOverflowForExport 완료");
+
+          // Phase 4: 높이 확장 - 자식들의 scrollHeight를 기반으로 부모 확장
+          let maxScrollHeight = 0;
+          const childrenToExpand: Array<{
+            element: HTMLElement;
+            scrollHeight: number;
+          }> = [];
+
+          for (const child of Array.from(clonedEl.children)) {
+            if (child instanceof HTMLElement) {
+              const scrollHeight = child.scrollHeight;
+              maxScrollHeight = Math.max(maxScrollHeight, scrollHeight);
+
+              if (scrollHeight > child.offsetHeight) {
+                childrenToExpand.push({ element: child, scrollHeight });
+              }
+            }
+          }
+
+          // 직계 자식들의 높이 확장
+          for (const { element, scrollHeight } of childrenToExpand) {
+            element.style.setProperty(
+              "height",
+              `${scrollHeight}px`,
+              "important"
+            );
+            element.style.setProperty(
+              "min-height",
+              `${scrollHeight}px`,
+              "important"
+            );
+            element.style.setProperty("max-height", "none", "important");
+            console.log(
+              `[PNG Export] 자식 높이 확장: ${
+                element.className.split(" ")[0]
+              } ${element.offsetHeight}px → ${scrollHeight}px`
+            );
+          }
+
+          // 최상위 컨테이너 높이 확장
+          if (maxScrollHeight > clonedEl.offsetHeight) {
+            clonedEl.style.setProperty(
+              "height",
+              `${maxScrollHeight}px`,
+              "important"
+            );
+            clonedEl.style.setProperty(
+              "min-height",
+              `${maxScrollHeight}px`,
+              "important"
+            );
+            clonedEl.style.setProperty("max-height", "none", "important");
+            console.log(
+              `[PNG Export] 최상위 컨테이너 높이 확장: ${clonedEl.offsetHeight}px → ${maxScrollHeight}px`
+            );
+          }
+
+          // #region agent log
+          // LOG 2: fixOverflow 후 상태 측정 (가설 A, C)
+          const postFixState = {
+            topContainer: {
+              offsetHeight: clonedEl.offsetHeight,
+              scrollHeight: clonedEl.scrollHeight,
+              clientHeight: clonedEl.clientHeight,
+              computedHeight: window.getComputedStyle(clonedEl).height,
+              computedOverflow: window.getComputedStyle(clonedEl).overflow,
+            },
+            children: Array.from(clonedEl.children)
+              .map((child, idx) => {
+                if (child instanceof HTMLElement) {
+                  const computed = window.getComputedStyle(child);
+                  return {
+                    idx,
+                    offsetHeight: child.offsetHeight,
+                    scrollHeight: child.scrollHeight,
+                    clientHeight: child.clientHeight,
+                    computedHeight: computed.height,
+                    computedOverflow: computed.overflow,
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean),
+          };
+          fetch(
+            "http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "imageExporter.ts:onclone-postfix",
+                message: "State after fixOverflow and height expansion",
+                data: postFixState,
+                timestamp: Date.now(),
+                sessionId: "debug-session",
+                runId: "post-fix",
+                hypothesisId: "A,C",
+              }),
+            }
+          ).catch(() => {});
+          // #endregion
+
+          // #region agent log
+          // LOG 6: html2canvas 직전 최종 상태 (모든 가설 종합)
+          const finalState = {
+            topContainer: {
+              tagName: clonedEl.tagName,
+              offsetWidth: clonedEl.offsetWidth,
+              offsetHeight: clonedEl.offsetHeight,
+              scrollWidth: clonedEl.scrollWidth,
+              scrollHeight: clonedEl.scrollHeight,
+              clientWidth: clonedEl.clientWidth,
+              clientHeight: clonedEl.clientHeight,
+              boundingRect: {
+                width: clonedEl.getBoundingClientRect().width,
+                height: clonedEl.getBoundingClientRect().height,
+              },
+              computedStyle: {
+                width: window.getComputedStyle(clonedEl).width,
+                height: window.getComputedStyle(clonedEl).height,
+                maxHeight: window.getComputedStyle(clonedEl).maxHeight,
+                overflow: window.getComputedStyle(clonedEl).overflow,
+              },
+            },
+            expectedCanvasHeight: Math.max(
+              clonedEl.offsetHeight,
+              clonedEl.scrollHeight,
+              Array.from(clonedEl.children).reduce((max, child) => {
+                if (child instanceof HTMLElement) {
+                  return Math.max(max, child.offsetHeight, child.scrollHeight);
+                }
+                return max;
+              }, 0)
+            ),
+          };
+          fetch(
+            "http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "imageExporter.ts:before-html2canvas",
+                message:
+                  "Final state before html2canvas (after height expansion)",
+                data: finalState,
+                timestamp: Date.now(),
+                sessionId: "debug-session",
+                runId: "post-fix",
+                hypothesisId: "A,B,C,D,E",
+              }),
+            }
+          ).catch(() => {});
+          // #endregion
         }
       },
     });

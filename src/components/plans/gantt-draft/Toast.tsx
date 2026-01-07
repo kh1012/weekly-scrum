@@ -2,14 +2,20 @@
  * Toast 알림 컴포넌트 (sonner 기반)
  * - Airbnb 스타일 그라데이션 디자인 유지
  * - 여러 토스트 쌓기 지원
+ * - 로딩 토스트 및 상태 업데이트 지원 (Export 기능용)
  */
 
 "use client";
 
 import { Toaster, toast } from "sonner";
-import { CheckIcon, XIcon, InfoIcon } from "@/components/common/Icons";
+import {
+  CheckIcon,
+  XIcon,
+  InfoIcon,
+  LoadingIcon,
+} from "@/components/common/Icons";
 
-export type ToastType = "success" | "error" | "info" | "warning";
+export type ToastType = "success" | "error" | "info" | "warning" | "loading";
 
 const typeConfig: Record<
   ToastType,
@@ -32,6 +38,11 @@ const typeConfig: Record<
   },
   info: {
     icon: <InfoIcon className="w-4 h-4" />,
+    gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+    iconBg: "rgba(255, 255, 255, 0.2)",
+  },
+  loading: {
+    icon: <LoadingIcon className="w-4 h-4 animate-spin" />,
     gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
     iconBg: "rgba(255, 255, 255, 0.2)",
   },
@@ -112,6 +123,100 @@ export function showToast(type: ToastType, title: string, message?: string) {
 }
 
 /**
+ * 로딩 토스트 표시 (업데이트 가능)
+ * - sonner의 내장 API 사용으로 안정성 확보
+ * - Export 작업 등에서 사용
+ * - 반환된 ID로 나중에 성공/실패 상태로 업데이트 가능
+ */
+export function showLoadingToast(
+  title: string,
+  message?: string
+): string | number {
+  const displayMessage = message ? `${title}\n${message}` : title;
+
+  const toastId = toast.custom(
+    (t) => (
+      <CustomToast
+        type="loading"
+        title={title}
+        message={message}
+        onDismiss={() => toast.dismiss(t)}
+      />
+    ),
+    {
+      duration: Infinity, // 수동으로 닫거나 업데이트될 때까지 유지
+      position: "bottom-right",
+    }
+  );
+
+  return toastId;
+}
+
+/**
+ * 토스트를 성공 상태로 업데이트
+ * - 로딩 스피너가 체크 아이콘으로 전환
+ * - 3초 후 자동으로 닫힘
+ */
+export function updateToastToSuccess(
+  toastId: string | number,
+  title: string,
+  message?: string
+) {
+  // 기존 토스트 닫기
+  toast.dismiss(toastId);
+
+  // 새로운 성공 토스트 표시 (짧은 딜레이로 자연스러운 전환)
+  setTimeout(() => {
+    toast.custom(
+      (t) => (
+        <CustomToast
+          type="success"
+          title={title}
+          message={message}
+          onDismiss={() => toast.dismiss(t)}
+        />
+      ),
+      {
+        duration: 3000,
+        position: "bottom-right",
+      }
+    );
+  }, 100);
+}
+
+/**
+ * 토스트를 에러 상태로 업데이트
+ * - 로딩 스피너가 X 아이콘으로 전환
+ * - 5초 후 자동으로 닫힘 (에러는 좀 더 길게)
+ */
+export function updateToastToError(
+  toastId: string | number,
+  title: string,
+  message?: string
+) {
+  // 기존 토스트 닫기
+  toast.dismiss(toastId);
+
+  // 새로운 에러 토스트 표시 (짧은 딜레이로 자연스러운 전환)
+  setTimeout(() => {
+    toast.custom(
+      (t) => (
+        <CustomToast
+          type="error"
+          title={title}
+          message={message}
+          onDismiss={() => toast.dismiss(t)}
+        />
+      ),
+      {
+        duration: 5000,
+        position: "bottom-right",
+      }
+    );
+  }, 100);
+}
+
+/**
  * 비활성 경고 토스트 (연장 버튼 포함)
  */
 export function showInactivityWarningToast(
@@ -119,7 +224,7 @@ export function showInactivityWarningToast(
   onExtend: () => void
 ) {
   const toastId = `inactivity-${remainingMinutes}`;
-  
+
   // 이미 표시된 토스트가 있으면 무시
   if (document.querySelector(`[data-toast-id="${toastId}"]`)) {
     return;
