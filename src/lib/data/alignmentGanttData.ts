@@ -6,6 +6,7 @@
  * - Snapshot Entries: 사용자가 작성한 Snapshot Entries (주차를 날짜 범위로 변환)
  */
 
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getWeekDateRange } from "@/lib/date/isoWeek";
 import { listWorkspaceMembers } from "./members";
@@ -67,7 +68,7 @@ export interface AlignmentGanttData {
 }
 
 /**
- * Workspace-wide Alignment 간트 차트 데이터 조회
+ * Workspace-wide Alignment 간트 차트 데이터 조회 (내부 구현)
  * 
  * 모든 Plans와 모든 사용자의 Snapshot Entries를 조회합니다.
  * My Alignment와 달리 사용자 필터링을 하지 않습니다.
@@ -75,7 +76,7 @@ export interface AlignmentGanttData {
  * @param workspaceId - 워크스페이스 ID
  * @returns Plans + 모든 사용자의 Snapshot Entries
  */
-export async function getWorkspaceAlignmentData({
+async function getWorkspaceAlignmentDataInternal({
   workspaceId,
 }: {
   workspaceId: string;
@@ -83,26 +84,37 @@ export async function getWorkspaceAlignmentData({
   const supabase = await createClient();
 
   try {
-    // 1. 워크스페이스의 모든 Plans 조회
-    const { data: plansData, error: plansError } = await supabase
-      .from("plans")
-      .select(
+    // 1. Plans와 Snapshots를 병렬로 조회
+    const [plansResult, snapshotsResult] = await Promise.all([
+      supabase
+        .from("plans")
+        .select(
+          `
+          id,
+          type,
+          title,
+          domain,
+          project,
+          module,
+          feature,
+          start_date,
+          end_date,
+          status,
+          stage
         `
-        id,
-        type,
-        title,
-        domain,
-        project,
-        module,
-        feature,
-        start_date,
-        end_date,
-        status,
-        stage
-      `
-      )
-      .eq("workspace_id", workspaceId)
-      .order("start_date", { ascending: true });
+        )
+        .eq("workspace_id", workspaceId)
+        .order("start_date", { ascending: true }),
+      supabase
+        .from("snapshots")
+        .select("id, year, week, author_id, workspace_id")
+        .eq("workspace_id", workspaceId)
+        .order("year", { ascending: true })
+        .order("week", { ascending: true }),
+    ]);
+
+    const { data: plansData, error: plansError } = plansResult;
+    const { data: snapshots, error: snapshotsError } = snapshotsResult;
 
     let plans: any[] = [];
     if (plansError) {
@@ -155,13 +167,7 @@ export async function getWorkspaceAlignmentData({
       }
     }
 
-    // 2. 워크스페이스의 모든 Snapshot Entries 조회
-    const { data: snapshots, error: snapshotsError } = await supabase
-      .from("snapshots")
-      .select("id, year, week, author_id, workspace_id")
-      .eq("workspace_id", workspaceId)
-      .order("year", { ascending: true })
-      .order("week", { ascending: true });
+    // 2. Snapshot 데이터 처리
 
     // Author 정보를 별도로 조회
     let authorProfiles = new Map<string, { display_name?: string; email?: string; user_id: string }>();
@@ -380,7 +386,7 @@ export async function getWorkspaceAlignmentData({
 }
 
 /**
- * Personal Alignment 간트 차트 데이터 조회
+ * Personal Alignment 간트 차트 데이터 조회 (내부 구현)
  * 
  * 엣지 케이스 처리:
  * - Plans 없음: 빈 배열 반환
@@ -388,7 +394,7 @@ export async function getWorkspaceAlignmentData({
  * - 둘 다 없음: 빈 items 배열 반환
  * - 날짜 형식 오류: try-catch로 안전 처리
  */
-export async function getAlignmentGanttData({
+async function getAlignmentGanttDataInternal({
   workspaceId,
   userId,
 }: {
@@ -398,12 +404,24 @@ export async function getAlignmentGanttData({
   const supabase = await createClient();
 
   try {
-    // 1. 사용자에게 할당된 Plans 조회
-    const { data: planAssignees } = await supabase
-      .from("plan_assignees")
-      .select("plan_id, role")
-      .eq("workspace_id", workspaceId)
-      .eq("user_id", userId);
+    // 1. plan_assignees와 snapshots를 병렬로 조회
+    const [planAssigneesResult, snapshotsResult] = await Promise.all([
+      supabase
+        .from("plan_assignees")
+        .select("plan_id, role")
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", userId),
+      supabase
+        .from("snapshots")
+        .select("id, year, week, author_id, workspace_id")
+        .eq("workspace_id", workspaceId)
+        .eq("author_id", userId)
+        .order("year", { ascending: true })
+        .order("week", { ascending: true }),
+    ]);
+
+    const { data: planAssignees } = planAssigneesResult;
+    const { data: snapshots, error: snapshotsError } = snapshotsResult;
 
     const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
 
@@ -482,14 +500,7 @@ export async function getAlignmentGanttData({
       }
     }
 
-  // 2. 사용자가 작성한 Snapshot Entries 조회
-    const { data: snapshots, error: snapshotsError } = await supabase
-      .from("snapshots")
-      .select("id, year, week, author_id, workspace_id")
-    .eq("workspace_id", workspaceId)
-    .eq("author_id", userId)
-    .order("year", { ascending: true })
-    .order("week", { ascending: true });
+  // 2. Snapshot 데이터 처리
 
     // Author 정보를 별도로 조회
     let authorProfiles = new Map<string, { display_name?: string; email?: string; user_id: string }>();
@@ -711,3 +722,31 @@ export async function getAlignmentGanttData({
     };
   }
 }
+
+/**
+ * Workspace-wide Alignment 간트 차트 데이터 조회 (캐싱 래퍼)
+ * 
+ * 60초 캐싱 적용으로 prefetch 성능 향상
+ */
+export const getWorkspaceAlignmentData = unstable_cache(
+  getWorkspaceAlignmentDataInternal,
+  ["workspace-alignment"],
+  {
+    revalidate: 60,
+    tags: ["alignment", "workspace-alignment"],
+  }
+);
+
+/**
+ * Personal Alignment 간트 차트 데이터 조회 (캐싱 래퍼)
+ * 
+ * 60초 캐싱 적용으로 prefetch 성능 향상
+ */
+export const getAlignmentGanttData = unstable_cache(
+  getAlignmentGanttDataInternal,
+  ["personal-alignment"],
+  {
+    revalidate: 60,
+    tags: ["alignment", "personal-alignment"],
+  }
+);

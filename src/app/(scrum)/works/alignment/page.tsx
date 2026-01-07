@@ -1,4 +1,5 @@
-export const dynamic = "force-dynamic";
+// ISR 캐싱 적용: 60초마다 재검증
+export const revalidate = 60;
 
 import { createClient } from "@/lib/supabase/server";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
