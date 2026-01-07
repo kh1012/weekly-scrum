@@ -597,7 +597,7 @@ export const DraftBar = memo(function DraftBar({
             
             {/* 텍스트 */}
             <span className="text-[10px] font-medium text-gray-700">
-              실행 {bar.alignmentActualCount ?? 0}/{bar.alignmentExpectedCount ?? 0}회
+              실행/계획 {bar.alignmentActualCount ?? 0}/{bar.alignmentExpectedCount ?? 0}회
               {bar.alignmentExpectedCount && bar.alignmentExpectedCount > 0 && (
                 <span className="text-gray-500 ml-1">
                   ({Math.round(((bar.alignmentActualCount ?? 0) / bar.alignmentExpectedCount) * 100)}%)

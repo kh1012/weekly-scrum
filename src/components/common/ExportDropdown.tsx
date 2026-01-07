@@ -253,7 +253,7 @@ export function ExportDropdown({
             </button>
 
             {/* PNG Export */}
-            <div className="relative">
+            <div>
               <button
                 onClick={() => handleExport("png")}
                 className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
@@ -276,7 +276,9 @@ export function ExportDropdown({
                   </div>
                 </div>
                 <svg
-                  className="w-3 h-3 text-gray-400 group-hover:text-blue-600"
+                  className={`w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-transform ${
+                    showPNGQuality ? "rotate-90" : ""
+                  }`}
                   fill="currentColor"
                   viewBox="0 0 16 16"
                 >
@@ -284,10 +286,10 @@ export function ExportDropdown({
                 </svg>
               </button>
 
-              {/* PNG 품질 선택 서브메뉴 */}
+              {/* PNG 품질 선택 서브메뉴 (인라인) */}
               {showPNGQuality && (
-                <div className="absolute left-full top-0 ml-1 bg-white rounded-md shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
-                  <div className="p-1.5 space-y-0.5">
+                <div className="bg-gray-50 border-t border-gray-100">
+                  <div className="py-1 px-2">
                     {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
                       (quality) => {
                         const preset = QUALITY_PRESETS[quality];
@@ -295,11 +297,11 @@ export function ExportDropdown({
                           <button
                             key={quality}
                             onClick={() => handleQualitySelect(quality, "png")}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
-                              selectedQuality === quality ? "bg-blue-50" : ""
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-white transition-colors ${
+                              selectedQuality === quality ? "bg-white shadow-sm" : ""
                             }`}
                           >
-                            <div>
+                            <div className="flex-1">
                               <div className="text-xs font-semibold text-gray-900">
                                 {preset.label}
                               </div>
@@ -309,7 +311,7 @@ export function ExportDropdown({
                             </div>
                             {selectedQuality === quality && (
                               <svg
-                                className="w-3.5 h-3.5 text-blue-600"
+                                className="w-3.5 h-3.5 text-blue-600 ml-2"
                                 fill="currentColor"
                                 viewBox="0 0 16 16"
                               >
@@ -326,7 +328,7 @@ export function ExportDropdown({
             </div>
 
             {/* SVG Export */}
-            <div className="relative">
+            <div>
               <button
                 onClick={() => handleExport("svg")}
                 className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
@@ -350,7 +352,9 @@ export function ExportDropdown({
                   </div>
                 </div>
                 <svg
-                  className="w-3 h-3 text-gray-400 group-hover:text-blue-600"
+                  className={`w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-transform ${
+                    showSVGQuality ? "rotate-90" : ""
+                  }`}
                   fill="currentColor"
                   viewBox="0 0 16 16"
                 >
@@ -358,10 +362,10 @@ export function ExportDropdown({
                 </svg>
               </button>
 
-              {/* SVG 품질 선택 서브메뉴 */}
+              {/* SVG 품질 선택 서브메뉴 (인라인) */}
               {showSVGQuality && (
-                <div className="absolute left-full top-0 ml-1 bg-white rounded-md shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
-                  <div className="p-1.5 space-y-0.5">
+                <div className="bg-gray-50 border-t border-gray-100">
+                  <div className="py-1 px-2">
                     {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
                       (quality) => {
                         const preset = QUALITY_PRESETS[quality];
@@ -369,11 +373,11 @@ export function ExportDropdown({
                           <button
                             key={quality}
                             onClick={() => handleQualitySelect(quality, "svg")}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
-                              selectedQuality === quality ? "bg-blue-50" : ""
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-white transition-colors ${
+                              selectedQuality === quality ? "bg-white shadow-sm" : ""
                             }`}
                           >
-                            <div>
+                            <div className="flex-1">
                               <div className="text-xs font-semibold text-gray-900">
                                 {preset.label}
                               </div>
@@ -383,7 +387,7 @@ export function ExportDropdown({
                             </div>
                             {selectedQuality === quality && (
                               <svg
-                                className="w-3.5 h-3.5 text-blue-600"
+                                className="w-3.5 h-3.5 text-blue-600 ml-2"
                                 fill="currentColor"
                                 viewBox="0 0 16 16"
                               >
