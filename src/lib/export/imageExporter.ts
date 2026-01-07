@@ -56,28 +56,23 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
 
   let treePanelWidth = 0;
   let timelineContainer: HTMLElement | null = null;
-  let maxChildHeight = 0; // 자식들 중 최대 높이 추적
 
-  // 1단계: 직계 자식 중 Tree Panel과 Timeline 컨테이너 찾기 + 최대 높이 계산
+  // 1단계: 직계 자식 중 Tree Panel과 Timeline 컨테이너 찾기
   for (const child of Array.from(element.children)) {
     if (child instanceof HTMLElement) {
       const computed = window.getComputedStyle(child);
-      
-      // 자식의 실제 높이 계산 (scrollHeight 포함)
-      const childHeight = Math.max(child.offsetHeight, child.scrollHeight);
-      maxChildHeight = Math.max(maxChildHeight, childHeight);
 
       if (computed.flexShrink === "0") {
         // Tree Panel (flex-shrink-0)
         treePanelWidth = child.offsetWidth;
         console.log(
-          `[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px × ${childHeight}px`
+          `[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px`
         );
       } else if (computed.flex && computed.flex.includes("1")) {
         // Timeline 컨테이너 (flex-1)
         timelineContainer = child;
         console.log(
-          `[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className} (${childHeight}px)`
+          `[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className}`
         );
       }
     }
@@ -88,14 +83,12 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
     return;
   }
 
-  // 2단계: 최상위 컨테이너는 Tree + Timeline width + 최대 height로 설정
+  // 2단계: 최상위 컨테이너는 Tree + Timeline width만 설정 (height는 원래대로)
   const totalWidth = treePanelWidth + timelineWidth;
   element.style.setProperty("width", `${totalWidth}px`, "important");
   element.style.setProperty("min-width", `${totalWidth}px`, "important");
-  element.style.setProperty("height", `${maxChildHeight}px`, "important");
-  element.style.setProperty("min-height", `${maxChildHeight}px`, "important");
   console.log(
-    `[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px × ${maxChildHeight}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`
+    `[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`
   );
 
   // 3단계: Timeline 컨테이너만 고정 width로 변경 (자식은 건드리지 않음)
@@ -131,8 +124,46 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
 }
 
 /**
+ * 텍스트 요소의 여백 스타일 디버깅 (최대 5개만 출력)
+ */
+function debugTextPadding(element: HTMLElement, maxSamples: number = 5): void {
+  let count = 0;
+  const queue: HTMLElement[] = [element];
+  
+  console.log("[debugTextPadding] 텍스트 요소 여백 분석:");
+  
+  while (queue.length > 0 && count < maxSamples) {
+    const el = queue.shift()!;
+    
+    // 텍스트가 있는 요소만 체크 (SPAN, DIV with text)
+    if (
+      el.textContent &&
+      el.textContent.trim() &&
+      (el.tagName === "SPAN" || el.tagName === "DIV")
+    ) {
+      const computed = window.getComputedStyle(el);
+      console.log(`  ${el.tagName}.${el.className.split(" ")[0] || "(no-class)"}:`, {
+        text: el.textContent.substring(0, 20) + "...",
+        lineHeight: computed.lineHeight,
+        padding: `${computed.paddingTop} ${computed.paddingRight} ${computed.paddingBottom} ${computed.paddingLeft}`,
+        margin: `${computed.marginTop} ${computed.marginRight} ${computed.marginBottom} ${computed.marginLeft}`,
+        fontSize: computed.fontSize,
+      });
+      count++;
+    }
+    
+    // 자식 추가
+    for (const child of Array.from(el.children)) {
+      if (child instanceof HTMLElement) {
+        queue.push(child);
+      }
+    }
+  }
+}
+
+/**
  * Export를 위해 overflow만 visible로 변경 (레이아웃 보존)
- * width/height/flex는 건드리지 않아서 여백/정렬 유지
+ * width/height/flex/padding/margin은 건드리지 않아서 여백/정렬 유지
  */
 function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
   const computedStyle = window.getComputedStyle(element);
@@ -166,7 +197,7 @@ function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
     );
   }
 
-  // 자식 요소 재귀 처리 (overflow만 처리, width/height/flex는 그대로)
+  // 자식 요소 재귀 처리 (overflow만 처리, width/height/flex/padding/margin은 그대로)
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
       fixOverflowForExport(child, depth + 1);
@@ -244,6 +275,9 @@ export async function exportPNG(
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
+          // Phase 0: 텍스트 요소의 여백 디버깅 (수정 전 상태)
+          debugTextPadding(clonedEl, 3);
+
           // Phase 1: Timeline의 실제 콘텐츠 width 찾기
           const timelineWidth = findTimelineContentWidth(clonedEl);
           console.log("[PNG Export] Timeline width 발견:", timelineWidth);
