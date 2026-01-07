@@ -91,7 +91,7 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
     `[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`
   );
 
-  // 3단계: Timeline 컨테이너만 고정 width로 변경 (자식은 건드리지 않음)
+  // 3단계: Timeline 컨테이너만 고정 width로 변경 (height는 건드리지 않음)
   timelineContainer.style.setProperty("flex", "none", "important");
   timelineContainer.style.setProperty(
     "width",
@@ -104,22 +104,8 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
     "important"
   );
 
-  // 4단계: Timeline의 직계 스크롤 컨테이너만 overflow visible 처리
-  let scrollContainers = 0;
-  for (const child of Array.from(timelineContainer.children)) {
-    if (child instanceof HTMLElement) {
-      const computed = window.getComputedStyle(child);
-      if (computed.overflow !== "visible" || computed.overflowX !== "visible") {
-        child.style.setProperty("overflow", "visible", "important");
-        child.style.setProperty("overflow-x", "visible", "important");
-        child.style.setProperty("overflow-y", "visible", "important");
-        scrollContainers++;
-      }
-    }
-  }
-
   console.log(
-    `[applyTimelineWidth] 적용 완료: Timeline 컨테이너 1개, 스크롤 컨테이너 ${scrollContainers}개 수정됨`
+    `[applyTimelineWidth] 적용 완료: Timeline 컨테이너 width만 설정 (overflow는 fixOverflowForExport가 처리)`
   );
 }
 
@@ -165,42 +151,77 @@ function debugTextPadding(element: HTMLElement, maxSamples: number = 5): void {
 }
 
 /**
- * Export를 위해 overflow만 visible로 변경 (레이아웃 보존)
- * width/height/flex/padding/margin은 건드리지 않아서 여백/정렬 유지
+ * Export를 위해 스크롤 컨테이너의 overflow만 visible로 변경
+ * 텍스트 요소(truncate, ellipsis)는 건너뛰어서 스타일 보존
  */
 function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
   const computedStyle = window.getComputedStyle(element);
   const indent = "  ".repeat(depth);
 
-  // overflow가 있는 요소만 visible로 변경 (레이아웃은 건드리지 않음)
-  if (
+  // 1. text-overflow: ellipsis가 있는 요소는 건너뛰기 (말줄임표 보존)
+  if (computedStyle.textOverflow === "ellipsis") {
+    console.log(
+      `${indent}[fixOverflow] SKIP (ellipsis): ${element.tagName}.${
+        element.className.split(" ")[0] || "(no-class)"
+      }`
+    );
+    // 자식은 처리
+    Array.from(element.children).forEach((child) => {
+      if (child instanceof HTMLElement) {
+        fixOverflowForExport(child, depth + 1);
+      }
+    });
+    return;
+  }
+
+  // 2. truncate 클래스가 있는 요소는 건너뛰기
+  if (element.classList.contains("truncate")) {
+    console.log(
+      `${indent}[fixOverflow] SKIP (truncate class): ${element.tagName}.${
+        element.className.split(" ")[0] || "(no-class)"
+      }`
+    );
+    // 자식은 처리
+    Array.from(element.children).forEach((child) => {
+      if (child instanceof HTMLElement) {
+        fixOverflowForExport(child, depth + 1);
+      }
+    });
+    return;
+  }
+
+  // 3. 실제로 스크롤이 필요한 요소만 visible로 변경
+  const hasOverflowX = element.scrollWidth > element.clientWidth;
+  const hasOverflowY = element.scrollHeight > element.clientHeight;
+  const hasOverflowStyle =
     computedStyle.overflow !== "visible" ||
     computedStyle.overflowX !== "visible" ||
-    computedStyle.overflowY !== "visible"
-  ) {
+    computedStyle.overflowY !== "visible";
+
+  if (hasOverflowStyle && (hasOverflowX || hasOverflowY)) {
     const before = {
       overflow: computedStyle.overflow,
-      width: element.offsetWidth,
-      height: element.offsetHeight,
+      scroll: `${element.scrollWidth}×${element.scrollHeight}`,
+      client: `${element.clientWidth}×${element.clientHeight}`,
     };
 
     element.style.setProperty("overflow", "visible", "important");
     element.style.setProperty("overflow-x", "visible", "important");
     element.style.setProperty("overflow-y", "visible", "important");
 
-    // 디버깅: overflow 변경한 요소만 로그
     console.log(
       `${indent}[fixOverflow] ${element.tagName}.${
         element.className.split(" ")[0] || "(no-class)"
       }:`,
       {
         overflow: `${before.overflow} → visible`,
-        size: `${before.width}×${before.height}`,
+        scroll: before.scroll,
+        client: before.client,
       }
     );
   }
 
-  // 자식 요소 재귀 처리 (overflow만 처리, width/height/flex/padding/margin은 그대로)
+  // 자식 요소 재귀 처리
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
       fixOverflowForExport(child, depth + 1);
@@ -298,33 +319,12 @@ export async function exportPNG(
             );
           }
 
-          // Phase 3: overflow를 visible로 변경 (이때 자식 높이가 확장됨)
+          // Phase 3: 스크롤 컨테이너의 overflow만 visible로 변경
+          // (truncate, ellipsis 요소는 건너뛰어서 스타일 보존)
           fixOverflowForExport(clonedEl);
-
-          // Phase 4: 자식들의 실제 높이를 측정하여 최상위 컨테이너 높이 조정
-          let maxChildHeight = 0;
-          for (const child of Array.from(clonedEl.children)) {
-            if (child instanceof HTMLElement) {
-              const childHeight = Math.max(
-                child.offsetHeight,
-                child.scrollHeight,
-                child.getBoundingClientRect().height
-              );
-              maxChildHeight = Math.max(maxChildHeight, childHeight);
-            }
-          }
-
-          if (maxChildHeight > clonedEl.offsetHeight) {
-            console.log(
-              `[PNG Export] 최상위 컨테이너 높이 조정: ${clonedEl.offsetHeight}px → ${maxChildHeight}px`
-            );
-            clonedEl.style.setProperty("height", `${maxChildHeight}px`, "important");
-            clonedEl.style.setProperty("min-height", `${maxChildHeight}px`, "important");
-          } else {
-            console.log(
-              `[PNG Export] 높이 조정 불필요: 현재 ${clonedEl.offsetHeight}px, 최대 자식 ${maxChildHeight}px`
-            );
-          }
+          console.log(
+            "[PNG Export] fixOverflowForExport 완료 (높이는 원래대로 유지)"
+          );
         }
       },
     });
