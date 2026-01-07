@@ -50,8 +50,6 @@ export async function exportPNG(
   options?: ExportOptions,
   onProgress?: (progress: ExportProgress) => void
 ): Promise<void> {
-  let clonedElement: HTMLElement | null = null;
-
   try {
     // 1. html2canvas 동적 import
     onProgress?.({
@@ -78,86 +76,34 @@ export async function exportPNG(
     if (preset.textRendering) {
       onProgress?.({
         step: "폰트 로딩 중...",
-        progress: 15,
+        progress: 20,
         completed: false,
       });
       await document.fonts.ready;
-      // 추가 대기 시간 (폰트 렌더링 안정화)
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // 4. Export 전용 DOM 생성
-    onProgress?.({
-      step: "캡처 영역 준비 중...",
-      progress: 25,
-      completed: false,
-    });
-
-    // 원본 요소 복제
-    clonedElement = element.cloneNode(true) as HTMLElement;
-    
-    // 복제된 요소를 화면 밖에 배치
-    clonedElement.style.position = 'fixed';
-    clonedElement.style.left = '-9999px';
-    clonedElement.style.top = '0';
-    clonedElement.style.zIndex = '-1';
-    clonedElement.style.pointerEvents = 'none';
-    
-    // body에 추가
-    document.body.appendChild(clonedElement);
-
-    // overflow 스타일만 최소 침습적으로 조정 (레이아웃 보존)
-    fixOverflowForExport(clonedElement);
-
-    // 폰트 재로딩 대기 (복제된 DOM에 대해)
-    if (preset.textRendering) {
-      await document.fonts.ready;
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    // 5. 캡처 옵션 설정 및 실행
+    // 4. 캡처 준비
     onProgress?.({
       step: "이미지 생성 중...",
       progress: 40,
       completed: false,
     });
 
-    // 전체 콘텐츠 크기 계산 (복제된 요소 기준)
-    const actualWidth = clonedElement.scrollWidth;
-    const actualHeight = clonedElement.scrollHeight;
-
-    // 6. 캡처 실행
-    const canvas = await html2canvas(clonedElement, {
+    // 5. 원본 요소를 직접 캡처 (이중 복제 방지)
+    const canvas = await html2canvas(element, {
       scale,
       backgroundColor,
       useCORS: true,
       allowTaint: false,
       foreignObjectRendering: false,
       logging: false,
-      width: actualWidth,
-      height: actualHeight,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: actualWidth,
-      windowHeight: actualHeight,
-      x: 0,
-      y: 0,
       onclone: (clonedDoc, clonedEl) => {
-        // 1. 외부 CSS link 태그 제거 (404 오류 방지)
-        const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
-        links.forEach(link => link.remove());
-        
-        // 2. script 태그 제거 (불필요한 로딩 방지)
-        const scripts = clonedDoc.querySelectorAll('script');
-        scripts.forEach(script => script.remove());
-        
-        // 3. overflow 스타일 조정 (기존 로직 유지)
+        // html2canvas가 복제한 요소에서만 overflow 조정
+        // CSS/스타일은 그대로 유지 (computed style 활용)
         if (clonedEl instanceof HTMLElement) {
           fixOverflowForExport(clonedEl);
         }
-        
-        // Note: Tailwind CSS 클래스는 이미 computed style로 적용되어 있어서
-        // link 태그를 제거해도 렌더링에 영향 없음
       }
     });
 
@@ -167,7 +113,7 @@ export async function exportPNG(
       completed: false,
     });
 
-    // 7. Canvas를 Blob으로 변환
+    // 6. Canvas를 Blob으로 변환
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => {
@@ -175,7 +121,7 @@ export async function exportPNG(
           else reject(new Error("Blob 생성 실패"));
         },
         "image/png",
-        options?.pngOptions?.quality || 1
+        1  // 최고 품질
       );
     });
 
@@ -185,12 +131,12 @@ export async function exportPNG(
       completed: false,
     });
 
-    // 8. 파일명 결정
+    // 7. 파일명 결정
     const filename = options?.filename
       ? sanitizeFilename(options.filename)
       : generateDefaultFilename("screenshot", "png");
 
-    // 9. 다운로드
+    // 8. 다운로드
     downloadFile(blob, filename, "image/png");
 
     onProgress?.({
@@ -201,11 +147,6 @@ export async function exportPNG(
   } catch (error) {
     console.error("PNG Export 실패:", error);
     throw new Error(`PNG Export 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
-  } finally {
-    // 10. 임시 DOM 정리
-    if (clonedElement && clonedElement.parentNode) {
-      document.body.removeChild(clonedElement);
-    }
   }
 }
 
