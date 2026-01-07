@@ -117,6 +117,19 @@ export class GanttCanvasDrawer {
   private drawTreePanel(): void {
     console.log("[GanttCanvasDrawer] Tree Panel 그리기 시작");
 
+    // 배경 그리기
+    this.ctx.fillStyle = "#f9fafb";
+    this.ctx.fillRect(0, 0, this.data.layout.treePanelWidth, this.data.timeline.height);
+
+    // 구분선
+    this.ctx.strokeStyle = "#e0e0e0";
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.data.layout.treePanelWidth, 0);
+    this.ctx.lineTo(this.data.layout.treePanelWidth, this.data.timeline.height);
+    this.ctx.stroke();
+
+    // 노드 그리기
     this.data.treeNodes.forEach((node) => {
       this.drawTreeNode(node);
     });
@@ -133,11 +146,15 @@ export class GanttCanvasDrawer {
     const y = node.top + node.height / 2;
 
     // 텍스트 그리기
+    const fontSize = node.depth === 0 ? "14px" : "13px";
+    const fontWeight = node.depth === 0 ? "600" : "400";
+    
     this.drawText(node.label, x, y, {
-      font: "14px Pretendard, sans-serif",
-      color: "#37352f",
+      font: `${fontWeight} ${fontSize} Pretendard, sans-serif`,
+      color: node.depth === 0 ? "#1f2937" : "#4b5563",
       align: "left",
       baseline: "middle",
+      maxWidth: this.data.layout.treePanelWidth - indent - 20,
     });
   }
 
@@ -161,11 +178,52 @@ export class GanttCanvasDrawer {
    * Plan Bar 하나 그리기
    */
   private drawBar(bar: GanttExportData["bars"][0]): void {
-    // TODO: 실제 Bar 렌더링 로직 구현
-    // - 날짜 → X 좌표 변환
-    // - Lane → Y 좌표 변환
-    // - 색상, 테두리, 텍스트
-    console.log(`[GanttCanvasDrawer] Bar 그리기: ${bar.title}`);
+    // 날짜를 X 좌표로 변환
+    const startDate = new Date(bar.startDate);
+    const endDate = new Date(bar.endDate);
+    const rangeStart = new Date(this.data.timeline.rangeStart);
+    
+    const daysSinceStart = Math.floor((startDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
+    const duration = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    const barX = this.data.layout.treePanelWidth + daysSinceStart * this.data.layout.dayWidth;
+    const barWidth = duration * this.data.layout.dayWidth;
+    
+    // Row 찾기
+    const rowNode = this.data.treeNodes.find(node => node.id === bar.rowId);
+    if (!rowNode) return;
+    
+    const barY = rowNode.top + 5 + (bar.lane * 25); // lane별 Y 좌표
+    const barHeight = 20;
+    
+    // 상태별 색상
+    const colors: Record<string, string> = {
+      "진행중": "#3b82f6",
+      "완료": "#10b981",
+      "보류": "#f59e0b",
+      "취소": "#ef4444",
+    };
+    const barColor = colors[bar.status] || "#6b7280";
+    
+    // 막대 그리기
+    this.ctx.fillStyle = barColor;
+    this.ctx.fillRect(barX, barY, barWidth, barHeight);
+    
+    // 테두리
+    this.ctx.strokeStyle = "#ffffff";
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+    
+    // 텍스트 (막대가 충분히 크면)
+    if (barWidth > 50) {
+      this.drawText(bar.title, barX + 5, barY + barHeight / 2, {
+        font: "11px Pretendard, sans-serif",
+        color: "#ffffff",
+        align: "left",
+        baseline: "middle",
+        maxWidth: barWidth - 10,
+      });
+    }
   }
 
   /**
@@ -187,8 +245,37 @@ export class GanttCanvasDrawer {
    * Flag 하나 그리기
    */
   private drawFlag(flag: GanttExportData["flags"][0]): void {
-    // TODO: 실제 Flag 렌더링 로직 구현
-    console.log(`[GanttCanvasDrawer] Flag 그리기: ${flag.title}`);
+    // 날짜를 X 좌표로 변환
+    const startDate = new Date(flag.startDate);
+    const rangeStart = new Date(this.data.timeline.rangeStart);
+    
+    const daysSinceStart = Math.floor((startDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
+    const flagX = this.data.layout.treePanelWidth + daysSinceStart * this.data.layout.dayWidth;
+    
+    // Point flag (수직선)
+    const isPoint = flag.startDate === flag.endDate;
+    
+    if (isPoint) {
+      // 수직선
+      this.ctx.strokeStyle = flag.color || "#ef4444";
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.moveTo(flagX, 0);
+      this.ctx.lineTo(flagX, this.data.timeline.height);
+      this.ctx.stroke();
+      
+      // Flag 레이블 (상단)
+      this.ctx.fillStyle = flag.color || "#ef4444";
+      this.ctx.fillRect(flagX + 2, 5, 60, 20);
+      
+      this.drawText(flag.title, flagX + 5, 15, {
+        font: "10px Pretendard, sans-serif",
+        color: "#ffffff",
+        align: "left",
+        baseline: "top",
+        maxWidth: 55,
+      });
+    }
   }
 
   /**

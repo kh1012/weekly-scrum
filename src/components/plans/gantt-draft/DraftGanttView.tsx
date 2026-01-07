@@ -49,6 +49,7 @@ import {
   exportPNGWithCanvas,
   exportSVG,
   type ExportMetadata,
+  type GanttCanvasData,
 } from "@/lib/export";
 import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
 
@@ -1142,7 +1143,23 @@ export const DraftGanttView = forwardRef<
           throw new Error("Export 컨테이너를 찾을 수 없습니다.");
         }
 
-        await exportPNGWithCanvas(ganttContainerRef.current, {
+        // JSON Export와 동일한 데이터 구조 생성
+        const ganttData: GanttCanvasData = {
+          rows,
+          bars: bars.filter((b) => !b.deleted),
+          flags,
+          timeline: {
+            rangeStart: rangeStart,
+            rangeEnd: rangeEnd,
+          },
+          layout: {
+            treePanelWidth: 300, // TODO: 실제 값으로 대체
+            rowHeight: 40, // TODO: 실제 값으로 대체
+            dayWidth: 24, // TODO: 실제 값으로 대체
+          },
+        };
+
+        await exportPNGWithCanvas(ganttContainerRef.current, ganttData, {
           filename: `gantt-draw-${Date.now()}`,
           quality,
           pngOptions: {
@@ -1166,7 +1183,7 @@ export const DraftGanttView = forwardRef<
         );
       }
     },
-    []
+    [rows, bars, flags, rangeStart, rangeEnd]
   );
 
   const handleExportSVG = useCallback(
