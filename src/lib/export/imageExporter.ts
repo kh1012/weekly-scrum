@@ -6,28 +6,38 @@ import type { ExportOptions, ExportProgress } from "./types";
 import { downloadFile, generateDefaultFilename, sanitizeFilename } from "./utils";
 
 /**
- * Export를 위해 overflow만 최소 침습적으로 변경
- * 레이아웃(width, height, flex)은 건드리지 않음
+ * Export를 위해 overflow를 강제로 visible로 변경
+ * 전체 콘텐츠가 표시되도록 강력하게 처리
  */
 function fixOverflowForExport(element: HTMLElement): void {
-  // 실제 스크롤이 발생하는 요소만 처리
-  const hasVerticalScroll = element.scrollHeight > element.clientHeight;
-  const hasHorizontalScroll = element.scrollWidth > element.clientWidth;
+  const computedStyle = window.getComputedStyle(element);
   
-  if (hasVerticalScroll || hasHorizontalScroll) {
-    // overflow만 변경 (레이아웃은 보존)
-    element.style.overflow = 'visible';
-    element.style.overflowX = 'visible';
-    element.style.overflowY = 'visible';
+  // 모든 overflow 속성을 visible로 강제 변경
+  if (
+    computedStyle.overflow !== 'visible' ||
+    computedStyle.overflowX !== 'visible' ||
+    computedStyle.overflowY !== 'visible'
+  ) {
+    element.style.setProperty('overflow', 'visible', 'important');
+    element.style.setProperty('overflow-x', 'visible', 'important');
+    element.style.setProperty('overflow-y', 'visible', 'important');
     
-    // 내부 콘텐츠가 잘리지 않도록 min 크기만 설정
-    // (width/height는 건드리지 않아 flex 레이아웃 보존)
-    if (hasHorizontalScroll) {
-      element.style.minWidth = `${element.scrollWidth}px`;
+    // 스크롤 콘텐츠가 잘리지 않도록 크기 확장
+    if (element.scrollWidth > element.clientWidth) {
+      element.style.setProperty('width', `${element.scrollWidth}px`, 'important');
     }
-    if (hasVerticalScroll) {
-      element.style.minHeight = `${element.scrollHeight}px`;
+    if (element.scrollHeight > element.clientHeight) {
+      element.style.setProperty('height', `${element.scrollHeight}px`, 'important');
     }
+  }
+  
+  // flex-1 요소는 고정 크기로 변경
+  if (computedStyle.flex && computedStyle.flex.includes('1')) {
+    const currentHeight = element.offsetHeight;
+    const currentWidth = element.offsetWidth;
+    element.style.setProperty('flex', 'none', 'important');
+    element.style.setProperty('width', `${Math.max(currentWidth, element.scrollWidth)}px`, 'important');
+    element.style.setProperty('height', `${Math.max(currentHeight, element.scrollHeight)}px`, 'important');
   }
   
   // 자식 요소 재귀 처리
