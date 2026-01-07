@@ -46,45 +46,79 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
 
 /**
  * Timeline width를 전체 컨테이너에 적용 (Phase 2)
- * flex 컨테이너를 고정 width로 변경하고 overflow를 visible로 설정
+ * Tree Panel은 건드리지 않고, Timeline 영역만 확장
  */
 function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
   console.log(`[applyTimelineWidth] 적용 시작: ${timelineWidth}px`);
   
-  // 최상위 요소에 width 강제 적용
-  element.style.setProperty("width", `${timelineWidth}px`, "important");
-  element.style.setProperty("min-width", `${timelineWidth}px`, "important");
-  
+  let treePanelWidth = 0;
   let appliedCount = 0;
   
-  // 모든 자식 요소를 순회하며 적용
-  const traverse = (el: HTMLElement) => {
+  // 1단계: Tree Panel의 width 찾기 (flex-shrink-0인 첫 번째 자식)
+  for (const child of Array.from(element.children)) {
+    if (child instanceof HTMLElement) {
+      const computed = window.getComputedStyle(child);
+      if (computed.flexShrink === "0") {
+        treePanelWidth = child.offsetWidth;
+        console.log(`[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px`);
+        break;
+      }
+    }
+  }
+  
+  // 2단계: 최상위 컨테이너는 Tree + Timeline width로 설정
+  const totalWidth = treePanelWidth + timelineWidth;
+  element.style.setProperty("width", `${totalWidth}px`, "important");
+  element.style.setProperty("min-width", `${totalWidth}px`, "important");
+  console.log(`[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`);
+  
+  // 3단계: Timeline 영역만 확장 (Tree Panel은 스킵)
+  const traverse = (el: HTMLElement, skipFirst: boolean = false) => {
     const computed = window.getComputedStyle(el);
     
-    // flex 컨테이너는 고정 width로 변경
-    if (computed.display.includes("flex")) {
-      el.style.setProperty("flex", "none", "important");
-      el.style.setProperty("width", `${timelineWidth}px`, "important");
-      appliedCount++;
+    // Tree Panel (flex-shrink-0)은 건드리지 않기
+    if (skipFirst && computed.flexShrink === "0") {
+      console.log(`[applyTimelineWidth] Tree Panel 스킵: ${el.className}`);
+      return; // 자식도 처리하지 않음
     }
     
-    // overflow 컨테이너는 visible로 변경
-    if (computed.overflow !== "visible") {
-      el.style.setProperty("overflow", "visible", "important");
-      el.style.setProperty("overflow-x", "visible", "important");
-      el.style.setProperty("overflow-y", "visible", "important");
-      appliedCount++;
+    // flex-1 또는 overflow가 있는 Timeline 관련 요소만 처리
+    const isFlexGrow = computed.flex && computed.flex.includes("1");
+    const hasOverflow = computed.overflow !== "visible" || 
+                       computed.overflowX !== "visible";
+    
+    if (isFlexGrow || hasOverflow) {
+      // flex-1 요소는 고정 width로 변경
+      if (isFlexGrow) {
+        el.style.setProperty("flex", "none", "important");
+        el.style.setProperty("width", `${timelineWidth}px`, "important");
+        appliedCount++;
+      }
+      
+      // overflow 컨테이너는 visible로 변경
+      if (hasOverflow) {
+        el.style.setProperty("overflow", "visible", "important");
+        el.style.setProperty("overflow-x", "visible", "important");
+        el.style.setProperty("overflow-y", "visible", "important");
+        appliedCount++;
+      }
     }
     
     // 자식 순회
     for (const child of Array.from(el.children)) {
       if (child instanceof HTMLElement) {
-        traverse(child);
+        traverse(child, false);
       }
     }
   };
   
-  traverse(element);
+  // 최상위의 자식부터 순회 (Tree Panel 체크를 위해 skipFirst=true)
+  for (const child of Array.from(element.children)) {
+    if (child instanceof HTMLElement) {
+      traverse(child, true);
+    }
+  }
+  
   console.log(`[applyTimelineWidth] 적용 완료: ${appliedCount}개 요소 수정됨`);
 }
 
