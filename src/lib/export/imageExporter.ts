@@ -125,10 +125,14 @@ function debugTimelineBlocks(element: HTMLElement): void {
     const computed = window.getComputedStyle(el);
 
     // 1. absolute positioned 블록 찾기 (타임라인 블록, 높이 > 15px만)
-    if (computed.position === "absolute" && el.offsetHeight > 15 && timelineBlockSamples.length < 5) {
+    if (
+      computed.position === "absolute" &&
+      el.offsetHeight > 15 &&
+      timelineBlockSamples.length < 5
+    ) {
       const parent = el.parentElement;
       const parentComputed = parent ? window.getComputedStyle(parent) : null;
-      
+
       timelineBlockSamples.push({
         tag: el.tagName,
         className: el.className.split(" ").slice(0, 3).join(" "),
@@ -154,7 +158,7 @@ function debugTimelineBlocks(element: HTMLElement): void {
         flexDirection: computed.flexDirection,
         gap: computed.gap,
         parentPosition: parentComputed?.position,
-        parentDisplay: parentComputed?.display
+        parentDisplay: parentComputed?.display,
       });
     }
 
@@ -168,7 +172,9 @@ function debugTimelineBlocks(element: HTMLElement): void {
       const parent = el.parentElement;
       const parentComputed = parent ? window.getComputedStyle(parent) : null;
       const grandparent = parent?.parentElement;
-      const grandparentComputed = grandparent ? window.getComputedStyle(grandparent) : null;
+      const grandparentComputed = grandparent
+        ? window.getComputedStyle(grandparent)
+        : null;
 
       textSamples.push({
         tag: el.tagName,
@@ -178,7 +184,8 @@ function debugTimelineBlocks(element: HTMLElement): void {
         lineHeight: computed.lineHeight,
         lineHeightNumeric: parseFloat(computed.lineHeight),
         fontSizeNumeric: parseFloat(computed.fontSize),
-        lineHeightDiff: parseFloat(computed.lineHeight) - parseFloat(computed.fontSize),
+        lineHeightDiff:
+          parseFloat(computed.lineHeight) - parseFloat(computed.fontSize),
         verticalAlign: computed.verticalAlign,
         paddingTop: computed.paddingTop,
         paddingBottom: computed.paddingBottom,
@@ -196,7 +203,7 @@ function debugTimelineBlocks(element: HTMLElement): void {
         parentPaddingTop: parentComputed?.paddingTop,
         parentPaddingBottom: parentComputed?.paddingBottom,
         grandparentPosition: grandparentComputed?.position,
-        grandparentHeight: grandparent?.offsetHeight
+        grandparentHeight: grandparent?.offsetHeight,
       });
     }
 
@@ -211,9 +218,13 @@ function debugTimelineBlocks(element: HTMLElement): void {
   const summary = {
     timelineBlocksCount: timelineBlockSamples.length,
     textElementsCount: textSamples.length,
-    avgLineHeightDiff: textSamples.reduce((sum, s) => sum + (s.lineHeightDiff || 0), 0) / Math.max(textSamples.length, 1),
-    flexParentCount: textSamples.filter(s => s.parentDisplay === "flex").length,
-    centerAlignCount: textSamples.filter(s => s.parentAlignItems === "center").length
+    avgLineHeightDiff:
+      textSamples.reduce((sum, s) => sum + (s.lineHeightDiff || 0), 0) /
+      Math.max(textSamples.length, 1),
+    flexParentCount: textSamples.filter((s) => s.parentDisplay === "flex")
+      .length,
+    centerAlignCount: textSamples.filter((s) => s.parentAlignItems === "center")
+      .length,
   };
 
   fetch("http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1", {
@@ -222,10 +233,10 @@ function debugTimelineBlocks(element: HTMLElement): void {
     body: JSON.stringify({
       location: "imageExporter.ts:debugTimelineBlocks",
       message: "Timeline blocks and text elements analysis (v2)",
-      data: { 
+      data: {
         summary,
-        timelineBlocks: timelineBlockSamples, 
-        textElements: textSamples 
+        timelineBlocks: timelineBlockSamples,
+        textElements: textSamples,
       },
       timestamp: Date.now(),
       sessionId: "debug-session",
@@ -440,38 +451,36 @@ export async function exportPNG(
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
-          // Phase 0: 텍스트 여백 보정 (vertical-align 및 flex 속성)
+          // Phase 0: 텍스트 여백 보정 (SPAN 요소만 transform으로 위로 이동)
           console.log("[PNG Export] 텍스트 여백 보정 시작");
           const allElements = clonedEl.querySelectorAll("*");
           let textElementCount = 0;
-          let flexParentCount = 0;
-          
+
           allElements.forEach((el) => {
             if (el instanceof HTMLElement) {
               const computed = window.getComputedStyle(el);
-              const hasText = el.textContent && el.textContent.trim().length > 0;
-              
-              // 1. 텍스트가 있는 요소의 vertical-align을 top으로 설정
-              if (hasText && (el.tagName === "SPAN" || el.tagName === "DIV" || el.tagName === "P")) {
-                el.style.setProperty("vertical-align", "top", "important");
+              const hasText =
+                el.textContent && el.textContent.trim().length > 0;
+
+              // SPAN 텍스트 요소만 타겟팅하여 위로 이동
+              // 사용자 피드백: 브라우저에서 padding-top: 13-15px를 줘야 PNG와 동일
+              // = PNG에서 13-15px의 여백이 추가로 생김
+              if (el.tagName === "SPAN" && hasText) {
+                const fontSize = parseFloat(computed.fontSize);
+                // font-size 기반 보정: 약 10-20% 위로 이동
+                const offset = Math.round(fontSize * 0.15); // 14px 기준 약 2px
+                el.style.setProperty(
+                  "transform",
+                  `translateY(-${offset}px)`,
+                  "important"
+                );
                 textElementCount++;
-              }
-              
-              // 2. flex 컨테이너의 align-items를 flex-start로 조정
-              if (computed.display === "flex" || computed.display === "inline-flex") {
-                el.style.setProperty("align-items", "flex-start", "important");
-                flexParentCount++;
-              }
-              
-              // 3. absolute positioned 텍스트 요소의 padding-top 제거
-              if (computed.position === "absolute" && hasText) {
-                el.style.setProperty("padding-top", "0", "important");
               }
             }
           });
-          
+
           console.log(
-            `[PNG Export] 텍스트 여백 보정 완료: ${textElementCount}개 텍스트, ${flexParentCount}개 flex`
+            `[PNG Export] 텍스트 여백 보정 완료: ${textElementCount}개 SPAN 요소 이동`
           );
 
           // #region agent log
