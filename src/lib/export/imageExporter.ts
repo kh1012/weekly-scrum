@@ -91,20 +91,34 @@ export async function exportPNG(
     });
 
     // 5. 원본 요소를 직접 캡처 (이중 복제 방지)
+    console.log("[PNG Export] 캡처 시작:", {
+      element: element.tagName,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      scale
+    });
+
     const canvas = await html2canvas(element, {
       scale,
       backgroundColor,
       useCORS: true,
       allowTaint: false,
       foreignObjectRendering: false,
-      logging: false,
+      logging: true,  // 디버깅을 위해 로깅 활성화
       onclone: (clonedDoc, clonedEl) => {
+        console.log("[PNG Export] onclone 호출됨");
         // html2canvas가 복제한 요소에서만 overflow 조정
         // CSS/스타일은 그대로 유지 (computed style 활용)
         if (clonedEl instanceof HTMLElement) {
           fixOverflowForExport(clonedEl);
         }
       }
+    });
+
+    console.log("[PNG Export] Canvas 생성 완료:", {
+      width: canvas.width,
+      height: canvas.height,
+      type: canvas.constructor.name
     });
 
     onProgress?.({
@@ -117,12 +131,26 @@ export async function exportPNG(
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => {
-          if (b) resolve(b);
-          else reject(new Error("Blob 생성 실패"));
+          if (b) {
+            console.log("[PNG Export] Blob 생성 성공:", {
+              size: b.size,
+              type: b.type
+            });
+            resolve(b);
+          } else {
+            console.error("[PNG Export] Blob 생성 실패");
+            reject(new Error("Blob 생성 실패"));
+          }
         },
         "image/png",
         1  // 최고 품질
       );
+    });
+
+    console.log("[PNG Export] 최종 Blob:", {
+      size: blob.size,
+      type: blob.type,
+      sizeMB: (blob.size / (1024 * 1024)).toFixed(2) + "MB"
     });
 
     onProgress?.({
