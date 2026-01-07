@@ -94,13 +94,15 @@ export function ExportDropdown({
       return;
     }
 
-    // PNG/SVG는 품질 선택 메뉴 표시
+    // PNG/SVG는 품질 선택 메뉴 토글
     if (type === "png" && !quality) {
-      setShowPNGQuality(true);
+      setShowPNGQuality(!showPNGQuality);
+      setShowSVGQuality(false);
       return;
     }
     if (type === "svg" && !quality) {
-      setShowSVGQuality(true);
+      setShowSVGQuality(!showSVGQuality);
+      setShowPNGQuality(false);
       return;
     }
 
@@ -131,14 +133,17 @@ export function ExportDropdown({
     }
   };
 
-  const handleQualitySelect = (quality: ExportQuality, type: "png" | "svg") => {
+  const handleQualitySelect = (quality: ExportQuality) => {
     setSelectedQuality(quality);
     try {
       localStorage.setItem("export-quality", quality);
     } catch {
       // localStorage 접근 실패 시 무시
     }
-    handleExport(type, quality);
+  };
+
+  const handleExportWithQuality = async (type: "png" | "svg") => {
+    await handleExport(type, selectedQuality);
   };
 
   const handleFigmaExport = async () => {
@@ -231,52 +236,20 @@ export function ExportDropdown({
             {/* JSON Export */}
             <button
               onClick={() => handleExport("json")}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+              className="w-full px-3 py-2 text-xs font-medium text-left text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <div className="flex-shrink-0">
-                <svg
-                  className="w-4 h-4 text-gray-600 group-hover:text-blue-600"
-                  fill="currentColor"
-                  viewBox="0 0 16 16"
-                >
-                  <path d="M3.5 1.75a.25.25 0 01.25-.25h3.5a.75.75 0 010 1.5h-3.5a.25.25 0 01-.25-.25v-1.5zm-2 0A2.25 2.25 0 013.75 0h3.5a2.25 2.25 0 011.5 3.93v6.64a2.25 2.25 0 01-1.5 3.93h-3.5a2.25 2.25 0 01-1.5-3.93V3.93A2.25 2.25 0 011.5 1.75zm8.75 11.5a.25.25 0 01.25-.25h3.5a.25.25 0 01.25.25v1.5a.25.25 0 01-.25.25h-3.5a.25.25 0 01-.25-.25v-1.5zm-2 0c0-1.118.82-2.04 1.875-2.197V4.447A2.25 2.25 0 0110.25 2h3.5A2.25 2.25 0 0116 4.25v1.5a2.25 2.25 0 01-1.5 3.93v6.64a2.25 2.25 0 01-1.875 2.197V13.25z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-gray-900 group-hover:text-blue-600">
-                  JSON 데이터
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  필터된 데이터를 JSON 파일로 저장
-                </div>
-              </div>
+              JSON
             </button>
 
             {/* PNG Export */}
             <div>
               <button
                 onClick={() => handleExport("png")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex-shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-600 group-hover:text-blue-600"
-                    fill="currentColor"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="M1.75 2.5a.25.25 0 00-.25.25v10.5c0 .138.112.25.25.25h.94a.76.76 0 01-.03-.03l-1.11-1.11A1.75 1.75 0 011.5 2.75c0-.966.784-1.75 1.75-1.75h8.5a1.75 1.75 0 011.75 1.75v8.5c0 .698-.409 1.3-1 1.58v-8.33a.25.25 0 00-.25-.25h-10.5zM11 4.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM2.75 14a.25.25 0 01-.22-.364l3.69-7.38a.75.75 0 011.32 0L10.78 13a.75.75 0 01-.66 1.11H2.75z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-gray-900 group-hover:text-blue-600">
-                    PNG 이미지
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    고해상도 이미지로 화면 캡처
-                  </div>
-                </div>
+                <span>PNG</span>
                 <svg
-                  className={`w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-transform ${
+                  className={`w-3 h-3 text-gray-400 transition-transform ${
                     showPNGQuality ? "rotate-90" : ""
                   }`}
                   fill="currentColor"
@@ -286,43 +259,42 @@ export function ExportDropdown({
                 </svg>
               </button>
 
-              {/* PNG 품질 선택 서브메뉴 (인라인) */}
+              {/* PNG 품질 선택 */}
               {showPNGQuality && (
-                <div className="bg-gray-50 border-t border-gray-100">
-                  <div className="py-1 px-2">
-                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
-                      (quality) => {
-                        const preset = QUALITY_PRESETS[quality];
-                        return (
-                          <button
-                            key={quality}
-                            onClick={() => handleQualitySelect(quality, "png")}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-white transition-colors ${
-                              selectedQuality === quality ? "bg-white shadow-sm" : ""
-                            }`}
-                          >
-                            <div className="flex-1">
-                              <div className="text-xs font-semibold text-gray-900">
-                                {preset.label}
-                              </div>
-                              <div className="text-[10px] text-gray-500 mt-0.5">
-                                {preset.description}
-                              </div>
-                            </div>
-                            {selectedQuality === quality && (
-                              <svg
-                                className="w-3.5 h-3.5 text-blue-600 ml-2"
-                                fill="currentColor"
-                                viewBox="0 0 16 16"
-                              >
-                                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-                              </svg>
-                            )}
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
+                <div className="bg-gray-50 py-1.5 px-2 space-y-1">
+                  {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
+                    (quality) => {
+                      const preset = QUALITY_PRESETS[quality];
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleQualitySelect(quality)}
+                          className={`w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors ${
+                            selectedQuality === quality
+                              ? "bg-blue-50 text-blue-600 font-medium"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span>{preset.label}</span>
+                          {selectedQuality === quality && (
+                            <svg
+                              className="w-3 h-3"
+                              fill="currentColor"
+                              viewBox="0 0 16 16"
+                            >
+                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    }
+                  )}
+                  <button
+                    onClick={() => handleExportWithQuality("png")}
+                    className="w-full mt-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Export PNG
+                  </button>
                 </div>
               )}
             </div>
@@ -331,28 +303,11 @@ export function ExportDropdown({
             <div>
               <button
                 onClick={() => handleExport("svg")}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex-shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-600 group-hover:text-blue-600"
-                    fill="currentColor"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="M3.5 3.5a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-7a1 1 0 01-1-1v-7zM4.5 2a2.5 2.5 0 00-2.5 2.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-7A2.5 2.5 0 0011.5 2h-7z" />
-                    <path d="M5.75 4.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h2.5a.75.75 0 000-1.5h-2.5z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-gray-900 group-hover:text-blue-600">
-                    SVG 벡터
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    Figma Import 가능한 벡터 파일
-                  </div>
-                </div>
+                <span>SVG</span>
                 <svg
-                  className={`w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-transform ${
+                  className={`w-3 h-3 text-gray-400 transition-transform ${
                     showSVGQuality ? "rotate-90" : ""
                   }`}
                   fill="currentColor"
@@ -362,43 +317,42 @@ export function ExportDropdown({
                 </svg>
               </button>
 
-              {/* SVG 품질 선택 서브메뉴 (인라인) */}
+              {/* SVG 품질 선택 */}
               {showSVGQuality && (
-                <div className="bg-gray-50 border-t border-gray-100">
-                  <div className="py-1 px-2">
-                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
-                      (quality) => {
-                        const preset = QUALITY_PRESETS[quality];
-                        return (
-                          <button
-                            key={quality}
-                            onClick={() => handleQualitySelect(quality, "svg")}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-white transition-colors ${
-                              selectedQuality === quality ? "bg-white shadow-sm" : ""
-                            }`}
-                          >
-                            <div className="flex-1">
-                              <div className="text-xs font-semibold text-gray-900">
-                                {preset.label}
-                              </div>
-                              <div className="text-[10px] text-gray-500 mt-0.5">
-                                {preset.description}
-                              </div>
-                            </div>
-                            {selectedQuality === quality && (
-                              <svg
-                                className="w-3.5 h-3.5 text-blue-600 ml-2"
-                                fill="currentColor"
-                                viewBox="0 0 16 16"
-                              >
-                                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-                              </svg>
-                            )}
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
+                <div className="bg-gray-50 py-1.5 px-2 space-y-1">
+                  {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
+                    (quality) => {
+                      const preset = QUALITY_PRESETS[quality];
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleQualitySelect(quality)}
+                          className={`w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors ${
+                            selectedQuality === quality
+                              ? "bg-blue-50 text-blue-600 font-medium"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span>{preset.label}</span>
+                          {selectedQuality === quality && (
+                            <svg
+                              className="w-3 h-3"
+                              fill="currentColor"
+                              viewBox="0 0 16 16"
+                            >
+                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    }
+                  )}
+                  <button
+                    onClick={() => handleExportWithQuality("svg")}
+                    className="w-full mt-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Export SVG
+                  </button>
                 </div>
               )}
             </div>
@@ -409,40 +363,13 @@ export function ExportDropdown({
             {/* Figma API Export */}
             <button
               onClick={() => handleExport("figma")}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-purple-50 hover:text-purple-600 transition-colors group"
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <div className="flex-shrink-0">
-                <svg
-                  className="w-4 h-4 text-gray-600 group-hover:text-purple-600"
-                  fill="currentColor"
-                  viewBox="0 0 38 57"
-                >
-                  <path d="M19 28.5C19 23.26 23.26 19 28.5 19C33.74 19 38 23.26 38 28.5C38 33.74 33.74 38 28.5 38C23.26 38 19 33.74 19 28.5Z" />
-                  <path d="M0 47.5C0 42.26 4.26 38 9.5 38H19V47.5C19 52.74 14.74 57 9.5 57C4.26 57 0 52.74 0 47.5Z" />
-                  <path d="M19 0V19H28.5C33.74 19 38 14.74 38 9.5C38 4.26 33.74 0 28.5 0H19Z" />
-                  <path d="M0 9.5C0 14.74 4.26 19 9.5 19H19V0H9.5C4.26 0 0 4.26 0 9.5Z" />
-                  <path d="M0 28.5C0 33.74 4.26 38 9.5 38H19V19H9.5C4.26 19 0 23.26 0 28.5Z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-gray-900 group-hover:text-purple-600 flex items-center gap-1">
-                  Figma 자동 연동
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-purple-100 text-purple-700 rounded">
-                    BETA
-                  </span>
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  Figma REST API로 직접 업로드
-                </div>
-              </div>
+              <span>Figma</span>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-purple-100 text-purple-700 rounded">
+                BETA
+              </span>
             </button>
-
-            {/* 안내 문구 */}
-            <div className="px-3 pt-2 pb-3 bg-gray-50 border-t border-gray-100">
-              <p className="text-[10px] text-gray-500 leading-relaxed text-center">
-                SVG는 벡터 편집 가능, PNG는 즉시 공유용
-              </p>
-            </div>
           </div>
         )}
       </div>
