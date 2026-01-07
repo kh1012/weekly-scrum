@@ -9,7 +9,11 @@ import {
   sanitizeFilename,
 } from "./utils";
 import { GanttCanvasDrawer } from "./canvasDrawer";
-import type { DraftRow, DraftBar, DraftFlag } from "@/components/plans/gantt-draft/types";
+import type {
+  DraftRow,
+  DraftBar,
+  DraftFlag,
+} from "@/components/plans/gantt-draft/types";
 
 /**
  * Timeline 내부의 실제 콘텐츠 width를 찾기 (Phase 1)
@@ -974,7 +978,7 @@ export interface GanttExportData {
 
 /**
  * Canvas Draw 방식으로 PNG Export
- * 
+ *
  * @param element - Export할 HTML 요소
  * @param ganttData - Gantt 차트 데이터 (JSON Export와 동일)
  * @param options - Export 옵션
@@ -987,14 +991,14 @@ export async function exportPNGWithCanvas(
   onProgress?: (progress: ExportProgress) => void
 ): Promise<void> {
   console.log("[PNG Canvas Draw Export] 시작");
-  
+
   try {
     onProgress?.({
       step: "Canvas 데이터 변환 중...",
       progress: 20,
       completed: false,
     });
-    
+
     // GanttCanvasData → GanttExportData 변환
     const exportData = convertToExportData(element, ganttData);
     console.log("[PNG Canvas Draw] 데이터 변환 완료:", {
@@ -1002,59 +1006,64 @@ export async function exportPNGWithCanvas(
       bars: exportData.bars.length,
       flags: exportData.flags.length,
     });
-    
+
     // Canvas 생성
-    const scale = options?.quality === "low" ? 1 : options?.quality === "high" ? 3 : 2;
+    const scale =
+      options?.quality === "low" ? 1 : options?.quality === "high" ? 3 : 2;
     const canvas = document.createElement("canvas");
-    const totalWidth = exportData.layout.treePanelWidth + exportData.timeline.width;
+    const totalWidth =
+      exportData.layout.treePanelWidth + exportData.timeline.width;
     const totalHeight = exportData.timeline.height;
-    
+
     canvas.width = totalWidth * scale;
     canvas.height = totalHeight * scale;
     canvas.style.width = `${totalWidth}px`;
     canvas.style.height = `${totalHeight}px`;
-    
-    console.log("[PNG Canvas Draw] Canvas 생성:", { width: canvas.width, height: canvas.height, scale });
-    
+
+    console.log("[PNG Canvas Draw] Canvas 생성:", {
+      width: canvas.width,
+      height: canvas.height,
+      scale,
+    });
+
     // Canvas 렌더링
     onProgress?.({
       step: "Canvas 렌더링 중...",
       progress: 50,
       completed: false,
     });
-    
+
     const drawer = new GanttCanvasDrawer(canvas, exportData, scale);
     await drawer.render();
-    
+
     // PNG Blob 생성
     onProgress?.({
       step: "PNG 생성 중...",
       progress: 80,
       completed: false,
     });
-    
+
     const blob = await drawer.toBlob(1);
     console.log("[PNG Canvas Draw] PNG Blob 생성 완료:", blob.size, "bytes");
-    
+
     // 다운로드
     onProgress?.({
       step: "다운로드 중...",
       progress: 90,
       completed: false,
     });
-    
+
     const filename = options?.filename
       ? sanitizeFilename(options.filename)
       : generateDefaultFilename("gantt-draw", "png");
-    
+
     downloadFile(blob, filename, "image/png");
-    
+
     onProgress?.({
       step: "완료",
       progress: 100,
       completed: true,
     });
-    
   } catch (error) {
     console.error("[PNG Canvas Draw Export] 실패:", error);
     throw new Error(
@@ -1067,7 +1076,7 @@ export async function exportPNGWithCanvas(
 
 /**
  * GanttCanvasData를 GanttExportData로 변환
- * 
+ *
  * @param element - Gantt 컨테이너 요소 (레이아웃 정보 추출용)
  * @param data - Gantt 차트 데이터
  * @returns Canvas Drawer용 데이터
@@ -1077,26 +1086,28 @@ function convertToExportData(
   data: GanttCanvasData
 ): GanttExportData {
   console.log("[convertToExportData] 시작");
-  
+
   // Timeline 크기 계산
   const timelineWidth = findTimelineContentWidth(element) || 2000;
   const timelineHeight = element.offsetHeight || 600;
-  
+
   // Tree nodes 변환
-  const treeNodes: GanttExportData["treeNodes"] = data.rows.map((row, index) => ({
-    type: row.feature ? "feature" : row.module ? "module" : "project",
-    id: row.rowId,
-    label: row.feature || row.module || row.project,
-    depth: row.feature ? 2 : row.module ? 1 : 0,
-    top: index * data.layout.rowHeight,
-    height: data.layout.rowHeight,
-    isExpanded: row.expanded ?? true,
-  }));
-  
+  const treeNodes: GanttExportData["treeNodes"] = data.rows.map(
+    (row, index) => ({
+      type: row.feature ? "feature" : row.module ? "module" : "project",
+      id: row.rowId,
+      label: row.feature || row.module || row.project,
+      depth: row.feature ? 2 : row.module ? 1 : 0,
+      top: index * data.layout.rowHeight,
+      height: data.layout.rowHeight,
+      isExpanded: row.expanded ?? true,
+    })
+  );
+
   // Bars 변환 (deleted 제외)
   const bars: GanttExportData["bars"] = data.bars
-    .filter(bar => !bar.deleted)
-    .map(bar => ({
+    .filter((bar) => !bar.deleted)
+    .map((bar) => ({
       id: bar.clientUid,
       rowId: bar.rowId,
       title: bar.title,
@@ -1105,16 +1116,16 @@ function convertToExportData(
       lane: bar.preferredLane ?? 0,
       stage: bar.stage,
       status: bar.status,
-      assignees: bar.assignees.map(a => ({
+      assignees: bar.assignees.map((a) => ({
         name: a.displayName || a.userId,
         role: a.role,
       })),
     }));
-  
+
   // Flags 변환 (deleted 제외)
   const flags: GanttExportData["flags"] = data.flags
-    .filter(flag => !flag.deleted)
-    .map(flag => ({
+    .filter((flag) => !flag.deleted)
+    .map((flag) => ({
       id: flag.clientId,
       title: flag.title,
       startDate: flag.startDate,
@@ -1122,13 +1133,13 @@ function convertToExportData(
       lane: flag.laneHint ?? 0,
       color: flag.color ?? undefined,
     }));
-  
+
   console.log("[convertToExportData] 완료:", {
     treeNodes: treeNodes.length,
     bars: bars.length,
     flags: flags.length,
   });
-  
+
   return {
     treeNodes,
     bars,

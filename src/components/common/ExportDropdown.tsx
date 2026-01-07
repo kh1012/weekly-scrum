@@ -306,7 +306,7 @@ export function ExportDropdown({
                 <span className="flex items-center gap-2">
                   PNG
                   <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-700 rounded">
-                    FAST
+                    HTML2CANVAS
                   </span>
                 </span>
                 <svg
@@ -369,7 +369,7 @@ export function ExportDropdown({
                 <span className="flex items-center gap-2">
                   PNG
                   <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-700 rounded">
-                    SLOW BUT DETAILED
+                    CANVAS DRAWN
                   </span>
                 </span>
                 <svg
