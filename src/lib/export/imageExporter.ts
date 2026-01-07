@@ -451,7 +451,7 @@ export async function exportPNG(
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
-          // Phase 0: 텍스트 여백 보정 (SPAN 요소만 transform으로 위로 이동)
+          // Phase 0: 텍스트 여백 보정 (position: relative + top으로 위로 이동)
           console.log("[PNG Export] 텍스트 여백 보정 시작");
           const allElements = clonedEl.querySelectorAll("*");
           let textElementCount = 0;
@@ -464,23 +464,21 @@ export async function exportPNG(
 
               // SPAN 텍스트 요소만 타겟팅하여 위로 이동
               // 사용자 피드백: 브라우저에서 padding-top: 13-15px를 줘야 PNG와 동일
-              // = PNG에서 13-15px의 여백이 추가로 생김
+              // = PNG에서 텍스트가 약 14px 아래로 내려가 있음
               if (el.tagName === "SPAN" && hasText) {
-                const fontSize = parseFloat(computed.fontSize);
-                // font-size 기반 보정: 약 10-20% 위로 이동
-                const offset = Math.round(fontSize * 0.15); // 14px 기준 약 2px
-                el.style.setProperty(
-                  "transform",
-                  `translateY(-${offset}px)`,
-                  "important"
-                );
+                // position: relative가 아닌 경우에만 설정
+                if (computed.position === "static") {
+                  el.style.setProperty("position", "relative", "important");
+                }
+                // 14px 위로 이동 (사용자 테스트 결과 기반)
+                el.style.setProperty("top", "-14px", "important");
                 textElementCount++;
               }
             }
           });
 
           console.log(
-            `[PNG Export] 텍스트 여백 보정 완료: ${textElementCount}개 SPAN 요소 이동`
+            `[PNG Export] 텍스트 여백 보정 완료: ${textElementCount}개 SPAN 요소 이동 (top: -14px)`
           );
 
           // #region agent log
