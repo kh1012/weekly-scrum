@@ -451,7 +451,7 @@ export async function exportPNG(
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
-          // Phase 0: 텍스트 여백 보정 (영역별 미세 조정)
+          // Phase 0: 텍스트 여백 보정 (영역별 미세 조정 + 부모 padding-top 추가)
           console.log("[PNG Export] 텍스트 여백 보정 시작");
           const allElements = clonedEl.querySelectorAll("*");
           const adjustments = {
@@ -460,6 +460,7 @@ export async function exportPNG(
             header: 0,
             other: 0,
           };
+          const parentsPadded = new Set<HTMLElement>();
 
           allElements.forEach((el) => {
             if (el instanceof HTMLElement) {
@@ -469,8 +470,8 @@ export async function exportPNG(
 
               // SPAN 텍스트 요소만 타겟팅하여 위로 이동
               if (el.tagName === "SPAN" && hasText) {
-                // 영역 구분 및 offset 결정
-                let offset = 14; // 기본값
+                // 영역 구분 및 offset 결정 (기존보다 50% 감소)
+                let offset = 5; // 기본값 (14px → 5px)
                 let area = "other";
 
                 // 부모 요소 탐색
@@ -481,8 +482,19 @@ export async function exportPNG(
 
                   // 1. 타임라인 블록 (absolute positioned parent)
                   if (parentComputed.position === "absolute") {
-                    offset = 12; // 타임라인 블록은 12px
+                    offset = 4; // 타임라인 블록 (12px → 4px)
                     area = "timelineBlock";
+                    
+                    // 부모에 padding-top 추가 (텍스트가 잘리지 않도록)
+                    if (!parentsPadded.has(parent)) {
+                      const currentPadding = parseFloat(parentComputed.paddingTop) || 0;
+                      parent.style.setProperty(
+                        "padding-top",
+                        `${currentPadding + 4}px`,
+                        "important"
+                      );
+                      parentsPadded.add(parent);
+                    }
                     break;
                   }
 
@@ -492,8 +504,18 @@ export async function exportPNG(
                     parent.className.includes("tree") ||
                     parent.className.includes("panel")
                   ) {
-                    offset = 10; // 트리 패널은 10px
+                    offset = 3; // 트리 패널 (10px → 3px)
                     area = "treePanel";
+                    
+                    if (!parentsPadded.has(parent)) {
+                      const currentPadding = parseFloat(parentComputed.paddingTop) || 0;
+                      parent.style.setProperty(
+                        "padding-top",
+                        `${currentPadding + 3}px`,
+                        "important"
+                      );
+                      parentsPadded.add(parent);
+                    }
                     break;
                   }
 
@@ -503,8 +525,18 @@ export async function exportPNG(
                     parent.className.includes("header") ||
                     parent.className.includes("title")
                   ) {
-                    offset = 8; // 헤더는 8px
+                    offset = 2; // 헤더 (8px → 2px)
                     area = "header";
+                    
+                    if (!parentsPadded.has(parent)) {
+                      const currentPadding = parseFloat(parentComputed.paddingTop) || 0;
+                      parent.style.setProperty(
+                        "padding-top",
+                        `${currentPadding + 2}px`,
+                        "important"
+                      );
+                      parentsPadded.add(parent);
+                    }
                     break;
                   }
 
@@ -527,7 +559,7 @@ export async function exportPNG(
           console.log(
             `[PNG Export] 텍스트 여백 보정 완료:`,
             adjustments,
-            `(timeline: 12px, tree: 10px, header: 8px, other: 14px)`
+            `(timeline: 4px, tree: 3px, header: 2px, other: 5px), 부모 padding: ${parentsPadded.size}개`
           );
 
           // #region agent log
