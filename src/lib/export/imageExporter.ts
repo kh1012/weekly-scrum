@@ -142,6 +142,23 @@ export async function exportPNG(
       windowHeight: actualHeight,
       x: 0,
       y: 0,
+      onclone: (clonedDoc, clonedEl) => {
+        // 1. 외부 CSS link 태그 제거 (404 오류 방지)
+        const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+        links.forEach(link => link.remove());
+        
+        // 2. script 태그 제거 (불필요한 로딩 방지)
+        const scripts = clonedDoc.querySelectorAll('script');
+        scripts.forEach(script => script.remove());
+        
+        // 3. overflow 스타일 조정 (기존 로직 유지)
+        if (clonedEl instanceof HTMLElement) {
+          fixOverflowForExport(clonedEl);
+        }
+        
+        // Note: Tailwind CSS 클래스는 이미 computed style로 적용되어 있어서
+        // link 태그를 제거해도 렌더링에 영향 없음
+      }
     });
 
     onProgress?.({
