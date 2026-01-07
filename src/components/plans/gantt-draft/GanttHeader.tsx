@@ -585,9 +585,17 @@ export function GanttHeader({
               {onRefreshData && (
                 <button
                   onClick={onRefreshData}
-                  disabled={isRefreshing}
-                  className="flex items-center justify-center h-8 border border-l rounded-tr-lg rounded-br-lg text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium"
-                  title="데이터 새로고침"
+                  disabled={!enableAlignmentCheck || isRefreshing}
+                  className={`flex items-center justify-center h-8 border border-l rounded-tr-lg rounded-br-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium ${
+                    enableAlignmentCheck
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-white text-gray-600 hover:bg-gray-100"
+                  }`}
+                  title={
+                    enableAlignmentCheck
+                      ? "데이터 새로고침"
+                      : "실행 커버리지 검토를 활성화하면 데이터 새로고침을 사용할 수 있습니다"
+                  }
                 >
                   <RefreshIcon
                     size={16}

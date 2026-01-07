@@ -1,12 +1,11 @@
 /**
  * Alignment Gantt Data Layer
- * 
+ *
  * 사용자 개인 관점에서 Plans와 Snapshot Entries를 간트 차트용으로 조회합니다.
  * - Plans: 사용자에게 할당된 Plans
  * - Snapshot Entries: 사용자가 작성한 Snapshot Entries (주차를 날짜 범위로 변환)
  */
 
-import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getWeekDateRange } from "@/lib/date/isoWeek";
 import { listWorkspaceMembers } from "./members";
@@ -69,10 +68,10 @@ export interface AlignmentGanttData {
 
 /**
  * Workspace-wide Alignment 간트 차트 데이터 조회 (내부 구현)
- * 
+ *
  * 모든 Plans와 모든 사용자의 Snapshot Entries를 조회합니다.
  * My Alignment와 달리 사용자 필터링을 하지 않습니다.
- * 
+ *
  * @param workspaceId - 워크스페이스 ID
  * @returns Plans + 모든 사용자의 Snapshot Entries
  */
@@ -170,9 +169,14 @@ async function getWorkspaceAlignmentDataInternal({
     // 2. Snapshot 데이터 처리
 
     // Author 정보를 별도로 조회
-    let authorProfiles = new Map<string, { display_name?: string; email?: string; user_id: string }>();
+    let authorProfiles = new Map<
+      string,
+      { display_name?: string; email?: string; user_id: string }
+    >();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [...new Set(snapshots.map((s) => s.author_id).filter(Boolean))];
+      const authorIds = [
+        ...new Set(snapshots.map((s) => s.author_id).filter(Boolean)),
+      ];
 
       if (authorIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
@@ -219,7 +223,9 @@ async function getWorkspaceAlignmentDataInternal({
       snapshotEntries = entriesData || [];
 
       // snapshot_entries의 name으로 user_id를 찾기 위한 추가 프로필 조회
-      const entryNames = [...new Set(snapshotEntries.map((e) => e.name).filter(Boolean))];
+      const entryNames = [
+        ...new Set(snapshotEntries.map((e) => e.name).filter(Boolean)),
+      ];
       if (entryNames.length > 0) {
         const { data: nameProfiles } = await supabase
           .from("profiles")
@@ -265,10 +271,10 @@ async function getWorkspaceAlignmentDataInternal({
       stage: plan.stage,
       assignees:
         plan.assignees?.map((a: any) => ({
-        userId: a.user_id,
-        role: a.role,
-        displayName: a.profiles?.display_name,
-      })) || [],
+          userId: a.user_id,
+          role: a.role,
+          displayName: a.profiles?.display_name,
+        })) || [],
     }));
 
     // 5. Snapshot Entries를 AlignmentGanttItem 형식으로 변환
@@ -300,13 +306,15 @@ async function getWorkspaceAlignmentDataInternal({
               (sum: number, task: any) => sum + (task.progress || 0),
               0
             ) / tasks.length
-        : 0;
+          : 0;
 
-      const metaKey = `${entry.project}::${entry.module || ""}::${entry.feature || ""}`;
+      const metaKey = `${entry.project}::${entry.module || ""}::${
+        entry.feature || ""
+      }`;
 
       // entry.name을 우선 사용하고, 없으면 snapshot.authorName 사용
       const authorName = entry.name?.trim() || snapshot.authorName || "Unknown";
-      
+
       // authorId 결정: snapshot.authorId 우선, 없으면 authorName으로 찾기
       let authorId = snapshot.authorId;
       if (!authorId && authorName) {
@@ -354,7 +362,7 @@ async function getWorkspaceAlignmentDataInternal({
 
     // 7. 워크스페이스 멤버 목록 조회
     const workspaceMembers = await listWorkspaceMembers({ workspaceId });
-    
+
     const membersList = workspaceMembers.map((m) => ({
       userId: m.user_id,
       displayName: m.display_name || m.email || m.user_id,
@@ -368,7 +376,7 @@ async function getWorkspaceAlignmentDataInternal({
     };
   } catch (error) {
     console.error("[getWorkspaceAlignmentData] Error:", error);
-    
+
     // 에러 발생 시에도 멤버 목록은 조회 시도
     const workspaceMembers = await listWorkspaceMembers({ workspaceId });
     const membersList = workspaceMembers.map((m) => ({
@@ -387,7 +395,7 @@ async function getWorkspaceAlignmentDataInternal({
 
 /**
  * Personal Alignment 간트 차트 데이터 조회 (내부 구현)
- * 
+ *
  * 엣지 케이스 처리:
  * - Plans 없음: 빈 배열 반환
  * - Snapshots 없음: 빈 배열 반환
@@ -500,12 +508,17 @@ async function getAlignmentGanttDataInternal({
       }
     }
 
-  // 2. Snapshot 데이터 처리
+    // 2. Snapshot 데이터 처리
 
     // Author 정보를 별도로 조회
-    let authorProfiles = new Map<string, { display_name?: string; email?: string; user_id: string }>();
+    let authorProfiles = new Map<
+      string,
+      { display_name?: string; email?: string; user_id: string }
+    >();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [...new Set(snapshots.map((s) => s.author_id).filter(Boolean))];
+      const authorIds = [
+        ...new Set(snapshots.map((s) => s.author_id).filter(Boolean)),
+      ];
 
       if (authorIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
@@ -525,12 +538,12 @@ async function getAlignmentGanttDataInternal({
       }
     }
 
-  const snapshotIds = snapshots?.map((s) => s.id) || [];
+    const snapshotIds = snapshots?.map((s) => s.id) || [];
 
-  let snapshotEntries: any[] = [];
-  if (snapshotIds.length > 0) {
+    let snapshotEntries: any[] = [];
+    if (snapshotIds.length > 0) {
       const { data: entriesData, error: entriesError } = await supabase
-      .from("snapshot_entries")
+        .from("snapshot_entries")
         .select(
           `
         id,
@@ -547,166 +560,170 @@ async function getAlignmentGanttDataInternal({
         risk_level
       `
         )
-      .in("snapshot_id", snapshotIds);
+        .in("snapshot_id", snapshotIds);
 
-    snapshotEntries = entriesData || [];
+      snapshotEntries = entriesData || [];
 
-    // snapshot_entries의 name으로 user_id를 찾기 위한 추가 프로필 조회
-    const entryNames = [...new Set(snapshotEntries.map((e) => e.name).filter(Boolean))];
-    if (entryNames.length > 0) {
-      const { data: nameProfiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, email")
-        .in("display_name", entryNames);
+      // snapshot_entries의 name으로 user_id를 찾기 위한 추가 프로필 조회
+      const entryNames = [
+        ...new Set(snapshotEntries.map((e) => e.name).filter(Boolean)),
+      ];
+      if (entryNames.length > 0) {
+        const { data: nameProfiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, email")
+          .in("display_name", entryNames);
 
-      nameProfiles?.forEach((p) => {
-        if (p.display_name && !authorProfiles.has(p.user_id)) {
-          authorProfiles.set(p.display_name, {
-            display_name: p.display_name,
-            email: p.email,
-            user_id: p.user_id,
-          });
-        }
-      });
+        nameProfiles?.forEach((p) => {
+          if (p.display_name && !authorProfiles.has(p.user_id)) {
+            authorProfiles.set(p.display_name, {
+              display_name: p.display_name,
+              email: p.email,
+              user_id: p.user_id,
+            });
+          }
+        });
+      }
     }
-  }
 
-  // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName, authorId})
-  const snapshotMap = new Map(
-    snapshots?.map((s) => {
+    // 3. Snapshot 맵 생성 (snapshot_id -> {year, week, authorName, authorId})
+    const snapshotMap = new Map(
+      snapshots?.map((s) => {
         const profile = authorProfiles.get(s.author_id);
-      const authorName = profile?.display_name || profile?.email || "Unknown";
+        const authorName = profile?.display_name || profile?.email || "Unknown";
         return [
           s.id,
           { year: s.year, week: s.week, authorName, authorId: s.author_id },
         ];
-    }) || []
-  );
+      }) || []
+    );
 
-  // 4. Plans를 AlignmentGanttItem 형식으로 변환
-  const planItems: AlignmentGanttItem[] = plans.map((plan) => ({
-    id: plan.id,
-    type: "plan",
-    title: plan.title || `${plan.domain} / ${plan.project}`,
-    domain: plan.domain || "",
-    project: plan.project || "",
-    module: plan.module || null,
-    feature: plan.feature || null,
-    start_date: plan.start_date,
-    end_date: plan.end_date,
-    status: plan.status,
-    stage: plan.stage,
+    // 4. Plans를 AlignmentGanttItem 형식으로 변환
+    const planItems: AlignmentGanttItem[] = plans.map((plan) => ({
+      id: plan.id,
+      type: "plan",
+      title: plan.title || `${plan.domain} / ${plan.project}`,
+      domain: plan.domain || "",
+      project: plan.project || "",
+      module: plan.module || null,
+      feature: plan.feature || null,
+      start_date: plan.start_date,
+      end_date: plan.end_date,
+      status: plan.status,
+      stage: plan.stage,
       assignees:
         plan.assignees?.map((a: any) => ({
-      userId: a.user_id,
-      role: a.role,
-      displayName: a.profiles?.display_name,
-    })) || [],
-  }));
+          userId: a.user_id,
+          role: a.role,
+          displayName: a.profiles?.display_name,
+        })) || [],
+    }));
 
-  // 5. Snapshot Entries를 AlignmentGanttItem 형식으로 변환
-  const snapshotItems: AlignmentGanttItem[] = snapshotEntries.map((entry) => {
-    const snapshot = snapshotMap.get(entry.snapshot_id);
-    if (!snapshot) {
-      throw new Error(`Snapshot not found for entry ${entry.id}`);
-    }
+    // 5. Snapshot Entries를 AlignmentGanttItem 형식으로 변환
+    const snapshotItems: AlignmentGanttItem[] = snapshotEntries.map((entry) => {
+      const snapshot = snapshotMap.get(entry.snapshot_id);
+      if (!snapshot) {
+        throw new Error(`Snapshot not found for entry ${entry.id}`);
+      }
 
-    // year + week을 실제 날짜 범위로 변환
-    // week 형식: W01, W02, ... -> 숫자로 변환
-    const weekNumber = parseInt(snapshot.week.replace("W", ""), 10);
+      // year + week을 실제 날짜 범위로 변환
+      // week 형식: W01, W02, ... -> 숫자로 변환
+      const weekNumber = parseInt(snapshot.week.replace("W", ""), 10);
       const { weekStart, weekEnd } = getWeekDateRange(
         snapshot.year,
         weekNumber
       );
 
-    // Date를 YYYY-MM-DD 형식으로 변환
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const day = date.getDate().toString().padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
+      // Date를 YYYY-MM-DD 형식으로 변환
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
 
-    // 평균 진행률 계산
-    const pastWeek = entry.past_week as any;
-    const thisWeek = entry.this_week as any;
-    const tasks = pastWeek?.tasks || [];
+      // 평균 진행률 계산
+      const pastWeek = entry.past_week as any;
+      const thisWeek = entry.this_week as any;
+      const tasks = pastWeek?.tasks || [];
       const avgProgress =
         tasks.length > 0
           ? tasks.reduce(
               (sum: number, task: any) => sum + (task.progress || 0),
               0
             ) / tasks.length
-      : 0;
+          : 0;
 
-    // 메타 정보로 고유 키 생성 (연결 화살표용)
-    const metaKey = `${entry.project}::${entry.module || ""}::${entry.feature || ""}`;
+      // 메타 정보로 고유 키 생성 (연결 화살표용)
+      const metaKey = `${entry.project}::${entry.module || ""}::${
+        entry.feature || ""
+      }`;
 
-    // entry.name을 우선 사용하고, 없으면 snapshot.authorName 사용
-    const authorName = entry.name?.trim() || snapshot.authorName || "Unknown";
-    
-    // authorId 결정: snapshot.authorId 우선, 없으면 authorName으로 찾기
-    let authorId = snapshot.authorId;
-    if (!authorId && authorName) {
-      const profileByName = authorProfiles.get(authorName);
-      if (profileByName) {
-        authorId = profileByName.user_id;
+      // entry.name을 우선 사용하고, 없으면 snapshot.authorName 사용
+      const authorName = entry.name?.trim() || snapshot.authorName || "Unknown";
+
+      // authorId 결정: snapshot.authorId 우선, 없으면 authorName으로 찾기
+      let authorId = snapshot.authorId;
+      if (!authorId && authorName) {
+        const profileByName = authorProfiles.get(authorName);
+        if (profileByName) {
+          authorId = profileByName.user_id;
+        }
       }
-    }
+
+      return {
+        id: `snapshot-${entry.id}`,
+        type: "snapshot",
+        title: entry.feature || entry.module || entry.project,
+        domain: entry.domain || "",
+        project: entry.project || "",
+        module: entry.module || null,
+        feature: entry.feature || null,
+        start_date: formatDate(weekStart),
+        end_date: formatDate(weekEnd),
+        status: "done", // Snapshot은 이미 완료된 작업
+        stage: "completed",
+        priority: "snapshot", // Snapshot 전용 우선순위
+        custom_feature: true, // Snapshot 항목 시각적 구분
+        custom_module: false,
+        snapshotId: entry.snapshot_id,
+        year: snapshot.year,
+        week: snapshot.week,
+        avgProgress, // 평균 진행률 추가
+        metaKey, // 메타 키 추가 (연결 화살표용)
+        authorName, // 작성자 이름 추가 (entry.name 우선 사용)
+        authorId, // 작성자 ID 추가 (화살표 연결용, fallback 로직 적용)
+        past_week: pastWeek, // Snapshot 상세 정보 추가
+        this_week: thisWeek, // NEXT 작업 추가
+        collaborators: entry.collaborators || [], // 협업자 추가
+        risks: entry.risks || [], // 리스크 목록 추가
+        risk_level: entry.risk_level || 0, // 리스크 레벨 추가
+        assignees: [],
+      };
+    });
+
+    // 6. Plans + Snapshots 통합
+    const items = [...planItems, ...snapshotItems].sort((a, b) =>
+      a.start_date.localeCompare(b.start_date)
+    );
+
+    // 7. 워크스페이스 멤버 목록 조회 (DraftGanttView에서 필요)
+    const workspaceMembers = await listWorkspaceMembers({ workspaceId });
+
+    const membersList = workspaceMembers.map((m) => ({
+      userId: m.user_id,
+      displayName: m.display_name || m.email || m.user_id,
+      email: m.email || undefined,
+      basicRole: m.basic_role,
+    }));
 
     return {
-      id: `snapshot-${entry.id}`,
-      type: "snapshot",
-      title: entry.feature || entry.module || entry.project,
-      domain: entry.domain || "",
-      project: entry.project || "",
-      module: entry.module || null,
-      feature: entry.feature || null,
-      start_date: formatDate(weekStart),
-      end_date: formatDate(weekEnd),
-      status: "done", // Snapshot은 이미 완료된 작업
-      stage: "completed",
-      priority: "snapshot", // Snapshot 전용 우선순위
-      custom_feature: true, // Snapshot 항목 시각적 구분
-      custom_module: false,
-      snapshotId: entry.snapshot_id,
-      year: snapshot.year,
-      week: snapshot.week,
-      avgProgress, // 평균 진행률 추가
-      metaKey, // 메타 키 추가 (연결 화살표용)
-      authorName, // 작성자 이름 추가 (entry.name 우선 사용)
-      authorId, // 작성자 ID 추가 (화살표 연결용, fallback 로직 적용)
-      past_week: pastWeek, // Snapshot 상세 정보 추가
-      this_week: thisWeek, // NEXT 작업 추가
-      collaborators: entry.collaborators || [], // 협업자 추가
-      risks: entry.risks || [], // 리스크 목록 추가
-      risk_level: entry.risk_level || 0, // 리스크 레벨 추가
-      assignees: [],
+      items,
+      members: membersList,
     };
-  });
-
-  // 6. Plans + Snapshots 통합
-  const items = [...planItems, ...snapshotItems].sort((a, b) =>
-    a.start_date.localeCompare(b.start_date)
-  );
-
-  // 7. 워크스페이스 멤버 목록 조회 (DraftGanttView에서 필요)
-  const workspaceMembers = await listWorkspaceMembers({ workspaceId });
-  
-  const membersList = workspaceMembers.map((m) => ({
-    userId: m.user_id,
-    displayName: m.display_name || m.email || m.user_id,
-    email: m.email || undefined,
-    basicRole: m.basic_role,
-  }));
-
-  return {
-    items,
-    members: membersList,
-  };
   } catch (error) {
     console.error("[getAlignmentGanttData] Error:", error);
-    
+
     // 에러 발생 시에도 멤버 목록은 조회 시도
     const workspaceMembers = await listWorkspaceMembers({ workspaceId });
     const membersList = workspaceMembers.map((m) => ({
@@ -724,29 +741,15 @@ async function getAlignmentGanttDataInternal({
 }
 
 /**
- * Workspace-wide Alignment 간트 차트 데이터 조회 (캐싱 래퍼)
- * 
- * 60초 캐싱 적용으로 prefetch 성능 향상
+ * Workspace-wide Alignment 간트 차트 데이터 조회
+ *
+ * 페이지 레벨 ISR 캐싱 사용 (unstable_cache는 cookies와 호환되지 않음)
  */
-export const getWorkspaceAlignmentData = unstable_cache(
-  getWorkspaceAlignmentDataInternal,
-  ["workspace-alignment"],
-  {
-    revalidate: 60,
-    tags: ["alignment", "workspace-alignment"],
-  }
-);
+export const getWorkspaceAlignmentData = getWorkspaceAlignmentDataInternal;
 
 /**
- * Personal Alignment 간트 차트 데이터 조회 (캐싱 래퍼)
- * 
- * 60초 캐싱 적용으로 prefetch 성능 향상
+ * Personal Alignment 간트 차트 데이터 조회
+ *
+ * 페이지 레벨 ISR 캐싱 사용 (unstable_cache는 cookies와 호환되지 않음)
  */
-export const getAlignmentGanttData = unstable_cache(
-  getAlignmentGanttDataInternal,
-  ["personal-alignment"],
-  {
-    revalidate: 60,
-    tags: ["alignment", "personal-alignment"],
-  }
-);
+export const getAlignmentGanttData = getAlignmentGanttDataInternal;
