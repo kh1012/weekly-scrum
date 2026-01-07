@@ -3,7 +3,11 @@
  */
 
 import type { ExportOptions, ExportProgress } from "./types";
-import { downloadFile, generateDefaultFilename, sanitizeFilename } from "./utils";
+import {
+  downloadFile,
+  generateDefaultFilename,
+  sanitizeFilename,
+} from "./utils";
 
 /**
  * Export를 위해 overflow를 강제로 visible로 변경
@@ -11,61 +15,89 @@ import { downloadFile, generateDefaultFilename, sanitizeFilename } from "./utils
  */
 function fixOverflowForExport(element: HTMLElement): void {
   const computedStyle = window.getComputedStyle(element);
-  
+
   // 자식 요소들의 최대 크기 계산
   let maxChildWidth = 0;
   let maxChildHeight = 0;
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
-      const childRight = child.offsetLeft + child.offsetWidth;
-      const childBottom = child.offsetTop + child.offsetHeight;
-      maxChildWidth = Math.max(maxChildWidth, childRight);
-      maxChildHeight = Math.max(maxChildHeight, childBottom);
+      // offsetLeft/Top은 relative 부모 기준이므로 정확하지 않을 수 있음
+      // style.width를 직접 읽어보기
+      const styleWidth = child.style.width;
+      const styleHeight = child.style.height;
+      
+      if (styleWidth && styleWidth.endsWith("px")) {
+        const width = parseFloat(styleWidth);
+        maxChildWidth = Math.max(maxChildWidth, width);
+      } else {
+        const childRight = child.offsetLeft + child.offsetWidth;
+        maxChildWidth = Math.max(maxChildWidth, childRight);
+      }
+      
+      if (styleHeight && styleHeight.endsWith("px")) {
+        const height = parseFloat(styleHeight);
+        maxChildHeight = Math.max(maxChildHeight, height);
+      } else {
+        const childBottom = child.offsetTop + child.offsetHeight;
+        maxChildHeight = Math.max(maxChildHeight, childBottom);
+      }
     }
   });
-  
-  // 실제 필요한 크기 계산 (scrollWidth와 자식 크기 중 큰 값)
-  const requiredWidth = Math.max(element.scrollWidth, maxChildWidth);
-  const requiredHeight = Math.max(element.scrollHeight, maxChildHeight);
-  
+
+  // 실제 필요한 크기 계산 (scrollWidth, 자식 크기, style 크기 중 큰 값)
+  const requiredWidth = Math.max(
+    element.scrollWidth,
+    maxChildWidth,
+    element.clientWidth
+  );
+  const requiredHeight = Math.max(
+    element.scrollHeight,
+    maxChildHeight,
+    element.clientHeight
+  );
+
   console.log(`[fixOverflow] ${element.className}:`, {
     current: { width: element.offsetWidth, height: element.offsetHeight },
     scroll: { width: element.scrollWidth, height: element.scrollHeight },
     maxChild: { width: maxChildWidth, height: maxChildHeight },
-    required: { width: requiredWidth, height: requiredHeight }
+    required: { width: requiredWidth, height: requiredHeight },
   });
-  
+
   // 모든 overflow 속성을 visible로 강제 변경
   if (
-    computedStyle.overflow !== 'visible' ||
-    computedStyle.overflowX !== 'visible' ||
-    computedStyle.overflowY !== 'visible'
+    computedStyle.overflow !== "visible" ||
+    computedStyle.overflowX !== "visible" ||
+    computedStyle.overflowY !== "visible"
   ) {
-    element.style.setProperty('overflow', 'visible', 'important');
-    element.style.setProperty('overflow-x', 'visible', 'important');
-    element.style.setProperty('overflow-y', 'visible', 'important');
-    
+    element.style.setProperty("overflow", "visible", "important");
+    element.style.setProperty("overflow-x", "visible", "important");
+    element.style.setProperty("overflow-y", "visible", "important");
+
     // 스크롤 콘텐츠가 잘리지 않도록 크기 확장
     if (requiredWidth > element.clientWidth) {
-      element.style.setProperty('width', `${requiredWidth}px`, 'important');
-      element.style.setProperty('min-width', `${requiredWidth}px`, 'important');
+      element.style.setProperty("width", `${requiredWidth}px`, "important");
+      element.style.setProperty("min-width", `${requiredWidth}px`, "important");
     }
     if (requiredHeight > element.clientHeight) {
-      element.style.setProperty('height', `${requiredHeight}px`, 'important');
-      element.style.setProperty('min-height', `${requiredHeight}px`, 'important');
+      element.style.setProperty("height", `${requiredHeight}px`, "important");
+      element.style.setProperty(
+        "min-height",
+        `${requiredHeight}px`,
+        "important"
+      );
     }
   }
-  
+
   // flex-1 요소는 고정 크기로 변경
-  if (computedStyle.flex && computedStyle.flex.includes('1')) {
+  if (computedStyle.flex && computedStyle.flex.includes("1")) {
     const targetWidth = Math.max(element.offsetWidth, requiredWidth);
     const targetHeight = Math.max(element.offsetHeight, requiredHeight);
-    
-    element.style.setProperty('flex', 'none', 'important');
-    element.style.setProperty('width', `${targetWidth}px`, 'important');
-    element.style.setProperty('height', `${targetHeight}px`, 'important');
+
+    element.style.setProperty("flex", "none", "important");
+    element.style.setProperty("width", `${targetWidth}px`, "important");
+    element.style.setProperty("height", `${targetHeight}px`, "important");
   }
-  
+
   // 자식 요소 재귀 처리 (먼저 처리해야 부모가 올바른 크기를 계산할 수 있음)
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
@@ -76,7 +108,7 @@ function fixOverflowForExport(element: HTMLElement): void {
 
 /**
  * HTML 요소를 PNG 이미지로 캡처
- * 
+ *
  * @param element - 캡처할 HTML 요소
  * @param options - Export 옵션
  * @param onProgress - 진행률 콜백
@@ -100,10 +132,10 @@ export async function exportPNG(
     const qualityPresets = {
       low: { scale: 1, textRendering: false },
       normal: { scale: 2, textRendering: true },
-      high: { scale: 3, textRendering: true }
+      high: { scale: 3, textRendering: true },
     };
-    
-    const quality = options?.quality || 'normal';
+
+    const quality = options?.quality || "normal";
     const preset = qualityPresets[quality];
     const scale = options?.pngOptions?.scale || preset.scale;
     const backgroundColor = options?.pngOptions?.backgroundColor || "#ffffff";
@@ -116,7 +148,7 @@ export async function exportPNG(
         completed: false,
       });
       await document.fonts.ready;
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     // 4. 캡처 준비
@@ -131,7 +163,7 @@ export async function exportPNG(
       element: element.tagName,
       width: element.scrollWidth,
       height: element.scrollHeight,
-      scale
+      scale,
     });
 
     const canvas = await html2canvas(element, {
@@ -140,7 +172,7 @@ export async function exportPNG(
       useCORS: true,
       allowTaint: false,
       foreignObjectRendering: false,
-      logging: true,  // 디버깅을 위해 로깅 활성화
+      logging: true, // 디버깅을 위해 로깅 활성화
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         // html2canvas가 복제한 요소에서만 overflow 조정
@@ -148,13 +180,13 @@ export async function exportPNG(
         if (clonedEl instanceof HTMLElement) {
           fixOverflowForExport(clonedEl);
         }
-      }
+      },
     });
 
     console.log("[PNG Export] Canvas 생성 완료:", {
       width: canvas.width,
       height: canvas.height,
-      type: canvas.constructor.name
+      type: canvas.constructor.name,
     });
 
     onProgress?.({
@@ -170,7 +202,7 @@ export async function exportPNG(
           if (b) {
             console.log("[PNG Export] Blob 생성 성공:", {
               size: b.size,
-              type: b.type
+              type: b.type,
             });
             resolve(b);
           } else {
@@ -179,14 +211,14 @@ export async function exportPNG(
           }
         },
         "image/png",
-        1  // 최고 품질
+        1 // 최고 품질
       );
     });
 
     console.log("[PNG Export] 최종 Blob:", {
       size: blob.size,
       type: blob.type,
-      sizeMB: (blob.size / (1024 * 1024)).toFixed(2) + "MB"
+      sizeMB: (blob.size / (1024 * 1024)).toFixed(2) + "MB",
     });
 
     onProgress?.({
@@ -210,7 +242,11 @@ export async function exportPNG(
     });
   } catch (error) {
     console.error("PNG Export 실패:", error);
-    throw new Error(`PNG Export 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
+    throw new Error(
+      `PNG Export 실패: ${
+        error instanceof Error ? error.message : "알 수 없는 오류"
+      }`
+    );
   }
 }
 
@@ -239,4 +275,3 @@ export async function exportElementPNG(
   }
   return exportPNG(element, options, onProgress);
 }
-
