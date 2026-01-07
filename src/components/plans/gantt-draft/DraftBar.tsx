@@ -160,6 +160,7 @@ export const DraftBar = memo(function DraftBar({
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragOffset, setDragOffset] = useState({ left: 0, width: 0, top: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [showAlignmentTooltip, setShowAlignmentTooltip] = useState(false);
 
   // Snapshot 블록인지 확인
   const isSnapshot = bar.isSnapshot === true;
@@ -530,9 +531,13 @@ export const DraftBar = memo(function DraftBar({
       }}
       onMouseEnter={() => {
         setIsHovered(true);
+        setShowAlignmentTooltip(true);
         onClearHover?.();
       }}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setShowAlignmentTooltip(false);
+      }}
       onMouseMove={(e) => e.stopPropagation()} // 부모의 hover line 표시 방지
       onKeyDown={handleKeyDown}
       tabIndex={isEditing ? 0 : -1}
@@ -554,6 +559,131 @@ export const DraftBar = memo(function DraftBar({
               opacity: isHovered ? 0.8 : 0.4,
             }}
           />
+        </div>
+      )}
+
+      {/* Alignment 커버리지 툴팁 (Plan only, 호버 시) */}
+      {!isSnapshot && alignmentStatus && showAlignmentTooltip && (
+        <div className="absolute bottom-full left-0 mb-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-3 pointer-events-none">
+          {/* Content */}
+          <div className="max-h-96 overflow-y-auto">
+            {/* Status */}
+            <div className="mb-3 pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{
+                    background:
+                      alignmentStatus === "green"
+                        ? "rgb(16, 185, 129)"
+                        : alignmentStatus === "orange"
+                        ? "rgb(251, 146, 60)"
+                        : "rgb(244, 63, 94)",
+                  }}
+                />
+                <span className="text-xs font-semibold text-gray-900">
+                  {alignmentStatus === "green"
+                    ? "실행 커버리지 양호"
+                    : alignmentStatus === "orange"
+                    ? "실행 커버리지 부족"
+                    : "실행 기록 없음"}
+                </span>
+              </div>
+              <div className="text-[10px] text-gray-600 ml-4">
+                실행 {bar.alignmentActualCount || 0}회 / 예상{" "}
+                {bar.alignmentExpectedCount || 0}회
+              </div>
+            </div>
+
+            {/* Debug Info */}
+            {bar.alignmentDebugInfo && (
+              <>
+                {/* Plan Info */}
+                <div className="mb-3">
+                  <div className="text-[10px] font-semibold text-gray-700 mb-1.5">
+                    계획 정보
+                  </div>
+                  <div className="text-[10px] space-y-1 bg-gray-50 rounded p-2">
+                    <div className="text-gray-700 break-all">
+                      <span className="font-medium text-gray-600">MetaKey:</span>{" "}
+                      {bar.alignmentDebugInfo.planMetaKey}
+                    </div>
+                    <div className="text-gray-700">
+                      <span className="font-medium text-gray-600">기간:</span>{" "}
+                      {bar.alignmentDebugInfo.planDateRange}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Matching Snapshots */}
+                {bar.alignmentDebugInfo.matchingSnapshots.length > 0 && (
+                  <div className="mb-3 pb-3 border-b border-gray-200">
+                    <div className="text-[10px] font-semibold text-emerald-700 mb-1.5">
+                      ✓ 매칭된 스냅샷 (
+                      {bar.alignmentDebugInfo.matchingSnapshots.length}개)
+                    </div>
+                    <div className="space-y-1.5">
+                      {bar.alignmentDebugInfo.matchingSnapshots.map(
+                        (s, i) => (
+                          <div
+                            key={i}
+                            className="text-[10px] pl-3"
+                          >
+                            <div className="font-medium text-emerald-700">
+                              {i + 1}. {s.startDate}
+                            </div>
+                            <div className="text-gray-600 break-all">
+                              {s.metaKey}
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Filtered Out Snapshots */}
+                {bar.alignmentDebugInfo.filteredOutSnapshots.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-semibold text-rose-700 mb-1.5">
+                      ✗ 필터링된 스냅샷 (
+                      {bar.alignmentDebugInfo.filteredOutSnapshots.length}
+                      개)
+                    </div>
+                    <div className="space-y-1.5">
+                      {bar.alignmentDebugInfo.filteredOutSnapshots
+                        .slice(0, 10)
+                        .map((s, i) => (
+                          <div
+                            key={i}
+                            className="text-[10px] pl-3"
+                          >
+                            <div className="font-medium text-rose-700">
+                              {i + 1}. {s.startDate}
+                            </div>
+                            <div className="text-gray-600 break-all">
+                              {s.metaKey}
+                            </div>
+                            <div className="text-rose-600 mt-0.5 font-medium">
+                              → {s.reason}
+                            </div>
+                          </div>
+                        ))}
+                      {bar.alignmentDebugInfo.filteredOutSnapshots.length >
+                        10 && (
+                        <div className="text-[10px] text-gray-500 text-center py-1">
+                          ... 외{" "}
+                          {bar.alignmentDebugInfo.filteredOutSnapshots
+                            .length - 10}
+                          개
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 

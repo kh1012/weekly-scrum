@@ -9,7 +9,7 @@
 import { useState, useRef, useEffect } from "react";
 import { LoadingIcon } from "./Icons";
 
-export type ExportQuality = 'low' | 'normal' | 'high';
+export type ExportQuality = "low" | "normal" | "high";
 
 export interface ExportDropdownProps {
   /** JSON export 핸들러 */
@@ -28,9 +28,9 @@ type ExportType = "json" | "png" | "svg" | "figma";
 
 // 품질별 설정
 const QUALITY_PRESETS = {
-  low: { scale: 1, label: '저품질', description: '빠른 생성 (1x)' },
-  normal: { scale: 2, label: '기본', description: '표준 품질 (2x)' },
-  high: { scale: 3, label: '고품질', description: '최고 품질 (3x)' }
+  low: { scale: 1, label: "저품질", description: "빠른 생성 (1x)" },
+  normal: { scale: 2, label: "기본", description: "표준 품질 (2x)" },
+  high: { scale: 3, label: "고품질", description: "최고 품질 (3x)" },
 };
 
 export function ExportDropdown({
@@ -48,7 +48,8 @@ export function ExportDropdown({
   const [figmaFileKey, setFigmaFileKey] = useState("");
   const [showPNGQuality, setShowPNGQuality] = useState(false);
   const [showSVGQuality, setShowSVGQuality] = useState(false);
-  const [selectedQuality, setSelectedQuality] = useState<ExportQuality>('normal');
+  const [selectedQuality, setSelectedQuality] =
+    useState<ExportQuality>("normal");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Figma 설정 및 품질 설정 불러오기
@@ -56,7 +57,8 @@ export function ExportDropdown({
     try {
       const token = localStorage.getItem("figma-access-token") || "";
       const fileKey = localStorage.getItem("figma-file-key") || "";
-      const quality = localStorage.getItem("export-quality") as ExportQuality || 'normal';
+      const quality =
+        (localStorage.getItem("export-quality") as ExportQuality) || "normal";
       setFigmaToken(token);
       setFigmaFileKey(fileKey);
       setSelectedQuality(quality);
@@ -127,7 +129,7 @@ export function ExportDropdown({
     }
   };
 
-  const handleQualitySelect = (quality: ExportQuality, type: 'png' | 'svg') => {
+  const handleQualitySelect = (quality: ExportQuality, type: "png" | "svg") => {
     setSelectedQuality(quality);
     try {
       localStorage.setItem("export-quality", quality);
@@ -284,32 +286,38 @@ export function ExportDropdown({
               {showPNGQuality && (
                 <div className="absolute left-full top-0 ml-1 bg-white rounded-md shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
                   <div className="p-1.5 space-y-0.5">
-                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map((quality) => {
-                      const preset = QUALITY_PRESETS[quality];
-                      return (
-                        <button
-                          key={quality}
-                          onClick={() => handleQualitySelect(quality, 'png')}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
-                            selectedQuality === quality ? 'bg-blue-50' : ''
-                          }`}
-                        >
-                          <div>
-                            <div className="text-xs font-semibold text-gray-900">
-                              {preset.label}
+                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
+                      (quality) => {
+                        const preset = QUALITY_PRESETS[quality];
+                        return (
+                          <button
+                            key={quality}
+                            onClick={() => handleQualitySelect(quality, "png")}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
+                              selectedQuality === quality ? "bg-blue-50" : ""
+                            }`}
+                          >
+                            <div>
+                              <div className="text-xs font-semibold text-gray-900">
+                                {preset.label}
+                              </div>
+                              <div className="text-[10px] text-gray-500 mt-0.5">
+                                {preset.description}
+                              </div>
                             </div>
-                            <div className="text-[10px] text-gray-500 mt-0.5">
-                              {preset.description}
-                            </div>
-                          </div>
-                          {selectedQuality === quality && (
-                            <svg className="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 16 16">
-                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })}
+                            {selectedQuality === quality && (
+                              <svg
+                                className="w-3.5 h-3.5 text-blue-600"
+                                fill="currentColor"
+                                viewBox="0 0 16 16"
+                              >
+                                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      }
+                    )}
                   </div>
                 </div>
               )}
@@ -352,32 +360,38 @@ export function ExportDropdown({
               {showSVGQuality && (
                 <div className="absolute left-full top-0 ml-1 bg-white rounded-md shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
                   <div className="p-1.5 space-y-0.5">
-                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map((quality) => {
-                      const preset = QUALITY_PRESETS[quality];
-                      return (
-                        <button
-                          key={quality}
-                          onClick={() => handleQualitySelect(quality, 'svg')}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
-                            selectedQuality === quality ? 'bg-blue-50' : ''
-                          }`}
-                        >
-                          <div>
-                            <div className="text-xs font-semibold text-gray-900">
-                              {preset.label}
+                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
+                      (quality) => {
+                        const preset = QUALITY_PRESETS[quality];
+                        return (
+                          <button
+                            key={quality}
+                            onClick={() => handleQualitySelect(quality, "svg")}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
+                              selectedQuality === quality ? "bg-blue-50" : ""
+                            }`}
+                          >
+                            <div>
+                              <div className="text-xs font-semibold text-gray-900">
+                                {preset.label}
+                              </div>
+                              <div className="text-[10px] text-gray-500 mt-0.5">
+                                {preset.description}
+                              </div>
                             </div>
-                            <div className="text-[10px] text-gray-500 mt-0.5">
-                              {preset.description}
-                            </div>
-                          </div>
-                          {selectedQuality === quality && (
-                            <svg className="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 16 16">
-                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })}
+                            {selectedQuality === quality && (
+                              <svg
+                                className="w-3.5 h-3.5 text-blue-600"
+                                fill="currentColor"
+                                viewBox="0 0 16 16"
+                              >
+                                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      }
+                    )}
                   </div>
                 </div>
               )}

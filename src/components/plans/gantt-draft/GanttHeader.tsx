@@ -108,8 +108,8 @@ interface GanttHeaderProps {
   isRefreshing?: boolean;
   /** Export 핸들러 */
   onExportJSON?: () => Promise<void>;
-  onExportPNG?: (quality?: 'low' | 'normal' | 'high') => Promise<void>;
-  onExportSVG?: (quality?: 'low' | 'normal' | 'high') => Promise<void>;
+  onExportPNG?: (quality?: "low" | "normal" | "high") => Promise<void>;
+  onExportSVG?: (quality?: "low" | "normal" | "high") => Promise<void>;
 }
 
 // 스타일 태그 (체크 아이콘 애니메이션)
