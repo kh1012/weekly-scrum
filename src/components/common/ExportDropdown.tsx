@@ -436,8 +436,7 @@ export function ExportDropdown({
             {/* 안내 문구 */}
             <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
               <p className="text-[10px] text-gray-500 leading-relaxed">
-                <span className="font-semibold">💡 Tip:</span> SVG는 벡터 편집
-                가능, PNG는 즉시 공유용
+                SVG는 벡터 편집 가능, PNG는 즉시 공유용
               </p>
             </div>
           </div>

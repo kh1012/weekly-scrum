@@ -28,7 +28,7 @@ interface WorksAlignmentClientProps {
 
 /**
  * Works Alignment Client Component
- * 
+ *
  * Workspace-wide alignment view
  * - 모든 Plans + 모든 사용자의 Snapshot Entries
  * - 개인별 연결 화살표 표시
@@ -45,7 +45,7 @@ export function WorksAlignmentClient({
 }: WorksAlignmentClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(
     new Set(initialAssignees)
@@ -63,10 +63,10 @@ export function WorksAlignmentClient({
   }, [initialViewMode, setViewModeStore]);
 
   // 필터링 및 통계 계산 (담당자 필터 반영)
-  const { filteredItems, stats } = useAlignmentFilter({ 
-    items, 
+  const { filteredItems, stats } = useAlignmentFilter({
+    items,
     filter,
-    selectedAssignees 
+    selectedAssignees,
   });
 
   // filter 변경 핸들러 (querystring 업데이트)
@@ -125,7 +125,7 @@ export function WorksAlignmentClient({
         params.delete("enableAlignmentCheck");
       }
       router.replace(`?${params.toString()}`, { scroll: false });
-      
+
       // 2. state 업데이트 (연산 수행)
       setEnableAlignmentCheck(enabled);
     },
@@ -154,7 +154,9 @@ export function WorksAlignmentClient({
         return item.authorId && selectedAssignees.has(item.authorId);
       }
       // Plan인 경우
-      return item.assignees?.some((a) => selectedAssignees.has(a.userId)) || false;
+      return (
+        item.assignees?.some((a) => selectedAssignees.has(a.userId)) || false
+      );
     });
   }, [filteredItems, selectedAssignees]);
 
@@ -176,7 +178,6 @@ export function WorksAlignmentClient({
           members={members}
           title="Workspace Alignment"
           description="전체 계획과 실행 기록을 확인합니다."
-          showMismatchReview={enableAlignmentCheck}
           selectedAssignees={selectedAssignees}
           onAssigneesChange={handleAssigneesChange}
           onViewModeChange={handleViewModeChange}
@@ -189,4 +190,3 @@ export function WorksAlignmentClient({
     </div>
   );
 }
-

@@ -44,7 +44,7 @@ export function AlignmentGanttClient({
 }: AlignmentGanttClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [enableAlignmentCheck, setEnableAlignmentCheck] = useState(
     initialEnableAlignmentCheck
@@ -99,7 +99,7 @@ export function AlignmentGanttClient({
         params.delete("enableAlignmentCheck");
       }
       router.replace(`?${params.toString()}`, { scroll: false });
-      
+
       // 2. state 업데이트 (연산 수행)
       setEnableAlignmentCheck(enabled);
     },
@@ -117,10 +117,10 @@ export function AlignmentGanttClient({
   }, [router]);
 
   // 필터링 및 통계 계산 (개인 페이지는 담당자 필터 없음)
-  const { filteredItems, stats } = useAlignmentFilter({ 
-    items, 
+  const { filteredItems, stats } = useAlignmentFilter({
+    items,
     filter,
-    selectedAssignees: new Set() // 개인 페이지는 담당자 필터 없음
+    selectedAssignees: new Set(), // 개인 페이지는 담당자 필터 없음
   });
 
   return (
@@ -141,7 +141,6 @@ export function AlignmentGanttClient({
           members={members}
           title={userName ? `${userName}님의 Alignment` : "Alignment"}
           description="계획과 기록을 Align 해봅니다."
-          showMismatchReview={enableAlignmentCheck}
           onViewModeChange={handleViewModeChange}
           enableAlignmentCheck={enableAlignmentCheck}
           onEnableAlignmentCheckChange={handleEnableAlignmentCheckChange}

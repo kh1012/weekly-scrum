@@ -1,6 +1,6 @@
 /**
  * AlignmentGanttView - Alignment 전용 Gantt Chart Wrapper
- * 
+ *
  * DraftGanttView를 래핑하여 Alignment 기능을 제공:
  * - Status Coloring (RED/ORANGE/GREEN)
  * - Mismatch Review Panel
@@ -11,20 +11,25 @@
 "use client";
 
 import { useMemo, useRef, useCallback } from "react";
-import { DraftGanttView, type DraftGanttViewRef } from "@/components/plans/gantt-draft/DraftGanttView";
+import {
+  DraftGanttView,
+  type DraftGanttViewRef,
+} from "@/components/plans/gantt-draft/DraftGanttView";
 import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
-import { calculateAlignmentStatus, detectAlignmentMismatches } from "@/lib/alignment/alignmentStatus";
+import {
+  calculateAlignmentStatus,
+  detectAlignmentMismatches,
+} from "@/lib/alignment/alignmentStatus";
 import type { DraftBar } from "@/components/plans/gantt-draft/types";
 import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
-import { MismatchReviewPanel } from "./MismatchReviewPanel";
 
 export interface AlignmentGanttViewProps {
   /** Workspace ID */
   workspaceId: string;
-  
+
   /** Alignment items (Plans + Snapshots) */
   items: AlignmentGanttItem[];
-  
+
   /** Workspace members */
   members: Array<{
     userId: string;
@@ -32,44 +37,41 @@ export interface AlignmentGanttViewProps {
     email?: string;
     basicRole?: "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null;
   }>;
-  
+
   /** Gantt chart title */
   title: string;
-  
+
   /** Gantt chart description (optional) */
   description?: string;
-  
-  /** Show mismatch review panel (default: true) */
-  showMismatchReview?: boolean;
-  
+
   /** Selected assignees for filtering (optional) */
   selectedAssignees?: Set<string>;
-  
+
   /** Assignee filter change handler (optional) */
   onAssigneesChange?: (assignees: Set<string>) => void;
-  
+
   /** View mode change handler (optional) */
   onViewModeChange?: (mode: "detailed" | "summarized") => void;
-  
+
   /** Enable alignment coverage check (default: false) */
   enableAlignmentCheck?: boolean;
-  
+
   /** Enable alignment coverage check change handler */
   onEnableAlignmentCheckChange?: (enabled: boolean) => void;
-  
+
   /** Coverage check start date (YYYY-MM-DD, default: 2025-01-12) */
   coverageCheckStartDate?: string;
-  
+
   /** 데이터 새로고침 핸들러 */
   onRefreshData?: () => void;
-  
+
   /** 데이터 새로고침 중 상태 */
   isRefreshing?: boolean;
 }
 
 /**
  * AlignmentGanttView Component
- * 
+ *
  * Alignment 기능에 특화된 Gantt Chart 래퍼 컴포넌트
  * Plans와 Alignment가 공통으로 사용하는 DraftGanttView를 래핑하여
  * Alignment 고유 기능을 제공합니다.
@@ -80,7 +82,6 @@ export function AlignmentGanttView({
   members,
   title,
   description = "계획과 기록을 Align 해봅니다.",
-  showMismatchReview = true,
   selectedAssignees,
   onAssigneesChange,
   onViewModeChange,
@@ -183,7 +184,9 @@ export function AlignmentGanttView({
     // 4. Mismatch 검출 (커버리지 검증이 활성화되고 기간 필터를 통과한 경우만)
     let detectedMismatches: any[] = [];
     if (enableAlignmentCheck) {
-      const planBars = mockBars.filter((bar) => !bar.isSnapshot && bar.startDate >= coverageCheckStartDate);
+      const planBars = mockBars.filter(
+        (bar) => !bar.isSnapshot && bar.startDate >= coverageCheckStartDate
+      );
       detectedMismatches = detectAlignmentMismatches(planBars, mockBars);
     }
 
@@ -200,40 +203,30 @@ export function AlignmentGanttView({
     // metaPath format: "Project / Module / Feature"
     const parts = mismatch.metaPath.split(" / ");
     const rowId = parts.join("::");
-    
+
     // Scroll to the row and highlight
     ganttRef.current?.scrollToRow(rowId, { highlight: true, smooth: true });
   }, []);
 
   return (
-    <div className="relative h-full">
-      {/* Mismatch Review Panel */}
-      {showMismatchReview && (
-        <MismatchReviewPanel
-          mismatches={mismatches}
-          onFocusMismatch={handleFocusMismatch}
-        />
-      )}
-
-      {/* Gantt Chart */}
-      <DraftGanttView
-        ref={ganttRef}
-        workspaceId={workspaceId}
-        initialPlans={initialPlans}
-        members={members}
-        readOnly={true}
-        title={title}
-        description={description}
-        selectedStages={new Set()}
-        selectedAssignees={selectedAssignees || new Set()}
-        onAssigneesChange={onAssigneesChange}
-        onViewModeChange={onViewModeChange}
-        onRefreshData={onRefreshData}
-        isRefreshing={isRefreshing}
-        enableAlignmentCheck={enableAlignmentCheck}
-        onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
-      />
-    </div>
+    <DraftGanttView
+      ref={ganttRef}
+      workspaceId={workspaceId}
+      initialPlans={initialPlans}
+      members={members}
+      readOnly={true}
+      title={title}
+      description={description}
+      selectedStages={new Set()}
+      selectedAssignees={selectedAssignees || new Set()}
+      onAssigneesChange={onAssigneesChange}
+      onViewModeChange={onViewModeChange}
+      onRefreshData={onRefreshData}
+      isRefreshing={isRefreshing}
+      enableAlignmentCheck={enableAlignmentCheck}
+      onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
+      mismatches={mismatches}
+      onFocusMismatch={handleFocusMismatch}
+    />
   );
 }
-

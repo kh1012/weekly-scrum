@@ -32,6 +32,7 @@ import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
 import { showToast, showInactivityWarningToast } from "./Toast";
 import { ExportDropdown } from "@/components/common/ExportDropdown";
+import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
 
 interface GanttHeaderProps {
   workspaceId: string;
@@ -98,6 +99,10 @@ interface GanttHeaderProps {
   enableAlignmentCheck?: boolean;
   /** Alignment 커버리지 검토 활성화 변경 핸들러 */
   onEnableAlignmentCheckChange?: (enabled: boolean) => void;
+  /** Alignment mismatches (검토 필요한 항목들) */
+  mismatches?: AlignmentMismatch[];
+  /** Mismatch 클릭 핸들러 */
+  onFocusMismatch?: (mismatch: AlignmentMismatch) => void;
   /** 뷰 모드 변경 시작 콜백 */
   onViewModeChangeStart?: () => void;
   /** 뷰 모드 변경 핸들러 (store + URL 업데이트) */
@@ -159,6 +164,8 @@ export function GanttHeader({
   autoSaveSuccess = false,
   enableAlignmentCheck = false,
   onEnableAlignmentCheckChange,
+  mismatches = [],
+  onFocusMismatch,
   onViewModeChangeStart,
   onViewModeChange,
   onRefreshData,
@@ -182,6 +189,11 @@ export function GanttHeader({
   const setViewMode = useDraftStore((s) => s.setViewMode);
   const [isViewModeChanging, setIsViewModeChanging] = useState(false);
   const prevViewModeRef = useRef(viewMode);
+
+  // Mismatch Review Popover 상태
+  const [showMismatchPopover, setShowMismatchPopover] = useState(false);
+  const mismatchButtonRef = useRef<HTMLButtonElement>(null);
+  const mismatchPopoverRef = useRef<HTMLDivElement>(null);
 
   const isMac = useIsMac();
   const modKey = isMac ? "⌘" : "Ctrl";
@@ -223,6 +235,36 @@ export function GanttHeader({
     onViewModeChange,
     onViewModeChangeStart,
   ]);
+
+  // Mismatch Popover 외부 클릭 감지
+  useEffect(() => {
+    if (!showMismatchPopover) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        mismatchPopoverRef.current &&
+        !mismatchPopoverRef.current.contains(event.target as Node) &&
+        mismatchButtonRef.current &&
+        !mismatchButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowMismatchPopover(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMismatchPopover]);
+
+  // Mismatch 클릭 핸들러
+  const handleMismatchClick = useCallback(
+    (mismatch: AlignmentMismatch) => {
+      onFocusMismatch?.(mismatch);
+      setShowMismatchPopover(false);
+    },
+    [onFocusMismatch]
+  );
 
   // 필터 활성화 시 Detailed 뷰로 강제 전환
   useEffect(() => {
@@ -586,10 +628,14 @@ export function GanttHeader({
                 <button
                   onClick={onRefreshData}
                   disabled={!enableAlignmentCheck || isRefreshing}
-                  className={`relative group flex items-center justify-center h-8 border border-l rounded-tr-lg rounded-br-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium ${
+                  className={`relative group flex items-center justify-center h-8 border transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium ${
                     enableAlignmentCheck
                       ? "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
                       : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
+                  } ${
+                    mismatches && mismatches.length > 0
+                      ? ""
+                      : "rounded-tr-lg rounded-br-lg border-l"
                   }`}
                   title={enableAlignmentCheck ? "데이터 새로고침" : undefined}
                 >
@@ -606,6 +652,170 @@ export function GanttHeader({
                     </span>
                   )}
                 </button>
+              )}
+
+              {/* 실행 커버리지 검토 리스트 버튼 */}
+              {enableAlignmentCheck && mismatches && mismatches.length > 0 && (
+                <div className="relative">
+                  <button
+                    ref={mismatchButtonRef}
+                    onClick={() => setShowMismatchPopover(!showMismatchPopover)}
+                    className="relative flex items-center justify-center h-8 border border-l rounded-tr-lg rounded-br-lg transition-all px-1.5 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                    title="검토 필요 항목 보기"
+                  >
+                    {/* List Icon */}
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    </svg>
+
+                    {/* 뱃지 (우측 상단) */}
+                    <span
+                      className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[9px] font-bold rounded-full"
+                      style={{
+                        background: "#ef4444",
+                        color: "white",
+                      }}
+                    >
+                      {mismatches.length}
+                    </span>
+                  </button>
+
+                  {/* Popover */}
+                  {showMismatchPopover && (
+                    <div
+                      ref={mismatchPopoverRef}
+                      className="absolute top-full left-0 mt-2 z-50 w-[600px] max-h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col"
+                      style={{
+                        animation: "slideDown 0.2s ease-out",
+                      }}
+                    >
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-gray-800">
+                            실행 커버리지 검토
+                          </h3>
+                          <button
+                            onClick={() => setShowMismatchPopover(false)}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {mismatches.length}개 항목의 실행 기록 확인이
+                          필요합니다
+                        </p>
+                      </div>
+
+                      {/* Mismatch List */}
+                      <div className="flex-1 overflow-y-auto">
+                        {mismatches.map((mismatch, index) => (
+                          <button
+                            key={`${mismatch.planId}-${index}`}
+                            onClick={() => handleMismatchClick(mismatch)}
+                            className="w-full px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
+                          >
+                            {/* Status Icon + Meta Path */}
+                            <div className="flex items-start gap-2 mb-1.5">
+                              <div className="shrink-0 mt-0.5">
+                                {mismatch.status === "red" ? (
+                                  <div
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ background: "#ef4444" }}
+                                    title="실행 기록 없음"
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ background: "#f59e0b" }}
+                                    title="실행 커버리지 부족"
+                                  />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-gray-700">
+                                  {mismatch.metaPath}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Plan Title */}
+                            {mismatch.planTitle && (
+                              <div className="text-xs text-gray-600 ml-5 mb-1 truncate">
+                                {mismatch.planTitle}
+                              </div>
+                            )}
+
+                            {/* Explanation */}
+                            <div className="text-xs text-gray-500 ml-5 leading-relaxed">
+                              {mismatch.status === "red"
+                                ? "계획 기간 내 실행 기록이 없습니다."
+                                : "실행 기록은 있으나 예상 범위보다 부족합니다."}
+                            </div>
+
+                            {/* Coverage Stats */}
+                            <div className="flex items-center gap-3 ml-5 mt-1.5 text-[10px] text-gray-400">
+                              <span>
+                                실행 {mismatch.actualCount} / 예상{" "}
+                                {mismatch.expectedCount}
+                              </span>
+                              <span>•</span>
+                              <span>
+                                {mismatch.planStartDate} ~{" "}
+                                {mismatch.planEndDate}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Footer Hint */}
+                      <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50">
+                        <p className="text-[10px] text-gray-500 text-center">
+                          항목을 클릭하면 타임라인에서 해당 계획을 확인할 수
+                          있습니다
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Slide down animation */}
+                  <style jsx>{`
+                    @keyframes slideDown {
+                      from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                      }
+                      to {
+                        opacity: 1;
+                        transform: translateY(0);
+                      }
+                    }
+                  `}</style>
+                </div>
               )}
             </div>
           )}

@@ -43,6 +43,7 @@ import {
   exportSVG,
   type ExportMetadata,
 } from "@/lib/export";
+import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
 
 interface InitialAssignee {
   userId: string;
@@ -90,6 +91,23 @@ interface InitialPlan {
   risk_level?: number;
   /** Alignment 상태 (Plan only) */
   alignmentStatus?: "green" | "orange" | "red" | null;
+  alignmentActualCount?: number;
+  alignmentExpectedCount?: number;
+  alignmentDebugInfo?: {
+    planMetaKey: string;
+    planDateRange: string;
+    matchingSnapshots: Array<{
+      metaKey: string;
+      startDate: string;
+      authorId?: string;
+    }>;
+    filteredOutSnapshots: Array<{
+      metaKey: string;
+      startDate: string;
+      authorId?: string;
+      reason: string;
+    }>;
+  };
 }
 
 interface DraftGanttViewProps {
@@ -128,6 +146,10 @@ interface DraftGanttViewProps {
   onRefreshData?: () => void;
   /** 데이터 새로고침 중 상태 */
   isRefreshing?: boolean;
+  /** Alignment mismatches (검토 필요한 항목들) */
+  mismatches?: AlignmentMismatch[];
+  /** Mismatch 클릭 핸들러 */
+  onFocusMismatch?: (mismatch: AlignmentMismatch) => void;
 }
 
 export interface DraftGanttViewRef {
@@ -161,6 +183,8 @@ export const DraftGanttView = forwardRef<
     onViewModeChange,
     onRefreshData,
     isRefreshing = false,
+    mismatches = [],
+    onFocusMismatch,
   },
   ref
 ) {
@@ -1041,72 +1065,86 @@ export const DraftGanttView = forwardRef<
     members,
   ]);
 
-  const handleExportPNG = useCallback(async (quality: 'low' | 'normal' | 'high' = 'normal') => {
-    try {
-      // exportContainerRef 사용 (Header 포함)
-      if (!exportContainerRef.current) {
-        throw new Error("Export 컨테이너를 찾을 수 없습니다.");
+  const handleExportPNG = useCallback(
+    async (quality: "low" | "normal" | "high" = "normal") => {
+      try {
+        // exportContainerRef 사용 (Header 포함)
+        if (!exportContainerRef.current) {
+          throw new Error("Export 컨테이너를 찾을 수 없습니다.");
+        }
+
+        const qualityLabels = {
+          low: "저품질",
+          normal: "기본",
+          high: "고품질",
+        };
+
+        showToast(
+          "info",
+          `PNG 생성 중 (${qualityLabels[quality]})`,
+          "잠시만 기다려주세요..."
+        );
+
+        await exportPNG(exportContainerRef.current, {
+          filename: `gantt-screenshot-${Date.now()}`,
+          quality,
+          pngOptions: {
+            backgroundColor: "#ffffff",
+          },
+        });
+
+        showToast("success", "PNG Export 완료", "이미지가 다운로드되었습니다.");
+      } catch (error) {
+        console.error("PNG Export 실패:", error);
+        showToast(
+          "error",
+          "Export 실패",
+          error instanceof Error ? error.message : "알 수 없는 오류"
+        );
       }
+    },
+    []
+  );
 
-      const qualityLabels = {
-        low: '저품질',
-        normal: '기본',
-        high: '고품질'
-      };
+  const handleExportSVG = useCallback(
+    async (quality: "low" | "normal" | "high" = "normal") => {
+      try {
+        if (!exportContainerRef.current) {
+          throw new Error("Export 컨테이너를 찾을 수 없습니다.");
+        }
 
-      showToast("info", `PNG 생성 중 (${qualityLabels[quality]})`, "잠시만 기다려주세요...");
+        const qualityLabels = {
+          low: "저품질",
+          normal: "기본",
+          high: "고품질",
+        };
 
-      await exportPNG(exportContainerRef.current, {
-        filename: `gantt-screenshot-${Date.now()}`,
-        quality,
-        pngOptions: {
-          backgroundColor: "#ffffff",
-        },
-      });
+        showToast(
+          "info",
+          `SVG 생성 중 (${qualityLabels[quality]})`,
+          "잠시만 기다려주세요..."
+        );
 
-      showToast("success", "PNG Export 완료", "이미지가 다운로드되었습니다.");
-    } catch (error) {
-      console.error("PNG Export 실패:", error);
-      showToast(
-        "error",
-        "Export 실패",
-        error instanceof Error ? error.message : "알 수 없는 오류"
-      );
-    }
-  }, []);
+        await exportSVG(exportContainerRef.current, {
+          filename: `gantt-export-${Date.now()}`,
+          quality,
+          svgOptions: {
+            inlineStyles: true,
+          },
+        });
 
-  const handleExportSVG = useCallback(async (quality: 'low' | 'normal' | 'high' = 'normal') => {
-    try {
-      if (!exportContainerRef.current) {
-        throw new Error("Export 컨테이너를 찾을 수 없습니다.");
+        showToast("success", "SVG Export 완료", "파일이 다운로드되었습니다.");
+      } catch (error) {
+        console.error("SVG Export 실패:", error);
+        showToast(
+          "error",
+          "Export 실패",
+          error instanceof Error ? error.message : "알 수 없는 오류"
+        );
       }
-
-      const qualityLabels = {
-        low: '저품질',
-        normal: '기본',
-        high: '고품질'
-      };
-
-      showToast("info", `SVG 생성 중 (${qualityLabels[quality]})`, "잠시만 기다려주세요...");
-
-      await exportSVG(exportContainerRef.current, {
-        filename: `gantt-export-${Date.now()}`,
-        quality,
-        svgOptions: {
-          inlineStyles: true,
-        },
-      });
-
-      showToast("success", "SVG Export 완료", "파일이 다운로드되었습니다.");
-    } catch (error) {
-      console.error("SVG Export 실패:", error);
-      showToast(
-        "error",
-        "Export 실패",
-        error instanceof Error ? error.message : "알 수 없는 오류"
-      );
-    }
-  }, []);
+    },
+    []
+  );
 
   // 키보드 단축키
   useEffect(() => {
@@ -1262,6 +1300,8 @@ export const DraftGanttView = forwardRef<
           // Alignment 커버리지 검토
           enableAlignmentCheck={enableAlignmentCheck}
           onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
+          mismatches={mismatches}
+          onFocusMismatch={onFocusMismatch}
           // 중앙 액션 props
           onUndo={undo}
           onRedo={redo}
