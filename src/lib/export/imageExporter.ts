@@ -12,6 +12,29 @@ import { downloadFile, generateDefaultFilename, sanitizeFilename } from "./utils
 function fixOverflowForExport(element: HTMLElement): void {
   const computedStyle = window.getComputedStyle(element);
   
+  // 자식 요소들의 최대 크기 계산
+  let maxChildWidth = 0;
+  let maxChildHeight = 0;
+  Array.from(element.children).forEach((child) => {
+    if (child instanceof HTMLElement) {
+      const childRight = child.offsetLeft + child.offsetWidth;
+      const childBottom = child.offsetTop + child.offsetHeight;
+      maxChildWidth = Math.max(maxChildWidth, childRight);
+      maxChildHeight = Math.max(maxChildHeight, childBottom);
+    }
+  });
+  
+  // 실제 필요한 크기 계산 (scrollWidth와 자식 크기 중 큰 값)
+  const requiredWidth = Math.max(element.scrollWidth, maxChildWidth);
+  const requiredHeight = Math.max(element.scrollHeight, maxChildHeight);
+  
+  console.log(`[fixOverflow] ${element.className}:`, {
+    current: { width: element.offsetWidth, height: element.offsetHeight },
+    scroll: { width: element.scrollWidth, height: element.scrollHeight },
+    maxChild: { width: maxChildWidth, height: maxChildHeight },
+    required: { width: requiredWidth, height: requiredHeight }
+  });
+  
   // 모든 overflow 속성을 visible로 강제 변경
   if (
     computedStyle.overflow !== 'visible' ||
@@ -23,24 +46,27 @@ function fixOverflowForExport(element: HTMLElement): void {
     element.style.setProperty('overflow-y', 'visible', 'important');
     
     // 스크롤 콘텐츠가 잘리지 않도록 크기 확장
-    if (element.scrollWidth > element.clientWidth) {
-      element.style.setProperty('width', `${element.scrollWidth}px`, 'important');
+    if (requiredWidth > element.clientWidth) {
+      element.style.setProperty('width', `${requiredWidth}px`, 'important');
+      element.style.setProperty('min-width', `${requiredWidth}px`, 'important');
     }
-    if (element.scrollHeight > element.clientHeight) {
-      element.style.setProperty('height', `${element.scrollHeight}px`, 'important');
+    if (requiredHeight > element.clientHeight) {
+      element.style.setProperty('height', `${requiredHeight}px`, 'important');
+      element.style.setProperty('min-height', `${requiredHeight}px`, 'important');
     }
   }
   
   // flex-1 요소는 고정 크기로 변경
   if (computedStyle.flex && computedStyle.flex.includes('1')) {
-    const currentHeight = element.offsetHeight;
-    const currentWidth = element.offsetWidth;
+    const targetWidth = Math.max(element.offsetWidth, requiredWidth);
+    const targetHeight = Math.max(element.offsetHeight, requiredHeight);
+    
     element.style.setProperty('flex', 'none', 'important');
-    element.style.setProperty('width', `${Math.max(currentWidth, element.scrollWidth)}px`, 'important');
-    element.style.setProperty('height', `${Math.max(currentHeight, element.scrollHeight)}px`, 'important');
+    element.style.setProperty('width', `${targetWidth}px`, 'important');
+    element.style.setProperty('height', `${targetHeight}px`, 'important');
   }
   
-  // 자식 요소 재귀 처리
+  // 자식 요소 재귀 처리 (먼저 처리해야 부모가 올바른 크기를 계산할 수 있음)
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
       fixOverflowForExport(child);
