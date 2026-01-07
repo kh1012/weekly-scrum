@@ -6,39 +6,34 @@ import type { ExportOptions, ExportProgress } from "./types";
 import { downloadFile, generateDefaultFilename, sanitizeFilename } from "./utils";
 
 /**
- * 요소의 모든 자식을 순회하며 overflow 스타일을 visible로 변경
+ * Export를 위해 overflow만 최소 침습적으로 변경
+ * 레이아웃(width, height, flex)은 건드리지 않음
  */
-function expandAllOverflowContainers(element: HTMLElement): void {
-  // 현재 요소의 computed style 확인
-  const computedStyle = window.getComputedStyle(element);
-  const overflow = computedStyle.overflow;
-  const overflowX = computedStyle.overflowX;
-  const overflowY = computedStyle.overflowY;
-
-  // overflow가 auto, scroll, hidden인 경우 visible로 변경
-  if (
-    overflow !== 'visible' ||
-    overflowX !== 'visible' ||
-    overflowY !== 'visible'
-  ) {
+function fixOverflowForExport(element: HTMLElement): void {
+  // 실제 스크롤이 발생하는 요소만 처리
+  const hasVerticalScroll = element.scrollHeight > element.clientHeight;
+  const hasHorizontalScroll = element.scrollWidth > element.clientWidth;
+  
+  if (hasVerticalScroll || hasHorizontalScroll) {
+    // overflow만 변경 (레이아웃은 보존)
     element.style.overflow = 'visible';
     element.style.overflowX = 'visible';
     element.style.overflowY = 'visible';
-    element.style.height = 'auto';
-    element.style.maxHeight = 'none';
-    element.style.width = 'auto';
-    element.style.maxWidth = 'none';
+    
+    // 내부 콘텐츠가 잘리지 않도록 min 크기만 설정
+    // (width/height는 건드리지 않아 flex 레이아웃 보존)
+    if (hasHorizontalScroll) {
+      element.style.minWidth = `${element.scrollWidth}px`;
+    }
+    if (hasVerticalScroll) {
+      element.style.minHeight = `${element.scrollHeight}px`;
+    }
   }
-
-  // flex-1 같은 클래스가 있는 경우도 처리
-  if (element.style.flex || computedStyle.flex) {
-    element.style.flex = 'none';
-  }
-
-  // 모든 자식 요소에 대해 재귀적으로 처리
+  
+  // 자식 요소 재귀 처리
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
-      expandAllOverflowContainers(child);
+      fixOverflowForExport(child);
     }
   });
 }
@@ -111,8 +106,8 @@ export async function exportPNG(
     // body에 추가
     document.body.appendChild(clonedElement);
 
-    // 모든 overflow 컨테이너 확장
-    expandAllOverflowContainers(clonedElement);
+    // overflow 스타일만 최소 침습적으로 조정 (레이아웃 보존)
+    fixOverflowForExport(clonedElement);
 
     // 폰트 재로딩 대기 (복제된 DOM에 대해)
     if (preset.textRendering) {
