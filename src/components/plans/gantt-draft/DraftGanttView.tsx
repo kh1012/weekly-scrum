@@ -228,39 +228,20 @@ export const DraftGanttView = forwardRef<
     }
   }, [viewMode]);
 
-  // 자동 저장 옵션 (localStorage에서 불러오기)
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  // 자동 저장 옵션 (기본값: 활성화)
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [autoSaveSuccess, setAutoSaveSuccess] = useState(false);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("gantt-auto-save-enabled");
-      if (stored === "true") {
-        setAutoSaveEnabled(true);
-      }
-    } catch {
-      // localStorage 접근 실패 시 무시
-    }
-  }, []);
 
   const handleAutoSaveChange = useCallback((enabled: boolean) => {
     setAutoSaveEnabled(enabled);
-    try {
-      localStorage.setItem(
-        "gantt-auto-save-enabled",
-        enabled ? "true" : "false"
+    if (enabled) {
+      showToast(
+        "success",
+        "자동 저장 활성화",
+        "90초 이상 비활성 시 자동으로 저장됩니다."
       );
-      if (enabled) {
-        showToast(
-          "success",
-          "자동 저장 활성화",
-          "90초 이상 비활성 시 자동으로 저장됩니다."
-        );
-      } else {
-        showToast("info", "자동 저장 비활성화", "수동으로만 저장됩니다.");
-      }
-    } catch {
-      // localStorage 접근 실패 시 무시
+    } else {
+      showToast("info", "자동 저장 비활성화", "수동으로만 저장됩니다.");
     }
   }, []);
 
@@ -894,9 +875,9 @@ export const DraftGanttView = forwardRef<
   const lastAutoSaveRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!autoSaveEnabled || !isMyLock || !hasUnsavedChanges) return;
-    // 정확히 90초가 되었을 때만 실행
-    if (inactivitySeconds !== 90) return;
+    if (!autoSaveEnabled || !isMyLock) return;
+    // 90초 미만일 때는 스킵
+    if (inactivitySeconds === null || inactivitySeconds < 90) return;
     if (isCommitting || isAutoSaving) return;
 
     // 마지막 자동 저장으로부터 최소 90초 경과 확인 (중복 방지)
@@ -905,10 +886,10 @@ export const DraftGanttView = forwardRef<
 
     lastAutoSaveRef.current = now;
     handleAutoSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     autoSaveEnabled,
     isMyLock,
-    hasUnsavedChanges,
     inactivitySeconds,
     isCommitting,
     isAutoSaving,
@@ -916,7 +897,7 @@ export const DraftGanttView = forwardRef<
 
   // 조용한 자동 저장 (모달 없이)
   const handleAutoSave = useCallback(async () => {
-    if (!hasUnsavedChanges || isCommitting || isAutoSaving) return;
+    if (isCommitting || isAutoSaving) return;
 
     const dirtyBars = getDirtyBars();
     const deletedBars = getDeletedBars();
@@ -926,7 +907,11 @@ export const DraftGanttView = forwardRef<
     const deletedFlags = getDeletedFlags();
     const allFlags = [...dirtyFlags, ...deletedFlags];
 
-    if (allBars.length === 0 && allFlags.length === 0) return;
+    // 변경사항이 없으면 타이머만 리셋하고 종료
+    if (allBars.length === 0 && allFlags.length === 0) {
+      recordActivity();
+      return;
+    }
 
     setIsAutoSaving(true);
 
@@ -1057,7 +1042,6 @@ export const DraftGanttView = forwardRef<
 
       showToast("success", "JSON Export 완료", "파일이 다운로드되었습니다.");
     } catch (error) {
-      console.error("JSON Export 실패:", error);
       showToast(
         "error",
         "Export 실패",
@@ -1110,7 +1094,6 @@ export const DraftGanttView = forwardRef<
           "이미지가 다운로드되었습니다."
         );
       } catch (error) {
-        console.error("PNG Export 실패:", error);
         // 에러로 업데이트
         updateToastToError(
           toastId,
@@ -1173,7 +1156,6 @@ export const DraftGanttView = forwardRef<
           "이미지가 다운로드되었습니다."
         );
       } catch (error) {
-        console.error("PNG Draw Export 실패:", error);
         // 에러로 업데이트
         updateToastToError(
           toastId,
@@ -1363,6 +1345,7 @@ export const DraftGanttView = forwardRef<
           onAutoSaveChange={handleAutoSaveChange}
           isAutoSaving={isAutoSaving}
           autoSaveSuccess={autoSaveSuccess}
+          inactivitySeconds={inactivitySeconds}
           // 뷰 모드 변경 콜백
           onViewModeChangeStart={handleViewModeChangeStart}
           onViewModeChange={onViewModeChange}

@@ -95,10 +95,7 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
       // 이는 사용자가 작업 중일 때 서버 데이터와의 동기화를 방지하기 위함
       if (hasAcquiredRef.current) {
         // 이미 락을 획득한 경우, 편집 모드를 유지하고 state만 업데이트
-        // 단, 내 락이 아니게 되면 경고만 하고 편집 모드는 유지
-        if (!state.isMyLock) {
-          console.warn("[useLock] 락 상태가 변경되었지만 편집 모드는 유지됩니다.");
-        }
+        // 단, 내 락이 아니게 되면 편집 모드는 유지
         return;
       }
       

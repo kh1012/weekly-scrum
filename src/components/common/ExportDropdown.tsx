@@ -340,6 +340,20 @@ export function ExportDropdown({
                 </div>
               )}
             </div>
+
+            {/* Figma [BETA] - 구현 예정 */}
+            <button
+              disabled
+              className="w-full px-3 py-2 text-xs font-medium text-left text-gray-400 cursor-not-allowed opacity-50"
+              title="개발 중인 기능입니다"
+            >
+              <span className="flex items-center gap-2">
+                Figma
+                <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-500 rounded">
+                  BETA
+                </span>
+              </span>
+            </button>
           </div>
         )}
       </div>

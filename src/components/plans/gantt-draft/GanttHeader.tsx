@@ -115,6 +115,8 @@ interface GanttHeaderProps {
   onExportJSON?: () => Promise<void>;
   onExportPNG?: (quality?: "low" | "normal" | "high") => Promise<void>;
   onExportDraw?: (quality?: "low" | "normal" | "high") => Promise<void>;
+  /** 비활성 시간 (초) - 외부에서 전달 */
+  inactivitySeconds?: number | null;
 }
 
 // 스타일 태그 (체크 아이콘 애니메이션)
@@ -173,6 +175,7 @@ export function GanttHeader({
   onExportJSON,
   onExportPNG,
   onExportDraw,
+  inactivitySeconds: propsInactivitySeconds,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -182,8 +185,11 @@ export function GanttHeader({
     extendLockIfNeeded,
     recordActivity,
     nextHeartbeatSeconds,
-    inactivitySeconds,
+    inactivitySeconds: lockInactivitySeconds,
   } = useLock({ workspaceId });
+  
+  // props로 전달된 값이 있으면 우선 사용 (DraftGanttView에서 전달)
+  const inactivitySeconds = propsInactivitySeconds ?? lockInactivitySeconds;
 
   const viewMode = useDraftStore((s) => s.ui.viewMode);
   const setViewMode = useDraftStore((s) => s.setViewMode);
@@ -1459,14 +1465,6 @@ export function GanttHeader({
                     >
                       <CheckIcon className="w-8 h-8" />
                     </div>
-                  ) : autoSaveEnabled &&
-                    inactivitySeconds !== null &&
-                    inactivitySeconds >= 90 ? (
-                    // 90초 도달 시 로딩 스피너 표시
-                    <LoadingIcon className="w-8 h-8 text-emerald-600 animate-spin" />
-                  ) : isAutoSaving ? (
-                    // 저장 중: 로딩 스피너
-                    <LoadingIcon className="w-8 h-8 text-emerald-600 animate-spin" />
                   ) : autoSaveEnabled ? (
                     <>
                       {/* 활성화 상태: 카운트다운 표시 */}
@@ -1491,22 +1489,38 @@ export function GanttHeader({
                               cy="18"
                               r="16"
                               fill="none"
-                              stroke="#10b981"
+                              stroke={isAutoSaving ? "#9ca3af" : "#10b981"}
                               strokeWidth="2.5"
                               strokeLinecap="round"
                               strokeDasharray={`${2 * Math.PI * 16}`}
                               strokeDashoffset={`${
-                                2 * Math.PI * 16 * (inactivitySeconds / 90)
+                                2 *
+                                Math.PI *
+                                16 *
+                                (isAutoSaving ? 1 : inactivitySeconds / 90)
                               }`}
                               style={{
-                                transition: "stroke-dashoffset 1s linear",
+                                transition: isAutoSaving
+                                  ? "none"
+                                  : "stroke-dashoffset 1s linear",
                               }}
                             />
                           </svg>
                           {/* 중앙 숫자 */}
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-[10px] font-mono font-bold text-emerald-600 tabular-nums">
-                              {Math.max(0, 90 - inactivitySeconds)}
+                          <div 
+                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            key={`timer-container-${inactivitySeconds}`}
+                          >
+                            <span
+                              className={`text-[11px] font-mono font-bold tabular-nums ${
+                                isAutoSaving
+                                  ? "text-gray-400"
+                                  : "text-emerald-600"
+                              }`}
+                            >
+                              {isAutoSaving || inactivitySeconds >= 90
+                                ? 0
+                                : Math.max(0, 90 - inactivitySeconds)}
                             </span>
                           </div>
                         </>
