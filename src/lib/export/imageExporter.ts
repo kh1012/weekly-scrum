@@ -119,58 +119,87 @@ function debugTimelineBlocks(element: HTMLElement): void {
   // #region agent log
   // 타임라인 블록 찾기 (가설 F, G)
   const queue: HTMLElement[] = [element];
-  
+
   while (queue.length > 0) {
     const el = queue.shift()!;
     const computed = window.getComputedStyle(el);
-    
-    // 1. absolute positioned 블록 찾기 (타임라인 블록)
-    if (computed.position === "absolute" && timelineBlockSamples.length < 3) {
-      const rect = el.getBoundingClientRect();
+
+    // 1. absolute positioned 블록 찾기 (타임라인 블록, 높이 > 15px만)
+    if (computed.position === "absolute" && el.offsetHeight > 15 && timelineBlockSamples.length < 5) {
+      const parent = el.parentElement;
+      const parentComputed = parent ? window.getComputedStyle(parent) : null;
+      
       timelineBlockSamples.push({
         tag: el.tagName,
-        className: el.className.split(" ").slice(0, 2).join(" "),
+        className: el.className.split(" ").slice(0, 3).join(" "),
         position: computed.position,
         top: computed.top,
         left: computed.left,
+        width: computed.width,
+        height: computed.height,
         transform: computed.transform,
         offsetTop: el.offsetTop,
         offsetLeft: el.offsetLeft,
+        offsetWidth: el.offsetWidth,
         offsetHeight: el.offsetHeight,
         paddingTop: computed.paddingTop,
         paddingBottom: computed.paddingBottom,
+        paddingLeft: computed.paddingLeft,
+        paddingRight: computed.paddingRight,
         marginTop: computed.marginTop,
         marginBottom: computed.marginBottom,
         display: computed.display,
         alignItems: computed.alignItems,
-        justifyContent: computed.justifyContent
+        justifyContent: computed.justifyContent,
+        flexDirection: computed.flexDirection,
+        gap: computed.gap,
+        parentPosition: parentComputed?.position,
+        parentDisplay: parentComputed?.display
       });
     }
-    
+
     // 2. 텍스트 요소 찾기 (SPAN with text)
-    if (el.tagName === "SPAN" && el.textContent && el.textContent.trim() && textSamples.length < 5) {
+    if (
+      el.tagName === "SPAN" &&
+      el.textContent &&
+      el.textContent.trim() &&
+      textSamples.length < 8
+    ) {
       const parent = el.parentElement;
       const parentComputed = parent ? window.getComputedStyle(parent) : null;
-      
+      const grandparent = parent?.parentElement;
+      const grandparentComputed = grandparent ? window.getComputedStyle(grandparent) : null;
+
       textSamples.push({
         tag: el.tagName,
-        className: el.className.split(" ").slice(0, 2).join(" "),
+        className: el.className.split(" ").slice(0, 3).join(" "),
         text: el.textContent.substring(0, 30),
         fontSize: computed.fontSize,
         lineHeight: computed.lineHeight,
+        lineHeightNumeric: parseFloat(computed.lineHeight),
+        fontSizeNumeric: parseFloat(computed.fontSize),
+        lineHeightDiff: parseFloat(computed.lineHeight) - parseFloat(computed.fontSize),
         verticalAlign: computed.verticalAlign,
         paddingTop: computed.paddingTop,
         paddingBottom: computed.paddingBottom,
         marginTop: computed.marginTop,
         marginBottom: computed.marginBottom,
         offsetHeight: el.offsetHeight,
+        clientHeight: el.clientHeight,
+        scrollHeight: el.scrollHeight,
+        parentTag: parent?.tagName,
+        parentClassName: parent?.className.split(" ").slice(0, 2).join(" "),
         parentDisplay: parentComputed?.display,
         parentAlignItems: parentComputed?.alignItems,
+        parentJustifyContent: parentComputed?.justifyContent,
+        parentHeight: parent?.offsetHeight,
         parentPaddingTop: parentComputed?.paddingTop,
-        parentPaddingBottom: parentComputed?.paddingBottom
+        parentPaddingBottom: parentComputed?.paddingBottom,
+        grandparentPosition: grandparentComputed?.position,
+        grandparentHeight: grandparent?.offsetHeight
       });
     }
-    
+
     // 자식 추가
     for (const child of Array.from(el.children)) {
       if (child instanceof HTMLElement) {
@@ -179,16 +208,28 @@ function debugTimelineBlocks(element: HTMLElement): void {
     }
   }
 
+  const summary = {
+    timelineBlocksCount: timelineBlockSamples.length,
+    textElementsCount: textSamples.length,
+    avgLineHeightDiff: textSamples.reduce((sum, s) => sum + (s.lineHeightDiff || 0), 0) / Math.max(textSamples.length, 1),
+    flexParentCount: textSamples.filter(s => s.parentDisplay === "flex").length,
+    centerAlignCount: textSamples.filter(s => s.parentAlignItems === "center").length
+  };
+
   fetch("http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       location: "imageExporter.ts:debugTimelineBlocks",
-      message: "Timeline blocks and text elements analysis",
-      data: { timelineBlocks: timelineBlockSamples, textElements: textSamples },
+      message: "Timeline blocks and text elements analysis (v2)",
+      data: { 
+        summary,
+        timelineBlocks: timelineBlockSamples, 
+        textElements: textSamples 
+      },
       timestamp: Date.now(),
       sessionId: "debug-session",
-      runId: "padding-debug",
+      runId: "padding-debug-v2",
       hypothesisId: "F,G,H",
     }),
   }).catch(() => {});
