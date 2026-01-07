@@ -451,10 +451,15 @@ export async function exportPNG(
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
-          // Phase 0: 텍스트 여백 보정 (position: relative + top으로 위로 이동)
+          // Phase 0: 텍스트 여백 보정 (영역별 미세 조정)
           console.log("[PNG Export] 텍스트 여백 보정 시작");
           const allElements = clonedEl.querySelectorAll("*");
-          let textElementCount = 0;
+          const adjustments = {
+            timelineBlock: 0,
+            treePanel: 0,
+            header: 0,
+            other: 0,
+          };
 
           allElements.forEach((el) => {
             if (el instanceof HTMLElement) {
@@ -463,22 +468,66 @@ export async function exportPNG(
                 el.textContent && el.textContent.trim().length > 0;
 
               // SPAN 텍스트 요소만 타겟팅하여 위로 이동
-              // 사용자 피드백: 브라우저에서 padding-top: 13-15px를 줘야 PNG와 동일
-              // = PNG에서 텍스트가 약 14px 아래로 내려가 있음
               if (el.tagName === "SPAN" && hasText) {
+                // 영역 구분 및 offset 결정
+                let offset = 14; // 기본값
+                let area = "other";
+
+                // 부모 요소 탐색
+                let parent = el.parentElement;
+                let depth = 0;
+                while (parent && depth < 5) {
+                  const parentComputed = window.getComputedStyle(parent);
+
+                  // 1. 타임라인 블록 (absolute positioned parent)
+                  if (parentComputed.position === "absolute") {
+                    offset = 12; // 타임라인 블록은 12px
+                    area = "timelineBlock";
+                    break;
+                  }
+
+                  // 2. 트리 패널 (flex-shrink-0 또는 특정 클래스)
+                  if (
+                    parentComputed.flexShrink === "0" ||
+                    parent.className.includes("tree") ||
+                    parent.className.includes("panel")
+                  ) {
+                    offset = 10; // 트리 패널은 10px
+                    area = "treePanel";
+                    break;
+                  }
+
+                  // 3. 헤더 영역
+                  if (
+                    parent.tagName === "HEADER" ||
+                    parent.className.includes("header") ||
+                    parent.className.includes("title")
+                  ) {
+                    offset = 8; // 헤더는 8px
+                    area = "header";
+                    break;
+                  }
+
+                  parent = parent.parentElement;
+                  depth++;
+                }
+
                 // position: relative가 아닌 경우에만 설정
                 if (computed.position === "static") {
                   el.style.setProperty("position", "relative", "important");
                 }
-                // 14px 위로 이동 (사용자 테스트 결과 기반)
-                el.style.setProperty("top", "-14px", "important");
-                textElementCount++;
+                el.style.setProperty("top", `-${offset}px`, "important");
+
+                // 통계
+                adjustments[area as keyof typeof adjustments]++;
               }
             }
           });
 
           console.log(
-            `[PNG Export] 텍스트 여백 보정 완료: ${textElementCount}개 SPAN 요소 이동 (top: -14px)`
+            `[PNG Export] 텍스트 여백 보정 완료:`,
+            adjustments,
+            `(timeline: 12px, tree: 10px, header: 8px, other: 14px)`
           );
 
           // #region agent log
