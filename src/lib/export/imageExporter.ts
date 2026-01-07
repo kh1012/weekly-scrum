@@ -56,23 +56,28 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
 
   let treePanelWidth = 0;
   let timelineContainer: HTMLElement | null = null;
+  let maxChildHeight = 0; // 자식들 중 최대 높이 추적
 
-  // 1단계: 직계 자식 중 Tree Panel과 Timeline 컨테이너 찾기
+  // 1단계: 직계 자식 중 Tree Panel과 Timeline 컨테이너 찾기 + 최대 높이 계산
   for (const child of Array.from(element.children)) {
     if (child instanceof HTMLElement) {
       const computed = window.getComputedStyle(child);
+      
+      // 자식의 실제 높이 계산 (scrollHeight 포함)
+      const childHeight = Math.max(child.offsetHeight, child.scrollHeight);
+      maxChildHeight = Math.max(maxChildHeight, childHeight);
 
       if (computed.flexShrink === "0") {
         // Tree Panel (flex-shrink-0)
         treePanelWidth = child.offsetWidth;
         console.log(
-          `[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px`
+          `[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px × ${childHeight}px`
         );
       } else if (computed.flex && computed.flex.includes("1")) {
         // Timeline 컨테이너 (flex-1)
         timelineContainer = child;
         console.log(
-          `[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className}`
+          `[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className} (${childHeight}px)`
         );
       }
     }
@@ -83,12 +88,14 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
     return;
   }
 
-  // 2단계: 최상위 컨테이너는 Tree + Timeline width로 설정
+  // 2단계: 최상위 컨테이너는 Tree + Timeline width + 최대 height로 설정
   const totalWidth = treePanelWidth + timelineWidth;
   element.style.setProperty("width", `${totalWidth}px`, "important");
   element.style.setProperty("min-width", `${totalWidth}px`, "important");
+  element.style.setProperty("height", `${maxChildHeight}px`, "important");
+  element.style.setProperty("min-height", `${maxChildHeight}px`, "important");
   console.log(
-    `[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`
+    `[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px × ${maxChildHeight}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`
   );
 
   // 3단계: Timeline 컨테이너만 고정 width로 변경 (자식은 건드리지 않음)
@@ -149,7 +156,9 @@ function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
 
     // 디버깅: overflow 변경한 요소만 로그
     console.log(
-      `${indent}[fixOverflow] ${element.tagName}.${element.className.split(" ")[0] || "(no-class)"}:`,
+      `${indent}[fixOverflow] ${element.tagName}.${
+        element.className.split(" ")[0] || "(no-class)"
+      }:`,
       {
         overflow: `${before.overflow} → visible`,
         size: `${before.width}×${before.height}`,
