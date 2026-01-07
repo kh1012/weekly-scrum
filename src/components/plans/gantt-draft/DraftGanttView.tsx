@@ -37,6 +37,12 @@ import {
   calculateNodePositions,
   ROW_HEIGHT,
 } from "./laneLayout";
+import {
+  exportJSON,
+  exportPNG,
+  exportSVG,
+  type ExportMetadata,
+} from "@/lib/export";
 
 interface InitialAssignee {
   userId: string;
@@ -985,6 +991,108 @@ export const DraftGanttView = forwardRef<
     discardAllChanges();
   }, [discardAllChanges]);
 
+  // Export 핸들러
+  const ganttContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleExportJSON = useCallback(async () => {
+    try {
+      const metadata: Partial<ExportMetadata> = {
+        pageInfo: {
+          title: title || "Plans Gantt",
+          url: window.location.href,
+        },
+        filters: {
+          stages: Array.from(selectedStages),
+          assignees: Array.from(selectedAssignees),
+          viewMode,
+        },
+      };
+
+      // 현재 필터된 데이터 추출
+      const exportData = {
+        rows,
+        bars: bars.filter((b) => !b.deleted),
+        flags,
+        members,
+      };
+
+      await exportJSON(exportData, metadata, {
+        filename: `gantt-export-${Date.now()}`,
+      });
+
+      showToast("success", "JSON Export 완료", "파일이 다운로드되었습니다.");
+    } catch (error) {
+      console.error("JSON Export 실패:", error);
+      showToast(
+        "error",
+        "Export 실패",
+        error instanceof Error ? error.message : "알 수 없는 오류"
+      );
+    }
+  }, [
+    title,
+    selectedStages,
+    selectedAssignees,
+    viewMode,
+    rows,
+    bars,
+    flags,
+    members,
+  ]);
+
+  const handleExportPNG = useCallback(async () => {
+    try {
+      if (!ganttContainerRef.current) {
+        throw new Error("Gantt 컨테이너를 찾을 수 없습니다.");
+      }
+
+      showToast("info", "PNG 생성 중", "잠시만 기다려주세요...");
+
+      await exportPNG(ganttContainerRef.current, {
+        filename: `gantt-screenshot-${Date.now()}`,
+        pngOptions: {
+          scale: 2,
+          backgroundColor: "#ffffff",
+        },
+      });
+
+      showToast("success", "PNG Export 완료", "이미지가 다운로드되었습니다.");
+    } catch (error) {
+      console.error("PNG Export 실패:", error);
+      showToast(
+        "error",
+        "Export 실패",
+        error instanceof Error ? error.message : "알 수 없는 오류"
+      );
+    }
+  }, []);
+
+  const handleExportSVG = useCallback(async () => {
+    try {
+      if (!ganttContainerRef.current) {
+        throw new Error("Gantt 컨테이너를 찾을 수 없습니다.");
+      }
+
+      showToast("info", "SVG 생성 중", "잠시만 기다려주세요...");
+
+      await exportSVG(ganttContainerRef.current, {
+        filename: `gantt-export-${Date.now()}`,
+        svgOptions: {
+          inlineStyles: true,
+        },
+      });
+
+      showToast("success", "SVG Export 완료", "파일이 다운로드되었습니다.");
+    } catch (error) {
+      console.error("SVG Export 실패:", error);
+      showToast(
+        "error",
+        "Export 실패",
+        error instanceof Error ? error.message : "알 수 없는 오류"
+      );
+    }
+  }, []);
+
   // 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1167,6 +1275,10 @@ export const DraftGanttView = forwardRef<
           // 데이터 새로고침
           onRefreshData={onRefreshData}
           isRefreshing={isRefreshing}
+          // Export 핸들러
+          onExportJSON={handleExportJSON}
+          onExportPNG={handleExportPNG}
+          onExportSVG={handleExportSVG}
           onLockError={(type, lockedByName) => {
             if (type === "locked_by_other") {
               showToast(
@@ -1242,7 +1354,10 @@ export const DraftGanttView = forwardRef<
       )}
 
       {/* 메인 영역 - border 없이 꽉 차게 */}
-      <div className="flex flex-1 overflow-hidden bg-white relative">
+      <div
+        ref={ganttContainerRef}
+        className="flex flex-1 overflow-hidden bg-white relative"
+      >
         {/* 필터 로딩 & 뷰 모드 전환 스켈레톤 (테이블 영역만) */}
         {(isFilterLoading ||
           isViewModeChanging ||

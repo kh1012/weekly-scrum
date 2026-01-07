@@ -49,22 +49,30 @@ function getWeeksInPlanWindow(startDate: string, endDate: string): number {
 }
 
 /**
- * Snapshot이 Plan window 내에 있는지 확인합니다.
+ * Snapshot 기간과 Plan 기간이 겹치는지 확인합니다.
  * 
- * @param snapshotDate - YYYY-MM-DD
+ * Snapshot은 주차 범위(startDate ~ endDate)를 가지므로
+ * 단순 시작일 비교가 아닌 기간 겹침(overlap) 체크를 수행합니다.
+ * 
+ * @param snapshotStart - YYYY-MM-DD (snapshot 시작일)
+ * @param snapshotEnd - YYYY-MM-DD (snapshot 종료일)
  * @param planStart - YYYY-MM-DD
  * @param planEnd - YYYY-MM-DD
- * @returns true if snapshot is within plan window
+ * @returns true if periods overlap
  */
 function isWithinPlanWindow(
-  snapshotDate: string,
+  snapshotStart: string,
+  snapshotEnd: string,
   planStart: string,
   planEnd: string
 ): boolean {
-  const snapshot = new Date(snapshotDate);
-  const start = new Date(planStart);
-  const end = new Date(planEnd);
-  return snapshot >= start && snapshot <= end;
+  const snapStart = new Date(snapshotStart);
+  const snapEnd = new Date(snapshotEnd);
+  const planStartDate = new Date(planStart);
+  const planEndDate = new Date(planEnd);
+  
+  // 두 기간이 겹치는지 체크: snapEnd >= planStart && snapStart <= planEnd
+  return snapEnd >= planStartDate && snapStart <= planEndDate;
 }
 
 /**
@@ -147,13 +155,13 @@ export function calculateAlignmentStatus(
       return false;
     }
 
-    // Plan window 내에 있는지 확인
-    if (!isWithinPlanWindow(bar.startDate, plan.startDate, plan.endDate)) {
+    // Plan window 내에 있는지 확인 (기간 겹침 체크)
+    if (!isWithinPlanWindow(bar.startDate, bar.endDate, plan.startDate, plan.endDate)) {
       filteredOutSnapshots.push({
         metaKey: snapshotMetaKey,
         startDate: bar.startDate,
         authorId: snapshotAuthorId,
-        reason: `Out of date range (plan: ${plan.startDate} ~ ${plan.endDate})`,
+        reason: `Out of date range (plan: ${plan.startDate} ~ ${plan.endDate}, snapshot: ${bar.startDate} ~ ${bar.endDate})`,
       });
       return false;
     }

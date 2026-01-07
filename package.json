@@ -23,6 +23,7 @@
     "@types/nprogress": "^0.2.3",
     "d3-force": "^3.0.0",
     "date-fns": "^4.1.0",
+    "html2canvas": "^1.4.1",
     "next": "15.5.9",
     "nprogress": "^0.2.0",
     "react": "^19.0.0",

@@ -54,7 +54,7 @@ export function BlockContextMenu({
               onViewDetails();
               onClose();
             }}
-            className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+            className="w-full px-4 py-2 text-left flex items-center gap-2 group transition-all duration-150"
             style={{
               background: "transparent",
             }}

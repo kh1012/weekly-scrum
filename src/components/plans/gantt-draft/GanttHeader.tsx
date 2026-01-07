@@ -31,6 +31,7 @@ import {
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
 import { showToast, showInactivityWarningToast } from "./Toast";
+import { ExportDropdown } from "@/components/common/ExportDropdown";
 
 interface GanttHeaderProps {
   workspaceId: string;
@@ -105,6 +106,10 @@ interface GanttHeaderProps {
   onRefreshData?: () => void;
   /** 데이터 새로고침 중 상태 */
   isRefreshing?: boolean;
+  /** Export 핸들러 */
+  onExportJSON?: () => Promise<void>;
+  onExportPNG?: () => Promise<void>;
+  onExportSVG?: () => Promise<void>;
 }
 
 // 스타일 태그 (체크 아이콘 애니메이션)
@@ -158,6 +163,9 @@ export function GanttHeader({
   onViewModeChange,
   onRefreshData,
   isRefreshing = false,
+  onExportJSON,
+  onExportPNG,
+  onExportSVG,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -333,8 +341,8 @@ export function GanttHeader({
   // Members 리스트를 안정화 (displayName으로 정렬하여 메모이제이션)
   const sortedMembers = useMemo(() => {
     if (!members || members.length === 0) return [];
-    return [...members].sort((a, b) => 
-      a.displayName.localeCompare(b.displayName, 'ko-KR')
+    return [...members].sort((a, b) =>
+      a.displayName.localeCompare(b.displayName, "ko-KR")
     );
   }, [members]);
 
@@ -548,15 +556,15 @@ export function GanttHeader({
 
           {/* Alignment 커버리지 검토 토글 (ReadOnly 모드일 때만) */}
           {readOnly && onEnableAlignmentCheckChange && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               <button
                 onClick={() =>
                   onEnableAlignmentCheckChange(!enableAlignmentCheck)
                 }
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`flex items-center h-8 border border-r-0 gap-1.5 px-2.5 py-1.5 rounded-tl-lg rounded-bl-lg text-xs font-medium transition-all ${
                   enableAlignmentCheck
                     ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-white text-gray-600 hover:bg-gray-100"
                 }`}
                 title={
                   enableAlignmentCheck
@@ -572,13 +580,13 @@ export function GanttHeader({
                 />
                 <span>실행 커버리지 검토</span>
               </button>
-              
+
               {/* 데이터 새로고침 버튼 */}
               {onRefreshData && (
                 <button
                   onClick={onRefreshData}
                   disabled={isRefreshing}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center h-8 border border-l rounded-tr-lg rounded-br-lg text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium"
                   title="데이터 새로고침"
                 >
                   <RefreshIcon
@@ -891,7 +899,8 @@ export function GanttHeader({
                         }}
                         className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-emerald-500 rounded hover:bg-emerald-600 transition-colors"
                       >
-                        적용 {localAssignees.size > 0 && `(${localAssignees.size})`}
+                        적용{" "}
+                        {localAssignees.size > 0 && `(${localAssignees.size})`}
                       </button>
                     </div>
                   </div>
@@ -1004,6 +1013,19 @@ export function GanttHeader({
                   onClick={handleCopyURL}
                   tooltip="URL 복사"
                 />
+
+                {/* Export 버튼 */}
+                {onExportJSON && onExportPNG && onExportSVG && (
+                  <>
+                    <div className="w-px h-5 bg-gray-200 mx-1" />
+                    <ExportDropdown
+                      onExportJSON={onExportJSON}
+                      onExportPNG={onExportPNG}
+                      onExportSVG={onExportSVG}
+                      disabled={isCommitting || isAutoSaving}
+                    />
+                  </>
+                )}
 
                 {/* 도움말 - 읽기 전용에서는 숨김 */}
                 {!readOnly && onOpenHelp && (

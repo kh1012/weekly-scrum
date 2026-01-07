@@ -296,9 +296,7 @@ export async function getWorkspaceAlignmentData({
             ) / tasks.length
         : 0;
 
-      const metaKey = `${entry.domain}::${entry.project}::${
-        entry.module || ""
-      }::${entry.feature || ""}`;
+      const metaKey = `${entry.project}::${entry.module || ""}::${entry.feature || ""}`;
 
       // entry.name을 우선 사용하고, 없으면 snapshot.authorName 사용
       const authorName = entry.name?.trim() || snapshot.authorName || "Unknown";
@@ -631,9 +629,7 @@ export async function getAlignmentGanttData({
       : 0;
 
     // 메타 정보로 고유 키 생성 (연결 화살표용)
-      const metaKey = `${entry.domain}::${entry.project}::${
-        entry.module || ""
-      }::${entry.feature || ""}`;
+    const metaKey = `${entry.project}::${entry.module || ""}::${entry.feature || ""}`;
 
     // entry.name을 우선 사용하고, 없으면 snapshot.authorName 사용
     const authorName = entry.name?.trim() || snapshot.authorName || "Unknown";
