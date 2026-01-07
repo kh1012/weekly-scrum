@@ -456,12 +456,29 @@ export async function exportPNG(
           const allElements = clonedEl.querySelectorAll("*");
           const adjustments = {
             search: 0,
+            placeholder: 0,
             timelineBlock: 0,
             treePanel: 0,
             header: 0,
             other: 0,
           };
           const parentsPadded = new Set<HTMLElement>();
+
+          // INPUT placeholder 처리
+          const inputElements = clonedEl.querySelectorAll("input[placeholder]");
+          inputElements.forEach((input) => {
+            if (input instanceof HTMLInputElement) {
+              // input 내부 텍스트를 위로 이동 (padding-top 조정)
+              const computed = window.getComputedStyle(input);
+              const currentPaddingTop = parseFloat(computed.paddingTop) || 0;
+              const currentPaddingBottom = parseFloat(computed.paddingBottom) || 0;
+              
+              // 상단 패딩은 줄이고 하단 패딩은 늘려서 텍스트를 위로 이동
+              input.style.setProperty("padding-top", `${Math.max(0, currentPaddingTop - 7)}px`, "important");
+              input.style.setProperty("padding-bottom", `${currentPaddingBottom + 7}px`, "important");
+              adjustments.placeholder++;
+            }
+          });
 
           allElements.forEach((el) => {
             if (el instanceof HTMLElement) {
@@ -486,7 +503,7 @@ export async function exportPNG(
                     parent.className.includes("search") ||
                     parent.className.includes("filter") ||
                     parent.querySelector('input[type="text"]') ||
-                    parent.querySelector('input[placeholder]')
+                    parent.querySelector("input[placeholder]")
                   ) {
                     offset = 7; // 검색 영역은 7px 위로
                     area = "search";
@@ -586,7 +603,7 @@ export async function exportPNG(
           console.log(
             `[PNG Export] 텍스트 여백 보정 완료:`,
             adjustments,
-            `(search: 7px, timeline: 4px, tree: 3px, header: 2px, other: 5px), 부모 padding: ${parentsPadded.size}개`
+            `(placeholder: ${adjustments.placeholder}개, search: 7px, timeline: 4px, tree: 3px, header: 2px, other: 5px), 부모 padding: ${parentsPadded.size}개`
           );
 
           // #region agent log
