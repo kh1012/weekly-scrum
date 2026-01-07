@@ -732,64 +732,95 @@ export function GanttHeader({
 
                       {/* Mismatch List */}
                       <div className="flex-1 overflow-y-auto">
-                        {mismatches.map((mismatch, index) => (
-                          <button
-                            key={`${mismatch.planId}-${index}`}
-                            onClick={() => handleMismatchClick(mismatch)}
-                            className="w-full px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
-                          >
-                            {/* Status Icon + Meta Path */}
-                            <div className="flex items-start gap-2 mb-1.5">
-                              <div className="shrink-0 mt-0.5">
+                        {mismatches.map((mismatch, index) => {
+                          // 날짜 차이 계산
+                          const startDate = new Date(mismatch.planStartDate);
+                          const endDate = new Date(mismatch.planEndDate);
+                          const daysDiff = Math.ceil(
+                            (endDate.getTime() - startDate.getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          );
+
+                          return (
+                            <button
+                              key={`${mismatch.planId}-${index}`}
+                              onClick={() => handleMismatchClick(mismatch)}
+                              className="w-full px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
+                            >
+                              {/* 1줄: [Plan Block] + 상태 아이콘 + 메타 경로 */}
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600 bg-blue-50 rounded border border-blue-200">
+                                  Plan Block
+                                </span>
+                                <div className="shrink-0">
+                                  {mismatch.status === "red" ? (
+                                    <div
+                                      className="w-3 h-3 rounded-full"
+                                      style={{ background: "#ef4444" }}
+                                      title="실행 기록 없음"
+                                    />
+                                  ) : (
+                                    <div
+                                      className="w-3 h-3 rounded-full"
+                                      style={{ background: "#f59e0b" }}
+                                      title="실행 커버리지 부족"
+                                    />
+                                  )}
+                                </div>
+                                <span className="text-xs font-medium text-gray-700 truncate">
+                                  {mismatch.metaPath}
+                                </span>
+                              </div>
+
+                              {/* 2줄: 타이틀 */}
+                              {mismatch.planTitle && (
+                                <div className="text-xs text-gray-600 ml-[75px] mb-1.5 truncate">
+                                  {mismatch.planTitle}
+                                </div>
+                              )}
+
+                              {/* 3줄: 검토 결과 (상세) */}
+                              <div className="text-xs text-gray-500 ml-[75px] mb-1.5 leading-relaxed">
                                 {mismatch.status === "red" ? (
-                                  <div
-                                    className="w-3 h-3 rounded-full"
-                                    style={{ background: "#ef4444" }}
-                                    title="실행 기록 없음"
-                                  />
+                                  <>
+                                    현재 계획은{" "}
+                                    <span className="font-medium">
+                                      {mismatch.planStartDate} ~{" "}
+                                      {mismatch.planEndDate}
+                                    </span>{" "}
+                                    ({daysDiff}d)로 수립되어 있으나, 해당 기간 내
+                                    실행 기록이 없습니다.
+                                  </>
                                 ) : (
-                                  <div
-                                    className="w-3 h-3 rounded-full"
-                                    style={{ background: "#f59e0b" }}
-                                    title="실행 커버리지 부족"
-                                  />
+                                  <>
+                                    현재 계획은{" "}
+                                    <span className="font-medium">
+                                      {mismatch.planStartDate} ~{" "}
+                                      {mismatch.planEndDate}
+                                    </span>{" "}
+                                    ({daysDiff}d)로 수립되어 있으며, 실행 기록은
+                                    있으나 예상 범위보다 부족합니다. (실행{" "}
+                                    {mismatch.actualCount}회 / 예상{" "}
+                                    {mismatch.expectedCount}회)
+                                  </>
                                 )}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium text-gray-700">
-                                  {mismatch.metaPath}
-                                </div>
+
+                              {/* 4줄: 통계 */}
+                              <div className="flex items-center gap-3 ml-[75px] text-[10px] text-gray-400">
+                                <span>
+                                  실행 {mismatch.actualCount} / 예상{" "}
+                                  {mismatch.expectedCount}
+                                </span>
+                                <span>•</span>
+                                <span>
+                                  {mismatch.planStartDate} ~{" "}
+                                  {mismatch.planEndDate}
+                                </span>
                               </div>
-                            </div>
-
-                            {/* Plan Title */}
-                            {mismatch.planTitle && (
-                              <div className="text-xs text-gray-600 ml-5 mb-1 truncate">
-                                {mismatch.planTitle}
-                              </div>
-                            )}
-
-                            {/* Explanation */}
-                            <div className="text-xs text-gray-500 ml-5 leading-relaxed">
-                              {mismatch.status === "red"
-                                ? "계획 기간 내 실행 기록이 없습니다."
-                                : "실행 기록은 있으나 예상 범위보다 부족합니다."}
-                            </div>
-
-                            {/* Coverage Stats */}
-                            <div className="flex items-center gap-3 ml-5 mt-1.5 text-[10px] text-gray-400">
-                              <span>
-                                실행 {mismatch.actualCount} / 예상{" "}
-                                {mismatch.expectedCount}
-                              </span>
-                              <span>•</span>
-                              <span>
-                                {mismatch.planStartDate} ~{" "}
-                                {mismatch.planEndDate}
-                              </span>
-                            </div>
-                          </button>
-                        ))}
+                            </button>
+                          );
+                        })}
                       </div>
 
                       {/* Footer Hint */}

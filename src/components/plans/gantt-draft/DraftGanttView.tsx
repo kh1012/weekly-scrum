@@ -555,7 +555,11 @@ export const DraftGanttView = forwardRef<
         collaborators: plan.collaborators,
         risks: plan.risks,
         risk_level: plan.risk_level,
+        // Alignment 필드
         alignmentStatus: plan.alignmentStatus,
+        alignmentActualCount: plan.alignmentActualCount,
+        alignmentExpectedCount: plan.alignmentExpectedCount,
+        alignmentDebugInfo: plan.alignmentDebugInfo,
       });
     }
 
