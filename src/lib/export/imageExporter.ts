@@ -46,24 +46,35 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
 
 /**
  * Timeline width를 전체 컨테이너에 적용 (Phase 2)
- * Tree Panel은 건드리지 않고, Timeline 영역만 확장
+ * Tree Panel은 건드리지 않고, Timeline 영역의 최상위만 확장
+ * 깊이 있는 자식들은 fixOverflowForExport가 자동으로 처리
  */
 function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
   console.log(`[applyTimelineWidth] 적용 시작: ${timelineWidth}px`);
   
   let treePanelWidth = 0;
-  let appliedCount = 0;
+  let timelineContainer: HTMLElement | null = null;
   
-  // 1단계: Tree Panel의 width 찾기 (flex-shrink-0인 첫 번째 자식)
+  // 1단계: 직계 자식 중 Tree Panel과 Timeline 컨테이너 찾기
   for (const child of Array.from(element.children)) {
     if (child instanceof HTMLElement) {
       const computed = window.getComputedStyle(child);
+      
       if (computed.flexShrink === "0") {
+        // Tree Panel (flex-shrink-0)
         treePanelWidth = child.offsetWidth;
         console.log(`[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px`);
-        break;
+      } else if (computed.flex && computed.flex.includes("1")) {
+        // Timeline 컨테이너 (flex-1)
+        timelineContainer = child;
+        console.log(`[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className}`);
       }
     }
+  }
+  
+  if (!timelineContainer) {
+    console.warn(`[applyTimelineWidth] Timeline 컨테이너를 찾을 수 없음`);
+    return;
   }
   
   // 2단계: 최상위 컨테이너는 Tree + Timeline width로 설정
@@ -72,54 +83,26 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
   element.style.setProperty("min-width", `${totalWidth}px`, "important");
   console.log(`[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`);
   
-  // 3단계: Timeline 영역만 확장 (Tree Panel은 스킵)
-  const traverse = (el: HTMLElement, skipFirst: boolean = false) => {
-    const computed = window.getComputedStyle(el);
-    
-    // Tree Panel (flex-shrink-0)은 건드리지 않기
-    if (skipFirst && computed.flexShrink === "0") {
-      console.log(`[applyTimelineWidth] Tree Panel 스킵: ${el.className}`);
-      return; // 자식도 처리하지 않음
-    }
-    
-    // flex-1 또는 overflow가 있는 Timeline 관련 요소만 처리
-    const isFlexGrow = computed.flex && computed.flex.includes("1");
-    const hasOverflow = computed.overflow !== "visible" || 
-                       computed.overflowX !== "visible";
-    
-    if (isFlexGrow || hasOverflow) {
-      // flex-1 요소는 고정 width로 변경
-      if (isFlexGrow) {
-        el.style.setProperty("flex", "none", "important");
-        el.style.setProperty("width", `${timelineWidth}px`, "important");
-        appliedCount++;
-      }
-      
-      // overflow 컨테이너는 visible로 변경
-      if (hasOverflow) {
-        el.style.setProperty("overflow", "visible", "important");
-        el.style.setProperty("overflow-x", "visible", "important");
-        el.style.setProperty("overflow-y", "visible", "important");
-        appliedCount++;
-      }
-    }
-    
-    // 자식 순회
-    for (const child of Array.from(el.children)) {
-      if (child instanceof HTMLElement) {
-        traverse(child, false);
-      }
-    }
-  };
+  // 3단계: Timeline 컨테이너만 고정 width로 변경 (자식은 건드리지 않음)
+  timelineContainer.style.setProperty("flex", "none", "important");
+  timelineContainer.style.setProperty("width", `${timelineWidth}px`, "important");
+  timelineContainer.style.setProperty("min-width", `${timelineWidth}px`, "important");
   
-  // 최상위의 자식부터 순회 (Tree Panel 체크를 위해 skipFirst=true)
-  for (const child of Array.from(element.children)) {
+  // 4단계: Timeline의 직계 스크롤 컨테이너만 overflow visible 처리
+  let scrollContainers = 0;
+  for (const child of Array.from(timelineContainer.children)) {
     if (child instanceof HTMLElement) {
-      traverse(child, true);
+      const computed = window.getComputedStyle(child);
+      if (computed.overflow !== "visible" || computed.overflowX !== "visible") {
+        child.style.setProperty("overflow", "visible", "important");
+        child.style.setProperty("overflow-x", "visible", "important");
+        child.style.setProperty("overflow-y", "visible", "important");
+        scrollContainers++;
+      }
     }
   }
   
-  console.log(`[applyTimelineWidth] 적용 완료: ${appliedCount}개 요소 수정됨`);
+  console.log(`[applyTimelineWidth] 적용 완료: Timeline 컨테이너 1개, 스크롤 컨테이너 ${scrollContainers}개 수정됨`);
 }
 
 /**
