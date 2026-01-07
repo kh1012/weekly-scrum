@@ -8,7 +8,7 @@ import {
   generateDefaultFilename,
   sanitizeFilename,
 } from "./utils";
-import { GanttCanvasDrawer } from "./canvasDrawer";
+// import { GanttCanvasDrawer } from "./canvasDrawer"; // TODO: Canvas 렌더링 구현 시 사용
 
 /**
  * Timeline 내부의 실제 콘텐츠 width를 찾기 (Phase 1)
@@ -1012,69 +1012,15 @@ export async function exportPNGWithCanvas(
   onProgress?: (progress: ExportProgress) => void
 ): Promise<void> {
   console.log("[PNG Canvas Draw Export] 시작");
+  console.log("[PNG Canvas Draw] TODO: Canvas 렌더링 로직 미구현, html2canvas 사용");
+  
+  // TODO: 실제 Canvas Draw 로직 구현
+  // 현재는 extractGanttData가 빈 데이터만 반환하므로
+  // 일단 html2canvas를 사용하여 동작하도록 함
   
   try {
-    // 1. 데이터 추출
-    onProgress?.({
-      step: "데이터 추출 중...",
-      progress: 20,
-      completed: false,
-    });
-    
-    const data = extractGanttData(element);
-    console.log("[PNG Canvas Draw] 데이터 추출 완료:", data);
-    
-    // 2. Canvas 생성
-    const scale = options?.quality === "low" ? 1 : options?.quality === "high" ? 3 : 2;
-    const canvas = document.createElement("canvas");
-    const totalWidth = data.layout.treePanelWidth + data.timeline.width;
-    const totalHeight = data.timeline.height;
-    
-    canvas.width = totalWidth * scale;
-    canvas.height = totalHeight * scale;
-    canvas.style.width = `${totalWidth}px`;
-    canvas.style.height = `${totalHeight}px`;
-    
-    console.log("[PNG Canvas Draw] Canvas 생성:", { width: canvas.width, height: canvas.height, scale });
-    
-    // 3. GanttCanvasDrawer로 렌더링
-    onProgress?.({
-      step: "Canvas 렌더링 중...",
-      progress: 50,
-      completed: false,
-    });
-    
-    const drawer = new GanttCanvasDrawer(canvas, data, scale);
-    await drawer.render();
-    
-    // 4. PNG Blob 생성
-    onProgress?.({
-      step: "PNG 생성 중...",
-      progress: 80,
-      completed: false,
-    });
-    
-    const blob = await drawer.toBlob(1);
-    console.log("[PNG Canvas Draw] PNG Blob 생성 완료:", blob.size, "bytes");
-    
-    // 5. 다운로드
-    onProgress?.({
-      step: "다운로드 중...",
-      progress: 90,
-      completed: false,
-    });
-    
-    const filename = options?.filename
-      ? sanitizeFilename(options.filename)
-      : generateDefaultFilename("gantt-draw", "png");
-    
-    downloadFile(blob, filename, "image/png");
-    
-    onProgress?.({
-      step: "완료",
-      progress: 100,
-      completed: true,
-    });
+    // html2canvas 방식으로 fallback
+    await exportPNG(element, options, onProgress);
     
   } catch (error) {
     console.error("[PNG Canvas Draw Export] 실패:", error);
