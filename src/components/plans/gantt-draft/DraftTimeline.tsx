@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { useDraftStore } from "./store";
 import { FlagLane } from "./FlagLane";
 import { packFlagsIntoLanes } from "./flagLayout";
@@ -29,12 +29,14 @@ import { TimelineHeader } from "./timeline/components/TimelineHeader";
 import { TimelineGridLines } from "./timeline/components/TimelineGridLines";
 import { TimelineHighlight } from "./timeline/components/TimelineHighlight";
 import { TimelineNodes } from "./timeline/components/TimelineNodes";
+import { TimelineNodesVirtualized } from "./timeline/components/TimelineNodesVirtualized";
 import { TimelineHoverPreview } from "./timeline/components/TimelineHoverPreview";
 import { SnapshotConnections } from "./timeline/components/SnapshotConnections";
 import { TimelineModals } from "./timeline/components/TimelineModals";
 import { TimelineLaneMenu } from "./timeline/components/TimelineLaneMenu";
 import { TimelineDeleteLaneModal } from "./timeline/components/TimelineDeleteLaneModal";
 import { BlockContextMenu } from "./timeline/components/BlockContextMenu";
+import { getFeatureFlags } from "./featureFlags";
 
 export function DraftTimeline({
   rangeStart,
@@ -55,8 +57,45 @@ export function DraftTimeline({
   const headerRef = useRef<HTMLDivElement>(null);
   const flagLaneRef = useRef<HTMLDivElement>(null);
 
+  // 가상화를 위한 state
+  const [containerHeight, setContainerHeight] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+
   // State
   const state = useTimelineState();
+
+  // Feature flags
+  const flags_perf = getFeatureFlags();
+
+  // ResizeObserver로 컨테이너 높이 감지
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0].contentRect.height;
+      setContainerHeight(height);
+    });
+    
+    observer.observe(containerRef.current);
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // 스크롤 위치 업데이트
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      setScrollTop(container.scrollTop);
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   // Store
   const allRows = useDraftStore((s) => s.rows);
@@ -258,38 +297,74 @@ export function DraftTimeline({
             nodePositions={data.nodePositions}
           />
 
-          {/* 노드 렌더링 */}
-          <TimelineNodes
-            nodePositions={data.nodePositions}
-            viewMode={viewMode}
-            totalWidth={data.totalWidth}
-                        rangeStart={rangeStart}
-            days={data.days}
-            flags={flags}
-            rows={data.rows}
-            activeBars={data.filteredActiveBars}
-            activeBarsSet={data.activeBarsSet}
-            filters={filters}
-            selectedBarId={selectedBarId}
-            selectedRowId={selectedRowId}
-            highlightedRowId={highlightedRowId}
-            isEditing={isEditing}
-            readOnly={readOnly}
-            containerRef={containerRef}
-            dragCreate={state.dragCreate}
-            dragPreview={dragLogic.dragPreview}
-            middleClickScroll={state.middleClickScroll}
-            onMouseDown={dragLogic.handleMouseDown}
-            setHoverInfo={state.setHoverInfo}
-            setLaneContextMenu={state.setLaneContextMenu}
-            selectBar={selectBar}
-            setViewPopover={state.setViewPopover}
-            setShowEditModal={state.setShowEditModal}
-            setModuleSummaryPopover={state.setModuleSummaryPopover}
-            setBlockContextMenu={state.setBlockContextMenu}
-                        onDragDateChange={onDragDateChange}
-            moveBarToRow={moveBarToRow}
-                      />
+          {/* 노드 렌더링 (가상화 지원) */}
+          {flags_perf.enableVirtualization ? (
+            <TimelineNodesVirtualized
+              nodePositions={data.nodePositions}
+              viewMode={viewMode}
+              totalWidth={data.totalWidth}
+              rangeStart={rangeStart}
+              days={data.days}
+              flags={flags}
+              rows={data.rows}
+              activeBars={data.filteredActiveBars}
+              activeBarsSet={data.activeBarsSet}
+              filters={filters}
+              selectedBarId={selectedBarId}
+              selectedRowId={selectedRowId}
+              highlightedRowId={highlightedRowId}
+              isEditing={isEditing}
+              readOnly={readOnly}
+              containerRef={containerRef}
+              dragCreate={state.dragCreate}
+              dragPreview={dragLogic.dragPreview}
+              middleClickScroll={state.middleClickScroll}
+              onMouseDown={dragLogic.handleMouseDown}
+              setHoverInfo={state.setHoverInfo}
+              setLaneContextMenu={state.setLaneContextMenu}
+              selectBar={selectBar}
+              setViewPopover={state.setViewPopover}
+              setShowEditModal={state.setShowEditModal}
+              setModuleSummaryPopover={state.setModuleSummaryPopover}
+              setBlockContextMenu={state.setBlockContextMenu}
+              onDragDateChange={onDragDateChange}
+              moveBarToRow={moveBarToRow}
+              containerHeight={containerHeight}
+              scrollTop={scrollTop}
+            />
+          ) : (
+            <TimelineNodes
+              nodePositions={data.nodePositions}
+              viewMode={viewMode}
+              totalWidth={data.totalWidth}
+              rangeStart={rangeStart}
+              days={data.days}
+              flags={flags}
+              rows={data.rows}
+              activeBars={data.filteredActiveBars}
+              activeBarsSet={data.activeBarsSet}
+              filters={filters}
+              selectedBarId={selectedBarId}
+              selectedRowId={selectedRowId}
+              highlightedRowId={highlightedRowId}
+              isEditing={isEditing}
+              readOnly={readOnly}
+              containerRef={containerRef}
+              dragCreate={state.dragCreate}
+              dragPreview={dragLogic.dragPreview}
+              middleClickScroll={state.middleClickScroll}
+              onMouseDown={dragLogic.handleMouseDown}
+              setHoverInfo={state.setHoverInfo}
+              setLaneContextMenu={state.setLaneContextMenu}
+              selectBar={selectBar}
+              setViewPopover={state.setViewPopover}
+              setShowEditModal={state.setShowEditModal}
+              setModuleSummaryPopover={state.setModuleSummaryPopover}
+              setBlockContextMenu={state.setBlockContextMenu}
+              onDragDateChange={onDragDateChange}
+              moveBarToRow={moveBarToRow}
+            />
+          )}
 
           {/* 호버 프리뷰 */}
           <TimelineHoverPreview

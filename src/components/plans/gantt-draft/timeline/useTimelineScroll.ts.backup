@@ -5,7 +5,6 @@
 import { useCallback } from "react";
 import type { MiddleClickScrollState } from "./timelineTypes";
 import { DAY_WIDTH } from "./timelineTypes";
-import { useRAFThrottle } from "./useRAFThrottle";
 
 interface UseTimelineScrollProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -152,8 +151,8 @@ export function useTimelineScroll({
     [containerRef, setHoverInfo, setMiddleClickScroll]
   );
 
-  // 휠 클릭 스크롤 이동 (RAF 적용 전 원본)
-  const handleMiddleClickMoveRaw = useCallback(
+  // 휠 클릭 스크롤 이동
+  const handleMiddleClickMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!middleClickScroll?.isActive || !containerRef.current) return;
 
@@ -165,9 +164,6 @@ export function useTimelineScroll({
     },
     [middleClickScroll, containerRef]
   );
-
-  // RAF로 감싸진 버전 (Feature Flag로 제어)
-  const handleMiddleClickMove = useRAFThrottle(handleMiddleClickMoveRaw);
 
   return {
     handleScroll,
