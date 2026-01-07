@@ -23,8 +23,6 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
   const queue: HTMLElement[] = [element];
   let maxWidth = 0;
 
-  console.log("[findTimelineContentWidth] 탐색 시작");
-
   while (queue.length > 0) {
     const el = queue.shift()!;
 
@@ -34,9 +32,6 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
       const width = parseFloat(styleWidth);
       if (width > maxWidth) {
         maxWidth = width;
-        console.log(
-          `[findTimelineContentWidth] 발견: ${width}px (${el.className})`
-        );
       }
     }
 
@@ -48,7 +43,6 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
     }
   }
 
-  console.log(`[findTimelineContentWidth] 최종 결과: ${maxWidth || null}`);
   return maxWidth > 0 ? maxWidth : null;
 }
 
@@ -58,8 +52,6 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
  * 깊이 있는 자식들은 fixOverflowForExport가 자동으로 처리
  */
 function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
-  console.log(`[applyTimelineWidth] 적용 시작: ${timelineWidth}px`);
-
   let treePanelWidth = 0;
   let timelineContainer: HTMLElement | null = null;
 
@@ -71,21 +63,14 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
       if (computed.flexShrink === "0") {
         // Tree Panel (flex-shrink-0)
         treePanelWidth = child.offsetWidth;
-        console.log(
-          `[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px`
-        );
       } else if (computed.flex && computed.flex.includes("1")) {
         // Timeline 컨테이너 (flex-1)
         timelineContainer = child;
-        console.log(
-          `[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className}`
-        );
       }
     }
   }
 
   if (!timelineContainer) {
-    console.warn(`[applyTimelineWidth] Timeline 컨테이너를 찾을 수 없음`);
     return;
   }
 
@@ -93,9 +78,6 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
   const totalWidth = treePanelWidth + timelineWidth;
   element.style.setProperty("width", `${totalWidth}px`, "important");
   element.style.setProperty("min-width", `${totalWidth}px`, "important");
-  console.log(
-    `[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`
-  );
 
   // 3단계: Timeline 컨테이너만 고정 width로 변경 (height는 건드리지 않음)
   timelineContainer.style.setProperty("flex", "none", "important");
@@ -109,148 +91,13 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
     `${timelineWidth}px`,
     "important"
   );
-
-  console.log(
-    `[applyTimelineWidth] 적용 완료: Timeline 컨테이너 width만 설정 (overflow는 fixOverflowForExport가 처리)`
-  );
 }
 
 /**
- * 타임라인 블록과 텍스트 요소의 스타일 디버깅
+ * 타임라인 블록과 텍스트 요소의 스타일 디버깅 (deprecated)
  */
 function debugTimelineBlocks(element: HTMLElement): void {
-  const timelineBlockSamples: any[] = [];
-  const textSamples: any[] = [];
-
-  // #region agent log
-  // 타임라인 블록 찾기 (가설 F, G)
-  const queue: HTMLElement[] = [element];
-
-  while (queue.length > 0) {
-    const el = queue.shift()!;
-    const computed = window.getComputedStyle(el);
-
-    // 1. absolute positioned 블록 찾기 (타임라인 블록, 높이 > 15px만)
-    if (
-      computed.position === "absolute" &&
-      el.offsetHeight > 15 &&
-      timelineBlockSamples.length < 5
-    ) {
-      const parent = el.parentElement;
-      const parentComputed = parent ? window.getComputedStyle(parent) : null;
-
-      timelineBlockSamples.push({
-        tag: el.tagName,
-        className: el.className.split(" ").slice(0, 3).join(" "),
-        position: computed.position,
-        top: computed.top,
-        left: computed.left,
-        width: computed.width,
-        height: computed.height,
-        transform: computed.transform,
-        offsetTop: el.offsetTop,
-        offsetLeft: el.offsetLeft,
-        offsetWidth: el.offsetWidth,
-        offsetHeight: el.offsetHeight,
-        paddingTop: computed.paddingTop,
-        paddingBottom: computed.paddingBottom,
-        paddingLeft: computed.paddingLeft,
-        paddingRight: computed.paddingRight,
-        marginTop: computed.marginTop,
-        marginBottom: computed.marginBottom,
-        display: computed.display,
-        alignItems: computed.alignItems,
-        justifyContent: computed.justifyContent,
-        flexDirection: computed.flexDirection,
-        gap: computed.gap,
-        parentPosition: parentComputed?.position,
-        parentDisplay: parentComputed?.display,
-      });
-    }
-
-    // 2. 텍스트 요소 찾기 (SPAN with text)
-    if (
-      el.tagName === "SPAN" &&
-      el.textContent &&
-      el.textContent.trim() &&
-      textSamples.length < 8
-    ) {
-      const parent = el.parentElement;
-      const parentComputed = parent ? window.getComputedStyle(parent) : null;
-      const grandparent = parent?.parentElement;
-      const grandparentComputed = grandparent
-        ? window.getComputedStyle(grandparent)
-        : null;
-
-      textSamples.push({
-        tag: el.tagName,
-        className: el.className.split(" ").slice(0, 3).join(" "),
-        text: el.textContent.substring(0, 30),
-        fontSize: computed.fontSize,
-        lineHeight: computed.lineHeight,
-        lineHeightNumeric: parseFloat(computed.lineHeight),
-        fontSizeNumeric: parseFloat(computed.fontSize),
-        lineHeightDiff:
-          parseFloat(computed.lineHeight) - parseFloat(computed.fontSize),
-        verticalAlign: computed.verticalAlign,
-        paddingTop: computed.paddingTop,
-        paddingBottom: computed.paddingBottom,
-        marginTop: computed.marginTop,
-        marginBottom: computed.marginBottom,
-        offsetHeight: el.offsetHeight,
-        clientHeight: el.clientHeight,
-        scrollHeight: el.scrollHeight,
-        parentTag: parent?.tagName,
-        parentClassName: parent?.className.split(" ").slice(0, 2).join(" "),
-        parentDisplay: parentComputed?.display,
-        parentAlignItems: parentComputed?.alignItems,
-        parentJustifyContent: parentComputed?.justifyContent,
-        parentHeight: parent?.offsetHeight,
-        parentPaddingTop: parentComputed?.paddingTop,
-        parentPaddingBottom: parentComputed?.paddingBottom,
-        grandparentPosition: grandparentComputed?.position,
-        grandparentHeight: grandparent?.offsetHeight,
-      });
-    }
-
-    // 자식 추가
-    for (const child of Array.from(el.children)) {
-      if (child instanceof HTMLElement) {
-        queue.push(child);
-      }
-    }
-  }
-
-  const summary = {
-    timelineBlocksCount: timelineBlockSamples.length,
-    textElementsCount: textSamples.length,
-    avgLineHeightDiff:
-      textSamples.reduce((sum, s) => sum + (s.lineHeightDiff || 0), 0) /
-      Math.max(textSamples.length, 1),
-    flexParentCount: textSamples.filter((s) => s.parentDisplay === "flex")
-      .length,
-    centerAlignCount: textSamples.filter((s) => s.parentAlignItems === "center")
-      .length,
-  };
-
-  fetch("http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "imageExporter.ts:debugTimelineBlocks",
-      message: "Timeline blocks and text elements analysis (v2)",
-      data: {
-        summary,
-        timelineBlocks: timelineBlockSamples,
-        textElements: textSamples,
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "padding-debug-v2",
-      hypothesisId: "F,G,H",
-    }),
-  }).catch(() => {});
-  // #endregion
+  // 디버깅 함수 - 현재는 사용하지 않음
 }
 
 /**
@@ -269,81 +116,9 @@ function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
 
   // overflow가 설정된 모든 요소를 visible로 변경 (스크롤 여부와 관계없이)
   if (hasOverflowStyle) {
-    const before = {
-      overflow: computedStyle.overflow,
-      scroll: `${element.scrollWidth}×${element.scrollHeight}`,
-      client: `${element.clientWidth}×${element.clientHeight}`,
-    };
-
-    // #region agent log
-    // LOG 3: overflow 변경 전 상태 (가설 C, D)
-    const beforeOverflowChange = {
-      tag: element.tagName,
-      className: element.className.split(" ")[0],
-      depth,
-      before: {
-        offsetHeight: element.offsetHeight,
-        scrollHeight: element.scrollHeight,
-        clientHeight: element.clientHeight,
-        computedHeight: computedStyle.height,
-        computedMaxHeight: computedStyle.maxHeight,
-        computedFlex: computedStyle.flex,
-        overflow: computedStyle.overflow,
-      },
-    };
-    // #endregion
-
     element.style.setProperty("overflow", "visible", "important");
     element.style.setProperty("overflow-x", "visible", "important");
     element.style.setProperty("overflow-y", "visible", "important");
-
-    // #region agent log
-    // LOG 4: overflow 변경 후 상태 (가설 C)
-    const afterComputedStyle = window.getComputedStyle(element);
-    const afterOverflowChange = {
-      tag: element.tagName,
-      className: element.className.split(" ")[0],
-      depth,
-      after: {
-        offsetHeight: element.offsetHeight,
-        scrollHeight: element.scrollHeight,
-        clientHeight: element.clientHeight,
-        computedHeight: afterComputedStyle.height,
-        overflow: afterComputedStyle.overflow,
-      },
-      heightChanged:
-        element.offsetHeight !== beforeOverflowChange.before.offsetHeight,
-    };
-    if (depth <= 1 || afterOverflowChange.heightChanged) {
-      fetch(
-        "http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "imageExporter.ts:fixOverflow",
-            message: "Overflow change",
-            data: { before: beforeOverflowChange, after: afterOverflowChange },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "post-fix",
-            hypothesisId: "C,D",
-          }),
-        }
-      ).catch(() => {});
-    }
-    // #endregion
-
-    console.log(
-      `${indent}[fixOverflow] ${element.tagName}.${
-        element.className.split(" ")[0] || "(no-class)"
-      }:`,
-      {
-        overflow: `${before.overflow} → visible`,
-        scroll: before.scroll,
-        client: before.client,
-      }
-    );
   }
 
   // 자식 요소 재귀 처리
@@ -407,25 +182,16 @@ export async function exportPNG(
     });
 
     // 5. 원본 요소를 직접 캡처 (이중 복제 방지)
-    console.log("[PNG Export] 캡처 시작:", {
-      element: element.tagName,
-      width: element.scrollWidth,
-      height: element.scrollHeight,
-      scale,
-    });
-
     const canvas = await html2canvas(element, {
       scale,
       backgroundColor,
       useCORS: true,
       allowTaint: false,
       foreignObjectRendering: false,
-      logging: true, // 디버깅을 위해 로깅 활성화
+      logging: false,
       onclone: (clonedDoc, clonedEl) => {
-        console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
           // Phase 0: 텍스트 여백 보정 (영역별 미세 조정 + 부모 padding-top 추가)
-          console.log("[PNG Export] 텍스트 여백 보정 시작");
           const allElements = clonedEl.querySelectorAll("*");
           const adjustments = {
             search: 0,
@@ -640,25 +406,15 @@ export async function exportPNG(
 
           // Phase 1: Timeline의 실제 콘텐츠 width 찾기
           const timelineWidth = findTimelineContentWidth(clonedEl);
-          console.log("[PNG Export] Timeline width 발견:", timelineWidth);
 
           // Phase 2: 발견한 width를 전체 컨테이너에 적용
           if (timelineWidth && timelineWidth > clonedEl.scrollWidth) {
-            console.log(
-              `[PNG Export] Timeline width 적용: ${timelineWidth}px (기존: ${clonedEl.scrollWidth}px)`
-            );
             applyTimelineWidth(clonedEl, timelineWidth);
-            console.log("[PNG Export] Timeline width 적용 완료");
-          } else {
-            console.log(
-              "[PNG Export] Timeline width 적용 불필요 (현재 크기가 충분함)"
-            );
           }
 
           // Phase 3: 스크롤 컨테이너의 overflow만 visible로 변경
           // (truncate, ellipsis 요소는 건너뛰어서 스타일 보존)
           fixOverflowForExport(clonedEl);
-          console.log("[PNG Export] fixOverflowForExport 완료");
 
           // Phase 4: 높이 확장 - 자식들의 scrollHeight를 기반으로 부모 확장
           let maxScrollHeight = 0;
@@ -691,11 +447,6 @@ export async function exportPNG(
               "important"
             );
             element.style.setProperty("max-height", "none", "important");
-            console.log(
-              `[PNG Export] 자식 높이 확장: ${
-                element.className.split(" ")[0]
-              } ${element.offsetHeight}px → ${scrollHeight}px`
-            );
           }
 
           // 최상위 컨테이너 높이 확장
@@ -711,115 +462,10 @@ export async function exportPNG(
               "important"
             );
             clonedEl.style.setProperty("max-height", "none", "important");
-            console.log(
-              `[PNG Export] 최상위 컨테이너 높이 확장: ${clonedEl.offsetHeight}px → ${maxScrollHeight}px`
-            );
           }
 
-          // #region agent log
-          // LOG 2: fixOverflow 후 상태 측정 (가설 A, C)
-          const postFixState = {
-            topContainer: {
-              offsetHeight: clonedEl.offsetHeight,
-              scrollHeight: clonedEl.scrollHeight,
-              clientHeight: clonedEl.clientHeight,
-              computedHeight: window.getComputedStyle(clonedEl).height,
-              computedOverflow: window.getComputedStyle(clonedEl).overflow,
-            },
-            children: Array.from(clonedEl.children)
-              .map((child, idx) => {
-                if (child instanceof HTMLElement) {
-                  const computed = window.getComputedStyle(child);
-                  return {
-                    idx,
-                    offsetHeight: child.offsetHeight,
-                    scrollHeight: child.scrollHeight,
-                    clientHeight: child.clientHeight,
-                    computedHeight: computed.height,
-                    computedOverflow: computed.overflow,
-                  };
-                }
-                return null;
-              })
-              .filter(Boolean),
-          };
-          fetch(
-            "http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                location: "imageExporter.ts:onclone-postfix",
-                message: "State after fixOverflow and height expansion",
-                data: postFixState,
-                timestamp: Date.now(),
-                sessionId: "debug-session",
-                runId: "post-fix",
-                hypothesisId: "A,C",
-              }),
-            }
-          ).catch(() => {});
-          // #endregion
-
-          // #region agent log
-          // LOG 6: html2canvas 직전 최종 상태 (모든 가설 종합)
-          const finalState = {
-            topContainer: {
-              tagName: clonedEl.tagName,
-              offsetWidth: clonedEl.offsetWidth,
-              offsetHeight: clonedEl.offsetHeight,
-              scrollWidth: clonedEl.scrollWidth,
-              scrollHeight: clonedEl.scrollHeight,
-              clientWidth: clonedEl.clientWidth,
-              clientHeight: clonedEl.clientHeight,
-              boundingRect: {
-                width: clonedEl.getBoundingClientRect().width,
-                height: clonedEl.getBoundingClientRect().height,
-              },
-              computedStyle: {
-                width: window.getComputedStyle(clonedEl).width,
-                height: window.getComputedStyle(clonedEl).height,
-                maxHeight: window.getComputedStyle(clonedEl).maxHeight,
-                overflow: window.getComputedStyle(clonedEl).overflow,
-              },
-            },
-            expectedCanvasHeight: Math.max(
-              clonedEl.offsetHeight,
-              clonedEl.scrollHeight,
-              Array.from(clonedEl.children).reduce((max, child) => {
-                if (child instanceof HTMLElement) {
-                  return Math.max(max, child.offsetHeight, child.scrollHeight);
-                }
-                return max;
-              }, 0)
-            ),
-          };
-          fetch(
-            "http://127.0.0.1:7242/ingest/647b972b-6e46-450e-a5cb-b78c984f30b1",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                location: "imageExporter.ts:before-html2canvas",
-                message:
-                  "Final state before html2canvas (after height expansion)",
-                data: finalState,
-                timestamp: Date.now(),
-                sessionId: "debug-session",
-                runId: "post-fix",
-                hypothesisId: "A,B,C,D,E",
-              }),
-            }
-          ).catch(() => {});
-          // #endregion
         }
       },
-    });
-
-    console.log("[PNG Export] Canvas 생성 완료:", {
-      width: canvas.width,
-      height: canvas.height,
-      type: canvas.constructor.name,
     });
 
     onProgress?.({
@@ -833,25 +479,14 @@ export async function exportPNG(
       canvas.toBlob(
         (b) => {
           if (b) {
-            console.log("[PNG Export] Blob 생성 성공:", {
-              size: b.size,
-              type: b.type,
-            });
             resolve(b);
           } else {
-            console.error("[PNG Export] Blob 생성 실패");
             reject(new Error("Blob 생성 실패"));
           }
         },
         "image/png",
         1 // 최고 품질
       );
-    });
-
-    console.log("[PNG Export] 최종 Blob:", {
-      size: blob.size,
-      type: blob.type,
-      sizeMB: (blob.size / (1024 * 1024)).toFixed(2) + "MB",
     });
 
     onProgress?.({
@@ -990,8 +625,6 @@ export async function exportPNGWithCanvas(
   options?: ExportOptions,
   onProgress?: (progress: ExportProgress) => void
 ): Promise<void> {
-  console.log("[PNG Canvas Draw Export] 시작");
-
   try {
     onProgress?.({
       step: "Canvas 데이터 변환 중...",
@@ -1001,11 +634,6 @@ export async function exportPNGWithCanvas(
 
     // GanttCanvasData → GanttExportData 변환
     const exportData = convertToExportData(element, ganttData);
-    console.log("[PNG Canvas Draw] 데이터 변환 완료:", {
-      treeNodes: exportData.treeNodes.length,
-      bars: exportData.bars.length,
-      flags: exportData.flags.length,
-    });
 
     // Canvas 생성
     const scale =
@@ -1019,12 +647,6 @@ export async function exportPNGWithCanvas(
     canvas.height = totalHeight * scale;
     canvas.style.width = `${totalWidth}px`;
     canvas.style.height = `${totalHeight}px`;
-
-    console.log("[PNG Canvas Draw] Canvas 생성:", {
-      width: canvas.width,
-      height: canvas.height,
-      scale,
-    });
 
     // Canvas 렌더링
     onProgress?.({
@@ -1044,7 +666,6 @@ export async function exportPNGWithCanvas(
     });
 
     const blob = await drawer.toBlob(1);
-    console.log("[PNG Canvas Draw] PNG Blob 생성 완료:", blob.size, "bytes");
 
     // 다운로드
     onProgress?.({
@@ -1085,18 +706,17 @@ function convertToExportData(
   element: HTMLElement,
   data: GanttCanvasData
 ): GanttExportData {
-  console.log("[convertToExportData] 시작");
-
   // Canvas Drawing 상수
   const HEADER_HEIGHT = 76; // 38(월) + 38(일+요일)
   const FLAG_LANE_HEIGHT = 60;
   const DAY_WIDTH = 24; // Canvas에서 사용하는 일 단위 너비
 
   // Timeline 크기 계산
-  const daysDiff = Math.ceil(
-    (data.timeline.rangeEnd.getTime() - data.timeline.rangeStart.getTime()) /
-      (1000 * 60 * 60 * 24)
-  ) + 1;
+  const daysDiff =
+    Math.ceil(
+      (data.timeline.rangeEnd.getTime() - data.timeline.rangeStart.getTime()) /
+        (1000 * 60 * 60 * 24)
+    ) + 1;
   const timelineWidth = daysDiff * DAY_WIDTH;
 
   // Header + Flag Lane + Rows 높이 포함
@@ -1145,12 +765,6 @@ function convertToExportData(
       lane: flag.laneHint ?? 0,
       color: flag.color ?? undefined,
     }));
-
-  console.log("[convertToExportData] 완료:", {
-    treeNodes: treeNodes.length,
-    bars: bars.length,
-    flags: flags.length,
-  });
 
   return {
     treeNodes,

@@ -487,12 +487,12 @@ export function ExportDropdown({
             {/* Figma API Export */}
             <button
               onClick={() => handleExport("figma")}
-              className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={true}
+              disabled
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left text-gray-400 cursor-not-allowed transition-colors opacity-50"
             >
               <span>Figma</span>
-              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-purple-100 text-purple-700 rounded">
-                BETA
+              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-500 rounded">
+                DISABLED
               </span>
             </button>
           </div>

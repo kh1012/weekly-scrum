@@ -93,8 +93,6 @@ export class GanttCanvasDrawer {
    * 메인 렌더링
    */
   public async render(): Promise<void> {
-    console.log("[GanttCanvasDrawer] 렌더링 시작");
-
     await document.fonts.ready;
 
     // 1. 배경
@@ -114,8 +112,6 @@ export class GanttCanvasDrawer {
 
     // 6. Plan Bars (타임라인 영역)
     this.drawBars();
-
-    console.log("[GanttCanvasDrawer] 렌더링 완료");
   }
 
   /**
