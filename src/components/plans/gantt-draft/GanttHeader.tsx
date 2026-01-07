@@ -563,8 +563,8 @@ export function GanttHeader({
                 }
                 className={`flex items-center h-8 border border-r-0 gap-1.5 px-2.5 py-1.5 rounded-tl-lg rounded-bl-lg text-xs font-medium transition-all ${
                   enableAlignmentCheck
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-white text-gray-600 hover:bg-gray-100"
+                    ? "bg-blue-50 text-blue-600 border-blue-200 shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
                 }`}
                 title={
                   enableAlignmentCheck
@@ -575,7 +575,7 @@ export function GanttHeader({
                 <CheckIcon
                   size={14}
                   className={`transition-colors ${
-                    enableAlignmentCheck ? "text-white" : "text-gray-400"
+                    enableAlignmentCheck ? "text-blue-600" : "text-gray-400"
                   }`}
                 />
                 <span>실행 커버리지 검토</span>
@@ -586,21 +586,25 @@ export function GanttHeader({
                 <button
                   onClick={onRefreshData}
                   disabled={!enableAlignmentCheck || isRefreshing}
-                  className={`flex items-center justify-center h-8 border border-l rounded-tr-lg rounded-br-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium ${
+                  className={`relative group flex items-center justify-center h-8 border border-l rounded-tr-lg rounded-br-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium ${
                     enableAlignmentCheck
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-white text-gray-600 hover:bg-gray-100"
+                      ? "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
                   }`}
-                  title={
-                    enableAlignmentCheck
-                      ? "데이터 새로고침"
-                      : "실행 커버리지 검토를 활성화하면 데이터 새로고침을 사용할 수 있습니다"
-                  }
+                  title={enableAlignmentCheck ? "데이터 새로고침" : undefined}
                 >
                   <RefreshIcon
                     size={16}
                     className={`${isRefreshing ? "animate-spin" : ""}`}
                   />
+
+                  {/* 비활성화 상태 툴팁 */}
+                  {!enableAlignmentCheck && (
+                    <span className="invisible group-hover:visible absolute left-full ml-2 px-3 py-1.5 text-xs text-white bg-gray-900 rounded-md whitespace-nowrap shadow-lg z-50 pointer-events-none">
+                      실행 커버리지 검토가 활성화 되어야 사용할 수 있습니다
+                      <span className="absolute right-full top-1/2 -translate-y-1/2 -mr-px border-4 border-transparent border-r-gray-900" />
+                    </span>
+                  )}
                 </button>
               )}
             </div>

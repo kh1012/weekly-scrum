@@ -160,7 +160,6 @@ export const DraftBar = memo(function DraftBar({
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragOffset, setDragOffset] = useState({ left: 0, width: 0, top: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  const [showAlignmentPopover, setShowAlignmentPopover] = useState(false);
 
   // Snapshot 블록인지 확인
   const isSnapshot = bar.isSnapshot === true;
@@ -460,15 +459,40 @@ export const DraftBar = memo(function DraftBar({
         background: isSnapshot
           ? "#ffffff" // 하얀색 배경
           : barColor.bg.replace(/[\d.]+\)$/, "0.06)"), // Plan 배경을 더 투명하게 (0.12 → 0.06)
-        // Snapshot은 검정 1px 테두리, Plan은 투명하게
+        // Snapshot은 검정 1px 테두리, Plan은 투명하게 (alignment 상태에 따라 변경)
         border: isSnapshot
           ? "1px solid #000000" // 검정 테두리
-          : `1px solid ${isSelected ? barColor.color : `${barColor.color}20`}`, // Plan 테두리를 더 투명하게
-        // 호버/선택 시 그림자 & lift 효과
+          : alignmentStatus
+          ? alignmentStatus === "green"
+            ? "2px solid rgba(16, 185, 129, 0.5)" // emerald-500
+            : alignmentStatus === "orange"
+            ? "2px solid rgba(251, 146, 60, 0.5)" // orange-500
+            : "2px solid rgba(244, 63, 94, 0.5)" // rose-500
+          : `1px solid ${isSelected ? barColor.color : `${barColor.color}20`}`, // Plan 기본 테두리
+        // 호버/선택 시 그림자 & lift 효과 (alignment 글로우 추가)
         boxShadow: isSnapshot
           ? isSelected
             ? "0 0 0 3px rgba(59, 130, 246, 0.3), 0 2px 6px rgba(0, 0, 0, 0.1)" // 선택 시 포커스 링 + 기본 그림자
             : "0 2px 6px rgba(0, 0, 0, 0.1)" // 항상 그림자 표시
+          : alignmentStatus
+          ? (() => {
+              // Alignment 글로우 색상
+              const glowColor =
+                alignmentStatus === "green"
+                  ? "rgba(16, 185, 129, 0.3)"
+                  : alignmentStatus === "orange"
+                  ? "rgba(251, 146, 60, 0.3)"
+                  : "rgba(244, 63, 94, 0.3)";
+              
+              // 기본 그림자 + alignment 글로우
+              const baseShadow = isSelected
+                ? `0 2px 12px ${barColor.color}20, 0 0 0 2px ${barColor.color}20`
+                : isHovered
+                ? "0 2px 8px rgba(0, 0, 0, 0.06)"
+                : "0 1px 2px rgba(0, 0, 0, 0.03)";
+              
+              return `${baseShadow}, 0 0 8px ${glowColor}`;
+            })()
           : isSelected
           ? `0 2px 12px ${barColor.color}20, 0 0 0 2px ${barColor.color}20` // Plan 선택 시 더 약한 그림자
           : isHovered
@@ -524,152 +548,6 @@ export const DraftBar = memo(function DraftBar({
               opacity: isHovered ? 0.8 : 0.4,
             }}
           />
-        </div>
-      )}
-
-      {/* Alignment 상태 인디케이터 (Plan only) - 우측 상단 원형 */}
-      {!isSnapshot && alignmentStatus && (
-        <div
-          className="absolute right-1 top-1 z-10"
-          onMouseEnter={() => setShowAlignmentPopover(true)}
-          onMouseLeave={() => setShowAlignmentPopover(false)}
-        >
-          <div
-            className="w-3 h-3 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
-            style={{
-              background:
-                alignmentStatus === "green"
-                  ? "rgb(16, 185, 129)" // emerald-500
-                  : alignmentStatus === "orange"
-                  ? "rgb(251, 146, 60)" // orange-500
-                  : "rgb(244, 63, 94)", // rose-500
-            }}
-          />
-
-          {/* Alignment Debug Tooltip */}
-          {showAlignmentPopover && (
-            <div className="absolute top-6 right-0 w-80 bg-white rounded-lg shadow-lg border border-gray-300 z-50 p-3 pointer-events-none">
-              {/* Content */}
-              <div className="max-h-96 overflow-y-auto">
-                {/* Status */}
-                <div className="mb-3 pb-3 border-b border-gray-200">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{
-                        background:
-                          alignmentStatus === "green"
-                            ? "rgb(16, 185, 129)"
-                            : alignmentStatus === "orange"
-                            ? "rgb(251, 146, 60)"
-                            : "rgb(244, 63, 94)",
-                      }}
-                    />
-                    <span className="text-xs font-semibold text-gray-900">
-                      {alignmentStatus === "green"
-                        ? "양호"
-                        : alignmentStatus === "orange"
-                        ? "부족"
-                        : "실행 기록 없음"}
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-gray-600 ml-4">
-                    실행 {bar.alignmentActualCount || 0}회 / 예상{" "}
-                    {bar.alignmentExpectedCount || 0}회
-                  </div>
-                </div>
-
-                {/* Debug Info */}
-                {bar.alignmentDebugInfo && (
-                  <>
-                    {/* Plan Info */}
-                    <div className="mb-3">
-                      <div className="text-[10px] font-semibold text-gray-700 mb-1.5">
-                        계획 정보
-                      </div>
-                      <div className="text-[10px] space-y-1 bg-gray-50 rounded p-2">
-                        <div className="text-gray-700 break-all">
-                          <span className="font-medium text-gray-600">MetaKey:</span>{" "}
-                          {bar.alignmentDebugInfo.planMetaKey}
-                        </div>
-                        <div className="text-gray-700">
-                          <span className="font-medium text-gray-600">기간:</span>{" "}
-                          {bar.alignmentDebugInfo.planDateRange}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Matching Snapshots */}
-                    {bar.alignmentDebugInfo.matchingSnapshots.length > 0 && (
-                      <div className="mb-3 pb-3 border-b border-gray-200">
-                        <div className="text-[10px] font-semibold text-emerald-700 mb-1.5">
-                          ✓ 매칭된 스냅샷 (
-                          {bar.alignmentDebugInfo.matchingSnapshots.length}개)
-                        </div>
-                        <div className="space-y-1.5">
-                          {bar.alignmentDebugInfo.matchingSnapshots.map(
-                            (s, i) => (
-                              <div
-                                key={i}
-                                className="text-[10px] pl-3"
-                              >
-                                <div className="font-medium text-emerald-700">
-                                  {i + 1}. {s.startDate}
-                                </div>
-                                <div className="text-gray-600 break-all">
-                                  {s.metaKey}
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Filtered Out Snapshots */}
-                    {bar.alignmentDebugInfo.filteredOutSnapshots.length > 0 && (
-                      <div>
-                        <div className="text-[10px] font-semibold text-rose-700 mb-1.5">
-                          ✗ 필터링된 스냅샷 (
-                          {bar.alignmentDebugInfo.filteredOutSnapshots.length}
-                          개)
-                        </div>
-                        <div className="space-y-1.5">
-                          {bar.alignmentDebugInfo.filteredOutSnapshots
-                            .slice(0, 10)
-                            .map((s, i) => (
-                              <div
-                                key={i}
-                                className="text-[10px] pl-3"
-                              >
-                                <div className="font-medium text-rose-700">
-                                  {i + 1}. {s.startDate}
-                                </div>
-                                <div className="text-gray-600 break-all">
-                                  {s.metaKey}
-                                </div>
-                                <div className="text-rose-600 mt-0.5 font-medium">
-                                  → {s.reason}
-                                </div>
-                              </div>
-                            ))}
-                          {bar.alignmentDebugInfo.filteredOutSnapshots.length >
-                            10 && (
-                            <div className="text-[10px] text-gray-500 text-center py-1">
-                              ... 외{" "}
-                              {bar.alignmentDebugInfo.filteredOutSnapshots
-                                .length - 10}
-                              개
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

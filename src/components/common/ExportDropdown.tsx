@@ -118,13 +118,13 @@ export function ExportDropdown({
 
       // SVG를 먼저 생성하고 Figma에 업로드
       await onExportSVG();
-      
+
       // 실제 Figma API 호출은 향후 구현 예정
       // 현재는 SVG 다운로드만 수행
       alert(
         "SVG 파일이 다운로드되었습니다.\n" +
-        "Figma에서 File > Import를 통해 업로드해주세요.\n" +
-        "자동 업로드 기능은 추후 업데이트 예정입니다."
+          "Figma에서 File > Import를 통해 업로드해주세요.\n" +
+          "자동 업로드 기능은 추후 업데이트 예정입니다."
       );
     } catch (error) {
       console.error("Figma Export 실패:", error);
@@ -161,11 +161,7 @@ export function ExportDropdown({
           ) : (
             <>
               {/* Download 아이콘 (GitHub 스타일) */}
-              <svg
-                className="w-4 h-4"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M7.47 10.78a.75.75 0 001.06 0l3.75-3.75a.75.75 0 00-1.06-1.06L8.75 8.44V1.75a.75.75 0 00-1.5 0v6.69L4.78 5.97a.75.75 0 00-1.06 1.06l3.75 3.75zM3.75 13a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5z" />
               </svg>
               <span>{label}</span>
@@ -343,7 +339,11 @@ export function ExportDropdown({
                   onClick={() => setShowFigmaSettings(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -427,4 +427,3 @@ export function ExportDropdown({
     </>
   );
 }
-
