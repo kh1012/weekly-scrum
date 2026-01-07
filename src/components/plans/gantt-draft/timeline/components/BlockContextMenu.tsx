@@ -66,16 +66,8 @@ export function BlockContextMenu({
               e.currentTarget.style.background = "transparent";
             }}
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 group-hover:bg-blue-100 transition-colors">
-              <EyeIcon className="w-4 h-4 text-blue-600" />
-            </div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900">
-                상세정보 보기
-              </div>
-              <div className="text-xs text-gray-500">
-                블록의 세부 내용 확인
-              </div>
+              <div className="text-sm  text-gray-900">상세정보 보기</div>
             </div>
           </button>
         </div>
@@ -84,4 +76,3 @@ export function BlockContextMenu({
     document.body
   );
 }
-

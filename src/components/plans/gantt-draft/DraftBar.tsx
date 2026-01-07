@@ -548,11 +548,11 @@ export const DraftBar = memo(function DraftBar({
 
           {/* Alignment Debug Tooltip */}
           {showAlignmentPopover && (
-            <div className="absolute top-6 right-0 w-80 bg-gray-900 text-white rounded-lg shadow-2xl z-50 p-3 pointer-events-none">
+            <div className="absolute top-6 right-0 w-80 bg-white rounded-lg shadow-lg border border-gray-300 z-50 p-3 pointer-events-none">
               {/* Content */}
               <div className="max-h-96 overflow-y-auto">
                 {/* Status */}
-                <div className="mb-3 pb-3 border-b border-gray-700">
+                <div className="mb-3 pb-3 border-b border-gray-200">
                   <div className="flex items-center gap-2 mb-1">
                     <div
                       className="w-2.5 h-2.5 rounded-full"
@@ -565,7 +565,7 @@ export const DraftBar = memo(function DraftBar({
                             : "rgb(244, 63, 94)",
                       }}
                     />
-                    <span className="text-xs font-medium">
+                    <span className="text-xs font-semibold text-gray-900">
                       {alignmentStatus === "green"
                         ? "양호"
                         : alignmentStatus === "orange"
@@ -573,7 +573,7 @@ export const DraftBar = memo(function DraftBar({
                         : "실행 기록 없음"}
                     </span>
                   </div>
-                  <div className="text-[10px] text-gray-400 ml-4">
+                  <div className="text-[10px] text-gray-600 ml-4">
                     실행 {bar.alignmentActualCount || 0}회 / 예상{" "}
                     {bar.alignmentExpectedCount || 0}회
                   </div>
@@ -584,16 +584,16 @@ export const DraftBar = memo(function DraftBar({
                   <>
                     {/* Plan Info */}
                     <div className="mb-3">
-                      <div className="text-[10px] text-gray-400 mb-1">
+                      <div className="text-[10px] font-semibold text-gray-700 mb-1.5">
                         계획 정보
                       </div>
-                      <div className="text-[10px] space-y-0.5">
-                        <div className="text-gray-300 break-all">
-                          <span className="text-gray-500">MetaKey:</span>{" "}
+                      <div className="text-[10px] space-y-1 bg-gray-50 rounded p-2">
+                        <div className="text-gray-700 break-all">
+                          <span className="font-medium text-gray-600">MetaKey:</span>{" "}
                           {bar.alignmentDebugInfo.planMetaKey}
                         </div>
-                        <div className="text-gray-300">
-                          <span className="text-gray-500">기간:</span>{" "}
+                        <div className="text-gray-700">
+                          <span className="font-medium text-gray-600">기간:</span>{" "}
                           {bar.alignmentDebugInfo.planDateRange}
                         </div>
                       </div>
@@ -601,8 +601,8 @@ export const DraftBar = memo(function DraftBar({
 
                     {/* Matching Snapshots */}
                     {bar.alignmentDebugInfo.matchingSnapshots.length > 0 && (
-                      <div className="mb-3 pb-3 border-b border-gray-700">
-                        <div className="text-[10px] text-emerald-400 mb-1.5">
+                      <div className="mb-3 pb-3 border-b border-gray-200">
+                        <div className="text-[10px] font-semibold text-emerald-700 mb-1.5">
                           ✓ 매칭된 스냅샷 (
                           {bar.alignmentDebugInfo.matchingSnapshots.length}개)
                         </div>
@@ -611,12 +611,12 @@ export const DraftBar = memo(function DraftBar({
                             (s, i) => (
                               <div
                                 key={i}
-                                className="text-[10px] text-gray-300 pl-3"
+                                className="text-[10px] pl-3"
                               >
-                                <div className="text-emerald-300">
+                                <div className="font-medium text-emerald-700">
                                   {i + 1}. {s.startDate}
                                 </div>
-                                <div className="text-gray-400 break-all">
+                                <div className="text-gray-600 break-all">
                                   {s.metaKey}
                                 </div>
                               </div>
@@ -629,7 +629,7 @@ export const DraftBar = memo(function DraftBar({
                     {/* Filtered Out Snapshots */}
                     {bar.alignmentDebugInfo.filteredOutSnapshots.length > 0 && (
                       <div>
-                        <div className="text-[10px] text-rose-400 mb-1.5">
+                        <div className="text-[10px] font-semibold text-rose-700 mb-1.5">
                           ✗ 필터링된 스냅샷 (
                           {bar.alignmentDebugInfo.filteredOutSnapshots.length}
                           개)
@@ -640,15 +640,15 @@ export const DraftBar = memo(function DraftBar({
                             .map((s, i) => (
                               <div
                                 key={i}
-                                className="text-[10px] text-gray-300 pl-3"
+                                className="text-[10px] pl-3"
                               >
-                                <div className="text-rose-300">
+                                <div className="font-medium text-rose-700">
                                   {i + 1}. {s.startDate}
                                 </div>
-                                <div className="text-gray-400 break-all">
+                                <div className="text-gray-600 break-all">
                                   {s.metaKey}
                                 </div>
-                                <div className="text-rose-400 mt-0.5">
+                                <div className="text-rose-600 mt-0.5 font-medium">
                                   → {s.reason}
                                 </div>
                               </div>
