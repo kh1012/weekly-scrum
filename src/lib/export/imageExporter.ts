@@ -440,6 +440,40 @@ export async function exportPNG(
       onclone: (clonedDoc, clonedEl) => {
         console.log("[PNG Export] onclone 호출됨");
         if (clonedEl instanceof HTMLElement) {
+          // Phase 0: 텍스트 여백 보정 (vertical-align 및 flex 속성)
+          console.log("[PNG Export] 텍스트 여백 보정 시작");
+          const allElements = clonedEl.querySelectorAll("*");
+          let textElementCount = 0;
+          let flexParentCount = 0;
+          
+          allElements.forEach((el) => {
+            if (el instanceof HTMLElement) {
+              const computed = window.getComputedStyle(el);
+              const hasText = el.textContent && el.textContent.trim().length > 0;
+              
+              // 1. 텍스트가 있는 요소의 vertical-align을 top으로 설정
+              if (hasText && (el.tagName === "SPAN" || el.tagName === "DIV" || el.tagName === "P")) {
+                el.style.setProperty("vertical-align", "top", "important");
+                textElementCount++;
+              }
+              
+              // 2. flex 컨테이너의 align-items를 flex-start로 조정
+              if (computed.display === "flex" || computed.display === "inline-flex") {
+                el.style.setProperty("align-items", "flex-start", "important");
+                flexParentCount++;
+              }
+              
+              // 3. absolute positioned 텍스트 요소의 padding-top 제거
+              if (computed.position === "absolute" && hasText) {
+                el.style.setProperty("padding-top", "0", "important");
+              }
+            }
+          });
+          
+          console.log(
+            `[PNG Export] 텍스트 여백 보정 완료: ${textElementCount}개 텍스트, ${flexParentCount}개 flex`
+          );
+
           // #region agent log
           // LOG 1: 초기 상태 측정 (가설 A, B)
           const initialState = {
