@@ -993,6 +993,7 @@ export const DraftGanttView = forwardRef<
 
   // Export 핸들러
   const ganttContainerRef = useRef<HTMLDivElement>(null);
+  const exportContainerRef = useRef<HTMLDivElement>(null);
 
   const handleExportJSON = useCallback(async () => {
     try {
@@ -1040,18 +1041,25 @@ export const DraftGanttView = forwardRef<
     members,
   ]);
 
-  const handleExportPNG = useCallback(async () => {
+  const handleExportPNG = useCallback(async (quality: 'low' | 'normal' | 'high' = 'normal') => {
     try {
-      if (!ganttContainerRef.current) {
-        throw new Error("Gantt 컨테이너를 찾을 수 없습니다.");
+      // exportContainerRef 사용 (Header 포함)
+      if (!exportContainerRef.current) {
+        throw new Error("Export 컨테이너를 찾을 수 없습니다.");
       }
 
-      showToast("info", "PNG 생성 중", "잠시만 기다려주세요...");
+      const qualityLabels = {
+        low: '저품질',
+        normal: '기본',
+        high: '고품질'
+      };
 
-      await exportPNG(ganttContainerRef.current, {
+      showToast("info", `PNG 생성 중 (${qualityLabels[quality]})`, "잠시만 기다려주세요...");
+
+      await exportPNG(exportContainerRef.current, {
         filename: `gantt-screenshot-${Date.now()}`,
+        quality,
         pngOptions: {
-          scale: 2,
           backgroundColor: "#ffffff",
         },
       });
@@ -1067,16 +1075,23 @@ export const DraftGanttView = forwardRef<
     }
   }, []);
 
-  const handleExportSVG = useCallback(async () => {
+  const handleExportSVG = useCallback(async (quality: 'low' | 'normal' | 'high' = 'normal') => {
     try {
-      if (!ganttContainerRef.current) {
-        throw new Error("Gantt 컨테이너를 찾을 수 없습니다.");
+      if (!exportContainerRef.current) {
+        throw new Error("Export 컨테이너를 찾을 수 없습니다.");
       }
 
-      showToast("info", "SVG 생성 중", "잠시만 기다려주세요...");
+      const qualityLabels = {
+        low: '저품질',
+        normal: '기본',
+        high: '고품질'
+      };
 
-      await exportSVG(ganttContainerRef.current, {
+      showToast("info", `SVG 생성 중 (${qualityLabels[quality]})`, "잠시만 기다려주세요...");
+
+      await exportSVG(exportContainerRef.current, {
         filename: `gantt-export-${Date.now()}`,
+        quality,
         svgOptions: {
           inlineStyles: true,
         },
@@ -1218,6 +1233,7 @@ export const DraftGanttView = forwardRef<
 
   return (
     <div
+      ref={exportContainerRef}
       className={`flex flex-col bg-white ${
         isHeaderHidden ? "fixed inset-0 z-40" : "h-full"
       }`}

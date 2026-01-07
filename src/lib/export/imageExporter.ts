@@ -27,28 +27,69 @@ export async function exportPNG(
 
     const html2canvas = (await import("html2canvas")).default;
 
-    // 2. 캡처 옵션 설정
+    // 2. 품질 설정 매핑
+    const qualityPresets = {
+      low: { scale: 1, textRendering: false },
+      normal: { scale: 2, textRendering: true },
+      high: { scale: 3, textRendering: true }
+    };
+    
+    const quality = options?.quality || 'normal';
+    const preset = qualityPresets[quality];
+    const scale = options?.pngOptions?.scale || preset.scale;
+    const backgroundColor = options?.pngOptions?.backgroundColor || "#ffffff";
+
+    // 폰트 로딩 대기 (기본/고품질에서만)
+    if (preset.textRendering) {
+      onProgress?.({
+        step: "폰트 로딩 중...",
+        progress: 20,
+        completed: false,
+      });
+      await document.fonts.ready;
+    }
+
+    // 3. 캡처 옵션 설정
     onProgress?.({
       step: "이미지 생성 중...",
       progress: 30,
       completed: false,
     });
 
-    const scale = options?.pngOptions?.scale || 2; // Retina 지원
-    const backgroundColor = options?.pngOptions?.backgroundColor || "#ffffff";
+    // 전체 콘텐츠 크기 계산
+    const actualWidth = element.scrollWidth;
+    const actualHeight = element.scrollHeight;
 
-    // 3. 캡처 실행
+    // 4. 캡처 실행
     const canvas = await html2canvas(element, {
       scale,
       backgroundColor,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
+      foreignObjectRendering: false,
       logging: false,
-      // 스크롤 영역 포함
-      scrollY: -window.scrollY,
-      scrollX: -window.scrollX,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
+      width: actualWidth,
+      height: actualHeight,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: actualWidth,
+      windowHeight: actualHeight,
+      onclone: async (clonedDoc) => {
+        // 폰트 로딩 대기
+        if (preset.textRendering && clonedDoc.fonts) {
+          await clonedDoc.fonts.ready;
+        }
+        
+        // 스크롤 컨테이너 스타일 조정 (전체 콘텐츠 표시)
+        const scrollContainers = clonedDoc.querySelectorAll('[style*="overflow"]');
+        scrollContainers.forEach(el => {
+          if (el instanceof HTMLElement) {
+            el.style.overflow = 'visible';
+            el.style.height = 'auto';
+            el.style.maxHeight = 'none';
+          }
+        });
+      }
     });
 
     onProgress?.({
@@ -57,7 +98,7 @@ export async function exportPNG(
       completed: false,
     });
 
-    // 4. Canvas를 Blob으로 변환
+    // 5. Canvas를 Blob으로 변환
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => {

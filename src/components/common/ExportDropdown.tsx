@@ -9,13 +9,15 @@
 import { useState, useRef, useEffect } from "react";
 import { LoadingIcon } from "./Icons";
 
+export type ExportQuality = 'low' | 'normal' | 'high';
+
 export interface ExportDropdownProps {
   /** JSON export 핸들러 */
   onExportJSON: () => Promise<void>;
-  /** PNG export 핸들러 */
-  onExportPNG: () => Promise<void>;
-  /** SVG export 핸들러 */
-  onExportSVG: () => Promise<void>;
+  /** PNG export 핸들러 (품질 옵션 포함) */
+  onExportPNG: (quality?: ExportQuality) => Promise<void>;
+  /** SVG export 핸들러 (품질 옵션 포함) */
+  onExportSVG: (quality?: ExportQuality) => Promise<void>;
   /** 비활성화 여부 */
   disabled?: boolean;
   /** 버튼 레이블 */
@@ -23,6 +25,13 @@ export interface ExportDropdownProps {
 }
 
 type ExportType = "json" | "png" | "svg" | "figma";
+
+// 품질별 설정
+const QUALITY_PRESETS = {
+  low: { scale: 1, label: '저품질', description: '빠른 생성 (1x)' },
+  normal: { scale: 2, label: '기본', description: '표준 품질 (2x)' },
+  high: { scale: 3, label: '고품질', description: '최고 품질 (3x)' }
+};
 
 export function ExportDropdown({
   onExportJSON,
@@ -37,15 +46,20 @@ export function ExportDropdown({
   const [showFigmaSettings, setShowFigmaSettings] = useState(false);
   const [figmaToken, setFigmaToken] = useState("");
   const [figmaFileKey, setFigmaFileKey] = useState("");
+  const [showPNGQuality, setShowPNGQuality] = useState(false);
+  const [showSVGQuality, setShowSVGQuality] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState<ExportQuality>('normal');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Figma 설정 불러오기
+  // Figma 설정 및 품질 설정 불러오기
   useEffect(() => {
     try {
       const token = localStorage.getItem("figma-access-token") || "";
       const fileKey = localStorage.getItem("figma-file-key") || "";
+      const quality = localStorage.getItem("export-quality") as ExportQuality || 'normal';
       setFigmaToken(token);
       setFigmaFileKey(fileKey);
+      setSelectedQuality(quality);
     } catch {
       // localStorage 접근 실패 시 무시
     }
@@ -67,7 +81,7 @@ export function ExportDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  const handleExport = async (type: ExportType) => {
+  const handleExport = async (type: ExportType, quality?: ExportQuality) => {
     if (isExporting) return;
 
     if (type === "figma") {
@@ -76,9 +90,21 @@ export function ExportDropdown({
       return;
     }
 
+    // PNG/SVG는 품질 선택 메뉴 표시
+    if (type === "png" && !quality) {
+      setShowPNGQuality(true);
+      return;
+    }
+    if (type === "svg" && !quality) {
+      setShowSVGQuality(true);
+      return;
+    }
+
     setIsExporting(true);
     setExportingType(type);
     setIsOpen(false);
+    setShowPNGQuality(false);
+    setShowSVGQuality(false);
 
     try {
       switch (type) {
@@ -86,10 +112,10 @@ export function ExportDropdown({
           await onExportJSON();
           break;
         case "png":
-          await onExportPNG();
+          await onExportPNG(quality || selectedQuality);
           break;
         case "svg":
-          await onExportSVG();
+          await onExportSVG(quality || selectedQuality);
           break;
       }
     } catch (error) {
@@ -99,6 +125,16 @@ export function ExportDropdown({
       setIsExporting(false);
       setExportingType(null);
     }
+  };
+
+  const handleQualitySelect = (quality: ExportQuality, type: 'png' | 'svg') => {
+    setSelectedQuality(quality);
+    try {
+      localStorage.setItem("export-quality", quality);
+    } catch {
+      // localStorage 접근 실패 시 무시
+    }
+    handleExport(type, quality);
   };
 
   const handleFigmaExport = async () => {
@@ -142,7 +178,7 @@ export function ExportDropdown({
         <button
           onClick={() => setIsOpen(!isOpen)}
           disabled={disabled || isExporting}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           title="데이터 및 시각화 Export"
         >
           {isExporting ? (
@@ -213,53 +249,139 @@ export function ExportDropdown({
             </button>
 
             {/* PNG Export */}
-            <button
-              onClick={() => handleExport("png")}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
-            >
-              <div className="flex-shrink-0">
+            <div className="relative">
+              <button
+                onClick={() => handleExport("png")}
+                className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+              >
+                <div className="flex-shrink-0">
+                  <svg
+                    className="w-4 h-4 text-gray-600 group-hover:text-blue-600"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M1.75 2.5a.25.25 0 00-.25.25v10.5c0 .138.112.25.25.25h.94a.76.76 0 01-.03-.03l-1.11-1.11A1.75 1.75 0 011.5 2.75c0-.966.784-1.75 1.75-1.75h8.5a1.75 1.75 0 011.75 1.75v8.5c0 .698-.409 1.3-1 1.58v-8.33a.25.25 0 00-.25-.25h-10.5zM11 4.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM2.75 14a.25.25 0 01-.22-.364l3.69-7.38a.75.75 0 011.32 0L10.78 13a.75.75 0 01-.66 1.11H2.75z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-gray-900 group-hover:text-blue-600">
+                    PNG 이미지
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    고해상도 이미지로 화면 캡처
+                  </div>
+                </div>
                 <svg
-                  className="w-4 h-4 text-gray-600 group-hover:text-blue-600"
+                  className="w-3 h-3 text-gray-400 group-hover:text-blue-600"
                   fill="currentColor"
                   viewBox="0 0 16 16"
                 >
-                  <path d="M1.75 2.5a.25.25 0 00-.25.25v10.5c0 .138.112.25.25.25h.94a.76.76 0 01-.03-.03l-1.11-1.11A1.75 1.75 0 011.5 2.75c0-.966.784-1.75 1.75-1.75h8.5a1.75 1.75 0 011.75 1.75v8.5c0 .698-.409 1.3-1 1.58v-8.33a.25.25 0 00-.25-.25h-10.5zM11 4.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM2.75 14a.25.25 0 01-.22-.364l3.69-7.38a.75.75 0 011.32 0L10.78 13a.75.75 0 01-.66 1.11H2.75z" />
+                  <path d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" />
                 </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-gray-900 group-hover:text-blue-600">
-                  PNG 이미지
+              </button>
+
+              {/* PNG 품질 선택 서브메뉴 */}
+              {showPNGQuality && (
+                <div className="absolute left-full top-0 ml-1 bg-white rounded-md shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
+                  <div className="p-1.5 space-y-0.5">
+                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map((quality) => {
+                      const preset = QUALITY_PRESETS[quality];
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleQualitySelect(quality, 'png')}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
+                            selectedQuality === quality ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div>
+                            <div className="text-xs font-semibold text-gray-900">
+                              {preset.label}
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">
+                              {preset.description}
+                            </div>
+                          </div>
+                          {selectedQuality === quality && (
+                            <svg className="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  고해상도 이미지로 화면 캡처 (2x)
-                </div>
-              </div>
-            </button>
+              )}
+            </div>
 
             {/* SVG Export */}
-            <button
-              onClick={() => handleExport("svg")}
-              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
-            >
-              <div className="flex-shrink-0">
+            <div className="relative">
+              <button
+                onClick={() => handleExport("svg")}
+                className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+              >
+                <div className="flex-shrink-0">
+                  <svg
+                    className="w-4 h-4 text-gray-600 group-hover:text-blue-600"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M3.5 3.5a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-7a1 1 0 01-1-1v-7zM4.5 2a2.5 2.5 0 00-2.5 2.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-7A2.5 2.5 0 0011.5 2h-7z" />
+                    <path d="M5.75 4.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h2.5a.75.75 0 000-1.5h-2.5z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-gray-900 group-hover:text-blue-600">
+                    SVG 벡터
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Figma Import 가능한 벡터 파일
+                  </div>
+                </div>
                 <svg
-                  className="w-4 h-4 text-gray-600 group-hover:text-blue-600"
+                  className="w-3 h-3 text-gray-400 group-hover:text-blue-600"
                   fill="currentColor"
                   viewBox="0 0 16 16"
                 >
-                  <path d="M3.5 3.5a1 1 0 011-1h7a1 1 0 011 1v7a1 1 0 01-1 1h-7a1 1 0 01-1-1v-7zM4.5 2a2.5 2.5 0 00-2.5 2.5v7A2.5 2.5 0 004.5 14h7a2.5 2.5 0 002.5-2.5v-7A2.5 2.5 0 0011.5 2h-7z" />
-                  <path d="M5.75 4.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h2.5a.75.75 0 000-1.5h-2.5z" />
+                  <path d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" />
                 </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-gray-900 group-hover:text-blue-600">
-                  SVG 벡터
+              </button>
+
+              {/* SVG 품질 선택 서브메뉴 */}
+              {showSVGQuality && (
+                <div className="absolute left-full top-0 ml-1 bg-white rounded-md shadow-lg border border-gray-200 min-w-[180px] z-50 overflow-hidden">
+                  <div className="p-1.5 space-y-0.5">
+                    {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map((quality) => {
+                      const preset = QUALITY_PRESETS[quality];
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleQualitySelect(quality, 'svg')}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded text-left hover:bg-blue-50 transition-colors ${
+                            selectedQuality === quality ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div>
+                            <div className="text-xs font-semibold text-gray-900">
+                              {preset.label}
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">
+                              {preset.description}
+                            </div>
+                          </div>
+                          {selectedQuality === quality && (
+                            <svg className="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  Figma Import 가능한 벡터 파일
-                </div>
-              </div>
-            </button>
+              )}
+            </div>
 
             {/* 구분선 */}
             <div className="border-t border-gray-200 my-1" />

@@ -16,13 +16,19 @@ export async function exportSVG(
   options?: ExportOptions
 ): Promise<void> {
   try {
+    // 품질에 따른 스타일 인라인화 수준 조정
+    const quality = options?.quality || 'normal';
+    const detailedInlining = quality === 'high';
+    
+    // 폰트 로딩 대기
+    await document.fonts.ready;
+
     // SVG 네임스페이스
     const svgNS = "http://www.w3.org/2000/svg";
 
-    // 요소의 크기 계산
-    const rect = element.getBoundingClientRect();
-    const width = element.scrollWidth || rect.width;
-    const height = element.scrollHeight || rect.height;
+    // 전체 크기 계산
+    const width = element.scrollWidth;
+    const height = element.scrollHeight;
 
     // SVG 요소 생성
     const svg = document.createElementNS(svgNS, "svg");
@@ -40,9 +46,9 @@ export async function exportSVG(
     // 요소 복제하여 삽입
     const clonedElement = element.cloneNode(true) as HTMLElement;
     
-    // 스타일 인라인화 (옵션)
+    // 스타일 인라인화 (품질에 따라)
     if (options?.svgOptions?.inlineStyles !== false) {
-      inlineStyles(clonedElement);
+      inlineStyles(clonedElement, detailedInlining);
     }
 
     foreignObject.appendChild(clonedElement);
@@ -71,18 +77,42 @@ export async function exportSVG(
 /**
  * 요소의 computed styles를 인라인으로 변환
  * (외부 CSS가 적용되지 않는 환경에서도 스타일 유지)
+ * 
+ * @param element - 스타일을 인라인화할 요소
+ * @param detailed - 상세 모드 (고품질일 때 true)
  */
-function inlineStyles(element: HTMLElement): void {
+function inlineStyles(element: HTMLElement, detailed: boolean = false): void {
   const computedStyle = window.getComputedStyle(element);
-  const styleString = Array.from(computedStyle)
-    .map((key) => `${key}:${computedStyle.getPropertyValue(key)}`)
-    .join(";");
-  element.setAttribute("style", styleString);
+  
+  // 필수 스타일 속성
+  const essentialProps = [
+    'font-family', 'font-size', 'font-weight', 'font-style',
+    'color', 'background-color'
+  ];
+  
+  // 고품질 모드에서는 추가 속성 포함
+  const detailedProps = detailed ? [
+    ...essentialProps,
+    'border', 'border-radius', 'padding', 'margin', 'width', 'height',
+    'display', 'position', 'text-align', 'line-height', 'opacity'
+  ] : essentialProps;
+  
+  const styleString = detailedProps
+    .map(key => {
+      const value = computedStyle.getPropertyValue(key);
+      return value ? `${key}:${value}` : '';
+    })
+    .filter(s => s)
+    .join(';');
+    
+  if (styleString) {
+    element.setAttribute('style', styleString);
+  }
 
   // 자식 요소에도 재귀 적용
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
-      inlineStyles(child);
+      inlineStyles(child, detailed);
     }
   });
 }

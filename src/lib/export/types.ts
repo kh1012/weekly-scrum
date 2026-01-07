@@ -32,9 +32,13 @@ export interface JSONExportData {
   data: unknown; // 실제 데이터는 페이지마다 다름
 }
 
+export type ExportQuality = 'low' | 'normal' | 'high';
+
 export interface ExportOptions {
   /** 파일명 (확장자 제외) */
   filename?: string;
+  /** Export 품질 (default: normal) */
+  quality?: ExportQuality;
   /** PNG 옵션 */
   pngOptions?: {
     /** 이미지 품질 (0-1, default: 1) */

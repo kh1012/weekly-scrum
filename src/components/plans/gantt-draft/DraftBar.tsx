@@ -455,10 +455,16 @@ export const DraftBar = memo(function DraftBar({
         top: currentTop,
         // Airbnb 스타일: 더 둥근 끝
         borderRadius: 10,
-        // Snapshot은 하얀색 배경, Plan은 투명하게
+        // Snapshot은 하얀색 배경, Plan은 투명하게 (alignment 상태에 따라 색상 오버레이)
         background: isSnapshot
           ? "#ffffff" // 하얀색 배경
-          : barColor.bg.replace(/[\d.]+\)$/, "0.06)"), // Plan 배경을 더 투명하게 (0.12 → 0.06)
+          : alignmentStatus
+          ? alignmentStatus === "green"
+            ? "rgba(16, 185, 129, 0.2)" // emerald-500 overlay
+            : alignmentStatus === "orange"
+            ? "rgba(251, 146, 60, 0.2)" // orange-500 overlay
+            : "rgba(244, 63, 94, 0.2)" // rose-500 overlay
+          : barColor.bg.replace(/[\d.]+\)$/, "0.06)"), // Plan 기본 배경 (더 투명하게)
         // Snapshot은 검정 1px 테두리, Plan은 투명하게 (alignment 상태에 따라 변경)
         border: isSnapshot
           ? "1px solid #000000" // 검정 테두리
