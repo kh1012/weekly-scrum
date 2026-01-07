@@ -1021,7 +1021,6 @@ export const DraftGanttView = forwardRef<
 
   // Export 핸들러
   const ganttContainerRef = useRef<HTMLDivElement>(null);
-  const exportContainerRef = useRef<HTMLDivElement>(null);
 
   const handleExportJSON = useCallback(async () => {
     try {
@@ -1072,8 +1071,8 @@ export const DraftGanttView = forwardRef<
   const handleExportPNG = useCallback(
     async (quality: "low" | "normal" | "high" = "normal") => {
       try {
-        // exportContainerRef 사용 (Header 포함)
-        if (!exportContainerRef.current) {
+        // ganttContainerRef 사용 (Timeline만, Header 제외)
+        if (!ganttContainerRef.current) {
           throw new Error("Export 컨테이너를 찾을 수 없습니다.");
         }
 
@@ -1089,7 +1088,7 @@ export const DraftGanttView = forwardRef<
           "잠시만 기다려주세요..."
         );
 
-        await exportPNG(exportContainerRef.current, {
+        await exportPNG(ganttContainerRef.current, {
           filename: `gantt-screenshot-${Date.now()}`,
           quality,
           pngOptions: {
@@ -1113,7 +1112,8 @@ export const DraftGanttView = forwardRef<
   const handleExportSVG = useCallback(
     async (quality: "low" | "normal" | "high" = "normal") => {
       try {
-        if (!exportContainerRef.current) {
+        // ganttContainerRef 사용 (Timeline만, Header 제외)
+        if (!ganttContainerRef.current) {
           throw new Error("Export 컨테이너를 찾을 수 없습니다.");
         }
 
@@ -1129,7 +1129,7 @@ export const DraftGanttView = forwardRef<
           "잠시만 기다려주세요..."
         );
 
-        await exportSVG(exportContainerRef.current, {
+        await exportSVG(ganttContainerRef.current, {
           filename: `gantt-export-${Date.now()}`,
           quality,
           svgOptions: {
@@ -1275,7 +1275,6 @@ export const DraftGanttView = forwardRef<
 
   return (
     <div
-      ref={exportContainerRef}
       className={`flex flex-col bg-white ${
         isHeaderHidden ? "fixed inset-0 z-40" : "h-full"
       }`}
