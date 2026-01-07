@@ -1087,18 +1087,30 @@ function convertToExportData(
 ): GanttExportData {
   console.log("[convertToExportData] 시작");
 
-  // Timeline 크기 계산
-  const timelineWidth = findTimelineContentWidth(element) || 2000;
-  const timelineHeight = element.offsetHeight || 600;
+  // Canvas Drawing 상수
+  const HEADER_HEIGHT = 76; // 38(월) + 38(일+요일)
+  const FLAG_LANE_HEIGHT = 60;
+  const DAY_WIDTH = 24; // Canvas에서 사용하는 일 단위 너비
 
-  // Tree nodes 변환
+  // Timeline 크기 계산
+  const daysDiff = Math.ceil(
+    (data.timeline.rangeEnd.getTime() - data.timeline.rangeStart.getTime()) /
+      (1000 * 60 * 60 * 24)
+  ) + 1;
+  const timelineWidth = daysDiff * DAY_WIDTH;
+
+  // Header + Flag Lane + Rows 높이 포함
+  const rowsHeight = data.rows.length * data.layout.rowHeight;
+  const timelineHeight = HEADER_HEIGHT + FLAG_LANE_HEIGHT + rowsHeight;
+
+  // Tree nodes 변환 (top은 rows 영역 기준 상대 좌표)
   const treeNodes: GanttExportData["treeNodes"] = data.rows.map(
     (row, index) => ({
       type: row.feature ? "feature" : row.module ? "module" : "project",
       id: row.rowId,
       label: row.feature || row.module || row.project,
       depth: row.feature ? 2 : row.module ? 1 : 0,
-      top: index * data.layout.rowHeight,
+      top: index * data.layout.rowHeight, // Rows 영역 기준
       height: data.layout.rowHeight,
       isExpanded: row.expanded ?? true,
     })
@@ -1150,6 +1162,10 @@ function convertToExportData(
       width: timelineWidth,
       height: timelineHeight,
     },
-    layout: data.layout,
+    layout: {
+      treePanelWidth: data.layout.treePanelWidth,
+      rowHeight: data.layout.rowHeight,
+      dayWidth: DAY_WIDTH, // Canvas 기준 24px
+    },
   };
 }

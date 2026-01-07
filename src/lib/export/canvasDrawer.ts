@@ -1,25 +1,30 @@
 /**
  * Canvas Drawer for Gantt Chart
  * 
- * HTML DOM이 아닌 Canvas API를 직접 사용하여 Gantt 차트를 렌더링합니다.
- * html2canvas의 폰트 렌더링 문제를 근본적으로 해결하고 텍스트 위치를 정밀하게 제어합니다.
+ * Plans Gantt와 동일한 구조로 Canvas에 그립니다:
+ * - Timeline Header (연도/월 + 일/요일)
+ * - Flag Lane
+ * - Tree Panel (프로젝트/모듈/기능)
+ * - Plan Bars (상세 정보 포함)
  */
 
 import type { GanttExportData } from "./imageExporter";
 
+// Constants (Plans와 동일)
+const HEADER_HEIGHT = 76; // 38 + 38
+const FLAG_LANE_HEIGHT = 60;
+const ROW_HEIGHT = 40;
+const DAY_WIDTH = 24;
+
 /**
  * Gantt Canvas Drawer 클래스
- * 
- * Canvas API를 사용하여 Gantt 차트의 모든 요소를 직접 그립니다:
- * - Tree Panel (프로젝트 계층 구조)
- * - Timeline Grid (날짜 헤더, 그리드 라인)
- * - Plan Bars (작업 막대)
- * - Flags (마일스톤 마커)
  */
 export class GanttCanvasDrawer {
   private ctx: CanvasRenderingContext2D;
   private data: GanttExportData;
   private scale: number;
+  private days: Date[] = [];
+  private months: Array<{ month: string; days: number }> = [];
 
   constructor(canvas: HTMLCanvasElement, data: GanttExportData, scale: number = 2) {
     const ctx = canvas.getContext("2d");
@@ -31,263 +36,453 @@ export class GanttCanvasDrawer {
     this.scale = scale;
 
     // Canvas 크기는 이미 imageExporter.ts에서 설정됨
-    // scale만 적용
     this.ctx.scale(scale, scale);
+
+    // 날짜 배열 생성
+    this.generateDays();
+    this.generateMonths();
   }
 
   /**
-   * 메인 렌더링 함수
-   * 
-   * 모든 Gantt 차트 요소를 순서대로 그립니다.
+   * 날짜 범위에서 일 배열 생성
+   */
+  private generateDays(): void {
+    const start = new Date(this.data.timeline.rangeStart);
+    const end = new Date(this.data.timeline.rangeEnd);
+    
+    const current = new Date(start);
+    while (current <= end) {
+      this.days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+  }
+
+  /**
+   * 월 헤더 정보 생성
+   */
+  private generateMonths(): void {
+    if (this.days.length === 0) return;
+
+    let currentMonth = this.days[0].getMonth();
+    let currentYear = this.days[0].getFullYear();
+    let dayCount = 0;
+
+    this.days.forEach((day, index) => {
+      if (day.getMonth() === currentMonth && day.getFullYear() === currentYear) {
+        dayCount++;
+      } else {
+        this.months.push({
+          month: `${currentYear}년 ${currentMonth + 1}월`,
+          days: dayCount,
+        });
+        currentMonth = day.getMonth();
+        currentYear = day.getFullYear();
+        dayCount = 1;
+      }
+
+      if (index === this.days.length - 1) {
+        this.months.push({
+          month: `${currentYear}년 ${currentMonth + 1}월`,
+          days: dayCount,
+        });
+      }
+    });
+  }
+
+  /**
+   * 메인 렌더링
    */
   public async render(): Promise<void> {
     console.log("[GanttCanvasDrawer] 렌더링 시작");
 
-    // 폰트 로딩 대기
     await document.fonts.ready;
-    console.log("[GanttCanvasDrawer] 폰트 로딩 완료");
 
-    // 배경
+    // 1. 배경
     this.drawBackground();
 
-    // Timeline (그리드, 날짜 헤더)
-    this.drawTimeline();
+    // 2. Timeline Header (상단)
+    this.drawTimelineHeader();
 
-    // Tree Panel (프로젝트 계층)
+    // 3. Flag Lane (헤더 아래)
+    this.drawFlagLane();
+
+    // 4. Tree Panel (좌측)
     this.drawTreePanel();
 
-    // Plan Bars (작업 막대)
-    this.drawBars();
+    // 5. Grid Lines (세로선)
+    this.drawGridLines();
 
-    // Flags (마일스톤)
-    this.drawFlags();
+    // 6. Plan Bars (타임라인 영역)
+    this.drawBars();
 
     console.log("[GanttCanvasDrawer] 렌더링 완료");
   }
 
   /**
-   * 배경 그리기
+   * 배경
    */
   private drawBackground(): void {
     this.ctx.fillStyle = "#ffffff";
-    this.ctx.fillRect(
-      0,
-      0,
-      this.data.layout.treePanelWidth + this.data.timeline.width,
-      this.data.timeline.height
-    );
+    this.ctx.fillRect(0, 0, this.data.layout.treePanelWidth + this.data.timeline.width, this.data.timeline.height);
   }
 
   /**
-   * Timeline 그리드 그리기
-   * - 날짜 헤더
-   * - 세로 그리드 라인
-   * - 주말 강조
+   * Timeline Header (연도/월 + 일/요일)
    */
-  private drawTimeline(): void {
-    console.log("[GanttCanvasDrawer] Timeline 그리기 시작");
+  private drawTimelineHeader(): void {
+    const offsetX = this.data.layout.treePanelWidth;
 
-    const { treePanelWidth, dayWidth } = this.data.layout;
-    const { rangeStart, rangeEnd } = this.data.timeline;
+    // 배경 그라데이션
+    const gradient = this.ctx.createLinearGradient(0, 0, 0, HEADER_HEIGHT);
+    gradient.addColorStop(0, "#f8f9fa");
+    gradient.addColorStop(1, "#f3f4f6");
+    this.ctx.fillStyle = gradient;
+    this.ctx.fillRect(offsetX, 0, this.data.timeline.width, HEADER_HEIGHT);
 
-    // TODO: 실제 날짜 파싱 및 그리드 렌더링
-    // 현재는 기본 그리드만 표시
+    // 1. 월 헤더 (상단 38px)
+    let monthX = offsetX;
+    this.months.forEach((m, idx) => {
+      const monthWidth = m.days * DAY_WIDTH;
 
-    // 그리드 라인 (세로)
-    this.ctx.strokeStyle = "#e0e0e0";
-    this.ctx.lineWidth = 1;
+      // 텍스트
+      this.drawText(m.month, monthX + monthWidth / 2, 19, {
+        font: "600 12px Pretendard, sans-serif",
+        color: "#374151",
+        align: "center",
+        baseline: "middle",
+      });
 
-    for (let i = 0; i < 100; i++) {
-      const x = treePanelWidth + i * dayWidth;
+      // 우측 테두리
+      this.ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+      this.ctx.lineWidth = 1;
       this.ctx.beginPath();
-      this.ctx.moveTo(x, 0);
-      this.ctx.lineTo(x, this.data.timeline.height);
+      this.ctx.moveTo(monthX + monthWidth, 0);
+      this.ctx.lineTo(monthX + monthWidth, 38);
       this.ctx.stroke();
-    }
 
-    console.log("[GanttCanvasDrawer] Timeline 그리기 완료");
+      monthX += monthWidth;
+    });
+
+    // 월 헤더 하단 테두리
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+    this.ctx.beginPath();
+    this.ctx.moveTo(offsetX, 38);
+    this.ctx.lineTo(offsetX + this.data.timeline.width, 38);
+    this.ctx.stroke();
+
+    // 2. 일 헤더 (하단 38px)
+    this.days.forEach((day, idx) => {
+      const dayX = offsetX + idx * DAY_WIDTH;
+      const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+      const isMonday = day.getDay() === 1;
+      const isToday = day.toDateString() === new Date().toDateString();
+
+      // 배경
+      if (isToday) {
+        const grad = this.ctx.createLinearGradient(dayX, 38, dayX, 76);
+        grad.addColorStop(0, "rgba(59, 130, 246, 0.15)");
+        grad.addColorStop(1, "rgba(59, 130, 246, 0.08)");
+        this.ctx.fillStyle = grad;
+        this.ctx.fillRect(dayX, 38, DAY_WIDTH, 38);
+      } else if (isWeekend) {
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
+        this.ctx.fillRect(dayX, 38, DAY_WIDTH, 38);
+      }
+
+      // 월요일 좌측 테두리
+      if (isMonday) {
+        this.ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(dayX, 38);
+        this.ctx.lineTo(dayX, 76);
+        this.ctx.stroke();
+      }
+
+      // 우측 테두리
+      this.ctx.strokeStyle = "rgba(0, 0, 0, 0.04)";
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      this.ctx.moveTo(dayX + DAY_WIDTH, 38);
+      this.ctx.lineTo(dayX + DAY_WIDTH, 76);
+      this.ctx.stroke();
+
+      // 일자
+      const dayColor = isToday ? "#2563eb" : isWeekend ? "#9ca3af" : "#6b7280";
+      this.drawText(String(day.getDate()), dayX + DAY_WIDTH / 2, 50, {
+        font: `600 11px Pretendard, sans-serif`,
+        color: dayColor,
+        align: "center",
+        baseline: "middle",
+      });
+
+      // 요일
+      const weekdayLabels = ["일", "월", "화", "수", "목", "금", "토"];
+      this.drawText(weekdayLabels[day.getDay()], dayX + DAY_WIDTH / 2, 64, {
+        font: "500 9px Pretendard, sans-serif",
+        color: dayColor,
+        align: "center",
+        baseline: "middle",
+      });
+    });
+
+    // 헤더 하단 테두리
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+    this.ctx.beginPath();
+    this.ctx.moveTo(offsetX, HEADER_HEIGHT);
+    this.ctx.lineTo(offsetX + this.data.timeline.width, HEADER_HEIGHT);
+    this.ctx.stroke();
   }
 
   /**
-   * Tree Panel 그리기
-   * - 프로젝트/모듈/기능 계층 구조
-   * - 확장/축소 아이콘
-   * - 텍스트 레이블
+   * Flag Lane (헤더 아래, Bars 위)
+   */
+  private drawFlagLane(): void {
+    const offsetX = this.data.layout.treePanelWidth;
+    const offsetY = HEADER_HEIGHT;
+
+    // 배경
+    this.ctx.fillStyle = "#fef3c7";
+    this.ctx.fillRect(offsetX, offsetY, this.data.timeline.width, FLAG_LANE_HEIGHT);
+
+    // Flags 그리기
+    this.data.flags.forEach((flag) => {
+      const startDate = new Date(flag.startDate);
+      const endDate = new Date(flag.endDate);
+      const rangeStart = new Date(this.data.timeline.rangeStart);
+
+      const daysSinceStart = Math.floor(
+        (startDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const flagX = offsetX + daysSinceStart * DAY_WIDTH;
+
+      const isPoint = flag.startDate === flag.endDate;
+
+      if (isPoint) {
+        // Point flag: 수직선 + 레이블
+        const flagColor = flag.color || "#ef4444";
+
+        // 수직선
+        this.ctx.strokeStyle = flagColor;
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(flagX, offsetY);
+        this.ctx.lineTo(flagX, offsetY + FLAG_LANE_HEIGHT);
+        this.ctx.stroke();
+
+        // 레이블 박스
+        const labelWidth = Math.min(80, this.ctx.measureText(flag.title).width + 12);
+        this.ctx.fillStyle = flagColor;
+        this.ctx.fillRect(flagX + 4, offsetY + 10, labelWidth, 20);
+
+        // 텍스트
+        this.drawText(flag.title, flagX + 8, offsetY + 20, {
+          font: "600 10px Pretendard, sans-serif",
+          color: "#ffffff",
+          align: "left",
+          baseline: "middle",
+          maxWidth: labelWidth - 8,
+        });
+      }
+    });
+
+    // Flag Lane 하단 테두리
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+    this.ctx.beginPath();
+    this.ctx.moveTo(offsetX, offsetY + FLAG_LANE_HEIGHT);
+    this.ctx.lineTo(offsetX + this.data.timeline.width, offsetY + FLAG_LANE_HEIGHT);
+    this.ctx.stroke();
+  }
+
+  /**
+   * Tree Panel (좌측 계층 구조)
    */
   private drawTreePanel(): void {
-    console.log("[GanttCanvasDrawer] Tree Panel 그리기 시작");
+    const offsetY = HEADER_HEIGHT + FLAG_LANE_HEIGHT;
 
-    // 배경 그리기
+    // 배경
     this.ctx.fillStyle = "#f9fafb";
-    this.ctx.fillRect(0, 0, this.data.layout.treePanelWidth, this.data.timeline.height);
+    this.ctx.fillRect(0, offsetY, this.data.layout.treePanelWidth, this.data.timeline.height - offsetY);
 
-    // 구분선
-    this.ctx.strokeStyle = "#e0e0e0";
+    // 우측 테두리
+    this.ctx.strokeStyle = "#e5e7eb";
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
-    this.ctx.moveTo(this.data.layout.treePanelWidth, 0);
+    this.ctx.moveTo(this.data.layout.treePanelWidth, offsetY);
     this.ctx.lineTo(this.data.layout.treePanelWidth, this.data.timeline.height);
     this.ctx.stroke();
 
     // 노드 그리기
     this.data.treeNodes.forEach((node) => {
-      this.drawTreeNode(node);
-    });
+      const indent = node.depth * 20;
+      const x = 12 + indent;
+      const y = offsetY + node.top + ROW_HEIGHT / 2;
 
-    console.log("[GanttCanvasDrawer] Tree Panel 그리기 완료");
-  }
+      // 프로젝트/모듈/기능별 스타일
+      let fontSize = "12px";
+      let fontWeight = "400";
+      let color = "#4b5563";
 
-  /**
-   * Tree Node 하나 그리기
-   */
-  private drawTreeNode(node: GanttExportData["treeNodes"][0]): void {
-    const indent = node.depth * 20; // 들여쓰기
-    const x = 10 + indent;
-    const y = node.top + node.height / 2;
+      if (node.depth === 0) {
+        // 프로젝트
+        fontSize = "13px";
+        fontWeight = "700";
+        color = "#1f2937";
+      } else if (node.depth === 1) {
+        // 모듈
+        fontSize = "12px";
+        fontWeight = "600";
+        color = "#374151";
+      }
 
-    // 텍스트 그리기
-    const fontSize = node.depth === 0 ? "14px" : "13px";
-    const fontWeight = node.depth === 0 ? "600" : "400";
-    
-    this.drawText(node.label, x, y, {
-      font: `${fontWeight} ${fontSize} Pretendard, sans-serif`,
-      color: node.depth === 0 ? "#1f2937" : "#4b5563",
-      align: "left",
-      baseline: "middle",
-      maxWidth: this.data.layout.treePanelWidth - indent - 20,
-    });
-  }
-
-  /**
-   * Plan Bars 그리기
-   * - 작업 막대
-   * - 상태별 색상
-   * - 텍스트 레이블
-   */
-  private drawBars(): void {
-    console.log("[GanttCanvasDrawer] Bars 그리기 시작");
-
-    this.data.bars.forEach((bar) => {
-      this.drawBar(bar);
-    });
-
-    console.log("[GanttCanvasDrawer] Bars 그리기 완료");
-  }
-
-  /**
-   * Plan Bar 하나 그리기
-   */
-  private drawBar(bar: GanttExportData["bars"][0]): void {
-    // 날짜를 X 좌표로 변환
-    const startDate = new Date(bar.startDate);
-    const endDate = new Date(bar.endDate);
-    const rangeStart = new Date(this.data.timeline.rangeStart);
-    
-    const daysSinceStart = Math.floor((startDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
-    const duration = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    
-    const barX = this.data.layout.treePanelWidth + daysSinceStart * this.data.layout.dayWidth;
-    const barWidth = duration * this.data.layout.dayWidth;
-    
-    // Row 찾기
-    const rowNode = this.data.treeNodes.find(node => node.id === bar.rowId);
-    if (!rowNode) return;
-    
-    const barY = rowNode.top + 5 + (bar.lane * 25); // lane별 Y 좌표
-    const barHeight = 20;
-    
-    // 상태별 색상
-    const colors: Record<string, string> = {
-      "진행중": "#3b82f6",
-      "완료": "#10b981",
-      "보류": "#f59e0b",
-      "취소": "#ef4444",
-    };
-    const barColor = colors[bar.status] || "#6b7280";
-    
-    // 막대 그리기
-    this.ctx.fillStyle = barColor;
-    this.ctx.fillRect(barX, barY, barWidth, barHeight);
-    
-    // 테두리
-    this.ctx.strokeStyle = "#ffffff";
-    this.ctx.lineWidth = 1;
-    this.ctx.strokeRect(barX, barY, barWidth, barHeight);
-    
-    // 텍스트 (막대가 충분히 크면)
-    if (barWidth > 50) {
-      this.drawText(bar.title, barX + 5, barY + barHeight / 2, {
-        font: "11px Pretendard, sans-serif",
-        color: "#ffffff",
+      this.drawText(node.label, x, y, {
+        font: `${fontWeight} ${fontSize} Pretendard, sans-serif`,
+        color,
         align: "left",
         baseline: "middle",
-        maxWidth: barWidth - 10,
+        maxWidth: this.data.layout.treePanelWidth - indent - 20,
       });
-    }
-  }
 
-  /**
-   * Flags 그리기
-   * - 마일스톤 마커
-   * - Flag 레이블
-   */
-  private drawFlags(): void {
-    console.log("[GanttCanvasDrawer] Flags 그리기 시작");
-
-    this.data.flags.forEach((flag) => {
-      this.drawFlag(flag);
-    });
-
-    console.log("[GanttCanvasDrawer] Flags 그리기 완료");
-  }
-
-  /**
-   * Flag 하나 그리기
-   */
-  private drawFlag(flag: GanttExportData["flags"][0]): void {
-    // 날짜를 X 좌표로 변환
-    const startDate = new Date(flag.startDate);
-    const rangeStart = new Date(this.data.timeline.rangeStart);
-    
-    const daysSinceStart = Math.floor((startDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
-    const flagX = this.data.layout.treePanelWidth + daysSinceStart * this.data.layout.dayWidth;
-    
-    // Point flag (수직선)
-    const isPoint = flag.startDate === flag.endDate;
-    
-    if (isPoint) {
-      // 수직선
-      this.ctx.strokeStyle = flag.color || "#ef4444";
-      this.ctx.lineWidth = 2;
+      // Row 구분선
+      this.ctx.strokeStyle = "#f3f4f6";
+      this.ctx.lineWidth = 1;
       this.ctx.beginPath();
-      this.ctx.moveTo(flagX, 0);
-      this.ctx.lineTo(flagX, this.data.timeline.height);
+      this.ctx.moveTo(0, offsetY + node.top + ROW_HEIGHT);
+      this.ctx.lineTo(this.data.layout.treePanelWidth, offsetY + node.top + ROW_HEIGHT);
       this.ctx.stroke();
-      
-      // Flag 레이블 (상단)
-      this.ctx.fillStyle = flag.color || "#ef4444";
-      this.ctx.fillRect(flagX + 2, 5, 60, 20);
-      
-      this.drawText(flag.title, flagX + 5, 15, {
-        font: "10px Pretendard, sans-serif",
-        color: "#ffffff",
-        align: "left",
-        baseline: "top",
-        maxWidth: 55,
-      });
-    }
+    });
   }
 
   /**
-   * 텍스트 그리기 (핵심 유틸리티)
-   * 
-   * Canvas의 fillText를 사용하여 정밀한 위치에 텍스트를 렌더링합니다.
-   * html2canvas의 폰트 렌더링 문제를 근본적으로 해결합니다.
-   * 
-   * @param text - 그릴 텍스트
-   * @param x - X 좌표
-   * @param y - Y 좌표
-   * @param options - 스타일 옵션
+   * Grid Lines (세로선)
+   */
+  private drawGridLines(): void {
+    const offsetX = this.data.layout.treePanelWidth;
+    const offsetY = HEADER_HEIGHT + FLAG_LANE_HEIGHT;
+
+    this.days.forEach((day, idx) => {
+      const x = offsetX + idx * DAY_WIDTH;
+      const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+      const isMonday = day.getDay() === 1;
+
+      // 주말 배경
+      if (isWeekend) {
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.015)";
+        this.ctx.fillRect(x, offsetY, DAY_WIDTH, this.data.timeline.height - offsetY);
+      }
+
+      // 세로선
+      this.ctx.strokeStyle = isMonday ? "rgba(0, 0, 0, 0.08)" : "rgba(0, 0, 0, 0.04)";
+      this.ctx.lineWidth = isMonday ? 2 : 1;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, offsetY);
+      this.ctx.lineTo(x, this.data.timeline.height);
+      this.ctx.stroke();
+    });
+  }
+
+  /**
+   * Plan Bars (작업 막대)
+   */
+  private drawBars(): void {
+    const offsetX = this.data.layout.treePanelWidth;
+    const offsetY = HEADER_HEIGHT + FLAG_LANE_HEIGHT;
+
+    this.data.bars.forEach((bar) => {
+      const startDate = new Date(bar.startDate);
+      const endDate = new Date(bar.endDate);
+      const rangeStart = new Date(this.data.timeline.rangeStart);
+
+      const daysSinceStart = Math.floor(
+        (startDate.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const duration = Math.floor(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+
+      const barX = offsetX + daysSinceStart * DAY_WIDTH;
+      const barWidth = duration * DAY_WIDTH - 2; // 간격
+
+      // Row 찾기
+      const rowNode = this.data.treeNodes.find((node) => node.id === bar.rowId);
+      if (!rowNode) return;
+
+      const barY = offsetY + rowNode.top + 6 + bar.lane * 26;
+      const barHeight = 22;
+
+      // 상태별 색상
+      const statusColors: Record<string, string> = {
+        진행중: "#3b82f6",
+        완료: "#10b981",
+        보류: "#f59e0b",
+        취소: "#ef4444",
+      };
+      const barColor = statusColors[bar.status] || "#6b7280";
+
+      // 막대 배경
+      this.ctx.fillStyle = barColor;
+      this.roundRect(barX, barY, barWidth, barHeight, 3);
+      this.ctx.fill();
+
+      // 텍스트 영역 (막대가 충분히 크면)
+      if (barWidth > 60) {
+        // Stage 태그
+        this.ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        this.roundRect(barX + 4, barY + 4, 30, 14, 2);
+        this.ctx.fill();
+
+        this.drawText(bar.stage, barX + 19, barY + 11, {
+          font: "600 9px Pretendard, sans-serif",
+          color: "#ffffff",
+          align: "center",
+          baseline: "middle",
+        });
+
+        // Title
+        if (barWidth > 100) {
+          this.drawText(bar.title, barX + 40, barY + 11, {
+            font: "600 11px Pretendard, sans-serif",
+            color: "#ffffff",
+            align: "left",
+            baseline: "middle",
+            maxWidth: barWidth - 45,
+          });
+        }
+
+        // Assignees
+        if (barWidth > 150 && bar.assignees.length > 0) {
+          const assigneeText = bar.assignees.map((a) => a.name).join(", ");
+          this.drawText(assigneeText, barX + barWidth - 5, barY + 11, {
+            font: "500 9px Pretendard, sans-serif",
+            color: "rgba(255, 255, 255, 0.8)",
+            align: "right",
+            baseline: "middle",
+            maxWidth: Math.min(barWidth / 3, 80),
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * 둥근 사각형 (막대 모서리용)
+   */
+  private roundRect(x: number, y: number, width: number, height: number, radius: number): void {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + radius, y);
+    this.ctx.lineTo(x + width - radius, y);
+    this.ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    this.ctx.lineTo(x + width, y + height - radius);
+    this.ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    this.ctx.lineTo(x + radius, y + height);
+    this.ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    this.ctx.lineTo(x, y + radius);
+    this.ctx.quadraticCurveTo(x, y, x + radius, y);
+    this.ctx.closePath();
+  }
+
+  /**
+   * 텍스트 그리기
    */
   private drawText(
     text: string,
@@ -302,7 +497,7 @@ export class GanttCanvasDrawer {
     } = {}
   ): void {
     const {
-      font = "14px Pretendard, sans-serif",
+      font = "12px Pretendard, sans-serif",
       color = "#37352f",
       align = "left",
       baseline = "top",
@@ -314,7 +509,6 @@ export class GanttCanvasDrawer {
     this.ctx.textAlign = align;
     this.ctx.textBaseline = baseline;
 
-    // 말줄임표 처리
     let finalText = text;
     if (maxWidth) {
       const metrics = this.ctx.measureText(text);
@@ -323,16 +517,11 @@ export class GanttCanvasDrawer {
       }
     }
 
-    // ⭐ 텍스트 렌더링 (정밀한 위치 제어)
     this.ctx.fillText(finalText, x, y);
   }
 
   /**
-   * 텍스트 말줄임표 처리
-   * 
-   * @param text - 원본 텍스트
-   * @param maxWidth - 최대 너비
-   * @returns 말줄임표가 적용된 텍스트
+   * 말줄임표 처리
    */
   private truncateText(text: string, maxWidth: number): string {
     const ellipsis = "...";
@@ -345,8 +534,7 @@ export class GanttCanvasDrawer {
     let truncated = text;
     while (truncated.length > 0) {
       truncated = truncated.slice(0, -1);
-      const width =
-        this.ctx.measureText(truncated).width + ellipsisWidth;
+      const width = this.ctx.measureText(truncated).width + ellipsisWidth;
       if (width <= maxWidth) {
         return truncated + ellipsis;
       }
@@ -356,10 +544,7 @@ export class GanttCanvasDrawer {
   }
 
   /**
-   * Canvas를 PNG Blob으로 변환
-   * 
-   * @param quality - 이미지 품질 (0.0 ~ 1.0)
-   * @returns PNG Blob
+   * PNG Blob 생성
    */
   public toBlob(quality: number = 1): Promise<Blob> {
     return new Promise((resolve, reject) => {
@@ -377,4 +562,3 @@ export class GanttCanvasDrawer {
     });
   }
 }
-
