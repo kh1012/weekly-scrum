@@ -75,13 +75,15 @@ export function ExportDropdown({
         !dropdownRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
+        setShowPNGQuality(false);
+        setShowSVGQuality(false);
       }
     };
-    if (isOpen) {
+    if (isOpen || showPNGQuality || showSVGQuality) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+  }, [isOpen, showPNGQuality, showSVGQuality]);
 
   const handleExport = async (type: ExportType, quality?: ExportQuality) => {
     if (isExporting) return;
