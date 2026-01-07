@@ -455,6 +455,7 @@ export async function exportPNG(
           console.log("[PNG Export] 텍스트 여백 보정 시작");
           const allElements = clonedEl.querySelectorAll("*");
           const adjustments = {
+            search: 0,
             timelineBlock: 0,
             treePanel: 0,
             header: 0,
@@ -480,14 +481,38 @@ export async function exportPNG(
                 while (parent && depth < 5) {
                   const parentComputed = window.getComputedStyle(parent);
 
+                  // 0. 검색 영역 (최우선 - 좌상단)
+                  if (
+                    parent.className.includes("search") ||
+                    parent.className.includes("filter") ||
+                    parent.querySelector('input[type="text"]') ||
+                    parent.querySelector('input[placeholder]')
+                  ) {
+                    offset = 7; // 검색 영역은 7px 위로
+                    area = "search";
+
+                    if (!parentsPadded.has(parent)) {
+                      const currentPadding =
+                        parseFloat(parentComputed.paddingTop) || 0;
+                      parent.style.setProperty(
+                        "padding-top",
+                        `${currentPadding + 7}px`,
+                        "important"
+                      );
+                      parentsPadded.add(parent);
+                    }
+                    break;
+                  }
+
                   // 1. 타임라인 블록 (absolute positioned parent)
                   if (parentComputed.position === "absolute") {
                     offset = 4; // 타임라인 블록 (12px → 4px)
                     area = "timelineBlock";
-                    
+
                     // 부모에 padding-top 추가 (텍스트가 잘리지 않도록)
                     if (!parentsPadded.has(parent)) {
-                      const currentPadding = parseFloat(parentComputed.paddingTop) || 0;
+                      const currentPadding =
+                        parseFloat(parentComputed.paddingTop) || 0;
                       parent.style.setProperty(
                         "padding-top",
                         `${currentPadding + 4}px`,
@@ -506,9 +531,10 @@ export async function exportPNG(
                   ) {
                     offset = 3; // 트리 패널 (10px → 3px)
                     area = "treePanel";
-                    
+
                     if (!parentsPadded.has(parent)) {
-                      const currentPadding = parseFloat(parentComputed.paddingTop) || 0;
+                      const currentPadding =
+                        parseFloat(parentComputed.paddingTop) || 0;
                       parent.style.setProperty(
                         "padding-top",
                         `${currentPadding + 3}px`,
@@ -527,9 +553,10 @@ export async function exportPNG(
                   ) {
                     offset = 2; // 헤더 (8px → 2px)
                     area = "header";
-                    
+
                     if (!parentsPadded.has(parent)) {
-                      const currentPadding = parseFloat(parentComputed.paddingTop) || 0;
+                      const currentPadding =
+                        parseFloat(parentComputed.paddingTop) || 0;
                       parent.style.setProperty(
                         "padding-top",
                         `${currentPadding + 2}px`,
@@ -559,7 +586,7 @@ export async function exportPNG(
           console.log(
             `[PNG Export] 텍스트 여백 보정 완료:`,
             adjustments,
-            `(timeline: 4px, tree: 3px, header: 2px, other: 5px), 부모 padding: ${parentsPadded.size}개`
+            `(search: 7px, timeline: 4px, tree: 3px, header: 2px, other: 5px), 부모 padding: ${parentsPadded.size}개`
           );
 
           // #region agent log
