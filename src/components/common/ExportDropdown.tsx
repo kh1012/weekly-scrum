@@ -222,7 +222,7 @@ export function ExportDropdown({
         {/* 드롭다운 메뉴 - GitHub 스타일 */}
         {isOpen && !isExporting && (
           <div
-            className="absolute top-full right-0 mt-2 py-2 rounded-md border border-gray-200 bg-white min-w-[280px] z-50 overflow-hidden"
+            className="absolute top-full right-0 mt-2 pt-2 rounded-md border border-gray-200 bg-white min-w-[280px] z-50 overflow-hidden"
             style={{
               boxShadow:
                 "0 8px 24px rgba(140, 149, 159, 0.2), 0 0 1px rgba(27, 31, 35, 0.1)",
@@ -434,8 +434,8 @@ export function ExportDropdown({
             </button>
 
             {/* 안내 문구 */}
-            <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
-              <p className="text-[10px] text-gray-500 leading-relaxed">
+            <div className="px-3 pt-2 pb-3 bg-gray-50 border-t border-gray-100">
+              <p className="text-[10px] text-gray-500 leading-relaxed text-center">
                 SVG는 벡터 편집 가능, PNG는 즉시 공유용
               </p>
             </div>

@@ -565,11 +565,11 @@ export const DraftBar = memo(function DraftBar({
       {/* Alignment 커버리지 툴팁 (Plan only, 호버 시) - Figma 댓글 스타일 */}
       {!isSnapshot && alignmentStatus && showAlignmentTooltip && (
         <div
-          className="absolute right-full top-1/2 -translate-y-1/2 mr-2 flex items-center gap-2 z-50 pointer-events-none"
+          className="absolute left-full top-1/2 -translate-y-1/2 ml-2 flex items-center gap-0 z-50 pointer-events-none"
         >
           {/* 점선 연결 */}
           <div
-            className="absolute left-full w-4 border-t-2 border-dashed"
+            className="w-3 border-t border-dashed"
             style={{
               borderColor:
                 alignmentStatus === "green"
@@ -581,10 +581,10 @@ export const DraftBar = memo(function DraftBar({
           />
           
           {/* 툴팁 컨텐츠 */}
-          <div className="bg-white rounded-md shadow-lg border border-gray-200 px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
+          <div className="bg-white rounded-md shadow-lg border border-gray-200 px-2 py-1 flex items-center gap-1.5 whitespace-nowrap">
             {/* 상태 dot */}
             <div
-              className="w-2 h-2 rounded-full flex-shrink-0"
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{
                 background:
                   alignmentStatus === "green"
@@ -596,7 +596,7 @@ export const DraftBar = memo(function DraftBar({
             />
             
             {/* 텍스트 */}
-            <span className="text-xs font-medium text-gray-700">
+            <span className="text-[10px] font-medium text-gray-700">
               실행 {bar.alignmentActualCount ?? 0}/{bar.alignmentExpectedCount ?? 0}회
               {bar.alignmentExpectedCount && bar.alignmentExpectedCount > 0 && (
                 <span className="text-gray-500 ml-1">
