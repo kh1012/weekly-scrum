@@ -129,12 +129,12 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
 function debugTextPadding(element: HTMLElement, maxSamples: number = 5): void {
   let count = 0;
   const queue: HTMLElement[] = [element];
-  
+
   console.log("[debugTextPadding] 텍스트 요소 여백 분석:");
-  
+
   while (queue.length > 0 && count < maxSamples) {
     const el = queue.shift()!;
-    
+
     // 텍스트가 있는 요소만 체크 (SPAN, DIV with text)
     if (
       el.textContent &&
@@ -142,16 +142,19 @@ function debugTextPadding(element: HTMLElement, maxSamples: number = 5): void {
       (el.tagName === "SPAN" || el.tagName === "DIV")
     ) {
       const computed = window.getComputedStyle(el);
-      console.log(`  ${el.tagName}.${el.className.split(" ")[0] || "(no-class)"}:`, {
-        text: el.textContent.substring(0, 20) + "...",
-        lineHeight: computed.lineHeight,
-        padding: `${computed.paddingTop} ${computed.paddingRight} ${computed.paddingBottom} ${computed.paddingLeft}`,
-        margin: `${computed.marginTop} ${computed.marginRight} ${computed.marginBottom} ${computed.marginLeft}`,
-        fontSize: computed.fontSize,
-      });
+      console.log(
+        `  ${el.tagName}.${el.className.split(" ")[0] || "(no-class)"}:`,
+        {
+          text: el.textContent.substring(0, 20) + "...",
+          lineHeight: computed.lineHeight,
+          padding: `${computed.paddingTop} ${computed.paddingRight} ${computed.paddingBottom} ${computed.paddingLeft}`,
+          margin: `${computed.marginTop} ${computed.marginRight} ${computed.marginBottom} ${computed.marginLeft}`,
+          fontSize: computed.fontSize,
+        }
+      );
       count++;
     }
-    
+
     // 자식 추가
     for (const child of Array.from(el.children)) {
       if (child instanceof HTMLElement) {
@@ -295,8 +298,33 @@ export async function exportPNG(
             );
           }
 
-          // 기존 fixOverflowForExport는 세부 조정(세로 스크롤 등)에 계속 사용
+          // Phase 3: overflow를 visible로 변경 (이때 자식 높이가 확장됨)
           fixOverflowForExport(clonedEl);
+
+          // Phase 4: 자식들의 실제 높이를 측정하여 최상위 컨테이너 높이 조정
+          let maxChildHeight = 0;
+          for (const child of Array.from(clonedEl.children)) {
+            if (child instanceof HTMLElement) {
+              const childHeight = Math.max(
+                child.offsetHeight,
+                child.scrollHeight,
+                child.getBoundingClientRect().height
+              );
+              maxChildHeight = Math.max(maxChildHeight, childHeight);
+            }
+          }
+
+          if (maxChildHeight > clonedEl.offsetHeight) {
+            console.log(
+              `[PNG Export] 최상위 컨테이너 높이 조정: ${clonedEl.offsetHeight}px → ${maxChildHeight}px`
+            );
+            clonedEl.style.setProperty("height", `${maxChildHeight}px`, "important");
+            clonedEl.style.setProperty("min-height", `${maxChildHeight}px`, "important");
+          } else {
+            console.log(
+              `[PNG Export] 높이 조정 불필요: 현재 ${clonedEl.offsetHeight}px, 최대 자식 ${maxChildHeight}px`
+            );
+          }
         }
       },
     });
