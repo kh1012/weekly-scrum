@@ -68,9 +68,11 @@ export function ExportDropdown({
       const quality =
         (localStorage.getItem("export-quality") as ExportQuality) || "normal";
       const pngQuality =
-        (localStorage.getItem("export-png-quality") as ExportQuality) || "normal";
+        (localStorage.getItem("export-png-quality") as ExportQuality) ||
+        "normal";
       const drawQuality =
-        (localStorage.getItem("export-draw-quality") as ExportQuality) || "normal";
+        (localStorage.getItem("export-draw-quality") as ExportQuality) ||
+        "normal";
       setFigmaToken(token);
       setFigmaFileKey(fileKey);
       setSelectedQuality(quality);
@@ -160,7 +162,10 @@ export function ExportDropdown({
     }
   };
 
-  const handleQualitySelect = (quality: ExportQuality, type: "png" | "draw" | "svg") => {
+  const handleQualitySelect = (
+    quality: ExportQuality,
+    type: "png" | "draw" | "svg"
+  ) => {
     if (type === "png") {
       setSelectedPNGQuality(quality);
       try {
@@ -300,7 +305,7 @@ export function ExportDropdown({
               >
                 <span className="flex items-center gap-2">
                   PNG
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-green-100 text-green-700 rounded">
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-700 rounded">
                     FAST
                   </span>
                 </span>
@@ -363,7 +368,7 @@ export function ExportDropdown({
               >
                 <span className="flex items-center gap-2">
                   PNG
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-orange-100 text-orange-700 rounded">
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-700 rounded">
                     SLOW BUT DETAILED
                   </span>
                 </span>

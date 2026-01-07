@@ -30,18 +30,9 @@ export class GanttCanvasDrawer {
     this.data = data;
     this.scale = scale;
 
-    // High DPI 디스플레이 지원
-    this.setupHighDPI(canvas);
-  }
-
-  /**
-   * High DPI 디스플레이 지원 설정
-   */
-  private setupHighDPI(canvas: HTMLCanvasElement): void {
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * this.scale;
-    canvas.height = rect.height * this.scale;
-    this.ctx.scale(this.scale, this.scale);
+    // Canvas 크기는 이미 imageExporter.ts에서 설정됨
+    // scale만 적용
+    this.ctx.scale(scale, scale);
   }
 
   /**
