@@ -205,7 +205,7 @@ export default function NotFound() {
           <p className="text-xs text-[#57606a]">
             문제가 지속되면{" "}
             <a
-              href="mailto:support@example.com"
+              href="mailto:zrelor@gmail.com"
               className="text-[#0969da] hover:underline"
             >
               문의하기
