@@ -16,22 +16,24 @@ import {
 function findTimelineContentWidth(element: HTMLElement): number | null {
   const queue: HTMLElement[] = [element];
   let maxWidth = 0;
-  
+
   console.log("[findTimelineContentWidth] 탐색 시작");
-  
+
   while (queue.length > 0) {
     const el = queue.shift()!;
-    
+
     // style.width가 px 단위로 명시된 요소 찾기
     const styleWidth = el.style.width;
     if (styleWidth && styleWidth.endsWith("px")) {
       const width = parseFloat(styleWidth);
       if (width > maxWidth) {
         maxWidth = width;
-        console.log(`[findTimelineContentWidth] 발견: ${width}px (${el.className})`);
+        console.log(
+          `[findTimelineContentWidth] 발견: ${width}px (${el.className})`
+        );
       }
     }
-    
+
     // 자식들 큐에 추가
     for (const child of Array.from(el.children)) {
       if (child instanceof HTMLElement) {
@@ -39,7 +41,7 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
       }
     }
   }
-  
+
   console.log(`[findTimelineContentWidth] 최종 결과: ${maxWidth || null}`);
   return maxWidth > 0 ? maxWidth : null;
 }
@@ -51,43 +53,57 @@ function findTimelineContentWidth(element: HTMLElement): number | null {
  */
 function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
   console.log(`[applyTimelineWidth] 적용 시작: ${timelineWidth}px`);
-  
+
   let treePanelWidth = 0;
   let timelineContainer: HTMLElement | null = null;
-  
+
   // 1단계: 직계 자식 중 Tree Panel과 Timeline 컨테이너 찾기
   for (const child of Array.from(element.children)) {
     if (child instanceof HTMLElement) {
       const computed = window.getComputedStyle(child);
-      
+
       if (computed.flexShrink === "0") {
         // Tree Panel (flex-shrink-0)
         treePanelWidth = child.offsetWidth;
-        console.log(`[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px`);
+        console.log(
+          `[applyTimelineWidth] Tree Panel 발견: ${treePanelWidth}px`
+        );
       } else if (computed.flex && computed.flex.includes("1")) {
         // Timeline 컨테이너 (flex-1)
         timelineContainer = child;
-        console.log(`[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className}`);
+        console.log(
+          `[applyTimelineWidth] Timeline 컨테이너 발견: ${child.className}`
+        );
       }
     }
   }
-  
+
   if (!timelineContainer) {
     console.warn(`[applyTimelineWidth] Timeline 컨테이너를 찾을 수 없음`);
     return;
   }
-  
+
   // 2단계: 최상위 컨테이너는 Tree + Timeline width로 설정
   const totalWidth = treePanelWidth + timelineWidth;
   element.style.setProperty("width", `${totalWidth}px`, "important");
   element.style.setProperty("min-width", `${totalWidth}px`, "important");
-  console.log(`[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`);
-  
+  console.log(
+    `[applyTimelineWidth] 최상위 컨테이너: ${totalWidth}px (Tree ${treePanelWidth}px + Timeline ${timelineWidth}px)`
+  );
+
   // 3단계: Timeline 컨테이너만 고정 width로 변경 (자식은 건드리지 않음)
   timelineContainer.style.setProperty("flex", "none", "important");
-  timelineContainer.style.setProperty("width", `${timelineWidth}px`, "important");
-  timelineContainer.style.setProperty("min-width", `${timelineWidth}px`, "important");
-  
+  timelineContainer.style.setProperty(
+    "width",
+    `${timelineWidth}px`,
+    "important"
+  );
+  timelineContainer.style.setProperty(
+    "min-width",
+    `${timelineWidth}px`,
+    "important"
+  );
+
   // 4단계: Timeline의 직계 스크롤 컨테이너만 overflow visible 처리
   let scrollContainers = 0;
   for (const child of Array.from(timelineContainer.children)) {
@@ -101,104 +117,50 @@ function applyTimelineWidth(element: HTMLElement, timelineWidth: number): void {
       }
     }
   }
-  
-  console.log(`[applyTimelineWidth] 적용 완료: Timeline 컨테이너 1개, 스크롤 컨테이너 ${scrollContainers}개 수정됨`);
+
+  console.log(
+    `[applyTimelineWidth] 적용 완료: Timeline 컨테이너 1개, 스크롤 컨테이너 ${scrollContainers}개 수정됨`
+  );
 }
 
 /**
- * Export를 위해 overflow를 강제로 visible로 변경
- * 전체 콘텐츠가 표시되도록 강력하게 처리
+ * Export를 위해 overflow만 visible로 변경 (레이아웃 보존)
+ * width/height/flex는 건드리지 않아서 여백/정렬 유지
  */
-function fixOverflowForExport(element: HTMLElement): void {
+function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
   const computedStyle = window.getComputedStyle(element);
+  const indent = "  ".repeat(depth);
 
-  // 자식 요소들의 최대 크기 계산
-  let maxChildWidth = 0;
-  let maxChildHeight = 0;
-  Array.from(element.children).forEach((child) => {
-    if (child instanceof HTMLElement) {
-      // offsetLeft/Top은 relative 부모 기준이므로 정확하지 않을 수 있음
-      // style.width를 직접 읽어보기
-      const styleWidth = child.style.width;
-      const styleHeight = child.style.height;
-
-      if (styleWidth && styleWidth.endsWith("px")) {
-        const width = parseFloat(styleWidth);
-        maxChildWidth = Math.max(maxChildWidth, width);
-      } else {
-        const childRight = child.offsetLeft + child.offsetWidth;
-        maxChildWidth = Math.max(maxChildWidth, childRight);
-      }
-
-      if (styleHeight && styleHeight.endsWith("px")) {
-        const height = parseFloat(styleHeight);
-        maxChildHeight = Math.max(maxChildHeight, height);
-      } else {
-        const childBottom = child.offsetTop + child.offsetHeight;
-        maxChildHeight = Math.max(maxChildHeight, childBottom);
-      }
-    }
-  });
-
-  // 실제 필요한 크기 계산 (scrollWidth, 자식 크기, style 크기 중 큰 값)
-  const requiredWidth = Math.max(
-    element.scrollWidth,
-    maxChildWidth,
-    element.clientWidth
-  );
-  const requiredHeight = Math.max(
-    element.scrollHeight,
-    maxChildHeight,
-    element.clientHeight
-  );
-
-  // 디버깅 로그 (필요시에만 활성화)
-  // console.log(`[fixOverflow] ${element.className}:`, {
-  //   current: { width: element.offsetWidth, height: element.offsetHeight },
-  //   scroll: { width: element.scrollWidth, height: element.scrollHeight },
-  //   maxChild: { width: maxChildWidth, height: maxChildHeight },
-  //   required: { width: requiredWidth, height: requiredHeight },
-  // });
-
-  // 모든 overflow 속성을 visible로 강제 변경
+  // overflow가 있는 요소만 visible로 변경 (레이아웃은 건드리지 않음)
   if (
     computedStyle.overflow !== "visible" ||
     computedStyle.overflowX !== "visible" ||
     computedStyle.overflowY !== "visible"
   ) {
+    const before = {
+      overflow: computedStyle.overflow,
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+    };
+
     element.style.setProperty("overflow", "visible", "important");
     element.style.setProperty("overflow-x", "visible", "important");
     element.style.setProperty("overflow-y", "visible", "important");
 
-    // 스크롤 콘텐츠가 잘리지 않도록 크기 확장
-    if (requiredWidth > element.clientWidth) {
-      element.style.setProperty("width", `${requiredWidth}px`, "important");
-      element.style.setProperty("min-width", `${requiredWidth}px`, "important");
-    }
-    if (requiredHeight > element.clientHeight) {
-      element.style.setProperty("height", `${requiredHeight}px`, "important");
-      element.style.setProperty(
-        "min-height",
-        `${requiredHeight}px`,
-        "important"
-      );
-    }
+    // 디버깅: overflow 변경한 요소만 로그
+    console.log(
+      `${indent}[fixOverflow] ${element.tagName}.${element.className.split(" ")[0] || "(no-class)"}:`,
+      {
+        overflow: `${before.overflow} → visible`,
+        size: `${before.width}×${before.height}`,
+      }
+    );
   }
 
-  // flex-1 요소는 고정 크기로 변경
-  if (computedStyle.flex && computedStyle.flex.includes("1")) {
-    const targetWidth = Math.max(element.offsetWidth, requiredWidth);
-    const targetHeight = Math.max(element.offsetHeight, requiredHeight);
-
-    element.style.setProperty("flex", "none", "important");
-    element.style.setProperty("width", `${targetWidth}px`, "important");
-    element.style.setProperty("height", `${targetHeight}px`, "important");
-  }
-
-  // 자식 요소 재귀 처리 (먼저 처리해야 부모가 올바른 크기를 계산할 수 있음)
+  // 자식 요소 재귀 처리 (overflow만 처리, width/height/flex는 그대로)
   Array.from(element.children).forEach((child) => {
     if (child instanceof HTMLElement) {
-      fixOverflowForExport(child);
+      fixOverflowForExport(child, depth + 1);
     }
   });
 }
@@ -276,16 +238,20 @@ export async function exportPNG(
           // Phase 1: Timeline의 실제 콘텐츠 width 찾기
           const timelineWidth = findTimelineContentWidth(clonedEl);
           console.log("[PNG Export] Timeline width 발견:", timelineWidth);
-          
+
           // Phase 2: 발견한 width를 전체 컨테이너에 적용
           if (timelineWidth && timelineWidth > clonedEl.scrollWidth) {
-            console.log(`[PNG Export] Timeline width 적용: ${timelineWidth}px (기존: ${clonedEl.scrollWidth}px)`);
+            console.log(
+              `[PNG Export] Timeline width 적용: ${timelineWidth}px (기존: ${clonedEl.scrollWidth}px)`
+            );
             applyTimelineWidth(clonedEl, timelineWidth);
             console.log("[PNG Export] Timeline width 적용 완료");
           } else {
-            console.log("[PNG Export] Timeline width 적용 불필요 (현재 크기가 충분함)");
+            console.log(
+              "[PNG Export] Timeline width 적용 불필요 (현재 크기가 충분함)"
+            );
           }
-          
+
           // 기존 fixOverflowForExport는 세부 조정(세로 스크롤 등)에 계속 사용
           fixOverflowForExport(clonedEl);
         }
