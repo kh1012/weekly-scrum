@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useCallback, useRef, useState, memo, useEffect } from "react";
+import { useCallback, useRef, useState, memo } from "react";
 import { useDraftStore } from "./store";
 import {
   calculateMovedDates,
@@ -161,7 +161,6 @@ export const DraftBar = memo(function DraftBar({
   const [dragOffset, setDragOffset] = useState({ left: 0, width: 0, top: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [showAlignmentPopover, setShowAlignmentPopover] = useState(false);
-  const alignmentPopoverRef = useRef<HTMLDivElement>(null);
 
   // Snapshot 블록인지 확인
   const isSnapshot = bar.isSnapshot === true;
@@ -171,9 +170,13 @@ export const DraftBar = memo(function DraftBar({
   const authorName = bar.authorName;
   const isMerged = bar.isMerged || false;
   const mergedWeeks = bar.mergedWeeks || [];
-  
+
   // Alignment 상태 (Plan only)
-  const alignmentStatus = bar.alignmentStatus as "green" | "orange" | "red" | null;
+  const alignmentStatus = bar.alignmentStatus as
+    | "green"
+    | "orange"
+    | "red"
+    | null;
 
   // 첫 번째 담당자의 역할 기반 색상 (없으면 기본 회색)
   const primaryRole = bar.assignees?.[0]?.role;
@@ -183,25 +186,6 @@ export const DraftBar = memo(function DraftBar({
   const barColor = isSnapshot
     ? { color: "#000000", bg: "#ffffff", text: "#000000" }
     : roleColor || DEFAULT_COLOR;
-
-  // Alignment popover 외부 클릭 감지
-  useEffect(() => {
-    if (!showAlignmentPopover) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        alignmentPopoverRef.current &&
-        !alignmentPopoverRef.current.contains(event.target as Node)
-      ) {
-        setShowAlignmentPopover(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showAlignmentPopover]);
 
   // 드래그 시작
   const handleMouseDown = useCallback(
@@ -299,29 +283,39 @@ export const DraftBar = memo(function DraftBar({
             });
 
             // 타겟 레인부터 아래로 순회하며 연쇄적으로 밀기
-            const maxLane = Math.max(...Array.from(barsByLane.keys()), newPreferredLane);
+            const maxLane = Math.max(
+              ...Array.from(barsByLane.keys()),
+              newPreferredLane
+            );
             const blocksToMove = new Map<string, number>(); // clientUid -> 새 레인
-            
-            for (let currentLane = newPreferredLane; currentLane <= maxLane + 1; currentLane++) {
+
+            for (
+              let currentLane = newPreferredLane;
+              currentLane <= maxLane + 1;
+              currentLane++
+            ) {
               const barsInCurrentLane = barsByLane.get(currentLane) || [];
-              
+
               // 이 레인에 이동해야 할 블록이 있는지 확인 (이전 단계에서 밀린 블록)
               const incomingBars = Array.from(blocksToMove.entries())
                 .filter(([_, targetLane]) => targetLane === currentLane)
-                .map(([clientUid, _]) => rowBars.find((b) => b.clientUid === clientUid)!)
+                .map(
+                  ([clientUid, _]) =>
+                    rowBars.find((b) => b.clientUid === clientUid)!
+                )
                 .filter(Boolean);
-              
+
               // 드래그 블록이 이 레인에 배치되는지 확인
               const isDraggedBarHere = currentLane === newPreferredLane;
-              
+
               // 현재 레인에 있는 블록들 중 날짜가 겹치는 것이 있는지 확인
               const hasConflict = barsInCurrentLane.some((existingBar) => {
                 // 이미 이동 예정인 블록은 제외
                 if (blocksToMove.has(existingBar.clientUid)) return false;
-                
+
                 const existingStart = new Date(existingBar.startDate).getTime();
                 const existingEnd = new Date(existingBar.endDate).getTime();
-                
+
                 // 드래그 블록과의 충돌 검사
                 if (isDraggedBarHere) {
                   const dragStart = new Date(newDates.startDate).getTime();
@@ -330,15 +324,19 @@ export const DraftBar = memo(function DraftBar({
                     return true;
                   }
                 }
-                
+
                 // 위에서 밀려온 블록들과의 충돌 검사
                 return incomingBars.some((incomingBar) => {
-                  const incomingStart = new Date(incomingBar.startDate).getTime();
+                  const incomingStart = new Date(
+                    incomingBar.startDate
+                  ).getTime();
                   const incomingEnd = new Date(incomingBar.endDate).getTime();
-                  return !(incomingEnd < existingStart || incomingStart > existingEnd);
+                  return !(
+                    incomingEnd < existingStart || incomingStart > existingEnd
+                  );
                 });
               });
-              
+
               // 충돌이 있으면 현재 레인의 블록들을 한 칸 아래로 이동 예약
               if (hasConflict) {
                 barsInCurrentLane.forEach((b) => {
@@ -348,7 +346,7 @@ export const DraftBar = memo(function DraftBar({
                 });
               }
             }
-            
+
             // 예약된 모든 블록 이동 실행
             blocksToMove.forEach((newLane, clientUid) => {
               updateBar(clientUid, {
@@ -390,7 +388,18 @@ export const DraftBar = memo(function DraftBar({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [isEditing, bar, updateBar, dayWidth, rangeStart, lane, onDragDateChange, onMoveComplete, rowTopOffset, rowBars]
+    [
+      isEditing,
+      bar,
+      updateBar,
+      dayWidth,
+      rangeStart,
+      lane,
+      onDragDateChange,
+      onMoveComplete,
+      rowTopOffset,
+      rowBars,
+    ]
   );
 
   // 클릭 핸들링
@@ -450,21 +459,21 @@ export const DraftBar = memo(function DraftBar({
         // Snapshot은 하얀색 배경, Plan은 투명하게
         background: isSnapshot
           ? "#ffffff" // 하얀색 배경
-          : barColor.bg.replace(/[\d.]+\)$/, '0.06)'), // Plan 배경을 더 투명하게 (0.12 → 0.06)
+          : barColor.bg.replace(/[\d.]+\)$/, "0.06)"), // Plan 배경을 더 투명하게 (0.12 → 0.06)
         // Snapshot은 검정 1px 테두리, Plan은 투명하게
         border: isSnapshot
           ? "1px solid #000000" // 검정 테두리
           : `1px solid ${isSelected ? barColor.color : `${barColor.color}20`}`, // Plan 테두리를 더 투명하게
         // 호버/선택 시 그림자 & lift 효과
         boxShadow: isSnapshot
-          ? (isSelected
-              ? "0 0 0 3px rgba(59, 130, 246, 0.3), 0 2px 6px rgba(0, 0, 0, 0.1)" // 선택 시 포커스 링 + 기본 그림자
-              : "0 2px 6px rgba(0, 0, 0, 0.1)") // 항상 그림자 표시
-          : (isSelected
-              ? `0 2px 12px ${barColor.color}20, 0 0 0 2px ${barColor.color}20` // Plan 선택 시 더 약한 그림자
-              : isHovered
-              ? "0 2px 8px rgba(0, 0, 0, 0.06)" // Plan 호버 시 약한 그림자
-              : "0 1px 2px rgba(0, 0, 0, 0.03)"), // Plan 기본 그림자 (거의 투명)
+          ? isSelected
+            ? "0 0 0 3px rgba(59, 130, 246, 0.3), 0 2px 6px rgba(0, 0, 0, 0.1)" // 선택 시 포커스 링 + 기본 그림자
+            : "0 2px 6px rgba(0, 0, 0, 0.1)" // 항상 그림자 표시
+          : isSelected
+          ? `0 2px 12px ${barColor.color}20, 0 0 0 2px ${barColor.color}20` // Plan 선택 시 더 약한 그림자
+          : isHovered
+          ? "0 2px 8px rgba(0, 0, 0, 0.06)" // Plan 호버 시 약한 그림자
+          : "0 1px 2px rgba(0, 0, 0, 0.03)", // Plan 기본 그림자 (거의 투명)
         // Airbnb 스타일: 호버 시 lift
         transform:
           isHovered && !isDragging ? "translateY(-1px)" : "translateY(0)",
@@ -520,12 +529,12 @@ export const DraftBar = memo(function DraftBar({
 
       {/* Alignment 상태 인디케이터 (Plan only) - 우측 상단 원형 */}
       {!isSnapshot && alignmentStatus && (
-        <div className="absolute right-1 top-1 z-10">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowAlignmentPopover(!showAlignmentPopover);
-            }}
+        <div
+          className="absolute right-1 top-1 z-10"
+          onMouseEnter={() => setShowAlignmentPopover(true)}
+          onMouseLeave={() => setShowAlignmentPopover(false)}
+        >
+          <div
             className="w-3 h-3 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
             style={{
               background:
@@ -535,28 +544,13 @@ export const DraftBar = memo(function DraftBar({
                   ? "rgb(251, 146, 60)" // orange-500
                   : "rgb(244, 63, 94)", // rose-500
             }}
-            title="클릭하여 상세 정보 확인"
           />
 
           {/* Alignment Debug Tooltip */}
           {showAlignmentPopover && (
-            <div
-              ref={alignmentPopoverRef}
-              className="absolute top-6 right-0 w-80 bg-gray-900 text-white rounded-lg shadow-2xl z-50 p-3"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Close button */}
-              <button
-                onClick={() => setShowAlignmentPopover(false)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
+            <div className="absolute top-6 right-0 w-80 bg-gray-900 text-white rounded-lg shadow-2xl z-50 p-3 pointer-events-none">
               {/* Content */}
-              <div className="max-h-96 overflow-y-auto pr-5">
+              <div className="max-h-96 overflow-y-auto">
                 {/* Status */}
                 <div className="mb-3 pb-3 border-b border-gray-700">
                   <div className="flex items-center gap-2 mb-1">
@@ -590,7 +584,9 @@ export const DraftBar = memo(function DraftBar({
                   <>
                     {/* Plan Info */}
                     <div className="mb-3">
-                      <div className="text-[10px] text-gray-400 mb-1">계획 정보</div>
+                      <div className="text-[10px] text-gray-400 mb-1">
+                        계획 정보
+                      </div>
                       <div className="text-[10px] space-y-0.5">
                         <div className="text-gray-300 break-all">
                           <span className="text-gray-500">MetaKey:</span>{" "}
@@ -607,17 +603,25 @@ export const DraftBar = memo(function DraftBar({
                     {bar.alignmentDebugInfo.matchingSnapshots.length > 0 && (
                       <div className="mb-3 pb-3 border-b border-gray-700">
                         <div className="text-[10px] text-emerald-400 mb-1.5">
-                          ✓ 매칭된 스냅샷 ({bar.alignmentDebugInfo.matchingSnapshots.length}개)
+                          ✓ 매칭된 스냅샷 (
+                          {bar.alignmentDebugInfo.matchingSnapshots.length}개)
                         </div>
                         <div className="space-y-1.5">
-                          {bar.alignmentDebugInfo.matchingSnapshots.map((s, i) => (
-                            <div key={i} className="text-[10px] text-gray-300 pl-3">
-                              <div className="text-emerald-300">
-                                {i + 1}. {s.startDate}
+                          {bar.alignmentDebugInfo.matchingSnapshots.map(
+                            (s, i) => (
+                              <div
+                                key={i}
+                                className="text-[10px] text-gray-300 pl-3"
+                              >
+                                <div className="text-emerald-300">
+                                  {i + 1}. {s.startDate}
+                                </div>
+                                <div className="text-gray-400 break-all">
+                                  {s.metaKey}
+                                </div>
                               </div>
-                              <div className="text-gray-400 break-all">{s.metaKey}</div>
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                       </div>
                     )}
@@ -626,23 +630,36 @@ export const DraftBar = memo(function DraftBar({
                     {bar.alignmentDebugInfo.filteredOutSnapshots.length > 0 && (
                       <div>
                         <div className="text-[10px] text-rose-400 mb-1.5">
-                          ✗ 필터링된 스냅샷 ({bar.alignmentDebugInfo.filteredOutSnapshots.length}개)
+                          ✗ 필터링된 스냅샷 (
+                          {bar.alignmentDebugInfo.filteredOutSnapshots.length}
+                          개)
                         </div>
                         <div className="space-y-1.5">
                           {bar.alignmentDebugInfo.filteredOutSnapshots
                             .slice(0, 10)
                             .map((s, i) => (
-                              <div key={i} className="text-[10px] text-gray-300 pl-3">
+                              <div
+                                key={i}
+                                className="text-[10px] text-gray-300 pl-3"
+                              >
                                 <div className="text-rose-300">
                                   {i + 1}. {s.startDate}
                                 </div>
-                                <div className="text-gray-400 break-all">{s.metaKey}</div>
-                                <div className="text-rose-400 mt-0.5">→ {s.reason}</div>
+                                <div className="text-gray-400 break-all">
+                                  {s.metaKey}
+                                </div>
+                                <div className="text-rose-400 mt-0.5">
+                                  → {s.reason}
+                                </div>
                               </div>
                             ))}
-                          {bar.alignmentDebugInfo.filteredOutSnapshots.length > 10 && (
+                          {bar.alignmentDebugInfo.filteredOutSnapshots.length >
+                            10 && (
                             <div className="text-[10px] text-gray-500 text-center py-1">
-                              ... 외 {bar.alignmentDebugInfo.filteredOutSnapshots.length - 10}개
+                              ... 외{" "}
+                              {bar.alignmentDebugInfo.filteredOutSnapshots
+                                .length - 10}
+                              개
                             </div>
                           )}
                         </div>
@@ -711,7 +728,9 @@ export const DraftBar = memo(function DraftBar({
                   title="Snapshot Entry"
                 >
                   {isMerged && mergedWeeks.length > 0
-                    ? `${String(mergedWeeks[0].year).slice(2)} ${mergedWeeks[0].week}-${mergedWeeks[mergedWeeks.length - 1].week}`
+                    ? `${String(mergedWeeks[0].year).slice(2)} ${
+                        mergedWeeks[0].week
+                      }-${mergedWeeks[mergedWeeks.length - 1].week}`
                     : `${String(snapshotYear).slice(2)} ${snapshotWeek}`}
                 </span>
 
@@ -784,8 +803,8 @@ export const DraftBar = memo(function DraftBar({
                   {isSnapshot && authorName ? (
                     <span
                       className="px-1.5 py-0.5 text-[9px] font-medium rounded shrink-0 truncate"
-                      style={{ 
-                        background: "#f6f8fa", 
+                      style={{
+                        background: "#f6f8fa",
                         color: "#24292f",
                         border: "1px solid #d0d7de",
                       }}
