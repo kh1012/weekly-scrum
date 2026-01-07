@@ -538,37 +538,30 @@ export const DraftBar = memo(function DraftBar({
             title="클릭하여 상세 정보 확인"
           />
 
-          {/* Alignment Debug Popover */}
+          {/* Alignment Debug Tooltip */}
           {showAlignmentPopover && (
             <div
               ref={alignmentPopoverRef}
-              className="absolute top-6 right-0 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-50"
+              className="absolute top-6 right-0 w-80 bg-gray-900 text-white rounded-lg shadow-2xl z-50 p-3"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-800">
-                    실행 커버리지 상세 정보
-                  </h3>
-                  <button
-                    onClick={() => setShowAlignmentPopover(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
+              {/* Close button */}
+              <button
+                onClick={() => setShowAlignmentPopover(false)}
+                className="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
 
               {/* Content */}
-              <div className="p-4 max-h-96 overflow-y-auto">
+              <div className="max-h-96 overflow-y-auto pr-5">
                 {/* Status */}
-                <div className="mb-4 pb-4 border-b border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="mb-3 pb-3 border-b border-gray-700">
+                  <div className="flex items-center gap-2 mb-1">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-2.5 h-2.5 rounded-full"
                       style={{
                         background:
                           alignmentStatus === "green"
@@ -578,15 +571,15 @@ export const DraftBar = memo(function DraftBar({
                             : "rgb(244, 63, 94)",
                       }}
                     />
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-xs font-medium">
                       {alignmentStatus === "green"
-                        ? "양호 (예상 범위 내)"
+                        ? "양호"
                         : alignmentStatus === "orange"
-                        ? "부족 (예상 범위 이하)"
+                        ? "부족"
                         : "실행 기록 없음"}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-[10px] text-gray-400 ml-4">
                     실행 {bar.alignmentActualCount || 0}회 / 예상{" "}
                     {bar.alignmentExpectedCount || 0}회
                   </div>
@@ -596,19 +589,15 @@ export const DraftBar = memo(function DraftBar({
                 {bar.alignmentDebugInfo && (
                   <>
                     {/* Plan Info */}
-                    <div className="mb-4">
-                      <h4 className="text-xs font-semibold text-gray-700 mb-2">
-                        계획 정보
-                      </h4>
-                      <div className="bg-gray-50 rounded p-2 space-y-1">
-                        <div className="text-xs text-gray-600">
-                          <span className="font-medium">MetaKey:</span>{" "}
-                          <span className="font-mono">
-                            {bar.alignmentDebugInfo.planMetaKey}
-                          </span>
+                    <div className="mb-3">
+                      <div className="text-[10px] text-gray-400 mb-1">계획 정보</div>
+                      <div className="text-[10px] space-y-0.5">
+                        <div className="text-gray-300 break-all">
+                          <span className="text-gray-500">MetaKey:</span>{" "}
+                          {bar.alignmentDebugInfo.planMetaKey}
                         </div>
-                        <div className="text-xs text-gray-600">
-                          <span className="font-medium">기간:</span>{" "}
+                        <div className="text-gray-300">
+                          <span className="text-gray-500">기간:</span>{" "}
                           {bar.alignmentDebugInfo.planDateRange}
                         </div>
                       </div>
@@ -616,28 +605,17 @@ export const DraftBar = memo(function DraftBar({
 
                     {/* Matching Snapshots */}
                     {bar.alignmentDebugInfo.matchingSnapshots.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-xs font-semibold text-emerald-700 mb-2">
-                          ✓ 매칭된 스냅샷 ({bar.alignmentDebugInfo.matchingSnapshots.length}
-                          개)
-                        </h4>
-                        <div className="space-y-1">
+                      <div className="mb-3 pb-3 border-b border-gray-700">
+                        <div className="text-[10px] text-emerald-400 mb-1.5">
+                          ✓ 매칭된 스냅샷 ({bar.alignmentDebugInfo.matchingSnapshots.length}개)
+                        </div>
+                        <div className="space-y-1.5">
                           {bar.alignmentDebugInfo.matchingSnapshots.map((s, i) => (
-                            <div
-                              key={i}
-                              className="bg-emerald-50 rounded p-2 text-xs"
-                            >
-                              <div className="font-medium text-emerald-900">
+                            <div key={i} className="text-[10px] text-gray-300 pl-3">
+                              <div className="text-emerald-300">
                                 {i + 1}. {s.startDate}
                               </div>
-                              <div className="text-emerald-700 font-mono text-[10px]">
-                                {s.metaKey}
-                              </div>
-                              {s.authorId && (
-                                <div className="text-emerald-600 text-[10px]">
-                                  Author: {s.authorId}
-                                </div>
-                              )}
+                              <div className="text-gray-400 break-all">{s.metaKey}</div>
                             </div>
                           ))}
                         </div>
@@ -647,41 +625,24 @@ export const DraftBar = memo(function DraftBar({
                     {/* Filtered Out Snapshots */}
                     {bar.alignmentDebugInfo.filteredOutSnapshots.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold text-red-700 mb-2">
-                          ✗ 필터링된 스냅샷 (
-                          {bar.alignmentDebugInfo.filteredOutSnapshots.length}개)
-                        </h4>
-                        <div className="space-y-1">
+                        <div className="text-[10px] text-rose-400 mb-1.5">
+                          ✗ 필터링된 스냅샷 ({bar.alignmentDebugInfo.filteredOutSnapshots.length}개)
+                        </div>
+                        <div className="space-y-1.5">
                           {bar.alignmentDebugInfo.filteredOutSnapshots
                             .slice(0, 10)
                             .map((s, i) => (
-                              <div
-                                key={i}
-                                className="bg-red-50 rounded p-2 text-xs"
-                              >
-                                <div className="font-medium text-red-900">
+                              <div key={i} className="text-[10px] text-gray-300 pl-3">
+                                <div className="text-rose-300">
                                   {i + 1}. {s.startDate}
                                 </div>
-                                <div className="text-red-700 font-mono text-[10px]">
-                                  {s.metaKey}
-                                </div>
-                                {s.authorId && (
-                                  <div className="text-red-600 text-[10px]">
-                                    Author: {s.authorId}
-                                  </div>
-                                )}
-                                <div className="text-red-800 text-[10px] mt-1 font-medium">
-                                  → {s.reason}
-                                </div>
+                                <div className="text-gray-400 break-all">{s.metaKey}</div>
+                                <div className="text-rose-400 mt-0.5">→ {s.reason}</div>
                               </div>
                             ))}
-                          {bar.alignmentDebugInfo.filteredOutSnapshots.length >
-                            10 && (
-                            <div className="text-xs text-gray-500 text-center py-1">
-                              ... 외{" "}
-                              {bar.alignmentDebugInfo.filteredOutSnapshots.length -
-                                10}
-                              개
+                          {bar.alignmentDebugInfo.filteredOutSnapshots.length > 10 && (
+                            <div className="text-[10px] text-gray-500 text-center py-1">
+                              ... 외 {bar.alignmentDebugInfo.filteredOutSnapshots.length - 10}개
                             </div>
                           )}
                         </div>
