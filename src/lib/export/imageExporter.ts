@@ -463,7 +463,6 @@ export async function exportPNG(
             );
             clonedEl.style.setProperty("max-height", "none", "important");
           }
-
         }
       },
     });

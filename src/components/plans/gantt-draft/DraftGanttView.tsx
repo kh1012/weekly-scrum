@@ -47,7 +47,6 @@ import {
   exportJSON,
   exportPNG,
   exportPNGWithCanvas,
-  exportSVG,
   type ExportMetadata,
   type GanttCanvasData,
 } from "@/lib/export";
@@ -1186,53 +1185,6 @@ export const DraftGanttView = forwardRef<
     [rows, bars, flags, rangeStart, rangeEnd]
   );
 
-  const handleExportSVG = useCallback(
-    async (quality: "low" | "normal" | "high" = "normal") => {
-      const qualityLabels = {
-        low: "저품질",
-        normal: "기본",
-        high: "고품질",
-      };
-
-      // 로딩 토스트 표시
-      const toastId = showLoadingToast(
-        `SVG 생성 중 (${qualityLabels[quality]})`,
-        "잠시만 기다려주세요..."
-      );
-
-      try {
-        // ganttContainerRef 사용 (Timeline만, Header 제외)
-        if (!ganttContainerRef.current) {
-          throw new Error("Export 컨테이너를 찾을 수 없습니다.");
-        }
-
-        await exportSVG(ganttContainerRef.current, {
-          filename: `gantt-export-${Date.now()}`,
-          quality,
-          svgOptions: {
-            inlineStyles: true,
-          },
-        });
-
-        // 성공으로 업데이트
-        updateToastToSuccess(
-          toastId,
-          "SVG Export 완료",
-          "파일이 다운로드되었습니다."
-        );
-      } catch (error) {
-        console.error("SVG Export 실패:", error);
-        // 에러로 업데이트
-        updateToastToError(
-          toastId,
-          "Export 실패",
-          error instanceof Error ? error.message : "알 수 없는 오류"
-        );
-      }
-    },
-    []
-  );
-
   // 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1421,7 +1373,6 @@ export const DraftGanttView = forwardRef<
           onExportJSON={handleExportJSON}
           onExportPNG={handleExportPNG}
           onExportDraw={handleExportDraw}
-          onExportSVG={handleExportSVG}
           onLockError={(type, lockedByName) => {
             if (type === "locked_by_other") {
               showToast(

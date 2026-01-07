@@ -115,7 +115,6 @@ interface GanttHeaderProps {
   onExportJSON?: () => Promise<void>;
   onExportPNG?: (quality?: "low" | "normal" | "high") => Promise<void>;
   onExportDraw?: (quality?: "low" | "normal" | "high") => Promise<void>;
-  onExportSVG?: (quality?: "low" | "normal" | "high") => Promise<void>;
 }
 
 // 스타일 태그 (체크 아이콘 애니메이션)
@@ -174,7 +173,6 @@ export function GanttHeader({
   onExportJSON,
   onExportPNG,
   onExportDraw,
-  onExportSVG,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -1367,14 +1365,13 @@ export function GanttHeader({
                 />
 
                 {/* Export 버튼 */}
-                {onExportJSON && onExportPNG && onExportDraw && onExportSVG && (
+                {onExportJSON && onExportPNG && onExportDraw && (
                   <>
                     <div className="w-px h-5 bg-gray-200 mx-1" />
                     <ExportDropdown
                       onExportJSON={onExportJSON}
                       onExportPNG={onExportPNG}
                       onExportDraw={onExportDraw}
-                      onExportSVG={onExportSVG}
                       disabled={isCommitting || isAutoSaving}
                     />
                   </>
