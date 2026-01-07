@@ -14,8 +14,10 @@ export type ExportQuality = "low" | "normal" | "high";
 export interface ExportDropdownProps {
   /** JSON export 핸들러 */
   onExportJSON: () => Promise<void>;
-  /** PNG export 핸들러 (품질 옵션 포함) */
+  /** PNG export 핸들러 (품질 옵션 포함) - html2canvas 방식 */
   onExportPNG: (quality?: ExportQuality) => Promise<void>;
+  /** PNG Draw export 핸들러 (품질 옵션 포함) - Canvas Draw 방식 */
+  onExportDraw: (quality?: ExportQuality) => Promise<void>;
   /** SVG export 핸들러 (품질 옵션 포함) */
   onExportSVG: (quality?: ExportQuality) => Promise<void>;
   /** 비활성화 여부 */
@@ -24,7 +26,7 @@ export interface ExportDropdownProps {
   label?: string;
 }
 
-type ExportType = "json" | "png" | "svg" | "figma";
+type ExportType = "json" | "png" | "draw" | "svg" | "figma";
 
 // 품질별 설정
 const QUALITY_PRESETS = {
@@ -36,6 +38,7 @@ const QUALITY_PRESETS = {
 export function ExportDropdown({
   onExportJSON,
   onExportPNG,
+  onExportDraw,
   onExportSVG,
   disabled = false,
   label = "Export",
@@ -47,7 +50,12 @@ export function ExportDropdown({
   const [figmaToken, setFigmaToken] = useState("");
   const [figmaFileKey, setFigmaFileKey] = useState("");
   const [showPNGQuality, setShowPNGQuality] = useState(false);
+  const [showDrawQuality, setShowDrawQuality] = useState(false);
   const [showSVGQuality, setShowSVGQuality] = useState(false);
+  const [selectedPNGQuality, setSelectedPNGQuality] =
+    useState<ExportQuality>("normal");
+  const [selectedDrawQuality, setSelectedDrawQuality] =
+    useState<ExportQuality>("normal");
   const [selectedQuality, setSelectedQuality] =
     useState<ExportQuality>("normal");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,9 +67,15 @@ export function ExportDropdown({
       const fileKey = localStorage.getItem("figma-file-key") || "";
       const quality =
         (localStorage.getItem("export-quality") as ExportQuality) || "normal";
+      const pngQuality =
+        (localStorage.getItem("export-png-quality") as ExportQuality) || "normal";
+      const drawQuality =
+        (localStorage.getItem("export-draw-quality") as ExportQuality) || "normal";
       setFigmaToken(token);
       setFigmaFileKey(fileKey);
       setSelectedQuality(quality);
+      setSelectedPNGQuality(pngQuality);
+      setSelectedDrawQuality(drawQuality);
     } catch {
       // localStorage 접근 실패 시 무시
     }
@@ -76,14 +90,15 @@ export function ExportDropdown({
       ) {
         setIsOpen(false);
         setShowPNGQuality(false);
+        setShowDrawQuality(false);
         setShowSVGQuality(false);
       }
     };
-    if (isOpen || showPNGQuality || showSVGQuality) {
+    if (isOpen || showPNGQuality || showDrawQuality || showSVGQuality) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, showPNGQuality, showSVGQuality]);
+  }, [isOpen, showPNGQuality, showDrawQuality, showSVGQuality]);
 
   const handleExport = async (type: ExportType, quality?: ExportQuality) => {
     if (isExporting) return;
@@ -94,15 +109,23 @@ export function ExportDropdown({
       return;
     }
 
-    // PNG/SVG는 품질 선택 메뉴 토글
+    // PNG/Draw/SVG는 품질 선택 메뉴 토글
     if (type === "png" && !quality) {
       setShowPNGQuality(!showPNGQuality);
+      setShowDrawQuality(false);
+      setShowSVGQuality(false);
+      return;
+    }
+    if (type === "draw" && !quality) {
+      setShowDrawQuality(!showDrawQuality);
+      setShowPNGQuality(false);
       setShowSVGQuality(false);
       return;
     }
     if (type === "svg" && !quality) {
       setShowSVGQuality(!showSVGQuality);
       setShowPNGQuality(false);
+      setShowDrawQuality(false);
       return;
     }
 
@@ -110,6 +133,7 @@ export function ExportDropdown({
     setExportingType(type);
     setIsOpen(false);
     setShowPNGQuality(false);
+    setShowDrawQuality(false);
     setShowSVGQuality(false);
 
     try {
@@ -118,7 +142,10 @@ export function ExportDropdown({
           await onExportJSON();
           break;
         case "png":
-          await onExportPNG(quality || selectedQuality);
+          await onExportPNG(quality || selectedPNGQuality);
+          break;
+        case "draw":
+          await onExportDraw(quality || selectedDrawQuality);
           break;
         case "svg":
           await onExportSVG(quality || selectedQuality);
@@ -133,17 +160,39 @@ export function ExportDropdown({
     }
   };
 
-  const handleQualitySelect = (quality: ExportQuality) => {
-    setSelectedQuality(quality);
-    try {
-      localStorage.setItem("export-quality", quality);
-    } catch {
-      // localStorage 접근 실패 시 무시
+  const handleQualitySelect = (quality: ExportQuality, type: "png" | "draw" | "svg") => {
+    if (type === "png") {
+      setSelectedPNGQuality(quality);
+      try {
+        localStorage.setItem("export-png-quality", quality);
+      } catch {
+        // localStorage 접근 실패 시 무시
+      }
+    } else if (type === "draw") {
+      setSelectedDrawQuality(quality);
+      try {
+        localStorage.setItem("export-draw-quality", quality);
+      } catch {
+        // localStorage 접근 실패 시 무시
+      }
+    } else {
+      setSelectedQuality(quality);
+      try {
+        localStorage.setItem("export-quality", quality);
+      } catch {
+        // localStorage 접근 실패 시 무시
+      }
     }
   };
 
-  const handleExportWithQuality = async (type: "png" | "svg") => {
-    await handleExport(type, selectedQuality);
+  const handleExportWithQuality = async (type: "png" | "draw" | "svg") => {
+    if (type === "png") {
+      await handleExport(type, selectedPNGQuality);
+    } else if (type === "draw") {
+      await handleExport(type, selectedDrawQuality);
+    } else {
+      await handleExport(type, selectedQuality);
+    }
   };
 
   const handleFigmaExport = async () => {
@@ -198,6 +247,8 @@ export function ExportDropdown({
                   ? "JSON 생성 중..."
                   : exportingType === "png"
                   ? "PNG 생성 중..."
+                  : exportingType === "draw"
+                  ? "PNG Draw 생성 중..."
                   : exportingType === "figma"
                   ? "Figma 연동 중..."
                   : "SVG 생성 중..."}
@@ -241,13 +292,18 @@ export function ExportDropdown({
               JSON
             </button>
 
-            {/* PNG Export */}
+            {/* PNG Export [FAST] */}
             <div>
               <button
                 onClick={() => handleExport("png")}
                 className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <span>PNG</span>
+                <span className="flex items-center gap-2">
+                  PNG
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-green-100 text-green-700 rounded">
+                    FAST
+                  </span>
+                </span>
                 <svg
                   className={`w-3 h-3 text-gray-400 transition-transform ${
                     showPNGQuality ? "rotate-90" : ""
@@ -268,15 +324,15 @@ export function ExportDropdown({
                       return (
                         <button
                           key={quality}
-                          onClick={() => handleQualitySelect(quality)}
+                          onClick={() => handleQualitySelect(quality, "png")}
                           className={`w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors ${
-                            selectedQuality === quality
+                            selectedPNGQuality === quality
                               ? "bg-blue-50 text-blue-600 font-medium"
                               : "text-gray-700 hover:bg-gray-100"
                           }`}
                         >
                           <span>{preset.label}</span>
-                          {selectedQuality === quality && (
+                          {selectedPNGQuality === quality && (
                             <svg
                               className="w-3 h-3"
                               fill="currentColor"
@@ -291,6 +347,69 @@ export function ExportDropdown({
                   )}
                   <button
                     onClick={() => handleExportWithQuality("png")}
+                    className="w-full mt-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Export PNG
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* PNG Draw Export [SLOW BUT DETAILED] */}
+            <div>
+              <button
+                onClick={() => handleExport("draw")}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  PNG
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-orange-100 text-orange-700 rounded">
+                    SLOW BUT DETAILED
+                  </span>
+                </span>
+                <svg
+                  className={`w-3 h-3 text-gray-400 transition-transform ${
+                    showDrawQuality ? "rotate-90" : ""
+                  }`}
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" />
+                </svg>
+              </button>
+
+              {/* PNG Draw 품질 선택 */}
+              {showDrawQuality && (
+                <div className="bg-gray-50 py-1.5 px-2 space-y-1">
+                  {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
+                    (quality) => {
+                      const preset = QUALITY_PRESETS[quality];
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleQualitySelect(quality, "draw")}
+                          className={`w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors ${
+                            selectedDrawQuality === quality
+                              ? "bg-blue-50 text-blue-600 font-medium"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span>{preset.label}</span>
+                          {selectedDrawQuality === quality && (
+                            <svg
+                              className="w-3 h-3"
+                              fill="currentColor"
+                              viewBox="0 0 16 16"
+                            >
+                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    }
+                  )}
+                  <button
+                    onClick={() => handleExportWithQuality("draw")}
                     className="w-full mt-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
                   >
                     Export PNG
@@ -326,7 +445,7 @@ export function ExportDropdown({
                       return (
                         <button
                           key={quality}
-                          onClick={() => handleQualitySelect(quality)}
+                          onClick={() => handleQualitySelect(quality, "svg")}
                           className={`w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors ${
                             selectedQuality === quality
                               ? "bg-blue-50 text-blue-600 font-medium"

@@ -8,6 +8,7 @@ import {
   generateDefaultFilename,
   sanitizeFilename,
 } from "./utils";
+import { GanttCanvasDrawer } from "./canvasDrawer";
 
 /**
  * Timeline 내부의 실제 콘텐츠 width를 찾기 (Phase 1)
@@ -901,4 +902,186 @@ export async function exportElementPNG(
     throw new Error(`요소를 찾을 수 없습니다: ${selector}`);
   }
   return exportPNG(element, options, onProgress);
+}
+
+// ============================================================================
+// Canvas Draw Export (정밀한 텍스트 렌더링)
+// ============================================================================
+
+/**
+ * Gantt 차트 데이터 인터페이스
+ */
+export interface GanttExportData {
+  treeNodes: Array<{
+    type: "project" | "module" | "feature";
+    id: string;
+    label: string;
+    depth: number;
+    top: number;
+    height: number;
+    isExpanded: boolean;
+  }>;
+  bars: Array<{
+    id: string;
+    rowId: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    lane: number;
+    stage: string;
+    status: string;
+    assignees: Array<{ name: string; role: string }>;
+  }>;
+  flags: Array<{
+    id: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    lane: number;
+    color?: string;
+  }>;
+  timeline: {
+    rangeStart: string;
+    rangeEnd: string;
+    width: number;
+    height: number;
+  };
+  layout: {
+    treePanelWidth: number;
+    rowHeight: number;
+    dayWidth: number;
+  };
+}
+
+/**
+ * DOM에서 Gantt 차트 데이터를 추출
+ * 
+ * @param element - Gantt 차트 컨테이너 요소
+ * @returns Gantt 차트 데이터
+ */
+export function extractGanttData(element: HTMLElement): GanttExportData {
+  console.log("[extractGanttData] 데이터 추출 시작");
+  
+  // TODO: 실제 DOM 구조에서 데이터 추출 로직 구현
+  // 현재는 더미 데이터 반환
+  
+  const treeNodes: GanttExportData["treeNodes"] = [];
+  const bars: GanttExportData["bars"] = [];
+  const flags: GanttExportData["flags"] = [];
+  
+  // 기본 layout 정보 추출
+  const layout: GanttExportData["layout"] = {
+    treePanelWidth: 300,
+    rowHeight: 40,
+    dayWidth: 24,
+  };
+  
+  // 기본 timeline 정보
+  const timeline: GanttExportData["timeline"] = {
+    rangeStart: "2025-01-01",
+    rangeEnd: "2025-03-31",
+    width: 2000,
+    height: 600,
+  };
+  
+  console.log("[extractGanttData] 데이터 추출 완료:", {
+    treeNodes: treeNodes.length,
+    bars: bars.length,
+    flags: flags.length,
+  });
+  
+  return {
+    treeNodes,
+    bars,
+    flags,
+    timeline,
+    layout,
+  };
+}
+
+/**
+ * Canvas Draw 방식으로 PNG Export
+ * 
+ * @param element - Export할 HTML 요소
+ * @param options - Export 옵션
+ * @param onProgress - 진행률 콜백
+ */
+export async function exportPNGWithCanvas(
+  element: HTMLElement,
+  options?: ExportOptions,
+  onProgress?: (progress: ExportProgress) => void
+): Promise<void> {
+  console.log("[PNG Canvas Draw Export] 시작");
+  
+  try {
+    // 1. 데이터 추출
+    onProgress?.({
+      step: "데이터 추출 중...",
+      progress: 20,
+      completed: false,
+    });
+    
+    const data = extractGanttData(element);
+    console.log("[PNG Canvas Draw] 데이터 추출 완료:", data);
+    
+    // 2. Canvas 생성
+    const scale = options?.quality === "low" ? 1 : options?.quality === "high" ? 3 : 2;
+    const canvas = document.createElement("canvas");
+    const totalWidth = data.layout.treePanelWidth + data.timeline.width;
+    const totalHeight = data.timeline.height;
+    
+    canvas.width = totalWidth * scale;
+    canvas.height = totalHeight * scale;
+    canvas.style.width = `${totalWidth}px`;
+    canvas.style.height = `${totalHeight}px`;
+    
+    console.log("[PNG Canvas Draw] Canvas 생성:", { width: canvas.width, height: canvas.height, scale });
+    
+    // 3. GanttCanvasDrawer로 렌더링
+    onProgress?.({
+      step: "Canvas 렌더링 중...",
+      progress: 50,
+      completed: false,
+    });
+    
+    const drawer = new GanttCanvasDrawer(canvas, data, scale);
+    await drawer.render();
+    
+    // 4. PNG Blob 생성
+    onProgress?.({
+      step: "PNG 생성 중...",
+      progress: 80,
+      completed: false,
+    });
+    
+    const blob = await drawer.toBlob(1);
+    console.log("[PNG Canvas Draw] PNG Blob 생성 완료:", blob.size, "bytes");
+    
+    // 5. 다운로드
+    onProgress?.({
+      step: "다운로드 중...",
+      progress: 90,
+      completed: false,
+    });
+    
+    const filename = options?.filename
+      ? sanitizeFilename(options.filename)
+      : generateDefaultFilename("gantt-draw", "png");
+    
+    downloadFile(blob, filename, "image/png");
+    
+    onProgress?.({
+      step: "완료",
+      progress: 100,
+      completed: true,
+    });
+    
+  } catch (error) {
+    console.error("[PNG Canvas Draw Export] 실패:", error);
+    throw new Error(
+      `PNG Canvas Draw Export 실패: ${
+        error instanceof Error ? error.message : "알 수 없는 오류"
+      }`
+    );
+  }
 }

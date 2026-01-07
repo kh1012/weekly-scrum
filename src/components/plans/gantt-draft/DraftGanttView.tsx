@@ -46,6 +46,7 @@ import {
 import {
   exportJSON,
   exportPNG,
+  exportPNGWithCanvas,
   exportSVG,
   type ExportMetadata,
 } from "@/lib/export";
@@ -1121,6 +1122,53 @@ export const DraftGanttView = forwardRef<
     []
   );
 
+  const handleExportDraw = useCallback(
+    async (quality: "low" | "normal" | "high" = "normal") => {
+      const qualityLabels = {
+        low: "저품질",
+        normal: "기본",
+        high: "고품질",
+      };
+
+      // 로딩 토스트 표시
+      const toastId = showLoadingToast(
+        `PNG Draw 생성 중 (${qualityLabels[quality]})`,
+        "Canvas로 정밀하게 렌더링 중..."
+      );
+
+      try {
+        // ganttContainerRef 사용 (Timeline만, Header 제외)
+        if (!ganttContainerRef.current) {
+          throw new Error("Export 컨테이너를 찾을 수 없습니다.");
+        }
+
+        await exportPNGWithCanvas(ganttContainerRef.current, {
+          filename: `gantt-draw-${Date.now()}`,
+          quality,
+          pngOptions: {
+            backgroundColor: "#ffffff",
+          },
+        });
+
+        // 성공으로 업데이트
+        updateToastToSuccess(
+          toastId,
+          "PNG Draw Export 완료",
+          "이미지가 다운로드되었습니다."
+        );
+      } catch (error) {
+        console.error("PNG Draw Export 실패:", error);
+        // 에러로 업데이트
+        updateToastToError(
+          toastId,
+          "Export 실패",
+          error instanceof Error ? error.message : "알 수 없는 오류"
+        );
+      }
+    },
+    []
+  );
+
   const handleExportSVG = useCallback(
     async (quality: "low" | "normal" | "high" = "normal") => {
       const qualityLabels = {
@@ -1355,6 +1403,7 @@ export const DraftGanttView = forwardRef<
           // Export 핸들러
           onExportJSON={handleExportJSON}
           onExportPNG={handleExportPNG}
+          onExportDraw={handleExportDraw}
           onExportSVG={handleExportSVG}
           onLockError={(type, lockedByName) => {
             if (type === "locked_by_other") {

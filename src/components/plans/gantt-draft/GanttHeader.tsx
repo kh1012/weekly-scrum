@@ -114,6 +114,7 @@ interface GanttHeaderProps {
   /** Export 핸들러 */
   onExportJSON?: () => Promise<void>;
   onExportPNG?: (quality?: "low" | "normal" | "high") => Promise<void>;
+  onExportDraw?: (quality?: "low" | "normal" | "high") => Promise<void>;
   onExportSVG?: (quality?: "low" | "normal" | "high") => Promise<void>;
 }
 
@@ -172,6 +173,7 @@ export function GanttHeader({
   isRefreshing = false,
   onExportJSON,
   onExportPNG,
+  onExportDraw,
   onExportSVG,
 }: GanttHeaderProps) {
   const {
@@ -1365,12 +1367,13 @@ export function GanttHeader({
                 />
 
                 {/* Export 버튼 */}
-                {onExportJSON && onExportPNG && onExportSVG && (
+                {onExportJSON && onExportPNG && onExportDraw && onExportSVG && (
                   <>
                     <div className="w-px h-5 bg-gray-200 mx-1" />
                     <ExportDropdown
                       onExportJSON={onExportJSON}
                       onExportPNG={onExportPNG}
+                      onExportDraw={onExportDraw}
                       onExportSVG={onExportSVG}
                       disabled={isCommitting || isAutoSaving}
                     />
