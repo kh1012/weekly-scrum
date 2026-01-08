@@ -146,9 +146,9 @@ function fixOverflowForExport(element: HTMLElement, depth: number = 0): void {
  */
 export async function exportPNG(
   element: HTMLElement,
-  options?: ExportOptions,
+  options?: ExportOptions & { returnBlob?: boolean },
   onProgress?: (progress: ExportProgress) => void
-): Promise<void> {
+): Promise<void | Blob> {
   try {
     // 1. html2canvas 동적 import
     onProgress?.({
@@ -496,18 +496,28 @@ export async function exportPNG(
       );
     });
 
+    // 7. returnBlob 옵션 확인
+    if (options?.returnBlob) {
+      onProgress?.({
+        step: "완료",
+        progress: 100,
+        completed: true,
+      });
+      return blob;
+    }
+
     onProgress?.({
       step: "다운로드 중...",
       progress: 90,
       completed: false,
     });
 
-    // 7. 파일명 결정
+    // 8. 파일명 결정
     const filename = options?.filename
       ? sanitizeFilename(options.filename)
       : generateDefaultFilename("screenshot", "png");
 
-    // 8. 다운로드
+    // 9. 다운로드
     downloadFile(blob, filename, "image/png");
 
     onProgress?.({
@@ -531,7 +541,7 @@ export async function exportPNG(
 export async function exportFullPagePNG(
   options?: ExportOptions,
   onProgress?: (progress: ExportProgress) => void
-): Promise<void> {
+): Promise<Blob | void> {
   const element = document.documentElement;
   return exportPNG(element, options, onProgress);
 }
@@ -543,7 +553,7 @@ export async function exportElementPNG(
   selector: string,
   options?: ExportOptions,
   onProgress?: (progress: ExportProgress) => void
-): Promise<void> {
+): Promise<Blob | void> {
   const element = document.querySelector<HTMLElement>(selector);
   if (!element) {
     throw new Error(`요소를 찾을 수 없습니다: ${selector}`);
@@ -638,9 +648,9 @@ export interface GanttExportData {
 export async function exportPNGWithCanvas(
   element: HTMLElement,
   ganttData: GanttCanvasData,
-  options?: ExportOptions,
+  options?: ExportOptions & { returnBlob?: boolean },
   onProgress?: (progress: ExportProgress) => void
-): Promise<void> {
+): Promise<void | Blob> {
   try {
     onProgress?.({
       step: "Canvas 데이터 변환 중...",
@@ -682,6 +692,16 @@ export async function exportPNGWithCanvas(
     });
 
     const blob = await drawer.toBlob(1);
+
+    // returnBlob 옵션 확인
+    if (options?.returnBlob) {
+      onProgress?.({
+        step: "완료",
+        progress: 100,
+        completed: true,
+      });
+      return blob;
+    }
 
     // 다운로드
     onProgress?.({

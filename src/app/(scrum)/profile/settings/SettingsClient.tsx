@@ -153,14 +153,14 @@ export function SettingsClient() {
                   {item.icon === "settings" && (
                     <svg
                       className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
                         d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
                       />
                       <path
@@ -168,8 +168,8 @@ export function SettingsClient() {
                         strokeLinejoin="round"
                         strokeWidth={2}
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
+              />
+            </svg>
                   )}
                   <span>{item.label}</span>
                 </button>
@@ -182,129 +182,129 @@ export function SettingsClient() {
             {activeTab === "integrations" && (
               <div>
                 {/* 연동 관리 섹션 */}
-                <div className="bg-white border border-[#d0d7de] rounded-md">
+        <div className="bg-white border border-[#d0d7de] rounded-md">
                   <div className="px-4 py-2.5 border-b border-[#d0d7de]">
-                    <h2 className="text-sm font-semibold text-[#24292f]">연동 관리</h2>
-                    <p className="text-xs text-[#57606a] mt-0.5">
-                      외부 서비스 연동
-                    </p>
-                  </div>
+            <h2 className="text-sm font-semibold text-[#24292f]">연동 관리</h2>
+            <p className="text-xs text-[#57606a] mt-0.5">
+              외부 서비스 연동
+            </p>
+          </div>
 
-                  <div className="divide-y divide-[#d0d7de]">
+          <div className="divide-y divide-[#d0d7de]">
                     {/* Figma 연동 */}
-                    <div className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-3">
+            <div className="px-4 py-3">
+              <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 flex-1 min-w-0">
                           {/* Figma 아이콘 */}
                           <div className="w-9 h-9 rounded bg-[#f6f8fa] border border-[#d0d7de] flex items-center justify-center flex-shrink-0">
-                            <svg
+                    <svg
                               className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 38 57"
-                            >
-                              <path d="M19 28.5C19 23.26 23.26 19 28.5 19C33.74 19 38 23.26 38 28.5C38 33.74 33.74 38 28.5 38C23.26 38 19 33.74 19 28.5Z" />
-                              <path d="M0 47.5C0 42.26 4.26 38 9.5 38H19V47.5C19 52.74 14.74 57 9.5 57C4.26 57 0 52.74 0 47.5Z" />
-                              <path d="M19 0V19H28.5C33.74 19 38 14.74 38 9.5C38 4.26 33.74 0 28.5 0H19Z" />
-                              <path d="M0 9.5C0 14.74 4.26 19 9.5 19H19V0H9.5C4.26 0 0 4.26 0 9.5Z" />
-                              <path d="M0 28.5C0 33.74 4.26 38 9.5 38H19V19H9.5C4.26 19 0 23.26 0 28.5Z" />
-                            </svg>
-                          </div>
+                      fill="currentColor"
+                      viewBox="0 0 38 57"
+                    >
+                      <path d="M19 28.5C19 23.26 23.26 19 28.5 19C33.74 19 38 23.26 38 28.5C38 33.74 33.74 38 28.5 38C23.26 38 19 33.74 19 28.5Z" />
+                      <path d="M0 47.5C0 42.26 4.26 38 9.5 38H19V47.5C19 52.74 14.74 57 9.5 57C4.26 57 0 52.74 0 47.5Z" />
+                      <path d="M19 0V19H28.5C33.74 19 38 14.74 38 9.5C38 4.26 33.74 0 28.5 0H19Z" />
+                      <path d="M0 9.5C0 14.74 4.26 19 9.5 19H19V0H9.5C4.26 0 0 4.26 0 9.5Z" />
+                      <path d="M0 28.5C0 33.74 4.26 38 9.5 38H19V19H9.5C4.26 19 0 23.26 0 28.5Z" />
+                    </svg>
+                  </div>
 
                           {/* 정보 */}
-                          <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 mb-0.5">
-                              <h3 className="text-sm font-semibold text-[#24292f]">
-                                Figma
-                              </h3>
-                              {isLoading ? (
+                      <h3 className="text-sm font-semibold text-[#24292f]">
+                        Figma
+                      </h3>
+                      {isLoading ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#f6f8fa] text-[#57606a]">
-                                  확인 중
-                                </span>
-                              ) : isFigmaConnected ? (
+                          확인 중
+                        </span>
+                      ) : isFigmaConnected ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#dafbe1] text-[#1a7f37] border border-[#1a7f37]/20">
-                                  연동됨
-                                </span>
-                              ) : (
+                          연동됨
+                        </span>
+                      ) : (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de]">
-                                  미연동
-                                </span>
-                              )}
-                            </div>
+                          미연동
+                        </span>
+                      )}
+                    </div>
                             <p className="text-xs text-[#57606a]">
-                              Gantt 차트를 Figma/FigJam으로 업로드
-                            </p>
-                            {isFigmaConnected && figmaConnectedAt && (
+                      Gantt 차트를 Figma/FigJam으로 업로드
+                    </p>
+                    {isFigmaConnected && figmaConnectedAt && (
                               <p className="text-xs text-[#57606a] mt-1">
                                 연동일시: {new Date(figmaConnectedAt).toLocaleString("ko-KR", {
-                                  year: "numeric",
-                                  month: "2-digit",
-                                  day: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                         {/* 액션 버튼 */}
-                        <div className="flex-shrink-0">
-                          {isLoading ? (
-                            <button
-                              disabled
+                <div className="flex-shrink-0">
+                  {isLoading ? (
+                    <button
+                      disabled
                               className="px-3 py-1.5 text-sm font-medium rounded border border-[#d0d7de] bg-[#f6f8fa] text-[#57606a] cursor-not-allowed"
-                            >
-                              확인 중
-                            </button>
-                          ) : isFigmaConnected ? (
-                            <button
-                              onClick={handleFigmaDisconnect}
-                              disabled={isDisconnecting}
+                    >
+                      확인 중
+                    </button>
+                  ) : isFigmaConnected ? (
+                    <button
+                      onClick={handleFigmaDisconnect}
+                      disabled={isDisconnecting}
                               className="px-3 py-1.5 text-sm font-medium rounded border border-[#d0d7de] text-[#cf222e] hover:bg-[#ffebe9] hover:border-[#cf222e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {isDisconnecting ? "해제 중" : "연동 해제"}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={handleFigmaConnect}
+                    >
+                      {isDisconnecting ? "해제 중" : "연동 해제"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleFigmaConnect}
                               className="px-3 py-1.5 text-sm font-medium rounded bg-[#0969da] text-white hover:bg-[#0860ca] transition-colors"
-                            >
-                              연동하기
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    >
+                      연동하기
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
 
                     {/* 추후 추가될 연동 서비스 */}
-                    <div className="px-4 py-3">
+            <div className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded bg-[#f6f8fa] border border-[#d0d7de] flex items-center justify-center flex-shrink-0">
-                          <svg
+                  <svg
                             className="w-5 h-5 text-[#57606a]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                            />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-sm font-medium text-[#57606a]">
-                            추가 연동 서비스
-                          </h3>
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-[#57606a]">
+                    추가 연동 서비스
+                  </h3>
                           <p className="text-xs text-[#57606a] mt-0.5">
-                            Notion, Slack 등 추가 예정
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    Notion, Slack 등 추가 예정
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
                 </div>
               </div>
             )}

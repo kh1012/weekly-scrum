@@ -114,8 +114,15 @@ interface GanttHeaderProps {
   isRefreshing?: boolean;
   /** Export 핸들러 */
   onExportJSON?: () => Promise<void>;
-  onExportPNG?: (quality?: "low" | "normal" | "high") => Promise<void>;
-  onExportDraw?: (quality?: "low" | "normal" | "high") => Promise<void>;
+  onExportPNG?: (
+    quality?: "low" | "normal" | "high",
+    options?: { returnBlob?: boolean }
+  ) => Promise<Blob | void>;
+  onExportDraw?: (
+    quality?: "low" | "normal" | "high",
+    canvasOptions?: any,
+    options?: { returnBlob?: boolean }
+  ) => Promise<Blob | void>;
   /** 비활성 시간 (초) - 외부에서 전달 */
   inactivitySeconds?: number | null;
   /** Alignment 페이지 여부 */

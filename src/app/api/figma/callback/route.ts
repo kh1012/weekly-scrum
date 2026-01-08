@@ -40,27 +40,57 @@ export async function GET(request: NextRequest) {
   try {
     console.log("[Figma OAuth Callback] Exchanging code for token...");
     
-    const tokenRes = await fetch("https://www.figma.com/api/oauth/token", {
+    // 환경 변수 확인
+    const clientId = process.env.FIGMA_CLIENT_ID;
+    const clientSecret = process.env.FIGMA_CLIENT_SECRET;
+    const redirectUri = process.env.FIGMA_REDIRECT_URI;
+    
+    console.log("[Figma OAuth Callback] Environment variables:");
+    console.log("  - FIGMA_CLIENT_ID:", clientId ? `${clientId.substring(0, 8)}...` : "MISSING");
+    console.log("  - FIGMA_CLIENT_SECRET:", clientSecret ? `${clientSecret.substring(0, 8)}...` : "MISSING");
+    console.log("  - FIGMA_REDIRECT_URI:", redirectUri);
+    console.log("  - Code length:", code?.length);
+    
+    const requestBody = {
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      code,
+      grant_type: "authorization_code",
+    };
+    
+    console.log("[Figma OAuth Callback] Request body (sanitized):", {
+      ...requestBody,
+      client_secret: clientSecret ? `${clientSecret.substring(0, 8)}...` : "MISSING",
+      code: code ? `${code.substring(0, 10)}...` : "MISSING",
+    });
+    
+    const tokenRes = await fetch("https://api.figma.com/v1/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_id: process.env.FIGMA_CLIENT_ID,
-        client_secret: process.env.FIGMA_CLIENT_SECRET,
-        redirect_uri: process.env.FIGMA_REDIRECT_URI,
-        code,
-        grant_type: "authorization_code",
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     console.log("[Figma OAuth Callback] Token response status:", tokenRes.status);
+    console.log("[Figma OAuth Callback] Token response headers:", Object.fromEntries(tokenRes.headers.entries()));
     
     if (!tokenRes.ok) {
       const errorText = await tokenRes.text();
-      console.error("[Figma OAuth Callback] Token exchange failed:", errorText);
+      console.error("[Figma OAuth Callback] Token exchange failed:");
+      console.error("  - Status:", tokenRes.status);
+      console.error("  - Response:", errorText);
       throw new Error("Token exchange failed");
     }
 
     const tokens = await tokenRes.json();
+    
+    console.log("[Figma OAuth Callback] Token response (sanitized):", {
+      access_token: tokens.access_token ? `${tokens.access_token.substring(0, 10)}...` : "MISSING",
+      refresh_token: tokens.refresh_token ? `${tokens.refresh_token.substring(0, 10)}...` : "MISSING",
+      expires_in: tokens.expires_in,
+      user_id: tokens.user_id,
+    });
+    
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
     const encryptedTokens = encryptTokens({

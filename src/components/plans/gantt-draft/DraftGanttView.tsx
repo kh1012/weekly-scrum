@@ -1093,18 +1093,23 @@ export const DraftGanttView = forwardRef<
   ]);
 
   const handleExportPNG = useCallback(
-    async (quality: "low" | "normal" | "high" = "normal") => {
+    async (
+      quality: "low" | "normal" | "high" = "normal",
+      options?: { returnBlob?: boolean }
+    ): Promise<Blob | void> => {
       const qualityLabels = {
         low: "저품질",
         normal: "기본",
         high: "고품질",
       };
 
-      // 로딩 토스트 표시
-      const toastId = showLoadingToast(
-        `PNG 생성 중 (${qualityLabels[quality]})`,
-        "잠시만 기다려주세요..."
-      );
+      // returnBlob 모드일 때는 토스트 없이 실행
+      const toastId = options?.returnBlob
+        ? null
+        : showLoadingToast(
+            `PNG 생성 중 (${qualityLabels[quality]})`,
+            "잠시만 기다려주세요..."
+          );
 
       try {
         // ganttContainerRef 사용 (Timeline만, Header 제외)
@@ -1112,45 +1117,66 @@ export const DraftGanttView = forwardRef<
           throw new Error("Export 컨테이너를 찾을 수 없습니다.");
         }
 
-        await exportPNG(ganttContainerRef.current, {
+        const result = await exportPNG(ganttContainerRef.current, {
           filename: `gantt-screenshot-${Date.now()}`,
           quality,
           pngOptions: {
             backgroundColor: "#ffffff",
           },
+          returnBlob: options?.returnBlob,
         });
 
+        // returnBlob 모드일 때는 Blob 반환
+        if (options?.returnBlob) {
+          return result as Blob;
+        }
+
         // 성공으로 업데이트
-        updateToastToSuccess(
-          toastId,
-          "PNG Export 완료",
-          "이미지가 다운로드되었습니다."
-        );
+        if (toastId) {
+          updateToastToSuccess(
+            toastId,
+            "PNG Export 완료",
+            "이미지가 다운로드되었습니다."
+          );
+        }
       } catch (error) {
+        // returnBlob 모드일 때는 에러 throw
+        if (options?.returnBlob) {
+          throw error;
+        }
+
         // 에러로 업데이트
-        updateToastToError(
-          toastId,
-          "Export 실패",
-          error instanceof Error ? error.message : "알 수 없는 오류"
-        );
+        if (toastId) {
+          updateToastToError(
+            toastId,
+            "Export 실패",
+            error instanceof Error ? error.message : "알 수 없는 오류"
+          );
+        }
       }
     },
     []
   );
 
   const handleExportDraw = useCallback(
-    async (quality: "low" | "normal" | "high" = "normal", canvasOptions?: CanvasOptions) => {
+    async (
+      quality: "low" | "normal" | "high" = "normal",
+      canvasOptions?: CanvasOptions,
+      options?: { returnBlob?: boolean }
+    ): Promise<Blob | void> => {
       const qualityLabels = {
         low: "저품질",
         normal: "기본",
         high: "고품질",
       };
 
-      // 로딩 토스트 표시
-      const toastId = showLoadingToast(
-        `PNG Draw 생성 중 (${qualityLabels[quality]})`,
-        "Canvas로 정밀하게 렌더링 중..."
-      );
+      // returnBlob 모드일 때는 토스트 없이 실행
+      const toastId = options?.returnBlob
+        ? null
+        : showLoadingToast(
+            `PNG Draw 생성 중 (${qualityLabels[quality]})`,
+            "Canvas로 정밀하게 렌더링 중..."
+          );
 
       try {
         // ganttContainerRef 사용 (Timeline만, Header 제외)
@@ -1174,28 +1200,43 @@ export const DraftGanttView = forwardRef<
           },
         };
 
-        await exportPNGWithCanvas(ganttContainerRef.current, ganttData, {
+        const result = await exportPNGWithCanvas(ganttContainerRef.current, ganttData, {
           filename: `gantt-draw-${Date.now()}`,
           quality,
           pngOptions: {
             backgroundColor: "#ffffff",
           },
           canvasOptions,
+          returnBlob: options?.returnBlob,
         });
 
+        // returnBlob 모드일 때는 Blob 반환
+        if (options?.returnBlob) {
+          return result as Blob;
+        }
+
         // 성공으로 업데이트
-        updateToastToSuccess(
-          toastId,
-          "PNG Draw Export 완료",
-          "이미지가 다운로드되었습니다."
-        );
+        if (toastId) {
+          updateToastToSuccess(
+            toastId,
+            "PNG Draw Export 완료",
+            "이미지가 다운로드되었습니다."
+          );
+        }
       } catch (error) {
+        // returnBlob 모드일 때는 에러 throw
+        if (options?.returnBlob) {
+          throw error;
+        }
+
         // 에러로 업데이트
-        updateToastToError(
-          toastId,
-          "Export 실패",
-          error instanceof Error ? error.message : "알 수 없는 오류"
-        );
+        if (toastId) {
+          updateToastToError(
+            toastId,
+            "Export 실패",
+            error instanceof Error ? error.message : "알 수 없는 오류"
+          );
+        }
       }
     },
     [rows, bars, flags, rangeStart, rangeEnd]

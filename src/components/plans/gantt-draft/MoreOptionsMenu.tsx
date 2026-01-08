@@ -66,6 +66,7 @@ export function MoreOptionsMenu({
     "figjam"
   );
   const [exportMethod, setExportMethod] = useState<"png" | "draw">("png");
+  const [exportQuality, setExportQuality] = useState<ExportQuality>("normal");
 
   // Canvas 옵션 상태
   const [showTableColumns, setShowTableColumns] = useState(true);
@@ -127,6 +128,9 @@ export function MoreOptionsMenu({
 
     const savedMethod = localStorage.getItem("figma-export-method");
     if (savedMethod) setExportMethod(savedMethod as "png" | "draw");
+
+    const savedQuality = localStorage.getItem("figma-export-quality");
+    if (savedQuality) setExportQuality(savedQuality as ExportQuality);
   }, []);
 
   async function checkFigmaConnection() {
@@ -235,11 +239,11 @@ export function MoreOptionsMenu({
     setIsOpen(false);
 
     try {
-      // 1. PNG 생성 (선택한 방식에 따라)
-      let blob: Blob;
+      // 1. PNG 생성 (선택한 방식과 품질에 따라)
+      let blobResult: any;
       if (exportMethod === "png") {
         // HTML2Canvas 방식
-        blob = (await onExportPNG("normal", { returnBlob: true })) as Blob;
+        blobResult = await onExportPNG(exportQuality, { returnBlob: true });
       } else {
         // Canvas Draw 방식
         const canvasOptions: CanvasOptions = {
@@ -255,10 +259,17 @@ export function MoreOptionsMenu({
             showProgress: false,
           },
         };
-        blob = (await onExportDraw("normal", canvasOptions, {
+        blobResult = await onExportDraw(exportQuality, canvasOptions, {
           returnBlob: true,
-        })) as Blob;
+        });
       }
+
+      // Blob 검증
+      if (!blobResult || !(blobResult instanceof Blob)) {
+        throw new Error("이미지 생성에 실패했습니다. Blob이 생성되지 않았습니다.");
+      }
+
+      const blob: Blob = blobResult;
 
       // 2. Figma 업로드
       const formData = new FormData();
@@ -908,21 +919,21 @@ export function MoreOptionsMenu({
             </div>
 
             {/* 본문 */}
-            <div className="px-4 py-3 space-y-3">
+            <div className="px-3 py-2.5 space-y-2.5">
               {/* 플랫폼 선택 */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">
                   업로드 대상
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <button
                     onClick={() => {
                       setTargetPlatform("figjam");
                       localStorage.setItem("figma-platform", "figjam");
                     }}
-                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border ${
                       targetPlatform === "figjam"
-                        ? "bg-purple-50 border-purple-600 text-purple-700 font-medium"
+                        ? "bg-gray-100 border-gray-400 text-gray-900 font-medium"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -933,9 +944,9 @@ export function MoreOptionsMenu({
                       setTargetPlatform("figma");
                       localStorage.setItem("figma-platform", "figma");
                     }}
-                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border ${
                       targetPlatform === "figma"
-                        ? "bg-purple-50 border-purple-600 text-purple-700 font-medium"
+                        ? "bg-gray-100 border-gray-400 text-gray-900 font-medium"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -949,15 +960,15 @@ export function MoreOptionsMenu({
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">
                   Export 방식
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <button
                     onClick={() => {
                       setExportMethod("png");
                       localStorage.setItem("figma-export-method", "png");
                     }}
-                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border ${
                       exportMethod === "png"
-                        ? "bg-blue-50 border-blue-600 text-blue-700 font-medium"
+                        ? "bg-gray-100 border-gray-400 text-gray-900 font-medium"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -968,9 +979,9 @@ export function MoreOptionsMenu({
                       setExportMethod("draw");
                       localStorage.setItem("figma-export-method", "draw");
                     }}
-                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border ${
                       exportMethod === "draw"
-                        ? "bg-blue-50 border-blue-600 text-blue-700 font-medium"
+                        ? "bg-gray-100 border-gray-400 text-gray-900 font-medium"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -979,19 +990,68 @@ export function MoreOptionsMenu({
                 </div>
               </div>
 
+              {/* 품질 선택 */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  품질 수준
+                </label>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => {
+                      setExportQuality("low");
+                      localStorage.setItem("figma-export-quality", "low");
+                    }}
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border ${
+                      exportQuality === "low"
+                        ? "bg-gray-100 border-gray-400 text-gray-900 font-medium"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    저품질
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExportQuality("normal");
+                      localStorage.setItem("figma-export-quality", "normal");
+                    }}
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border ${
+                      exportQuality === "normal"
+                        ? "bg-gray-100 border-gray-400 text-gray-900 font-medium"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    기본
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExportQuality("high");
+                      localStorage.setItem("figma-export-quality", "high");
+                    }}
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border ${
+                      exportQuality === "high"
+                        ? "bg-gray-100 border-gray-400 text-gray-900 font-medium"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    고품질
+                  </button>
+                </div>
+              </div>
+
               {/* 안내 메시지 */}
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-2">
-                <p className="text-[10px] text-blue-800 leading-relaxed">
-                  💡 이미지가 {targetPlatform === "figjam" ? "FigJam" : "Figma"}{" "}
-                  파일의 Assets에 업로드됩니다.
-                  <br />
-                  파일을 열어 이미지를 캔버스로 드래그하세요.
+              <div className="bg-gray-50 border border-gray-200 rounded-md p-2 flex gap-2">
+                <svg className="w-3.5 h-3.5 flex-shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                  <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                </svg>
+                <p className="text-[10px] text-gray-700 leading-relaxed">
+                  이미지가 {targetPlatform === "figjam" ? "FigJam" : "Figma"} 파일의 Assets에 업로드됩니다. 파일을 열어 이미지를 캔버스로 드래그하세요.
                 </p>
               </div>
             </div>
 
             {/* 푸터 */}
-            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-2 rounded-b-md">
+            <div className="px-3 py-2.5 bg-gray-50 border-t border-gray-200 flex justify-end gap-1.5 rounded-b-md">
               <button
                 onClick={() => setShowFigmaModal(false)}
                 className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
@@ -1000,7 +1060,7 @@ export function MoreOptionsMenu({
               </button>
               <button
                 onClick={handleFigmaUpload}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700"
+                className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800"
               >
                 업로드
               </button>
