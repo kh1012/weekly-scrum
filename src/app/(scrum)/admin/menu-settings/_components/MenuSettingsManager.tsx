@@ -33,6 +33,12 @@ const ALL_MENUS = [
   // Works
   { key: "team-feed", label: "Team Feed", category: "Works", group: "works" },
   { key: "plans", label: "Plans", category: "Works", group: "works" },
+  {
+    key: "figma-files",
+    label: "Figma Files",
+    category: "Works",
+    group: "works",
+  },
   { key: "snapshots", label: "Snapshots", category: "Works", group: "works" },
   { key: "alignment", label: "Alignment", category: "Works", group: "works" },
   { key: "work-map", label: "Work Map", category: "Works", group: "works" },

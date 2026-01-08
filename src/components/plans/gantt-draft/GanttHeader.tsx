@@ -34,6 +34,7 @@ import { showToast, showInactivityWarningToast } from "./Toast";
 import { MoreOptionsMenu } from "./MoreOptionsMenu";
 import { ChangeHistoryButton } from "./ChangeHistoryButton";
 import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
+import { backupAndDisableFlags, restoreBackupFlags } from "./featureFlags";
 
 interface GanttHeaderProps {
   workspaceId: string;
@@ -522,6 +523,16 @@ export function GanttHeader({
   const handleStartEditing = async () => {
     setIsStarting(true);
     try {
+      // 성능 옵션 백업 및 비활성화
+      const disabledOptions = backupAndDisableFlags();
+      if (disabledOptions.length > 0) {
+        showToast(
+          "info",
+          "성능 옵션 임시 비활성화",
+          `편집 성능 향상을 위해 ${disabledOptions.join(", ")} 옵션이 일시적으로 비활성화되었습니다. 작업 종료 시 자동으로 복원됩니다.`
+        );
+      }
+
       const success = await startEditing();
       if (success) {
         // 편집 모드 시작 시 Summarized 뷰면 Detailed로 전환
@@ -538,6 +549,9 @@ export function GanttHeader({
         }
         onStartSuccess?.();
       } else {
+        // 작업 시작 실패 시 백업 복원
+        restoreBackupFlags();
+        
         if (lockState.isLocked && !lockState.isMyLock) {
           onLockError?.("locked_by_other", lockState.lockedByName);
         } else {
@@ -565,6 +579,17 @@ export function GanttHeader({
       // 변경사항 폐기
       onDiscardChanges?.();
       await stopEditing();
+      
+      // 성능 옵션 복원
+      const restoredOptions = restoreBackupFlags();
+      if (restoredOptions.length > 0) {
+        showToast(
+          "success",
+          "성능 옵션 복원",
+          `${restoredOptions.join(", ")} 옵션이 복원되었습니다.`
+        );
+      }
+      
       // 종료 성공 콜백
       onStopSuccess?.(countToDiscard);
     } finally {

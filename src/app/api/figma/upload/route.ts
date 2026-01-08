@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { decryptTokens, encryptTokens } from "@/lib/crypto/figmaTokens";
 
 async function refreshToken(refreshToken: string) {
-  const res = await fetch("https://www.figma.com/api/oauth/token", {
+  const res = await fetch("https://api.figma.com/v1/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -138,4 +138,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

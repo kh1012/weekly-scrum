@@ -1,6 +1,6 @@
 /**
  * Menu/Page usage telemetry client library
- * 
+ *
  * Features:
  * - Route change detection
  * - Dedupe identical events within 10s window
@@ -13,6 +13,7 @@ const MENU_MAP: Record<string, { group: string; key: string }> = {
   "/feedbacks": { group: "community", key: "feedbacks" },
   "/works/team-feed": { group: "works", key: "team-feed" },
   "/works/plans/gantt": { group: "works", key: "plans" },
+  "/works/figma-files": { group: "works", key: "figma-files" },
   "/admin/plans": { group: "admin", key: "admin-plans" },
   "/admin/plans/gantt": { group: "admin", key: "admin-plans" },
   "/works/snapshots": { group: "works", key: "snapshots" },
@@ -38,7 +39,9 @@ export function getOrCreateSessionId(): string {
 
   let sessionId = sessionStorage.getItem(SESSION_KEY);
   if (!sessionId) {
-    sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    sessionId = `sess_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 11)}`;
     sessionStorage.setItem(SESSION_KEY, sessionId);
   }
   return sessionId;
@@ -162,10 +165,7 @@ export async function logMenuEvent(payload: MenuEventPayload): Promise<void> {
 }
 
 // Log page view (called on route change)
-export function logPageView(
-  workspaceId: string,
-  pathname: string
-): void {
+export function logPageView(workspaceId: string, pathname: string): void {
   if (!workspaceId) return;
 
   const { menu_group, menu_key } = parseMenuFromPath(pathname);
@@ -196,4 +196,3 @@ export function logMenuClick(
     menu_key: menuKey,
   });
 }
-

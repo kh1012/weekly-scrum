@@ -54,6 +54,7 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = [
   "/my/alignment",
   "/works/alignment",
   "/profile/settings",
+  "/works/figma-files",
 ];
 
 // padding 없는 페이지 경로
@@ -76,6 +77,7 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/my/alignment",
   "/works/alignment",
   "/profile/settings",
+  "/works/figma-files",
 ];
 
 // localStorage 키

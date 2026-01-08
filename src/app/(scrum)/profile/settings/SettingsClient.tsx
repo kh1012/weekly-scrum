@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useSearchParams } from "next/navigation";
+import { ConfirmModal } from "@/components/common/ConfirmModal";
 
 type SettingsTab = "integrations" | "notifications" | "preferences";
 
@@ -13,6 +14,7 @@ export function SettingsClient() {
   const [figmaConnectedAt, setFigmaConnectedAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
   useEffect(() => {
     checkFigmaConnection();
@@ -58,8 +60,6 @@ export function SettingsClient() {
   }
 
   async function handleFigmaDisconnect() {
-    if (!confirm("Figma 연동을 해제하시겠습니까?")) return;
-
     setIsDisconnecting(true);
     try {
       const supabase = createClient();
@@ -79,6 +79,7 @@ export function SettingsClient() {
 
       setIsFigmaConnected(false);
       setFigmaConnectedAt(null);
+      setShowDisconnectModal(false);
       alert("Figma 연동이 해제되었습니다.");
     } catch (error) {
       console.error("[Figma Disconnect]", error);
@@ -258,7 +259,7 @@ export function SettingsClient() {
                     </button>
                   ) : isFigmaConnected ? (
                     <button
-                      onClick={handleFigmaDisconnect}
+                      onClick={() => setShowDisconnectModal(true)}
                       disabled={isDisconnecting}
                               className="px-3 py-1.5 text-sm font-medium rounded border border-[#d0d7de] text-[#cf222e] hover:bg-[#ffebe9] hover:border-[#cf222e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
@@ -311,6 +312,19 @@ export function SettingsClient() {
           </main>
         </div>
       </div>
+
+      {/* Figma 연동 해제 확인 모달 */}
+      <ConfirmModal
+        isOpen={showDisconnectModal}
+        onClose={() => setShowDisconnectModal(false)}
+        onConfirm={handleFigmaDisconnect}
+        title="Figma 연동 해제"
+        message="Figma 연동을 해제하시겠습니까?&#10;&#10;연동을 해제하면:&#10;• Figma 파일 추적 기능을 사용할 수 없습니다&#10;• 등록된 Figma 파일 정보는 유지됩니다"
+        confirmText="연동 해제"
+        cancelText="취소"
+        variant="danger"
+        loading={isDisconnecting}
+      />
     </div>
   );
 }
