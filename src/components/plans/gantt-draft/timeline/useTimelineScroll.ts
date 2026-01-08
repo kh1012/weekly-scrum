@@ -6,6 +6,8 @@ import { useCallback } from "react";
 import type { MiddleClickScrollState } from "./timelineTypes";
 import { DAY_WIDTH } from "./timelineTypes";
 import { useRAFThrottle } from "./useRAFThrottle";
+import { getFeatureFlags } from "../featureFlags";
+import { performanceMonitor } from "../performanceMonitor";
 
 interface UseTimelineScrollProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -164,11 +166,23 @@ export function useTimelineScroll({
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!middleClickScroll?.isActive || !containerRef.current) return;
 
-      const deltaX = middleClickScroll.startX - e.clientX;
-      const deltaY = middleClickScroll.startY - e.clientY;
+      const flags = getFeatureFlags();
+      
+      const moveScroll = () => {
+        if (!containerRef.current) return;
+        const deltaX = middleClickScroll.startX - e.clientX;
+        const deltaY = middleClickScroll.startY - e.clientY;
 
-      containerRef.current.scrollLeft = middleClickScroll.scrollLeft + deltaX;
-      containerRef.current.scrollTop = middleClickScroll.scrollTop + deltaY;
+        containerRef.current.scrollLeft = middleClickScroll.scrollLeft + deltaX;
+        containerRef.current.scrollTop = middleClickScroll.scrollTop + deltaY;
+      };
+
+      // 성능 로깅이 켜져있으면 측정
+      if (flags.enablePerformanceLogging) {
+        performanceMonitor.measureScroll('Middle Click Drag', moveScroll);
+      } else {
+        moveScroll();
+      }
     },
     [middleClickScroll, containerRef]
   );

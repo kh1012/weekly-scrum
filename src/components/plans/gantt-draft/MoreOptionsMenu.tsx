@@ -78,6 +78,7 @@ export function MoreOptionsMenu({
   // Performance 설정
   const [perfFlags, setPerfFlags] = useState(getFeatureFlags());
   const [needsReload, setNeedsReload] = useState(false);
+  const [countdown, setCountdown] = useState(5);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -303,6 +304,7 @@ export function MoreOptionsMenu({
 
   // 자동 새로고침을 위한 타이머 ref
   const reloadTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handlePerformanceFlagChange = (
     key: keyof typeof perfFlags,
@@ -311,20 +313,43 @@ export function MoreOptionsMenu({
     setFeatureFlag(key, value);
     setPerfFlags(getFeatureFlags());
     setNeedsReload(true);
+    setCountdown(5); // 카운트다운 초기화
 
     // 이전 타이머 취소
     if (reloadTimerRef.current) {
       clearTimeout(reloadTimerRef.current);
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
 
-    // 500ms 후 자동 새로고침 (연속 변경 시 마지막 한 번만)
+    // 카운트다운 시작 (1초마다)
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+          }
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // 5초 후 자동 새로고침 (연속 변경 시 마지막 한 번만)
     reloadTimerRef.current = setTimeout(() => {
       console.log("⏳ 성능 설정을 적용하기 위해 페이지를 새로고침합니다...");
       window.location.reload();
-    }, 500);
+    }, 5000);
   };
 
   const handleReload = () => {
+    // 타이머 취소
+    if (reloadTimerRef.current) {
+      clearTimeout(reloadTimerRef.current);
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
     window.location.reload();
   };
 
@@ -333,6 +358,9 @@ export function MoreOptionsMenu({
     return () => {
       if (reloadTimerRef.current) {
         clearTimeout(reloadTimerRef.current);
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
       }
     };
   }, []);
@@ -825,7 +853,7 @@ export function MoreOptionsMenu({
                             />
                           </svg>
                           <span className="text-[10px] text-blue-800 font-medium">
-                            곧 자동으로 새로고침됩니다...
+                            {countdown}초 후 자동 새로고침
                           </span>
                         </div>
                         <button
