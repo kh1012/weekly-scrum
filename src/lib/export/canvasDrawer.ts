@@ -72,7 +72,7 @@ export class GanttCanvasDrawer {
         dayCount++;
       } else {
         this.months.push({
-          month: `${currentYear}년 ${currentMonth + 1}월`,
+          month: `${currentMonth + 1}월`,
           days: dayCount,
         });
         currentMonth = day.getMonth();
@@ -82,7 +82,7 @@ export class GanttCanvasDrawer {
 
       if (index === this.days.length - 1) {
         this.months.push({
-          month: `${currentYear}년 ${currentMonth + 1}월`,
+          month: `${currentMonth + 1}월`,
           days: dayCount,
         });
       }
@@ -376,9 +376,8 @@ export class GanttCanvasDrawer {
   /**
    * Plan Bars (작업 막대)
    */
-  protected drawBars(): void {
+  protected drawBars(offsetY: number = HEADER_HEIGHT + FLAG_LANE_HEIGHT): void {
     const offsetX = this.data.layout.treePanelWidth;
-    const offsetY = HEADER_HEIGHT + FLAG_LANE_HEIGHT;
 
     this.data.bars.forEach((bar) => {
       const startDate = new Date(bar.startDate);

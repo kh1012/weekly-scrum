@@ -18,7 +18,10 @@ export interface MoreOptionsMenuProps {
   /** PNG export 핸들러 (품질 옵션 포함) */
   onExportPNG: (quality?: ExportQuality) => Promise<void>;
   /** PNG Draw export 핸들러 (품질 옵션 포함) */
-  onExportDraw: (quality?: ExportQuality, canvasOptions?: CanvasOptions) => Promise<void>;
+  onExportDraw: (
+    quality?: ExportQuality,
+    canvasOptions?: CanvasOptions
+  ) => Promise<void>;
   /** 비활성화 여부 */
   disabled?: boolean;
   /** 읽기 전용 모드 (Performance 설정을 보여줄지 결정) */
@@ -81,21 +84,36 @@ export function MoreOptionsMenu({
         "normal";
       setSelectedPNGQuality(pngQuality);
       setSelectedDrawQuality(drawQuality);
-      
+
       // Canvas 옵션 불러오기
-      const savedShowTableColumns = localStorage.getItem("export-canvas-show-table-columns");
-      const savedShowMetadata = localStorage.getItem("export-canvas-show-metadata");
+      const savedShowTableColumns = localStorage.getItem(
+        "export-canvas-show-table-columns"
+      );
+      const savedShowMetadata = localStorage.getItem(
+        "export-canvas-show-metadata"
+      );
       const savedShowLegend = localStorage.getItem("export-canvas-show-legend");
-      const savedShowStatistics = localStorage.getItem("export-canvas-show-statistics");
-      const savedShowProgressGradient = localStorage.getItem("export-canvas-show-progress-gradient");
-      const savedShowAlignmentArrows = localStorage.getItem("export-canvas-show-alignment-arrows");
-      
-      if (savedShowTableColumns !== null) setShowTableColumns(savedShowTableColumns === "true");
-      if (savedShowMetadata !== null) setShowMetadata(savedShowMetadata === "true");
+      const savedShowStatistics = localStorage.getItem(
+        "export-canvas-show-statistics"
+      );
+      const savedShowProgressGradient = localStorage.getItem(
+        "export-canvas-show-progress-gradient"
+      );
+      const savedShowAlignmentArrows = localStorage.getItem(
+        "export-canvas-show-alignment-arrows"
+      );
+
+      if (savedShowTableColumns !== null)
+        setShowTableColumns(savedShowTableColumns === "true");
+      if (savedShowMetadata !== null)
+        setShowMetadata(savedShowMetadata === "true");
       if (savedShowLegend !== null) setShowLegend(savedShowLegend === "true");
-      if (savedShowStatistics !== null) setShowStatistics(savedShowStatistics === "true");
-      if (savedShowProgressGradient !== null) setShowProgressGradient(savedShowProgressGradient === "true");
-      if (savedShowAlignmentArrows !== null) setShowAlignmentArrows(savedShowAlignmentArrows === "true");
+      if (savedShowStatistics !== null)
+        setShowStatistics(savedShowStatistics === "true");
+      if (savedShowProgressGradient !== null)
+        setShowProgressGradient(savedShowProgressGradient === "true");
+      if (savedShowAlignmentArrows !== null)
+        setShowAlignmentArrows(savedShowAlignmentArrows === "true");
     } catch {
       // localStorage 접근 실패 시 무시
     }
@@ -216,9 +234,7 @@ export function MoreOptionsMenu({
           }
         `}
       >
-        {isExporting ? (
-          <LoadingIcon className="w-3.5 h-3.5" />
-        ) : null}
+        {isExporting ? <LoadingIcon className="w-3.5 h-3.5" /> : null}
         <span>추가 기능</span>
       </button>
 
@@ -543,6 +559,33 @@ export function MoreOptionsMenu({
                       </label>
                     </div>
 
+                    {/* 고급 메모이제이션 */}
+                    <div className="px-3 py-1.5 hover:bg-gray-50">
+                      <label className="flex items-center justify-between cursor-pointer gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-700">
+                            고급 메모이제이션
+                          </div>
+                          <div className="text-[10px] text-gray-500 mt-0.5">
+                            렌더링 최적화 강화
+                          </div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={perfFlags.enableAdvancedMemo}
+                          onChange={(e) =>
+                            handlePerformanceFlagChange(
+                              "enableAdvancedMemo",
+                              e.target.checked
+                            )
+                          }
+                          className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded flex-shrink-0"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="px-3 py-1.5 border-t border-gray-200 w-full" />
+
                     {/* 성능 로깅 */}
                     <div className="px-3 py-1.5 hover:bg-gray-50">
                       <label className="flex items-center justify-between cursor-pointer gap-2">
@@ -592,31 +635,6 @@ export function MoreOptionsMenu({
                         />
                       </label>
                     </div>
-
-                    {/* 고급 메모이제이션 */}
-                    <div className="px-3 py-1.5 hover:bg-gray-50">
-                      <label className="flex items-center justify-between cursor-pointer gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-700">
-                            고급 메모이제이션
-                          </div>
-                          <div className="text-[10px] text-gray-500 mt-0.5">
-                            렌더링 최적화 강화
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={perfFlags.enableAdvancedMemo}
-                          onChange={(e) =>
-                            handlePerformanceFlagChange(
-                              "enableAdvancedMemo",
-                              e.target.checked
-                            )
-                          }
-                          className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded flex-shrink-0"
-                        />
-                      </label>
-                    </div>
                   </div>
 
                   {/* 새로고침 필요 경고 */}
@@ -659,4 +677,3 @@ export function MoreOptionsMenu({
     </div>
   );
 }
-

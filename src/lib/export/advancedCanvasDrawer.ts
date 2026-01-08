@@ -96,14 +96,14 @@ export class AdvancedGanttCanvasDrawer extends GanttCanvasDrawer {
 
     let offsetY = 0;
 
-    // 1. 메타데이터 섹션
+    // 1. 전체 배경
+    this.drawAdvancedBackground();
+
+    // 2. 메타데이터 섹션
     if (this.canvasOptions.showMetadata && this.data.metadata) {
       this.drawMetadataSection(offsetY);
       offsetY += METADATA_HEIGHT;
     }
-
-    // 2. 배경
-    this.drawBackground();
 
     // 3. Timeline Header
     this.drawTimelineHeader(offsetY);
@@ -134,6 +134,25 @@ export class AdvancedGanttCanvasDrawer extends GanttCanvasDrawer {
       const legendOffsetY = offsetY + HEADER_HEIGHT + FLAG_LANE_HEIGHT + (this.data.treeNodes.length * ROW_HEIGHT);
       this.drawLegendAndStatistics(legendOffsetY);
     }
+  }
+
+  /**
+   * Advanced 배경 (메타데이터 포함)
+   */
+  protected drawAdvancedBackground(): void {
+    const totalWidth = this.getTreePanelWidth() + this.data.timeline.width;
+    let totalHeight = HEADER_HEIGHT + FLAG_LANE_HEIGHT + (this.data.treeNodes.length * ROW_HEIGHT);
+    
+    if (this.canvasOptions.showMetadata && this.data.metadata) {
+      totalHeight += METADATA_HEIGHT;
+    }
+    
+    if (this.canvasOptions.showLegend || this.canvasOptions.showStatistics) {
+      totalHeight += LEGEND_HEIGHT;
+    }
+    
+    this.ctx.fillStyle = "#ffffff";
+    this.ctx.fillRect(0, 0, totalWidth, totalHeight);
   }
 
   /**
