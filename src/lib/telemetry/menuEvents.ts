@@ -16,19 +16,18 @@ const MENU_MAP: Record<string, { group: string; key: string }> = {
   "/admin/plans": { group: "admin", key: "admin-plans" },
   "/admin/plans/gantt": { group: "admin", key: "admin-plans" },
   "/works/snapshots": { group: "works", key: "snapshots" },
-  "/manage/snapshots": { group: "personal", key: "my-snapshots" }, // Navigation.tsx와 일치
+  "/manage/snapshots": { group: "personal", key: "my-snapshots" },
   "/works/alignment": { group: "works", key: "alignment" },
   "/works/work-map": { group: "works", key: "work-map" },
   "/works/collaborator-graph": { group: "works", key: "collaborator-graph" },
-  "/my": { group: "personal", key: "my-dashboard" }, // Navigation.tsx와 일치
-  "/my/alignment": { group: "personal", key: "my-alignment" }, // Navigation.tsx와 일치
-  "/admin": { group: "admin", key: "admin-dashboard" }, // Navigation.tsx와 일치
-  "/admin/snapshots": { group: "admin", key: "admin-snapshots" },
-  "/admin/meta-options": { group: "admin", key: "admin-meta-options" }, // Navigation.tsx와 일치
+  "/my": { group: "personal", key: "my-dashboard" },
+  "/my/alignment": { group: "personal", key: "my-alignment" },
+  "/admin": { group: "admin", key: "admin-dashboard" },
+  "/admin/meta-options": { group: "admin", key: "admin-meta-options" },
   "/admin/members": { group: "admin", key: "admin-members" },
   "/admin/menu-usage": { group: "admin", key: "admin-menu-usage" },
   "/admin/menu-settings": { group: "admin", key: "admin-menu-settings" },
-  "/releases": { group: "extra", key: "releases" }, // Navigation.tsx와 일치
+  "/releases": { group: "extra", key: "releases" },
 };
 
 // Session ID management (persisted in sessionStorage)

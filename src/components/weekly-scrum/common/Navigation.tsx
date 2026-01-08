@@ -57,6 +57,8 @@ function getMenuCount(
       return menuStats.features_count;
     case "collaborator-graph":
       return menuStats.collaborations_count;
+    case "my-dashboard":
+      return menuStats.my_entries_count;
     case "my-snapshots":
       return menuStats.my_entries_count;
     case "my-alignment":
@@ -85,6 +87,8 @@ function getMenuCountLabel(menuKey: string): string {
       return "기능 수";
     case "collaborator-graph":
       return "협업 설정";
+    case "my-dashboard":
+      return "내 스냅샷 엔트리";
     case "my-snapshots":
       return "내 스냅샷 엔트리";
     case "my-alignment":

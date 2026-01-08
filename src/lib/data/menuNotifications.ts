@@ -171,6 +171,94 @@ export async function getMenuNewCounts(params: {
       }
     }
 
+    // 8. Alignment - 마지막 방문 이후 새 Plans 또는 Snapshot Entries
+    const alignmentLastVisit = visitsMap.get("alignment");
+    if (alignmentLastVisit) {
+      const { count: newPlansCount } = await supabase
+        .from("plans")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .gt("created_at", alignmentLastVisit);
+
+      const { count: newEntriesCount } = await supabase
+        .from("snapshot_entries")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .gt("created_at", alignmentLastVisit);
+
+      const totalNewCount = (newPlansCount || 0) + (newEntriesCount || 0);
+      if (totalNewCount > 0) {
+        results.push({ menu_key: "alignment", new_count: totalNewCount });
+      }
+    }
+
+    // 9. My Dashboard - 마지막 방문 이후 새 데이터 (사용자 본인 관련)
+    const myDashboardLastVisit = visitsMap.get("my-dashboard");
+    if (myDashboardLastVisit) {
+      const { count: myNewEntriesCount } = await supabase
+        .from("snapshot_entries")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("author_id", userId)
+        .gt("created_at", myDashboardLastVisit);
+
+      if (myNewEntriesCount && myNewEntriesCount > 0) {
+        results.push({ menu_key: "my-dashboard", new_count: myNewEntriesCount });
+      }
+    }
+
+    // 10. My Alignment - 마지막 방문 이후 새 할당된 Plans 또는 현재 주차 Snapshot Entries
+    const myAlignmentLastVisit = visitsMap.get("my-alignment");
+    if (myAlignmentLastVisit) {
+      // 할당된 Plans 중 새로운 것
+      const { data: planAssignees } = await supabase
+        .from("plan_assignees")
+        .select("plan_id")
+        .eq("user_id", userId);
+
+      const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
+      let newAssignedPlansCount = 0;
+
+      if (assignedPlanIds.length > 0) {
+        const { count } = await supabase
+          .from("plans")
+          .select("*", { count: "exact", head: true })
+          .eq("workspace_id", workspaceId)
+          .in("id", assignedPlanIds)
+          .gt("created_at", myAlignmentLastVisit);
+
+        newAssignedPlansCount = count || 0;
+      }
+
+      // 현재 주차 Snapshot Entries 중 새로운 것
+      const { count: myNewEntriesCount } = await supabase
+        .from("snapshot_entries")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("author_id", userId)
+        .gt("created_at", myAlignmentLastVisit);
+
+      const totalMyAlignmentNew = newAssignedPlansCount + (myNewEntriesCount || 0);
+      if (totalMyAlignmentNew > 0) {
+        results.push({ menu_key: "my-alignment", new_count: totalMyAlignmentNew });
+      }
+    }
+
+    // 11. My Snapshots - 마지막 방문 이후 새 Snapshot Entries (작성자 기준)
+    const mySnapshotsLastVisit = visitsMap.get("my-snapshots");
+    if (mySnapshotsLastVisit) {
+      const { count: myNewEntriesCount } = await supabase
+        .from("snapshot_entries")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("author_id", userId)
+        .gt("created_at", mySnapshotsLastVisit);
+
+      if (myNewEntriesCount && myNewEntriesCount > 0) {
+        results.push({ menu_key: "my-snapshots", new_count: myNewEntriesCount });
+      }
+    }
+
     return results;
   } catch (error) {
     console.error("[menuNotifications] Error fetching new counts:", error);
