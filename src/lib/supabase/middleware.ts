@@ -40,8 +40,9 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Auth code가 있으면 /auth/callback으로 포워딩 (PKCE 흐름 처리)
+  // 단, API 라우트는 제외 (예: /api/figma/callback)
   const code = request.nextUrl.searchParams.get("code");
-  if (code && pathname !== "/auth/callback") {
+  if (code && pathname !== "/auth/callback" && !pathname.startsWith("/api/")) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/callback";
     // 기존 searchParams 유지 (code, redirectTo 등)
