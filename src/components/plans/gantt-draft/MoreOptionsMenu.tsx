@@ -584,7 +584,7 @@ export function MoreOptionsMenu({
                       </label>
                     </div>
 
-                    <div className="px-3 py-1.5 border-t border-gray-200 w-full" />
+                    <div className="mx-3 my-1.5 h-[1px] bg-gray-200 w-full" />
 
                     {/* 성능 로깅 */}
                     <div className="px-3 py-1.5 hover:bg-gray-50">

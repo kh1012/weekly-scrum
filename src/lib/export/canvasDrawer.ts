@@ -293,16 +293,18 @@ export class GanttCanvasDrawer {
    * Tree Panel (좌측 계층 구조)
    */
   protected drawTreePanel(offsetY: number = HEADER_HEIGHT + FLAG_LANE_HEIGHT): void {
+    const panelHeight = this.data.treeNodes.length * ROW_HEIGHT;
+    
     // 배경
     this.ctx.fillStyle = "#f9fafb";
-    this.ctx.fillRect(0, offsetY, this.data.layout.treePanelWidth, this.data.timeline.height - offsetY);
+    this.ctx.fillRect(0, offsetY, this.data.layout.treePanelWidth, panelHeight);
 
     // 우측 테두리
     this.ctx.strokeStyle = "#e5e7eb";
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.moveTo(this.data.layout.treePanelWidth, offsetY);
-    this.ctx.lineTo(this.data.layout.treePanelWidth, this.data.timeline.height);
+    this.ctx.lineTo(this.data.layout.treePanelWidth, offsetY + panelHeight);
     this.ctx.stroke();
 
     // 노드 그리기
@@ -351,6 +353,7 @@ export class GanttCanvasDrawer {
    */
   protected drawGridLines(offsetY: number = HEADER_HEIGHT + FLAG_LANE_HEIGHT): void {
     const offsetX = this.data.layout.treePanelWidth;
+    const gridHeight = this.data.treeNodes.length * ROW_HEIGHT;
 
     this.days.forEach((day, idx) => {
       const x = offsetX + idx * DAY_WIDTH;
@@ -360,7 +363,7 @@ export class GanttCanvasDrawer {
       // 주말 배경
       if (isWeekend) {
         this.ctx.fillStyle = "rgba(0, 0, 0, 0.015)";
-        this.ctx.fillRect(x, offsetY, DAY_WIDTH, this.data.timeline.height - offsetY);
+        this.ctx.fillRect(x, offsetY, DAY_WIDTH, gridHeight);
       }
 
       // 세로선
@@ -368,7 +371,7 @@ export class GanttCanvasDrawer {
       this.ctx.lineWidth = isMonday ? 2 : 1;
       this.ctx.beginPath();
       this.ctx.moveTo(x, offsetY);
-      this.ctx.lineTo(x, this.data.timeline.height);
+      this.ctx.lineTo(x, offsetY + gridHeight);
       this.ctx.stroke();
     });
   }
