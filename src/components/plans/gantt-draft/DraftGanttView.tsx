@@ -50,6 +50,7 @@ import {
   type ExportMetadata,
   type GanttCanvasData,
 } from "@/lib/export";
+import type { CanvasOptions } from "@/lib/export/types";
 import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
 
 interface InitialAssignee {
@@ -157,6 +158,8 @@ interface DraftGanttViewProps {
   mismatches?: AlignmentMismatch[];
   /** Mismatch 클릭 핸들러 */
   onFocusMismatch?: (mismatch: AlignmentMismatch) => void;
+  /** Alignment 페이지 여부 */
+  isAlignmentPage?: boolean;
 }
 
 export interface DraftGanttViewRef {
@@ -192,6 +195,7 @@ export const DraftGanttView = forwardRef<
     isRefreshing = false,
     mismatches = [],
     onFocusMismatch,
+    isAlignmentPage = false,
   },
   ref
 ) {
@@ -1106,7 +1110,7 @@ export const DraftGanttView = forwardRef<
   );
 
   const handleExportDraw = useCallback(
-    async (quality: "low" | "normal" | "high" = "normal") => {
+    async (quality: "low" | "normal" | "high" = "normal", canvasOptions?: CanvasOptions) => {
       const qualityLabels = {
         low: "저품질",
         normal: "기본",
@@ -1135,9 +1139,9 @@ export const DraftGanttView = forwardRef<
             rangeEnd: rangeEnd,
           },
           layout: {
-            treePanelWidth: 300, // TODO: 실제 값으로 대체
-            rowHeight: 40, // TODO: 실제 값으로 대체
-            dayWidth: 24, // TODO: 실제 값으로 대체
+            treePanelWidth: 300,
+            rowHeight: ROW_HEIGHT,
+            dayWidth: 24,
           },
         };
 
@@ -1147,6 +1151,7 @@ export const DraftGanttView = forwardRef<
           pngOptions: {
             backgroundColor: "#ffffff",
           },
+          canvasOptions,
         });
 
         // 성공으로 업데이트
@@ -1356,6 +1361,7 @@ export const DraftGanttView = forwardRef<
           onExportJSON={handleExportJSON}
           onExportPNG={handleExportPNG}
           onExportDraw={handleExportDraw}
+          isAlignmentPage={isAlignmentPage}
           onLockError={(type, lockedByName) => {
             if (type === "locked_by_other") {
               showToast(

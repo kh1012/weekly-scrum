@@ -8,6 +8,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { LoadingIcon } from "./Icons";
+import type { CanvasOptions } from "@/lib/export/types";
 
 export type ExportQuality = "low" | "normal" | "high";
 
@@ -17,11 +18,13 @@ export interface ExportDropdownProps {
   /** PNG export 핸들러 (품질 옵션 포함) - html2canvas 방식 */
   onExportPNG: (quality?: ExportQuality) => Promise<void>;
   /** PNG Draw export 핸들러 (품질 옵션 포함) - Canvas Draw 방식 */
-  onExportDraw: (quality?: ExportQuality) => Promise<void>;
+  onExportDraw: (quality?: ExportQuality, canvasOptions?: CanvasOptions) => Promise<void>;
   /** 비활성화 여부 */
   disabled?: boolean;
   /** 버튼 레이블 */
   label?: string;
+  /** Alignment 페이지 여부 (화살표 옵션 표시) */
+  isAlignmentPage?: boolean;
 }
 
 type ExportType = "json" | "png" | "draw";
@@ -39,6 +42,7 @@ export function ExportDropdown({
   onExportDraw,
   disabled = false,
   label = "Export",
+  isAlignmentPage = false,
 }: ExportDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -49,9 +53,18 @@ export function ExportDropdown({
     useState<ExportQuality>("normal");
   const [selectedDrawQuality, setSelectedDrawQuality] =
     useState<ExportQuality>("normal");
+  
+  // Canvas 옵션 상태
+  const [showTableColumns, setShowTableColumns] = useState(true);
+  const [showMetadata, setShowMetadata] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
+  const [showStatistics, setShowStatistics] = useState(true);
+  const [showProgressGradient, setShowProgressGradient] = useState(true);
+  const [showAlignmentArrows, setShowAlignmentArrows] = useState(true);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 품질 설정 불러오기
+  // 품질 설정 및 Canvas 옵션 불러오기
   useEffect(() => {
     try {
       const pngQuality =
@@ -62,6 +75,21 @@ export function ExportDropdown({
         "normal";
       setSelectedPNGQuality(pngQuality);
       setSelectedDrawQuality(drawQuality);
+      
+      // Canvas 옵션 불러오기
+      const savedShowTableColumns = localStorage.getItem("export-canvas-show-table-columns");
+      const savedShowMetadata = localStorage.getItem("export-canvas-show-metadata");
+      const savedShowLegend = localStorage.getItem("export-canvas-show-legend");
+      const savedShowStatistics = localStorage.getItem("export-canvas-show-statistics");
+      const savedShowProgressGradient = localStorage.getItem("export-canvas-show-progress-gradient");
+      const savedShowAlignmentArrows = localStorage.getItem("export-canvas-show-alignment-arrows");
+      
+      if (savedShowTableColumns !== null) setShowTableColumns(savedShowTableColumns === "true");
+      if (savedShowMetadata !== null) setShowMetadata(savedShowMetadata === "true");
+      if (savedShowLegend !== null) setShowLegend(savedShowLegend === "true");
+      if (savedShowStatistics !== null) setShowStatistics(savedShowStatistics === "true");
+      if (savedShowProgressGradient !== null) setShowProgressGradient(savedShowProgressGradient === "true");
+      if (savedShowAlignmentArrows !== null) setShowAlignmentArrows(savedShowAlignmentArrows === "true");
     } catch {
       // localStorage 접근 실패 시 무시
     }
@@ -115,7 +143,21 @@ export function ExportDropdown({
           await onExportPNG(quality || selectedPNGQuality);
           break;
         case "draw":
-          await onExportDraw(quality || selectedDrawQuality);
+          // Canvas 옵션 전달
+          const canvasOptions: CanvasOptions = {
+            showTableColumns,
+            showMetadata,
+            showLegend,
+            showStatistics,
+            showProgressGradient,
+            showAlignmentArrows: isAlignmentPage && showAlignmentArrows,
+            columnConfig: {
+              showAssignees: true,
+              showStatus: true,
+              showProgress: false, // 기본적으로 진행률 컬럼은 비활성화
+            },
+          };
+          await onExportDraw(quality || selectedDrawQuality, canvasOptions);
           break;
       }
     } catch (error) {
@@ -153,6 +195,35 @@ export function ExportDropdown({
       await handleExport(type, selectedPNGQuality);
     } else if (type === "draw") {
       await handleExport(type, selectedDrawQuality);
+    }
+  };
+
+  const handleCanvasOptionChange = (option: string, value: boolean) => {
+    try {
+      localStorage.setItem(`export-canvas-${option}`, String(value));
+    } catch {
+      // localStorage 접근 실패 시 무시
+    }
+
+    switch (option) {
+      case "show-table-columns":
+        setShowTableColumns(value);
+        break;
+      case "show-metadata":
+        setShowMetadata(value);
+        break;
+      case "show-legend":
+        setShowLegend(value);
+        break;
+      case "show-statistics":
+        setShowStatistics(value);
+        break;
+      case "show-progress-gradient":
+        setShowProgressGradient(value);
+        break;
+      case "show-alignment-arrows":
+        setShowAlignmentArrows(value);
+        break;
     }
   };
 
@@ -304,6 +375,7 @@ export function ExportDropdown({
               {/* PNG Draw 품질 선택 */}
               {showDrawQuality && (
                 <div className="bg-gray-50 py-1.5 px-2 space-y-1">
+                  {/* 품질 선택 */}
                   {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
                     (quality) => {
                       const preset = QUALITY_PRESETS[quality];
@@ -331,6 +403,77 @@ export function ExportDropdown({
                       );
                     }
                   )}
+                  
+                  {/* 구분선 */}
+                  <div className="border-t border-gray-200 my-2" />
+                  
+                  {/* Canvas 옵션 체크박스 */}
+                  <div className="space-y-1.5 py-1">
+                    <label className="flex items-center gap-2 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showTableColumns}
+                        onChange={(e) => handleCanvasOptionChange("show-table-columns", e.target.checked)}
+                        className="w-3 h-3 text-blue-600 rounded"
+                      />
+                      <span>테이블 컬럼</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showMetadata}
+                        onChange={(e) => handleCanvasOptionChange("show-metadata", e.target.checked)}
+                        className="w-3 h-3 text-blue-600 rounded"
+                      />
+                      <span>메타데이터</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showLegend}
+                        onChange={(e) => handleCanvasOptionChange("show-legend", e.target.checked)}
+                        className="w-3 h-3 text-blue-600 rounded"
+                      />
+                      <span>범례</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showStatistics}
+                        onChange={(e) => handleCanvasOptionChange("show-statistics", e.target.checked)}
+                        className="w-3 h-3 text-blue-600 rounded"
+                      />
+                      <span>통계</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showProgressGradient}
+                        onChange={(e) => handleCanvasOptionChange("show-progress-gradient", e.target.checked)}
+                        className="w-3 h-3 text-blue-600 rounded"
+                      />
+                      <span>진행률 Gradient</span>
+                    </label>
+                    
+                    {/* Alignment 페이지에서만 표시 */}
+                    {isAlignmentPage && (
+                      <label className="flex items-center gap-2 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showAlignmentArrows}
+                          onChange={(e) => handleCanvasOptionChange("show-alignment-arrows", e.target.checked)}
+                          className="w-3 h-3 text-blue-600 rounded"
+                        />
+                        <span>Alignment 연결선</span>
+                      </label>
+                    )}
+                  </div>
+                  
+                  {/* Export 버튼 */}
                   <button
                     onClick={() => handleExportWithQuality("draw")}
                     className="w-full mt-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"

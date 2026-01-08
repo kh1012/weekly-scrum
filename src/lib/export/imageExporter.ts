@@ -2,13 +2,21 @@
  * PNG 이미지 Export 기능 (html2canvas 사용)
  */
 
-import type { ExportOptions, ExportProgress } from "./types";
+import type {
+  ExportOptions,
+  ExportProgress,
+  ExportMetadata,
+  CanvasStatistics,
+  CanvasArrow,
+} from "./types";
 import {
   downloadFile,
   generateDefaultFilename,
   sanitizeFilename,
 } from "./utils";
 import { GanttCanvasDrawer } from "./canvasDrawer";
+import { AdvancedGanttCanvasDrawer } from "./advancedCanvasDrawer";
+import { AlignmentCanvasDrawer } from "./alignmentCanvasDrawer";
 import type {
   DraftRow,
   DraftBar,
@@ -588,6 +596,12 @@ export interface GanttExportData {
     stage: string;
     status: string;
     assignees: Array<{ name: string; role: string }>;
+    progress?: number; // 진행률 (0-100)
+    alignmentStatus?: "green" | "orange" | "red" | null; // Alignment 상태
+    alignmentActualCount?: number; // Alignment 실제 실행 횟수
+    alignmentExpectedCount?: number; // Alignment 예상 실행 횟수
+    isSnapshot?: boolean; // Snapshot 여부
+    authorName?: string; // Snapshot 작성자
   }>;
   flags: Array<{
     id: string;
@@ -608,6 +622,9 @@ export interface GanttExportData {
     rowHeight: number;
     dayWidth: number;
   };
+  metadata?: ExportMetadata; // Export 메타정보
+  statistics?: CanvasStatistics; // 통계 정보
+  arrows?: CanvasArrow[]; // Alignment 연결 화살표
 }
 
 /**
@@ -631,16 +648,15 @@ export async function exportPNGWithCanvas(
       completed: false,
     });
 
-    // GanttCanvasData → GanttExportData 변환
-    const exportData = convertToExportData(element, ganttData);
+    // GanttCanvasData → GanttExportData 변환 (메타데이터, 통계, 화살표 포함)
+    const exportData = convertToExportData(element, ganttData, options);
 
-    // Canvas 생성
+    // Canvas 생성 (고급 옵션 고려한 크기 계산)
     const scale =
       options?.quality === "low" ? 1 : options?.quality === "high" ? 3 : 2;
     const canvas = document.createElement("canvas");
-    const totalWidth =
-      exportData.layout.treePanelWidth + exportData.timeline.width;
-    const totalHeight = exportData.timeline.height;
+    
+    const { totalWidth, totalHeight } = calculateCanvasSize(exportData, options);
 
     canvas.width = totalWidth * scale;
     canvas.height = totalHeight * scale;
@@ -654,7 +670,8 @@ export async function exportPNGWithCanvas(
       completed: false,
     });
 
-    const drawer = new GanttCanvasDrawer(canvas, exportData, scale);
+    // Drawer 선택 (옵션에 따라)
+    const drawer = selectDrawer(canvas, exportData, scale, options);
     await drawer.render();
 
     // PNG Blob 생성
@@ -695,15 +712,86 @@ export async function exportPNGWithCanvas(
 }
 
 /**
+ * Drawer 선택 (옵션에 따라 적절한 Drawer 반환)
+ */
+function selectDrawer(
+  canvas: HTMLCanvasElement,
+  exportData: GanttExportData,
+  scale: number,
+  options?: ExportOptions
+): GanttCanvasDrawer | AdvancedGanttCanvasDrawer | AlignmentCanvasDrawer {
+  const canvasOptions = options?.canvasOptions;
+
+  // Alignment Export (화살표 표시)
+  if (canvasOptions?.showAlignmentArrows) {
+    return new AlignmentCanvasDrawer(canvas, exportData, scale, options);
+  }
+
+  // Advanced Export (테이블 컬럼, 메타데이터 등)
+  if (
+    canvasOptions?.showTableColumns ||
+    canvasOptions?.showMetadata ||
+    canvasOptions?.showLegend ||
+    canvasOptions?.showStatistics ||
+    canvasOptions?.showProgressGradient
+  ) {
+    return new AdvancedGanttCanvasDrawer(canvas, exportData, scale, options);
+  }
+
+  // 기본 Export
+  return new GanttCanvasDrawer(canvas, exportData, scale);
+}
+
+/**
+ * Canvas 크기 계산 (고급 옵션 고려)
+ */
+function calculateCanvasSize(
+  exportData: GanttExportData,
+  options?: ExportOptions
+): { totalWidth: number; totalHeight: number } {
+  const canvasOptions = options?.canvasOptions;
+  
+  // 기본 너비
+  let treePanelWidth = exportData.layout.treePanelWidth;
+  
+  // 테이블 컬럼 추가 너비
+  if (canvasOptions?.showTableColumns) {
+    const columnConfig = canvasOptions.columnConfig || {};
+    if (columnConfig.showAssignees !== false) treePanelWidth += 80;
+    if (columnConfig.showStatus !== false) treePanelWidth += 60;
+    if (columnConfig.showProgress) treePanelWidth += 60;
+  }
+  
+  const totalWidth = treePanelWidth + exportData.timeline.width;
+  
+  // 기본 높이
+  let totalHeight = exportData.timeline.height;
+  
+  // 메타데이터 섹션 추가 높이
+  if (canvasOptions?.showMetadata && exportData.metadata) {
+    totalHeight += 50;
+  }
+  
+  // 범례/통계 섹션 추가 높이
+  if (canvasOptions?.showLegend || canvasOptions?.showStatistics) {
+    totalHeight += 60;
+  }
+  
+  return { totalWidth, totalHeight };
+}
+
+/**
  * GanttCanvasData를 GanttExportData로 변환
  *
  * @param element - Gantt 컨테이너 요소 (레이아웃 정보 추출용)
  * @param data - Gantt 차트 데이터
+ * @param options - Export 옵션
  * @returns Canvas Drawer용 데이터
  */
 function convertToExportData(
   element: HTMLElement,
-  data: GanttCanvasData
+  data: GanttCanvasData,
+  options?: ExportOptions
 ): GanttExportData {
   // Canvas Drawing 상수
   const HEADER_HEIGHT = 76; // 38(월) + 38(일+요일)
@@ -735,7 +823,7 @@ function convertToExportData(
     })
   );
 
-  // Bars 변환 (deleted 제외)
+  // Bars 변환 (deleted 제외, 추가 필드 포함)
   const bars: GanttExportData["bars"] = data.bars
     .filter((bar) => !bar.deleted)
     .map((bar) => ({
@@ -751,6 +839,12 @@ function convertToExportData(
         name: a.displayName || a.userId,
         role: a.role,
       })),
+      progress: bar.avgProgress, // 진행률
+      alignmentStatus: bar.alignmentStatus, // Alignment 상태
+      alignmentActualCount: bar.alignmentActualCount,
+      alignmentExpectedCount: bar.alignmentExpectedCount,
+      isSnapshot: bar.isSnapshot, // Snapshot 여부
+      authorName: bar.authorName, // Snapshot 작성자
     }));
 
   // Flags 변환 (deleted 제외)
@@ -764,6 +858,41 @@ function convertToExportData(
       lane: flag.laneHint ?? 0,
       color: flag.color ?? undefined,
     }));
+
+  // 메타데이터 생성
+  const metadata: ExportMetadata | undefined = options?.canvasOptions?.showMetadata
+    ? {
+        exportDate: new Date().toISOString(),
+        exportType: "png",
+        pageInfo: {
+          title: document.title || "Gantt Chart",
+          url: window.location.href,
+        },
+        dateRange: {
+          start: data.timeline.rangeStart.toISOString().split("T")[0],
+          end: data.timeline.rangeEnd.toISOString().split("T")[0],
+        },
+      }
+    : undefined;
+
+  // 통계 생성
+  const statistics: CanvasStatistics | undefined =
+    options?.canvasOptions?.showStatistics
+      ? {
+          totalCount: bars.length,
+          byStatus: {
+            진행중: bars.filter((b) => b.status === "진행중").length,
+            완료: bars.filter((b) => b.status === "완료").length,
+            보류: bars.filter((b) => b.status === "보류").length,
+            취소: bars.filter((b) => b.status === "취소").length,
+          },
+        }
+      : undefined;
+
+  // Alignment 화살표 생성
+  const arrows: CanvasArrow[] | undefined = options?.canvasOptions?.showAlignmentArrows
+    ? generateAlignmentArrows(bars)
+    : undefined;
 
   return {
     treeNodes,
@@ -780,5 +909,49 @@ function convertToExportData(
       rowHeight: data.layout.rowHeight,
       dayWidth: DAY_WIDTH, // Canvas 기준 24px
     },
+    metadata,
+    statistics,
+    arrows,
   };
+}
+
+/**
+ * Alignment 화살표 정보 생성
+ * Plan → Snapshot 연결 화살표
+ */
+function generateAlignmentArrows(bars: GanttExportData["bars"]): CanvasArrow[] {
+  const arrows: CanvasArrow[] = [];
+  
+  // Plan bars 찾기
+  const planBars = bars.filter((bar) => !bar.isSnapshot);
+  
+  planBars.forEach((planBar) => {
+    // 해당 Plan과 연결된 Snapshot 찾기
+    // (같은 rowId를 가진 Snapshot)
+    const relatedSnapshots = bars.filter(
+      (bar) => bar.isSnapshot && bar.rowId === planBar.rowId
+    );
+    
+    relatedSnapshots.forEach((snapshot) => {
+      // Alignment 상태별 색상
+      const statusColors = {
+        green: "#28a745",
+        orange: "#fb8500",
+        red: "#d73a49",
+      };
+      
+      const color = planBar.alignmentStatus
+        ? statusColors[planBar.alignmentStatus]
+        : "#6a737d";
+      
+      arrows.push({
+        fromBarId: planBar.id,
+        toBarId: snapshot.id,
+        color,
+        status: planBar.alignmentStatus || "red",
+      });
+    });
+  });
+  
+  return arrows;
 }

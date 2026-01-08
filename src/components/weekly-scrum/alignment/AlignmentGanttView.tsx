@@ -227,6 +227,7 @@ export function AlignmentGanttView({
       onEnableAlignmentCheckChange={onEnableAlignmentCheckChange}
       mismatches={mismatches}
       onFocusMismatch={handleFocusMismatch}
+      isAlignmentPage={true}
     />
   );
 }

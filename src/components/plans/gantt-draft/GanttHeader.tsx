@@ -117,6 +117,8 @@ interface GanttHeaderProps {
   onExportDraw?: (quality?: "low" | "normal" | "high") => Promise<void>;
   /** 비활성 시간 (초) - 외부에서 전달 */
   inactivitySeconds?: number | null;
+  /** Alignment 페이지 여부 */
+  isAlignmentPage?: boolean;
 }
 
 // 스타일 태그 (체크 아이콘 애니메이션)
@@ -176,6 +178,7 @@ export function GanttHeader({
   onExportPNG,
   onExportDraw,
   inactivitySeconds: propsInactivitySeconds,
+  isAlignmentPage = false,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -1382,6 +1385,7 @@ export function GanttHeader({
                       onExportDraw={onExportDraw}
                       disabled={isCommitting || isAutoSaving}
                       readOnly={readOnly}
+                      isAlignmentPage={isAlignmentPage}
                     />
                   </>
                 )}

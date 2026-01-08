@@ -20,11 +20,11 @@ const DAY_WIDTH = 24;
  * Gantt Canvas Drawer 클래스
  */
 export class GanttCanvasDrawer {
-  private ctx: CanvasRenderingContext2D;
-  private data: GanttExportData;
-  private scale: number;
-  private days: Date[] = [];
-  private months: Array<{ month: string; days: number }> = [];
+  protected ctx: CanvasRenderingContext2D;
+  protected data: GanttExportData;
+  protected scale: number;
+  protected days: Date[] = [];
+  protected months: Array<{ month: string; days: number }> = [];
 
   constructor(canvas: HTMLCanvasElement, data: GanttExportData, scale: number = 2) {
     const ctx = canvas.getContext("2d");
@@ -117,7 +117,7 @@ export class GanttCanvasDrawer {
   /**
    * 배경
    */
-  private drawBackground(): void {
+  protected drawBackground(): void {
     this.ctx.fillStyle = "#ffffff";
     this.ctx.fillRect(0, 0, this.data.layout.treePanelWidth + this.data.timeline.width, this.data.timeline.height);
   }
@@ -125,15 +125,15 @@ export class GanttCanvasDrawer {
   /**
    * Timeline Header (연도/월 + 일/요일)
    */
-  private drawTimelineHeader(): void {
+  protected drawTimelineHeader(offsetY: number = 0): void {
     const offsetX = this.data.layout.treePanelWidth;
 
     // 배경 그라데이션
-    const gradient = this.ctx.createLinearGradient(0, 0, 0, HEADER_HEIGHT);
+    const gradient = this.ctx.createLinearGradient(0, offsetY, 0, offsetY + HEADER_HEIGHT);
     gradient.addColorStop(0, "#f8f9fa");
     gradient.addColorStop(1, "#f3f4f6");
     this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(offsetX, 0, this.data.timeline.width, HEADER_HEIGHT);
+    this.ctx.fillRect(offsetX, offsetY, this.data.timeline.width, HEADER_HEIGHT);
 
     // 1. 월 헤더 (상단 38px)
     let monthX = offsetX;
@@ -233,9 +233,8 @@ export class GanttCanvasDrawer {
   /**
    * Flag Lane (헤더 아래, Bars 위)
    */
-  private drawFlagLane(): void {
+  protected drawFlagLane(offsetY: number = HEADER_HEIGHT): void {
     const offsetX = this.data.layout.treePanelWidth;
-    const offsetY = HEADER_HEIGHT;
 
     // 배경
     this.ctx.fillStyle = "#fef3c7";
@@ -293,9 +292,7 @@ export class GanttCanvasDrawer {
   /**
    * Tree Panel (좌측 계층 구조)
    */
-  private drawTreePanel(): void {
-    const offsetY = HEADER_HEIGHT + FLAG_LANE_HEIGHT;
-
+  protected drawTreePanel(offsetY: number = HEADER_HEIGHT + FLAG_LANE_HEIGHT): void {
     // 배경
     this.ctx.fillStyle = "#f9fafb";
     this.ctx.fillRect(0, offsetY, this.data.layout.treePanelWidth, this.data.timeline.height - offsetY);
@@ -352,9 +349,8 @@ export class GanttCanvasDrawer {
   /**
    * Grid Lines (세로선)
    */
-  private drawGridLines(): void {
+  protected drawGridLines(offsetY: number = HEADER_HEIGHT + FLAG_LANE_HEIGHT): void {
     const offsetX = this.data.layout.treePanelWidth;
-    const offsetY = HEADER_HEIGHT + FLAG_LANE_HEIGHT;
 
     this.days.forEach((day, idx) => {
       const x = offsetX + idx * DAY_WIDTH;
@@ -380,7 +376,7 @@ export class GanttCanvasDrawer {
   /**
    * Plan Bars (작업 막대)
    */
-  private drawBars(): void {
+  protected drawBars(): void {
     const offsetX = this.data.layout.treePanelWidth;
     const offsetY = HEADER_HEIGHT + FLAG_LANE_HEIGHT;
 
@@ -463,7 +459,7 @@ export class GanttCanvasDrawer {
   /**
    * 둥근 사각형 (막대 모서리용)
    */
-  private roundRect(x: number, y: number, width: number, height: number, radius: number): void {
+  protected roundRect(x: number, y: number, width: number, height: number, radius: number): void {
     this.ctx.beginPath();
     this.ctx.moveTo(x + radius, y);
     this.ctx.lineTo(x + width - radius, y);
@@ -480,7 +476,7 @@ export class GanttCanvasDrawer {
   /**
    * 텍스트 그리기
    */
-  private drawText(
+  protected drawText(
     text: string,
     x: number,
     y: number,
@@ -519,7 +515,7 @@ export class GanttCanvasDrawer {
   /**
    * 말줄임표 처리
    */
-  private truncateText(text: string, maxWidth: number): string {
+  protected truncateText(text: string, maxWidth: number): string {
     const ellipsis = "...";
     const ellipsisWidth = this.ctx.measureText(ellipsis).width;
 
