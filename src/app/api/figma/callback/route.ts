@@ -15,14 +15,14 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      new URL(`/admin/plans/gantt?figma_error=${error}`, request.url)
+      new URL(`/profile/settings?figma_error=${error}`, request.url)
     );
   }
 
   const storedState = request.cookies.get("figma_oauth_state")?.value;
   if (!state || state !== storedState) {
     return NextResponse.redirect(
-      new URL("/admin/plans/gantt?figma_error=invalid_state", request.url)
+      new URL("/profile/settings?figma_error=invalid_state", request.url)
     );
   }
 
@@ -67,12 +67,12 @@ export async function GET(request: NextRequest) {
       .eq("user_id", user.id);
 
     return NextResponse.redirect(
-      new URL("/admin/plans/gantt?figma_success=true", request.url)
+      new URL("/profile/settings?figma_success=true", request.url)
     );
   } catch (err) {
     console.error("[Figma OAuth]", err);
     return NextResponse.redirect(
-      new URL("/admin/plans/gantt?figma_error=server_error", request.url)
+      new URL("/profile/settings?figma_error=server_error", request.url)
     );
   }
 }

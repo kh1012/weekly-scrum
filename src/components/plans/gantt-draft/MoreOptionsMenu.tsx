@@ -301,6 +301,9 @@ export function MoreOptionsMenu({
     }
   };
 
+  // 자동 새로고침을 위한 타이머 ref
+  const reloadTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const handlePerformanceFlagChange = (
     key: keyof typeof perfFlags,
     value: boolean
@@ -308,11 +311,31 @@ export function MoreOptionsMenu({
     setFeatureFlag(key, value);
     setPerfFlags(getFeatureFlags());
     setNeedsReload(true);
+
+    // 이전 타이머 취소
+    if (reloadTimerRef.current) {
+      clearTimeout(reloadTimerRef.current);
+    }
+
+    // 500ms 후 자동 새로고침 (연속 변경 시 마지막 한 번만)
+    reloadTimerRef.current = setTimeout(() => {
+      console.log("⏳ 성능 설정을 적용하기 위해 페이지를 새로고침합니다...");
+      window.location.reload();
+    }, 500);
   };
 
   const handleReload = () => {
     window.location.reload();
   };
+
+  // Cleanup: 컴포넌트 언마운트 시 타이머 취소
+  useEffect(() => {
+    return () => {
+      if (reloadTimerRef.current) {
+        clearTimeout(reloadTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -644,7 +667,7 @@ export function MoreOptionsMenu({
                       성능 최적화 설정
                     </div>
                     <div className="text-[10px] text-gray-500 mt-0.5">
-                      설정 변경 후 새로고침이 필요합니다
+                      설정 변경 시 자동으로 적용됩니다
                     </div>
                   </div>
 
@@ -777,33 +800,39 @@ export function MoreOptionsMenu({
                     </div>
                   </div>
 
-                  {/* 새로고침 필요 경고 */}
+                  {/* 자동 새로고침 안내 */}
                   {needsReload && (
                     <div className="px-3 py-2 border-t border-gray-200">
-                      <div className="flex items-center justify-between gap-2 p-1.5 bg-amber-50 rounded border border-amber-200">
+                      <div className="flex items-center justify-between gap-2 p-1.5 bg-blue-50 rounded border border-blue-200">
                         <div className="flex items-center gap-1.5">
                           <svg
-                            className="w-3.5 h-3.5 text-amber-600 flex-shrink-0"
+                            className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 animate-spin"
                             fill="none"
                             viewBox="0 0 24 24"
-                            stroke="currentColor"
                           >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
                             <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             />
                           </svg>
-                          <span className="text-[10px] text-amber-800 font-medium">
-                            새로고침 필요
+                          <span className="text-[10px] text-blue-800 font-medium">
+                            곧 자동으로 새로고침됩니다...
                           </span>
                         </div>
                         <button
                           onClick={handleReload}
-                          className="px-2 py-0.5 text-[10px] font-medium text-amber-800 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 rounded border border-amber-300 flex-shrink-0"
+                          className="px-2 py-0.5 text-[10px] font-medium text-blue-800 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 rounded border border-blue-300 flex-shrink-0"
                         >
-                          새로고침
+                          즉시 적용
                         </button>
                       </div>
                     </div>

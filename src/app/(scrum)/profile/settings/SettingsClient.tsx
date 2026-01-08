@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/browser";
+import { useSearchParams } from "next/navigation";
 
 type SettingsTab = "integrations" | "notifications" | "preferences";
 
 export function SettingsClient() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<SettingsTab>("integrations");
   const [isFigmaConnected, setIsFigmaConnected] = useState(false);
   const [figmaConnectedAt, setFigmaConnectedAt] = useState<string | null>(null);
@@ -14,7 +16,19 @@ export function SettingsClient() {
 
   useEffect(() => {
     checkFigmaConnection();
-  }, []);
+
+    // URL 파라미터 확인하여 성공/실패 메시지 표시
+    const figmaSuccess = searchParams.get("figma_success");
+    const figmaError = searchParams.get("figma_error");
+
+    if (figmaSuccess === "true") {
+      // URL 파라미터 제거 (깨끗한 URL 유지)
+      window.history.replaceState({}, "", "/profile/settings");
+    } else if (figmaError) {
+      alert(`Figma 연동 실패: ${figmaError}`);
+      window.history.replaceState({}, "", "/profile/settings");
+    }
+  }, [searchParams]);
 
   async function checkFigmaConnection() {
     try {
