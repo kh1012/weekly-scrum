@@ -29,13 +29,22 @@ class PerformanceMonitor {
   private rafId: number | null = null;
 
   constructor() {
-    this.startFPSMonitoring();
+    // 클라이언트 사이드에서만 FPS 모니터링 시작
+    if (typeof window !== 'undefined') {
+      this.startFPSMonitoring();
+    }
   }
 
   /**
    * FPS 모니터링 시작 (연속적으로 측정)
+   * 클라이언트 사이드에서만 실행됨
    */
   private startFPSMonitoring(): void {
+    // 서버 사이드에서는 실행하지 않음
+    if (typeof window === 'undefined' || typeof requestAnimationFrame === 'undefined') {
+      return;
+    }
+
     const measure = () => {
       const flags = getFeatureFlags();
       
@@ -60,7 +69,10 @@ class PerformanceMonitor {
         this.frameCount++;
       }
       
-      this.rafId = requestAnimationFrame(measure);
+      // 클라이언트 사이드에서만 RAF 호출
+      if (typeof requestAnimationFrame !== 'undefined') {
+        this.rafId = requestAnimationFrame(measure);
+      }
     };
     
     measure();
@@ -229,6 +241,10 @@ class PerformanceMonitor {
    * 모니터링 중지
    */
   stop(): void {
+    if (typeof window === 'undefined' || typeof cancelAnimationFrame === 'undefined') {
+      return;
+    }
+    
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
