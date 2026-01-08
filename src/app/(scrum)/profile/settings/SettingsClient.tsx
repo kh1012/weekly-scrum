@@ -231,7 +231,7 @@ export function SettingsClient() {
                       )}
                     </div>
                             <p className="text-xs text-[#57606a]">
-                      Gantt 차트를 Figma/FigJam으로 업로드
+                      Weekly Scrum 사이트와 Figma 계정을 연동하여 Figma REST API 기반의 확장 기능을 활성화합니다.
                     </p>
                     {isFigmaConnected && figmaConnectedAt && (
                               <p className="text-xs text-[#57606a] mt-1">
