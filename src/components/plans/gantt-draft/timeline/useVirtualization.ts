@@ -160,16 +160,23 @@ function calculateVirtualization(
   const lastNode = nodePositions[nodePositions.length - 1];
   const totalHeight = lastNode.top + lastNode.height;
 
-  // 디버그 모드일 때 로깅
+  // 디버그 모드일 때 로깅 (1초에 1회만 - 성능 오버헤드 방지)
   if (flags.enableDebugMode) {
-    console.log('[Virtualization]', {
-      total: nodePositions.length,
-      visible: visibleEndIndex - visibleStartIndex + 1,
-      startIndex: visibleStartIndex,
-      endIndex: visibleEndIndex,
-      offsetY,
-      totalHeight,
-    });
+    const now = performance.now();
+    const lastLogKey = '__lastVirtualizationLog';
+    const lastLog = (globalThis as any)[lastLogKey] || 0;
+    
+    if (now - lastLog > 1000) { // 1초마다만 로깅
+      console.log('[Virtualization]', {
+        total: nodePositions.length,
+        visible: visibleEndIndex - visibleStartIndex + 1,
+        startIndex: visibleStartIndex,
+        endIndex: visibleEndIndex,
+        offsetY,
+        totalHeight,
+      });
+      (globalThis as any)[lastLogKey] = now;
+    }
   }
 
   return {

@@ -139,33 +139,34 @@ export function TimelineNodesVirtualized({
     return <TimelineNodes nodePositions={nodePositions} {...otherProps} />;
   }
 
-  // 가상화가 활성화된 경우 - Option 1: Spacer 방식
-  // translateY 제거하고 상단/하단 spacer 사용
+  // 가상화가 활성화된 경우 - GPU 가속을 위한 translate3d 방식
+  // 외부 container는 totalHeight로 고정, 내부는 translate3d로 이동
+  const adjustedNodePositions = useMemo(() => {
+    return visibleNodePositions.map(pos => ({
+      ...pos,
+      top: pos.top - offsetY, // offsetY만큼 조정
+    }));
+  }, [visibleNodePositions, offsetY]);
+
   return (
     <div
       style={{
         height: totalHeight,
         position: "relative",
         width: "100%",
+        overflow: "hidden",
       }}
     >
-      {/* 상단 spacer - offsetY만큼 공간 확보 */}
-      {offsetY > 0 && (
-        <div
-          style={{
-            height: offsetY,
-            flexShrink: 0,
-          }}
-        />
-      )}
-
-      {/* 실제 보이는 노드들 - transform 없이 절대 위치 유지 */}
+      {/* GPU 가속을 위한 translate3d 사용 */}
       <div
         style={{
-          willChange: isScrolling ? "contents" : "auto",
+          transform: `translate3d(0, ${offsetY}px, 0)`,
+          willChange: isScrolling ? "transform" : "auto",
+          backfaceVisibility: "hidden", // GPU 레이어 강제 생성
+          perspective: 1000, // 3D 렌더링 힌트
         }}
       >
-        <TimelineNodes nodePositions={visibleNodePositions} {...otherProps} />
+        <TimelineNodes nodePositions={adjustedNodePositions} {...otherProps} />
       </div>
     </div>
   );

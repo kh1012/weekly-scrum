@@ -41,9 +41,16 @@ export function useRAFThrottle<T extends (...args: any[]) => void>(
       return;
     }
 
-    // 디버그 모드일 때만 호출 횟수 로깅
+    // 디버그 모드일 때만 호출 횟수 로깅 (1초에 1회만)
     if (flags.enableDebugMode) {
-      console.log('[RAF] Function call queued');
+      const now = performance.now();
+      const lastLogKey = '__lastRAFLog';
+      const lastLog = (globalThis as any)[lastLogKey] || 0;
+      
+      if (now - lastLog > 1000) { // 1초마다만 로깅
+        console.log('[RAF] Function call queued');
+        (globalThis as any)[lastLogKey] = now;
+      }
     }
 
     // 최신 인자 저장

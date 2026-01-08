@@ -152,12 +152,11 @@ class PerformanceMonitor {
     });
 
     // 16ms 초과 시 경고 (60fps 기준)
+    // 성공 로그는 제거 - console.log 자체가 성능 오버헤드
     if (duration > 16) {
       console.warn(
         `⚠️ [Performance] ${label} took ${duration.toFixed(2)}ms (>16ms)`
       );
-    } else if (flags.enableDebugMode) {
-      console.log(`✅ [Performance] ${label}: ${duration.toFixed(2)}ms`);
     }
 
     // 최근 100개만 유지
@@ -190,12 +189,11 @@ class PerformanceMonitor {
     });
 
     // 8ms 초과 시 경고 (스크롤은 더 짧아야 함)
+    // 성공 로그는 제거 - console.log 자체가 성능 오버헤드
     if (duration > 8) {
       console.warn(
         `⚠️ [Scroll] ${label} took ${duration.toFixed(2)}ms (>8ms)`
       );
-    } else if (flags.enableDebugMode) {
-      console.log(`✅ [Scroll] ${label}: ${duration.toFixed(2)}ms`);
     }
 
     // 최근 100개만 유지
