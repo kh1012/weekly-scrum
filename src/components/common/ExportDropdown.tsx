@@ -49,10 +49,6 @@ export function ExportDropdown({
   const [exportingType, setExportingType] = useState<ExportType | null>(null);
   const [showPNGQuality, setShowPNGQuality] = useState(false);
   const [showDrawQuality, setShowDrawQuality] = useState(false);
-  const [selectedPNGQuality, setSelectedPNGQuality] =
-    useState<ExportQuality>("normal");
-  const [selectedDrawQuality, setSelectedDrawQuality] =
-    useState<ExportQuality>("normal");
   
   // Canvas 옵션 상태
   const [showTableColumns, setShowTableColumns] = useState(true);
@@ -64,19 +60,9 @@ export function ExportDropdown({
   
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 품질 설정 및 Canvas 옵션 불러오기
+  // Canvas 옵션 불러오기
   useEffect(() => {
     try {
-      const pngQuality =
-        (localStorage.getItem("export-png-quality") as ExportQuality) ||
-        "normal";
-      const drawQuality =
-        (localStorage.getItem("export-draw-quality") as ExportQuality) ||
-        "normal";
-      setSelectedPNGQuality(pngQuality);
-      setSelectedDrawQuality(drawQuality);
-      
-      // Canvas 옵션 불러오기
       const savedShowTableColumns = localStorage.getItem("export-canvas-show-table-columns");
       const savedShowMetadata = localStorage.getItem("export-canvas-show-metadata");
       const savedShowLegend = localStorage.getItem("export-canvas-show-legend");
@@ -140,7 +126,7 @@ export function ExportDropdown({
           await onExportJSON();
           break;
         case "png":
-          await onExportPNG(quality || selectedPNGQuality);
+          await onExportPNG(quality);
           break;
         case "draw":
           // Canvas 옵션 전달
@@ -157,7 +143,7 @@ export function ExportDropdown({
               showProgress: false, // 기본적으로 진행률 컬럼은 비활성화
             },
           };
-          await onExportDraw(quality || selectedDrawQuality, canvasOptions);
+          await onExportDraw(quality, canvasOptions);
           break;
       }
     } catch (error) {
@@ -166,35 +152,6 @@ export function ExportDropdown({
     } finally {
       setIsExporting(false);
       setExportingType(null);
-    }
-  };
-
-  const handleQualitySelect = (
-    quality: ExportQuality,
-    type: "png" | "draw"
-  ) => {
-    if (type === "png") {
-      setSelectedPNGQuality(quality);
-      try {
-        localStorage.setItem("export-png-quality", quality);
-      } catch {
-        // localStorage 접근 실패 시 무시
-      }
-    } else if (type === "draw") {
-      setSelectedDrawQuality(quality);
-      try {
-        localStorage.setItem("export-draw-quality", quality);
-      } catch {
-        // localStorage 접근 실패 시 무시
-      }
-    }
-  };
-
-  const handleExportWithQuality = async (type: "png" | "draw") => {
-    if (type === "png") {
-      await handleExport(type, selectedPNGQuality);
-    } else if (type === "draw") {
-      await handleExport(type, selectedDrawQuality);
     }
   };
 
@@ -318,33 +275,17 @@ export function ExportDropdown({
                       return (
                         <button
                           key={quality}
-                          onClick={() => handleQualitySelect(quality, "png")}
-                          className={`w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors ${
-                            selectedPNGQuality === quality
-                              ? "bg-blue-50 text-blue-600 font-medium"
-                              : "text-gray-700 hover:bg-gray-100"
-                          }`}
+                          onClick={() => handleExport("png", quality)}
+                          className="w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors text-gray-700 hover:bg-gray-100"
                         >
                           <span>{preset.label}</span>
-                          {selectedPNGQuality === quality && (
-                            <svg
-                              className="w-3 h-3"
-                              fill="currentColor"
-                              viewBox="0 0 16 16"
-                            >
-                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-                            </svg>
-                          )}
+                          <span className="text-[10px] text-gray-500">
+                            {preset.description}
+                          </span>
                         </button>
                       );
                     }
                   )}
-                  <button
-                    onClick={() => handleExportWithQuality("png")}
-                    className="w-full mt-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Export PNG
-                  </button>
                 </div>
               )}
             </div>
@@ -375,38 +316,6 @@ export function ExportDropdown({
               {/* PNG Draw 품질 선택 */}
               {showDrawQuality && (
                 <div className="bg-gray-50 py-1.5 px-2 space-y-1">
-                  {/* 품질 선택 */}
-                  {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
-                    (quality) => {
-                      const preset = QUALITY_PRESETS[quality];
-                      return (
-                        <button
-                          key={quality}
-                          onClick={() => handleQualitySelect(quality, "draw")}
-                          className={`w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors ${
-                            selectedDrawQuality === quality
-                              ? "bg-blue-50 text-blue-600 font-medium"
-                              : "text-gray-700 hover:bg-gray-100"
-                          }`}
-                        >
-                          <span>{preset.label}</span>
-                          {selectedDrawQuality === quality && (
-                            <svg
-                              className="w-3 h-3"
-                              fill="currentColor"
-                              viewBox="0 0 16 16"
-                            >
-                              <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    }
-                  )}
-                  
-                  {/* 구분선 */}
-                  <div className="border-t border-gray-200 my-2" />
-                  
                   {/* Canvas 옵션 체크박스 */}
                   <div className="space-y-1.5 py-1">
                     <label className="flex items-center gap-2 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
@@ -473,13 +382,28 @@ export function ExportDropdown({
                     )}
                   </div>
                   
-                  {/* Export 버튼 */}
-                  <button
-                    onClick={() => handleExportWithQuality("draw")}
-                    className="w-full mt-1 px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Export PNG
-                  </button>
+                  {/* 구분선 */}
+                  <div className="border-t border-gray-200 my-2" />
+                  
+                  {/* 품질 선택 버튼 */}
+                  <div className="text-[10px] text-gray-500 px-2 py-1">품질 선택</div>
+                  {(Object.keys(QUALITY_PRESETS) as ExportQuality[]).map(
+                    (quality) => {
+                      const preset = QUALITY_PRESETS[quality];
+                      return (
+                        <button
+                          key={quality}
+                          onClick={() => handleExport("draw", quality)}
+                          className="w-full flex items-center justify-between px-2 py-1 text-xs rounded transition-colors text-gray-700 hover:bg-gray-100"
+                        >
+                          <span>{preset.label}</span>
+                          <span className="text-[10px] text-gray-500">
+                            {preset.description}
+                          </span>
+                        </button>
+                      );
+                    }
+                  )}
                 </div>
               )}
             </div>

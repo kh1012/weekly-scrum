@@ -54,10 +54,6 @@ export function MoreOptionsMenu({
   const [showDrawQuality, setShowDrawQuality] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportingType, setExportingType] = useState<ExportType | null>(null);
-  const [selectedPNGQuality, setSelectedPNGQuality] =
-    useState<ExportQuality>("normal");
-  const [selectedDrawQuality, setSelectedDrawQuality] =
-    useState<ExportQuality>("normal");
 
   // Canvas 옵션 상태
   const [showTableColumns, setShowTableColumns] = useState(true);
@@ -73,19 +69,9 @@ export function MoreOptionsMenu({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 품질 설정 및 Canvas 옵션 불러오기
+  // Canvas 옵션 불러오기
   useEffect(() => {
     try {
-      const pngQuality =
-        (localStorage.getItem("export-png-quality") as ExportQuality) ||
-        "normal";
-      const drawQuality =
-        (localStorage.getItem("export-draw-quality") as ExportQuality) ||
-        "normal";
-      setSelectedPNGQuality(pngQuality);
-      setSelectedDrawQuality(drawQuality);
-
-      // Canvas 옵션 불러오기
       const savedShowTableColumns = localStorage.getItem(
         "export-canvas-show-table-columns"
       );
@@ -162,11 +148,6 @@ export function MoreOptionsMenu({
         await onExportJSON();
       } else if (type === "png") {
         await onExportPNG(quality);
-        // 품질 저장
-        if (quality) {
-          localStorage.setItem("export-png-quality", quality);
-          setSelectedPNGQuality(quality);
-        }
       } else if (type === "draw") {
         // Canvas 옵션 전달
         const canvasOptions: CanvasOptions = {
@@ -183,11 +164,6 @@ export function MoreOptionsMenu({
           },
         };
         await onExportDraw(quality, canvasOptions);
-        // 품질 저장
-        if (quality) {
-          localStorage.setItem("export-draw-quality", quality);
-          setSelectedDrawQuality(quality);
-        }
       }
 
       setIsOpen(false);
@@ -343,15 +319,7 @@ export function MoreOptionsMenu({
                             key={quality}
                             onClick={() => handleExport("png", quality)}
                             disabled={isExporting}
-                            className={`
-                              w-full text-left px-3 py-1.5 hover:bg-gray-50
-                              disabled:opacity-50 disabled:cursor-not-allowed
-                              ${
-                                selectedPNGQuality === quality
-                                  ? "bg-blue-50 text-blue-700"
-                                  : "text-gray-700"
-                              }
-                            `}
+                            className="w-full text-left px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div>
@@ -362,11 +330,9 @@ export function MoreOptionsMenu({
                                   {QUALITY_PRESETS[quality].description}
                                 </div>
                               </div>
-                              {isExporting &&
-                                exportingType === "png" &&
-                                selectedPNGQuality === quality && (
-                                  <LoadingIcon className="w-3.5 h-3.5" />
-                                )}
+                              {isExporting && exportingType === "png" && (
+                                <LoadingIcon className="w-3.5 h-3.5" />
+                              )}
                             </div>
                           </button>
                         )
@@ -416,15 +382,7 @@ export function MoreOptionsMenu({
                             key={quality}
                             onClick={() => handleExport("draw", quality)}
                             disabled={isExporting}
-                            className={`
-                              w-full text-left px-3 py-1.5 hover:bg-gray-50
-                              disabled:opacity-50 disabled:cursor-not-allowed
-                              ${
-                                selectedDrawQuality === quality
-                                  ? "bg-blue-50 text-blue-700"
-                                  : "text-gray-700"
-                              }
-                            `}
+                            className="w-full text-left px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div>
@@ -435,11 +393,9 @@ export function MoreOptionsMenu({
                                   {QUALITY_PRESETS[quality].description}
                                 </div>
                               </div>
-                              {isExporting &&
-                                exportingType === "draw" &&
-                                selectedDrawQuality === quality && (
-                                  <LoadingIcon className="w-3.5 h-3.5" />
-                                )}
+                              {isExporting && exportingType === "draw" && (
+                                <LoadingIcon className="w-3.5 h-3.5" />
+                              )}
                             </div>
                           </button>
                         )
