@@ -118,8 +118,8 @@ export function ModuleSummaryBarPopover({
   const getPopoverPosition = useCallback(() => {
     if (!anchorRect) return { x: 0, y: 0 };
 
-    const popoverWidth = 480;
-    const popoverHeight = 600;
+    const popoverWidth = 400;
+    const popoverHeight = 500;
     const padding = 16;
 
     let x = anchorRect.left + anchorRect.width / 2 - popoverWidth / 2;
@@ -155,73 +155,60 @@ export function ModuleSummaryBarPopover({
   return createPortal(
     <div
       ref={popoverRef}
-      className="fixed z-[9999] w-[480px] rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150 flex flex-col max-h-[600px]"
+      className="fixed z-[9999] w-[400px] bg-white border border-[#d0d7de] rounded-md animate-in zoom-in-95 fade-in duration-150 flex flex-col max-h-[500px]"
       style={{
         left: position.x,
         top: position.y,
-        background: "white",
-        boxShadow:
-          "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+        boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
       }}
     >
       {/* 헤더 */}
-      <div
-        className="flex-shrink-0 px-5 py-4 rounded-t-2xl"
-        style={{
-          background: "linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.02) 100%)",
-          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-        }}
-      >
+      <div className="flex-shrink-0 px-3 py-2 rounded-t-md bg-[#f6f8fa] border-b border-[#d0d7de]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
-              }}
-            >
-              <CubeIcon className="w-4.5 h-4.5 text-white" />
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded bg-[#ddf4ff] flex items-center justify-center">
+              <CubeIcon className="w-3.5 h-3.5 text-[#0969da]" />
             </div>
             <div>
-              <div className="text-base font-semibold text-gray-900">{module}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{project}</div>
+              <div className="text-sm font-semibold text-[#24292f]">{module}</div>
+              <div className="text-xs text-[#57606a] mt-0.5">{project}</div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-150 active:scale-95"
+            className="p-1 rounded hover:bg-[#d0d7de] transition-colors duration-150"
           >
-            <XIcon className="w-4 h-4 text-gray-400" />
+            <XIcon className="w-3.5 h-3.5 text-[#57606a]" />
           </button>
         </div>
       </div>
 
       {/* 콘텐츠 */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
         {/* 기간 정보 */}
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-            <CalendarIcon className="w-4 h-4 text-blue-600" />
+        <div className="flex items-start gap-2">
+          <div className="w-6 h-6 rounded bg-[#ddf4ff] flex items-center justify-center flex-shrink-0">
+            <CalendarIcon className="w-3 h-3 text-[#0969da]" />
           </div>
           <div className="flex-1">
-            <div className="text-xs font-medium text-gray-500 mb-1">기간</div>
-            <div className="text-sm text-gray-900">
+            <div className="text-xs font-medium text-[#57606a] mb-1">기간</div>
+            <div className="text-sm text-[#24292f]">
               {formatDate(startDate)} - {formatDate(endDate)}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-[#57606a] mt-1">
               총 {durationDays}일
             </div>
           </div>
         </div>
 
         {/* 기능 개수 */}
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
-            <CubeIcon className="w-4 h-4 text-purple-600" />
+        <div className="flex items-start gap-2">
+          <div className="w-6 h-6 rounded bg-[#fbefff] flex items-center justify-center flex-shrink-0">
+            <CubeIcon className="w-3 h-3 text-[#8250df]" />
           </div>
           <div className="flex-1">
-            <div className="text-xs font-medium text-gray-500 mb-1">기능</div>
-            <div className="text-sm text-gray-900">
+            <div className="text-xs font-medium text-[#57606a] mb-1">기능</div>
+            <div className="text-sm text-[#24292f]">
               {featureCount}개 기능
             </div>
           </div>
@@ -229,15 +216,15 @@ export function ModuleSummaryBarPopover({
 
         {/* 기능명 리스트 */}
         {features.length > 0 && (
-          <div className="bg-gray-50 rounded-xl p-3">
-            <div className="text-xs font-medium text-gray-700 mb-2">기능 목록</div>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+          <div className="bg-[#f6f8fa] border border-[#d0d7de] rounded p-2">
+            <div className="text-xs font-medium text-[#24292f] mb-1.5">기능 목록</div>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
               {features.map((feature, idx) => (
                 <div
                   key={idx}
-                  className="text-sm text-gray-600 flex items-center gap-2"
+                  className="text-xs text-[#57606a] flex items-center gap-1.5"
                 >
-                  <span className="w-1 h-1 rounded-full bg-gray-400 flex-shrink-0" />
+                  <span className="w-1 h-1 rounded-full bg-[#57606a] flex-shrink-0" />
                   <span className="truncate">{feature}</span>
                 </div>
               ))}
@@ -247,19 +234,19 @@ export function ModuleSummaryBarPopover({
 
         {/* 담당자 정보 (역할별 그룹핑) */}
         {assignees.length > 0 && (
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-              <UserIcon className="w-4 h-4 text-green-600" />
+          <div className="flex items-start gap-2">
+            <div className="w-6 h-6 rounded bg-[#dafbe1] flex items-center justify-center flex-shrink-0">
+              <UserIcon className="w-3 h-3 text-[#1a7f37]" />
             </div>
             <div className="flex-1">
-              <div className="text-xs font-medium text-gray-500 mb-2">참여인원</div>
-              <div className="space-y-2">
+              <div className="text-xs font-medium text-[#57606a] mb-1.5">참여인원</div>
+              <div className="space-y-1.5">
                 {Object.entries(assigneesByRole).map(([role, members]) => {
                   const roleConfig = ROLE_CONFIG[role] || { label: role, color: "#6b7280" };
                   return (
-                    <div key={role} className="flex items-start gap-2">
+                    <div key={role} className="flex items-start gap-1.5">
                       <span
-                        className="px-2 py-0.5 text-xs font-medium rounded flex-shrink-0"
+                        className="px-1.5 py-0.5 text-xs font-medium rounded flex-shrink-0"
                         style={{
                           background: `${roleConfig.color}20`,
                           color: roleConfig.color,
@@ -267,11 +254,11 @@ export function ModuleSummaryBarPopover({
                       >
                         {roleConfig.label}
                       </span>
-                      <div className="flex-1 flex flex-wrap gap-1.5">
+                      <div className="flex-1 flex flex-wrap gap-1">
                         {members.map((member, idx) => (
                           <span
                             key={idx}
-                            className="text-xs text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-200"
+                            className="text-xs text-[#24292f] bg-white px-1.5 py-0.5 rounded border border-[#d0d7de]"
                           >
                             {member.displayName || member.userId}
                           </span>
@@ -287,25 +274,25 @@ export function ModuleSummaryBarPopover({
 
         {/* Flags 정보 */}
         {flags.length > 0 && (
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
-              <FlagIcon className="w-4 h-4 text-red-600" />
+          <div className="flex items-start gap-2">
+            <div className="w-6 h-6 rounded bg-[#ffebe9] flex items-center justify-center flex-shrink-0">
+              <FlagIcon className="w-3 h-3 text-[#cf222e]" />
             </div>
             <div className="flex-1">
-              <div className="text-xs font-medium text-gray-500 mb-2">관련 Flags</div>
-              <div className="space-y-2">
+              <div className="text-xs font-medium text-[#57606a] mb-1.5">관련 Flags</div>
+              <div className="space-y-1.5">
                 {flags.map((flag) => (
                   <div
                     key={flag.clientId}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-white border border-gray-200"
+                    className="flex items-center gap-2 p-2 rounded bg-[#f6f8fa] border border-[#d0d7de]"
                   >
                     <div
-                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                       style={{ background: flag.color || "#ef4444" }}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-gray-900 truncate">{flag.title}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">
+                      <div className="text-xs text-[#24292f] truncate">{flag.title}</div>
+                      <div className="text-xs text-[#57606a] mt-0.5">
                         {formatDate(flag.startDate)}
                         {flag.startDate !== flag.endDate && ` - ${formatDate(flag.endDate)}`}
                       </div>

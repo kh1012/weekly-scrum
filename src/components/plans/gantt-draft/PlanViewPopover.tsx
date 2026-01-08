@@ -64,8 +64,8 @@ export function PlanViewPopover({
       ? SNAPSHOT_POPOVER_SIZE_KEY
       : PLAN_POPOVER_SIZE_KEY;
     const defaultSize = bar.isSnapshot
-      ? { width: 420, height: 600 } // Snapshot: 더 큰 기본 크기
-      : { width: 360, height: 400 }; // Plan: 기존 크기
+      ? { width: 380, height: 520 } // Snapshot: 더 컴팩트한 크기
+      : { width: 320, height: 360 }; // Plan: 더 컴팩트한 크기
 
     try {
       const stored = localStorage.getItem(storageKey);
@@ -208,29 +208,23 @@ export function PlanViewPopover({
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in duration-150 flex flex-col"
+      className="fixed z-50 bg-white border border-[#d0d7de] rounded-md animate-in zoom-in-95 fade-in duration-150 flex flex-col"
       style={{
         left: position.x,
         top: position.y,
         width: size.width,
         height: size.height,
-        background: "white",
-        boxShadow:
-          "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+        boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
         cursor: isResizing ? "nwse-resize" : "default",
       }}
     >
       {/* 헤더 */}
       <div
-        className="flex-shrink-0 flex items-center justify-between px-4 py-3 rounded-t-2xl"
-        style={{
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-          borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-        }}
+        className="flex-shrink-0 flex items-center justify-between px-3 py-2 rounded-t-md bg-[#f6f8fa] border-b border-[#d0d7de]"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span
-            className="px-2 py-0.5 text-xs font-medium rounded-md"
+            className="px-1.5 py-0.5 text-xs font-medium rounded"
             style={{
               background: "rgba(59, 130, 246, 0.1)",
               color: "#3b82f6",
@@ -239,7 +233,7 @@ export function PlanViewPopover({
             {bar.stage}
           </span>
           <span
-            className={`px-2 py-0.5 text-xs font-medium rounded-md ${
+            className={`px-1.5 py-0.5 text-xs font-medium rounded ${
               bar.status === "완료"
                 ? "bg-green-100 text-green-700"
                 : bar.status === "보류"
@@ -254,19 +248,19 @@ export function PlanViewPopover({
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150 active:scale-95"
+          className="p-1 rounded hover:bg-[#d0d7de] transition-colors duration-150"
         >
-          <XIcon className="w-4 h-4 text-gray-400" />
+          <XIcon className="w-3.5 h-3.5 text-[#57606a]" />
         </button>
       </div>
 
       {/* 콘텐츠 */}
-      <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
+      <div className="p-3 space-y-3 overflow-y-auto flex-1 min-h-0">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="font-medium text-gray-700">{project}</span>
+        <div className="flex items-center gap-1 text-xs text-[#57606a]">
+          <span className="font-medium text-[#24292f]">{project}</span>
           <svg
-            className="w-3 h-3"
+            className="w-2.5 h-2.5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -278,9 +272,9 @@ export function PlanViewPopover({
               d="M9 5l7 7-7 7"
             />
           </svg>
-          <span className="font-medium text-gray-700">{module}</span>
+          <span className="font-medium text-[#24292f]">{module}</span>
           <svg
-            className="w-3 h-3"
+            className="w-2.5 h-2.5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -292,37 +286,32 @@ export function PlanViewPopover({
               d="M9 5l7 7-7 7"
             />
           </svg>
-          <span className="font-medium text-gray-900">{feature}</span>
+          <span className="font-medium text-[#24292f]">{feature}</span>
         </div>
 
         {/* 제목 */}
-        <h3 className="text-lg font-semibold text-gray-900 leading-snug">
+        <h3 className="text-base font-semibold text-[#24292f] leading-snug">
           {bar.title}
         </h3>
 
         {/* 기간 */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{
-              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-            }}
-          >
-            <CalendarIcon className="w-3.5 h-3.5 text-white" />
+        <div className="flex items-center gap-2 text-sm text-[#57606a]">
+          <div className="w-6 h-6 rounded bg-[#ddf4ff] flex items-center justify-center">
+            <CalendarIcon className="w-3 h-3 text-[#0969da]" />
           </div>
-          <span className="font-medium">
+          <span className="font-medium text-[#24292f]">
             {bar.startDate} ~ {bar.endDate}
           </span>
         </div>
 
         {/* 담당자 */}
         {bar.assignees && bar.assignees.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-              <UserIcon className="w-4 h-4" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1 text-xs font-semibold text-[#24292f]">
+              <UserIcon className="w-3.5 h-3.5" />
               담당자
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {bar.assignees.map((assignee, index) => {
                 const roleConfig = ROLE_CONFIG[assignee.role] || {
                   label: assignee.role,
@@ -331,16 +320,15 @@ export function PlanViewPopover({
                 return (
                   <div
                     key={index}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
-                    style={{ background: "#f8fafc" }}
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-[#f6f8fa] border border-[#d0d7de]"
                   >
                     <span
-                      className="px-2 py-0.5 text-xs font-bold rounded-md text-white"
+                      className="px-1.5 py-0.5 text-xs font-medium rounded text-white"
                       style={{ background: roleConfig.color }}
                     >
                       {roleConfig.label}
                     </span>
-                    <span className="text-sm font-medium text-gray-800">
+                    <span className="text-xs font-medium text-[#24292f]">
                       {assignee.displayName || assignee.userId}
                     </span>
                   </div>
@@ -352,12 +340,9 @@ export function PlanViewPopover({
 
         {/* 설명 */}
         {hasDescription && (
-          <div className="space-y-2">
-            <div className="text-sm font-semibold text-gray-700">설명</div>
-            <div
-              className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
-              style={{ background: "#f8fafc" }}
-            >
+          <div className="space-y-1.5">
+            <div className="text-xs font-semibold text-[#24292f]">설명</div>
+            <div className="text-xs text-[#57606a] leading-relaxed p-2 rounded bg-[#f6f8fa] border border-[#d0d7de] whitespace-pre-wrap">
               {bar.description}
             </div>
           </div>
@@ -365,34 +350,33 @@ export function PlanViewPopover({
 
         {/* 링크 */}
         {hasLinks && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-              <LinkIcon className="w-4 h-4" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1 text-xs font-semibold text-[#24292f]">
+              <LinkIcon className="w-3.5 h-3.5" />
               관련 링크
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {bar.links!.map((link, index) => (
                 <a
                   key={index}
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
-                  style={{ background: "#f8fafc" }}
+                  className="flex items-center gap-2 p-2 rounded bg-[#f6f8fa] border border-[#d0d7de] hover:bg-[#ddf4ff] hover:border-[#0969da] transition-colors group"
                 >
-                  <LinkIcon className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                  <LinkIcon className="w-3 h-3 text-[#0969da] flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-blue-600 group-hover:underline truncate">
+                    <div className="text-xs text-[#0969da] group-hover:underline truncate">
                       {link.label || link.url}
                     </div>
                     {link.label && (
-                      <div className="text-xs text-gray-400 truncate">
+                      <div className="text-xs text-[#57606a] truncate">
                         {link.url}
                       </div>
                     )}
                   </div>
                   <svg
-                    className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0"
+                    className="w-3 h-3 text-[#57606a] group-hover:text-[#0969da] transition-colors flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -412,42 +396,38 @@ export function PlanViewPopover({
 
         {/* Snapshot 정보 */}
         {bar.isSnapshot && bar.past_week && (
-          <div className="space-y-4 border-t border-gray-200 pt-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <span className="px-2 py-1 bg-gray-600 text-white text-xs font-bold rounded">
+          <div className="space-y-3 border-t border-[#d0d7de] pt-3">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-[#24292f] text-white text-xs font-medium rounded">
                 📸 Snapshot Entry
               </span>
             </div>
 
             {/* Tasks */}
             {bar.past_week.tasks && bar.past_week.tasks.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-[#24292f]">
                   PROGRESS
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   {bar.past_week.tasks.map((task, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 text-sm p-2 rounded-lg"
-                      style={{ background: "#f8fafc" }}
+                      className="flex items-center gap-2 text-xs p-2 rounded bg-[#f6f8fa] border border-[#d0d7de]"
                     >
                       <div className="flex-1">{task.title}</div>
                       <div className="flex items-center gap-1.5">
                         <div
-                          className="w-20 h-1.5 rounded-full overflow-hidden"
-                          style={{ background: "#e5e7eb" }}
+                          className="w-16 h-1.5 rounded-full overflow-hidden bg-[#d0d7de]"
                         >
                           <div
-                            className="h-full rounded-full"
+                            className="h-full rounded-full bg-[#1a7f37]"
                             style={{
                               width: `${task.progress}%`,
-                              background:
-                                "linear-gradient(90deg, #10b981 0%, #34d399 100%)",
                             }}
                           />
                         </div>
-                        <span className="text-xs font-semibold text-gray-600 w-10 text-right">
+                        <span className="text-xs font-medium text-[#57606a] w-8 text-right">
                           {task.progress}%
                         </span>
                       </div>
@@ -459,14 +439,11 @@ export function PlanViewPopover({
 
             {/* Progress */}
             {bar.past_week.progress && (
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-[#24292f]">
                   진행 상황
                 </div>
-                <div
-                  className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
-                  style={{ background: "#f8fafc" }}
-                >
+                <div className="text-xs text-[#57606a] leading-relaxed p-2 rounded bg-[#f6f8fa] border border-[#d0d7de] whitespace-pre-wrap">
                   {bar.past_week.progress}
                 </div>
               </div>
@@ -474,28 +451,24 @@ export function PlanViewPopover({
 
             {/* Next */}
             {bar.this_week?.tasks && bar.this_week.tasks.length > 0 ? (
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">NEXT</div>
-                <ul className="space-y-1.5">
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-[#24292f]">NEXT</div>
+                <ul className="space-y-1">
                   {bar.this_week.tasks.map((task, idx) => (
                     <li
                       key={idx}
-                      className="flex items-start gap-2 text-sm p-2 rounded-lg"
-                      style={{ background: "#f8fafc" }}
+                      className="flex items-start gap-2 text-xs p-2 rounded bg-[#f6f8fa] border border-[#d0d7de]"
                     >
-                      <span className="text-gray-400 mt-0.5">•</span>
-                      <span className="flex-1 text-gray-700">{task}</span>
+                      <span className="text-[#57606a] mt-0.5">•</span>
+                      <span className="flex-1 text-[#24292f]">{task}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             ) : bar.past_week?.next ? (
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">NEXT</div>
-                <div
-                  className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
-                  style={{ background: "#f8fafc" }}
-                >
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-[#24292f]">NEXT</div>
+                <div className="text-xs text-[#57606a] leading-relaxed p-2 rounded bg-[#f6f8fa] border border-[#d0d7de] whitespace-pre-wrap">
                   {bar.past_week.next}
                 </div>
               </div>
@@ -503,14 +476,14 @@ export function PlanViewPopover({
 
             {/* Risk */}
             {(bar.risks && bar.risks.length > 0) || bar.risk_level ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <div className="text-sm font-semibold text-gray-700">
+                  <div className="text-xs font-semibold text-[#24292f]">
                     RISK
                   </div>
                   {bar.risk_level && bar.risk_level > 0 && (
                     <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded ${
+                      className={`px-1.5 py-0.5 text-xs font-medium rounded ${
                         bar.risk_level >= 3
                           ? "bg-red-100 text-red-600 border border-red-200"
                           : bar.risk_level >= 2
@@ -522,31 +495,25 @@ export function PlanViewPopover({
                     </span>
                   )}
                 </div>
-                <div
-                  className="text-sm text-gray-700 leading-relaxed p-3 rounded-lg"
-                  style={{ background: "#fef2f2" }}
-                >
+                <div className="text-xs text-[#cf222e] leading-relaxed p-2 rounded bg-[#ffebe9] border border-[#ff8182]">
                   {bar.risks && bar.risks.length > 0 ? (
                     <ul className="space-y-1">
                       {bar.risks.map((risk, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-red-400 mt-0.5">•</span>
-                          <span className="flex-1 text-red-600">{risk}</span>
+                          <span className="text-[#cf222e] mt-0.5">•</span>
+                          <span className="flex-1">{risk}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <span className="text-red-600">미정</span>
+                    <span>미정</span>
                   )}
                 </div>
               </div>
             ) : bar.past_week?.risk ? (
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">RISK</div>
-                <div
-                  className="text-sm text-red-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
-                  style={{ background: "#fef2f2" }}
-                >
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-[#24292f]">RISK</div>
+                <div className="text-xs text-[#cf222e] leading-relaxed p-2 rounded bg-[#ffebe9] border border-[#ff8182] whitespace-pre-wrap">
                   {bar.past_week.risk}
                 </div>
               </div>
@@ -554,9 +521,9 @@ export function PlanViewPopover({
 
             {/* Collaborators (WITH) */}
             {bar.collaborators && bar.collaborators.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">WITH</div>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-[#24292f]">WITH</div>
+                <div className="flex flex-wrap gap-1.5">
                   {bar.collaborators.map((c, i) => {
                     const relation = c.relations?.[0];
                     const styles = {
@@ -588,7 +555,7 @@ export function PlanViewPopover({
                     return (
                       <span
                         key={i}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium"
                         style={{
                           backgroundColor: style.bg,
                           color: style.text,
@@ -610,12 +577,9 @@ export function PlanViewPopover({
 
             {/* Memo */}
             {bar.past_week.memo && (
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-700">메모</div>
-                <div
-                  className="text-sm text-gray-600 leading-relaxed p-3 rounded-lg whitespace-pre-wrap"
-                  style={{ background: "#f8fafc" }}
-                >
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-[#24292f]">메모</div>
+                <div className="text-xs text-[#57606a] leading-relaxed p-2 rounded bg-[#f6f8fa] border border-[#d0d7de] whitespace-pre-wrap">
                   {bar.past_week.memo}
                 </div>
               </div>
@@ -625,7 +589,7 @@ export function PlanViewPopover({
 
         {/* 정보 없음 표시 (Plans만) */}
         {!bar.isSnapshot && !hasDescription && !hasLinks && (
-          <div className="text-sm text-gray-400 text-center py-4">
+          <div className="text-xs text-[#57606a] text-center py-3">
             추가 정보가 없습니다
           </div>
         )}

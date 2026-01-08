@@ -34,40 +34,27 @@ export function BlockContextMenu({
 
       {/* 컨텍스트 메뉴 */}
       <div
-        className="fixed z-[10000] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+        className="fixed z-[10000] bg-white border border-[#d0d7de] rounded-md overflow-hidden animate-in fade-in zoom-in-95 duration-100"
         style={{
           left: position.x,
           top: position.y,
-          minWidth: 200,
-          background: "white",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-          boxShadow:
-            "0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)",
+          minWidth: 160,
+          boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
         }}
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="py-2">
+        <div className="py-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onViewDetails();
               onClose();
             }}
-            className="w-full px-4 py-2 text-left flex items-center gap-2 group transition-all duration-150"
-            style={{
-              background: "transparent",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background =
-                "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
+            className="w-full px-4 py-2 text-left flex items-center gap-2 transition-colors duration-150 hover:bg-[#f6f8fa]"
           >
             <div className="flex-1">
-              <div className="text-sm  text-gray-900">상세정보 보기</div>
+              <div className="text-sm text-[#24292f]">상세정보 보기</div>
             </div>
           </button>
         </div>

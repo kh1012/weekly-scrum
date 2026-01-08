@@ -7,7 +7,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ChangeHistoryPopover } from "./ChangeHistoryPopover";
-import { getPlansChangeHistory } from "@/lib/data/planChangeHistory";
+import { getPlansChangeHistoryAction } from "@/app/actions/planChangeHistory";
 import type { ChangeHistoryResponse } from "@/lib/data/planChangeHistory";
 
 interface ChangeHistoryButtonProps {
@@ -52,7 +52,7 @@ export function ChangeHistoryButton({
 
   const handleFetchHistory = useCallback(
     async (wsId: string): Promise<ChangeHistoryResponse> => {
-      return await getPlansChangeHistory(wsId);
+      return await getPlansChangeHistoryAction(wsId);
     },
     []
   );

@@ -221,15 +221,10 @@ export function MoreOptionsMenu({
   };
 
   const handleFigmaClick = () => {
-    if (!isFigmaConnected) {
-      // 연동되지 않았으면 OAuth 시작
-      window.location.href = "/api/figma/auth";
-    } else {
-      // 연동되어 있으면 설정 모달 표시
-      setShowFigmaModal(true);
-      setIsOpen(false);
-      setShowExport(false);
-    }
+    // 연동되어 있을 때만 호출됨 (버튼 disabled 처리)
+    setShowFigmaModal(true);
+    setIsOpen(false);
+    setShowExport(false);
   };
 
   const handleFigmaUpload = async () => {
@@ -538,12 +533,16 @@ export function MoreOptionsMenu({
                 <div className="border-t border-gray-200 my-1" />
 
                 {/* Figma */}
-                <button
-                  onClick={handleFigmaClick}
-                  disabled={isExporting}
-                  className="w-full text-left px-3 py-1.5 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between gap-2"
-                >
-                  <div className="flex items-center gap-1.5">
+                <div className="w-full px-3 py-1.5 flex items-center justify-between gap-2">
+                  <button
+                    onClick={isFigmaConnected ? handleFigmaClick : undefined}
+                    disabled={!isFigmaConnected || isExporting}
+                    className={`flex items-center gap-1.5 flex-1 ${
+                      isFigmaConnected
+                        ? "text-gray-700 hover:text-gray-900 cursor-pointer"
+                        : "text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
                     <svg
                       className="w-3.5 h-3.5"
                       fill="currentColor"
@@ -556,17 +555,38 @@ export function MoreOptionsMenu({
                       <path d="M0 28.5C0 33.74 4.26 38 9.5 38H19V19H9.5C4.26 19 0 23.26 0 28.5Z" />
                     </svg>
                     <span className="font-medium">Figma</span>
-                    {isFigmaConnected ? (
+                    {isFigmaConnected && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-600 border border-green-200">
                         연동됨
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-600 border border-purple-200">
-                        Beta
-                      </span>
                     )}
-                  </div>
-                </button>
+                  </button>
+                  {!isFigmaConnected && (
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setShowExport(false);
+                        window.location.href = "/settings";
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                    >
+                      <span>연동하러 가기</span>
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
