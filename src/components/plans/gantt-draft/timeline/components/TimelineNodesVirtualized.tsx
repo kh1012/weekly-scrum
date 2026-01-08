@@ -1,6 +1,6 @@
 /**
  * TimelineNodesVirtualized - 가상화된 노드 리스트 렌더러
- * 
+ *
  * 화면에 보이는 노드만 렌더링하여 성능을 개선합니다.
  * Feature Flag로 제어되며, OFF 시에는 TimelineNodes를 사용합니다.
  */
@@ -11,7 +11,11 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { TimelineNodes } from "./TimelineNodes";
 import { useVirtualization, type NodePosition } from "../useVirtualization";
 import type { FlatTreeNode } from "../../laneLayout";
-import type { DraftRow, DraftBar as DraftBarType, DraftFlag } from "../../types";
+import type {
+  DraftRow,
+  DraftBar as DraftBarType,
+  DraftFlag,
+} from "../../types";
 
 interface TimelineNodesVirtualizedProps {
   nodePositions: Array<{
@@ -55,7 +59,9 @@ interface TimelineNodesVirtualizedProps {
   setShowEditModal: (bar: DraftBarType | null) => void;
   setModuleSummaryPopover: (popover: any) => void;
   setBlockContextMenu?: (menu: any) => void;
-  onDragDateChange?: (info: { startDate: string; endDate: string } | null) => void;
+  onDragDateChange?: (
+    info: { startDate: string; endDate: string } | null
+  ) => void;
   moveBarToRow: (
     clientUid: string,
     project: string,
@@ -81,16 +87,16 @@ export function TimelineNodesVirtualized({
   // 스크롤 중 감지 및 종료 감지
   useEffect(() => {
     setIsScrolling(true);
-    
+
     // 스크롤 종료 감지 (150ms 디바운스)
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
-    
+
     scrollTimeoutRef.current = setTimeout(() => {
       setIsScrolling(false);
     }, 150);
-    
+
     return () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
@@ -133,7 +139,8 @@ export function TimelineNodesVirtualized({
     return <TimelineNodes nodePositions={nodePositions} {...otherProps} />;
   }
 
-  // 가상화가 활성화된 경우
+  // 가상화가 활성화된 경우 - Option 1: Spacer 방식
+  // translateY 제거하고 상단/하단 spacer 사용
   return (
     <div
       style={{
@@ -142,18 +149,24 @@ export function TimelineNodesVirtualized({
         width: "100%",
       }}
     >
+      {/* 상단 spacer - offsetY만큼 공간 확보 */}
+      {offsetY > 0 && (
+        <div
+          style={{
+            height: offsetY,
+            flexShrink: 0,
+          }}
+        />
+      )}
+
+      {/* 실제 보이는 노드들 - transform 없이 절대 위치 유지 */}
       <div
         style={{
-          transform: `translateY(${offsetY}px)`,
-          willChange: isScrolling ? "transform" : "auto",
+          willChange: isScrolling ? "contents" : "auto",
         }}
       >
-        <TimelineNodes
-          nodePositions={visibleNodePositions}
-          {...otherProps}
-        />
+        <TimelineNodes nodePositions={visibleNodePositions} {...otherProps} />
       </div>
     </div>
   );
 }
-

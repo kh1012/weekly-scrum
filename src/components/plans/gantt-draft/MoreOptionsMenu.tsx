@@ -566,7 +566,7 @@ export function MoreOptionsMenu({
                       onClick={() => {
                         setIsOpen(false);
                         setShowExport(false);
-                        window.location.href = "/settings";
+                        window.location.href = "/profile/settings";
                       }}
                       className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                     >

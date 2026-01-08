@@ -151,7 +151,7 @@ function calculateVirtualization(
   const visibleStartIndex = Math.max(0, startIndex - overscan);
   const visibleEndIndex = Math.min(nodePositions.length - 1, endIndex + overscan);
 
-  // 5. 상단 offset 계산 (스크롤 위치 유지)
+  // 5. 상단 offset 계산 (spacer 높이로 사용)
   const offsetY = visibleStartIndex > 0 
     ? nodePositions[visibleStartIndex].top 
     : 0;

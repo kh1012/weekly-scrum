@@ -78,6 +78,10 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/works/alignment" ||
     pathname === "/works/alignment/" ||
     pathname.startsWith("/works/alignment/");
+  const isSettingsPage =
+    pathname === "/profile/settings" ||
+    pathname === "/profile/settings/" ||
+    pathname.startsWith("/profile/settings/");
 
   // Snapshots/Work-map 페이지 여부 (페이지 내부에 통합 필터 있음)
   const hasInternalFilters =
@@ -100,7 +104,8 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     isReleasesPage ||
     isAdminPage ||
     isCollaboratorGraphPage ||
-    isAlignmentPage;
+    isAlignmentPage ||
+    isSettingsPage;
 
   // GNB 컴포넌트 완전 숨김
   const hideAllControls = isMinimalGnb;

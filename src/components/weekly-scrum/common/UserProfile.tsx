@@ -242,7 +242,7 @@ export function UserProfile() {
             <button
               onClick={() => {
                 setIsOpen(false);
-                router.push("/settings");
+                router.push("/profile/settings");
               }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
             >

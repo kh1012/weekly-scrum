@@ -73,7 +73,7 @@ export function SettingsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f8fa]">
+    <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-6">
         {/* 헤더 - 컴팩트 */}
         <div className="mb-6">
@@ -97,18 +97,14 @@ export function SettingsClient() {
             돌아가기
           </Link>
           <h1 className="text-xl font-semibold text-[#24292f]">설정</h1>
-          <p className="text-xs text-[#57606a] mt-1">
-            연동 관리 및 개인 설정
-          </p>
+          <p className="text-xs text-[#57606a] mt-1">연동 관리 및 개인 설정</p>
         </div>
 
         {/* 연동 관리 섹션 - 컴팩트 */}
         <div className="bg-white border border-[#d0d7de] rounded-md">
           <div className="px-4 py-3 border-b border-[#d0d7de]">
             <h2 className="text-sm font-semibold text-[#24292f]">연동 관리</h2>
-            <p className="text-xs text-[#57606a] mt-0.5">
-              외부 서비스 연동
-            </p>
+            <p className="text-xs text-[#57606a] mt-0.5">외부 서비스 연동</p>
           </div>
 
           <div className="divide-y divide-[#d0d7de]">
@@ -231,4 +227,3 @@ export function SettingsClient() {
     </div>
   );
 }
-

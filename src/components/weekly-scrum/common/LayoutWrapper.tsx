@@ -53,6 +53,7 @@ const FULL_WIDTH_DYNAMIC_PATTERNS = [
   "/works/team-feed",
   "/my/alignment",
   "/works/alignment",
+  "/profile/settings",
 ];
 
 // padding 없는 페이지 경로
@@ -74,6 +75,7 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/feedbacks",
   "/my/alignment",
   "/works/alignment",
+  "/profile/settings",
 ];
 
 // localStorage 키
