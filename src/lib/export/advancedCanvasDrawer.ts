@@ -126,7 +126,7 @@ export class AdvancedGanttCanvasDrawer extends GanttCanvasDrawer {
     if (this.canvasOptions.showProgressGradient) {
       this.drawBarsWithProgress(offsetY + HEADER_HEIGHT + FLAG_LANE_HEIGHT);
     } else {
-      this.drawBars();
+      this.drawBars(offsetY + HEADER_HEIGHT + FLAG_LANE_HEIGHT);
     }
 
     // 9. 범례 및 통계
