@@ -592,6 +592,31 @@ export function MoreOptionsMenu({
                         />
                       </label>
                     </div>
+
+                    {/* 고급 메모이제이션 */}
+                    <div className="px-3 py-1.5 hover:bg-gray-50">
+                      <label className="flex items-center justify-between cursor-pointer gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-700">
+                            고급 메모이제이션
+                          </div>
+                          <div className="text-[10px] text-gray-500 mt-0.5">
+                            렌더링 최적화 강화
+                          </div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={perfFlags.enableAdvancedMemo}
+                          onChange={(e) =>
+                            handlePerformanceFlagChange(
+                              "enableAdvancedMemo",
+                              e.target.checked
+                            )
+                          }
+                          className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded flex-shrink-0"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   {/* 새로고침 필요 경고 */}
