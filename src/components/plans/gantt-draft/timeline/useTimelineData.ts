@@ -15,6 +15,7 @@ import { filterBarsWithIndex, filterRowsWithIndex } from "../filterCache";
 import type { DraftRow, DraftBar as DraftBarType } from "../types";
 import type { FilterIndex } from "../filterCache";
 import { DAY_WIDTH } from "./timelineTypes";
+import { getFeatureFlags } from "../featureFlags";
 
 interface UseTimelineDataProps {
   rangeStart: Date;
@@ -226,6 +227,7 @@ export function useTimelineData({
 
   // 연속된 스냅샷 엔트리 연결 정보 계산
   const snapshotConnections = useMemo(() => {
+    const flags = getFeatureFlags();
     const connections: Array<{
       fromBar: DraftBarType;
       toBar: DraftBarType;
@@ -244,9 +246,27 @@ export function useTimelineData({
 
     if (snapshots.length === 0) return connections;
 
+    // 고급 메모이제이션 활성화 시 Map 인덱싱 사용
+    const nodePositionMap = flags.enableAdvancedMemo
+      ? new Map<string, typeof nodePositions[0]>()
+      : null;
+    
+    if (nodePositionMap) {
+      for (const pos of nodePositions) {
+        if (pos.node.type === "feature" && pos.node.row?.rowId) {
+          nodePositionMap.set(pos.node.row.rowId, pos);
+        }
+      }
+    }
+
+    // assignLanesToBars 결과 캐싱 (고급 메모이제이션 활성화 시)
+    const rowBarsCache = flags.enableAdvancedMemo
+      ? new Map<string, ReturnType<typeof assignLanesToBars>>()
+      : null;
+
     // metaKey + authorId로 그룹화 (같은 사용자, 같은 meta만 연결)
     const groupedByMetaAndAuthor = new Map<string, DraftBarType[]>();
-    snapshots.forEach((bar) => {
+    for (const bar of snapshots) {
       const metaKey = (bar as any).metaKey;
       const authorId = (bar as any).authorId;
       const groupKey = `${metaKey}::${authorId || "unknown"}`;
@@ -254,11 +274,18 @@ export function useTimelineData({
         groupedByMetaAndAuthor.set(groupKey, []);
       }
       groupedByMetaAndAuthor.get(groupKey)!.push(bar);
-    });
+    }
+
+    // rangeStart를 자정으로 정규화 (루프 밖으로 이동)
+    const rangeStartMidnight = new Date(
+      rangeStart.getFullYear(),
+      rangeStart.getMonth(),
+      rangeStart.getDate()
+    );
 
     // 각 그룹에서 연속된 엔트리 찾기
-    groupedByMetaAndAuthor.forEach((group) => {
-      if (group.length < 2) return;
+    for (const [_, group] of groupedByMetaAndAuthor) {
+      if (group.length < 2) continue;
 
       // 날짜순 정렬
       const sorted = group.sort((a, b) =>
@@ -269,28 +296,49 @@ export function useTimelineData({
         const current = sorted[i];
         const next = sorted[i + 1];
 
-        // 각 바의 위치 정보 가져오기
-        const currentNode = nodePositions.find(
-          (pos) =>
-            pos.node.type === "feature" && pos.node.row?.rowId === current.rowId
-        );
-        const nextNode = nodePositions.find(
-          (pos) =>
-            pos.node.type === "feature" && pos.node.row?.rowId === next.rowId
-        );
+        // 각 바의 위치 정보 가져오기 (Map 인덱싱 사용 시 O(1), 아니면 O(n))
+        const currentNode = nodePositionMap
+          ? nodePositionMap.get(current.rowId)
+          : nodePositions.find(
+              (pos) =>
+                pos.node.type === "feature" && pos.node.row?.rowId === current.rowId
+            );
+        const nextNode = nodePositionMap
+          ? nodePositionMap.get(next.rowId)
+          : nodePositions.find(
+              (pos) =>
+                pos.node.type === "feature" && pos.node.row?.rowId === next.rowId
+            );
 
         if (!currentNode || !nextNode) continue;
 
-        // 바의 레인 정보 가져오기
-        const currentRowBars = filteredActiveBars.filter(
-          (b) => b.rowId === current.rowId
-        );
-        const nextRowBars = filteredActiveBars.filter(
-          (b) => b.rowId === next.rowId
-        );
+        // 레인 정보 가져오기 (캐싱 사용 시)
+        let currentBarsWithLane: ReturnType<typeof assignLanesToBars>;
+        let nextBarsWithLane: ReturnType<typeof assignLanesToBars>;
 
-        const currentBarsWithLane = assignLanesToBars(currentRowBars);
-        const nextBarsWithLane = assignLanesToBars(nextRowBars);
+        if (rowBarsCache) {
+          // 캐시에서 가져오거나 계산 후 캐싱
+          if (!rowBarsCache.has(current.rowId)) {
+            const bars = filteredActiveBars.filter((b) => b.rowId === current.rowId);
+            rowBarsCache.set(current.rowId, assignLanesToBars(bars));
+          }
+          if (!rowBarsCache.has(next.rowId)) {
+            const bars = filteredActiveBars.filter((b) => b.rowId === next.rowId);
+            rowBarsCache.set(next.rowId, assignLanesToBars(bars));
+          }
+          currentBarsWithLane = rowBarsCache.get(current.rowId)!;
+          nextBarsWithLane = rowBarsCache.get(next.rowId)!;
+        } else {
+          // 기존 방식
+          const currentRowBars = filteredActiveBars.filter(
+            (b) => b.rowId === current.rowId
+          );
+          const nextRowBars = filteredActiveBars.filter(
+            (b) => b.rowId === next.rowId
+          );
+          currentBarsWithLane = assignLanesToBars(currentRowBars);
+          nextBarsWithLane = assignLanesToBars(nextRowBars);
+        }
 
         const currentLayout = currentBarsWithLane.find(
           (l) => l.clientUid === current.clientUid
@@ -300,13 +348,6 @@ export function useTimelineData({
         );
 
         if (!currentLayout || !nextLayout) continue;
-
-        // rangeStart를 자정으로 정규화
-        const rangeStartMidnight = new Date(
-          rangeStart.getFullYear(),
-          rangeStart.getMonth(),
-          rangeStart.getDate()
-        );
 
         // 각 바의 X 위치 계산
         const currentStartDate = parseLocalDate(current.startDate);
@@ -351,7 +392,7 @@ export function useTimelineData({
           toY,
         });
       }
-    });
+    }
 
     return connections;
   }, [filteredActiveBars, nodePositions, rangeStart]);

@@ -15,6 +15,7 @@ import {
 } from "./laneLayout";
 import type { BarWithLane } from "./types";
 import type { AssigneeRole } from "@/lib/data/plans";
+import { getFeatureFlags } from "./featureFlags";
 
 const LANE_HEIGHT = 48;
 const RESIZE_HANDLE_WIDTH = 12;
@@ -132,6 +133,67 @@ function formatShortDateRange(startDate: string, endDate: string): string {
   }
   const endMonth = monthNames[end.getMonth()];
   return `${startMonth} ${startDay}–${endMonth} ${endDay}`;
+}
+
+/**
+ * DraftBar Props 비교 함수
+ * enableAdvancedMemo 플래그가 활성화되면 세밀한 비교 수행
+ */
+function arePropsEqual(
+  prevProps: DraftBarProps,
+  nextProps: DraftBarProps
+): boolean {
+  const flags = getFeatureFlags();
+  
+  // 기본 비교 (항상 수행)
+  if (prevProps.bar.clientUid !== nextProps.bar.clientUid) return false;
+  if (prevProps.isEditing !== nextProps.isEditing) return false;
+  if (prevProps.readOnly !== nextProps.readOnly) return false;
+  if (prevProps.isSelected !== nextProps.isSelected) return false;
+  
+  // 고급 메모이제이션 활성화 시 더 세밀한 비교
+  if (flags.enableAdvancedMemo) {
+    // 위치 관련 props
+    if (prevProps.left !== nextProps.left) return false;
+    if (prevProps.width !== nextProps.width) return false;
+    if (prevProps.lane !== nextProps.lane) return false;
+    
+    // Bar 데이터 비교
+    if (prevProps.bar.startDate !== nextProps.bar.startDate) return false;
+    if (prevProps.bar.endDate !== nextProps.bar.endDate) return false;
+    if (prevProps.bar.stage !== nextProps.bar.stage) return false;
+    if (prevProps.bar.title !== nextProps.bar.title) return false;
+    if (prevProps.bar.dirty !== nextProps.bar.dirty) return false;
+    
+    // Snapshot 관련
+    if (prevProps.bar.isSnapshot !== nextProps.bar.isSnapshot) return false;
+    if (prevProps.bar.avgProgress !== nextProps.bar.avgProgress) return false;
+    
+    // Alignment 상태
+    if (prevProps.bar.alignmentStatus !== nextProps.bar.alignmentStatus) return false;
+    
+    // 배열은 참조만 비교 (내용은 불변으로 가정)
+    if (prevProps.bar.assignees !== nextProps.bar.assignees) return false;
+    if (prevProps.rowBars !== nextProps.rowBars) return false;
+    
+    // 함수 props (참조 비교)
+    if (prevProps.onSelect !== nextProps.onSelect) return false;
+    if (prevProps.onDoubleClick !== nextProps.onDoubleClick) return false;
+    if (prevProps.onContextMenu !== nextProps.onContextMenu) return false;
+    if (prevProps.onDragDateChange !== nextProps.onDragDateChange) return false;
+    if (prevProps.onClearHover !== nextProps.onClearHover) return false;
+    if (prevProps.onMoveComplete !== nextProps.onMoveComplete) return false;
+    
+    // 기타 props
+    if (prevProps.dayWidth !== nextProps.dayWidth) return false;
+    if (prevProps.rangeStart !== nextProps.rangeStart) return false;
+    if (prevProps.rowTopOffset !== nextProps.rowTopOffset) return false;
+    
+    return true;
+  }
+  
+  // 기본 shallow 비교 (고급 메모이제이션 비활성화 시)
+  return false; // 기본적으로 재렌더링 허용
 }
 
 export const DraftBar = memo(function DraftBar({
@@ -820,4 +882,4 @@ export const DraftBar = memo(function DraftBar({
       )}
     </div>
   );
-});
+}, arePropsEqual);

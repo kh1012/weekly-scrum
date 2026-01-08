@@ -16,12 +16,16 @@ export interface MoreOptionsMenuProps {
   /** JSON export 핸들러 */
   onExportJSON: () => Promise<void>;
   /** PNG export 핸들러 (품질 옵션 포함) */
-  onExportPNG: (quality?: ExportQuality) => Promise<void>;
+  onExportPNG: (
+    quality?: ExportQuality,
+    options?: { returnBlob?: boolean }
+  ) => Promise<Blob | void>;
   /** PNG Draw export 핸들러 (품질 옵션 포함) */
   onExportDraw: (
     quality?: ExportQuality,
-    canvasOptions?: CanvasOptions
-  ) => Promise<void>;
+    canvasOptions?: CanvasOptions,
+    options?: { returnBlob?: boolean }
+  ) => Promise<Blob | void>;
   /** 비활성화 여부 */
   disabled?: boolean;
   /** 읽기 전용 모드 (Performance 설정을 보여줄지 결정) */
@@ -54,6 +58,14 @@ export function MoreOptionsMenu({
   const [showDrawQuality, setShowDrawQuality] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportingType, setExportingType] = useState<ExportType | null>(null);
+
+  // Figma 연동 관련 상태
+  const [isFigmaConnected, setIsFigmaConnected] = useState(false);
+  const [showFigmaModal, setShowFigmaModal] = useState(false);
+  const [targetPlatform, setTargetPlatform] = useState<"figma" | "figjam">(
+    "figjam"
+  );
+  const [exportMethod, setExportMethod] = useState<"png" | "draw">("png");
 
   // Canvas 옵션 상태
   const [showTableColumns, setShowTableColumns] = useState(true);
@@ -104,6 +116,38 @@ export function MoreOptionsMenu({
       // localStorage 접근 실패 시 무시
     }
   }, []);
+
+  // Figma 연동 상태 확인
+  useEffect(() => {
+    checkFigmaConnection();
+
+    const savedPlatform = localStorage.getItem("figma-platform");
+    if (savedPlatform) setTargetPlatform(savedPlatform as "figma" | "figjam");
+
+    const savedMethod = localStorage.getItem("figma-export-method");
+    if (savedMethod) setExportMethod(savedMethod as "png" | "draw");
+  }, []);
+
+  async function checkFigmaConnection() {
+    try {
+      const { createClient } = await import("@/lib/supabase/browser");
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("users")
+        .select("figma_encrypted_tokens")
+        .eq("id", user.id)
+        .single();
+
+      setIsFigmaConnected(!!data?.figma_encrypted_tokens);
+    } catch (error) {
+      console.error("[Figma Connection Check]", error);
+    }
+  }
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -170,6 +214,92 @@ export function MoreOptionsMenu({
       setShowExport(false);
       setShowPNGQuality(false);
       setShowDrawQuality(false);
+    } finally {
+      setIsExporting(false);
+      setExportingType(null);
+    }
+  };
+
+  const handleFigmaClick = () => {
+    if (!isFigmaConnected) {
+      // 연동되지 않았으면 OAuth 시작
+      window.location.href = "/api/figma/auth";
+    } else {
+      // 연동되어 있으면 설정 모달 표시
+      setShowFigmaModal(true);
+      setIsOpen(false);
+      setShowExport(false);
+    }
+  };
+
+  const handleFigmaUpload = async () => {
+    setShowFigmaModal(false);
+    setIsExporting(true);
+    setExportingType("figma" as ExportType);
+    setIsOpen(false);
+
+    try {
+      // 1. PNG 생성 (선택한 방식에 따라)
+      let blob: Blob;
+      if (exportMethod === "png") {
+        // HTML2Canvas 방식
+        blob = (await onExportPNG("normal", { returnBlob: true })) as Blob;
+      } else {
+        // Canvas Draw 방식
+        const canvasOptions: CanvasOptions = {
+          showTableColumns,
+          showMetadata,
+          showLegend,
+          showStatistics,
+          showProgressGradient,
+          showAlignmentArrows: isAlignmentPage && showAlignmentArrows,
+          columnConfig: {
+            showAssignees: true,
+            showStatus: true,
+            showProgress: false,
+          },
+        };
+        blob = (await onExportDraw("normal", canvasOptions, {
+          returnBlob: true,
+        })) as Blob;
+      }
+
+      // 2. Figma 업로드
+      const formData = new FormData();
+      formData.append("image", blob, "gantt.png");
+      formData.append(
+        "filename",
+        `Gantt Chart ${new Date().toLocaleDateString()}`
+      );
+      formData.append("platform", targetPlatform);
+
+      const res = await fetch("/api/figma/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error);
+      }
+
+      const data = await res.json();
+      const platformName = targetPlatform === "figjam" ? "FigJam" : "Figma";
+
+      alert(
+        `✅ ${platformName}에 업로드 완료!\n\n` +
+          `파일: ${data.fileUrl}\n\n` +
+          `📌 파일을 열어 이미지를 캔버스로 드래그하세요.`
+      );
+
+      window.open(data.fileUrl, "_blank");
+    } catch (error) {
+      console.error("[Figma Upload]", error);
+      alert(
+        `Figma 업로드 실패: ${
+          error instanceof Error ? error.message : "알 수 없는 오류"
+        }`
+      );
     } finally {
       setIsExporting(false);
       setExportingType(null);
@@ -403,6 +533,40 @@ export function MoreOptionsMenu({
                     </div>
                   )}
                 </div>
+
+                {/* 구분선 */}
+                <div className="border-t border-gray-200 my-1" />
+
+                {/* Figma */}
+                <button
+                  onClick={handleFigmaClick}
+                  disabled={isExporting}
+                  className="w-full text-left px-3 py-1.5 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 38 57"
+                    >
+                      <path d="M19 28.5C19 23.26 23.26 19 28.5 19C33.74 19 38 23.26 38 28.5C38 33.74 33.74 38 28.5 38C23.26 38 19 33.74 19 28.5Z" />
+                      <path d="M0 47.5C0 42.26 4.26 38 9.5 38H19V47.5C19 52.74 14.74 57 9.5 57C4.26 57 0 52.74 0 47.5Z" />
+                      <path d="M19 0V19H28.5C33.74 19 38 14.74 38 9.5C38 4.26 33.74 0 28.5 0H19Z" />
+                      <path d="M0 9.5C0 14.74 4.26 19 9.5 19H19V0H9.5C4.26 0 0 4.26 0 9.5Z" />
+                      <path d="M0 28.5C0 33.74 4.26 38 9.5 38H19V19H9.5C4.26 19 0 23.26 0 28.5Z" />
+                    </svg>
+                    <span className="font-medium">Figma</span>
+                    {isFigmaConnected ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-600 border border-green-200">
+                        연동됨
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-600 border border-purple-200">
+                        Beta
+                      </span>
+                    )}
+                  </div>
+                </button>
               </div>
             )}
           </div>
@@ -628,6 +792,143 @@ export function MoreOptionsMenu({
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Figma 설정 모달 */}
+      {showFigmaModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]"
+          onClick={() => setShowFigmaModal(false)}
+        >
+          <div
+            className="bg-white rounded-md border border-gray-300 max-w-sm w-full mx-4"
+            style={{
+              boxShadow:
+                "0 8px 24px rgba(140, 149, 159, 0.2), 0 0 1px rgba(27, 31, 35, 0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 헤더 */}
+            <div className="px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Figma 업로드
+                </h3>
+                <button
+                  onClick={() => setShowFigmaModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* 본문 */}
+            <div className="px-4 py-3 space-y-3">
+              {/* 플랫폼 선택 */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  업로드 대상
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setTargetPlatform("figjam");
+                      localStorage.setItem("figma-platform", "figjam");
+                    }}
+                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                      targetPlatform === "figjam"
+                        ? "bg-purple-50 border-purple-600 text-purple-700 font-medium"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    FigJam
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTargetPlatform("figma");
+                      localStorage.setItem("figma-platform", "figma");
+                    }}
+                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                      targetPlatform === "figma"
+                        ? "bg-purple-50 border-purple-600 text-purple-700 font-medium"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Figma
+                  </button>
+                </div>
+              </div>
+
+              {/* Export 방식 선택 */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Export 방식
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setExportMethod("png");
+                      localStorage.setItem("figma-export-method", "png");
+                    }}
+                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                      exportMethod === "png"
+                        ? "bg-blue-50 border-blue-600 text-blue-700 font-medium"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    빠름 (html2canvas)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExportMethod("draw");
+                      localStorage.setItem("figma-export-method", "draw");
+                    }}
+                    className={`flex-1 px-3 py-2 text-xs rounded-md border ${
+                      exportMethod === "draw"
+                        ? "bg-blue-50 border-blue-600 text-blue-700 font-medium"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    정밀 (Canvas Draw)
+                  </button>
+                </div>
+              </div>
+
+              {/* 안내 메시지 */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-2">
+                <p className="text-[10px] text-blue-800 leading-relaxed">
+                  💡 이미지가 {targetPlatform === "figjam" ? "FigJam" : "Figma"}{" "}
+                  파일의 Assets에 업로드됩니다.
+                  <br />
+                  파일을 열어 이미지를 캔버스로 드래그하세요.
+                </p>
+              </div>
+            </div>
+
+            {/* 푸터 */}
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-2 rounded-b-md">
+              <button
+                onClick={() => setShowFigmaModal(false)}
+                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleFigmaUpload}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700"
+              >
+                업로드
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

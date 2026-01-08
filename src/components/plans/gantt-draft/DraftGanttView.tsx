@@ -488,6 +488,35 @@ export const DraftGanttView = forwardRef<
     }
   }, [flags, selectedFlagId, searchParams, selectFlag]);
 
+  // Figma OAuth 콜백 처리
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (params.get("figma_success")) {
+      showToast(
+        "success",
+        "Figma 연동 완료",
+        "이제 Gantt 차트를 Figma/FigJam에 업로드할 수 있습니다."
+      );
+      // URL에서 파라미터 제거
+      params.delete("figma_success");
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+
+    if (params.get("figma_error")) {
+      const errorMap: Record<string, string> = {
+        invalid_state: "보안 검증 실패",
+        server_error: "서버 오류",
+        access_denied: "연동 거부",
+      };
+      const error = params.get("figma_error")!;
+      showToast("error", "Figma 연동 실패", errorMap[error] || error);
+      // URL에서 파라미터 제거
+      params.delete("figma_error");
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [searchParams, router]);
+
   // 초기 데이터 로드
   useEffect(() => {
     if (initialPlans.length === 0) {

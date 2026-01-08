@@ -56,9 +56,17 @@ export function useRAFThrottle<T extends (...args: any[]) => void>(
 
     // RAF 예약
     rafIdRef.current = requestAnimationFrame(() => {
-      performanceMonitor.measureScroll('RAF Throttled Call', () => {
+      const flags = getFeatureFlags();
+      
+      if (flags.enablePerformanceLogging) {
+        // 성능 로깅이 켜져있으면 측정
+        performanceMonitor.measureScroll('RAF Throttled Call', () => {
+          callbackRef.current(...latestArgsRef.current);
+        });
+      } else {
+        // 성능 로깅이 꺼져있으면 직접 실행 (오버헤드 제거)
         callbackRef.current(...latestArgsRef.current);
-      });
+      }
       
       // RAF ID 초기화 (다음 호출 허용)
       rafIdRef.current = null;

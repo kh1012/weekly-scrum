@@ -295,5 +295,9 @@ export function createProfilerCallback(componentName: string) {
 if (typeof window !== "undefined") {
   (window as any).__performanceMonitor = performanceMonitor;
   (window as any).__logPerformance = () => performanceMonitor.logSummary();
+  (window as any).__logScrollPerformance = () =>
+    performanceMonitor.logScrollPerformance();
+  (window as any).__checkPerformanceWarnings = () =>
+    performanceMonitor.checkPerformanceWarnings();
   (window as any).__resetPerformance = () => performanceMonitor.reset();
 }

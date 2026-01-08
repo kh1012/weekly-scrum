@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { TimelineNodes } from "./TimelineNodes";
 import { useVirtualization, type NodePosition } from "../useVirtualization";
 import type { FlatTreeNode } from "../../laneLayout";
@@ -74,6 +74,38 @@ export function TimelineNodesVirtualized({
   scrollTop,
   ...otherProps
 }: TimelineNodesVirtualizedProps) {
+  // 스크롤 중 감지 (willChange 동적 활성화용)
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 스크롤 중 감지 및 종료 감지
+  useEffect(() => {
+    setIsScrolling(true);
+    
+    // 스크롤 종료 감지 (150ms 디바운스)
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+    
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [scrollTop]);
+
+  // 데이터 양에 따른 동적 overscan 조정
+  const dynamicOverscan = useMemo(() => {
+    const nodeCount = nodePositions.length;
+    if (nodeCount < 100) return 5;
+    if (nodeCount < 500) return 3;
+    return 2;
+  }, [nodePositions.length]);
+
   // 가상화 계산
   const {
     visibleStartIndex,
@@ -85,7 +117,7 @@ export function TimelineNodesVirtualized({
     nodePositions: nodePositions as NodePosition[],
     containerHeight,
     scrollTop,
-    overscan: 5,
+    overscan: dynamicOverscan,
   });
 
   // 보이는 노드만 필터링
@@ -113,7 +145,7 @@ export function TimelineNodesVirtualized({
       <div
         style={{
           transform: `translateY(${offsetY}px)`,
-          willChange: "transform",
+          willChange: isScrolling ? "transform" : "auto",
         }}
       >
         <TimelineNodes

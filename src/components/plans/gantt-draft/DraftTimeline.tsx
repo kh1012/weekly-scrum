@@ -81,21 +81,8 @@ export function DraftTimeline({
     return () => observer.disconnect();
   }, []);
 
-  // 스크롤 위치 업데이트
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      setScrollTop(container.scrollTop);
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+  // 스크롤 위치 업데이트는 useTimelineScroll의 handleScroll에서 처리
+  // (중복 이벤트 리스너 제거 - onScrollChange 콜백으로 통합)
 
   // Store
   const allRows = useDraftStore((s) => s.rows);
@@ -171,6 +158,7 @@ export function DraftTimeline({
     setMiddleClickScroll: state.setMiddleClickScroll,
     middleClickScroll: state.middleClickScroll,
     onScrollChange,
+    onVirtualScrollChange: setScrollTop,
   });
 
   // Lane actions

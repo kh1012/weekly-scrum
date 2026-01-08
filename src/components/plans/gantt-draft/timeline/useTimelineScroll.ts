@@ -18,6 +18,7 @@ interface UseTimelineScrollProps {
   setMiddleClickScroll: (state: MiddleClickScrollState | null) => void;
   middleClickScroll: MiddleClickScrollState | null;
   onScrollChange?: (scrollTop: number) => void;
+  onVirtualScrollChange?: (scrollTop: number) => void;
 }
 
 export function useTimelineScroll({
@@ -31,9 +32,10 @@ export function useTimelineScroll({
   setMiddleClickScroll,
   middleClickScroll,
   onScrollChange,
+  onVirtualScrollChange,
 }: UseTimelineScrollProps) {
-  // 헤더 스크롤 동기화 (FlagLane 포함)
-  const handleScroll = useCallback(() => {
+  // 헤더 스크롤 동기화 (FlagLane 포함) - Raw 버전
+  const handleScrollRaw = useCallback(() => {
     if (containerRef.current) {
       const scrollLeft = containerRef.current.scrollLeft;
       const scrollTop = containerRef.current.scrollTop;
@@ -47,8 +49,9 @@ export function useTimelineScroll({
       }
       setHeaderScrollLeft(scrollLeft);
 
-      // 세로 스크롤 동기화 (TreePanel과)
+      // 세로 스크롤 동기화 (TreePanel과 가상화)
       onScrollChange?.(scrollTop);
+      onVirtualScrollChange?.(scrollTop);
     }
   }, [
     containerRef,
@@ -56,7 +59,11 @@ export function useTimelineScroll({
     flagLaneRef,
     setHeaderScrollLeft,
     onScrollChange,
+    onVirtualScrollChange,
   ]);
+
+  // RAF로 감싸진 버전 (Feature Flag로 제어)
+  const handleScroll = useRAFThrottle(handleScrollRaw);
 
   // Flag 영역 스크롤 시 타임라인 동기화 (양방향)
   const handleFlagScroll = useCallback(() => {
@@ -152,8 +159,8 @@ export function useTimelineScroll({
     [containerRef, setHoverInfo, setMiddleClickScroll]
   );
 
-  // 휠 클릭 스크롤 이동 (RAF 적용 전 원본)
-  const handleMiddleClickMoveRaw = useCallback(
+  // 휠 클릭 스크롤 이동 (직접 실행 - mousemove 빈도가 낮아 RAF 불필요)
+  const handleMiddleClickMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!middleClickScroll?.isActive || !containerRef.current) return;
 
@@ -165,9 +172,6 @@ export function useTimelineScroll({
     },
     [middleClickScroll, containerRef]
   );
-
-  // RAF로 감싸진 버전 (Feature Flag로 제어)
-  const handleMiddleClickMove = useRAFThrottle(handleMiddleClickMoveRaw);
 
   return {
     handleScroll,

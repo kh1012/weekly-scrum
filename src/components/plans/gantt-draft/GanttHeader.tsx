@@ -32,6 +32,7 @@ import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
 import { showToast, showInactivityWarningToast } from "./Toast";
 import { MoreOptionsMenu } from "./MoreOptionsMenu";
+import { ChangeHistoryButton } from "./ChangeHistoryButton";
 import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
 
 interface GanttHeaderProps {
@@ -961,20 +962,11 @@ export function GanttHeader({
 
           {/* 마지막 업데이트 시각 표시 (읽기 전용 모드에서만) */}
           {readOnly && maxUpdatedAt && (
-            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-500 bg-gray-50">
-              <span>Updated</span>
-              <span className="font-semibold text-gray-700">
-                {formatRelativeTime(maxUpdatedAt)}
-              </span>
-              {updatedByName && (
-                <>
-                  <span>by</span>
-                  <span className="font-semibold text-gray-700">
-                    {updatedByName}
-                  </span>
-                </>
-              )}
-            </div>
+            <ChangeHistoryButton
+              workspaceId={workspaceId}
+              maxUpdatedAt={maxUpdatedAt}
+              updatedByName={updatedByName}
+            />
           )}
 
           {!readOnly && lockState.isLocked ? (
