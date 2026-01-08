@@ -31,7 +31,7 @@ import {
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
 import { formatRelativeTime } from "@/lib/utils/relativeTime";
 import { showToast, showInactivityWarningToast } from "./Toast";
-import { ExportDropdown } from "@/components/common/ExportDropdown";
+import { MoreOptionsMenu } from "./MoreOptionsMenu";
 import type { AlignmentMismatch } from "@/lib/alignment/alignmentStatus";
 
 interface GanttHeaderProps {
@@ -187,7 +187,7 @@ export function GanttHeader({
     nextHeartbeatSeconds,
     inactivitySeconds: lockInactivitySeconds,
   } = useLock({ workspaceId });
-  
+
   // props로 전달된 값이 있으면 우선 사용 (DraftGanttView에서 전달)
   const inactivitySeconds = propsInactivitySeconds ?? lockInactivitySeconds;
 
@@ -683,7 +683,7 @@ export function GanttHeader({
                 <button
                   onClick={onRefreshData}
                   disabled={!enableAlignmentCheck || isRefreshing}
-                  className={`relative group flex items-center justify-center h-8 border transition-all disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium ${
+                  className={`relative group flex items-center justify-center h-8 border transition-all disabled:cursor-not-allowed px-1.5 py-1.5 text-xs font-medium ${
                     enableAlignmentCheck
                       ? "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
                       : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"
@@ -696,7 +696,9 @@ export function GanttHeader({
                 >
                   <RefreshIcon
                     size={16}
-                    className={`${isRefreshing ? "animate-spin" : ""}`}
+                    className={`${
+                      isRefreshing ? "animate-spin text-blue-400" : ""
+                    } ${!enableAlignmentCheck ? "text-gray-300" : ""}`}
                   />
 
                   {/* 비활성화 상태 툴팁 */}
@@ -1370,15 +1372,16 @@ export function GanttHeader({
                   tooltip="URL 복사"
                 />
 
-                {/* Export 버튼 */}
+                {/* 더보기 메뉴 (Export + Performance) */}
                 {onExportJSON && onExportPNG && onExportDraw && (
                   <>
                     <div className="w-px h-5 bg-gray-200 mx-1" />
-                    <ExportDropdown
+                    <MoreOptionsMenu
                       onExportJSON={onExportJSON}
                       onExportPNG={onExportPNG}
                       onExportDraw={onExportDraw}
                       disabled={isCommitting || isAutoSaving}
+                      readOnly={readOnly}
                     />
                   </>
                 )}
@@ -1507,7 +1510,7 @@ export function GanttHeader({
                             />
                           </svg>
                           {/* 중앙 숫자 */}
-                          <div 
+                          <div
                             className="absolute inset-0 flex items-center justify-center pointer-events-none"
                             key={`timer-container-${inactivitySeconds}`}
                           >
