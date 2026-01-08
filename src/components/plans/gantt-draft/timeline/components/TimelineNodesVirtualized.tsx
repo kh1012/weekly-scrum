@@ -134,19 +134,22 @@ export function TimelineNodesVirtualized({
     return nodePositions.slice(visibleStartIndex, visibleEndIndex + 1);
   }, [nodePositions, visibleStartIndex, visibleEndIndex, isVirtualized]);
 
-  // 가상화가 비활성화된 경우 기존 TimelineNodes 사용
-  if (!isVirtualized) {
-    return <TimelineNodes nodePositions={nodePositions} {...otherProps} />;
-  }
-
-  // 가상화가 활성화된 경우 - GPU 가속을 위한 translate3d 방식
-  // 외부 container는 totalHeight로 고정, 내부는 translate3d로 이동
+  // GPU 가속을 위한 translate3d 방식 - offsetY 조정
+  // Hook 규칙: 모든 Hook은 조건문/early return 전에 호출해야 함
   const adjustedNodePositions = useMemo(() => {
+    if (!isVirtualized) {
+      return nodePositions; // 가상화 비활성화 시 원본 그대로
+    }
     return visibleNodePositions.map(pos => ({
       ...pos,
       top: pos.top - offsetY, // offsetY만큼 조정
     }));
-  }, [visibleNodePositions, offsetY]);
+  }, [visibleNodePositions, offsetY, isVirtualized, nodePositions]);
+
+  // 가상화가 비활성화된 경우 기존 TimelineNodes 사용
+  if (!isVirtualized) {
+    return <TimelineNodes nodePositions={nodePositions} {...otherProps} />;
+  }
 
   return (
     <div
