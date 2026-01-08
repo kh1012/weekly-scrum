@@ -244,6 +244,9 @@ export function DraftTimeline({
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           minHeight: 0,
           cursor: state.middleClickScroll?.isActive ? "move" : undefined,
+          // 성능 최적화
+          contain: "layout style paint", // 브라우저에게 격리 힌트
+          willChange: state.middleClickScroll?.isActive ? "scroll-position" : "auto",
         }}
         onScroll={scrollLogic.handleScroll}
         onMouseDown={scrollLogic.handleMiddleClickStart}
