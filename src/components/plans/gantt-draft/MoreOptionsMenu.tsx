@@ -138,9 +138,9 @@ export function MoreOptionsMenu({
       if (!user) return;
 
       const { data } = await supabase
-        .from("users")
+        .from("profiles")
         .select("figma_encrypted_tokens")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
       setIsFigmaConnected(!!data?.figma_encrypted_tokens);

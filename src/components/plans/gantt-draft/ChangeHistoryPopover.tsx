@@ -17,22 +17,55 @@ interface ChangeHistoryPopoverProps {
   onFetchHistory: (
     workspaceId: string
   ) => Promise<ChangeHistoryResponse>;
+  isInitialLoad?: boolean;
 }
 
 /**
- * 날짜 포맷 (26.01.08 형식)
+ * 상대 시간 포맷 (몇분전, 몇시간전, 몇일전)
  */
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const year = date.getFullYear().toString().slice(2);
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  return `${year}.${month}.${day}`;
+function formatRelativeTime(dateStr: string): string {
+  const now = new Date();
+  const target = new Date(dateStr);
+  const diffMs = now.getTime() - target.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 1) {
+    return "just now";
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes}분전`;
+  } else if (diffHours < 24) {
+    return `${diffHours}시간전`;
+  } else {
+    return `${diffDays}일전`;
+  }
+}
+
+function SkeletonLoader() {
+  return (
+    <div className="w-[420px] max-h-[480px]">
+      <div className="divide-y divide-gray-100">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="px-4 py-3">
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+                <div className="h-3 bg-gray-200 rounded w-16 animate-pulse" />
+              </div>
+              <div className="h-3 bg-gray-200 rounded w-40 animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function ChangeHistoryPopover({
   workspaceId,
   onFetchHistory,
+  isInitialLoad = false,
 }: ChangeHistoryPopoverProps) {
   const [groups, setGroups] = useState<ChangeHistoryGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +73,9 @@ export function ChangeHistoryPopover({
 
   useEffect(() => {
     async function fetchHistory() {
-      setIsLoading(true);
+      if (!isInitialLoad) {
+        setIsLoading(true);
+      }
       setError(null);
       try {
         const result = await onFetchHistory(workspaceId);
@@ -57,36 +92,10 @@ export function ChangeHistoryPopover({
     }
 
     fetchHistory();
-  }, [workspaceId, onFetchHistory]);
+  }, [workspaceId, onFetchHistory, isInitialLoad]);
 
   if (isLoading) {
-    return (
-      <div className="w-96 p-4 flex items-center justify-center">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <svg
-            className="animate-spin h-4 w-4"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          <span>로딩 중...</span>
-        </div>
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   if (error) {
@@ -108,7 +117,7 @@ export function ChangeHistoryPopover({
   }
 
   return (
-    <div className="w-96 max-h-[32rem] overflow-y-auto">
+    <div className="w-[420px] max-h-[480px] overflow-y-auto">
       <div className="divide-y divide-gray-100">
         {groups.map((group, groupIndex) => (
           <ChangeHistoryGroupItem key={groupIndex} group={group} />
@@ -122,47 +131,39 @@ export function ChangeHistoryPopover({
  * 개별 그룹 아이템
  */
 function ChangeHistoryGroupItem({ group }: { group: ChangeHistoryGroup }) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const buildChangesSummary = () => {
+    const parts = [];
+    if (group.createdCount > 0) parts.push(`added ${group.createdCount}`);
+    if (group.updatedCount > 0) parts.push(`modified ${group.updatedCount}`);
+    return `${group.totalCount} change${group.totalCount !== 1 ? "s" : ""}, ${parts.join(", ")}`;
+  };
 
   return (
-    <div className="p-4 hover:bg-gray-50 transition-colors">
+    <div className="px-4 py-3 hover:bg-gray-50/50 transition-colors">
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="font-semibold text-gray-700">
-            [{formatDate(group.date)}]
-          </span>
-          <span className="font-semibold text-gray-700">[{group.timeLabel}]</span>
-          <span className="text-gray-500">changed by</span>
-          <span className="font-semibold text-gray-900">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="font-semibold text-gray-900 text-sm">
             {group.changedByName || group.changedBy}
           </span>
+          <span className="text-xs text-gray-500 flex-shrink-0">
+            {formatRelativeTime(`${group.date}T${group.hour.toString().padStart(2, "0")}:00:00Z`)}
+          </span>
         </div>
 
-        <div className="text-sm text-gray-600">
-          {group.totalCount}건의 변경사항
-        </div>
-
-        <div className="flex items-center gap-2">
-          {group.createdCount > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700">
-              추가됨 ({group.createdCount})
-            </span>
-          )}
-          {group.updatedCount > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
-              수정됨 ({group.updatedCount})
-            </span>
-          )}
+        <div className="text-xs text-gray-600">
+          {buildChangesSummary()}
         </div>
 
         {group.treeNodes.length > 0 && (
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors group"
             >
               <svg
-                className={`w-3 h-3 transition-transform ${
+                className={`w-3.5 h-3.5 transition-transform ${
                   isExpanded ? "rotate-90" : ""
                 }`}
                 fill="none"
@@ -176,22 +177,26 @@ function ChangeHistoryGroupItem({ group }: { group: ChangeHistoryGroup }) {
                   d="M9 5l7 7-7 7"
                 />
               </svg>
-              <span>변경된 항목</span>
+              <span className="group-hover:underline">
+                {isExpanded ? "Hide" : "Show"} changed items
+              </span>
             </button>
 
             {isExpanded && (
-              <div className="mt-2 space-y-1 pl-4">
+              <div className="mt-2 space-y-1 pl-1 border-l-2 border-gray-200">
                 {group.treeNodes.map((node, nodeIndex) => (
                   <div
                     key={nodeIndex}
-                    className="flex items-center gap-2 text-xs text-gray-600"
+                    className="flex items-center gap-2 text-xs text-gray-700 pl-3 py-1 hover:bg-gray-100/50 rounded transition-colors"
                   >
-                    <span className="text-gray-400">
-                      {nodeIndex === group.treeNodes.length - 1 ? "└─" : "├─"}
+                    <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="flex-1 truncate font-mono text-[11px]">
+                      {node.path}
                     </span>
-                    <span className="flex-1 truncate">{node.path}</span>
-                    <span className="text-gray-500 font-medium">
-                      ({node.count})
+                    <span className="text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded">
+                      {node.count}
                     </span>
                   </div>
                 ))}

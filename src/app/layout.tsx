@@ -4,7 +4,21 @@ import "./globals.css";
 import { PageLoadingOverlay } from "@/components/common/PageLoadingOverlay";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
+const getMetadataBase = (): string => {
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  if (process.env.NODE_ENV === "production") {
+    return "https://kh1012.github.io/weekly-scrum";
+  }
+  return "http://localhost:3000";
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getMetadataBase()),
   title: "Weekly Scrum Dashboard",
   description: "팀 위클리 스크럼 현황 대시보드",
   openGraph: {

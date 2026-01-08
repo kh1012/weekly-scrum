@@ -58,13 +58,13 @@ export async function GET(request: NextRequest) {
     if (!user) throw new Error("User not authenticated");
 
     await supabase
-      .from("users")
+      .from("profiles")
       .update({
         figma_encrypted_tokens: encryptedTokens,
         figma_user_id: tokens.user_id,
         figma_connected_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("user_id", user.id);
 
     return NextResponse.redirect(
       new URL("/admin/plans/gantt?figma_success=true", request.url)

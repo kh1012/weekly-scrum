@@ -26,17 +26,17 @@ async function refreshToken(refreshToken: string) {
 async function getValidAccessToken(userId: string) {
   const supabase = await createClient();
 
-  const { data: user } = await supabase
-    .from("users")
+  const { data: profile } = await supabase
+    .from("profiles")
     .select("figma_encrypted_tokens")
-    .eq("id", userId)
+    .eq("user_id", userId)
     .single();
 
-  if (!user?.figma_encrypted_tokens) {
+  if (!profile?.figma_encrypted_tokens) {
     throw new Error("Figma not connected");
   }
 
-  const tokens = decryptTokens(user.figma_encrypted_tokens);
+  const tokens = decryptTokens(profile.figma_encrypted_tokens);
 
   if (new Date(tokens.expires_at) < new Date(Date.now() + 5 * 60 * 1000)) {
     const newTokens = await refreshToken(tokens.refresh_token);
@@ -49,9 +49,9 @@ async function getValidAccessToken(userId: string) {
     });
 
     await supabase
-      .from("users")
+      .from("profiles")
       .update({ figma_encrypted_tokens: encryptedTokens })
-      .eq("id", userId);
+      .eq("user_id", userId);
 
     return newTokens.access_token;
   }

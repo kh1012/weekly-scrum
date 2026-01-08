@@ -47,14 +47,35 @@ export function ChangeHistoryButton({
   updatedByName,
 }: ChangeHistoryButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [cachedData, setCachedData] = useState<ChangeHistoryResponse | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    async function prefetchData() {
+      try {
+        const result = await getPlansChangeHistoryAction(workspaceId);
+        setCachedData(result);
+      } catch (error) {
+        console.error("[ChangeHistoryButton] Prefetch error:", error);
+        setCachedData({ success: false, groups: [], error: "데이터를 불러올 수 없습니다." });
+      } finally {
+        setIsInitialLoad(false);
+      }
+    }
+
+    prefetchData();
+  }, [workspaceId]);
+
   const handleFetchHistory = useCallback(
     async (wsId: string): Promise<ChangeHistoryResponse> => {
+      if (cachedData) {
+        return cachedData;
+      }
       return await getPlansChangeHistoryAction(wsId);
     },
-    []
+    [cachedData]
   );
 
   useEffect(() => {
@@ -89,21 +110,23 @@ export function ChangeHistoryButton({
     if (!buttonRef.current) return { left: 0, top: 0 };
 
     const rect = buttonRef.current.getBoundingClientRect();
-    const padding = 8;
+    const padding = 12;
+    const popoverWidth = 420;
+    const popoverHeight = 480;
 
     let left = rect.left;
     let top = rect.bottom + padding;
 
-    if (left + 384 > window.innerWidth) {
-      left = window.innerWidth - 384 - padding;
+    if (left + popoverWidth > window.innerWidth) {
+      left = window.innerWidth - popoverWidth - padding;
     }
 
     if (left < padding) {
       left = padding;
     }
 
-    if (top + 512 > window.innerHeight) {
-      top = rect.top - 512 - padding;
+    if (top + popoverHeight > window.innerHeight) {
+      top = rect.top - popoverHeight - padding;
     }
 
     if (top < padding) {
@@ -120,16 +143,18 @@ export function ChangeHistoryButton({
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+        className="hidden md:flex items-center gap-1.5 px-2.5 rounded text-xs font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all cursor-pointer h-8"
       >
-        <span>Updated</span>
-        <span className="font-semibold text-gray-700">
+        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span className="font-medium text-gray-700">
           {formatRelativeTime(maxUpdatedAt)}
         </span>
         {updatedByName && (
           <>
-            <span>by</span>
-            <span className="font-semibold text-gray-700">{updatedByName}</span>
+            <span className="text-gray-400">·</span>
+            <span className="font-medium text-gray-700">{updatedByName}</span>
           </>
         )}
         <svg
@@ -152,17 +177,18 @@ export function ChangeHistoryButton({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="fixed z-50 rounded-lg shadow-2xl bg-white animate-in zoom-in-95 fade-in duration-150"
+          className="fixed z-50 rounded-xl shadow-2xl bg-white animate-in zoom-in-95 fade-in duration-150 border border-gray-200"
           style={{
             left: position.left,
             top: position.top,
             boxShadow:
-              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
           }}
         >
           <ChangeHistoryPopover
             workspaceId={workspaceId}
             onFetchHistory={handleFetchHistory}
+            isInitialLoad={isInitialLoad}
           />
         </div>
       )}

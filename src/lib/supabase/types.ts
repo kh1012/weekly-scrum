@@ -12,6 +12,9 @@ export interface Database {
           display_name: string;
           email: string;
           basic_role?: string | null;
+          figma_encrypted_tokens?: string | null;
+          figma_user_id?: string | null;
+          figma_connected_at?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -20,6 +23,9 @@ export interface Database {
           display_name: string;
           email: string;
           basic_role?: string | null;
+          figma_encrypted_tokens?: string | null;
+          figma_user_id?: string | null;
+          figma_connected_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -28,6 +34,9 @@ export interface Database {
           display_name?: string;
           email?: string;
           basic_role?: string | null;
+          figma_encrypted_tokens?: string | null;
+          figma_user_id?: string | null;
+          figma_connected_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

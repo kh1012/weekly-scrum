@@ -180,74 +180,38 @@ export function UserProfile() {
         {initial}
       </button>
 
-      {/* 팝오버 - Portal로 body에 직접 렌더링 - GitHub 스타일 */}
+      {/* 팝오버 - Portal로 body에 직접 렌더링 - GitHub 스타일 컴팩트 */}
       {isOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={popoverRef}
-          className="fixed w-80 bg-white border border-[#d0d7de] rounded-md animate-context-menu z-[40]"
+          className="fixed w-56 bg-white border border-[#d0d7de] rounded-md shadow-lg z-[40]"
           style={{
             top: popoverPosition.top,
             right: popoverPosition.right,
             boxShadow: "0 8px 24px rgba(140,149,159,0.2)",
           }}
         >
-          {/* 헤더 영역 */}
-          <div className="px-4 py-3 border-b border-[#d0d7de]">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#0969da] flex items-center justify-center text-white font-semibold text-base shrink-0">
-                {initial}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-[#24292f] truncate">
-                  {userInfo.displayName}
-                </p>
-                <p className="text-xs text-[#57606a] truncate mt-0.5">
-                  {userInfo.email}
-                </p>
-              </div>
-            </div>
+          {/* 사용자 정보 */}
+          <div className="px-3 py-2.5 border-b border-[#d0d7de]">
+            <p className="font-semibold text-sm text-[#24292f] truncate">
+              {userInfo.displayName}
+            </p>
+            <p className="text-xs text-[#57606a] truncate mt-0.5">
+              {userInfo.email}
+            </p>
           </div>
 
-          {/* 통계 영역 */}
-          <div className="px-4 py-3 border-b border-[#d0d7de]">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-[#ddf4ff]">
-                <svg
-                  className="w-4 h-4 text-[#0969da]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs text-[#57606a]">
-                  작성한 스냅샷
-                </p>
-                <p className="text-sm font-semibold text-[#24292f]">
-                  {userInfo.snapshotCount}개
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 액션 영역 */}
-          <div className="p-2">
+          {/* 메뉴 */}
+          <div className="py-1">
             <button
               onClick={() => {
                 setIsOpen(false);
                 router.push("/profile/settings");
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
             >
               <svg
-                className="w-4 h-4"
+                className="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -267,12 +231,19 @@ export function UserProfile() {
               </svg>
               <span>설정</span>
             </button>
+          </div>
+
+          {/* 구분선 */}
+          <div className="border-t border-[#d0d7de]" />
+
+          {/* 로그아웃 */}
+          <div className="py-1">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-[#cf222e] hover:bg-[#ffebe9] transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-[#cf222e] hover:bg-[#ffebe9] transition-colors"
             >
               <svg
-                className="w-4 h-4"
+                className="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

@@ -133,13 +133,35 @@ class PerformanceMonitor {
     const start = performance.now();
     fn();
     const end = performance.now();
+    const duration = end - start;
 
     this.metrics.push({
       label,
-      duration: end - start,
+      duration,
       timestamp: start,
       type: "scroll",
     });
+
+    // 8ms 초과 시 경고 (스크롤은 더 짧아야 함)
+    if (duration > 8) {
+      console.warn(
+        `⚠️ [Scroll] ${label} took ${duration.toFixed(2)}ms (>8ms)`
+      );
+    } else if (flags.enableDebugMode) {
+      console.log(`✅ [Scroll] ${label}: ${duration.toFixed(2)}ms`);
+    }
+
+    // 최근 100개만 유지
+    if (this.metrics.length > 100) {
+      this.metrics.shift();
+    }
+  }
+
+  /**
+   * 모든 메트릭 데이터 반환
+   */
+  getMetrics(): PerformanceMetrics[] {
+    return [...this.metrics]; // 복사본 반환
   }
 
   /**
@@ -294,6 +316,15 @@ export function createProfilerCallback(componentName: string) {
 // 개발자 콘솔에서 사용 가능하도록 노출
 if (typeof window !== "undefined") {
   (window as any).__performanceMonitor = performanceMonitor;
+  (window as any).timelinePerf = {
+    getMetrics: () => performanceMonitor.getMetrics(),
+    logSummary: () => performanceMonitor.logSummary(),
+    reset: () => performanceMonitor.reset(),
+    getAverageFPS: () => performanceMonitor.getAverageFPS(),
+    getMinFPS: () => performanceMonitor.getMinFPS(),
+    getRecentFPS: (seconds?: number) => performanceMonitor.getRecentFPS(seconds),
+  };
+  // 하위 호환성을 위한 별칭
   (window as any).__logPerformance = () => performanceMonitor.logSummary();
   (window as any).__resetPerformance = () => performanceMonitor.reset();
 }

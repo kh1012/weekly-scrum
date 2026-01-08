@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const authUrl = new URL("https://www.figma.com/oauth");
   authUrl.searchParams.set("client_id", process.env.FIGMA_CLIENT_ID!);
   authUrl.searchParams.set("redirect_uri", process.env.FIGMA_REDIRECT_URI!);
-  authUrl.searchParams.set("scope", "files:read files:write");
+  authUrl.searchParams.set("scope", "file_content:read");
   authUrl.searchParams.set("state", state);
   authUrl.searchParams.set("response_type", "code");
 
