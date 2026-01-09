@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { WeeklyScrumData, WeekOption, ScrumItem } from "@/types/scrum";
+import type { WeeklyScrumData, WeekOption, ScrumItem, PastWeekTask, Collaborator, RiskLevel } from "@/types/scrum";
 
 /**
  * snapshot_weeks 기반 주차 목록 타입
@@ -14,12 +14,31 @@ export interface SnapshotWeek {
 }
 
 /**
+ * Supabase snapshot_entry 원시 타입 (DB에서 가져온 데이터)
+ */
+export interface SnapshotEntryRaw {
+  name: string;
+  domain: string;
+  project: string;
+  module?: string | null;
+  feature?: string | null;
+  past_week?: {
+    tasks?: PastWeekTask[];
+  };
+  this_week?: {
+    tasks?: string[];
+  };
+  risk?: string[] | null;
+  risk_level?: RiskLevel | null;
+  collaborators?: Collaborator[];
+}
+
+/**
  * Supabase snapshot_entry를 ScrumItem (v1 형식)으로 변환
  * @param entry - DB에서 가져온 엔트리 데이터
  * @param authorName - 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertEntryToScrumItem(entry: any, authorName?: string): ScrumItem {
+function convertEntryToScrumItem(entry: SnapshotEntryRaw, authorName?: string): ScrumItem {
   // past_week은 { tasks: [...] } 형태의 jsonb 필드
   const pastWeek = entry.past_week || {};
   const pastWeekTasks = pastWeek.tasks || [];
@@ -32,7 +51,7 @@ function convertEntryToScrumItem(entry: any, authorName?: string): ScrumItem {
     pastWeekTasks.length > 0
       ? Math.round(
           pastWeekTasks.reduce(
-            (sum: number, t: { progress: number }) => sum + (t.progress || 0),
+            (sum, t) => sum + (t.progress || 0),
             0
           ) / pastWeekTasks.length
         )
@@ -40,7 +59,7 @@ function convertEntryToScrumItem(entry: any, authorName?: string): ScrumItem {
 
   // collaborators에서 relation 필드 제거하고 relations만 사용하도록 정규화
   const normalizedCollaborators = (entry.collaborators || []).map(
-    (c: { name: string; relation?: string; relations?: string[] }) => ({
+    (c) => ({
       name: c.name,
       relations: c.relations || (c.relation ? [c.relation] : []),
     })
@@ -57,17 +76,17 @@ function convertEntryToScrumItem(entry: any, authorName?: string): ScrumItem {
     topic: entry.feature || "",
     plan:
       pastWeekTasks
-        .map((t: { title: string; progress: number }) => `${t.title} (${t.progress || 0}%)`)
+        .map((t) => `${t.title} (${t.progress || 0}%)`)
         .join(", ") || "",
     planPercent: avgProgress,
     progress: pastWeekTasks.map(
-      (t: { title: string; progress: number }) => `${t.title} (${t.progress || 0}%)`
+      (t) => `${t.title} (${t.progress || 0}%)`
     ),
     progressPercent: avgProgress,
     reason: "",
     next: thisWeekTasks,
-    risk: entry.risk,
-    riskLevel: entry.risk_level,
+    risk: entry.risk ?? null,
+    riskLevel: entry.risk_level ?? null,
     collaborators: normalizedCollaborators,
   };
 }
@@ -150,7 +169,7 @@ export async function getAllSnapshotsFromSupabase(
       for (const snapshot of weekSnapshots) {
         // 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
         const authorName = snapshot.author_id ? profileMap.get(snapshot.author_id) : undefined;
-        const items = (snapshot.entries || []).map((entry: unknown) => convertEntryToScrumItem(entry, authorName));
+        const items = (snapshot.entries || []).map((entry: SnapshotEntryRaw) => convertEntryToScrumItem(entry, authorName));
         allItems.push(...items);
       }
 
@@ -190,7 +209,7 @@ export async function getAllSnapshotsFromSupabase(
       for (const snapshot of weekData.snapshots) {
         // 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
         const authorName = snapshot.author_id ? profileMap.get(snapshot.author_id) : undefined;
-        const items = (snapshot.entries || []).map((entry: unknown) => convertEntryToScrumItem(entry, authorName));
+        const items = (snapshot.entries || []).map((entry: SnapshotEntryRaw) => convertEntryToScrumItem(entry, authorName));
         allItems.push(...items);
       }
 

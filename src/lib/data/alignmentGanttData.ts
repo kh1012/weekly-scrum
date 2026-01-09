@@ -9,6 +9,81 @@
 import { createClient } from "@/lib/supabase/server";
 import { getWeekDateRange } from "@/lib/date/isoWeek";
 import { listWorkspaceMembers } from "./members";
+import type { PastWeekTask } from "@/types/scrum";
+
+/**
+ * Supabase plans 테이블 조회 결과 타입
+ */
+interface PlanQueryResult {
+  id: string;
+  type?: string | null;
+  title: string;
+  domain: string;
+  project: string;
+  module: string | null;
+  feature: string | null;
+  start_date: string;
+  end_date: string;
+  status?: string | null;
+  stage?: string | null;
+}
+
+/**
+ * Plan assignee raw 타입 (DB에서 조회한 그대로)
+ */
+interface PlanAssigneeRaw {
+  user_id: string;
+  role: string;
+  profiles?: {
+    display_name?: string | null;
+  };
+}
+
+/**
+ * Plan assignee 정보 확장 타입
+ */
+interface PlanWithAssignees extends PlanQueryResult {
+  assignees?: PlanAssigneeRaw[];
+}
+
+/**
+ * Snapshot entry 정보
+ */
+interface SnapshotEntryQueryResult {
+  id: string;
+  snapshot_id: string;
+  name: string;
+  domain: string;
+  project: string;
+  module: string | null;
+  feature: string | null;
+  past_week?: {
+    tasks?: PastWeekTask[];
+  };
+  this_week?: {
+    tasks?: string[];
+  };
+  collaborators?: Array<{
+    name: string;
+    relation?: string;
+    relations?: string[];
+  }>;
+  risks?: string[];
+  risk_level?: number | null;
+}
+
+/**
+ * Snapshot with metadata
+ */
+interface SnapshotQueryResult {
+  id: string;
+  year: number;
+  week: string;
+  author_id?: string | null;
+  workspace_id: string;
+  authorName?: string;
+  authorId?: string;
+}
 
 /**
  * 간트 차트용 Plan 인터페이스 (Plans + Snapshot Entries 통합)
@@ -23,15 +98,15 @@ export interface AlignmentGanttItem {
   feature: string | null;
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
-  status?: string;
-  stage?: string;
+  status?: string | null;
+  stage?: string | null;
   priority?: string;
   custom_feature?: boolean;
   custom_module?: boolean;
   assignees?: Array<{
     userId: string;
     role: string;
-    displayName?: string;
+    displayName?: string | null;
   }>;
   // Snapshot 전용 필드
   snapshotId?: string;
@@ -40,7 +115,7 @@ export interface AlignmentGanttItem {
   avgProgress?: number; // 평균 진행률 (0-100)
   metaKey?: string; // 메타 정보 키 (연결 화살표용)
   authorName?: string; // 작성자 이름
-  authorId?: string; // 작성자 user_id (화살표 연결용)
+  authorId?: string | null; // 작성자 user_id (화살표 연결용)
   past_week?: {
     tasks?: Array<{ title: string; progress: number }>;
     progress?: string;
@@ -113,13 +188,13 @@ async function getWorkspaceAlignmentDataInternal({
     ]);
 
     const { data: plansData, error: plansError } = plansResult;
-    const { data: snapshots, error: snapshotsError } = snapshotsResult;
+    const { data: snapshots, error: snapshotsError } = snapshotsResult as { data: SnapshotQueryResult[] | null; error: unknown };
 
-    let plans: any[] = [];
+    let plans: PlanWithAssignees[] = [];
     if (plansError) {
       plans = [];
     } else {
-      plans = plansData || [];
+      plans = (plansData || []) as PlanWithAssignees[];
 
       // Plan 담당자 조회
       const planIds = plans.map((p) => p.id);
@@ -148,7 +223,7 @@ async function getWorkspaceAlignmentDataInternal({
           }
         }
 
-        const assigneesMap = new Map<string, any[]>();
+        const assigneesMap = new Map<string, PlanAssigneeRaw[]>();
         for (const a of allAssigneesData || []) {
           if (!assigneesMap.has(a.plan_id)) {
             assigneesMap.set(a.plan_id, []);
@@ -198,7 +273,7 @@ async function getWorkspaceAlignmentDataInternal({
 
     const snapshotIds = snapshots?.map((s) => s.id) || [];
 
-    let snapshotEntries: any[] = [];
+    let snapshotEntries: SnapshotEntryQueryResult[] = [];
     if (snapshotIds.length > 0) {
       const { data: entriesData, error: entriesError } = await supabase
         .from("snapshot_entries")
@@ -247,11 +322,11 @@ async function getWorkspaceAlignmentDataInternal({
     // 3. Snapshot 맵 생성
     const snapshotMap = new Map(
       snapshots?.map((s) => {
-        const profile = authorProfiles.get(s.author_id);
+        const profile = s.author_id ? authorProfiles.get(s.author_id) : null;
         const authorName = profile?.display_name || profile?.email || "Unknown";
         return [
           s.id,
-          { year: s.year, week: s.week, authorName, authorId: s.author_id },
+          { year: s.year, week: s.week, authorName, authorId: s.author_id || null },
         ];
       }) || []
     );
@@ -270,7 +345,7 @@ async function getWorkspaceAlignmentDataInternal({
       status: plan.status,
       stage: plan.stage,
       assignees:
-        plan.assignees?.map((a: any) => ({
+        plan.assignees?.map((a) => ({
           userId: a.user_id,
           role: a.role,
           displayName: a.profiles?.display_name,
@@ -303,7 +378,7 @@ async function getWorkspaceAlignmentDataInternal({
       const avgProgress =
         tasks.length > 0
           ? tasks.reduce(
-              (sum: number, task: any) => sum + (task.progress || 0),
+              (sum: number, task: PastWeekTask) => sum + (task.progress || 0),
               0
             ) / tasks.length
           : 0;
@@ -433,7 +508,7 @@ async function getAlignmentGanttDataInternal({
 
     const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
 
-    let plans: any[] = [];
+    let plans: PlanWithAssignees[] = [];
     if (assignedPlanIds.length > 0) {
       // Step 1: Plans 기본 정보 조회
       const { data: plansData, error: plansError } = await supabase
@@ -489,7 +564,7 @@ async function getAlignmentGanttDataInternal({
         }
 
         // Step 4: plan_id별로 담당자 그룹핑
-        const assigneesMap = new Map<string, any[]>();
+        const assigneesMap = new Map<string, PlanAssigneeRaw[]>();
         for (const a of allAssigneesData || []) {
           if (!assigneesMap.has(a.plan_id)) {
             assigneesMap.set(a.plan_id, []);
@@ -540,7 +615,7 @@ async function getAlignmentGanttDataInternal({
 
     const snapshotIds = snapshots?.map((s) => s.id) || [];
 
-    let snapshotEntries: any[] = [];
+    let snapshotEntries: SnapshotEntryQueryResult[] = [];
     if (snapshotIds.length > 0) {
       const { data: entriesData, error: entriesError } = await supabase
         .from("snapshot_entries")
@@ -612,7 +687,7 @@ async function getAlignmentGanttDataInternal({
       status: plan.status,
       stage: plan.stage,
       assignees:
-        plan.assignees?.map((a: any) => ({
+        plan.assignees?.map((a) => ({
           userId: a.user_id,
           role: a.role,
           displayName: a.profiles?.display_name,
@@ -649,7 +724,7 @@ async function getAlignmentGanttDataInternal({
       const avgProgress =
         tasks.length > 0
           ? tasks.reduce(
-              (sum: number, task: any) => sum + (task.progress || 0),
+              (sum: number, task: PastWeekTask) => sum + (task.progress || 0),
               0
             ) / tasks.length
           : 0;

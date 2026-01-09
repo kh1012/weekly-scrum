@@ -24,7 +24,7 @@ interface ModuleSummaryBarPopoverProps {
   endDate: string;
   featureCount: number;
   features: string[]; // 기능명 리스트
-  assignees: Array<{ userId: string; displayName?: string; role: string }>;
+  assignees: Array<{ userId: string; displayName?: string | null; role: string }>;
   flags: DraftFlag[]; // 겹치는 Flags
   anchorRect: DOMRect | null;
   onClose: () => void;

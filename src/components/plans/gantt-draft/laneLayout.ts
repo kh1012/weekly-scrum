@@ -25,7 +25,7 @@ export interface FlatTreeNode {
     endDate: string;
     uniqueAssignees: Array<{
       userId: string;
-      displayName?: string;
+      displayName?: string | null;
       role: string;
     }>;
     uniqueAuthors: Array<{
@@ -700,7 +700,7 @@ export function buildSummarizedTree(
       const featureNames: string[] = [];
       const assigneeSet = new Map<
         string,
-        { userId: string; displayName?: string; role: string }
+        { userId: string; displayName?: string | null; role: string }
       >();
       const authorSet = new Map<
         string,

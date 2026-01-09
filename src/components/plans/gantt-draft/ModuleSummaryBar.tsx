@@ -25,7 +25,7 @@ interface ModuleSummaryBarProps {
   /** 담당자 목록 */
   assignees: Array<{
     userId: string;
-    displayName?: string;
+    displayName?: string | null;
     role: string;
   }>;
   /** 바의 x 좌표 */
@@ -45,7 +45,7 @@ interface ModuleSummaryBarProps {
   /** Entry 작성자 목록 */
   authors?: Array<{
     userId: string;
-    displayName?: string;
+    displayName?: string | null;
   }>;
 }
 
@@ -128,7 +128,7 @@ export function ModuleSummaryBar({
       // 혼합: assignees + authors (중복 제거)
       const userMap = new Map<
         string,
-        { userId: string; displayName?: string }
+        { userId: string; displayName?: string | null }
       >();
 
       // assignees 먼저

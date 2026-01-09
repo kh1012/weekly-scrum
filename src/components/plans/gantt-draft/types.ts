@@ -88,7 +88,7 @@ export type PlanStatus = "진행중" | "완료" | "보류" | "취소";
 export interface DraftAssignee {
   userId: string;
   role: AssigneeRole;
-  displayName?: string;
+  displayName?: string | null;
 }
 
 /**
@@ -152,7 +152,7 @@ export interface DraftBar {
   year?: number;
   week?: string;
   authorName?: string; // 작성자 이름
-  authorId?: string; // 작성자 user_id (화살표 연결용)
+  authorId?: string | null; // 작성자 user_id (화살표 연결용)
   past_week?: {
     tasks?: Array<{ title: string; progress: number }>;
     progress?: string;
