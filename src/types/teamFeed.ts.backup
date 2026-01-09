@@ -2,7 +2,17 @@
  * Team Activity Feed 타입 정의
  */
 
-import type { PastWeekTaskLoose, RiskItem, Collaborator } from "./scrum";
+export interface PastWeekTask {
+  title: string;
+  progress?: number;
+  note?: string;
+}
+
+export interface RiskItem {
+  note?: string;
+  title?: string;
+  level?: string;
+}
 
 export interface TeamFeedEntry {
   id: string;
@@ -17,14 +27,17 @@ export interface TeamFeedEntry {
   module: string;
   feature: string;
   pastWeek: {
-    tasks?: (string | PastWeekTaskLoose)[]; // 문자열 또는 객체 지원
+    tasks?: (string | PastWeekTask | any)[]; // 문자열 또는 객체 지원
   };
   thisWeek: {
-    tasks?: (string | PastWeekTaskLoose)[]; // 문자열 또는 객체 지원 (데이터 불일치 대응)
+    tasks?: (string | any)[]; // 문자열 또는 객체 지원
   };
-  risks: (string | RiskItem)[]; // 문자열 또는 객체 지원
+  risks: (string | RiskItem | any)[]; // 문자열 또는 객체 지원
   riskLevel: number;
-  collaborators: Collaborator[];
+  collaborators: Array<{
+    name: string;
+    relation?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }

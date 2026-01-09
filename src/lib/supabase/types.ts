@@ -3,6 +3,10 @@
  * - Supabase CLI로 자동 생성하거나 수동으로 정의
  */
 
+// JSON 필드 타입 - scrum.ts에서 import 및 re-export
+import type { PastWeekTask as PastWeekTaskImport, Collaborator as CollaboratorImport } from "@/types/scrum";
+export type { PastWeekTask, Collaborator } from "@/types/scrum";
+
 export interface Database {
   public: {
     Tables: {
@@ -147,7 +151,7 @@ export interface Database {
           risk: RiskData;
           risks: string[];
           risk_level: number;
-          collaborators: Collaborator[];
+          collaborators: CollaboratorImport[];
           created_at: string;
           updated_at: string;
         };
@@ -166,7 +170,7 @@ export interface Database {
           risk?: RiskData;
           risks?: string[];
           risk_level?: number;
-          collaborators?: Collaborator[];
+          collaborators?: CollaboratorImport[];
           created_at?: string;
           updated_at?: string;
         };
@@ -185,7 +189,7 @@ export interface Database {
           risk?: RiskData;
           risks?: string[];
           risk_level?: number;
-          collaborators?: Collaborator[];
+          collaborators?: CollaboratorImport[];
           created_at?: string;
           updated_at?: string;
         };
@@ -329,24 +333,10 @@ export const WORKLOAD_LEVEL_COLORS: Record<
   burden: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
 };
 
-// JSON 필드 타입
-export interface PastWeekTask {
-  title: string;
-  progress: number;
-}
-
-export interface Collaborator {
-  name: string;
-  /** @deprecated - relations 배열을 사용하세요 */
-  relation?: "pair" | "pre" | "post";
-  /** 복수 관계 선택 */
-  relations?: ("pair" | "pre" | "post")[];
-}
-
 // snapshot_entries의 jsonb 컬럼 타입
 export interface PastWeekData {
-  tasks?: PastWeekTask[];
-  collaborators?: Collaborator[];
+  tasks?: PastWeekTaskImport[];
+  collaborators?: CollaboratorImport[];
 }
 
 export interface ThisWeekData {

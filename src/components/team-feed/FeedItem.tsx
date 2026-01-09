@@ -64,10 +64,16 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
     // Progress (저번 주 계획했던 작업들 - 진행률 포함)
     if (entry.pastWeek.tasks && entry.pastWeek.tasks.length > 0) {
       entry.pastWeek.tasks.forEach((task) => {
-        progressItems.push({
-          entry,
-          content: `${task.title}${task.progress > 0 ? ` (${task.progress}%)` : ""}`,
-        });
+        if (typeof task === 'string') {
+          progressItems.push({ entry, content: task });
+        } else {
+          const title = task.title || '';
+          const progress = task.progress || 0;
+          progressItems.push({
+            entry,
+            content: `${title}${progress > 0 ? ` (${progress}%)` : ""}`,
+          });
+        }
       });
     }
 
@@ -234,16 +240,20 @@ export function FeedItem({ data, searchQuery = "" }: FeedItemProps) {
                     Progress
                   </p>
                   <ul className="space-y-1 text-[#57606a]">
-                    {entry.pastWeek.tasks.map((task, idx) => (
-                      <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
-                        {highlightText(task.title, searchQuery)}
-                        {task.progress > 0 && (
-                          <span className="ml-1 text-[11px] text-[#8c959f]">
-                            ({task.progress}%)
-                          </span>
-                        )}
-                      </li>
-                    ))}
+                    {entry.pastWeek.tasks.map((task, idx) => {
+                      const taskTitle = typeof task === 'string' ? task : (task.title || '');
+                      const taskProgress = typeof task === 'string' ? 0 : (task.progress || 0);
+                      return (
+                        <li key={idx} className="text-xs leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0">
+                          {highlightText(taskTitle, searchQuery)}
+                          {taskProgress > 0 && (
+                            <span className="ml-1 text-[11px] text-[#8c959f]">
+                              ({taskProgress}%)
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}

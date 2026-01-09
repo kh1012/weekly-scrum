@@ -10,3 +10,4 @@ export async function getPlansChangeHistoryAction(
 ): Promise<ChangeHistoryResponse> {
   return await getPlansChangeHistory(workspaceId);
 }
+

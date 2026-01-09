@@ -50,19 +50,28 @@ export function InfiniteFeedList({
         }
 
         // Progress (thisWeek.tasks)
-        if (entry.thisWeek.tasks?.some((task) => task.toLowerCase().includes(query))) {
+        if (entry.thisWeek.tasks?.some((task) => {
+          const taskText = typeof task === 'string' ? task : (task.title || '');
+          return taskText.toLowerCase().includes(query);
+        })) {
           return true;
         }
 
         // Next (pastWeek.tasks)
         if (
-          entry.pastWeek.tasks?.some((task) => task.title.toLowerCase().includes(query))
+          entry.pastWeek.tasks?.some((task) => {
+            const taskTitle = typeof task === 'string' ? task : (task.title || '');
+            return taskTitle.toLowerCase().includes(query);
+          })
         ) {
           return true;
         }
 
         // Risk
-        if (entry.risks.some((risk) => risk.toLowerCase().includes(query))) {
+        if (entry.risks.some((risk) => {
+          const riskText = typeof risk === 'string' ? risk : (risk.title || risk.note || '');
+          return riskText.toLowerCase().includes(query);
+        })) {
           return true;
         }
 

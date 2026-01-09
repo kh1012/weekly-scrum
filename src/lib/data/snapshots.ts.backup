@@ -1,5 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
-import type { PastWeekTask, Collaborator } from "@/types/scrum";
+
+// 간소화된 타입 정의 (Supabase 스키마와 동기화 필요)
+export interface PastWeekTask {
+  title: string;
+  progress: number;
+}
+
+export interface Collaborator {
+  name: string;
+  relation: "pair" | "pre" | "post";
+  relations?: ("pair" | "pre" | "post")[];
+}
 
 export interface SnapshotEntry {
   id: string;

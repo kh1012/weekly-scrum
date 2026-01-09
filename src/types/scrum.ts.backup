@@ -16,7 +16,7 @@ export type RiskLevel = 0 | 1 | 2 | 3;
 export type Relation = "pair" | "pre" | "post";
 
 /**
- * 협업자 타입 (통합)
+ * 협업자 타입
  * - relation: 단일 값 (기존 코드 호환)
  * - relations: 배열 (v2, 복수 선택 지원)
  */
@@ -29,40 +29,11 @@ export interface Collaborator {
 }
 
 /**
- * 리스크 항목 타입 (통합)
- */
-export interface RiskItem {
-  title?: string;
-  note?: string;
-  level?: string;
-}
-
-/**
- * Past Week Task 타입 (통합)
- * - DB 및 대부분의 코드에서 사용
+ * v2 Past Week Task 타입
  */
 export interface PastWeekTask {
   title: string;
   progress: number; // 0-100
-}
-
-/**
- * Past Week Task 타입 (확장, teamFeed용)
- * - progress와 note가 선택적일 수 있는 경우
- */
-export interface PastWeekTaskExtended extends PastWeekTask {
-  progress: number;
-  note?: string;
-}
-
-/**
- * Past Week Task 타입 (느슨한 버전, 파싱용)
- * - teamFeed에서 다양한 형식을 처리할 때 사용
- */
-export interface PastWeekTaskLoose {
-  title: string;
-  progress?: number;
-  note?: string;
 }
 
 /**
