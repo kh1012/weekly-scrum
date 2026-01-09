@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { formatWeekRange } from "@/lib/date/isoWeek";
+import { formatWeekRange } from "@/lib/utils/date";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { LoadingButton, SmallLoadingSpinner } from "@/components/common/LoadingButton";
 

@@ -8,7 +8,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentISOWeek, getPreviousISOWeek } from "@/lib/date/isoWeek";
+import { getCurrentISOWeek, getPreviousISOWeek } from "@/lib/utils/date";
 
 export interface RecentSnapshotEntry {
   id: string;

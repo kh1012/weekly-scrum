@@ -13,7 +13,7 @@ import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
-import { getCurrentISOWeek } from "@/lib/date/isoWeek";
+import { getCurrentISOWeek } from "@/lib/utils/date";
 
 interface PersonalDashboardProps {
   userName?: string;

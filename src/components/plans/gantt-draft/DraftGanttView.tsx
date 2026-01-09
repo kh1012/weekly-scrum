@@ -36,7 +36,7 @@ import { SaveProgressModal, SaveStep, LogEntry } from "./SaveProgressModal";
 import { commitFeaturePlans, commitFlags } from "./commitService";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
-import { formatRelativeTime } from "@/lib/utils/relativeTime";
+import { formatRelativeTime } from "@/lib/utils/date";
 import { GanttSkeleton } from "./GanttSkeleton";
 import {
   buildFlatTree,

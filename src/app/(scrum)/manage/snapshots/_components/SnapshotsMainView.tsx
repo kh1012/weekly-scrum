@@ -16,7 +16,7 @@ import { SnapshotList } from "./SnapshotList";
 import { WeekMetaPanel } from "./WeekMetaPanel";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { LoadingButton } from "@/components/common/LoadingButton";
-import { getCurrentISOWeek, getWeekStartDateString } from "@/lib/date/isoWeek";
+import { getCurrentISOWeek, getWeekStartDateString } from "@/lib/utils/date";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
 import { NewEntryModal } from "@/components/weekly-scrum/manage/NewEntryModal";
 import { ToastProvider, useToast } from "@/components/weekly-scrum/manage/Toast";

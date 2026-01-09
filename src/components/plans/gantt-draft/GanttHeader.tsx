@@ -29,7 +29,7 @@ import {
   RefreshIcon,
 } from "@/components/common/Icons";
 import { ConfirmDiscardModal } from "./ConfirmDiscardModal";
-import { formatRelativeTime } from "@/lib/utils/relativeTime";
+import { formatRelativeTime } from "@/lib/utils/date";
 import { showToast, showInactivityWarningToast } from "./Toast";
 import { MoreOptionsMenu } from "./MoreOptionsMenu";
 import { ChangeHistoryButton } from "./ChangeHistoryButton";

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { getWeekStartDateString } from "@/lib/date/isoWeek";
+import { getWeekStartDateString } from "@/lib/utils/date";
 import { getMemberNames } from "@/lib/data/profiles";
 import { getAllMetaOptions } from "@/lib/data/snapshotMetaOptions";
 import { EditSnapshotsView } from "./_components/EditSnapshotsView";

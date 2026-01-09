@@ -11,7 +11,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import { formatWeekRange, formatWeekRangeCompact } from "@/lib/date/isoWeek";
+import { formatWeekRange, formatWeekRangeCompact } from "@/lib/utils/date";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { LoadingButton } from "@/components/common/LoadingButton";
 import {

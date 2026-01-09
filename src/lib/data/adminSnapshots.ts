@@ -6,7 +6,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { GnbParams } from "@/lib/ui/gnbParams";
-import { getWeekStartDateString, getWeekEndDateString } from "@/lib/date/isoWeek";
+import { getWeekStartDateString, getWeekEndDateString } from "@/lib/utils/date";
 
 export interface AdminSnapshotListItem {
   id: string;

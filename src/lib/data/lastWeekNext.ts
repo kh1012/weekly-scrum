@@ -3,7 +3,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { getPreviousISOWeek, getWeekStartDateString } from "@/lib/date/isoWeek";
+import { getPreviousISOWeek, getWeekStartDateString } from "@/lib/utils/date";
 
 export interface LastWeekNextItem {
   id: string;

@@ -7,7 +7,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { getWeekDateRange } from "@/lib/date/isoWeek";
+import { getWeekDateRange } from "@/lib/utils/date";
 import { listWorkspaceMembers } from "./members";
 import type { PastWeekTask } from "@/types/scrum";
 

@@ -12,7 +12,7 @@ import type { WorkloadLevel } from "@/lib/supabase/types";
 import { WORKLOAD_LEVEL_LABELS } from "@/lib/supabase/types";
 import { LeafIcon, BoltIcon, FireIcon } from "@/components/common/Icons";
 import { LoadingButton } from "@/components/common/LoadingButton";
-import { formatWeekRangeCompact } from "@/lib/date/isoWeek";
+import { formatWeekRangeCompact } from "@/lib/utils/date";
 
 interface WorkloadLevelModalProps {
   isOpen: boolean;

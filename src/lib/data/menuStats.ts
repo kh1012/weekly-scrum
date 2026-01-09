@@ -3,7 +3,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentISOWeek } from "@/lib/date/isoWeek";
+import { getCurrentISOWeek } from "@/lib/utils/date";
 
 export interface MenuStats {
   feedbacks_count: number;
