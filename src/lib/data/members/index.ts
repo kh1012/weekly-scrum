@@ -128,3 +128,7 @@ export async function searchWorkspaceMembers({
     return name.includes(lowerQuery) || email.includes(lowerQuery);
   });
 }
+
+// Re-exports for consolidated access
+export * from "./profiles";
+export * from "./workspaceMembers";

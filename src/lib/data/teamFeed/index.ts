@@ -421,3 +421,6 @@ export async function getActivityChartData(
 
   return { activityData };
 }
+
+// Re-exports for consolidated access
+export * from "./insights";

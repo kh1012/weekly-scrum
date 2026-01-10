@@ -259,3 +259,13 @@ export async function getAvailableWeeks(
   }));
 }
 
+
+// Re-exports for consolidated access
+export * from "./adminSnapshots";
+export * from "./mySnapshotEntries";
+export * from "./mySnapshots";
+export * from "./mySnapshotTimeline";
+export * from "./snapshotMetaOptions";
+export * from "./snapshotTimelineUtils";
+export * from "./supabaseSnapshots";
+export * from "./lastWeekNext";
