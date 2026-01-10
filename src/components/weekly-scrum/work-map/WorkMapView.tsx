@@ -8,6 +8,9 @@ import { DirectoryTree, PersonTree } from "./DirectoryTree";
 import { CollaborationNetworkV2 } from "./CollaborationNetworkV2";
 import { SnapshotList } from "./SnapshotList";
 import { useWorkMapPersistence } from "./persistence";
+import { useWorkMapResize } from "./useWorkMapResize";
+import { useWorkMapMobile } from "./useWorkMapMobile";
+import { useWorkMapSelection } from "./useWorkMapSelection";
 import { useScrumContext } from "@/context/ScrumContext";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 
@@ -107,164 +110,41 @@ export function WorkMapView({ items }: WorkMapViewProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOptionsOpen]);
 
-  // 트리 너비 조절 상태 (기본 450px, Tailwind의 w-[450px]에 해당)
-  const [treeWidth, setTreeWidth] = useState(450);
-  const isResizing = useRef(false);
+  // 리사이즈 hooks
+  const {
+    treeWidth,
+    networkHeight,
+    handleTreeMouseDown,
+    handleNetworkMouseDown,
+  } = useWorkMapResize();
 
-  // 네트워크 영역 높이 조절 상태 (기본 672px, 최대 960px)
-  const [networkHeight, setNetworkHeight] = useState(672);
-  const isNetworkResizing = useRef(false);
+  // 모바일 hooks
+  const { isMobile, mobileView, handleBackToTree, showMobileDetail } =
+    useWorkMapMobile();
 
-  // 모바일 관련 상태
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobileView, setMobileView] = useState<MobileView>("tree");
-
-  // 모바일 감지
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // 리사이즈 핸들러
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      isResizing.current = true;
-      e.preventDefault();
-
-      const startX = e.clientX;
-      const startWidth = treeWidth;
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!isResizing.current) return;
-        const delta = e.clientX - startX;
-        // 최소 280px, 최대 700px
-        const newWidth = Math.max(280, Math.min(700, startWidth + delta));
-        setTreeWidth(newWidth);
-      };
-
-      const handleMouseUp = () => {
-        isResizing.current = false;
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    },
-    [treeWidth]
-  );
-
-  // 현재 선택된 레벨과 아이템 (프로젝트 뷰)
-  const getSelectedItems = (): ScrumItem[] => {
-    if (!selection.project) return [];
-
-    // 피쳐 레벨 선택
-    if (selection.module && selection.feature) {
-      const feature = getFeatureByName(
-        selection.project,
-        selection.module,
-        selection.feature
-      );
-      return feature?.items || [];
-    }
-
-    // 모듈 레벨 선택
-    if (selection.module) {
-      const module = getModuleByName(selection.project, selection.module);
-      return module?.items || [];
-    }
-
-    // 프로젝트 레벨 선택
-    const project = getProjectByName(selection.project);
-    return project?.items || [];
-  };
-
-  // 현재 선택된 피쳐 아이템 (사람 뷰)
-  const selectedPersonFeatureItems =
-    personSelection.person &&
-    personSelection.domain &&
-    personSelection.project &&
-    personSelection.module &&
-    personSelection.feature
-      ? getPersonFeatureItems(
-          personSelection.person,
-          personSelection.domain,
-          personSelection.project,
-          personSelection.module,
-          personSelection.feature
-        )
-      : [];
-
-  // 현재 활성화된 피쳐 아이템 (뷰 모드에 따라)
-  const activeFeatureItems =
-    viewMode === "project" ? getSelectedItems() : selectedPersonFeatureItems;
-
-  // 선택 레벨 표시용 문자열
-  const getSelectionLabel = () => {
-    if (!selection.project) return null;
-    if (selection.feature)
-      return `${selection.project} / ${selection.module} / ${selection.feature}`;
-    if (selection.module) return `${selection.project} / ${selection.module}`;
-    return selection.project;
-  };
-
-  // 피쳐 선택 핸들러 (프로젝트 뷰)
-  const handleFeatureSelect = (
-    project: string,
-    module: string,
-    feature: string
-  ) => {
-    setSelection({ project, module, feature });
-    // 모바일에서는 detail 뷰로 전환
-    if (isMobile) {
-      setMobileView("detail");
-    }
-  };
-
-  // 프로젝트 보기 핸들러
-  const handleProjectView = (project: string) => {
-    setSelection({ project, module: null, feature: null });
-    if (isMobile) {
-      setMobileView("detail");
-    }
-  };
-
-  // 모듈 보기 핸들러
-  const handleModuleView = (project: string, module: string) => {
-    setSelection({ project, module, feature: null });
-    if (isMobile) {
-      setMobileView("detail");
-    }
-  };
-
-  // 피쳐 선택 핸들러 (사람 뷰)
-  const handlePersonFeatureSelect = (
-    person: string,
-    domain: string,
-    project: string,
-    module: string,
-    feature: string
-  ) => {
-    setPersonSelection({ person, domain, project, module, feature });
-    // 모바일에서는 detail 뷰로 전환
-    if (isMobile) {
-      setMobileView("detail");
-    }
-  };
-
-  // 모바일에서 트리 뷰로 돌아가기
-  const handleBackToTree = () => {
-    setMobileView("tree");
-  };
-
-  // 선택된 피쳐의 협업자 존재 여부
-  const hasCollaborators = activeFeatureItems.some(
-    (item) => item.collaborators && item.collaborators.length > 0
-  );
+  // 선택 로직 hooks
+  const {
+    getSelectedItems,
+    selectedPersonFeatureItems,
+    activeFeatureItems,
+    getSelectionLabel,
+    handleFeatureSelect,
+    handleProjectView,
+    handleModuleView,
+    handlePersonFeatureSelect,
+    hasCollaborators,
+  } = useWorkMapSelection({
+    selection,
+    setSelection,
+    personSelection,
+    setPersonSelection,
+    viewMode,
+    getFeatureByName,
+    getModuleByName,
+    getProjectByName,
+    getPersonFeatureItems,
+    onMobileDetail: showMobileDetail,
+  });
 
   // 뷰 모드 토글
   const toggleViewMode = () => {
@@ -790,7 +670,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
       {/* 리사이즈 핸들 */}
       <div
         className="w-1 flex-shrink-0 cursor-col-resize group relative"
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTreeMouseDown}
       >
         <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
           <div
@@ -938,35 +818,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
                 {/* 네트워크 높이 조절 핸들 */}
                 <div
                   className="h-4 flex-shrink-0 cursor-row-resize group flex items-center justify-center"
-                  onMouseDown={(e) => {
-                    isNetworkResizing.current = true;
-                    e.preventDefault();
-
-                    const startY = e.clientY;
-                    const startHeight = networkHeight;
-
-                    const handleMouseMove = (moveE: MouseEvent) => {
-                      if (!isNetworkResizing.current) return;
-                      const delta = moveE.clientY - startY;
-                      const newHeight = Math.max(
-                        250,
-                        Math.min(960, startHeight + delta)
-                      );
-                      setNetworkHeight(newHeight);
-                    };
-
-                    const handleMouseUp = () => {
-                      isNetworkResizing.current = false;
-                      document.removeEventListener(
-                        "mousemove",
-                        handleMouseMove
-                      );
-                      document.removeEventListener("mouseup", handleMouseUp);
-                    };
-
-                    document.addEventListener("mousemove", handleMouseMove);
-                    document.addEventListener("mouseup", handleMouseUp);
-                  }}
+                  onMouseDown={handleNetworkMouseDown}
                 >
                   <div
                     className="w-12 h-1 rounded-full transition-colors group-hover:bg-blue-400"
