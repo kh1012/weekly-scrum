@@ -19,7 +19,7 @@ interface PageProps {
 
 /**
  * Alignment Page
- * 
+ *
  * Personal Space > Alignment
  * Plans와 Snapshot Entries를 타임라인 기준으로 시계열 형태로 표시
  * - /plans/gantt와 동일한 간트 차트 UI
@@ -28,20 +28,24 @@ interface PageProps {
  */
 export default async function AlignmentPage({ searchParams }: PageProps) {
   const supabase = await createClient();
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) {
     redirect("/login");
   }
 
   // searchParams에서 필터 파라미터 확인
   const params = await searchParams;
-  const initialFilter = (params.filter === "plans" || params.filter === "snapshots") 
-    ? params.filter 
-    : "all";
+  const initialFilter =
+    params.filter === "plans" || params.filter === "snapshots"
+      ? params.filter
+      : "all";
   const initialEnableAlignmentCheck = params.enableAlignmentCheck === "true";
-  const initialViewMode = params.viewMode === "summarized" ? "summarized" : "detailed";
+  const initialViewMode =
+    params.viewMode === "summarized" ? "summarized" : "detailed";
 
   // 프로필 조회와 데이터 조회를 병렬로 실행
   const [profileResult, alignmentData] = await Promise.all([
@@ -55,7 +59,7 @@ export default async function AlignmentPage({ searchParams }: PageProps) {
       userId: user.id,
     }),
   ]);
-  
+
   const userName = profileResult.data?.display_name;
   const { items, members } = alignmentData;
 
@@ -71,4 +75,3 @@ export default async function AlignmentPage({ searchParams }: PageProps) {
     />
   );
 }
-
