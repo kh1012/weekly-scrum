@@ -50,7 +50,7 @@ export function MyDashboardView() {
   if (!currentData) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LogoLoadingSpinner title="대시보드를 불러오는 중" />
+        <LogoLoadingSpinner />
       </div>
     );
   }

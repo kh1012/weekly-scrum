@@ -104,8 +104,6 @@ function AuthCallbackContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <LogoLoadingSpinner
-        title="인증 처리 중입니다"
-        description="잠시만 기다려주세요."
         className="min-h-screen"
       />
     </div>
@@ -119,8 +117,6 @@ function AuthCallbackFallback() {
   return (
     <div className="min-h-screen bg-gray-50">
       <LogoLoadingSpinner
-        title="로딩 중..."
-        description=""
         className="min-h-screen"
       />
     </div>

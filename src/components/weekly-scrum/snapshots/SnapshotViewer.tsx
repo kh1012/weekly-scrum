@@ -250,7 +250,7 @@ export function SnapshotViewer() {
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center h-48">
-        <LogoLoadingSpinner title="스냅샷을 불러오는 중" />
+        <LogoLoadingSpinner />
       </div>
     );
   }

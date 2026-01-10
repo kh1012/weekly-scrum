@@ -80,8 +80,6 @@ export default function SelectWorkspacePage() {
   if (isLoading) {
     return (
       <LogoLoadingSpinner
-        title="워크스페이스 로딩 중..."
-        description="잠시만 기다려주세요."
         className="min-h-screen bg-gray-50"
       />
     );

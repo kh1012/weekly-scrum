@@ -225,10 +225,7 @@ export function CollaboratorGraphView({
           >
             <div className="h-full w-full flex items-center justify-center">
               {isLoadingEntries ? (
-                <LogoLoadingSpinner
-                  title="협업 데이터를 불러오는 중입니다"
-                  description="잠시만 기다려주세요."
-                />
+                <LogoLoadingSpinner />
               ) : entriesError ? (
                 <div className="text-center p-4">
                   <p className="text-xs text-red-600 font-medium">

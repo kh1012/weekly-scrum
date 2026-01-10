@@ -9,8 +9,6 @@ import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpin
 export default function FeedbacksLoading() {
   return (
     <LogoLoadingSpinner
-      title="피드백을 불러오는 중입니다"
-      description="잠시만 기다려주세요."
       className="min-h-[calc(100vh-5rem)]"
     />
   );

@@ -426,8 +426,6 @@ export function WeekTimeline({
     return (
       <div className={`flex flex-col ${className}`}>
         <LogoLoadingSpinner
-          title="주차 정보 불러오는 중"
-          description="잠시만 기다려주세요"
           className="py-12"
         />
       </div>

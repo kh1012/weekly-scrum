@@ -158,7 +158,7 @@ export function WorkMapView({ items }: WorkMapViewProps) {
         className="flex items-center justify-center"
         style={{ height: "calc(100vh - 120px)", minHeight: "600px" }}
       >
-        <LogoLoadingSpinner title="Work Map을 불러오는 중" />
+        <LogoLoadingSpinner />
       </div>
     );
   }

@@ -537,8 +537,6 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <LogoLoadingSpinner
-          title="로딩 중..."
-          description=""
           className="min-h-screen bg-gray-50"
         />
       }

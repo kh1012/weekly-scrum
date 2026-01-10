@@ -87,10 +87,7 @@ export function MySnapshotTimelineSection(props: MySnapshotTimelineSectionProps)
           <div className="w-full">
             <div className="max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8">
               <div className="bg-white border border-[#d0d7de] rounded-md p-12">
-                <LogoLoadingSpinner
-                  title="타임라인을 불러오는 중"
-                  description="잠시만 기다려주세요"
-                />
+                <LogoLoadingSpinner />
               </div>
             </div>
           </div>

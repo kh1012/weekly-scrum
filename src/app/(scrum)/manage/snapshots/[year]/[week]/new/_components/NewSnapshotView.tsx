@@ -921,10 +921,7 @@ function NewSnapshotViewInner({
 
           {/* 로딩 콘텐츠 */}
           <div className="relative">
-            <LogoLoadingSpinner
-              title="데이터를 불러오는 중입니다"
-              description="선택한 주차의 스냅샷을 준비하고 있습니다..."
-            />
+            <LogoLoadingSpinner />
           </div>
         </div>
       );

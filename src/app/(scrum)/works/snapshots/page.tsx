@@ -15,7 +15,7 @@ export default function SnapshotsPage() {
   if (!currentData) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <LogoLoadingSpinner title="스냅샷을 불러오는 중" />
+        <LogoLoadingSpinner />
       </div>
     );
   }

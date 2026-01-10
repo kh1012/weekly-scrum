@@ -11,8 +11,6 @@ import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpin
 export default function MyPageLoading() {
   return (
     <LogoLoadingSpinner
-      title="대시보드를 불러오는 중입니다"
-      description="잠시만 기다려주세요."
       className="min-h-[calc(100vh-5rem)]"
     />
   );

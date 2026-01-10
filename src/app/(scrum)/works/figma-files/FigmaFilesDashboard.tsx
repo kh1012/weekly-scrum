@@ -137,8 +137,6 @@ export function FigmaFilesDashboard({ workspaceId, userId }: Props) {
   if (loading) {
     return (
       <LogoLoadingSpinner
-        title="Figma 파일을 불러오는 중입니다"
-        description="잠시만 기다려주세요."
         className="min-h-[400px]"
       />
     );

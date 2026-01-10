@@ -9,8 +9,6 @@ export default function Loading() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <LogoLoadingSpinner
-        title="페이지를 불러오는 중입니다"
-        description="잠시만 기다려주세요."
         className="h-auto"
       />
     </div>

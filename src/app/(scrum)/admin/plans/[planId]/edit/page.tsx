@@ -76,7 +76,7 @@ export default function EditPlanPage() {
 
   if (isLoading) {
     return (
-      <LogoLoadingSpinner title="로딩 중..." description="" className="py-12" />
+      <LogoLoadingSpinner className="py-12" />
     );
   }
 

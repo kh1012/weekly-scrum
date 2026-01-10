@@ -6,8 +6,6 @@ import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpin
 export default function AdminLoading() {
   return (
     <LogoLoadingSpinner
-      title="로딩 중..."
-      description=""
       className="min-h-[50vh]"
     />
   );

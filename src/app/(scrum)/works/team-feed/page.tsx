@@ -77,10 +77,7 @@ export default async function TeamFeedPage({ searchParams }: PageProps) {
 function LoadingSkeleton() {
     return (
     <div className="h-full flex items-center justify-center">
-      <LogoLoadingSpinner
-        title="팀 피드를 불러오는 중입니다"
-        description="잠시만 기다려주세요."
-      />
+      <LogoLoadingSpinner />
       </div>
     );
 }

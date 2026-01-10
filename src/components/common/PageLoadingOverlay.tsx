@@ -23,8 +23,6 @@ export function PageLoadingOverlay() {
       style={{ pointerEvents: "none" }}
     >
       <LogoLoadingSpinner
-        title="페이지를 불러오는 중입니다"
-        description="잠시만 기다려주세요."
         className="h-auto"
       />
     </div>
