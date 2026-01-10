@@ -23,8 +23,13 @@ import {
   CUSTOM_INPUT_VALUE,
 } from "@/lib/snapshotMetaOptions";
 import { ShortcutHint } from "./ShortcutHint";
+import {
+  inputStyles,
+  inputStylesCompact,
+  selectStyles,
+  selectStylesCompact,
+} from "./components/form/formStyles";
 
-// 섹션 타입 (PlainTextPreview와 동일)
 export type FormSection =
   | "meta"
   | "pastWeek"
@@ -38,69 +43,25 @@ export type FormSection =
 interface SnapshotEditFormProps {
   snapshot: TempSnapshot;
   onUpdate: (updates: Partial<TempSnapshot>) => void;
-  /** 컴팩트 모드: padding/margin 30~40% 축소 */
   compact?: boolean;
-  /** 1열 레이아웃 모드: 좁은 화면에서 메타 필드를 1열로 배치 */
   singleColumn?: boolean;
-  /** 섹션 포커스 콜백 */
   onFocusSection?: (section: FormSection | null) => void;
-  /** Name 필드 숨김 (로그인 기반에서는 profile.display_name 사용) */
   hideName?: boolean;
-  /** 외부에서 활성화된 섹션 (미리보기 클릭 등) */
   activeSection?: FormSection | null;
-  /** 주차 정보 (Progress/Next 표시용) */
   weekInfo?: {
     year: number;
     week: number;
-    pastWeekLabel: string; // "W51 (25.12.08 ~ 25.12.12)"
-    thisWeekLabel: string; // "W52 (25.12.15 ~ 25.12.19)"
+    pastWeekLabel: string;
+    thisWeekLabel: string;
   };
-  /** 메타 옵션 (DB에서 동적으로 로드) */
   nameOptions?: string[];
   domainOptions?: string[];
   projectOptions?: string[];
   moduleOptions?: string[];
   featureOptions?: string[];
-  /** 미리보기 모드 (3칼럼 레이아웃 강제) */
   forceThreeColumn?: boolean;
   onToggleThreeColumn?: (enabled: boolean) => void;
 }
-
-// 공통 입력 스타일 (일반 모드) - 편집 시 애니메이션
-const inputStyles = `
-  w-full px-4 py-3 
-  border border-gray-200 rounded-xl 
-  text-sm text-gray-900 placeholder-gray-400
-  bg-white
-  transition-all duration-200
-  focus:outline-none focus:border-blue-500 focus:typing-glow
-  hover:border-gray-300
-`;
-
-// 컴팩트 입력 스타일 - 편집 시 애니메이션
-const inputStylesCompact = `
-  w-full px-3 py-2 
-  border border-gray-200 rounded-lg 
-  text-xs text-gray-900 placeholder-gray-400
-  bg-white
-  transition-all duration-200
-  focus:outline-none focus:border-blue-500 focus:typing-glow
-  hover:border-gray-300
-`;
-
-const selectStyles = `
-  ${inputStyles}
-  appearance-none cursor-pointer
-  bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%239ca3af%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] 
-  bg-[length:1.5rem_1.5rem] bg-[right_0.75rem_center] bg-no-repeat pr-12
-`;
-
-const selectStylesCompact = `
-  ${inputStylesCompact}
-  appearance-none cursor-pointer
-  bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%239ca3af%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] 
-  bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10
-`;
 
 /**
  * 커스텀 드롭다운 컴포넌트 - GNB 필터 스타일

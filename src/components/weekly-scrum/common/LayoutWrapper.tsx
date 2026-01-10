@@ -80,26 +80,6 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/works/figma-files",
 ];
 
-// localStorage 키
-const LAST_VISITED_PAGE_KEY = "weekly-scrum-last-visited-page";
-
-// 저장 대상 페이지 목록 (복원 가능한 페이지)
-const SAVEABLE_PAGES = [
-  "/works/work-map",
-  "/works/snapshots",
-  "/my",
-  "/releases",
-  "/works/team-feed",
-];
-
-export function getLastVisitedPage(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return localStorage.getItem(LAST_VISITED_PAGE_KEY);
-  } catch {
-    return null;
-  }
-}
 
 /**
  * GitHub 스타일 Drawer Navigation
@@ -232,20 +212,6 @@ export function LayoutWrapper({
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // 현재 경로를 localStorage에 저장
-  useEffect(() => {
-    if (
-      SAVEABLE_PAGES.some((p) => pathname === p || pathname.startsWith(p + "/"))
-    ) {
-      try {
-        localStorage.setItem(LAST_VISITED_PAGE_KEY, pathname);
-      } catch {
-        // localStorage 사용 불가 시 무시
-      }
-    }
-  }, [pathname]);
-
-  // 페이지 변경 시 메뉴 닫기
   useEffect(() => {
     setIsMenuOpen(false);
   }, [pathname]);

@@ -10,11 +10,7 @@ export { CircularProgress } from "./CircularProgress";
 export { DomainBadge } from "./DomainBadge";
 export { EmptyState } from "./EmptyState";
 export { RiskLevelBadge, RiskLevelDot } from "./RiskLevelBadge";
-export {
-  LayoutWrapper,
-  MainContent,
-  getLastVisitedPage,
-} from "./LayoutWrapper";
+export { LayoutWrapper, MainContent } from "./LayoutWrapper";
 export { UserProfile } from "./UserProfile";
 export {
   LoadingSpinner,
