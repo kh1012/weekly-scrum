@@ -264,65 +264,22 @@ export interface ScrumStats {
 // ========================================
 
 /**
- * v2 ScrumItem을 v1 ScrumItem으로 변환
+ * @deprecated 이 파일의 변환 함수들은 @/lib/transforms/scrumData로 이동되었습니다.
+ * 하위 호환성을 위해 re-export합니다.
  */
-export function convertV2ToV1Item(item: ScrumItemV2): ScrumItem {
-  const avgProgress =
-    item.pastWeek.tasks.length > 0
-      ? Math.round(
-          item.pastWeek.tasks.reduce((sum, t) => sum + t.progress, 0) /
-            item.pastWeek.tasks.length
-        )
-      : 0;
+export {
+  convertV2ToV1Item,
+  convertV2ToV1Data,
+  convertV3ToV1Data,
+  migrateScrumItem,
+  migrateWeeklyScrumData,
+  convertEntryToScrumItem,
+  parseTaskCompletionRate,
+  calculateAvgProgress,
+  formatProgressTasks,
+} from "../lib/transforms/scrumData";
 
-  return {
-    name: item.name,
-    domain: item.domain,
-    project: item.project,
-    module: item.module || null,
-    topic: item.feature, // feature → topic 매핑
-    plan: item.pastWeek.tasks.map((t) => `${t.title} (${t.progress}%)`).join(", ") || "",
-    planPercent: avgProgress,
-    progress: item.pastWeek.tasks.map((t) => `${t.title} (${t.progress}%)`),
-    progressPercent: avgProgress,
-    reason: "",
-    next: item.thisWeek.tasks,
-    risk: item.pastWeek.risk,
-    riskLevel: item.pastWeek.riskLevel,
-    collaborators: item.pastWeek.collaborators,
-  };
-}
-
-/**
- * v2 WeeklyScrumData를 v1 WeeklyScrumData로 변환
- */
-export function convertV2ToV1Data(data: WeeklyScrumDataV2): WeeklyScrumData {
-  return {
-    year: data.year,
-    month: data.month,
-    week: data.week,
-    range: data.range,
-    schemaVersion: 1,
-    items: data.items.map(convertV2ToV1Item),
-  };
-}
-
-/**
- * v3 WeeklyScrumData를 v1 WeeklyScrumData로 변환
- */
-export function convertV3ToV1Data(data: WeeklyScrumDataV3): WeeklyScrumData {
-  // weekStart에서 월 추출
-  const [year, month] = data.weekStart.split("-").map(Number);
-  
-  return {
-    year: data.year,
-    month: month,
-    week: data.week,
-    range: `${data.weekStart} ~ ${data.weekEnd}`,
-    schemaVersion: 1,
-    items: data.items.map(convertV2ToV1Item),
-  };
-}
+export type { SnapshotEntryRaw, RawSnapshot } from "../lib/transforms/scrumData";
 
 /**
  * 데이터가 v2 스키마인지 확인
