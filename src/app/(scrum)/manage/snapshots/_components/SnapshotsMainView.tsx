@@ -22,6 +22,8 @@ import { NewEntryModal } from "@/components/weekly-scrum/manage/NewEntryModal";
 import { ToastProvider, useToast } from "@/components/weekly-scrum/manage/Toast";
 import type { WorkloadLevel } from "@/lib/supabase/types";
 import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
+import { useSnapshotsState } from "./hooks/useSnapshotsState";
+import { useSnapshotsFilters } from "./hooks/useSnapshotsFilters";
 
 interface SnapshotsMainViewProps {
   userId: string;
@@ -91,66 +93,21 @@ function SnapshotsMainViewInner({
   workspaceId,
 }: SnapshotsMainViewProps) {
   const router = useRouter();
-  const currentWeek = getCurrentISOWeek();
 
-  // localStorage에서 상태 복원
-  const [isStateInitialized, setIsStateInitialized] = useState(false);
-
-  // 주차 선택 상태 (현재 주차를 기본값으로)
-  const [selectedYear, setSelectedYear] = useState(currentWeek.year);
-  const [selectedWeek, setSelectedWeek] = useState(currentWeek.week);
-
-  // 컴포넌트 마운트 시 현재 주차로 자동 선택
-  useEffect(() => {
-    if (!isStateInitialized) return;
-
-    // localStorage에 저장된 값이 없으면 현재 주차로 설정
-    const savedState = localStorage.getItem(SNAPSHOTS_STATE_KEY);
-    if (!savedState) {
-      setSelectedYear(currentWeek.year);
-      setSelectedWeek(currentWeek.week);
-    }
-  }, [isStateInitialized, currentWeek.year, currentWeek.week]);
-
-  // 뷰 모드
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  // 전체 펼치기/접기 상태 (기본값: 펼침)
-  const [allExpanded, setAllExpanded] = useState(true);
-
-  // 선택 모드 상태
-  const [isSelectMode, setIsSelectMode] = useState(false);
-
-  // localStorage에서 상태 복원
-  useEffect(() => {
-    try {
-      const savedState = localStorage.getItem(SNAPSHOTS_STATE_KEY);
-      if (savedState) {
-        const parsed: SnapshotsViewState = JSON.parse(savedState);
-        if (parsed.selectedYear) setSelectedYear(parsed.selectedYear);
-        if (parsed.selectedWeek) setSelectedWeek(parsed.selectedWeek);
-        if (parsed.viewMode) setViewMode(parsed.viewMode);
-      }
-    } catch {
-      // 무시
-    }
-    setIsStateInitialized(true);
-  }, []);
-
-  // 상태 변경 시 localStorage에 저장
-  useEffect(() => {
-    if (!isStateInitialized) return;
-    try {
-      const stateToSave: SnapshotsViewState = {
-        selectedYear,
-        selectedWeek,
-        viewMode,
-      };
-      localStorage.setItem(SNAPSHOTS_STATE_KEY, JSON.stringify(stateToSave));
-    } catch {
-      // 무시
-    }
-  }, [selectedYear, selectedWeek, viewMode, isStateInitialized]);
+  // 상태 관리 hooks
+  const {
+    isStateInitialized,
+    selectedYear,
+    setSelectedYear,
+    selectedWeek,
+    setSelectedWeek,
+    viewMode,
+    setViewMode,
+    allExpanded,
+    setAllExpanded,
+    isSelectMode,
+    setIsSelectMode,
+  } = useSnapshotsState();
 
   // 스냅샷 목록
   const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([]);
@@ -166,89 +123,26 @@ function SnapshotsMainViewInner({
   const [weekStats, setWeekStats] = useState<WeekStatsData | null>(null);
   const [isMetaPanelExpanded, setIsMetaPanelExpanded] = useState(false);
 
-  // 필터 상태 (다중 선택)
-  const [projectFilters, setProjectFilters] = useState<Set<string>>(new Set());
-  const [moduleFilters, setModuleFilters] = useState<Set<string>>(new Set());
-  const [featureFilters, setFeatureFilters] = useState<Set<string>>(new Set());
-
-  // 필터 드롭다운 상태
-  const [isProjectFilterOpen, setIsProjectFilterOpen] = useState(false);
-  const [isModuleFilterOpen, setIsModuleFilterOpen] = useState(false);
-  const [isFeatureFilterOpen, setIsFeatureFilterOpen] = useState(false);
-
-  // 필터 토글 함수
-  const toggleProjectFilter = (project: string) => {
-    setProjectFilters((prev) => {
-      const next = new Set(prev);
-      if (next.has(project)) next.delete(project);
-      else next.add(project);
-      return next;
-    });
-  };
-  const toggleModuleFilter = (module: string) => {
-    setModuleFilters((prev) => {
-      const next = new Set(prev);
-      if (next.has(module)) next.delete(module);
-      else next.add(module);
-      return next;
-    });
-  };
-  const toggleFeatureFilter = (feature: string) => {
-    setFeatureFilters((prev) => {
-      const next = new Set(prev);
-      if (next.has(feature)) next.delete(feature);
-      else next.add(feature);
-      return next;
-    });
-  };
-
-  // 필터 옵션 추출
-  const filterOptions = useMemo(() => {
-    const projects = new Set<string>();
-    const modules = new Set<string>();
-    const features = new Set<string>();
-
-    snapshots.forEach((s) => {
-      s.entries.forEach((e) => {
-        if (e.project) projects.add(e.project);
-        if (e.module) modules.add(e.module);
-        if (e.feature) features.add(e.feature);
-      });
-    });
-
-    return {
-      projects: Array.from(projects).sort(),
-      modules: Array.from(modules).sort(),
-      features: Array.from(features).sort(),
-    };
-  }, [snapshots]);
-
-  // 필터링된 스냅샷
-  const filteredSnapshots = useMemo(() => {
-    return snapshots.filter((s) => {
-      const matchesProject =
-        projectFilters.size === 0 ||
-        s.entries.some((e) => projectFilters.has(e.project));
-      const matchesModule =
-        moduleFilters.size === 0 ||
-        s.entries.some((e) => e.module && moduleFilters.has(e.module));
-      const matchesFeature =
-        featureFilters.size === 0 ||
-        s.entries.some((e) => e.feature && featureFilters.has(e.feature));
-      return matchesProject && matchesModule && matchesFeature;
-    });
-  }, [snapshots, projectFilters, moduleFilters, featureFilters]);
-
-  // 필터 초기화
-  const clearFilters = () => {
-    setProjectFilters(new Set());
-    setModuleFilters(new Set());
-    setFeatureFilters(new Set());
-  };
-
-  const totalFilterCount =
-    projectFilters.size + moduleFilters.size + featureFilters.size;
-  const hasActiveFilters = totalFilterCount > 0;
+  // 필터 hooks
+  const {
+    projectFilters,
+    moduleFilters,
+    featureFilters,
+    isProjectFilterOpen,
+    setIsProjectFilterOpen,
+    isModuleFilterOpen,
+    setIsModuleFilterOpen,
+    isFeatureFilterOpen,
+    setIsFeatureFilterOpen,
+    toggleProjectFilter,
+    toggleModuleFilter,
+    toggleFeatureFilter,
+    filterOptions,
+    filteredSnapshots,
+    clearFilters,
+    totalFilterCount,
+    hasActiveFilters,
+  } = useSnapshotsFilters(snapshots);
 
   // 스냅샷 통계 계산
   const snapshotStats = useMemo(() => {
