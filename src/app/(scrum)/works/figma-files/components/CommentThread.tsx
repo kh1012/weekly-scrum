@@ -1,6 +1,7 @@
 /**
- * 댓글 스레드 컴포넌트 (GitHub PR 스타일)
- * - 부모 댓글 + 대댓글 계층 구조
+ * 댓글 스레드 컴포넌트 (인스타그램 스타일)
+ * - 컴팩트한 디자인
+ * - 계층 구조 표현
  */
 
 "use client";
@@ -61,19 +62,19 @@ export function CommentThread({ comment, onReply, submitting }: Props) {
   };
 
   return (
-    <div className="comment-thread">
+    <div className="comment-thread py-3">
       {/* 부모 댓글 */}
-      <div className="flex gap-2 px-3 py-2">
+      <div className="flex gap-3 px-4">
         {/* 아바타 */}
-        <div className="w-7 h-7 flex-shrink-0">
+        <div className="w-8 h-8 flex-shrink-0">
           {comment.user_img_url ? (
             <img
               src={comment.user_img_url}
               alt={comment.user_handle}
-              className="w-full h-full rounded-full"
+              className="w-full h-full rounded-full object-cover"
             />
           ) : (
-            <div className="w-full h-full rounded-full bg-[#FF4500] flex items-center justify-center text-white text-xs font-semibold">
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-semibold">
               {getInitials(comment.user_handle)}
             </div>
           )}
@@ -81,46 +82,44 @@ export function CommentThread({ comment, onReply, submitting }: Props) {
 
         {/* 댓글 내용 */}
         <div className="flex-1 min-w-0">
-          {/* 헤더 */}
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="font-semibold text-xs text-[#24292f]">
+          {/* 사용자명 + 메시지 */}
+          <div className="mb-1">
+            <span className="font-semibold text-sm text-slate-900 mr-2">
               {comment.user_handle}
             </span>
-            <span className="text-xs text-[#8590A2]">
-              · {formatRelativeTime(comment.created_at)}
+            <span className="text-sm text-slate-700 break-words">
+              {comment.message}
             </span>
-          </div>
-
-          {/* 내용 */}
-          <div className="text-sm text-[#1A1A1B] leading-relaxed mb-1 whitespace-pre-wrap break-words">
-            {comment.message}
           </div>
 
           {/* 액션 */}
-          <button
-            onClick={() => setShowReplyForm(!showReplyForm)}
-            className="text-xs font-semibold text-[#8590A2] hover:bg-[#f6f8fa] px-1.5 py-0.5 rounded transition-colors"
-          >
-            ↩ Reply
-          </button>
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span>{formatRelativeTime(comment.created_at)}</span>
+            <button
+              onClick={() => setShowReplyForm(!showReplyForm)}
+              className="font-semibold hover:text-slate-700 transition-colors"
+            >
+              답글 달기
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 대댓글 */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-9 border-l-2 border-[#EDEFF1] pl-3">
+        <div className="mt-3 ml-14 space-y-3">
           {comment.replies.map((reply) => (
-            <div key={reply.comment_id} className="flex gap-2 py-2">
+            <div key={reply.comment_id} className="flex gap-3 px-4">
               {/* 아바타 */}
-              <div className="w-6 h-6 flex-shrink-0">
+              <div className="w-7 h-7 flex-shrink-0">
                 {reply.user_img_url ? (
                   <img
                     src={reply.user_img_url}
                     alt={reply.user_handle}
-                    className="w-full h-full rounded-full"
+                    className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-full bg-[#0079D3] flex items-center justify-center text-white text-xs font-semibold">
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-xs font-semibold">
                     {getInitials(reply.user_handle)}
                   </div>
                 )}
@@ -128,19 +127,19 @@ export function CommentThread({ comment, onReply, submitting }: Props) {
 
               {/* 답글 내용 */}
               <div className="flex-1 min-w-0">
-                {/* 헤더 */}
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="font-semibold text-xs text-[#24292f]">
+                {/* 사용자명 + 메시지 */}
+                <div className="mb-1">
+                  <span className="font-semibold text-sm text-slate-900 mr-2">
                     {reply.user_handle}
                   </span>
-                  <span className="text-xs text-[#8590A2]">
-                    · {formatRelativeTime(reply.created_at)}
+                  <span className="text-sm text-slate-700 break-words">
+                    {reply.message}
                   </span>
                 </div>
 
-                {/* 내용 */}
-                <div className="text-sm text-[#1A1A1B] leading-relaxed whitespace-pre-wrap break-words">
-                  {reply.message}
+                {/* 시간 */}
+                <div className="text-xs text-slate-500">
+                  {formatRelativeTime(reply.created_at)}
                 </div>
               </div>
             </div>
@@ -150,7 +149,7 @@ export function CommentThread({ comment, onReply, submitting }: Props) {
 
       {/* 답글 작성 폼 */}
       {showReplyForm && (
-        <div className="ml-9 px-3 py-2">
+        <div className="mt-3 ml-14 px-4">
           <CommentForm
             onSubmit={handleReplySubmit}
             submitting={submitting}
@@ -162,4 +161,3 @@ export function CommentThread({ comment, onReply, submitting }: Props) {
     </div>
   );
 }
-

@@ -1,8 +1,7 @@
 /**
  * Figma 파일 상세 페이지 (Client Component)
- * - GitHub PR 스타일
- * - 댓글 계층 구조 표시
- * - 댓글 작성/답글
+ * - 인스타그램 스타일 댓글
+ * - 깔끔한 카드 레이아웃
  */
 
 "use client";
@@ -10,6 +9,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
+import { InlineSpinner } from "@/components/weekly-scrum/common/InlineSpinner";
 import { CommentThread } from "../components/CommentThread";
 import { CommentForm } from "../components/CommentForm";
 
@@ -95,7 +95,6 @@ export function FileDetailClient({ fileKey, userId }: Props) {
         throw new Error("Failed to post comment");
       }
 
-      // 댓글 목록 새로고침
       await fetchData();
     } catch (error) {
       console.error("Failed to post comment:", error);
@@ -134,56 +133,80 @@ export function FileDetailClient({ fileKey, userId }: Props) {
   if (!file) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-sm text-[#57606a]">파일을 찾을 수 없습니다.</div>
+        <div className="text-center">
+          <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p className="text-sm text-slate-600">파일을 찾을 수 없습니다.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-3">
+    <div className="max-w-4xl mx-auto p-6">
       {/* 뒤로 가기 */}
       <Link
         href="/works/figma-files"
-        className="inline-flex items-center gap-1 text-xs text-[#0079D3] hover:underline mb-2 font-medium"
+        className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-6 hover:underline transition-colors"
       >
-        ← Back to Files
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        목록으로 돌아가기
       </Link>
 
-      {/* 헤더 - Reddit 스타일 카드 */}
-      <div className="bg-white border border-[#EDEFF1] rounded mb-3 overflow-hidden">
-        <div className="px-3 py-2 border-b border-[#EDEFF1]">
-          <div className="flex items-start justify-between mb-1">
-            <h1 className="text-base font-semibold text-[#1A1A1B]">
-              {file.file_name}
-            </h1>
+      {/* 파일 정보 카드 */}
+      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden mb-6">
+        {/* 헤더 */}
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-slate-900 mb-2">
+                {file.file_name}
+              </h1>
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <span>{file.registered_by}</span>
+                <span>•</span>
+                <span>{formatRelativeTime(file.created_at)}</span>
+              </div>
+            </div>
             <a
               href={file.file_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-2 py-1 text-xs font-bold text-white bg-[#0079D3] rounded-full hover:bg-[#0060B6] transition-colors whitespace-nowrap ml-2"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap shadow-sm hover:shadow-md"
             >
-              Open in Figma →
+              Figma에서 열기
             </a>
-          </div>
-          <div className="text-xs text-[#8590A2]">
-            {file.registered_by} · {formatRelativeTime(file.created_at)}
           </div>
         </div>
 
-        {/* 댓글 카운트 */}
-        <div className="px-3 py-1.5 bg-[#F8F9FA] border-b border-[#EDEFF1]">
-          <span className="text-xs font-semibold text-[#1A1A1B]">
-            💬 {comments.length} Comments
-          </span>
+        {/* 댓글 헤더 */}
+        <div className="px-6 py-3 border-b border-slate-200 bg-white">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            댓글 {comments.length}개
+          </div>
         </div>
 
         {/* 댓글 목록 */}
         {comments.length === 0 ? (
-          <div className="text-center py-6 text-sm text-[#8590A2]">
-            아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!
+          <div className="text-center py-12">
+            <svg className="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p className="text-sm text-slate-600 mb-1">
+              아직 댓글이 없습니다
+            </p>
+            <p className="text-xs text-slate-500">
+              첫 번째 댓글을 작성해보세요
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-[#EDEFF1]">
+          <div className="divide-y divide-slate-100">
             {comments.map((comment) => (
               <CommentThread
                 key={comment.comment_id}
@@ -198,17 +221,17 @@ export function FileDetailClient({ fileKey, userId }: Props) {
         )}
 
         {/* 댓글 작성 폼 */}
-        <div className="px-3 py-2 border-t border-[#EDEFF1]">
-          <div className="text-xs font-medium text-[#1A1A1B] mb-1.5">
-            Add a comment
+        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50">
+          <div className="text-sm font-medium text-slate-700 mb-3">
+            댓글 작성
           </div>
           <CommentForm
             onSubmit={(message) => handleCommentSubmit(message)}
             submitting={submitting}
+            placeholder="댓글을 입력하세요..."
           />
         </div>
       </div>
     </div>
   );
 }
-

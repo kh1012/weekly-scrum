@@ -1,10 +1,13 @@
 /**
- * 댓글 작성 폼 (GitHub 스타일)
+ * 댓글 작성 폼 (인스타그램 스타일)
+ * - 컴팩트한 디자인
+ * - 자동 확장 textarea
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { InlineSpinner } from "@/components/weekly-scrum/common/InlineSpinner";
 
 interface Props {
   onSubmit: (message: string) => Promise<void>;
@@ -20,6 +23,16 @@ export function CommentForm({
   onCancel,
 }: Props) {
   const [message, setMessage] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // 자동 높이 조절
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [message]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,39 +44,40 @@ export function CommentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="border border-[#EDEFF1] rounded bg-white overflow-hidden">
-        {/* Textarea */}
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder={placeholder}
-          className="w-full min-h-[60px] p-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-          disabled={submitting}
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="flex items-start gap-2">
+      {/* Textarea */}
+      <textarea
+        ref={textareaRef}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1 min-h-[36px] max-h-[120px] px-3 py-2 text-sm border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+        disabled={submitting}
+        rows={1}
+      />
 
       {/* Actions */}
-      <div className="flex justify-end gap-2 mt-1.5">
+      <div className="flex items-center gap-1.5">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-2.5 py-1 text-xs font-bold text-[#1A1A1B] bg-white border border-[#EDEFF1] rounded-full hover:bg-[#f6f8fa] transition-colors"
+            className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
             disabled={submitting}
           >
-            Cancel
+            취소
           </button>
         )}
         <button
           type="submit"
-          className="px-3 py-1 text-xs font-bold text-white bg-[#0079D3] rounded-full hover:bg-[#0060B6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
           disabled={submitting || !message.trim()}
+          aria-busy={submitting}
         >
-          {submitting ? "..." : "Comment"}
+          {submitting && <InlineSpinner size={12} />}
+          {submitting ? "작성 중..." : "게시"}
         </button>
       </div>
     </form>
   );
 }
-
