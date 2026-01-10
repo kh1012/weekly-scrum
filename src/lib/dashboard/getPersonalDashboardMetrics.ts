@@ -75,10 +75,10 @@ export async function getPersonalDashboardMetrics({
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
   // ========================================
-  // 병렬 쿼리 실행 (A, B, C 섹션)
+  // 병렬 쿼리 실행 (모든 독립적인 쿼리를 한 번에)
   // ========================================
   
-  const [snapshotsResult, planAssigneesResult, visitsResult] =
+  const [snapshotsResult, entriesResult, plansResult, visitsResult] =
     await Promise.allSettled([
       // A) Snapshot 메트릭
       supabase
@@ -87,13 +87,21 @@ export async function getPersonalDashboardMetrics({
         .eq("workspace_id", workspaceId)
         .eq("author_id", userId),
       
-      // B) Plan 메트릭
+      // B) Snapshot Entries (모든 필요한 필드를 한 번에 조회)
+      supabase
+        .from("snapshot_entries")
+        .select("id, name, domain, project, module, feature, snapshot_id, created_at, updated_at, past_week")
+        .eq("workspace_id", workspaceId)
+        .eq("author_id", userId),
+      
+      // C) Plan 메트릭 (JOIN으로 한 번에 조회)
       supabase
         .from("plan_assignees")
-        .select("plan_id")
-        .eq("user_id", userId),
+        .select("plan_id, plans!inner(id, status)")
+        .eq("user_id", userId)
+        .eq("plans.workspace_id", workspaceId),
       
-      // C) Usage 메트릭
+      // D) Usage 메트릭
       supabase
         .from("menu_events")
         .select("page_path, occurred_at")
@@ -116,86 +124,69 @@ export async function getPersonalDashboardMetrics({
     : 0;
 
   const snapshotIds = snapshots?.map((s) => s.id) || [];
-  let entriesTotal = 0;
-  let entriesThisWeek = 0;
-  let entriesLastWeek = 0;
+  
+  // ========================================
+  // B) Entries 처리 (한 번에 조회한 데이터 재사용)
+  // ========================================
+  
+  const allEntries =
+    entriesResult.status === "fulfilled" ? entriesResult.value.data : null;
+  
+  // 스냅샷 ID로 필터링
+  const entries = allEntries?.filter((e) => snapshotIds.includes(e.snapshot_id)) || [];
+  
+  const entriesTotal = entries.length;
+
+  // 이번 주 & 지난 주 스냅샷 ID 분류
+  const thisWeekSnapshotIds = new Set(
+    snapshots
+      ?.filter(
+        (s) => s.year === currentWeek.year && s.week === currentWeekLabel
+      )
+      .map((s) => s.id)
+  );
+  const lastWeekSnapshotIds = new Set(
+    snapshots
+      ?.filter(
+        (s) => s.year === previousWeek.year && s.week === previousWeekLabel
+      )
+      .map((s) => s.id)
+  );
+
+  const entriesThisWeek = entries.filter((e) => thisWeekSnapshotIds.has(e.snapshot_id)).length;
+  const entriesLastWeek = entries.filter((e) => lastWeekSnapshotIds.has(e.snapshot_id)).length;
+
+  // 마지막 스냅샷 시각 (엔트리 기준)
   let lastSnapshotAt: string | null = null;
-
-  if (snapshotIds.length > 0) {
-    const { data: entries } = await supabase
-      .from("snapshot_entries")
-      .select("snapshot_id, created_at, updated_at")
-      .in("snapshot_id", snapshotIds);
-
-    entriesTotal = entries?.length || 0;
-
-    // 이번 주 & 지난 주 스냅샷 ID 분류
-    const thisWeekSnapshotIds = new Set(
-      snapshots
-        ?.filter(
-          (s) => s.year === currentWeek.year && s.week === currentWeekLabel
-        )
-        .map((s) => s.id)
+  if (entries.length > 0) {
+    const sortedEntries = [...entries].sort(
+      (a, b) =>
+        new Date(b.updated_at || b.created_at).getTime() -
+        new Date(a.updated_at || a.created_at).getTime()
     );
-    const lastWeekSnapshotIds = new Set(
-      snapshots
-        ?.filter(
-          (s) => s.year === previousWeek.year && s.week === previousWeekLabel
-        )
-        .map((s) => s.id)
-    );
-
-    entriesThisWeek =
-      entries?.filter((e) => thisWeekSnapshotIds.has(e.snapshot_id)).length ||
-      0;
-    entriesLastWeek =
-      entries?.filter((e) => lastWeekSnapshotIds.has(e.snapshot_id)).length ||
-      0;
-
-    // 마지막 스냅샷 시각 (엔트리 기준)
-    if (entries && entries.length > 0) {
-      const sortedEntries = entries.sort(
-        (a, b) =>
-          new Date(b.updated_at || b.created_at).getTime() -
-          new Date(a.updated_at || a.created_at).getTime()
-      );
-      lastSnapshotAt =
-        sortedEntries[0].updated_at || sortedEntries[0].created_at;
-    }
+    lastSnapshotAt =
+      sortedEntries[0].updated_at || sortedEntries[0].created_at;
   }
 
   // ========================================
-  // B) Plan Metrics 처리
+  // C) Plan Metrics 처리 (JOIN으로 한 번에 조회한 데이터 사용)
   // ========================================
 
   const planAssignees =
-    planAssigneesResult.status === "fulfilled"
-      ? planAssigneesResult.value.data
-      : null;
+    plansResult.status === "fulfilled" ? plansResult.value.data : null;
 
-  const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
-  let assignedTotal = 0;
-  let assignedActive = 0;
+  const assignedTotal = planAssignees?.length || 0;
 
-  if (assignedPlanIds.length > 0) {
-    const { data: plans } = await supabase
-      .from("plans")
-      .select("id, status")
-      .eq("workspace_id", workspaceId)
-      .in("id", assignedPlanIds);
-
-    assignedTotal = plans?.length || 0;
-
-    // Active Plans (status가 done/closed/completed가 아닌 것)
-    const completedStatuses = ["done", "closed", "completed"];
-    assignedActive =
-      plans?.filter(
-        (p) => !completedStatuses.includes(p.status?.toLowerCase() || "")
-      ).length || 0;
-  }
+  // Active Plans (status가 done/closed/completed가 아닌 것)
+  const completedStatuses = ["done", "closed", "completed"];
+  const assignedActive =
+    planAssignees?.filter((pa) => {
+      const plan = (pa as any).plans;
+      return !completedStatuses.includes(plan?.status?.toLowerCase() || "");
+    }).length || 0;
 
   // ========================================
-  // C) Usage Metrics 처리
+  // D) Usage Metrics 처리
   // ========================================
 
   let visits7dTotal = 0;
@@ -241,7 +232,7 @@ export async function getPersonalDashboardMetrics({
   }
 
   // ========================================
-  // D) Additional Data for Enhanced Dashboard (병렬 쿼리)
+  // E) Additional Data for Enhanced Dashboard (이미 조회한 entries 재사용)
   // ========================================
 
   let recentEntries: RecentSnapshotEntry[] = [];
@@ -253,140 +244,101 @@ export async function getPersonalDashboardMetrics({
     entryCount: number;
   }[] = [];
 
-  if (snapshotIds.length > 0) {
-    // 추가 데이터 쿼리를 병렬로 실행
-    const [recentEntriesResult, domainEntriesResult, trendEntriesResult] =
-      await Promise.allSettled([
-        // 1. 최근 스냅샷 엔트리 5개
-        supabase
-          .from("snapshot_entries")
-          .select(
-            "id, name, domain, project, module, feature, updated_at, created_at, snapshot_id"
-          )
-          .in("snapshot_id", snapshotIds)
-          .order("updated_at", { ascending: false })
-          .limit(5),
-        
-        // 2. 도메인/프로젝트 분포용 데이터
-        supabase
-          .from("snapshot_entries")
-          .select("domain, project")
-          .in("snapshot_id", snapshotIds),
-        
-        // 3. 주차별 추이용 데이터 (past_week 포함)
-        supabase
-          .from("snapshot_entries")
-          .select("snapshot_id, past_week")
-          .in("snapshot_id", snapshotIds),
-      ]);
+  if (entries.length > 0 && snapshots) {
+    // 1. 최근 엔트리 5개 (메모리에서 정렬)
+    const sortedEntries = [...entries].sort(
+      (a, b) =>
+        new Date(b.updated_at || b.created_at).getTime() -
+        new Date(a.updated_at || a.created_at).getTime()
+    );
+    
+    recentEntries = sortedEntries.slice(0, 5).map((e) => {
+      const snapshot = snapshots.find((s) => s.id === e.snapshot_id);
+      return {
+        id: e.id,
+        name: e.name,
+        domain: e.domain,
+        project: e.project,
+        module: e.module || "",
+        feature: e.feature || "",
+        updatedAt: e.updated_at || e.created_at,
+        year: snapshot?.year || 0,
+        week: snapshot?.week || "",
+      };
+    });
 
-    // 1. 최근 엔트리 처리
-    if (
-      recentEntriesResult.status === "fulfilled" &&
-      recentEntriesResult.value.data
-    ) {
-      recentEntries = recentEntriesResult.value.data.map((e) => {
-        const snapshot = snapshots?.find((s) => s.id === e.snapshot_id);
-        return {
-          id: e.id,
-          name: e.name,
-          domain: e.domain,
-          project: e.project,
-          module: e.module || "",
-          feature: e.feature || "",
-          updatedAt: e.updated_at || e.created_at,
-          year: snapshot?.year || 0,
-          week: snapshot?.week || "",
-        };
+    // 2. 도메인 분포 계산 (메모리 집계)
+    for (const entry of entries) {
+      const key =
+        entry.domain && entry.project
+          ? `${entry.domain} / ${entry.project}`
+          : entry.domain || entry.project || "미분류";
+      domainMap.set(key, (domainMap.get(key) || 0) + 1);
+    }
+
+    // 3. 주차별 추이 계산 (메모리 집계)
+    // 주차별 스냅샷 그룹핑
+    const weekMap = new Map<string, string[]>();
+    for (const snapshot of snapshots) {
+      const weekKey = `${snapshot.year}-${snapshot.week}`;
+      if (!weekMap.has(weekKey)) {
+        weekMap.set(weekKey, []);
+      }
+      weekMap.get(weekKey)!.push(snapshot.id);
+    }
+
+    // 스냅샷 ID -> 엔트리 매핑
+    const snapshotIdToEntries = new Map<string, typeof entries[0][]>();
+    for (const entry of entries) {
+      if (!snapshotIdToEntries.has(entry.snapshot_id)) {
+        snapshotIdToEntries.set(entry.snapshot_id, []);
+      }
+      snapshotIdToEntries.get(entry.snapshot_id)!.push(entry);
+    }
+
+    // 최근 8주 추출 및 집계
+    const sortedWeeks = Array.from(weekMap.keys())
+      .sort()
+      .reverse()
+      .slice(0, 8);
+
+    for (const weekKey of sortedWeeks.reverse()) {
+      const weekSnapshotIds = weekMap.get(weekKey) || [];
+
+      // 엔트리 수 계산
+      const weekEntries = weekSnapshotIds.flatMap(
+        (sid) => snapshotIdToEntries.get(sid) || []
+      );
+      const weekEntryCount = weekEntries.length;
+
+      weeklyTrend.push({
+        week: weekKey,
+        count: weekEntryCount,
       });
-    }
 
-    // 2. 도메인 분포 처리
-    if (
-      domainEntriesResult.status === "fulfilled" &&
-      domainEntriesResult.value.data
-    ) {
-      for (const entry of domainEntriesResult.value.data) {
-        const key =
-          entry.domain && entry.project
-            ? `${entry.domain} / ${entry.project}`
-            : entry.domain || entry.project || "미분류";
-        domainMap.set(key, (domainMap.get(key) || 0) + 1);
-      }
-    }
+      // 평균 진행률 계산
+      let totalProgress = 0;
+      let taskCount = 0;
 
-    // 3. 주차별 추이 처리
-    if (
-      trendEntriesResult.status === "fulfilled" &&
-      trendEntriesResult.value.data &&
-      snapshots &&
-      snapshots.length > 0
-    ) {
-      const allEntriesForTrend = trendEntriesResult.value.data;
+      for (const entry of weekEntries) {
+        const pastWeek = entry.past_week as any;
+        const tasks = pastWeek?.tasks || [];
 
-      // 주차별 스냅샷 그룹핑
-      const weekMap = new Map<string, string[]>();
-      for (const snapshot of snapshots) {
-        const weekKey = `${snapshot.year}-${snapshot.week}`;
-        if (!weekMap.has(weekKey)) {
-          weekMap.set(weekKey, []);
-        }
-        weekMap.get(weekKey)!.push(snapshot.id);
-      }
-
-      // 스냅샷 ID -> 엔트리 매핑
-      const snapshotIdToEntries = new Map<string, any[]>();
-      for (const entry of allEntriesForTrend) {
-        if (!snapshotIdToEntries.has(entry.snapshot_id)) {
-          snapshotIdToEntries.set(entry.snapshot_id, []);
-        }
-        snapshotIdToEntries.get(entry.snapshot_id)!.push(entry);
-      }
-
-      // 최근 8주 추출 및 집계
-      const sortedWeeks = Array.from(weekMap.keys())
-        .sort()
-        .reverse()
-        .slice(0, 8);
-
-      for (const weekKey of sortedWeeks.reverse()) {
-        const weekSnapshotIds = weekMap.get(weekKey) || [];
-
-        // 엔트리 수 계산
-        const weekEntries = weekSnapshotIds.flatMap(
-          (sid) => snapshotIdToEntries.get(sid) || []
-        );
-        const weekEntryCount = weekEntries.length;
-
-        weeklyTrend.push({
-          week: weekKey,
-          count: weekEntryCount,
-        });
-
-        // 평균 진행률 계산
-        let totalProgress = 0;
-        let taskCount = 0;
-
-        for (const entry of weekEntries) {
-          const pastWeek = entry.past_week as any;
-          const tasks = pastWeek?.tasks || [];
-
-          for (const task of tasks) {
-            if (typeof task.progress === "number") {
-              totalProgress += task.progress;
-              taskCount++;
-            }
+        for (const task of tasks) {
+          if (typeof task.progress === "number") {
+            totalProgress += task.progress;
+            taskCount++;
           }
         }
-
-        const avgProgress = taskCount > 0 ? totalProgress / taskCount : 0;
-
-        weeklyProgressTrend.push({
-          week: weekKey,
-          avgProgress: Math.round(avgProgress * 10) / 10,
-          entryCount: weekEntryCount,
-        });
       }
+
+      const avgProgress = taskCount > 0 ? totalProgress / taskCount : 0;
+
+      weeklyProgressTrend.push({
+        week: weekKey,
+        avgProgress: Math.round(avgProgress * 10) / 10,
+        entryCount: weekEntryCount,
+      });
     }
   }
 
