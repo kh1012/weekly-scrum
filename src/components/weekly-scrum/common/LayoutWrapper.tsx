@@ -80,7 +80,6 @@ const NO_PADDING_DYNAMIC_PATTERNS = [
   "/works/figma-files",
 ];
 
-
 /**
  * GitHub 스타일 Drawer Navigation
  */
@@ -211,6 +210,16 @@ export function LayoutWrapper({
 }: LayoutWrapperProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("weekly-scrum-last-visited-page");
+      } catch {
+        // localStorage 사용 불가 시 무시
+      }
+    }
+  }, []);
 
   useEffect(() => {
     setIsMenuOpen(false);
