@@ -234,9 +234,15 @@ export async function deleteSnapshot(snapshotId: string): Promise<void> {
 /**
  * 사용 가능한 주차 목록 조회
  */
-export async function getAvailableWeeks(
-  workspaceId: string
-): Promise<{ year: number; week: string; weekStart: string; weekEnd: string; key: string }[]> {
+export async function getAvailableWeeks(workspaceId: string): Promise<
+  {
+    year: number;
+    week: string;
+    weekStart: string;
+    weekEnd: string;
+    key: string;
+  }[]
+> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -258,7 +264,6 @@ export async function getAvailableWeeks(
     key: `${row.year}-${row.week}`,
   }));
 }
-
 
 // Re-exports for consolidated access
 export * from "./adminSnapshots";
