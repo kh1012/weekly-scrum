@@ -43,20 +43,21 @@ export default async function AlignmentPage({ searchParams }: PageProps) {
   const initialEnableAlignmentCheck = params.enableAlignmentCheck === "true";
   const initialViewMode = params.viewMode === "summarized" ? "summarized" : "detailed";
 
-  // 사용자 정보 조회
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("user_id", user.id)
-    .single();
+  // 프로필 조회와 데이터 조회를 병렬로 실행
+  const [profileResult, alignmentData] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", user.id)
+      .single(),
+    getAlignmentGanttData({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      userId: user.id,
+    }),
+  ]);
   
-  const userName = profile?.display_name;
-
-  // Alignment 간트 차트 데이터 조회
-  const { items, members } = await getAlignmentGanttData({
-    workspaceId: DEFAULT_WORKSPACE_ID,
-    userId: user.id,
-  });
+  const userName = profileResult.data?.display_name;
+  const { items, members } = alignmentData;
 
   return (
     <AlignmentGanttClient
