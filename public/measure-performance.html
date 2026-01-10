@@ -198,6 +198,105 @@
       font-weight: 600;
       color: #24292f;
     }
+    
+    .routes-container {
+      margin-top: 24px;
+    }
+    
+    .route-section {
+      margin-bottom: 32px;
+      padding: 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #fafbfc;
+    }
+    
+    .route-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d0d7de;
+    }
+    
+    .route-title {
+      font-weight: 600;
+      font-size: 16px;
+      color: #24292f;
+    }
+    
+    .route-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: #57606a;
+    }
+    
+    .route-progress-container {
+      margin: 12px 0;
+    }
+    
+    .route-progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: #57606a;
+    }
+    
+    .route-progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #f6f8fa;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .route-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0969da, #1f6feb);
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .route-results {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    
+    .route-metric {
+      padding: 8px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #d0d7de;
+    }
+    
+    .route-metric-label {
+      font-size: 11px;
+      color: #57606a;
+      margin-bottom: 2px;
+    }
+    
+    .route-metric-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0969da;
+    }
+    
+    .route-metric-unit {
+      font-size: 12px;
+      color: #57606a;
+      margin-left: 2px;
+    }
   </style>
 </head>
 <body>
@@ -207,7 +306,8 @@
     <div class="controls">
       <input type="text" id="targetUrl" value="/my" placeholder="측정할 페이지 경로">
       <input type="number" id="iterations" value="100" min="1" max="500" placeholder="반복 횟수">
-      <button id="startBtn" onclick="startTest()">테스트 시작</button>
+      <button id="startBtn" onclick="startTest()">단일 테스트 시작</button>
+      <button id="startAllBtn" onclick="startAllRoutesTest()">전체 라우트 테스트</button>
       <button id="stopBtn" onclick="stopTest()" disabled>중단</button>
       <button onclick="exportResults()">결과 저장</button>
     </div>
@@ -218,6 +318,11 @@
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill">0%</div>
       </div>
+    </div>
+    
+    <div class="routes-container" id="routesContainer" style="display: none;">
+      <h2>라우트별 성능 측정</h2>
+      <div id="routesList"></div>
     </div>
     
     <div class="results" id="results" style="display: none;">
@@ -249,9 +354,30 @@
   </div>
   
   <script>
+    const ALL_ROUTES = [
+      { path: '/my', label: 'My Dashboard' },
+      { path: '/my/alignment', label: 'My Alignment' },
+      { path: '/feedbacks', label: 'Feedbacks' },
+      { path: '/works/team-feed', label: 'Team Feed' },
+      { path: '/works/plans/gantt', label: 'Plans Gantt' },
+      { path: '/works/snapshots', label: 'Snapshots' },
+      { path: '/works/alignment', label: 'Works Alignment' },
+      { path: '/works/work-map', label: 'Work Map' },
+      { path: '/works/collaborator-graph', label: 'Collaborator Graph' },
+      { path: '/manage/snapshots', label: 'Snapshot Management' },
+      { path: '/admin', label: 'Admin Dashboard' },
+      { path: '/admin/plans', label: 'Admin Plans' },
+      { path: '/admin/meta-options', label: 'Meta Options' },
+      { path: '/admin/members', label: 'Members' },
+      { path: '/admin/menu-usage', label: 'Menu Usage' },
+      { path: '/admin/menu-settings', label: 'Menu Settings' },
+      { path: '/releases', label: 'Release Notes' },
+    ];
+    
     let testRunning = false;
     let testResults = [];
     let shouldStop = false;
+    let allRoutesResults = {};
     
     async function measurePageLoad(url) {
       const iframe = document.createElement('iframe');
@@ -353,6 +479,151 @@
     
     function stopTest() {
       shouldStop = true;
+    }
+    
+    async function startAllRoutesTest() {
+      const iterations = parseInt(document.getElementById('iterations').value) || 10;
+      
+      testRunning = true;
+      shouldStop = false;
+      allRoutesResults = {};
+      
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('startAllBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+      document.getElementById('routesContainer').style.display = 'block';
+      document.getElementById('results').style.display = 'none';
+      
+      const routesListEl = document.getElementById('routesList');
+      routesListEl.innerHTML = ALL_ROUTES.map(route => `
+        <div class="route-section" id="route-${route.path.replace(/\//g, '-')}">
+          <div class="route-header">
+            <div class="route-title">${route.label} <span style="color: #57606a; font-weight: normal;">(${route.path})</span></div>
+            <div class="route-stats">
+              <span id="stats-${route.path.replace(/\//g, '-')}">대기 중...</span>
+            </div>
+          </div>
+          <div class="route-progress-container">
+            <div class="route-progress-label">
+              <span>진행률</span>
+              <span id="progress-text-${route.path.replace(/\//g, '-')}">0/${iterations}</span>
+            </div>
+            <div class="route-progress-bar">
+              <div class="route-progress-fill" id="progress-${route.path.replace(/\//g, '-')}" style="width: 0%">0%</div>
+            </div>
+          </div>
+          <div class="route-results" id="results-${route.path.replace(/\//g, '-')}"></div>
+        </div>
+      `).join('');
+      
+      updateStatus(`전체 라우트 테스트 시작... (${ALL_ROUTES.length}개 라우트)`, 'running');
+      
+      for (const route of ALL_ROUTES) {
+        if (shouldStop) {
+          updateStatus(`테스트 중단됨`, 'done');
+          break;
+        }
+        
+        const routeKey = route.path.replace(/\//g, '-');
+        const routeResults = [];
+        
+        updateStatus(`테스트 중: ${route.label} (${route.path})`, 'running');
+        
+        for (let i = 0; i < iterations; i++) {
+          if (shouldStop) break;
+          
+          try {
+            const metrics = await measurePageLoad(route.path);
+            routeResults.push({
+              iteration: i + 1,
+              ...metrics,
+              timestamp: new Date().toISOString(),
+            });
+            
+            const progress = ((i + 1) / iterations * 100).toFixed(1);
+            const progressEl = document.getElementById(`progress-${routeKey}`);
+            const progressTextEl = document.getElementById(`progress-text-${routeKey}`);
+            
+            if (progressEl) {
+              progressEl.style.width = progress + '%';
+              progressEl.textContent = progress + '%';
+            }
+            if (progressTextEl) {
+              progressTextEl.textContent = `${i + 1}/${iterations}`;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (error) {
+            console.error(`${route.path} 테스트 ${i + 1} 실패:`, error);
+          }
+        }
+        
+        allRoutesResults[route.path] = routeResults;
+        displayRouteResults(route.path, routeResults);
+      }
+      
+      testRunning = false;
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('startAllBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+      
+      if (!shouldStop) {
+        updateStatus(`전체 라우트 테스트 완료!`, 'done');
+      }
+    }
+    
+    function displayRouteResults(routePath, results) {
+      if (results.length === 0) return;
+      
+      const routeKey = routePath.replace(/\//g, '-');
+      const totalTimes = results.map(r => r.totalTime);
+      const ttfbs = results.map(r => r.ttfb);
+      const domParsings = results.map(r => r.domParsing);
+      const loadCompletes = results.map(r => r.loadComplete);
+      
+      const totalStats = calculateStats(totalTimes);
+      const ttfbStats = calculateStats(ttfbs);
+      const domStats = calculateStats(domParsings);
+      const loadStats = calculateStats(loadCompletes);
+      
+      const statsEl = document.getElementById(`stats-${routeKey}`);
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <span>평균: ${totalStats.avg.toFixed(0)}ms</span>
+          <span>중앙값: ${totalStats.median.toFixed(0)}ms</span>
+          <span>P95: ${totalStats.p95.toFixed(0)}ms</span>
+        `;
+      }
+      
+      const resultsEl = document.getElementById(`results-${routeKey}`);
+      if (resultsEl) {
+        resultsEl.innerHTML = `
+          <div class="route-metric">
+            <div class="route-metric-label">최소</div>
+            <div class="route-metric-value">${totalStats.min.toFixed(0)}<span class="route-metric-unit">ms</span></div>
+          </div>
+          <div class="route-metric">
+            <div class="route-metric-label">최대</div>
+            <div class="route-metric-value">${totalStats.max.toFixed(0)}<span class="route-metric-unit">ms</span></div>
+          </div>
+          <div class="route-metric">
+            <div class="route-metric-label">평균</div>
+            <div class="route-metric-value">${totalStats.avg.toFixed(0)}<span class="route-metric-unit">ms</span></div>
+          </div>
+          <div class="route-metric">
+            <div class="route-metric-label">중앙값</div>
+            <div class="route-metric-value">${totalStats.median.toFixed(0)}<span class="route-metric-unit">ms</span></div>
+          </div>
+          <div class="route-metric">
+            <div class="route-metric-label">TTFB 평균</div>
+            <div class="route-metric-value">${ttfbStats.avg.toFixed(0)}<span class="route-metric-unit">ms</span></div>
+          </div>
+          <div class="route-metric">
+            <div class="route-metric-label">DOM 파싱</div>
+            <div class="route-metric-value">${domStats.avg.toFixed(0)}<span class="route-metric-unit">ms</span></div>
+          </div>
+        `;
+      }
     }
     
     function updateStatus(message, type) {
@@ -462,20 +733,39 @@
     }
     
     function exportResults() {
-      if (testResults.length === 0) {
+      const hasSingleResults = testResults.length > 0;
+      const hasAllRoutesResults = Object.keys(allRoutesResults).length > 0;
+      
+      if (!hasSingleResults && !hasAllRoutesResults) {
         alert('측정 결과가 없습니다.');
         return;
       }
       
-      const dataStr = JSON.stringify({
+      const exportData = {
         metadata: {
-          url: document.getElementById('targetUrl').value,
-          totalTests: testResults.length,
           timestamp: new Date().toISOString(),
         },
-        results: testResults,
-      }, null, 2);
+      };
       
+      if (hasSingleResults) {
+        exportData.singleRoute = {
+          url: document.getElementById('targetUrl').value,
+          totalTests: testResults.length,
+          results: testResults,
+        };
+      }
+      
+      if (hasAllRoutesResults) {
+        exportData.allRoutes = {};
+        for (const [route, results] of Object.entries(allRoutesResults)) {
+          exportData.allRoutes[route] = {
+            totalTests: results.length,
+            results: results,
+          };
+        }
+      }
+      
+      const dataStr = JSON.stringify(exportData, null, 2);
       const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
       const exportFileDefaultName = `performance-results-${Date.now()}.json`;
       
