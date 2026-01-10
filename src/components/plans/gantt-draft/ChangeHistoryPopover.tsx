@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import type {
   ChangeHistoryGroup,
   ChangeHistoryResponse,
-} from "@/lib/data/planChangeHistory";
+} from "@/lib/data/plans";
 
 interface ChangeHistoryPopoverProps {
   workspaceId: string;

@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { getWeekStartDateString } from "@/lib/utils/date";
-import { getMemberNames } from "@/lib/data/profiles";
-import { getAllMetaOptions } from "@/lib/data/snapshotMetaOptions";
+import { getMemberNames } from "@/lib/data/members";
+import { getAllMetaOptions } from "@/lib/data/snapshots";
 import { EditSnapshotsView } from "./_components/EditSnapshotsView";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 

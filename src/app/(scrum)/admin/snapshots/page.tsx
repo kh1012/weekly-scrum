@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AdminSnapshotsView } from "./_components/AdminSnapshotsView";
-import { listAdminSnapshots } from "@/lib/data/adminSnapshots";
+import { listAdminSnapshots } from "@/lib/data/snapshots";
 import { parseGnbParams } from "@/lib/ui/gnbParams";
 
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";

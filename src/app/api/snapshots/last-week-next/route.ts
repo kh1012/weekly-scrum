@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLastWeekNext } from "@/lib/data/lastWeekNext";
+import { getLastWeekNext } from "@/lib/data/snapshots";
 
 export async function GET(request: NextRequest) {
   try {

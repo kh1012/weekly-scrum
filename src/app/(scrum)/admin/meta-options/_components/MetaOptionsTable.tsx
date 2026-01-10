@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SnapshotMetaOption } from "@/lib/data/snapshotMetaOptions";
+import type { SnapshotMetaOption } from "@/lib/data/snapshots";
 
 function formatRelativeTime(date: Date): string {
   const now = new Date();

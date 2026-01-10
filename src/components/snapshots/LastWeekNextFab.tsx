@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { LastWeekNextPanel } from "./LastWeekNextPanel";
-import type { LastWeekNextItem } from "@/lib/data/lastWeekNext";
+import type { LastWeekNextItem } from "@/lib/data/snapshots";
 
 interface LastWeekNextFabProps {
   workspaceId: string;

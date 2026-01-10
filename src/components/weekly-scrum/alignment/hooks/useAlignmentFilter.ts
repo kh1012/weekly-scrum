@@ -5,7 +5,7 @@
  */
 
 import { useMemo } from "react";
-import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
+import type { AlignmentGanttItem } from "@/lib/data/plans";
 
 export type FilterType = "all" | "plans" | "snapshots";
 

@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ChangeHistoryPopover } from "./ChangeHistoryPopover";
 import { getPlansChangeHistoryAction } from "@/app/actions/planChangeHistory";
-import type { ChangeHistoryResponse } from "@/lib/data/planChangeHistory";
+import type { ChangeHistoryResponse } from "@/lib/data/plans";
 
 interface ChangeHistoryButtonProps {
   workspaceId: string;

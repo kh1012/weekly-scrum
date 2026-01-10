@@ -6,7 +6,7 @@ import {
   getMenuUsageWeekly,
   getPageUsageWeekly,
   getUserMenuUsageWeekly,
-} from "@/lib/data/menuUsage";
+} from "@/lib/data/menu";
 import { MenuUsageClient } from "./_components/MenuUsageClient";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 

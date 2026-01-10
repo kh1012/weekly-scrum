@@ -9,7 +9,7 @@ import {
   type FilterType,
 } from "@/components/weekly-scrum/alignment";
 import { useDraftStore } from "@/components/plans/gantt-draft/store";
-import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
+import type { AlignmentGanttItem } from "@/lib/data/plans";
 
 interface AlignmentGanttClientProps {
   workspaceId: string;

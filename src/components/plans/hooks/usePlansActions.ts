@@ -58,8 +58,10 @@ export function usePlansActions({
   // 간트에서 셀 더블클릭 시 draft 생성
   const handleCreateDraftAtCell = useCallback(
     (context: {
+      project: string;
+      module: string;
+      feature: string;
       date: Date;
-      row: { project: string; module: string; feature: string; domain?: string };
     }) => {
       if (!isAdmin) return;
 
@@ -68,10 +70,10 @@ export function usePlansActions({
         tempId: crypto.randomUUID(),
         type: "feature",
         title: "",
-        project: context.row.project,
-        module: context.row.module,
-        feature: context.row.feature,
-        stage: context.row.domain || "",
+        project: context.project,
+        module: context.module,
+        feature: context.feature,
+        stage: "",
         start_date: dateStr,
         end_date: dateStr,
       };
@@ -84,9 +86,11 @@ export function usePlansActions({
   // 간트에서 드래그로 빠르게 생성
   const handleQuickCreate = useCallback(
     (context: {
+      project: string;
+      module: string;
+      feature: string;
       date: Date;
-      row: { project: string; module: string; feature: string; domain?: string };
-      duration: number;
+      title: string;
     }) => {
       if (!isAdmin) return;
 
@@ -94,11 +98,11 @@ export function usePlansActions({
       const newDraft: DraftPlanItem = {
         tempId: crypto.randomUUID(),
         type: "feature",
-        title: "",
-        project: context.row.project,
-        module: context.row.module,
-        feature: context.row.feature,
-        stage: context.row.domain || "",
+        title: context.title,
+        project: context.project,
+        module: context.module,
+        feature: context.feature,
+        stage: "",
         start_date: dateStr,
         end_date: dateStr,
       };

@@ -6,7 +6,7 @@ import type {
   MenuSetting,
   MenuSettingInput,
   TagColor,
-} from "@/lib/data/menuSettings";
+} from "@/lib/data/menu";
 import {
   upsertMenuSettingAction,
   deleteMenuSettingAction,

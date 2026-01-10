@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { isAdminOrLeader } from "@/lib/auth/getWorkspaceRole";
-import { listWorkspaceMembers } from "@/lib/data/workspaceMembers";
+import { listWorkspaceMembersLegacy as listWorkspaceMembers } from "@/lib/data/members";
 import { MembersManager } from "./_components/MembersManager";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 

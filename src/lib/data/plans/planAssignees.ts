@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { AssigneeRole, PlanAssignee } from "./plans";
+import type { AssigneeRole, PlanAssignee } from "./index";
 
 /**
  * Assignee 입력 타입

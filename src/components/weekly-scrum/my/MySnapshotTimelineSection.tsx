@@ -6,7 +6,7 @@
  * - 클라이언트 컴포넌트로 전달
  */
 
-import { getMySnapshotEntries } from "@/lib/data/mySnapshotTimeline";
+import { getMySnapshotEntries } from "@/lib/data/snapshots";
 import { MySnapshotTimelineClient } from "./MySnapshotTimelineClient";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
 import { Suspense } from "react";

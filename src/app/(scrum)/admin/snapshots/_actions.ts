@@ -1,6 +1,6 @@
 "use server";
 
-import { deleteSnapshotsBulk } from "@/lib/data/adminSnapshots";
+import { deleteSnapshotsBulk } from "@/lib/data/snapshots";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { TempSnapshot } from "@/components/weekly-scrum/manage/types";

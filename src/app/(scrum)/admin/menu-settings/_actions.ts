@@ -7,8 +7,8 @@ import {
   deleteMenuSetting,
   type MenuSetting,
   type MenuSettingInput,
-} from "@/lib/data/menuSettings";
-import { getMenuUsageWeekly } from "@/lib/data/menuUsage";
+} from "@/lib/data/menu";
+import { getMenuUsageWeekly } from "@/lib/data/menu";
 
 export async function getMenuSettingsAction(
   workspaceId: string

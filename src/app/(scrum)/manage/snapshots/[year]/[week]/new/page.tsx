@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { getMemberNames } from "@/lib/data/profiles";
-import { getAllMetaOptions } from "@/lib/data/snapshotMetaOptions";
+import { getMemberNames } from "@/lib/data/members";
+import { getAllMetaOptions } from "@/lib/data/snapshots";
 import { NewSnapshotView } from "./_components/NewSnapshotView";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 

@@ -8,7 +8,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { SnapshotTimelineEntry } from "@/lib/data/mySnapshotTimeline";
+import type { SnapshotTimelineEntry } from "@/lib/data/snapshots";
 import { MySnapshotTimeline } from "./MySnapshotTimeline";
 
 interface MySnapshotTimelineClientProps {

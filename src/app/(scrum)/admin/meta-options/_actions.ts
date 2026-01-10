@@ -12,7 +12,7 @@ import {
   type UpdateMetaOptionInput,
   type SnapshotMetaOption,
   type MetaOptionResult,
-} from "@/lib/data/snapshotMetaOptions";
+} from "@/lib/data/snapshots";
 
 /**
  * 메타 옵션 목록 조회 액션

@@ -15,7 +15,7 @@ import {
   DraftGanttView,
   type DraftGanttViewRef,
 } from "@/components/plans/gantt-draft/DraftGanttView";
-import type { AlignmentGanttItem } from "@/lib/data/alignmentGanttData";
+import type { AlignmentGanttItem } from "@/lib/data/plans";
 import {
   calculateAlignmentStatus,
   detectAlignmentMismatches,

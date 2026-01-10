@@ -4,7 +4,7 @@ export const revalidate = 60;
 import { createClient } from "@/lib/supabase/server";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 import { redirect } from "next/navigation";
-import { getWorkspaceAlignmentData } from "@/lib/data/alignmentGanttData";
+import { getWorkspaceAlignmentData } from "@/lib/data/plans";
 import { WorksAlignmentClient } from "./_components/WorksAlignmentClient";
 
 const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();

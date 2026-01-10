@@ -7,7 +7,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { SnapshotTimelineEntry } from "@/lib/data/mySnapshotTimeline";
+import type { SnapshotTimelineEntry } from "@/lib/data/snapshots";
 
 interface SnapshotEntryPopoverProps {
   entry: SnapshotTimelineEntry;

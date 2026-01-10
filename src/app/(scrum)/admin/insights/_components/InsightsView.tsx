@@ -8,7 +8,7 @@
 
 import Link from "next/link";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
-import type { FlagPlanSummary, ResourceDistribution, CollabEdge } from "@/lib/data/insights";
+import type { FlagPlanSummary, ResourceDistribution, CollabEdge } from "@/lib/data/teamFeed";
 
 interface InsightsViewProps {
   flagSummary: FlagPlanSummary[];

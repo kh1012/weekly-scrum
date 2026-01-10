@@ -1,3 +1,8 @@
+import {
+  convertV2ToV1Data as _convertV2ToV1Data,
+  convertV3ToV1Data as _convertV3ToV1Data,
+} from "../lib/transforms/scrumData";
+
 /**
  * 리스크 레벨 타입
  * 0 = 없음
@@ -300,10 +305,10 @@ export function isV3Data(data: WeeklyScrumDataUnion): data is WeeklyScrumDataV3 
  */
 export function normalizeToV1(data: WeeklyScrumDataUnion): WeeklyScrumData {
   if (isV3Data(data)) {
-    return convertV3ToV1Data(data);
+    return _convertV3ToV1Data(data);
   }
   if (isV2Data(data)) {
-    return convertV2ToV1Data(data);
+    return _convertV2ToV1Data(data);
   }
   return data;
 }

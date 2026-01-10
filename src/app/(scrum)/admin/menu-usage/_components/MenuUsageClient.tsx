@@ -16,7 +16,7 @@ import type {
   MenuUsageWeekly,
   PageUsageWeekly,
   UserMenuUsageWeekly,
-} from "@/lib/data/menuUsage";
+} from "@/lib/data/menu";
 import {
   getRecentMenuEvents,
   getViewData,

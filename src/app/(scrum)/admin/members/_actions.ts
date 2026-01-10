@@ -5,12 +5,12 @@
  */
 
 import {
-  listWorkspaceMembers,
+  listWorkspaceMembersLegacy as listWorkspaceMembers,
   updateMemberRole,
   updateMemberProfile,
   removeMember,
-  type WorkspaceMember,
-} from "@/lib/data/workspaceMembers";
+  type WorkspaceMemberLegacy as WorkspaceMember,
+} from "@/lib/data/members";
 import { revalidatePath } from "next/cache";
 
 /**

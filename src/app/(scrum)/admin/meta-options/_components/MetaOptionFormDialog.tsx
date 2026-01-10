@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import type {
   SnapshotMetaOption,
   MetaOptionCategory,
-} from "@/lib/data/snapshotMetaOptions";
+} from "@/lib/data/snapshots";
 
 interface MetaOptionFormDialogProps {
   isOpen: boolean;

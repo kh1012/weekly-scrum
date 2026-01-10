@@ -4,7 +4,7 @@
  * Server actions for menu visit tracking
  */
 
-import { updateMenuVisit } from "@/lib/data/menuNotifications";
+import { updateMenuVisit } from "@/lib/data/menu";
 
 export async function updateMenuVisitAction(params: {
   workspaceId: string;

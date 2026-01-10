@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useId } from "react";
 import { createPortal } from "react-dom";
-import type { WorkspaceMember } from "@/lib/data/workspaceMembers";
+import type { WorkspaceMemberLegacy as WorkspaceMember } from "@/lib/data/members";
 
 interface MemberEditDialogProps {
   isOpen: boolean;
@@ -12,9 +12,9 @@ interface MemberEditDialogProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: "admin", label: "Admin" },
-  { value: "manager", label: "Manager" },
-  { value: "member", label: "Member" },
+  { value: "admin" as const, label: "Admin" },
+  { value: "manager" as const, label: "Manager" },
+  { value: "member" as const, label: "Member" },
 ];
 
 export function MemberEditDialog({

@@ -8,7 +8,7 @@ import {
   updateMemberAction,
   deleteMemberAction,
 } from "../_actions";
-import type { WorkspaceMember } from "@/lib/data/workspaceMembers";
+import type { WorkspaceMemberLegacy as WorkspaceMember } from "@/lib/data/members";
 
 interface MembersManagerProps {
   workspaceId: string;

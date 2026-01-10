@@ -14,7 +14,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import type {
   SnapshotTimelineEntry,
-} from "@/lib/data/mySnapshotTimeline";
+} from "@/lib/data/snapshots";
 import {
   buildWeekAxis,
   groupEntriesByMeta,
@@ -22,7 +22,7 @@ import {
   type WeekAxisItem,
   type MetaGroup,
   type ContinuityArrow,
-} from "@/lib/data/snapshotTimelineUtils";
+} from "@/lib/data/snapshots";
 import { SnapshotEntryPopover } from "./SnapshotEntryPopover";
 
 // 레이아웃 상수 (Plans Gantt 참고)

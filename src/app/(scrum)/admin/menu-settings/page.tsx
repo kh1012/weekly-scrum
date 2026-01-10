@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getWorkspaceRole } from "@/lib/auth/getWorkspaceRole";
-import { getMenuSettings, type MenuSetting } from "@/lib/data/menuSettings";
+import { getMenuSettings, type MenuSetting } from "@/lib/data/menu";
 import { MenuSettingsManager } from "./_components/MenuSettingsManager";
 
 export const metadata = {

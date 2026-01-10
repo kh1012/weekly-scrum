@@ -15,7 +15,7 @@ import Link from "next/link";
 import { SummaryBar } from "@/components/SummaryBar";
 import { navigationProgress } from "@/components/weekly-scrum/common/NavigationProgress";
 import { deleteSnapshotsBulkAction } from "../_actions";
-import type { AdminSnapshotListItem } from "@/lib/data/adminSnapshots";
+import type { AdminSnapshotListItem } from "@/lib/data/snapshots";
 import type { GnbParams } from "@/lib/ui/gnbParams";
 
 interface AdminSnapshotsViewProps {

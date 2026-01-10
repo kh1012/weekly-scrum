@@ -7,8 +7,8 @@ export interface UndoSnackbarProps {
   isVisible: boolean;
   /** 메시지 */
   message: string;
-  /** Undo 버튼 클릭 핸들러 */
-  onUndo: () => void;
+  /** Undo 버튼 클릭 핸들러 (optional, 없으면 Undo 버튼 숨김) */
+  onUndo?: () => void;
   /** 스낵바 닫기 (타임아웃 또는 수동) */
   onClose: () => void;
   /** 타임아웃 (ms), 기본값 5000 */
@@ -62,6 +62,7 @@ export function UndoSnackbar({
 
   // Undo 클릭 핸들러
   const handleUndo = useCallback(() => {
+    if (!onUndo) return;
     setIsLeaving(true);
     setTimeout(() => {
       onUndo();
@@ -99,16 +100,18 @@ export function UndoSnackbar({
         <span className="flex-1 text-sm font-medium">{message}</span>
 
         {/* Undo 버튼 */}
-        <button
-          onClick={handleUndo}
-          className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 hover:scale-105"
-          style={{
-            background: "rgba(255, 255, 255, 0.15)",
-            color: "#F76D57",
-          }}
-        >
-          실행취소
-        </button>
+        {onUndo && (
+          <button
+            onClick={handleUndo}
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 hover:scale-105"
+            style={{
+              background: "rgba(255, 255, 255, 0.15)",
+              color: "#F76D57",
+            }}
+          >
+            실행취소
+          </button>
+        )}
 
         {/* 닫기 버튼 */}
         <button

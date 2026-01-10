@@ -1,4 +1,4 @@
-import { getFlagPlanSummary, getResourceDistribution, getCollabEdges } from "@/lib/data/insights";
+import { getFlagPlanSummary, getResourceDistribution, getCollabEdges } from "@/lib/data/teamFeed";
 import { InsightsView } from "./_components/InsightsView";
 import { getDefaultWorkspaceId } from "@/lib/supabase/mode";
 

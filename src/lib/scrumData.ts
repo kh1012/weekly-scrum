@@ -2,8 +2,10 @@ import "server-only";
 import * as fs from "fs";
 import * as path from "path";
 import type { 
-  WeeklyScrumData, 
+  WeeklyScrumData,
+  WeeklyScrumDataV2,
   WeeklyScrumDataUnion,
+  WeeklyScrumDataV3,
   WeekOption, 
 } from "@/types/scrum";
 import { migrateWeeklyScrumData } from "@/lib/transforms/scrumData";

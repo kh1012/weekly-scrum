@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getMemberNames } from "@/lib/data/profiles";
-import { getAllMetaOptions } from "@/lib/data/snapshotMetaOptions";
+import { getMemberNames } from "@/lib/data/members";
+import { getAllMetaOptions } from "@/lib/data/snapshots";
 
 /**
  * GET /api/manage/snapshots/user-data

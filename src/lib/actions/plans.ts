@@ -11,7 +11,7 @@ import {
   type PlanType,
   type PlanStatus,
 } from "@/lib/data/plans";
-import { replaceAssignees, type AssigneeInput } from "@/lib/data/planAssignees";
+import { replaceAssignees, type AssigneeInput } from "@/lib/data/plans";
 
 const DEFAULT_WORKSPACE_ID = process.env.DEFAULT_WORKSPACE_ID || "";
 

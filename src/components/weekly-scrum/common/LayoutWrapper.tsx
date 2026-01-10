@@ -8,10 +8,10 @@ import { SideNavigation } from "./Navigation";
 import { Logo } from "./Logo";
 import { TelemetryProvider } from "@/components/telemetry/TelemetryProvider";
 import type { WorkspaceRole } from "@/lib/auth/getWorkspaceRole";
-import type { MenuSetting } from "@/lib/data/menuSettings";
-import type { MenuViewCount } from "@/lib/data/menuUsage";
-import type { MenuStats } from "@/lib/data/menuStats";
-import type { MenuNewCount } from "@/lib/data/menuNotifications";
+import type { MenuSetting } from "@/lib/data/menu";
+import type { MenuViewCount } from "@/lib/data/menu";
+import type { MenuStats } from "@/lib/data/menu";
+import type { MenuNewCount } from "@/lib/data/menu";
 
 interface LayoutWrapperProps {
   children: ReactNode;

@@ -11,7 +11,7 @@ import {
   deleteMetaOptionAction,
   toggleMetaOptionActiveAction,
 } from "../_actions";
-import type { SnapshotMetaOption } from "@/lib/data/snapshotMetaOptions";
+import type { SnapshotMetaOption } from "@/lib/data/snapshots";
 
 const CATEGORIES = ["project", "module", "feature"] as const;
 type Category = (typeof CATEGORIES)[number];

@@ -131,4 +131,10 @@ export async function searchWorkspaceMembers({
 
 // Re-exports for consolidated access
 export * from "./profiles";
-export * from "./workspaceMembers";
+export { 
+  listWorkspaceMembers as listWorkspaceMembersLegacy, 
+  updateMemberRole,
+  updateMemberProfile,
+  removeMember,
+  type WorkspaceMember as WorkspaceMemberLegacy
+} from "./workspaceMembers";
