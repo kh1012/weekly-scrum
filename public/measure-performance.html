@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>페이지 성능 측정 도구</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f6f8fa;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 6px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      margin-top: 0;
+      color: #24292f;
+      border-bottom: 1px solid #d0d7de;
+      padding-bottom: 12px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    
+    input, button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #d0d7de;
+      font-size: 14px;
+    }
+    
+    button {
+      background: #2da44e;
+      color: white;
+      border-color: #2da44e;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background: #2c974b;
+    }
+    
+    button:disabled {
+      background: #94d3a2;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      padding: 12px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-weight: 600;
+    }
+    
+    .status.running {
+      background: #ddf4ff;
+      color: #0969da;
+    }
+    
+    .status.done {
+      background: #dafbe1;
+      color: #1a7f37;
+    }
+    
+    .progress {
+      margin: 16px 0;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 24px;
+      background: #f6f8fa;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2da44e, #1a7f37);
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .results {
+      margin-top: 24px;
+    }
+    
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    
+    .metric {
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #d0d7de;
+    }
+    
+    .metric-label {
+      font-size: 12px;
+      color: #57606a;
+      margin-bottom: 4px;
+    }
+    
+    .metric-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #0969da;
+    }
+    
+    .metric-unit {
+      font-size: 14px;
+      color: #57606a;
+      margin-left: 4px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #d0d7de;
+    }
+    
+    th {
+      background: #f6f8fa;
+      font-weight: 600;
+      font-size: 12px;
+      color: #57606a;
+      text-transform: uppercase;
+    }
+    
+    td {
+      font-size: 14px;
+    }
+    
+    .chart {
+      margin: 20px 0;
+      padding: 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+    }
+    
+    .bar {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+    
+    .bar-label {
+      width: 120px;
+      color: #57606a;
+    }
+    
+    .bar-visual {
+      flex: 1;
+      height: 24px;
+      background: #f6f8fa;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 0 12px;
+    }
+    
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0969da, #1f6feb);
+      transition: width 0.5s ease;
+    }
+    
+    .bar-value {
+      min-width: 80px;
+      text-align: right;
+      font-weight: 600;
+      color: #24292f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>페이지 로딩 성능 측정 도구</h1>
+    
+    <div class="controls">
+      <input type="text" id="targetUrl" value="/my" placeholder="측정할 페이지 경로">
+      <input type="number" id="iterations" value="100" min="1" max="500" placeholder="반복 횟수">
+      <button id="startBtn" onclick="startTest()">테스트 시작</button>
+      <button id="stopBtn" onclick="stopTest()" disabled>중단</button>
+      <button onclick="exportResults()">결과 저장</button>
+    </div>
+    
+    <div id="status"></div>
+    
+    <div class="progress" id="progressContainer" style="display: none;">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill">0%</div>
+      </div>
+    </div>
+    
+    <div class="results" id="results" style="display: none;">
+      <h2>측정 결과</h2>
+      
+      <div class="summary" id="summary"></div>
+      
+      <div class="chart">
+        <h3>시간대별 분포</h3>
+        <div id="distribution"></div>
+      </div>
+      
+      <details>
+        <summary style="cursor: pointer; padding: 8px; background: #f6f8fa; border-radius: 4px; margin-top: 16px;">상세 데이터 보기</summary>
+        <table id="detailsTable">
+          <thead>
+            <tr>
+              <th>테스트</th>
+              <th>전체 시간</th>
+              <th>TTFB</th>
+              <th>DOM 파싱</th>
+              <th>완료</th>
+            </tr>
+          </thead>
+          <tbody id="detailsBody"></tbody>
+        </table>
+      </details>
+    </div>
+  </div>
+  
+  <script>
+    let testRunning = false;
+    let testResults = [];
+    let shouldStop = false;
+    
+    async function measurePageLoad(url) {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      
+      const startTime = performance.now();
+      
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          document.body.removeChild(iframe);
+          reject(new Error('Timeout'));
+        }, 30000);
+        
+        iframe.onload = async () => {
+          clearTimeout(timeout);
+          
+          try {
+            const endTime = performance.now();
+            const totalTime = endTime - startTime;
+            
+            const perfData = iframe.contentWindow.performance.getEntriesByType('navigation')[0];
+            
+            const metrics = {
+              totalTime,
+              ttfb: perfData ? perfData.responseStart - perfData.fetchStart : 0,
+              domParsing: perfData ? perfData.domContentLoadedEventEnd - perfData.fetchStart : 0,
+              loadComplete: perfData ? perfData.loadEventEnd - perfData.fetchStart : 0,
+            };
+            
+            document.body.removeChild(iframe);
+            resolve(metrics);
+          } catch (error) {
+            document.body.removeChild(iframe);
+            reject(error);
+          }
+        };
+        
+        iframe.onerror = () => {
+          clearTimeout(timeout);
+          document.body.removeChild(iframe);
+          reject(new Error('Load error'));
+        };
+        
+        iframe.src = url;
+      });
+    }
+    
+    async function startTest() {
+      const url = document.getElementById('targetUrl').value;
+      const iterations = parseInt(document.getElementById('iterations').value);
+      
+      testRunning = true;
+      shouldStop = false;
+      testResults = [];
+      
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+      document.getElementById('progressContainer').style.display = 'block';
+      document.getElementById('results').style.display = 'none';
+      
+      updateStatus(`테스트 실행 중... (0/${iterations})`, 'running');
+      
+      for (let i = 0; i < iterations; i++) {
+        if (shouldStop) {
+          updateStatus(`테스트 중단됨 (${i}/${iterations} 완료)`, 'done');
+          break;
+        }
+        
+        try {
+          const metrics = await measurePageLoad(url);
+          testResults.push({
+            iteration: i + 1,
+            ...metrics,
+            timestamp: new Date().toISOString(),
+          });
+          
+          const progress = ((i + 1) / iterations * 100).toFixed(1);
+          document.getElementById('progressFill').style.width = progress + '%';
+          document.getElementById('progressFill').textContent = progress + '%';
+          updateStatus(`테스트 실행 중... (${i + 1}/${iterations})`, 'running');
+          
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (error) {
+          console.error(`테스트 ${i + 1} 실패:`, error);
+        }
+      }
+      
+      testRunning = false;
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+      
+      if (!shouldStop) {
+        updateStatus(`테스트 완료! (${testResults.length}/${iterations} 성공)`, 'done');
+      }
+      
+      displayResults();
+    }
+    
+    function stopTest() {
+      shouldStop = true;
+    }
+    
+    function updateStatus(message, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`;
+      statusEl.style.display = 'block';
+    }
+    
+    function calculateStats(values) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const sum = sorted.reduce((acc, val) => acc + val, 0);
+      
+      return {
+        min: sorted[0],
+        max: sorted[sorted.length - 1],
+        avg: sum / sorted.length,
+        median: sorted[Math.floor(sorted.length / 2)],
+        p95: sorted[Math.floor(sorted.length * 0.95)],
+        p99: sorted[Math.floor(sorted.length * 0.99)],
+      };
+    }
+    
+    function displayResults() {
+      if (testResults.length === 0) return;
+      
+      const totalTimes = testResults.map(r => r.totalTime);
+      const ttfbs = testResults.map(r => r.ttfb);
+      const domParsings = testResults.map(r => r.domParsing);
+      const loadCompletes = testResults.map(r => r.loadComplete);
+      
+      const totalStats = calculateStats(totalTimes);
+      const ttfbStats = calculateStats(ttfbs);
+      const domStats = calculateStats(domParsings);
+      const loadStats = calculateStats(loadCompletes);
+      
+      const summaryEl = document.getElementById('summary');
+      summaryEl.innerHTML = `
+        <div class="metric">
+          <div class="metric-label">최소 시간</div>
+          <div class="metric-value">${totalStats.min.toFixed(0)}<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">최대 시간</div>
+          <div class="metric-value">${totalStats.max.toFixed(0)}<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">평균 시간</div>
+          <div class="metric-value">${totalStats.avg.toFixed(0)}<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">중앙값</div>
+          <div class="metric-value">${totalStats.median.toFixed(0)}<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">95 백분위수</div>
+          <div class="metric-value">${totalStats.p95.toFixed(0)}<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">99 백분위수</div>
+          <div class="metric-value">${totalStats.p99.toFixed(0)}<span class="metric-unit">ms</span></div>
+        </div>
+      `;
+      
+      const ranges = [
+        { label: '< 500ms', min: 0, max: 500 },
+        { label: '500ms-1s', min: 500, max: 1000 },
+        { label: '1-2s', min: 1000, max: 2000 },
+        { label: '2-3s', min: 2000, max: 3000 },
+        { label: '3-5s', min: 3000, max: 5000 },
+        { label: '> 5s', min: 5000, max: Infinity },
+      ];
+      
+      const distributionEl = document.getElementById('distribution');
+      const maxCount = Math.max(...ranges.map(r => 
+        totalTimes.filter(t => t >= r.min && t < r.max).length
+      ));
+      
+      distributionEl.innerHTML = ranges.map(range => {
+        const count = totalTimes.filter(t => t >= range.min && t < range.max).length;
+        const percentage = (count / testResults.length * 100).toFixed(1);
+        const width = maxCount > 0 ? (count / maxCount * 100) : 0;
+        
+        return `
+          <div class="bar">
+            <div class="bar-label">${range.label}</div>
+            <div class="bar-visual">
+              <div class="bar-fill" style="width: ${width}%"></div>
+            </div>
+            <div class="bar-value">${count}회 (${percentage}%)</div>
+          </div>
+        `;
+      }).join('');
+      
+      const detailsBody = document.getElementById('detailsBody');
+      detailsBody.innerHTML = testResults.map(r => `
+        <tr>
+          <td>#${r.iteration}</td>
+          <td>${r.totalTime.toFixed(0)}ms</td>
+          <td>${r.ttfb.toFixed(0)}ms</td>
+          <td>${r.domParsing.toFixed(0)}ms</td>
+          <td>${r.loadComplete.toFixed(0)}ms</td>
+        </tr>
+      `).join('');
+      
+      document.getElementById('results').style.display = 'block';
+    }
+    
+    function exportResults() {
+      if (testResults.length === 0) {
+        alert('측정 결과가 없습니다.');
+        return;
+      }
+      
+      const dataStr = JSON.stringify({
+        metadata: {
+          url: document.getElementById('targetUrl').value,
+          totalTests: testResults.length,
+          timestamp: new Date().toISOString(),
+        },
+        results: testResults,
+      }, null, 2);
+      
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      const exportFileDefaultName = `performance-results-${Date.now()}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    }
+  </script>
+</body>
+</html>

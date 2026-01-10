@@ -27,100 +27,91 @@ export default async function ScrumLayout({
   const cookieStore = await cookies();
   const isDevBypass = cookieStore.get("dev-bypass")?.value === "true";
 
-  // 프로필 완성 여부 확인 (서버 컴포넌트에서 추가 보호)
-  // 바이패스 모드에서는 체크 스킵
-  if (!isDevBypass) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      // 프로필이 없으면 온보딩으로 리다이렉트
-      if (!profile) {
-        redirect("/onboarding/profile");
-      }
-    }
-  }
-
-  // 현재 유저의 workspace role 조회
-  const role = await getWorkspaceRole();
-
-  // 현재 사용자 ID 가져오기
+  // Supabase 클라이언트 및 사용자 정보 (한 번만 조회)
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   const userId = user?.id;
 
-  // 메뉴 설정 조회
-  let menuSettings: Awaited<ReturnType<typeof getMenuSettings>> = [];
-  try {
-    menuSettings = await getMenuSettings(DEFAULT_WORKSPACE_ID);
-  } catch {
-    // 메뉴 설정 로드 실패 시 빈 배열 사용
-  }
+  // 프로필 완성 여부 확인 (바이패스 모드에서는 스킵)
+  if (!isDevBypass && user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_id, display_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-  // 메뉴 조회수 데이터 가져오기
-  let menuViewCounts: Awaited<ReturnType<typeof getMenuViewCounts>> = [];
-  try {
-    menuViewCounts = await getMenuViewCounts({
-      workspaceId: DEFAULT_WORKSPACE_ID,
-      weeksLimit: 8,
-    });
-  } catch {
-    // 조회수 데이터 로드 실패 시 빈 배열 사용
-  }
-
-  // 메뉴별 통계 데이터 가져오기
-  let menuStats: Awaited<ReturnType<typeof getMenuStats>> = {
-    feedbacks_count: 0,
-    snapshots_count: 0,
-    total_entries_count: 0,
-    plans_count: 0,
-    features_count: 0,
-    collaborations_count: 0,
-    my_entries_count: 0,
-    alignment_count: 0,
-    workspace_alignment_count: 0,
-  };
-  try {
-    menuStats = await getMenuStats({
-      workspaceId: DEFAULT_WORKSPACE_ID,
-      userId,
-    });
-  } catch {
-    // 통계 데이터 로드 실패 시 기본값 사용
-  }
-
-  // 메뉴별 새 데이터 개수 가져오기
-  let menuNewCounts: Awaited<ReturnType<typeof getMenuNewCounts>> = [];
-  if (userId) {
-    try {
-      menuNewCounts = await getMenuNewCounts({
-        workspaceId: DEFAULT_WORKSPACE_ID,
-        userId,
-      });
-    } catch {
-      // 새 데이터 개수 로드 실패 시 빈 배열 사용
+    if (!profile) {
+      redirect("/onboarding/profile");
     }
   }
+
+  // 독립적인 쿼리들을 병렬로 실행
+  const [
+    role,
+    menuSettingsResult,
+    menuViewCountsResult,
+    menuStatsResult,
+    menuNewCountsResult,
+    supabaseDataResult,
+  ] = await Promise.allSettled([
+    getWorkspaceRole(),
+    getMenuSettings(DEFAULT_WORKSPACE_ID),
+    getMenuViewCounts({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      weeksLimit: 8,
+    }),
+    getMenuStats({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      userId,
+    }),
+    userId
+      ? getMenuNewCounts({
+          workspaceId: DEFAULT_WORKSPACE_ID,
+          userId,
+        })
+      : Promise.resolve([]),
+    getSupabaseOnlyData(DEFAULT_WORKSPACE_ID),
+  ]);
+
+  // 결과 추출 (에러 처리 포함)
+  const roleValue = role.status === "fulfilled" ? role.value : null;
+  const menuSettings =
+    menuSettingsResult.status === "fulfilled" ? menuSettingsResult.value : [];
+  const menuViewCounts =
+    menuViewCountsResult.status === "fulfilled"
+      ? menuViewCountsResult.value
+      : [];
+  const menuStats =
+    menuStatsResult.status === "fulfilled"
+      ? menuStatsResult.value
+      : {
+          feedbacks_count: 0,
+          snapshots_count: 0,
+          total_entries_count: 0,
+          plans_count: 0,
+          features_count: 0,
+          collaborations_count: 0,
+          my_entries_count: 0,
+          alignment_count: 0,
+          workspace_alignment_count: 0,
+        };
+  const menuNewCounts =
+    menuNewCountsResult.status === "fulfilled"
+      ? menuNewCountsResult.value
+      : [];
 
   let allData: Record<string, WeeklyScrumData>;
   let weeks: WeekOption[];
 
-  // Supabase 데이터만 사용
-  try {
-    const result = await getSupabaseOnlyData(DEFAULT_WORKSPACE_ID);
-    allData = result.allData;
-    weeks = result.weeks;
-  } catch {
+  if (
+    supabaseDataResult.status === "fulfilled" &&
+    Object.keys(supabaseDataResult.value.allData).length > 0
+  ) {
+    allData = supabaseDataResult.value.allData;
+    weeks = supabaseDataResult.value.weeks;
+  } else {
     allData = {};
     weeks = [];
   }
@@ -148,7 +139,7 @@ export default async function ScrumLayout({
         initialWeekKey={mockKey}
       >
         <LayoutWrapper
-          role={role}
+          role={roleValue}
           workspaceId={DEFAULT_WORKSPACE_ID}
           userId={userId}
           menuSettings={menuSettings}
@@ -171,7 +162,7 @@ export default async function ScrumLayout({
       initialWeekKey={initialWeekKey}
     >
       <LayoutWrapper
-        role={role}
+        role={roleValue}
         workspaceId={DEFAULT_WORKSPACE_ID}
         userId={userId}
         menuSettings={menuSettings}

@@ -69,22 +69,52 @@ export async function getPersonalDashboardMetrics({
   const currentWeekLabel = `W${currentWeek.week.toString().padStart(2, "0")}`;
   const previousWeekLabel = `W${previousWeek.week.toString().padStart(2, "0")}`;
 
+  // 7일 전, 14일 전 날짜 계산 (Usage Metrics용)
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
   // ========================================
-  // A) Snapshot Metrics
+  // 병렬 쿼리 실행 (A, B, C 섹션)
+  // ========================================
+  
+  const [snapshotsResult, planAssigneesResult, visitsResult] =
+    await Promise.allSettled([
+      // A) Snapshot 메트릭
+      supabase
+        .from("snapshots")
+        .select("id, year, week, created_at, updated_at")
+        .eq("workspace_id", workspaceId)
+        .eq("author_id", userId),
+      
+      // B) Plan 메트릭
+      supabase
+        .from("plan_assignees")
+        .select("plan_id")
+        .eq("user_id", userId),
+      
+      // C) Usage 메트릭
+      supabase
+        .from("menu_events")
+        .select("page_path, occurred_at")
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", userId)
+        .eq("event_type", "PAGE_VIEW")
+        .gte("occurred_at", fourteenDaysAgo.toISOString())
+        .order("occurred_at", { ascending: false }),
+    ]);
+
+  // ========================================
+  // A) Snapshot Metrics 처리
   // ========================================
 
-  // 1. 모든 스냅샷 조회 (주차 수 계산용)
-  const { data: snapshots } = await supabase
-    .from("snapshots")
-    .select("id, year, week, created_at, updated_at")
-    .eq("workspace_id", workspaceId)
-    .eq("author_id", userId);
+  const snapshots =
+    snapshotsResult.status === "fulfilled" ? snapshotsResult.value.data : null;
 
   const snapshotWeeksCount = snapshots
     ? new Set(snapshots.map((s) => `${s.year}-${s.week}`)).size
     : 0;
 
-  // 2. 스냅샷 엔트리 조회
   const snapshotIds = snapshots?.map((s) => s.id) || [];
   let entriesTotal = 0;
   let entriesThisWeek = 0;
@@ -135,14 +165,13 @@ export async function getPersonalDashboardMetrics({
   }
 
   // ========================================
-  // B) Plan Metrics
+  // B) Plan Metrics 처리
   // ========================================
 
-  // 1. 나에게 할당된 Plans 조회
-  const { data: planAssignees } = await supabase
-    .from("plan_assignees")
-    .select("plan_id")
-    .eq("user_id", userId);
+  const planAssignees =
+    planAssigneesResult.status === "fulfilled"
+      ? planAssigneesResult.value.data
+      : null;
 
   const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
   let assignedTotal = 0;
@@ -166,7 +195,7 @@ export async function getPersonalDashboardMetrics({
   }
 
   // ========================================
-  // C) Usage Metrics (Page Visits)
+  // C) Usage Metrics 처리
   // ========================================
 
   let visits7dTotal = 0;
@@ -174,79 +203,89 @@ export async function getPersonalDashboardMetrics({
   let visitsByDay14d: { date: string; count: number }[] = [];
   let lastVisitAt: string | null = null;
 
-  // 7일 전, 14일 전 날짜 계산
-  const now = new Date();
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const visits =
+    visitsResult.status === "fulfilled" ? visitsResult.value.data : null;
 
-  // 기존 menu_events 테이블에서 PAGE_VIEW 이벤트 조회
-  try {
-    // 최근 14일 방문 기록 조회 (PAGE_VIEW만)
-    const { data: visits } = await supabase
-      .from("menu_events")
-      .select("page_path, occurred_at")
-      .eq("workspace_id", workspaceId)
-      .eq("user_id", userId)
-      .eq("event_type", "PAGE_VIEW")
-      .gte("occurred_at", fourteenDaysAgo.toISOString())
-      .order("occurred_at", { ascending: false });
+  if (visits && visits.length > 0) {
+    // 최근 7일 방문 총 횟수
+    const visits7d = visits.filter(
+      (v) => new Date(v.occurred_at) >= sevenDaysAgo
+    );
+    visits7dTotal = visits7d.length;
 
-    if (visits && visits.length > 0) {
-      // 최근 7일 방문 총 횟수
-      const visits7d = visits.filter(
-        (v) => new Date(v.occurred_at) >= sevenDaysAgo
+    // Top 5 Routes (최근 7일)
+    const routeCounts = new Map<string, number>();
+    for (const visit of visits7d) {
+      routeCounts.set(
+        visit.page_path,
+        (routeCounts.get(visit.page_path) || 0) + 1
       );
-      visits7dTotal = visits7d.length;
-
-      // Top 5 Routes (최근 7일)
-      const routeCounts = new Map<string, number>();
-      for (const visit of visits7d) {
-        routeCounts.set(
-          visit.page_path,
-          (routeCounts.get(visit.page_path) || 0) + 1
-        );
-      }
-      topRoutes7d = Array.from(routeCounts.entries())
-        .map(([path, count]) => ({ path, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
-
-      // Visits by Day (최근 14일)
-      const dayCounts = new Map<string, number>();
-      for (const visit of visits) {
-        const dateStr = new Date(visit.occurred_at).toISOString().split("T")[0];
-        dayCounts.set(dateStr, (dayCounts.get(dateStr) || 0) + 1);
-      }
-      visitsByDay14d = Array.from(dayCounts.entries())
-        .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-
-      // 마지막 방문 시각
-      lastVisitAt = visits[0].occurred_at;
     }
-  } catch (err) {
-    // 테이블 접근 오류 시 무시
-    console.warn("menu_events table not available:", err);
+    topRoutes7d = Array.from(routeCounts.entries())
+      .map(([path, count]) => ({ path, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Visits by Day (최근 14일)
+    const dayCounts = new Map<string, number>();
+    for (const visit of visits) {
+      const dateStr = new Date(visit.occurred_at).toISOString().split("T")[0];
+      dayCounts.set(dateStr, (dayCounts.get(dateStr) || 0) + 1);
+    }
+    visitsByDay14d = Array.from(dayCounts.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // 마지막 방문 시각
+    lastVisitAt = visits[0].occurred_at;
   }
 
   // ========================================
-  // D) Additional Data for Enhanced Dashboard
+  // D) Additional Data for Enhanced Dashboard (병렬 쿼리)
   // ========================================
 
-  // 1. 최근 스냅샷 엔트리 5개
   let recentEntries: RecentSnapshotEntry[] = [];
-  if (snapshotIds.length > 0) {
-    const { data: entriesWithDetails } = await supabase
-      .from("snapshot_entries")
-      .select(
-        "id, name, domain, project, module, feature, updated_at, created_at, snapshot_id"
-      )
-      .in("snapshot_id", snapshotIds)
-      .order("updated_at", { ascending: false })
-      .limit(5);
+  const domainMap = new Map<string, number>();
+  const weeklyTrend: { week: string; count: number }[] = [];
+  const weeklyProgressTrend: {
+    week: string;
+    avgProgress: number;
+    entryCount: number;
+  }[] = [];
 
-    if (entriesWithDetails) {
-      recentEntries = entriesWithDetails.map((e) => {
+  if (snapshotIds.length > 0) {
+    // 추가 데이터 쿼리를 병렬로 실행
+    const [recentEntriesResult, domainEntriesResult, trendEntriesResult] =
+      await Promise.allSettled([
+        // 1. 최근 스냅샷 엔트리 5개
+        supabase
+          .from("snapshot_entries")
+          .select(
+            "id, name, domain, project, module, feature, updated_at, created_at, snapshot_id"
+          )
+          .in("snapshot_id", snapshotIds)
+          .order("updated_at", { ascending: false })
+          .limit(5),
+        
+        // 2. 도메인/프로젝트 분포용 데이터
+        supabase
+          .from("snapshot_entries")
+          .select("domain, project")
+          .in("snapshot_id", snapshotIds),
+        
+        // 3. 주차별 추이용 데이터 (past_week 포함)
+        supabase
+          .from("snapshot_entries")
+          .select("snapshot_id, past_week")
+          .in("snapshot_id", snapshotIds),
+      ]);
+
+    // 1. 최근 엔트리 처리
+    if (
+      recentEntriesResult.status === "fulfilled" &&
+      recentEntriesResult.value.data
+    ) {
+      recentEntries = recentEntriesResult.value.data.map((e) => {
         const snapshot = snapshots?.find((s) => s.id === e.snapshot_id);
         return {
           id: e.id,
@@ -261,18 +300,13 @@ export async function getPersonalDashboardMetrics({
         };
       });
     }
-  }
 
-  // 2. 도메인/프로젝트 분포 (Top 10)
-  const domainMap = new Map<string, number>();
-  if (snapshotIds.length > 0) {
-    const { data: allEntries } = await supabase
-      .from("snapshot_entries")
-      .select("domain, project")
-      .in("snapshot_id", snapshotIds);
-
-    if (allEntries) {
-      for (const entry of allEntries) {
+    // 2. 도메인 분포 처리
+    if (
+      domainEntriesResult.status === "fulfilled" &&
+      domainEntriesResult.value.data
+    ) {
+      for (const entry of domainEntriesResult.value.data) {
         const key =
           entry.domain && entry.project
             ? `${entry.domain} / ${entry.project}`
@@ -280,31 +314,18 @@ export async function getPersonalDashboardMetrics({
         domainMap.set(key, (domainMap.get(key) || 0) + 1);
       }
     }
-  }
 
-  const domainDistribution = Array.from(domainMap.entries())
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+    // 3. 주차별 추이 처리
+    if (
+      trendEntriesResult.status === "fulfilled" &&
+      trendEntriesResult.value.data &&
+      snapshots &&
+      snapshots.length > 0
+    ) {
+      const allEntriesForTrend = trendEntriesResult.value.data;
 
-  // 3. 주차별 엔트리 수 추이 (최근 8주)
-  const weeklyTrend: { week: string; count: number }[] = [];
-  const weeklyProgressTrend: {
-    week: string;
-    avgProgress: number;
-    entryCount: number;
-  }[] = [];
-
-  if (snapshots && snapshots.length > 0 && snapshotIds.length > 0) {
-    // 모든 엔트리를 한 번에 조회 (N+1 쿼리 방지) - past_week 포함
-    const { data: allEntriesForTrend } = await supabase
-      .from("snapshot_entries")
-      .select("snapshot_id, past_week")
-      .in("snapshot_id", snapshotIds);
-
-    if (allEntriesForTrend) {
       // 주차별 스냅샷 그룹핑
-      const weekMap = new Map<string, string[]>(); // "2025-W01" -> [snapshotIds]
+      const weekMap = new Map<string, string[]>();
       for (const snapshot of snapshots) {
         const weekKey = `${snapshot.year}-${snapshot.week}`;
         if (!weekMap.has(weekKey)) {
@@ -362,12 +383,17 @@ export async function getPersonalDashboardMetrics({
 
         weeklyProgressTrend.push({
           week: weekKey,
-          avgProgress: Math.round(avgProgress * 10) / 10, // 소수점 1자리
+          avgProgress: Math.round(avgProgress * 10) / 10,
           entryCount: weekEntryCount,
         });
       }
     }
   }
+
+  const domainDistribution = Array.from(domainMap.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
 
   return {
     snapshots: {

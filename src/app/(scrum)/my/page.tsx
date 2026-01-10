@@ -22,20 +22,20 @@ export default async function MyPage() {
     redirect("/login");
   }
 
-  // 프로필에서 이름 조회
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("user_id", user.id)
-    .single();
+  // 프로필 조회와 메트릭 조회를 병렬로 실행
+  const [profileResult, metrics] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", user.id)
+      .single(),
+    getPersonalDashboardMetrics({
+      workspaceId: DEFAULT_WORKSPACE_ID,
+      userId: user.id,
+    }),
+  ]);
   
-  const userName = profile?.display_name;
-
-  // 개인 메트릭 조회
-  const metrics = await getPersonalDashboardMetrics({
-    workspaceId: DEFAULT_WORKSPACE_ID,
-    userId: user.id,
-  });
+  const userName = profileResult.data?.display_name;
 
   return <DataOnlyDashboard userName={userName} metrics={metrics} />;
 }

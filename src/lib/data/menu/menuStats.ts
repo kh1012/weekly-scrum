@@ -28,51 +28,90 @@ export async function getMenuStats(params: {
   const supabase = await createClient();
 
   try {
-    // Feedbacks count
-    const { count: feedbacksCount } = await supabase
-      .from("feedbacks")
-      .select("*", { count: "exact", head: true })
-      .eq("workspace_id", workspaceId);
+    // 병렬로 실행할 쿼리들
+    const baseQueries = [
+      // Feedbacks count
+      supabase
+        .from("feedbacks")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId),
+      
+      // Distinct snapshots (snapshot_id만 조회)
+      supabase
+        .from("snapshot_entries")
+        .select("snapshot_id")
+        .eq("workspace_id", workspaceId),
+      
+      // Total snapshot entries count
+      supabase
+        .from("snapshot_entries")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId),
+      
+      // Plans count
+      supabase
+        .from("plans")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId),
+      
+      // Distinct features (feature만 조회)
+      supabase
+        .from("snapshot_entries")
+        .select("feature")
+        .eq("workspace_id", workspaceId)
+        .not("feature", "is", null),
+      
+      // Collaborations (collaborators만 조회)
+      supabase
+        .from("snapshot_entries")
+        .select("collaborators")
+        .eq("workspace_id", workspaceId)
+        .not("collaborators", "is", null),
+    ];
 
-    // Distinct snapshots count
-    const { data: snapshotsData } = await supabase
-      .from("snapshot_entries")
-      .select("snapshot_id")
-      .eq("workspace_id", workspaceId);
+    // userId가 있을 때만 추가 쿼리
+    if (userId) {
+      baseQueries.push(
+        // User's own entries count
+        supabase
+          .from("snapshot_entries")
+          .select("*", { count: "exact", head: true })
+          .eq("workspace_id", workspaceId)
+          .eq("author_id", userId),
+        
+        // Plan assignees
+        supabase
+          .from("plan_assignees")
+          .select("plan_id")
+          .eq("user_id", userId)
+      );
+    }
 
+    const results = await Promise.allSettled(baseQueries);
+
+    // 결과 추출
+    const feedbacksCount =
+      results[0].status === "fulfilled" ? results[0].value.count || 0 : 0;
+    
+    const snapshotsData =
+      results[1].status === "fulfilled" ? results[1].value.data : null;
     const uniqueSnapshots = new Set(
       snapshotsData?.map((d) => d.snapshot_id) || []
     ).size;
-
-    // Total snapshot entries count
-    const { count: totalEntriesCount } = await supabase
-      .from("snapshot_entries")
-      .select("*", { count: "exact", head: true })
-      .eq("workspace_id", workspaceId);
-
-    // Plans count
-    const { count: plansCount } = await supabase
-      .from("plans")
-      .select("*", { count: "exact", head: true })
-      .eq("workspace_id", workspaceId);
-
-    // Distinct features count (for work map)
-    const { data: featuresData } = await supabase
-      .from("snapshot_entries")
-      .select("feature")
-      .eq("workspace_id", workspaceId)
-      .not("feature", "is", null);
-
+    
+    const totalEntriesCount =
+      results[2].status === "fulfilled" ? results[2].value.count || 0 : 0;
+    
+    const plansCount =
+      results[3].status === "fulfilled" ? results[3].value.count || 0 : 0;
+    
+    const featuresData =
+      results[4].status === "fulfilled" ? results[4].value.data : null;
     const uniqueFeatures = new Set(featuresData?.map((d) => d.feature) || [])
       .size;
-
-    // Collaborations count (total collaborators in all entries)
-    const { data: entriesWithCollaborators } = await supabase
-      .from("snapshot_entries")
-      .select("collaborators")
-      .eq("workspace_id", workspaceId)
-      .not("collaborators", "is", null);
-
+    
+    const entriesWithCollaborators =
+      results[5].status === "fulfilled" ? results[5].value.data : null;
     let totalCollaborations = 0;
     entriesWithCollaborators?.forEach((entry) => {
       if (Array.isArray(entry.collaborators)) {
@@ -80,53 +119,56 @@ export async function getMenuStats(params: {
       }
     });
 
-    // User's own entries count
     let myEntriesCount = 0;
-    if (userId) {
-      const { count } = await supabase
-        .from("snapshot_entries")
-        .select("*", { count: "exact", head: true })
-        .eq("workspace_id", workspaceId)
-        .eq("author_id", userId);
-      myEntriesCount = count || 0;
-    }
-
-    // Alignment count (assigned Plans + current week Snapshot Entries)
     let alignmentCount = 0;
-    if (userId) {
-      // 1. 할당된 Plans 수
-      const { data: planAssignees } = await supabase
-        .from("plan_assignees")
-        .select("plan_id")
-        .eq("user_id", userId);
 
+    if (userId) {
+      myEntriesCount =
+        results[6].status === "fulfilled" ? results[6].value.count || 0 : 0;
+      
+      const planAssignees =
+        results[7].status === "fulfilled" ? results[7].value.data : null;
       const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
 
-      if (assignedPlanIds.length > 0) {
-        const { count: assignedPlansCount } = await supabase
-          .from("plans")
-          .select("*", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .in("id", assignedPlanIds);
-
-        alignmentCount += assignedPlansCount || 0;
-      }
-
-      // 2. 현재 주차 Snapshot Entries 수
+      // 추가 쿼리가 필요한 경우 병렬로 실행
       const currentWeekInfo = getCurrentISOWeek();
       const currentYear = currentWeekInfo.year;
       const currentWeekLabel = `W${currentWeekInfo.week.toString().padStart(2, "0")}`;
 
-      const { data: currentWeekSnapshots } = await supabase
-        .from("snapshots")
-        .select("id")
-        .eq("workspace_id", workspaceId)
-        .eq("author_id", userId)
-        .eq("year", currentYear)
-        .eq("week", currentWeekLabel);
+      // Plans와 현재 주차 스냅샷을 병렬로 조회
+      const [assignedPlansCountResult, currentWeekSnapshotsResult] =
+        await Promise.allSettled([
+          assignedPlanIds.length > 0
+            ? supabase
+                .from("plans")
+                .select("*", { count: "exact", head: true })
+                .eq("workspace_id", workspaceId)
+                .in("id", assignedPlanIds)
+                .then((res) => res.count || 0)
+            : Promise.resolve(0),
+          supabase
+            .from("snapshots")
+            .select("id")
+            .eq("workspace_id", workspaceId)
+            .eq("author_id", userId)
+            .eq("year", currentYear)
+            .eq("week", currentWeekLabel),
+        ]);
 
-      if (currentWeekSnapshots && currentWeekSnapshots.length > 0) {
-        const snapshotIds = currentWeekSnapshots.map((s) => s.id);
+      // Plans 카운트 추가
+      if (assignedPlansCountResult.status === "fulfilled") {
+        alignmentCount += assignedPlansCountResult.value;
+      }
+
+      // 현재 주차 스냅샷 엔트리 추가
+      if (
+        currentWeekSnapshotsResult.status === "fulfilled" &&
+        currentWeekSnapshotsResult.value.data &&
+        currentWeekSnapshotsResult.value.data.length > 0
+      ) {
+        const snapshotIds = currentWeekSnapshotsResult.value.data.map(
+          (s) => s.id
+        );
 
         const { count: entriesCount } = await supabase
           .from("snapshot_entries")
@@ -137,8 +179,8 @@ export async function getMenuStats(params: {
       }
     }
 
-    // Workspace-wide alignment count (전체 Plans + 전체 Snapshot Entries)
-    const workspaceAlignmentCount = (plansCount || 0) + (totalEntriesCount || 0);
+    // Workspace-wide alignment count
+    const workspaceAlignmentCount = plansCount + totalEntriesCount;
 
     return {
       feedbacks_count: feedbacksCount || 0,
