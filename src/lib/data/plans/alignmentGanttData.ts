@@ -181,7 +181,15 @@ async function getWorkspaceAlignmentDataInternal({
         .order("start_date", { ascending: true }),
       supabase
         .from("snapshots")
-        .select("id, year, week, author_id, workspace_id")
+        .select(
+          `
+          id,
+          year,
+          week,
+          author_id,
+          workspace_id
+        `
+        )
         .eq("workspace_id", workspaceId)
         .order("year", { ascending: true })
         .order("week", { ascending: true }),
@@ -196,7 +204,7 @@ async function getWorkspaceAlignmentDataInternal({
     } else {
       plans = (plansData || []) as PlanWithAssignees[];
 
-      // Plan 담당자 조회
+      // Plan 담당자 조회 (프로필 정보 별도 조회)
       const planIds = plans.map((p) => p.id);
       if (planIds.length > 0) {
         const { data: allAssigneesData } = await supabase
@@ -205,33 +213,29 @@ async function getWorkspaceAlignmentDataInternal({
           .eq("workspace_id", workspaceId)
           .in("plan_id", planIds);
 
-        const userIds = [
-          ...new Set((allAssigneesData || []).map((a) => a.user_id)),
-        ];
-        let profilesMap = new Map<string, string>();
+        // 담당자들의 프로필 조회
+        const assigneeUserIds = [...new Set((allAssigneesData || []).map(a => a.user_id))];
+        const { data: assigneeProfiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", assigneeUserIds);
 
-        if (userIds.length > 0) {
-          const { data: profilesData } = await supabase
-            .from("profiles")
-            .select("user_id, display_name")
-            .in("user_id", userIds);
-
-          for (const p of profilesData || []) {
-            if (p.display_name) {
-              profilesMap.set(p.user_id, p.display_name);
-            }
-          }
-        }
+        const assigneeProfileMap = new Map(
+          (assigneeProfiles || []).map(p => [p.user_id, p])
+        );
 
         const assigneesMap = new Map<string, PlanAssigneeRaw[]>();
-        for (const a of allAssigneesData || []) {
+        for (const a of (allAssigneesData || [])) {
           if (!assigneesMap.has(a.plan_id)) {
             assigneesMap.set(a.plan_id, []);
           }
+          const profile = assigneeProfileMap.get(a.user_id);
           assigneesMap.get(a.plan_id)!.push({
             user_id: a.user_id,
             role: a.role,
-            profiles: { display_name: profilesMap.get(a.user_id) || null },
+            profiles: {
+              display_name: profile?.display_name || null,
+            },
           });
         }
 
@@ -244,30 +248,25 @@ async function getWorkspaceAlignmentDataInternal({
     // 2. Snapshot 데이터 처리
 
     // Author 정보를 별도로 조회
-    let authorProfiles = new Map<
+    const authorProfiles = new Map<
       string,
       { display_name?: string; email?: string; user_id: string }
     >();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [
-        ...new Set(snapshots.map((s) => s.author_id).filter(Boolean)),
-      ];
-
+      const authorIds = [...new Set(snapshots.map(s => s.author_id).filter(Boolean))];
       if (authorIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
+        const { data: profiles } = await supabase
           .from("profiles")
           .select("user_id, display_name, email")
           .in("user_id", authorIds);
 
-        if (!profilesError) {
-          profiles?.forEach((p) => {
-            authorProfiles.set(p.user_id, {
-              display_name: p.display_name,
-              email: p.email,
-              user_id: p.user_id,
-            });
+        (profiles || []).forEach(p => {
+          authorProfiles.set(p.user_id, {
+            display_name: p.display_name,
+            email: p.email,
+            user_id: p.user_id,
           });
-        }
+        });
       }
     }
 
@@ -496,7 +495,15 @@ async function getAlignmentGanttDataInternal({
         .eq("user_id", userId),
       supabase
         .from("snapshots")
-        .select("id, year, week, author_id, workspace_id")
+        .select(
+          `
+          id,
+          year,
+          week,
+          author_id,
+          workspace_id
+        `
+        )
         .eq("workspace_id", workspaceId)
         .eq("author_id", userId)
         .order("year", { ascending: true })
@@ -544,35 +551,30 @@ async function getAlignmentGanttDataInternal({
           .eq("workspace_id", workspaceId)
           .in("plan_id", assignedPlanIds);
 
-        // Step 3: 담당자의 프로필 조회
-        const userIds = [
-          ...new Set((allAssigneesData || []).map((a) => a.user_id)),
-        ];
-        let profilesMap = new Map<string, string>();
+        // Step 3: 담당자들의 프로필 조회
+        const assigneeUserIds = [...new Set((allAssigneesData || []).map(a => a.user_id))];
+        const { data: assigneeProfiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", assigneeUserIds);
 
-        if (userIds.length > 0) {
-          const { data: profilesData } = await supabase
-            .from("profiles")
-            .select("user_id, display_name")
-            .in("user_id", userIds);
-
-          for (const p of profilesData || []) {
-            if (p.display_name) {
-              profilesMap.set(p.user_id, p.display_name);
-            }
-          }
-        }
+        const assigneeProfileMap = new Map(
+          (assigneeProfiles || []).map(p => [p.user_id, p])
+        );
 
         // Step 4: plan_id별로 담당자 그룹핑
         const assigneesMap = new Map<string, PlanAssigneeRaw[]>();
-        for (const a of allAssigneesData || []) {
+        for (const a of (allAssigneesData || [])) {
           if (!assigneesMap.has(a.plan_id)) {
             assigneesMap.set(a.plan_id, []);
           }
+          const profile = assigneeProfileMap.get(a.user_id);
           assigneesMap.get(a.plan_id)!.push({
             user_id: a.user_id,
             role: a.role,
-            profiles: { display_name: profilesMap.get(a.user_id) || null },
+            profiles: {
+              display_name: profile?.display_name || null,
+            },
           });
         }
 
@@ -586,30 +588,25 @@ async function getAlignmentGanttDataInternal({
     // 2. Snapshot 데이터 처리
 
     // Author 정보를 별도로 조회
-    let authorProfiles = new Map<
+    const authorProfiles = new Map<
       string,
       { display_name?: string; email?: string; user_id: string }
     >();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [
-        ...new Set(snapshots.map((s) => s.author_id).filter(Boolean)),
-      ];
-
+      const authorIds = [...new Set(snapshots.map(s => s.author_id).filter(Boolean))];
       if (authorIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
+        const { data: profiles } = await supabase
           .from("profiles")
           .select("user_id, display_name, email")
           .in("user_id", authorIds);
 
-        if (!profilesError) {
-          profiles?.forEach((p) => {
-            authorProfiles.set(p.user_id, {
-              display_name: p.display_name,
-              email: p.email,
-              user_id: p.user_id,
-            });
+        (profiles || []).forEach(p => {
+          authorProfiles.set(p.user_id, {
+            display_name: p.display_name,
+            email: p.email,
+            user_id: p.user_id,
           });
-        }
+        });
       }
     }
 

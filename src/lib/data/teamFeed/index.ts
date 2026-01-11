@@ -30,42 +30,53 @@ export async function getTeamFeedData(
   projectOptions: string[];
   moduleOptions: string[];
   featureOptions: string[];
+  members: Array<{
+    user_id: string;
+    display_name: string | null;
+    email: string | null;
+    role: "admin" | "manager" | "member";
+    basic_role: "PLANNING" | "FE" | "BE" | "DESIGN" | "QA" | null;
+  }>;
   error?: string;
 }> {
   const supabase = await createClient();
 
-  // 1. 워크스페이스 멤버 조회
+  // 1. 워크스페이스 멤버와 프로필을 별도로 조회 후 조합
   const { data: members, error: membersError } = await supabase
     .from("workspace_members")
     .select("user_id, role")
     .eq("workspace_id", workspaceId);
 
   if (membersError || !members) {
+    console.error(
+      "[getTeamFeedData] Failed to fetch members:",
+      {
+        error: membersError,
+        workspaceId,
+        message: membersError?.message,
+        details: membersError?.details,
+        hint: membersError?.hint,
+        code: membersError?.code,
+      }
+    );
     return {
       feedItems: [],
       projectOptions: [],
       moduleOptions: [],
       featureOptions: [],
+      members: [],
       error: "멤버 정보 조회 실패",
     };
   }
 
-  // 2. 프로필 정보 조회
+  // 2. 프로필 조회
   const userIds = members.map((m) => m.user_id);
-  const { data: profiles, error: profilesError } = await supabase
+  const { data: profiles } = await supabase
     .from("profiles")
-    .select("user_id, display_name, email")
+    .select("user_id, display_name, email, basic_role")
     .in("user_id", userIds);
 
-  if (profilesError || !profiles) {
-    return {
-      feedItems: [],
-      projectOptions: [],
-      moduleOptions: [],
-      featureOptions: [],
-      error: "프로필 정보 조회 실패",
-    };
-  }
+  const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
 
   // 3. 최근 N주의 스냅샷과 엔트리 조회 (필터링 적용)
   let query = supabase
@@ -125,12 +136,12 @@ export async function getTeamFeedData(
       projectOptions: [],
       moduleOptions: [],
       featureOptions: [],
+      members: [],
       error: "스냅샷 조회 실패",
     };
   }
 
-  // 4. 멤버 정보 맵 생성 (members + profiles 결합)
-  const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
+  // 4. 멤버 정보 맵 생성
   const memberMap = new Map(
     members.map((m) => {
       const profile = profileMap.get(m.user_id);
@@ -294,11 +305,31 @@ export async function getTeamFeedData(
     );
   });
 
+  // 멤버 정보 변환
+  const membersData = members.map((m) => {
+    const profile = profileMap.get(m.user_id);
+    
+    // Defensive fallback: "leader" → "manager"
+    let role = m.role as "admin" | "manager" | "member" | "leader";
+    if (role === "leader") {
+      role = "manager";
+    }
+
+    return {
+      user_id: m.user_id,
+      display_name: profile?.display_name || null,
+      email: profile?.email || null,
+      role: role as "admin" | "manager" | "member",
+      basic_role: profile?.basic_role || null,
+    };
+  });
+
   return {
     feedItems: filteredItems,
     projectOptions,
     moduleOptions,
     featureOptions,
+    members: membersData,
   };
 }
 

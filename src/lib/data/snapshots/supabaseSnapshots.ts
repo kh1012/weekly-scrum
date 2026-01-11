@@ -104,25 +104,33 @@ export async function getAllSnapshotsFromSupabase(
 ): Promise<Record<string, WeeklyScrumData>> {
   const supabase = await createClient();
 
-  // 1. 모든 스냅샷과 entries 조회 (author_id는 별도 처리)
+  // 1. 모든 스냅샷과 entries 조회
   const { data: snapshots, error } = await supabase
     .from("snapshots")
-    .select("*, entries:snapshot_entries(*)")
+    .select(
+      `
+      *,
+      entries:snapshot_entries(*)
+    `
+    )
     .eq("workspace_id", workspaceId)
     .order("week_start_date", { ascending: false });
 
-  // 2. author_id 목록으로 프로필 조회 (작성자 이름 fallback용)
-  const authorIds = [...new Set((snapshots || []).map(s => s.author_id).filter(Boolean))];
-  let profileMap: Map<string, string> = new Map();
-  
-  if (authorIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, display_name")
-      .in("id", authorIds);
-    
-    if (profiles) {
-      profileMap = new Map(profiles.map(p => [p.id, p.display_name || ""]));
+  // 2. author profiles를 별도로 조회
+  const profileMap: Map<string, string> = new Map();
+  if (snapshots && snapshots.length > 0) {
+    const authorIds = [...new Set(snapshots.map((s) => s.author_id).filter(Boolean))];
+    if (authorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", authorIds);
+
+      profiles?.forEach((p) => {
+        if (p.user_id && p.display_name) {
+          profileMap.set(p.user_id, p.display_name);
+        }
+      });
     }
   }
 

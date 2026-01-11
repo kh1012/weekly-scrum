@@ -19,7 +19,7 @@ export interface WorkspaceMember {
 
 /**
  * 워크스페이스 멤버 목록 조회
- * - workspace_members 조회 후 profiles 별도 조회
+ * - workspace_members와 profiles를 별도로 조회 후 조합
  * - 담당자 선택 옵션용
  */
 export async function listWorkspaceMembers({
@@ -40,7 +40,14 @@ export async function listWorkspaceMembers({
     if (membersError) {
       console.error(
         "[listWorkspaceMembers] Failed to fetch members:",
-        membersError
+        {
+          error: membersError,
+          workspaceId,
+          message: membersError.message,
+          details: membersError.details,
+          hint: membersError.hint,
+          code: membersError.code,
+        }
       );
       return [];
     }
@@ -49,7 +56,7 @@ export async function listWorkspaceMembers({
       return [];
     }
 
-    // 2. profiles 별도 조회 (basic_role 포함)
+    // 2. 각 멤버의 user_id로 profiles 조회
     const userIds = members.map((m) => m.user_id);
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
@@ -59,46 +66,36 @@ export async function listWorkspaceMembers({
     if (profilesError) {
       console.error(
         "[listWorkspaceMembers] Failed to fetch profiles:",
-        profilesError
+        {
+          error: profilesError,
+          userIds,
+          message: profilesError.message,
+        }
       );
-      // profiles 없어도 멤버 목록은 반환
     }
 
-    // 3. 조합
-    const profileMap = new Map<
-      string,
-      {
-        display_name: string | null;
-        email: string | null;
-        basic_role: BasicRole | null;
-      }
-    >();
-    for (const p of profiles || []) {
-      profileMap.set(p.user_id, {
-        display_name: p.display_name,
-        email: p.email,
-        basic_role: p.basic_role as BasicRole | null,
-      });
-    }
+    // 3. 데이터 병합
+    const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
 
     const result = members.map((member) => {
       const profile = profileMap.get(member.user_id);
+      
       // 빈 문자열도 null 처리
       const displayName = profile?.display_name?.trim() || null;
       const email = profile?.email?.trim() || null;
-      
+
       // Defensive fallback: "leader" → "manager"
       let role = member.role as "admin" | "manager" | "member" | "leader";
       if (role === "leader") {
         role = "manager";
       }
-      
+
       return {
         user_id: member.user_id,
         display_name: displayName,
         email: email,
         role: role as "admin" | "manager" | "member",
-        basic_role: profile?.basic_role || null,
+        basic_role: (profile?.basic_role as BasicRole | null) || null,
       };
     });
 
