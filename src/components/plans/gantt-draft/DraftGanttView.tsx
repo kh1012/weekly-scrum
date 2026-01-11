@@ -322,6 +322,7 @@ export const DraftGanttView = forwardRef<
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
   const selectFlag = useDraftStore((s) => s.selectFlag);
   const setFilters = useDraftStore((s) => s.setFilters);
+  const expandToLevel = useDraftStore((s) => s.expandToLevel);
 
   // Expose scrollToRow method via ref
   useImperativeHandle(
@@ -591,6 +592,15 @@ export const DraftGanttView = forwardRef<
 
     hydrate(sortedRows, loadedBars);
   }, [initialPlans, hydrate]);
+
+  // 초기 로드 시 트리를 '기능까지 보기' 상태로 펼치기
+  const hasInitializedExpandRef = useRef(false);
+  useEffect(() => {
+    if (rows.length > 0 && !hasInitializedExpandRef.current) {
+      hasInitializedExpandRef.current = true;
+      expandToLevel(1);
+    }
+  }, [rows.length, expandToLevel]);
 
   // 마지막 업데이트 시각 토스트 표시 (페이지 진입 시 한 번만)
   const hasShownToastRef = useRef(false);
