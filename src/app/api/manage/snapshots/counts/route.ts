@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/manage/snapshots/counts
- * 
+ *
  * 모든 주차별 본인 엔트리 갯수 조회
  * year 파라미터는 선택적 (없으면 모든 연도 조회)
  */
@@ -13,14 +13,16 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId");
   const year = searchParams.get("year");
 
-  console.log('[API /api/manage/snapshots/counts] Request params:', {
+  console.log("[API /api/manage/snapshots/counts] Request params:", {
     workspaceId,
     userId,
-    year
+    year,
   });
 
   if (!workspaceId || !userId) {
-    console.error('[API /api/manage/snapshots/counts] Missing required parameters');
+    console.error(
+      "[API /api/manage/snapshots/counts] Missing required parameters"
+    );
     return NextResponse.json(
       { error: "Missing required parameters" },
       { status: 400 }
@@ -79,7 +81,9 @@ export async function GET(request: NextRequest) {
 
   // author_id 또는 author_display_name으로 필터
   if (displayName) {
-    entriesQuery = entriesQuery.or(`author_id.eq.${userId},author_display_name.eq.${displayName}`);
+    entriesQuery = entriesQuery.or(
+      `author_id.eq.${userId},author_display_name.eq.${displayName}`
+    );
   } else {
     entriesQuery = entriesQuery.eq("author_id", userId);
   }
@@ -105,7 +109,7 @@ export async function GET(request: NextRequest) {
 
   // 주차별 엔트리 갯수 계산 (key: "년도-주차", value: 갯수)
   const countMap: Record<string, number> = {};
-  
+
   (entries || []).forEach((entry) => {
     const info = snapshotInfoMap.get(entry.snapshot_id);
     if (info) {

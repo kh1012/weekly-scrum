@@ -7,24 +7,23 @@ const DEFAULT_WORKSPACE_ID = getDefaultWorkspaceId();
 
 export default async function ManageSnapshotsPage() {
   const supabase = await createClient();
-  
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
   if (error || !user) {
     redirect("/login");
   }
 
-  console.log('[ManageSnapshotsPage] Rendering with:', {
+  console.log("[ManageSnapshotsPage] Rendering with:", {
     userId: user.id,
     workspaceId: DEFAULT_WORKSPACE_ID,
-    userEmail: user.email
+    userEmail: user.email,
   });
 
   return (
-    <SnapshotsMainView 
-      userId={user.id} 
-      workspaceId={DEFAULT_WORKSPACE_ID}
-    />
+    <SnapshotsMainView userId={user.id} workspaceId={DEFAULT_WORKSPACE_ID} />
   );
 }
-

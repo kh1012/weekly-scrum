@@ -5,7 +5,7 @@ import { getAllMetaOptions } from "@/lib/data/snapshots";
 
 /**
  * GET /api/manage/snapshots/user-data
- * 
+ *
  * 사용자 정보 및 메타 옵션 조회
  */
 export async function GET(request: NextRequest) {
@@ -13,13 +13,15 @@ export async function GET(request: NextRequest) {
   const workspaceId = searchParams.get("workspaceId");
   const userId = searchParams.get("userId");
 
-  console.log('[API /api/manage/snapshots/user-data] Request params:', {
+  console.log("[API /api/manage/snapshots/user-data] Request params:", {
     workspaceId,
-    userId
+    userId,
   });
 
   if (!workspaceId || !userId) {
-    console.error('[API /api/manage/snapshots/user-data] Missing required parameters');
+    console.error(
+      "[API /api/manage/snapshots/user-data] Missing required parameters"
+    );
     return NextResponse.json(
       { error: "Missing required parameters" },
       { status: 400 }
@@ -52,4 +54,3 @@ export async function GET(request: NextRequest) {
     featureOptions: metaOptions.feature,
   });
 }
-

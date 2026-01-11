@@ -19,9 +19,15 @@ import { LoadingButton } from "@/components/common/LoadingButton";
 import { getCurrentISOWeek, getWeekStartDateString } from "@/lib/utils/date";
 import { NewSnapshotModal } from "@/components/weekly-scrum/manage/NewSnapshotModal";
 import { NewEntryModal } from "@/components/weekly-scrum/manage/NewEntryModal";
-import { ToastProvider, useToast } from "@/components/weekly-scrum/manage/Toast";
+import {
+  ToastProvider,
+  useToast,
+} from "@/components/weekly-scrum/manage/Toast";
 import type { WorkloadLevel } from "@/lib/supabase/types";
-import { WORKLOAD_LEVEL_LABELS, WORKLOAD_LEVEL_COLORS } from "@/lib/supabase/types";
+import {
+  WORKLOAD_LEVEL_LABELS,
+  WORKLOAD_LEVEL_COLORS,
+} from "@/lib/supabase/types";
 import { useSnapshotsState } from "./hooks/useSnapshotsState";
 import { useSnapshotsFilters } from "./hooks/useSnapshotsFilters";
 
@@ -96,9 +102,9 @@ function SnapshotsMainViewInner({
 
   // 초기 props 로깅
   useEffect(() => {
-    console.log('[SnapshotsMainViewInner] Component mounted with props:', {
+    console.log("[SnapshotsMainViewInner] Component mounted with props:", {
       userId,
-      workspaceId
+      workspaceId,
     });
   }, [userId, workspaceId]);
 
@@ -191,32 +197,36 @@ function SnapshotsMainViewInner({
     try {
       const weekStartDate = getWeekStartDateString(selectedYear, selectedWeek);
       const url = `/api/manage/snapshots?workspaceId=${workspaceId}&userId=${userId}&weekStartDate=${weekStartDate}`;
-      
-      console.log('[SnapshotsMainView] Fetching snapshots:', {
+
+      console.log("[SnapshotsMainView] Fetching snapshots:", {
         workspaceId,
         userId,
         selectedYear,
         selectedWeek,
         weekStartDate,
-        url
+        url,
       });
-      
+
       const response = await fetch(url);
 
-      console.log('[SnapshotsMainView] Response status:', response.status);
+      console.log("[SnapshotsMainView] Response status:", response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[SnapshotsMainView] Response data:', {
+        console.log("[SnapshotsMainView] Response data:", {
           snapshotsCount: data.snapshots?.length || 0,
           snapshots: data.snapshots,
-          stats: data.stats
+          stats: data.stats,
         });
         setSnapshots(data.snapshots || []);
         setWeekStats(data.stats || null);
       } else {
         const errorText = await response.text();
-        console.error('[SnapshotsMainView] Response error:', response.status, errorText);
+        console.error(
+          "[SnapshotsMainView] Response error:",
+          response.status,
+          errorText
+        );
       }
     } catch (error) {
       console.error("[SnapshotsMainView] Failed to fetch snapshots:", error);
@@ -277,10 +287,10 @@ function SnapshotsMainViewInner({
 
   // 새로 작성하기 모달 상태
   const [isNewSnapshotModalOpen, setIsNewSnapshotModalOpen] = useState(false);
-  
+
   // 새 엔트리 작성 모달 상태
   const [isNewEntryModalOpen, setIsNewEntryModalOpen] = useState(false);
-  
+
   // 사용자 정보 및 메타 옵션 (API로 가져오기)
   const [displayName, setDisplayName] = useState("");
   const [memberNames, setMemberNames] = useState<string[]>([]);
@@ -288,12 +298,14 @@ function SnapshotsMainViewInner({
   const [projectOptions, setProjectOptions] = useState<string[]>([]);
   const [moduleOptions, setModuleOptions] = useState<string[]>([]);
   const [featureOptions, setFeatureOptions] = useState<string[]>([]);
-  
+
   // 사용자 정보 및 메타 옵션 로드
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const response = await fetch(`/api/manage/snapshots/user-data?workspaceId=${workspaceId}&userId=${userId}`);
+        const response = await fetch(
+          `/api/manage/snapshots/user-data?workspaceId=${workspaceId}&userId=${userId}`
+        );
         if (response.ok) {
           const data = await response.json();
           setDisplayName(data.displayName || "");
@@ -315,9 +327,11 @@ function SnapshotsMainViewInner({
     setIsNewSnapshotModalOpen(false);
     navigationProgress.start();
     // 선택된 주차 키들을 쿼리 파라미터로 전달
-    const weekKeysParam = selectedWeekKeys.join(',');
+    const weekKeysParam = selectedWeekKeys.join(",");
     router.push(
-      `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=load&weeks=${encodeURIComponent(weekKeysParam)}`
+      `/manage/snapshots/${selectedYear}/${selectedWeek}/new?mode=load&weeks=${encodeURIComponent(
+        weekKeysParam
+      )}`
     );
   };
 
@@ -781,7 +795,10 @@ function SnapshotsMainViewInner({
               </div>
               {snapshotStats.totalEntries > 0 && (
                 <div className="text-xs text-[#8c959f]">
-                  {snapshotStats.domainCount} domains, {snapshotStats.projectCount} projects, {snapshotStats.moduleCount} modules, {snapshotStats.featureCount} features가 기록 되었습니다.
+                  {snapshotStats.domainCount} domains,{" "}
+                  {snapshotStats.projectCount} projects,{" "}
+                  {snapshotStats.moduleCount} modules,{" "}
+                  {snapshotStats.featureCount} features가 기록 되었습니다.
                 </div>
               )}
             </div>
@@ -939,7 +956,7 @@ function SnapshotsMainViewInner({
         workspaceId={workspaceId}
         userId={userId}
       />
-      
+
       {/* 새 엔트리 작성하기 모달 */}
       <NewEntryModal
         isOpen={isNewEntryModalOpen}
@@ -968,7 +985,7 @@ function SnapshotsMainViewInner({
 function WorkloadBadge({ level }: { level: WorkloadLevel }) {
   const colors = WORKLOAD_LEVEL_COLORS[level];
   const label = WORKLOAD_LEVEL_LABELS[level];
-  
+
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md ${colors.bg} ${colors.text} border ${colors.border}`}

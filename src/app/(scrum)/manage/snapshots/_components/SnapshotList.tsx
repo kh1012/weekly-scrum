@@ -145,23 +145,31 @@ export function SnapshotList({
 
   // 스냅샷의 entries를 펼쳐서 개별 카드로 표시
   const allEntries: SnapshotEntry[] = snapshots.flatMap((snapshot) =>
-    snapshot.entries.map((entry, index) => ({
-      entryId: entry.id,
-      snapshotId: snapshot.id,
-      entryIndex: index,
-      domain: entry.domain,
-      project: entry.project,
-      module: entry.module,
-      feature: entry.feature,
-      past_week: entry.past_week,
-      this_week: entry.this_week,
-      risks: entry.risks,
-      risk_level: entry.risk_level,
-      collaborators: entry.collaborators?.map((c) => ({
-        name: c.name,
-        relations: c.relations,
-      })),
-    }))
+    snapshot.entries.map((entry, index) => {
+      console.log('[SnapshotList] Entry data:', {
+        entryId: entry.id,
+        past_week: entry.past_week,
+        this_week: entry.this_week,
+      });
+      
+      return {
+        entryId: entry.id,
+        snapshotId: snapshot.id,
+        entryIndex: index,
+        domain: entry.domain,
+        project: entry.project,
+        module: entry.module,
+        feature: entry.feature,
+        past_week: entry.past_week,
+        this_week: entry.this_week,
+        risks: entry.risks,
+        risk_level: entry.risk_level,
+        collaborators: entry.collaborators?.map((c) => ({
+          name: c.name,
+          relations: c.relations,
+        })),
+      };
+    })
   );
 
   // 로딩 중이고 데이터가 없으면 로딩 상태 표시
@@ -421,19 +429,32 @@ function EntryCard({
 
   const isExpanded = localExpanded;
 
-  // 데이터 추출
-  const pastWeekTasks = entry.past_week?.tasks || [];
-  const thisWeekTasks = entry.this_week?.tasks || [];
-  const risks = entry.risks || [];
+  // 데이터 추출 및 타입 보정
+  const pastWeekTasks = Array.isArray(entry.past_week?.tasks) ? entry.past_week.tasks : [];
+  const thisWeekTasks = Array.isArray(entry.this_week?.tasks) 
+    ? entry.this_week.tasks.map(task => 
+        typeof task === 'string' ? task : String(task)
+      )
+    : [];
+  const risks = Array.isArray(entry.risks) ? entry.risks : [];
   const riskLevel = entry.risk_level || 0;
-  const collaborators = entry.collaborators || [];
+  const collaborators = Array.isArray(entry.collaborators) ? entry.collaborators : [];
+  
+  console.log('[EntryCard] Processed data:', {
+    entryId: entry.entryId,
+    pastWeekTasks: pastWeekTasks.length,
+    thisWeekTasks,
+    thisWeekTasksType: thisWeekTasks.map(t => typeof t),
+  });
 
-  // 진행률 계산
+  // 진행률 계산 (안전하게)
   const avgProgress =
     pastWeekTasks.length > 0
       ? Math.round(
-          pastWeekTasks.reduce((sum, t) => sum + t.progress, 0) /
-            pastWeekTasks.length
+          pastWeekTasks.reduce((sum, t) => {
+            const progress = typeof t.progress === 'number' ? t.progress : 0;
+            return sum + progress;
+          }, 0) / pastWeekTasks.length
         )
       : null;
 
@@ -741,24 +762,33 @@ function EntryCard({
                 PROGRESS:
               </div>
               <ul className="space-y-1">
-                {pastWeekTasks.map((task, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-xs text-[#24292f]"
-                  >
-                    <span className="text-[#57606a] mt-0.5">•</span>
-                    <span className="flex-1">{task.title}</span>
-                    <span
-                      className={`shrink-0 text-[10px] font-medium ${
-                        task.progress === 100
-                          ? "text-[#1a7f37]"
-                          : "text-[#57606a]"
-                      }`}
+                {pastWeekTasks.map((task, i) => {
+                  const taskTitle = typeof task.title === 'string' 
+                    ? task.title 
+                    : (typeof task.title === 'object' 
+                      ? JSON.stringify(task.title) 
+                      : String(task.title || ''));
+                  const taskProgress = typeof task.progress === 'number' ? task.progress : 0;
+                  
+                  return (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-xs text-[#24292f]"
                     >
-                      {task.progress}%
-                    </span>
-                  </li>
-                ))}
+                      <span className="text-[#57606a] mt-0.5">•</span>
+                      <span className="flex-1">{taskTitle}</span>
+                      <span
+                        className={`shrink-0 text-[10px] font-medium ${
+                          taskProgress === 100
+                            ? "text-[#1a7f37]"
+                            : "text-[#57606a]"
+                        }`}
+                      >
+                        {taskProgress}%
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
@@ -780,7 +810,9 @@ function EntryCard({
                 Risk:
               </span>
               <span className="text-[#24292f]">
-                {risks.length > 0 ? risks.join(", ") : "미정"}
+                {risks.length > 0 
+                  ? risks.map(r => typeof r === 'string' ? r : JSON.stringify(r)).join(", ") 
+                  : "미정"}
               </span>
             </div>
           )}
@@ -791,6 +823,7 @@ function EntryCard({
               <span className="text-[#57606a] font-medium shrink-0">with:</span>
               <div className="flex flex-wrap gap-1.5">
                 {collaborators.map((c, i) => {
+                  const collabName = typeof c.name === 'string' ? c.name : String(c.name || '');
                   const style = getRelationStyle(c.relations);
                   return (
                     <span
@@ -799,7 +832,7 @@ function EntryCard({
                         c.relations?.[0] === 'pair' ? 'border-purple-200' : c.relations?.[0] === 'pre' ? 'border-blue-200' : 'border-green-200'
                       }`}
                     >
-                      {c.name}
+                      {collabName}
                       {style.label && (
                         <span className="opacity-75">({style.label})</span>
                       )}
@@ -817,15 +850,18 @@ function EntryCard({
                 NEXT:
               </div>
               <ul className="space-y-1">
-                {thisWeekTasks.map((task, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-xs text-[#24292f]"
-                  >
-                    <span className="text-[#57606a] mt-0.5">•</span>
-                    <span className="flex-1">{task}</span>
-                  </li>
-                ))}
+                {thisWeekTasks.map((task, i) => {
+                  const taskText = typeof task === 'string' ? task : JSON.stringify(task);
+                  return (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-xs text-[#24292f]"
+                    >
+                      <span className="text-[#57606a] mt-0.5">•</span>
+                      <span className="flex-1">{taskText}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

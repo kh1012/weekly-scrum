@@ -4,7 +4,7 @@ import { computeWeekStats } from "@/lib/stats/snapshotWeekStats";
 
 /**
  * GET /api/manage/snapshots
- * 
+ *
  * 특정 주차의 내 스냅샷 목록 조회
  */
 export async function GET(request: NextRequest) {
@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId");
   const weekStartDate = searchParams.get("weekStartDate");
 
-  console.log('[API /api/manage/snapshots] Request params:', {
+  console.log("[API /api/manage/snapshots] Request params:", {
     workspaceId,
     userId,
-    weekStartDate
+    weekStartDate,
   });
 
   if (!workspaceId || !userId || !weekStartDate) {
-    console.error('[API /api/manage/snapshots] Missing required parameters');
+    console.error("[API /api/manage/snapshots] Missing required parameters");
     return NextResponse.json(
       { error: "Missing required parameters" },
       { status: 400 }
@@ -29,16 +29,36 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  console.log('[API /api/manage/snapshots] Querying snapshots with filters:', {
+  // DEBUG: 전체 스냅샷 조회 (조건 없이)
+  const { data: allSnapshots } = await supabase
+    .from("snapshots")
+    .select("id, workspace_id, author_id, week_start_date, week, year")
+    .limit(10);
+
+  console.log("[API /api/manage/snapshots] All snapshots in DB (first 10):", {
+    count: allSnapshots?.length || 0,
+    snapshots: allSnapshots,
+  });
+
+  // 주차 범위 계산 (정확한 날짜 대신 범위로 조회)
+  const weekStartParsed = new Date(weekStartDate);
+  const weekEndDate = new Date(weekStartParsed);
+  weekEndDate.setDate(weekStartParsed.getDate() + 6);
+  const weekEndDateString = weekEndDate.toISOString().split('T')[0];
+
+  console.log("[API /api/manage/snapshots] Querying snapshots with filters:", {
     workspace_id: workspaceId,
     author_id: userId,
-    week_start_date: weekStartDate
+    week_start_date: weekStartDate,
+    week_end_date: weekEndDateString,
   });
 
   // 스냅샷 목록 조회 (새 DB 스키마: risks, collaborators 별도 컬럼 + workload 필드)
+  // 정확한 날짜 매칭 대신 주차 범위로 조회 (timezone 이슈 해결)
   const { data: snapshots, error } = await supabase
     .from("snapshots")
-    .select(`
+    .select(
+      `
       id,
       created_at,
       updated_at,
@@ -57,21 +77,26 @@ export async function GET(request: NextRequest) {
         risk_level,
         collaborators
       )
-    `)
+    `
+    )
     .eq("workspace_id", workspaceId)
     .eq("author_id", userId)
-    .eq("week_start_date", weekStartDate)
+    .gte("week_start_date", weekStartDate)
+    .lte("week_start_date", weekEndDateString)
     .order("updated_at", { ascending: false });
 
-  console.log('[API /api/manage/snapshots] Query result:', {
+  console.log("[API /api/manage/snapshots] Query result:", {
     success: !error,
     snapshotsCount: snapshots?.length || 0,
     error: error ? error.message : null,
-    errorDetails: error
+    errorDetails: error,
   });
 
   if (error) {
-    console.error("[API /api/manage/snapshots] Error fetching snapshots:", error);
+    console.error(
+      "[API /api/manage/snapshots] Error fetching snapshots:",
+      error
+    );
     return NextResponse.json(
       { error: "Failed to fetch snapshots", details: error.message },
       { status: 500 }
@@ -83,34 +108,36 @@ export async function GET(request: NextRequest) {
   const snapshotSummaries = (snapshots || [])
     .filter((snapshot) => snapshot.entries && snapshot.entries.length > 0)
     .map((snapshot) => ({
-    id: snapshot.id,
-    created_at: snapshot.created_at,
-    updated_at: snapshot.updated_at,
-    workload_level: snapshot.workload_level,
-    workload_note: snapshot.workload_note,
-    entriesCount: snapshot.entries?.length || 0,
-    entries: (snapshot.entries || []).map((e: Record<string, unknown>) => ({
-      id: e.id,
-      domain: e.domain,
-      project: e.project,
-      module: e.module,
-      feature: e.feature,
-      past_week: e.past_week,
-      this_week: e.this_week,
-      risks: e.risks,
-      risk_level: e.risk_level,
-      collaborators: e.collaborators,
-    })),
-  }));
+      id: snapshot.id,
+      created_at: snapshot.created_at,
+      updated_at: snapshot.updated_at,
+      workload_level: snapshot.workload_level,
+      workload_note: snapshot.workload_note,
+      entriesCount: snapshot.entries?.length || 0,
+      entries: (snapshot.entries || []).map((e: Record<string, unknown>) => ({
+        id: e.id,
+        domain: e.domain,
+        project: e.project,
+        module: e.module,
+        feature: e.feature,
+        past_week: e.past_week,
+        this_week: e.this_week,
+        risks: e.risks,
+        risk_level: e.risk_level,
+        collaborators: e.collaborators,
+      })),
+    }));
 
   // 모든 엔트리를 모아서 통계 계산 (DB 형식 그대로 전달)
   const allEntries = (snapshots || []).flatMap((s) => s.entries || []);
-  const stats = computeWeekStats(allEntries as unknown as Parameters<typeof computeWeekStats>[0]);
+  const stats = computeWeekStats(
+    allEntries as unknown as Parameters<typeof computeWeekStats>[0]
+  );
 
-  console.log('[API /api/manage/snapshots] Returning response:', {
+  console.log("[API /api/manage/snapshots] Returning response:", {
     totalSnapshots: snapshots?.length || 0,
     filteredSnapshots: snapshotSummaries.length,
-    totalEntries: allEntries.length
+    totalEntries: allEntries.length,
   });
 
   return NextResponse.json({
@@ -118,4 +145,3 @@ export async function GET(request: NextRequest) {
     stats,
   });
 }
-
