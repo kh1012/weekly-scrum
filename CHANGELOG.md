@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.9.0] - 2026-01-XX
+## [2.9.0] - 2026-01-11
 
 ### Added
 - **Personal Space 대시보드**: 데이터 중심 개인 분석 뷰
@@ -41,14 +41,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **전체 통계 표시**: Admin 및 Team Feed 페이지 개선
   - Admin 대시보드에 전체 스냅샷/엔트리 통계 표시
   - Team Feed에 전체 스냅샷 엔트리 개수 표시 (필터 무관)
+- **성능 측정 도구 강화**: Admin 페이지에 통합 성능 테스트 기능 추가
+  - 모든 주요 라우트에 대한 자동화된 성능 측정
+  - 개별 페이지 및 전체 테스트 실행 지원
+  - 측정 결과 시각화 (로딩 시간, 쿼리 수, 상태별 집계)
+  - HTML 기반 독립 실행형 측정 도구 (measure-performance.html)
 
 ### Fixed
+- **Supabase FK 관계 에러**: 테이블 조회 분리로 Foreign Key 관계 오류 해결
+  - `workspace_members`, `profiles` 테이블 별도 조회 후 애플리케이션에서 병합
+  - FK 미설정 환경에서도 안정적 동작 보장
+  - 향후 FK 추가 시 JOIN 쿼리로 전환 가능한 구조 유지
 - **ISO Week 계산 일관성**: 전체 앱에서 일관된 ISO Week 계산 로직 적용
   - `menuStats.ts`의 수동 ISO Week 계산을 `getCurrentISOWeek()` 유틸리티로 통일
   - 타임존 고려 및 ISO 8601 표준 준수
-- **N+1 쿼리 최적화**: Personal Dashboard의 주차별 추이 계산 성능 개선
-  - 모든 엔트리를 한 번에 조회하여 클라이언트 사이드에서 집계
-  - 쿼리 횟수: 8회 → 1회로 대폭 감소
+- **N+1 쿼리 제거**: Personal Dashboard 및 주요 페이지 성능 대폭 개선
+  - 주차별 추이 계산: 쿼리 8회 → 1회 (클라이언트 사이드 집계)
+  - `/my` 페이지: 병렬 쿼리 실행으로 응답 시간 단축
+  - `/my/alignment` 페이지: 병렬 쿼리 실행으로 응답 시간 단축
+  - 불필요한 데이터베이스 왕복 최소화
 - **데모 모드 데이터 호환성**: 프로덕션과 데모 환경 간 데이터 구조 차이 해결
   - `thisWeek.tasks` 및 `risks` 필드의 문자열/객체 타입 혼용 처리
   - `ScrumCard`, `FeedItem` 컴포넌트에 방어적 프로그래밍 적용
@@ -60,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 플래그 영역의 가로 스크롤이 타임라인과 동기화되도록 개선
 - **계획 데이터 무결성**: `plan_assignees`가 없는 계획 데이터 정리
   - 역할 기반 담당자 할당 보장 (각 스테이지당 1명)
+- **Legacy 로컬 스토리지 제거**: 앱 마운트 시 더 이상 사용하지 않는 localStorage 엔트리 자동 정리
 
 ### Changed
 - **기존 Alignment 재구현**: 카드 기반 레이아웃에서 간트 차트로 전환
@@ -72,7 +84,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Top Routes: 순위 배지 (금, 은, 동) 추가
   - Recent Activity: 2열 테이블 구조
 
+### Removed
+- **복잡한 성능 최적화 코드 제거**: 유지보수 부담 감소 및 단순화
+  - Materialized Views 관련 SQL 제거 (sql/materialized-views.sql)
+  - 성능 인덱스 SQL 제거 (sql/performance-indexes.sql)
+  - RPC 함수 SQL 제거 (sql/rpc-functions.sql)
+  - Progressive Loading 컴포넌트 제거 (DataOnlyDashboardProgressive.tsx)
+  - V2 메트릭 계산 로직 제거 (getPersonalDashboardMetricsV2.ts)
+  - Core 메트릭 계산 로직 제거 (getPersonalDashboardMetricsCore.ts)
+  - Enhanced Data API 엔드포인트 제거 (/api/dashboard/enhanced-data)
+  - 고급 성능 최적화 문서 제거 (docs/performance-optimization-advanced.md)
+- **단순하고 효과적인 병렬 쿼리 실행으로 대체**
+  - Promise.all을 활용한 쿼리 병렬 실행
+  - 복잡한 Materialized Views 없이도 충분한 성능 확보
+
 ### Improved
+- **전반적인 성능 개선**: 데이터베이스 쿼리 최적화로 페이지 로딩 속도 향상
+  - `/my` 페이지: 병렬 쿼리 실행으로 응답 시간 단축
+  - `/my/alignment` 페이지: 병렬 쿼리 실행으로 응답 시간 단축
+  - Personal Dashboard: N+1 쿼리 제거로 대폭 개선
+  - 복잡한 최적화 제거 후 단순한 병렬 실행으로도 충분한 성능 확보
 - **Alignment SNB 배지**: 할당된 Plans 수 + 현재 주차 Snapshot Entries 수 표시
   - 실시간으로 사용자의 계획 및 작업 현황 확인 가능
   - `menuStats.ts`에서 자동 계산
@@ -82,28 +113,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **데이터 일관성**: 데모 데이터의 구조적 일관성 확보
   - 모든 스냅샷 엔트리의 `name` 필드를 작성자 `display_name`으로 통일
   - 계획 데이터의 담당자 할당을 `basic_role` 기반으로 자동화
+- **코드베이스 단순화**: 불필요한 복잡성 제거로 유지보수성 향상
+  - 1,400줄 이상의 코드 제거 (복잡한 최적화 로직)
+  - 단순하고 명확한 병렬 쿼리 실행 패턴으로 통일
+
+### Performance Metrics
+- **Database Query Optimization**
+  - Personal Dashboard 주차별 추이: 8개 쿼리 → 1개 쿼리 (87.5% 감소)
+  - `/my` 페이지: 순차 실행 → 병렬 실행 (응답 시간 단축)
+  - `/my/alignment` 페이지: 순차 실행 → 병렬 실행 (응답 시간 단축)
+- **Code Reduction**
+  - 삭제된 코드: 2,410줄 (복잡한 최적화 로직)
+  - 추가된 코드: 1,005줄 (단순한 병렬 실행 패턴)
+  - 순감소: 1,405줄 (약 58% 감소)
 
 ### Technical Details
 - **Personal Dashboard**:
-  - `src/lib/dashboard/getPersonalDashboardMetrics.ts`: 개인 메트릭 집계 함수
+  - `src/lib/dashboard/getPersonalDashboardMetrics.ts`: 병렬 쿼리 실행으로 성능 개선
   - `src/components/weekly-scrum/my/DataOnlyDashboard.tsx`: 테이블/리스트 중심 UI
-  - `src/app/(scrum)/my/page.tsx`: 서버 사이드 데이터 조회
+  - `src/app/(scrum)/my/page.tsx`: 병렬 쿼리 실행으로 응답 시간 단축
 - **Alignment Gantt**:
-  - `src/lib/data/alignmentGanttData.ts`: Plans + Snapshots 통합 데이터 레이어 (268줄)
+  - `src/lib/data/plans/alignmentGanttData.ts`: 병렬 쿼리 실행으로 성능 개선
   - `src/app/(scrum)/my/alignment/_components/AlignmentGanttClient.tsx`: DraftGanttView 래핑 (61줄)
   - `src/app/(scrum)/my/alignment/page.tsx`: 서버 컴포넌트 재작성 (53줄)
   - 삭제: `AlignmentView`, `PlanCard`, `SnapshotOverlay`, `WeekSelector` 등 5개 컴포넌트
   - 삭제: `/api/alignment` API route, `alignmentData.ts` 데이터 레이어
+- **Snapshots 데이터 레이어**:
+  - `src/lib/data/snapshots/supabaseSnapshots.ts`: 테이블 분리 조회로 FK 관계 오류 해결
+  - FK 미설정 환경에서도 안정적 동작 보장
 - **GNB Breadcrumb**:
   - `src/components/weekly-scrum/common/Navigation.tsx`: `getBreadcrumbFromPath()` 함수 추가
   - `src/components/weekly-scrum/common/Header.tsx`: 브레드크럼 렌더링
 - **Menu Stats**:
-  - `src/lib/data/menuStats.ts`: `alignment_count` 계산 로직, ISO Week 일관성 확보
-  - `src/lib/telemetry/menuEvents.ts`: `/my/alignment` 경로 등록 (이미 존재)
+  - `src/lib/data/menu/menuStats.ts`: `alignment_count` 계산 로직, ISO Week 일관성 확보
+  - `src/lib/telemetry/menuEvents.ts`: `/my/alignment` 경로 등록
+- **Performance Testing**:
+  - `src/app/(scrum)/admin/performance/page.tsx`: 통합 성능 테스트 페이지
+  - `src/app/(scrum)/admin/performance/_components/PerformanceTestView.tsx`: 성능 측정 UI
+  - `public/measure-performance.html`: 독립 실행형 HTML 측정 도구
+- **Documentation**:
+  - `docs/supabase-fk-setup.md`: Supabase Foreign Key 설정 가이드
+  - `sql/add-foreign-keys-for-joins.sql`: FK 추가를 위한 SQL 스크립트
 - **기타**:
   - `src/lib/supabase/mode.ts`: `getDefaultWorkspaceId()` 함수 추가
   - `src/app/(scrum)/admin/page.tsx`: 전체 통계 조회 로직 추가
-  - `src/app/(scrum)/team-feed/page.tsx`: 전체 엔트리 개수 조회 추가
+  - `src/app/(scrum)/works/team-feed/page.tsx`: 전체 엔트리 개수 조회 추가
   - `src/components/weekly-scrum/cards/ScrumCard.tsx`: 타입 안전성 개선
   - `src/components/team-feed/FeedItem.tsx`: 방어적 데이터 처리 추가
   - `src/components/plans/gantt-draft/DraftTimeline.tsx`: 플래그 영역 스크롤 동기화 구현

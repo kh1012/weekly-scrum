@@ -77,7 +77,7 @@ export async function getPersonalDashboardMetrics({
   // ========================================
   // 병렬 쿼리 실행 (모든 독립적인 쿼리를 한 번에)
   // ========================================
-  
+
   const [snapshotsResult, entriesResult, plansResult, visitsResult] =
     await Promise.allSettled([
       // A) Snapshot 메트릭
@@ -86,21 +86,23 @@ export async function getPersonalDashboardMetrics({
         .select("id, year, week, created_at, updated_at")
         .eq("workspace_id", workspaceId)
         .eq("author_id", userId),
-      
+
       // B) Snapshot Entries (모든 필요한 필드를 한 번에 조회)
       supabase
         .from("snapshot_entries")
-        .select("id, name, domain, project, module, feature, snapshot_id, created_at, updated_at, past_week")
+        .select(
+          "id, name, domain, project, module, feature, snapshot_id, created_at, updated_at, past_week"
+        )
         .eq("workspace_id", workspaceId)
         .eq("author_id", userId),
-      
+
       // C) Plan 메트릭 (JOIN으로 한 번에 조회)
       supabase
         .from("plan_assignees")
         .select("plan_id, plans!inner(id, status)")
         .eq("user_id", userId)
         .eq("plans.workspace_id", workspaceId),
-      
+
       // D) Usage 메트릭
       supabase
         .from("menu_events")
@@ -124,17 +126,18 @@ export async function getPersonalDashboardMetrics({
     : 0;
 
   const snapshotIds = snapshots?.map((s) => s.id) || [];
-  
+
   // ========================================
   // B) Entries 처리 (한 번에 조회한 데이터 재사용)
   // ========================================
-  
+
   const allEntries =
     entriesResult.status === "fulfilled" ? entriesResult.value.data : null;
-  
+
   // 스냅샷 ID로 필터링
-  const entries = allEntries?.filter((e) => snapshotIds.includes(e.snapshot_id)) || [];
-  
+  const entries =
+    allEntries?.filter((e) => snapshotIds.includes(e.snapshot_id)) || [];
+
   const entriesTotal = entries.length;
 
   // 이번 주 & 지난 주 스냅샷 ID 분류
@@ -153,8 +156,12 @@ export async function getPersonalDashboardMetrics({
       .map((s) => s.id)
   );
 
-  const entriesThisWeek = entries.filter((e) => thisWeekSnapshotIds.has(e.snapshot_id)).length;
-  const entriesLastWeek = entries.filter((e) => lastWeekSnapshotIds.has(e.snapshot_id)).length;
+  const entriesThisWeek = entries.filter((e) =>
+    thisWeekSnapshotIds.has(e.snapshot_id)
+  ).length;
+  const entriesLastWeek = entries.filter((e) =>
+    lastWeekSnapshotIds.has(e.snapshot_id)
+  ).length;
 
   // 마지막 스냅샷 시각 (엔트리 기준)
   let lastSnapshotAt: string | null = null;
@@ -164,8 +171,7 @@ export async function getPersonalDashboardMetrics({
         new Date(b.updated_at || b.created_at).getTime() -
         new Date(a.updated_at || a.created_at).getTime()
     );
-    lastSnapshotAt =
-      sortedEntries[0].updated_at || sortedEntries[0].created_at;
+    lastSnapshotAt = sortedEntries[0].updated_at || sortedEntries[0].created_at;
   }
 
   // ========================================
@@ -251,7 +257,7 @@ export async function getPersonalDashboardMetrics({
         new Date(b.updated_at || b.created_at).getTime() -
         new Date(a.updated_at || a.created_at).getTime()
     );
-    
+
     recentEntries = sortedEntries.slice(0, 5).map((e) => {
       const snapshot = snapshots.find((s) => s.id === e.snapshot_id);
       return {
@@ -288,7 +294,7 @@ export async function getPersonalDashboardMetrics({
     }
 
     // 스냅샷 ID -> 엔트리 매핑
-    const snapshotIdToEntries = new Map<string, typeof entries[0][]>();
+    const snapshotIdToEntries = new Map<string, (typeof entries)[0][]>();
     for (const entry of entries) {
       if (!snapshotIdToEntries.has(entry.snapshot_id)) {
         snapshotIdToEntries.set(entry.snapshot_id, []);
@@ -297,10 +303,7 @@ export async function getPersonalDashboardMetrics({
     }
 
     // 최근 8주 추출 및 집계
-    const sortedWeeks = Array.from(weekMap.keys())
-      .sort()
-      .reverse()
-      .slice(0, 8);
+    const sortedWeeks = Array.from(weekMap.keys()).sort().reverse().slice(0, 8);
 
     for (const weekKey of sortedWeeks.reverse()) {
       const weekSnapshotIds = weekMap.get(weekKey) || [];

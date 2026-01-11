@@ -36,49 +36,22 @@ export async function getMenuStats(params: {
         .select("*", { count: "exact", head: true })
         .eq("workspace_id", workspaceId),
       
-      // Distinct snapshots (snapshot_id만 조회)
-      supabase
-        .from("snapshot_entries")
-        .select("snapshot_id")
-        .eq("workspace_id", workspaceId),
-      
-      // Total snapshot entries count
-      supabase
-        .from("snapshot_entries")
-        .select("*", { count: "exact", head: true })
-        .eq("workspace_id", workspaceId),
-      
       // Plans count
       supabase
         .from("plans")
         .select("*", { count: "exact", head: true })
         .eq("workspace_id", workspaceId),
       
-      // Distinct features (feature만 조회)
+      // 모든 snapshot entries를 한 번에 조회 (필요한 필드만 선택)
       supabase
         .from("snapshot_entries")
-        .select("feature")
-        .eq("workspace_id", workspaceId)
-        .not("feature", "is", null),
-      
-      // Collaborations (collaborators만 조회)
-      supabase
-        .from("snapshot_entries")
-        .select("collaborators")
-        .eq("workspace_id", workspaceId)
-        .not("collaborators", "is", null),
+        .select("snapshot_id, feature, collaborators, author_id")
+        .eq("workspace_id", workspaceId),
     ];
 
     // userId가 있을 때만 추가 쿼리
     if (userId) {
       baseQueries.push(
-        // User's own entries count
-        supabase
-          .from("snapshot_entries")
-          .select("*", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("author_id", userId),
-        
         // Plan assignees
         supabase
           .from("plan_assignees")
@@ -93,27 +66,26 @@ export async function getMenuStats(params: {
     const feedbacksCount =
       results[0].status === "fulfilled" ? results[0].value.count || 0 : 0;
     
-    const snapshotsData =
-      results[1].status === "fulfilled" ? results[1].value.data : null;
+    const plansCount =
+      results[1].status === "fulfilled" ? results[1].value.count || 0 : 0;
+    
+    // 모든 entries를 한 번에 조회하여 메모리에서 집계
+    const allEntries =
+      results[2].status === "fulfilled" ? results[2].value.data : null;
+    
+    // 메모리에서 집계
     const uniqueSnapshots = new Set(
-      snapshotsData?.map((d) => d.snapshot_id) || []
+      allEntries?.map((e) => e.snapshot_id) || []
     ).size;
     
-    const totalEntriesCount =
-      results[2].status === "fulfilled" ? results[2].value.count || 0 : 0;
+    const totalEntriesCount = allEntries?.length || 0;
     
-    const plansCount =
-      results[3].status === "fulfilled" ? results[3].value.count || 0 : 0;
+    const uniqueFeatures = new Set(
+      allEntries?.map((e) => e.feature).filter(Boolean) || []
+    ).size;
     
-    const featuresData =
-      results[4].status === "fulfilled" ? results[4].value.data : null;
-    const uniqueFeatures = new Set(featuresData?.map((d) => d.feature) || [])
-      .size;
-    
-    const entriesWithCollaborators =
-      results[5].status === "fulfilled" ? results[5].value.data : null;
     let totalCollaborations = 0;
-    entriesWithCollaborators?.forEach((entry) => {
+    allEntries?.forEach((entry) => {
       if (Array.isArray(entry.collaborators)) {
         totalCollaborations += entry.collaborators.length;
       }
@@ -123,11 +95,11 @@ export async function getMenuStats(params: {
     let alignmentCount = 0;
 
     if (userId) {
-      myEntriesCount =
-        results[6].status === "fulfilled" ? results[6].value.count || 0 : 0;
+      // 내 엔트리 수를 메모리에서 필터링
+      myEntriesCount = allEntries?.filter((e) => e.author_id === userId).length || 0;
       
       const planAssignees =
-        results[7].status === "fulfilled" ? results[7].value.data : null;
+        results[3].status === "fulfilled" ? results[3].value.data : null;
       const assignedPlanIds = planAssignees?.map((pa) => pa.plan_id) || [];
 
       // 추가 쿼리가 필요한 경우 병렬로 실행

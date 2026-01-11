@@ -89,43 +89,66 @@ export default async function AdminDashboardPage() {
   const currentWeek = recentWeeks[0]; // 이번 주 (실제로는 표시 안 함)
   const lastWeek = recentWeeks[1]; // 지난 주 (메인으로 표시)
 
-  // 1. 워크스페이스 멤버 조회
-  const { data: members } = await supabase
-    .from("workspace_members")
-    .select("user_id, role")
-    .eq("workspace_id", workspaceId)
-    .order("role");
-
-  // 2. profiles 별도 조회
-  const userIds = members?.map((m) => m.user_id) || [];
-  const { data: profiles } =
-    userIds.length > 0
-      ? await supabase
-          .from("profiles")
-          .select("user_id, display_name, email")
-          .in("user_id", userIds)
-      : { data: [] };
-
-  // profiles를 user_id로 맵핑
-  const profilesMap = new Map(
-    (profiles || []).map((p) => [
-      p.user_id,
-      { display_name: p.display_name, email: p.email },
-    ])
-  );
-
-  // 스냅샷 조회 (최근 6주치) - 테이블 표시용
+  // 스냅샷 조회 파라미터 준비
   const weekLabels = recentWeeks.map((w) => w.label);
   const years = [...new Set(recentWeeks.map((w) => w.year))];
 
-  const { data: snapshots } = await supabase
-    .from("snapshots")
-    .select("id, author_id, year, week, workload_level, workload_note")
-    .eq("workspace_id", workspaceId)
-    .in("year", years)
-    .in("week", weekLabels);
+  // 1. 모든 독립적인 쿼리를 병렬로 실행
+  const [
+    membersResult,
+    snapshotsResult,
+    { count: totalSnapshotsCount },
+    { count: totalEntriesCount },
+  ] = await Promise.all([
+    // workspace_members와 profiles를 JOIN으로 한 번에 조회
+    supabase
+      .from("workspace_members")
+      .select(
+        `
+        user_id,
+        role,
+        profiles!inner(
+          display_name,
+          email
+        )
+      `
+      )
+      .eq("workspace_id", workspaceId)
+      .order("role"),
+    // snapshots 조회 (최근 6주치)
+    supabase
+      .from("snapshots")
+      .select("id, author_id, year, week, workload_level, workload_note")
+      .eq("workspace_id", workspaceId)
+      .in("year", years)
+      .in("week", weekLabels),
+    // 전체 스냅샷 통계
+    supabase
+      .from("snapshots")
+      .select("*", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId),
+    // 전체 엔트리 통계
+    supabase
+      .from("snapshot_entries")
+      .select("*", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId),
+  ]);
 
-  // 스냅샷별 엔트리 수 조회 (최근 6주치) - 테이블 표시용
+  const members = membersResult.data;
+  const snapshots = snapshotsResult.data;
+
+  // profiles를 user_id로 맵핑 (JOIN된 데이터 구조 사용)
+  const profilesMap = new Map(
+    (members || []).map((m: any) => [
+      m.user_id,
+      {
+        display_name: m.profiles?.display_name,
+        email: m.profiles?.email,
+      },
+    ])
+  );
+
+  // 스냅샷별 엔트리 수 조회 (병렬 쿼리 후 별도 실행)
   const snapshotIds = snapshots?.map((s) => s.id) || [];
   const { data: entries } =
     snapshotIds.length > 0
@@ -134,21 +157,6 @@ export default async function AdminDashboardPage() {
           .select("snapshot_id")
           .in("snapshot_id", snapshotIds)
       : { data: [] };
-
-  // 전체 통계 조회 (필터 없이 전체)
-  const [
-    { count: totalSnapshotsCount },
-    { count: totalEntriesCount }
-  ] = await Promise.all([
-    supabase
-      .from("snapshots")
-      .select("*", { count: "exact", head: true })
-      .eq("workspace_id", workspaceId),
-    supabase
-      .from("snapshot_entries")
-      .select("*", { count: "exact", head: true })
-      .eq("workspace_id", workspaceId)
-  ]);
 
   // 스냅샷별 엔트리 수 맵핑
   const entryCountBySnapshot = new Map<string, number>();

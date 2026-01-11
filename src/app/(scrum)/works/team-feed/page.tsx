@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
 import { getTeamFeedData } from "@/lib/data/teamFeed";
-import { listWorkspaceMembers } from "@/lib/data/members";
 import { TeamFeedClient } from "@/components/team-feed/TeamFeedClient";
 import { parseGnbParams } from "@/lib/ui/gnbParams";
 import { LogoLoadingSpinner } from "@/components/weekly-scrum/common/LoadingSpinner";
@@ -34,16 +33,15 @@ export default async function TeamFeedPage({ searchParams }: PageProps) {
 
   const supabase = await createClient();
 
-  const [feedResult, membersResult, { count: totalEntriesCount }] = await Promise.all([
+  const [feedResult, { count: totalEntriesCount }] = await Promise.all([
     getTeamFeedData(DEFAULT_WORKSPACE_ID, 8, gnbParams),
-    listWorkspaceMembers({ workspaceId: DEFAULT_WORKSPACE_ID }),
     supabase
       .from("snapshot_entries")
       .select("*", { count: "exact", head: true })
       .eq("workspace_id", DEFAULT_WORKSPACE_ID),
   ]);
 
-  const { feedItems, projectOptions, moduleOptions, featureOptions, error: feedError } = feedResult;
+  const { feedItems, projectOptions, moduleOptions, featureOptions, members, error: feedError } = feedResult;
 
 
   if (feedError) {
@@ -64,7 +62,7 @@ export default async function TeamFeedPage({ searchParams }: PageProps) {
       <TeamFeedClient
         initialFeedItems={feedItems}
         gnbParams={gnbParams}
-        workspaceMembers={membersResult || []}
+        workspaceMembers={members || []}
         projectOptions={projectOptions || []}
         moduleOptions={moduleOptions || []}
         featureOptions={featureOptions || []}

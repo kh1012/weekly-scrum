@@ -63,6 +63,11 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     pathname === "/releases" ||
     pathname === "/releases/" ||
     pathname.startsWith("/releases/");
+  // Performance 페이지인지 확인
+  const isPerformancePage =
+    pathname === "/admin/performance" ||
+    pathname === "/admin/performance/" ||
+    pathname.startsWith("/admin/performance/");
   const isAdminPage =
     pathname === "/admin" ||
     pathname === "/admin/" ||
@@ -106,6 +111,7 @@ export function Header({ onMenuOpen, role }: HeaderProps) {
     isMetaOptionsPage ||
     isTeamFeedPage ||
     isReleasesPage ||
+    isPerformancePage ||
     isAdminPage ||
     isCollaboratorGraphPage ||
     isAlignmentPage ||

@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import type { WeeklyScrumData, WeekOption, ScrumItem, PastWeekTask, Collaborator, RiskLevel } from "@/types/scrum";
+import type {
+  WeeklyScrumData,
+  WeekOption,
+  ScrumItem,
+  PastWeekTask,
+  Collaborator,
+  RiskLevel,
+} from "@/types/scrum";
 
 /**
  * snapshot_weeks 기반 주차 목록 타입
@@ -38,32 +45,31 @@ export interface SnapshotEntryRaw {
  * @param entry - DB에서 가져온 엔트리 데이터
  * @param authorName - 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
  */
-function convertEntryToScrumItem(entry: SnapshotEntryRaw, authorName?: string): ScrumItem {
+function convertEntryToScrumItem(
+  entry: SnapshotEntryRaw,
+  authorName?: string
+): ScrumItem {
   // past_week은 { tasks: [...] } 형태의 jsonb 필드
   const pastWeek = entry.past_week || {};
   const pastWeekTasks = pastWeek.tasks || [];
-  
+
   // this_week도 { tasks: [...] } 형태의 jsonb 필드
   const thisWeek = entry.this_week || {};
   const thisWeekTasks = thisWeek.tasks || [];
-  
+
   const avgProgress =
     pastWeekTasks.length > 0
       ? Math.round(
-          pastWeekTasks.reduce(
-            (sum, t) => sum + (t.progress || 0),
-            0
-          ) / pastWeekTasks.length
+          pastWeekTasks.reduce((sum, t) => sum + (t.progress || 0), 0) /
+            pastWeekTasks.length
         )
       : 0;
 
   // collaborators에서 relation 필드 제거하고 relations만 사용하도록 정규화
-  const normalizedCollaborators = (entry.collaborators || []).map(
-    (c) => ({
-      name: c.name,
-      relations: c.relations || (c.relation ? [c.relation] : []),
-    })
-  );
+  const normalizedCollaborators = (entry.collaborators || []).map((c) => ({
+    name: c.name,
+    relations: c.relations || (c.relation ? [c.relation] : []),
+  }));
 
   // name이 비어있으면 authorName 또는 "익명" 사용
   const entryName = entry.name?.trim() || authorName || "익명";
@@ -75,13 +81,10 @@ function convertEntryToScrumItem(entry: SnapshotEntryRaw, authorName?: string): 
     module: entry.module || null,
     topic: entry.feature || "",
     plan:
-      pastWeekTasks
-        .map((t) => `${t.title} (${t.progress || 0}%)`)
-        .join(", ") || "",
+      pastWeekTasks.map((t) => `${t.title} (${t.progress || 0}%)`).join(", ") ||
+      "",
     planPercent: avgProgress,
-    progress: pastWeekTasks.map(
-      (t) => `${t.title} (${t.progress || 0}%)`
-    ),
+    progress: pastWeekTasks.map((t) => `${t.title} (${t.progress || 0}%)`),
     progressPercent: avgProgress,
     reason: "",
     next: thisWeekTasks,
@@ -94,7 +97,7 @@ function convertEntryToScrumItem(entry: SnapshotEntryRaw, authorName?: string): 
 /**
  * Supabase에서 모든 스냅샷 데이터 조회 (snapshot_weeks 기반)
  * 같은 주차의 모든 개인 스냅샷 entries를 합쳐서 반환
- * 
+ *
  * 폴백 전략:
  * 1. snapshot_weeks 테이블이 있으면 주차 목록으로 사용
  * 2. snapshot_weeks가 비어있으면 snapshots에서 직접 주차 추출 (레거시 호환)
@@ -119,7 +122,9 @@ export async function getAllSnapshotsFromSupabase(
   // 2. author profiles를 별도로 조회
   const profileMap: Map<string, string> = new Map();
   if (snapshots && snapshots.length > 0) {
-    const authorIds = [...new Set(snapshots.map((s) => s.author_id).filter(Boolean))];
+    const authorIds = [
+      ...new Set(snapshots.map((s) => s.author_id).filter(Boolean)),
+    ];
     if (authorIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
@@ -171,13 +176,17 @@ export async function getAllSnapshotsFromSupabase(
         }
         return false;
       });
-      
+
       // 모든 entries 합치기
       const allItems: ScrumItem[] = [];
       for (const snapshot of weekSnapshots) {
         // 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
-        const authorName = snapshot.author_id ? profileMap.get(snapshot.author_id) : undefined;
-        const items = (snapshot.entries || []).map((entry: SnapshotEntryRaw) => convertEntryToScrumItem(entry, authorName));
+        const authorName = snapshot.author_id
+          ? profileMap.get(snapshot.author_id)
+          : undefined;
+        const items = (snapshot.entries || []).map((entry: SnapshotEntryRaw) =>
+          convertEntryToScrumItem(entry, authorName)
+        );
         allItems.push(...items);
       }
 
@@ -192,11 +201,20 @@ export async function getAllSnapshotsFromSupabase(
   } else {
     // snapshot_weeks가 비어있으면 snapshots에서 직접 주차 추출 (레거시 호환)
     // 주차별로 그룹화 (중복 제거)
-    const weekMap = new Map<string, { year: number; week: string; weekStart: string; weekEnd: string; snapshots: typeof snapshots }>();
-    
+    const weekMap = new Map<
+      string,
+      {
+        year: number;
+        week: string;
+        weekStart: string;
+        weekEnd: string;
+        snapshots: typeof snapshots;
+      }
+    >();
+
     for (const snapshot of snapshots) {
       if (!snapshot.year || !snapshot.week) continue;
-      
+
       const key = `${snapshot.year}-${snapshot.week}`;
       if (!weekMap.has(key)) {
         weekMap.set(key, {
@@ -212,12 +230,16 @@ export async function getAllSnapshotsFromSupabase(
 
     for (const [key, weekData] of weekMap) {
       const [, month] = weekData.weekStart.split("-").map(Number);
-      
+
       const allItems: ScrumItem[] = [];
       for (const snapshot of weekData.snapshots) {
         // 스냅샷 작성자 이름 (엔트리 name이 비어있을 때 사용)
-        const authorName = snapshot.author_id ? profileMap.get(snapshot.author_id) : undefined;
-        const items = (snapshot.entries || []).map((entry: SnapshotEntryRaw) => convertEntryToScrumItem(entry, authorName));
+        const authorName = snapshot.author_id
+          ? profileMap.get(snapshot.author_id)
+          : undefined;
+        const items = (snapshot.entries || []).map((entry: SnapshotEntryRaw) =>
+          convertEntryToScrumItem(entry, authorName)
+        );
         allItems.push(...items);
       }
 
@@ -260,7 +282,7 @@ export async function listSnapshotWeeks(
 /**
  * Supabase에서 사용 가능한 주차 목록 조회 (snapshot_weeks 기반 - 중복 없음)
  * 폴백: snapshot_weeks가 비어있으면 snapshots에서 직접 추출
- * 
+ *
  * @param workspaceId - 워크스페이스 ID
  * @returns WeekOption 배열
  */
@@ -285,7 +307,7 @@ export async function getAvailableWeeksFromSupabase(
 
   // 2. 폴백: snapshots에서 직접 주차 추출 (중복 제거)
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("snapshots")
     .select("year, week, week_start_date, week_end_date")
@@ -300,7 +322,7 @@ export async function getAvailableWeeksFromSupabase(
   const weekMap = new Map<string, WeekOption>();
   for (const row of data || []) {
     if (!row.year || !row.week) continue;
-    
+
     const key = `${row.year}-${row.week}`;
     if (!weekMap.has(key)) {
       weekMap.set(key, {
@@ -356,7 +378,7 @@ export async function getDataSource(workspaceId: string): Promise<{
     // 주차 목록 병합 (중복 제거)
     const weekKeySet = new Set<string>();
     const mergedWeeks: WeekOption[] = [];
-    
+
     // Supabase 주차 먼저 추가 (최신 데이터)
     for (const week of supabaseWeeks) {
       if (!weekKeySet.has(week.key)) {
@@ -364,7 +386,7 @@ export async function getDataSource(workspaceId: string): Promise<{
         mergedWeeks.push(week);
       }
     }
-    
+
     // 정적 파일 주차 추가 (중복 제외)
     for (const week of staticWeeks) {
       if (!weekKeySet.has(week.key)) {
@@ -407,4 +429,3 @@ export async function getSupabaseOnlyData(workspaceId: string): Promise<{
 
   return { allData, weeks };
 }
-

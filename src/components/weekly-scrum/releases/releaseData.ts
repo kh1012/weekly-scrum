@@ -2,6 +2,59 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.9.0",
+    date: "2026-01-11",
+    title: "성능 최적화 & 코드베이스 단순화",
+    summary:
+      "데이터베이스 쿼리를 병렬 실행으로 최적화하고, 복잡한 최적화 코드를 제거하여 유지보수성을 향상시켰습니다. Personal Dashboard 개선, Supabase FK 관계 오류 해결, 성능 측정 도구 추가 등이 포함되어 있습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "성능 측정 도구 강화 - Admin 페이지에 통합 성능 테스트 기능",
+      },
+      {
+        type: "feat",
+        description: "HTML 기반 독립 실행형 측정 도구 (measure-performance.html)",
+      },
+      {
+        type: "fix",
+        description: "Supabase FK 관계 에러 해결 - 테이블 조회 분리로 안정성 확보",
+      },
+      {
+        type: "fix",
+        description: "N+1 쿼리 제거 - Personal Dashboard 주차별 추이 쿼리 8회 → 1회 (87.5% 감소)",
+      },
+      {
+        type: "fix",
+        description: "/my 페이지 성능 개선 - 병렬 쿼리 실행으로 응답 시간 단축",
+      },
+      {
+        type: "fix",
+        description: "/my/alignment 페이지 성능 개선 - 병렬 쿼리 실행으로 응답 시간 단축",
+      },
+      {
+        type: "fix",
+        description: "ISO Week 계산 일관성 확보 - 전체 앱에서 getCurrentISOWeek() 유틸리티로 통일",
+      },
+      {
+        type: "fix",
+        description: "Legacy 로컬 스토리지 제거 - 앱 마운트 시 미사용 엔트리 자동 정리",
+      },
+      {
+        type: "improve",
+        description: "코드베이스 단순화 - 1,405줄 감소 (복잡한 최적화 로직 제거)",
+      },
+      {
+        type: "improve",
+        description: "단순한 병렬 쿼리 실행 패턴으로 통일 (Promise.all 활용)",
+      },
+      {
+        type: "improve",
+        description: "Alignment SNB 배지 - 할당된 Plans + 현재 주차 Snapshot Entries 수 표시",
+      },
+    ],
+  },
+  {
     version: "2.8.0",
     date: "2025-12-29",
     title: "워크스페이스 멤버 관리 & 텔레메트리 시스템",

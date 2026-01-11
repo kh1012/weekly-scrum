@@ -28,6 +28,7 @@ const MENU_MAP: Record<string, { group: string; key: string }> = {
   "/admin/members": { group: "admin", key: "admin-members" },
   "/admin/menu-usage": { group: "admin", key: "admin-menu-usage" },
   "/admin/menu-settings": { group: "admin", key: "admin-menu-settings" },
+  "/admin/performance": { group: "admin", key: "admin-performance" },
   "/releases": { group: "extra", key: "releases" },
 };
 

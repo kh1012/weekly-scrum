@@ -196,7 +196,10 @@ async function getWorkspaceAlignmentDataInternal({
     ]);
 
     const { data: plansData, error: plansError } = plansResult;
-    const { data: snapshots, error: snapshotsError } = snapshotsResult as { data: SnapshotQueryResult[] | null; error: unknown };
+    const { data: snapshots, error: snapshotsError } = snapshotsResult as {
+      data: SnapshotQueryResult[] | null;
+      error: unknown;
+    };
 
     let plans: PlanWithAssignees[] = [];
     if (plansError) {
@@ -214,18 +217,20 @@ async function getWorkspaceAlignmentDataInternal({
           .in("plan_id", planIds);
 
         // 담당자들의 프로필 조회
-        const assigneeUserIds = [...new Set((allAssigneesData || []).map(a => a.user_id))];
+        const assigneeUserIds = [
+          ...new Set((allAssigneesData || []).map((a) => a.user_id)),
+        ];
         const { data: assigneeProfiles } = await supabase
           .from("profiles")
           .select("user_id, display_name")
           .in("user_id", assigneeUserIds);
 
         const assigneeProfileMap = new Map(
-          (assigneeProfiles || []).map(p => [p.user_id, p])
+          (assigneeProfiles || []).map((p) => [p.user_id, p])
         );
 
         const assigneesMap = new Map<string, PlanAssigneeRaw[]>();
-        for (const a of (allAssigneesData || [])) {
+        for (const a of allAssigneesData || []) {
           if (!assigneesMap.has(a.plan_id)) {
             assigneesMap.set(a.plan_id, []);
           }
@@ -253,14 +258,16 @@ async function getWorkspaceAlignmentDataInternal({
       { display_name?: string; email?: string; user_id: string }
     >();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [...new Set(snapshots.map(s => s.author_id).filter(Boolean))];
+      const authorIds = [
+        ...new Set(snapshots.map((s) => s.author_id).filter(Boolean)),
+      ];
       if (authorIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
           .select("user_id, display_name, email")
           .in("user_id", authorIds);
 
-        (profiles || []).forEach(p => {
+        (profiles || []).forEach((p) => {
           authorProfiles.set(p.user_id, {
             display_name: p.display_name,
             email: p.email,
@@ -325,7 +332,12 @@ async function getWorkspaceAlignmentDataInternal({
         const authorName = profile?.display_name || profile?.email || "Unknown";
         return [
           s.id,
-          { year: s.year, week: s.week, authorName, authorId: s.author_id || null },
+          {
+            year: s.year,
+            week: s.week,
+            authorName,
+            authorId: s.author_id || null,
+          },
         ];
       }) || []
     );
@@ -552,19 +564,21 @@ async function getAlignmentGanttDataInternal({
           .in("plan_id", assignedPlanIds);
 
         // Step 3: 담당자들의 프로필 조회
-        const assigneeUserIds = [...new Set((allAssigneesData || []).map(a => a.user_id))];
+        const assigneeUserIds = [
+          ...new Set((allAssigneesData || []).map((a) => a.user_id)),
+        ];
         const { data: assigneeProfiles } = await supabase
           .from("profiles")
           .select("user_id, display_name")
           .in("user_id", assigneeUserIds);
 
         const assigneeProfileMap = new Map(
-          (assigneeProfiles || []).map(p => [p.user_id, p])
+          (assigneeProfiles || []).map((p) => [p.user_id, p])
         );
 
         // Step 4: plan_id별로 담당자 그룹핑
         const assigneesMap = new Map<string, PlanAssigneeRaw[]>();
-        for (const a of (allAssigneesData || [])) {
+        for (const a of allAssigneesData || []) {
           if (!assigneesMap.has(a.plan_id)) {
             assigneesMap.set(a.plan_id, []);
           }
@@ -593,14 +607,16 @@ async function getAlignmentGanttDataInternal({
       { display_name?: string; email?: string; user_id: string }
     >();
     if (snapshots && snapshots.length > 0) {
-      const authorIds = [...new Set(snapshots.map(s => s.author_id).filter(Boolean))];
+      const authorIds = [
+        ...new Set(snapshots.map((s) => s.author_id).filter(Boolean)),
+      ];
       if (authorIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
           .select("user_id, display_name, email")
           .in("user_id", authorIds);
 
-        (profiles || []).forEach(p => {
+        (profiles || []).forEach((p) => {
           authorProfiles.set(p.user_id, {
             display_name: p.display_name,
             email: p.email,

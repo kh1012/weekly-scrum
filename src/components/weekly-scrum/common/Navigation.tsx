@@ -328,6 +328,12 @@ const BASE_NAV_CATEGORIES: NavCategory[] = [
         href: "/admin/menu-settings",
         icon: Icons.cog,
       },
+      {
+        key: "admin-performance",
+        label: "Performance",
+        href: "/admin/performance",
+        icon: Icons.chartBar,
+      },
     ],
   },
   {
