@@ -14,6 +14,12 @@ export default async function ManageSnapshotsPage() {
     redirect("/login");
   }
 
+  console.log('[ManageSnapshotsPage] Rendering with:', {
+    userId: user.id,
+    workspaceId: DEFAULT_WORKSPACE_ID,
+    userEmail: user.email
+  });
+
   return (
     <SnapshotsMainView 
       userId={user.id} 

@@ -94,6 +94,14 @@ function SnapshotsMainViewInner({
 }: SnapshotsMainViewProps) {
   const router = useRouter();
 
+  // 초기 props 로깅
+  useEffect(() => {
+    console.log('[SnapshotsMainViewInner] Component mounted with props:', {
+      userId,
+      workspaceId
+    });
+  }, [userId, workspaceId]);
+
   // 상태 관리 hooks
   const {
     isStateInitialized,
@@ -182,17 +190,36 @@ function SnapshotsMainViewInner({
     navigationProgress.start(); // 프로그레스바 시작
     try {
       const weekStartDate = getWeekStartDateString(selectedYear, selectedWeek);
-      const response = await fetch(
-        `/api/manage/snapshots?workspaceId=${workspaceId}&userId=${userId}&weekStartDate=${weekStartDate}`
-      );
+      const url = `/api/manage/snapshots?workspaceId=${workspaceId}&userId=${userId}&weekStartDate=${weekStartDate}`;
+      
+      console.log('[SnapshotsMainView] Fetching snapshots:', {
+        workspaceId,
+        userId,
+        selectedYear,
+        selectedWeek,
+        weekStartDate,
+        url
+      });
+      
+      const response = await fetch(url);
+
+      console.log('[SnapshotsMainView] Response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[SnapshotsMainView] Response data:', {
+          snapshotsCount: data.snapshots?.length || 0,
+          snapshots: data.snapshots,
+          stats: data.stats
+        });
         setSnapshots(data.snapshots || []);
         setWeekStats(data.stats || null);
+      } else {
+        const errorText = await response.text();
+        console.error('[SnapshotsMainView] Response error:', response.status, errorText);
       }
     } catch (error) {
-      console.error("Failed to fetch snapshots:", error);
+      console.error("[SnapshotsMainView] Failed to fetch snapshots:", error);
     } finally {
       setIsLoading(false);
       navigationProgress.done(); // 프로그레스바 완료

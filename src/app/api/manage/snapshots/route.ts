@@ -13,7 +13,14 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId");
   const weekStartDate = searchParams.get("weekStartDate");
 
+  console.log('[API /api/manage/snapshots] Request params:', {
+    workspaceId,
+    userId,
+    weekStartDate
+  });
+
   if (!workspaceId || !userId || !weekStartDate) {
+    console.error('[API /api/manage/snapshots] Missing required parameters');
     return NextResponse.json(
       { error: "Missing required parameters" },
       { status: 400 }
@@ -21,6 +28,12 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
+
+  console.log('[API /api/manage/snapshots] Querying snapshots with filters:', {
+    workspace_id: workspaceId,
+    author_id: userId,
+    week_start_date: weekStartDate
+  });
 
   // 스냅샷 목록 조회 (새 DB 스키마: risks, collaborators 별도 컬럼 + workload 필드)
   const { data: snapshots, error } = await supabase
@@ -50,10 +63,17 @@ export async function GET(request: NextRequest) {
     .eq("week_start_date", weekStartDate)
     .order("updated_at", { ascending: false });
 
+  console.log('[API /api/manage/snapshots] Query result:', {
+    success: !error,
+    snapshotsCount: snapshots?.length || 0,
+    error: error ? error.message : null,
+    errorDetails: error
+  });
+
   if (error) {
-    console.error("Error fetching snapshots:", error);
+    console.error("[API /api/manage/snapshots] Error fetching snapshots:", error);
     return NextResponse.json(
-      { error: "Failed to fetch snapshots" },
+      { error: "Failed to fetch snapshots", details: error.message },
       { status: 500 }
     );
   }
@@ -86,6 +106,12 @@ export async function GET(request: NextRequest) {
   // 모든 엔트리를 모아서 통계 계산 (DB 형식 그대로 전달)
   const allEntries = (snapshots || []).flatMap((s) => s.entries || []);
   const stats = computeWeekStats(allEntries as unknown as Parameters<typeof computeWeekStats>[0]);
+
+  console.log('[API /api/manage/snapshots] Returning response:', {
+    totalSnapshots: snapshots?.length || 0,
+    filteredSnapshots: snapshotSummaries.length,
+    totalEntries: allEntries.length
+  });
 
   return NextResponse.json({
     snapshots: snapshotSummaries,

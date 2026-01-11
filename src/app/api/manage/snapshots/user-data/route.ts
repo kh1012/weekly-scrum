@@ -13,7 +13,13 @@ export async function GET(request: NextRequest) {
   const workspaceId = searchParams.get("workspaceId");
   const userId = searchParams.get("userId");
 
+  console.log('[API /api/manage/snapshots/user-data] Request params:', {
+    workspaceId,
+    userId
+  });
+
   if (!workspaceId || !userId) {
+    console.error('[API /api/manage/snapshots/user-data] Missing required parameters');
     return NextResponse.json(
       { error: "Missing required parameters" },
       { status: 400 }
