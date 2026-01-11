@@ -397,11 +397,11 @@ function SnapshotsMainViewInner({
         <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             {/* 좌측: 타이틀 + 모바일 주차 버튼 */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center md:justify-start gap-3">
               {/* 모바일: 타임라인 열기 버튼 */}
               <button
                 onClick={() => setIsMobileTimelineOpen(true)}
-                className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#0969da] bg-[#ddf4ff] rounded-lg hover:bg-[#b6e3ff] transition-colors shrink-0"
+                className="lg:hidden flex items-center gap-2 h-8 px-3 text-sm font-medium text-[#0969da] bg-[#ddf4ff] rounded-lg hover:bg-[#b6e3ff] transition-colors shrink-0"
               >
                 <svg
                   className="w-4 h-4"
@@ -441,7 +441,7 @@ function SnapshotsMainViewInner({
             </div>
 
             {/* 우측: 필터 + 액션 버튼 */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            <div className="flex flex-col md:flex-row items-center gap-3">
               {/* 필터 드롭다운 (체크박스 형태) - 모바일에서는 숨김 */}
               <div className="hidden md:flex items-center gap-2">
                 {/* 필터 초기화 (Reset) 버튼 - 항상 표시, 필터 없으면 비활성화 */}
@@ -683,8 +683,8 @@ function SnapshotsMainViewInner({
 
               <div className="hidden md:block h-6 w-px bg-[#d0d7de]" />
 
-              {/* 액션 버튼 - PC에서는 아이콘+텍스트, 모바일에서는 아이콘만 */}
-              <div className="flex items-center gap-2">
+              {/* 액션 버튼 */}
+              <div className="flex items-center justify-center gap-2">
                 <LoadingButton
                   onClick={handleEditWeek}
                   disabled={snapshots.length === 0}
@@ -708,7 +708,7 @@ function SnapshotsMainViewInner({
                     </svg>
                   }
                 >
-                  <span className="hidden md:inline">전체 엔트리 편집하기</span>
+                  편집
                 </LoadingButton>
 
                 <LoadingButton
@@ -731,7 +731,7 @@ function SnapshotsMainViewInner({
                     </svg>
                   }
                 >
-                  <span className="hidden md:inline">새 엔트리 작성하기</span>
+                  작성
                 </LoadingButton>
               </div>
             </div>
@@ -741,7 +741,7 @@ function SnapshotsMainViewInner({
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* 서브 메뉴 영역 */}
-          <div className="shrink-0 relative flex items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
+          <div className="shrink-0 relative flex items-center justify-center lg:justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
             {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
             <div className="hidden lg:flex flex-col gap-0.5 text-sm">
               <div className="flex items-center gap-2">
@@ -758,9 +758,6 @@ function SnapshotsMainViewInner({
                 </div>
               )}
             </div>
-
-            {/* 모바일: 빈 공간 */}
-            <div className="lg:hidden" />
 
             {/* 우측: 뷰 모드 토글 + 전체 펼치기 */}
             <div className="flex items-center gap-3">

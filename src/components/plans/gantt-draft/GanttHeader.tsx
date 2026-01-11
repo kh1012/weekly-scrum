@@ -1103,10 +1103,10 @@ export function GanttHeader({
             isMobile ? "flex flex-col gap-2 w-full" : "flex items-center gap-3"
           }`}
         >
-          {/* 필터 섹션 (윗줄) */}
+          {/* 필터 + 기간 섹션 (윗줄: 스테이지, 담당자, 날짜) */}
           <div
-            className={`flex items-center gap-3 ${
-              isMobile ? "w-full justify-center" : ""
+            className={`flex items-center ${
+              isMobile ? "w-full justify-center flex-wrap gap-2" : "gap-3"
             }`}
           >
             {/* 스테이지 필터 */}
@@ -1293,21 +1293,14 @@ export function GanttHeader({
                 )}
               </div>
             )}
-          </div>
 
-          {/* 구분선 (데스크톱에서만) */}
-          {!isMobile &&
-            (onStagesChange ||
-              (onAssigneesChange && sortedMembers.length > 0)) && (
-              <div className="w-px h-5 bg-gray-200" />
-            )}
+            {/* 구분선 (데스크톱에서만, 필터가 있을 때만) */}
+            {!isMobile &&
+              (onStagesChange ||
+                (onAssigneesChange && sortedMembers.length > 0)) && (
+                <div className="w-px h-5 bg-gray-200" />
+              )}
 
-          {/* 날짜/액션 섹션 (아래줄) */}
-          <div
-            className={`flex items-center gap-3 ${
-              isMobile ? "w-full justify-center" : ""
-            }`}
-          >
             {/* 기간 설정 버튼 */}
             <div className="relative" ref={rangePopoverRef}>
               <button
@@ -1342,9 +1335,17 @@ export function GanttHeader({
                 />
               )}
             </div>
+          </div>
 
-            <div className="w-px h-5 bg-gray-200" />
+          {/* 구분선 (데스크톱에서만) */}
+          {!isMobile && <div className="w-px h-5 bg-gray-200" />}
 
+          {/* 보조 액션 섹션 (아래줄: Undo/Redo, 단축키 등) */}
+          <div
+            className={`flex items-center gap-3 ${
+              isMobile ? "w-full justify-center" : ""
+            }`}
+          >
             {/* 보조 액션 */}
             {dragInfo ? (
               <div

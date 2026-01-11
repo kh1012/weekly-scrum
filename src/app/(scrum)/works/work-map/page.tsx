@@ -12,17 +12,31 @@ export default function WorkMapPage() {
     <div className="overflow-hidden bg-white flex flex-col">
       {/* 필터 바 */}
       <div className="shrink-0 bg-white py-3">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
+        {/* 데스크톱: 1행 레이아웃 */}
+        <div className="hidden lg:flex items-center gap-3">
           {/* 주차 선택기 */}
-          <div className="w-full lg:w-auto">
+          <div className="w-auto">
             <WeekSelector isMobile={false} />
           </div>
 
-          {/* 구분선 (PC만) */}
-          <div className="hidden lg:block w-px h-6 bg-[#d0d7de]" />
+          {/* 구분선 */}
+          <div className="w-px h-6 bg-[#d0d7de]" />
 
           {/* 검색 + 필터 (통합 모드) */}
-          <div className="w-full lg:flex-1">
+          <div className="flex-1">
+            <ExpandableFilters unified withSearch />
+          </div>
+        </div>
+
+        {/* 모바일: 여러 행 레이아웃 */}
+        <div className="flex lg:hidden flex-col gap-3">
+          {/* WeekSelector 모바일 레이아웃 (내부적으로 2-3행) */}
+          <div className="w-full">
+            <WeekSelector isMobile={true} />
+          </div>
+
+          {/* 검색 + 필터 */}
+          <div className="w-full">
             <ExpandableFilters unified withSearch />
           </div>
         </div>

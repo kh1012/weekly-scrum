@@ -108,7 +108,7 @@ export function SnapshotToolbar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4 animate-slide-in-left">
+    <div className="flex flex-wrap items-center min-[480px]:gap-4 gap-2 animate-slide-in-left">
       {/* 뷰 모드 탭 */}
       <div 
         ref={tabsRef}
@@ -129,36 +129,40 @@ export function SnapshotToolbar({
           <button
             key={mode.key}
             onClick={() => onViewModeChange(mode.key)}
-            className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors ${
+            className={`relative z-10 flex items-center gap-2 min-[480px]:px-4 px-2 py-2 rounded text-sm font-medium transition-colors ${
               viewMode === mode.key ? "text-[#0969da]" : "text-[#57606a]"
             }`}
+            title={mode.label}
           >
             {mode.icon}
-            <span>{mode.label}</span>
+            <span className="hidden min-[480px]:inline">{mode.label}</span>
           </button>
         ))}
       </div>
 
       {/* 우측 영역 */}
-      <div className="flex items-center gap-3 ml-auto animate-slide-in-right">
+      <div className="flex items-center min-[480px]:gap-3 gap-2 ml-auto animate-slide-in-right">
         {/* 비교 기능 */}
         {compareCount > 0 && (
           <div className="flex items-center gap-2 animate-bounce-in">
             <span className="text-xs font-medium px-2 py-1 rounded bg-[#ddf4ff] text-[#0969da] border border-[#54aeff]">
-              {compareCount}개 선택
+              {compareCount}<span className="hidden min-[480px]:inline">개 선택</span>
             </span>
             <button
               onClick={onClearCompare}
-              className="px-3 py-1.5 rounded text-xs font-medium bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6] transition-colors"
+              className="min-[480px]:px-3 px-2 py-1.5 rounded text-xs font-medium bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6] transition-colors"
+              title="선택 취소"
             >
-              취소
+              <span className="hidden min-[480px]:inline">취소</span>
+              <span className="min-[480px]:hidden">✕</span>
             </button>
             {compareCount >= 2 && (
               <button
                 onClick={onOpenCompare}
-                className="px-4 py-2 rounded-md text-xs font-medium bg-[#0969da] text-white hover:bg-[#0860ca] transition-colors"
+                className="min-[480px]:px-4 px-2 py-2 rounded-md text-xs font-medium bg-[#0969da] text-white hover:bg-[#0860ca] transition-colors"
+                title="비교하기"
               >
-                🔍 비교하기
+                🔍<span className="hidden min-[480px]:inline ml-1">비교하기</span>
               </button>
             )}
           </div>
@@ -167,7 +171,7 @@ export function SnapshotToolbar({
         {/* 선택 모드 토글 */}
         <button
           onClick={onToggleSelectMode}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors h-[42px] ${
+          className={`flex items-center gap-2 min-[480px]:px-4 px-2.5 py-2.5 rounded-md text-sm font-medium transition-colors h-[42px] ${
             isSelectMode 
               ? "bg-[#ddf4ff] text-[#0969da] border border-[#0969da]" 
               : "bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
@@ -177,7 +181,7 @@ export function SnapshotToolbar({
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>선택</span>
+          <span className="hidden min-[480px]:inline">선택</span>
         </button>
         
         {/* 데이터 추출 버튼 */}
@@ -185,14 +189,14 @@ export function SnapshotToolbar({
           <div ref={exportButtonRef} className="relative">
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors h-[42px] bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
+              className="flex items-center gap-2 min-[480px]:px-4 px-2.5 py-2.5 rounded-md text-sm font-medium transition-colors h-[42px] bg-[#f6f8fa] text-[#57606a] border border-[#d0d7de] hover:bg-[#f3f4f6]"
               title="데이터 추출"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>추출</span>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="hidden min-[480px]:inline">추출</span>
+              <svg className="w-3 h-3 hidden min-[480px]:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>

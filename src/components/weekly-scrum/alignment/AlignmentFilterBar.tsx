@@ -43,7 +43,7 @@ export function AlignmentFilterBar({
   showUniqueAuthors = false,
 }: AlignmentFilterBarProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white">
+    <div className="hidden md:flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white">
       {/* 필터 버튼 그룹 */}
       <div className="flex items-center gap-1.5">
         <button
