@@ -441,7 +441,7 @@ function EntryCard({
   const pastWeekTasks = Array.isArray(entry.past_week?.tasks)
     ? entry.past_week.tasks
     : [];
-  
+
   // this_week.tasks 처리: 객체면 적절한 필드 추출
   const thisWeekTasks = Array.isArray(entry.this_week?.tasks)
     ? entry.this_week.tasks.map((task) => {
@@ -453,9 +453,9 @@ function EntryCard({
         return String(task);
       })
     : [];
-  
+
   // risks 처리: 객체면 note 필드 추출
-  const risks = Array.isArray(entry.risks) 
+  const risks = Array.isArray(entry.risks)
     ? entry.risks.map((risk) => {
         if (typeof risk === "string") return risk;
         if (typeof risk === "object" && risk !== null) {
@@ -464,7 +464,7 @@ function EntryCard({
         return String(risk);
       })
     : [];
-  
+
   const riskLevel = entry.risk_level || 0;
   const collaborators = Array.isArray(entry.collaborators)
     ? entry.collaborators
@@ -615,44 +615,49 @@ function EntryCard({
                 {entry.feature}
               </div>
             )}
-            {/* 진행률 (접힌 상태에서만 표시 - 확장 시 상세 내용에서 표시됨) */}
-            {!isExpanded && avgProgress !== null && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
-                  평균 진행률
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
-                    <div
-                      className="h-full bg-[#0969da] rounded-full transition-all"
-                      style={{ width: `${avgProgress}%` }}
-                    />
+            {/* 진행률 & 리스크 (접힌 상태에서 표시) */}
+            {!isExpanded && (avgProgress !== null || riskLevel > 0) && (
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* 평균 진행률 */}
+                {avgProgress !== null && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-[#57606a] shrink-0">
+                      평균 진행률
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
+                        <div
+                          className="h-full bg-[#0969da] rounded-full transition-all"
+                          style={{ width: `${avgProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-medium text-[#24292f]">
+                        {avgProgress}%
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-medium text-[#24292f]">
-                    {avgProgress}%
-                  </span>
-                </div>
-              </div>
-            )}
-            {/* 리스크 레벨 (접힌 상태에서도 표시) */}
-            {riskLevel > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-[#57606a] w-12 shrink-0">
-                  Risk
-                </span>
-                <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                    riskStyle.bg
-                  } ${riskStyle.text} border ${
-                    riskLevel >= 3
-                      ? "border-red-200"
-                      : riskLevel >= 2
-                      ? "border-orange-200"
-                      : "border-yellow-200"
-                  }`}
-                >
-                  Lv.{riskLevel} {riskStyle.label}
-                </span>
+                )}
+                {/* 리스크 레벨 */}
+                {riskLevel > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-[#57606a] shrink-0">
+                      Risk
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                        riskStyle.bg
+                      } ${riskStyle.text} border ${
+                        riskLevel >= 3
+                          ? "border-red-200"
+                          : riskLevel >= 2
+                          ? "border-orange-200"
+                          : "border-yellow-200"
+                      }`}
+                    >
+                      Lv.{riskLevel} {riskStyle.label}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
