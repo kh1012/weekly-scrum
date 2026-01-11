@@ -60,10 +60,12 @@ export function SnapshotList({
 }: SnapshotListProps) {
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   // 선택 모드 상태 (외부에서 제어 가능)
   const isSelectMode = externalSelectMode;
-  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(new Set());
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(
+    new Set()
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -146,12 +148,12 @@ export function SnapshotList({
   // 스냅샷의 entries를 펼쳐서 개별 카드로 표시
   const allEntries: SnapshotEntry[] = snapshots.flatMap((snapshot) =>
     snapshot.entries.map((entry, index) => {
-      console.log('[SnapshotList] Entry data:', {
+      console.log("[SnapshotList] Entry data:", {
         entryId: entry.id,
         past_week: entry.past_week,
         this_week: entry.this_week,
       });
-      
+
       return {
         entryId: entry.id,
         snapshotId: snapshot.id,
@@ -231,8 +233,8 @@ export function SnapshotList({
           onToggleSelection={toggleSelection}
         />
       ) : (
-        <ListView 
-          entries={allEntries} 
+        <ListView
+          entries={allEntries}
           onEditCard={handleEditCard}
           onEntryDeleted={onEntryDeleted}
           isSelectMode={isSelectMode}
@@ -242,7 +244,8 @@ export function SnapshotList({
       )}
 
       {/* 일괄 삭제 확인 모달 */}
-      {showBulkDeleteModal && mounted &&
+      {showBulkDeleteModal &&
+        mounted &&
         createPortal(
           <div
             className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#c8d1da66]"
@@ -272,7 +275,11 @@ export function SnapshotList({
               {/* 내용 */}
               <div className="p-6">
                 <p className="text-[#24292f]">
-                  선택한 <span className="font-semibold text-[#cf222e]">{selectedEntryIds.size}개</span>의 스냅샷 항목을 삭제하시겠습니까?
+                  선택한{" "}
+                  <span className="font-semibold text-[#cf222e]">
+                    {selectedEntryIds.size}개
+                  </span>
+                  의 스냅샷 항목을 삭제하시겠습니까?
                   <br />
                   <br />
                   삭제된 항목은 복구할 수 없습니다.
@@ -299,7 +306,7 @@ export function SnapshotList({
             </div>
           </div>,
           document.body
-      )}
+        )}
     </div>
   );
 }
@@ -423,28 +430,51 @@ function EntryCard({
 
     if (showOptionsMenu) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showOptionsMenu]);
 
   const isExpanded = localExpanded;
 
   // 데이터 추출 및 타입 보정
-  const pastWeekTasks = Array.isArray(entry.past_week?.tasks) ? entry.past_week.tasks : [];
-  const thisWeekTasks = Array.isArray(entry.this_week?.tasks) 
-    ? entry.this_week.tasks.map(task => 
-        typeof task === 'string' ? task : String(task)
-      )
+  const pastWeekTasks = Array.isArray(entry.past_week?.tasks)
+    ? entry.past_week.tasks
     : [];
-  const risks = Array.isArray(entry.risks) ? entry.risks : [];
-  const riskLevel = entry.risk_level || 0;
-  const collaborators = Array.isArray(entry.collaborators) ? entry.collaborators : [];
   
-  console.log('[EntryCard] Processed data:', {
+  // this_week.tasks 처리: 객체면 적절한 필드 추출
+  const thisWeekTasks = Array.isArray(entry.this_week?.tasks)
+    ? entry.this_week.tasks.map((task) => {
+        if (typeof task === "string") return task;
+        if (typeof task === "object" && task !== null) {
+          // 객체인 경우 title, task, name 등의 필드를 시도
+          return task.title || task.task || task.name || JSON.stringify(task);
+        }
+        return String(task);
+      })
+    : [];
+  
+  // risks 처리: 객체면 note 필드 추출
+  const risks = Array.isArray(entry.risks) 
+    ? entry.risks.map((risk) => {
+        if (typeof risk === "string") return risk;
+        if (typeof risk === "object" && risk !== null) {
+          return risk.note || JSON.stringify(risk);
+        }
+        return String(risk);
+      })
+    : [];
+  
+  const riskLevel = entry.risk_level || 0;
+  const collaborators = Array.isArray(entry.collaborators)
+    ? entry.collaborators
+    : [];
+
+  console.log("[EntryCard] Processed data:", {
     entryId: entry.entryId,
     pastWeekTasks: pastWeekTasks.length,
     thisWeekTasks,
-    thisWeekTasksType: thisWeekTasks.map(t => typeof t),
+    risks,
   });
 
   // 진행률 계산 (안전하게)
@@ -452,7 +482,7 @@ function EntryCard({
     pastWeekTasks.length > 0
       ? Math.round(
           pastWeekTasks.reduce((sum, t) => {
-            const progress = typeof t.progress === 'number' ? t.progress : 0;
+            const progress = typeof t.progress === "number" ? t.progress : 0;
             return sum + progress;
           }, 0) / pastWeekTasks.length
         )
@@ -611,8 +641,14 @@ function EntryCard({
                   Risk
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text} border ${
-                    riskLevel >= 3 ? 'border-red-200' : riskLevel >= 2 ? 'border-orange-200' : 'border-yellow-200'
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                    riskStyle.bg
+                  } ${riskStyle.text} border ${
+                    riskLevel >= 3
+                      ? "border-red-200"
+                      : riskLevel >= 2
+                      ? "border-orange-200"
+                      : "border-yellow-200"
                   }`}
                 >
                   Lv.{riskLevel} {riskStyle.label}
@@ -626,62 +662,62 @@ function EntryCard({
             {/* 선택 모드가 아닐 때만 버튼 표시 */}
             {!isSelectMode && (
               <>
-            {/* 펼치기/접기 버튼 */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setLocalExpanded(!localExpanded);
-              }}
-              className={`p-1.5 rounded transition-colors ${
-                isExpanded
-                  ? "text-[#0969da]"
-                  : "bg-[#ddf4ff] text-[#0969da] hover:bg-[#b6e3ff]"
-              }`}
-            >
-              <svg
-                className={`w-4 h-4 transition-transform ${
-                  isExpanded ? "rotate-180" : ""
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
+                {/* 펼치기/접기 버튼 */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setLocalExpanded(!localExpanded);
+                  }}
+                  className={`p-1.5 rounded transition-colors ${
+                    isExpanded
+                      ? "text-[#0969da]"
+                      : "bg-[#ddf4ff] text-[#0969da] hover:bg-[#b6e3ff]"
+                  }`}
+                >
+                  <svg
+                    className={`w-4 h-4 transition-transform ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
 
-            {/* 옵션 버튼 */}
-            <button
-              ref={optionsButtonRef}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowOptionsMenu(!showOptionsMenu);
-              }}
-              className="p-1.5 rounded text-[#57606a] hover:bg-[#f6f8fa] transition-colors shrink-0"
-              title="옵션"
-              type="button"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                />
-              </svg>
-            </button>
+                {/* 옵션 버튼 */}
+                <button
+                  ref={optionsButtonRef}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowOptionsMenu(!showOptionsMenu);
+                  }}
+                  className="p-1.5 rounded text-[#57606a] hover:bg-[#f6f8fa] transition-colors shrink-0"
+                  title="옵션"
+                  type="button"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
+                  </svg>
+                </button>
               </>
             )}
 
@@ -763,13 +799,15 @@ function EntryCard({
               </div>
               <ul className="space-y-1">
                 {pastWeekTasks.map((task, i) => {
-                  const taskTitle = typeof task.title === 'string' 
-                    ? task.title 
-                    : (typeof task.title === 'object' 
-                      ? JSON.stringify(task.title) 
-                      : String(task.title || ''));
-                  const taskProgress = typeof task.progress === 'number' ? task.progress : 0;
-                  
+                  const taskTitle =
+                    typeof task.title === "string"
+                      ? task.title
+                      : typeof task.title === "object"
+                      ? JSON.stringify(task.title)
+                      : String(task.title || "");
+                  const taskProgress =
+                    typeof task.progress === "number" ? task.progress : 0;
+
                   return (
                     <li
                       key={i}
@@ -810,9 +848,7 @@ function EntryCard({
                 Risk:
               </span>
               <span className="text-[#24292f]">
-                {risks.length > 0 
-                  ? risks.map(r => typeof r === 'string' ? r : JSON.stringify(r)).join(", ") 
-                  : "미정"}
+                {risks.length > 0 ? risks.join(", ") : "미정"}
               </span>
             </div>
           )}
@@ -823,13 +859,20 @@ function EntryCard({
               <span className="text-[#57606a] font-medium shrink-0">with:</span>
               <div className="flex flex-wrap gap-1.5">
                 {collaborators.map((c, i) => {
-                  const collabName = typeof c.name === 'string' ? c.name : String(c.name || '');
+                  const collabName =
+                    typeof c.name === "string" ? c.name : String(c.name || "");
                   const style = getRelationStyle(c.relations);
                   return (
                     <span
                       key={i}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${style.bg} ${style.text} border ${
-                        c.relations?.[0] === 'pair' ? 'border-purple-200' : c.relations?.[0] === 'pre' ? 'border-blue-200' : 'border-green-200'
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                        style.bg
+                      } ${style.text} border ${
+                        c.relations?.[0] === "pair"
+                          ? "border-purple-200"
+                          : c.relations?.[0] === "pre"
+                          ? "border-blue-200"
+                          : "border-green-200"
                       }`}
                     >
                       {collabName}
@@ -850,18 +893,15 @@ function EntryCard({
                 NEXT:
               </div>
               <ul className="space-y-1">
-                {thisWeekTasks.map((task, i) => {
-                  const taskText = typeof task === 'string' ? task : JSON.stringify(task);
-                  return (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 text-xs text-[#24292f]"
-                    >
-                      <span className="text-[#57606a] mt-0.5">•</span>
-                      <span className="flex-1">{taskText}</span>
-                    </li>
-                  );
-                })}
+                {thisWeekTasks.map((task, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-xs text-[#24292f]"
+                  >
+                    <span className="text-[#57606a] mt-0.5">•</span>
+                    <span className="flex-1">{task}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
@@ -930,7 +970,7 @@ function EntryCard({
             </div>
           </div>,
           document.body
-      )}
+        )}
     </div>
   );
 }
@@ -977,7 +1017,8 @@ function EntryRow({
 
     if (showOptionsMenu) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showOptionsMenu]);
 
@@ -1064,72 +1105,72 @@ function EntryRow({
 
       {/* 옵션 버튼 - 선택 모드가 아닐 때만 표시 */}
       {!isSelectMode && (
-      <div className="absolute top-2 right-2 z-10">
-        <button
-          ref={optionsButtonRef}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowOptionsMenu(!showOptionsMenu);
-          }}
-          className="p-1.5 rounded text-[#57606a] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#f6f8fa] shrink-0"
-          title="옵션"
-          type="button"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
+        <div className="absolute top-2 right-2 z-10">
+          <button
+            ref={optionsButtonRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowOptionsMenu(!showOptionsMenu);
+            }}
+            className="p-1.5 rounded text-[#57606a] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#f6f8fa] shrink-0"
+            title="옵션"
+            type="button"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+              />
+            </svg>
+          </button>
 
-        {/* 옵션 메뉴 팝오버 */}
-        {showOptionsMenu && (
-          <div
-            ref={optionsMenuRef}
-            className="absolute top-8 right-0 bg-white rounded-md border border-[#d0d7de] py-1 min-w-[120px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {onEdit && (
-              <button
-                onClick={handleEdit}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
-                type="button"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                <span>수정하기</span>
-              </button>
-                )}
+          {/* 옵션 메뉴 팝오버 */}
+          {showOptionsMenu && (
+            <div
+              ref={optionsMenuRef}
+              className="absolute top-8 right-0 bg-white rounded-md border border-[#d0d7de] py-1 min-w-[120px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {onEdit && (
                 <button
-                  onClick={handleDeleteClick}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#cf222e] hover:bg-[#ffebe9] transition-colors"
+                  onClick={handleEdit}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#24292f] hover:bg-[#f6f8fa] transition-colors"
                   type="button"
                 >
-                  <TrashIcon className="w-4 h-4" />
-                  <span>삭제하기</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  <span>수정하기</span>
                 </button>
-          </div>
-        )}
-      </div>
+              )}
+              <button
+                onClick={handleDeleteClick}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#cf222e] hover:bg-[#ffebe9] transition-colors"
+                type="button"
+              >
+                <TrashIcon className="w-4 h-4" />
+                <span>삭제하기</span>
+              </button>
+            </div>
+          )}
+        </div>
       )}
       {/* 태그 일렬 표시 */}
       <div className="flex-1 flex items-center gap-1.5 flex-wrap min-w-0">
@@ -1160,15 +1201,20 @@ function EntryRow({
         {/* Risk */}
         {riskStyle && (
           <span
-            className={`px-2 py-0.5 text-[10px] font-medium ${riskStyle.bg} ${riskStyle.text} rounded shrink-0 ${
-              riskLevel >= 3 ? 'border border-red-200' : riskLevel >= 2 ? 'border border-orange-200' : 'border border-yellow-200'
+            className={`px-2 py-0.5 text-[10px] font-medium ${riskStyle.bg} ${
+              riskStyle.text
+            } rounded shrink-0 ${
+              riskLevel >= 3
+                ? "border border-red-200"
+                : riskLevel >= 2
+                ? "border border-orange-200"
+                : "border border-yellow-200"
             }`}
           >
             Risk Lv.{riskLevel}
           </span>
         )}
       </div>
-
 
       {/* 화살표 */}
       <svg
@@ -1186,7 +1232,8 @@ function EntryRow({
       </svg>
 
       {/* 삭제 확인 모달 */}
-      {showDeleteModal && mounted &&
+      {showDeleteModal &&
+        mounted &&
         createPortal(
           <div
             className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#c8d1da66]"
@@ -1265,14 +1312,21 @@ function LoadingSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
   return (
     <div className="space-y-2">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="h-16 bg-[#f6f8fa] rounded-md animate-pulse border border-[#d0d7de]" />
+        <div
+          key={i}
+          className="h-16 bg-[#f6f8fa] rounded-md animate-pulse border border-[#d0d7de]"
+        />
       ))}
     </div>
   );
 }
 
 // 빈 상태
-function EmptyState({ onNewSnapshotClick }: { onNewSnapshotClick?: () => void }) {
+function EmptyState({
+  onNewSnapshotClick,
+}: {
+  onNewSnapshotClick?: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-16">
       <div className="w-20 h-20 mb-6 flex items-center justify-center bg-[#f6f8fa] rounded-md border border-[#d0d7de]">
