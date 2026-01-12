@@ -171,12 +171,14 @@ export function SnapshotList({
     totalCount: allEntries.length,
     entries: allEntries.map((e) => ({
       id: e.entryId,
-      path: `${e.domain} > ${e.project} > ${e.module || "-"} > ${e.feature || "-"}`,
+      path: `${e.domain} > ${e.project} > ${e.module || "-"} > ${
+        e.feature || "-"
+      }`,
+      pastWeekTasks: e.past_week?.tasks?.map((t) => t.title),
+      thisWeekTasks: e.this_week?.tasks,
+      risks: e.risks,
       riskLevel: e.risk_level || 0,
-      tasksCount: {
-        past: e.past_week?.tasks?.length || 0,
-        this: e.this_week?.tasks?.length || 0,
-      },
+      collaborators: e.collaborators?.map((c) => c.name),
     })),
   });
 
@@ -770,7 +772,7 @@ function EntryCard({
 
       {/* 펼친 내용 */}
       {isExpanded && (
-        <div className="border-t border-[#d0d7de]">
+        <div className={pastWeekTasks.length > 0 || avgProgress !== null ? "border-t border-[#d0d7de]" : ""}>
           {/* 진행률 요약 */}
           {avgProgress !== null && (
             <div className="mx-4 my-3 p-3 rounded-md bg-[#f6f8fa] border border-[#d0d7de]">
