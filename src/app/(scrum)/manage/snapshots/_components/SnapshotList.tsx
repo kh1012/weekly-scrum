@@ -487,7 +487,7 @@ function EntryCard({
             return sum + progress;
           }, 0) / pastWeekTasks.length
         )
-      : null;
+      : 0;
 
   // 관계 색상 매핑
   const getRelationStyle = (relations?: string[]) => {
@@ -617,27 +617,25 @@ function EntryCard({
               </div>
             )}
             {/* 진행률 & 리스크 (접힌 상태에서 표시) */}
-            {!isExpanded && (avgProgress !== null || riskLevel > 0) && (
+            {!isExpanded && (
               <div className="flex items-center gap-4 flex-wrap">
                 {/* 평균 진행률 */}
-                {avgProgress !== null && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-[#57606a] shrink-0">
-                      평균 진행률
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1.5 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
-                        <div
-                          className="h-full bg-[#0969da] rounded-full transition-all"
-                          style={{ width: `${avgProgress}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] font-medium text-[#24292f]">
-                        {avgProgress}%
-                      </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-[#57606a] shrink-0">
+                    평균 진행률
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-1.5 bg-[#f6f8fa] rounded-full overflow-hidden border border-[#d0d7de]">
+                      <div
+                        className="h-full bg-[#0969da] rounded-full transition-all"
+                        style={{ width: `${avgProgress}%` }}
+                      />
                     </div>
+                    <span className="text-[10px] font-medium text-[#24292f]">
+                      {avgProgress}%
+                    </span>
                   </div>
-                )}
+                </div>
                 {/* 리스크 레벨 */}
                 {riskLevel > 0 && (
                   <div className="flex items-center gap-1.5">
@@ -772,30 +770,28 @@ function EntryCard({
 
       {/* 펼친 내용 */}
       {isExpanded && (
-        <div className={pastWeekTasks.length > 0 || avgProgress !== null ? "border-t border-[#d0d7de]" : ""}>
+        <div className={"border-t border-[#d0d7de]"}>
           {/* 진행률 요약 */}
-          {avgProgress !== null && (
-            <div className="mx-4 my-3 p-3 rounded-md bg-[#f6f8fa] border border-[#d0d7de]">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#57606a]">평균 진행률</span>
-                <span
-                  className={`font-medium ${
-                    avgProgress === 100 ? "text-[#1a7f37]" : "text-[#24292f]"
-                  }`}
-                >
-                  {avgProgress}%
-                </span>
-              </div>
-              <div className="mt-2 h-1.5 bg-white rounded-full overflow-hidden border border-[#d0d7de]">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    avgProgress === 100 ? "bg-[#1a7f37]" : "bg-[#0969da]"
-                  }`}
-                  style={{ width: `${avgProgress}%` }}
-                />
-              </div>
+          <div className="mx-4 my-3 p-3 rounded-md bg-[#f6f8fa] border border-[#d0d7de]">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-[#57606a]">평균 진행률</span>
+              <span
+                className={`font-medium ${
+                  avgProgress === 100 ? "text-[#1a7f37]" : "text-[#24292f]"
+                }`}
+              >
+                {avgProgress}%
+              </span>
             </div>
-          )}
+            <div className="mt-2 h-1.5 bg-white rounded-full overflow-hidden border border-[#d0d7de]">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  avgProgress === 100 ? "bg-[#1a7f37]" : "bg-[#0969da]"
+                }`}
+                style={{ width: `${avgProgress}%` }}
+              />
+            </div>
+          </div>
 
           {/* PROGRESS */}
           {pastWeekTasks.length > 0 && (
