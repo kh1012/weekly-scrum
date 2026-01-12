@@ -456,7 +456,13 @@ function EntryCard({
         if (typeof task === "string") return task;
         if (typeof task === "object" && task !== null) {
           // 객체인 경우 title, task, name 등의 필드를 시도
-          return task.title || task.task || task.name || JSON.stringify(task);
+          const taskObj = task as Record<string, unknown>;
+          return (
+            (taskObj.title as string) ||
+            (taskObj.task as string) ||
+            (taskObj.name as string) ||
+            JSON.stringify(task)
+          );
         }
         return String(task);
       })
@@ -467,7 +473,8 @@ function EntryCard({
     ? entry.risks.map((risk) => {
         if (typeof risk === "string") return risk;
         if (typeof risk === "object" && risk !== null) {
-          return risk.note || JSON.stringify(risk);
+          const riskObj = risk as Record<string, unknown>;
+          return (riskObj.note as string) || JSON.stringify(risk);
         }
         return String(risk);
       })
