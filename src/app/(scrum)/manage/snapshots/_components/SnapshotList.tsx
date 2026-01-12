@@ -147,32 +147,38 @@ export function SnapshotList({
 
   // 스냅샷의 entries를 펼쳐서 개별 카드로 표시
   const allEntries: SnapshotEntry[] = snapshots.flatMap((snapshot) =>
-    snapshot.entries.map((entry, index) => {
-      console.log("[SnapshotList] Entry data:", {
-        entryId: entry.id,
-        past_week: entry.past_week,
-        this_week: entry.this_week,
-      });
-
-      return {
-        entryId: entry.id,
-        snapshotId: snapshot.id,
-        entryIndex: index,
-        domain: entry.domain,
-        project: entry.project,
-        module: entry.module,
-        feature: entry.feature,
-        past_week: entry.past_week,
-        this_week: entry.this_week,
-        risks: entry.risks,
-        risk_level: entry.risk_level,
-        collaborators: entry.collaborators?.map((c) => ({
-          name: c.name,
-          relations: c.relations,
-        })),
-      };
-    })
+    snapshot.entries.map((entry, index) => ({
+      entryId: entry.id,
+      snapshotId: snapshot.id,
+      entryIndex: index,
+      domain: entry.domain,
+      project: entry.project,
+      module: entry.module,
+      feature: entry.feature,
+      past_week: entry.past_week,
+      this_week: entry.this_week,
+      risks: entry.risks,
+      risk_level: entry.risk_level,
+      collaborators: entry.collaborators?.map((c) => ({
+        name: c.name,
+        relations: c.relations,
+      })),
+    }))
   );
+
+  // 목록에 노출되는 항목 로깅
+  console.log("[SnapshotList] Rendered entries:", {
+    totalCount: allEntries.length,
+    entries: allEntries.map((e) => ({
+      id: e.entryId,
+      path: `${e.domain} > ${e.project} > ${e.module || "-"} > ${e.feature || "-"}`,
+      riskLevel: e.risk_level || 0,
+      tasksCount: {
+        past: e.past_week?.tasks?.length || 0,
+        this: e.this_week?.tasks?.length || 0,
+      },
+    })),
+  });
 
   // 로딩 중이고 데이터가 없으면 로딩 상태 표시
   if (isLoading && snapshots.length === 0) {
@@ -469,13 +475,6 @@ function EntryCard({
   const collaborators = Array.isArray(entry.collaborators)
     ? entry.collaborators
     : [];
-
-  console.log("[EntryCard] Processed data:", {
-    entryId: entry.entryId,
-    pastWeekTasks: pastWeekTasks.length,
-    thisWeekTasks,
-    risks,
-  });
 
   // 진행률 계산 (안전하게)
   const avgProgress =

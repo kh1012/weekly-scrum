@@ -13,12 +13,6 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get("userId");
   const year = searchParams.get("year");
 
-  console.log("[API /api/manage/snapshots/counts] Request params:", {
-    workspaceId,
-    userId,
-    year,
-  });
-
   if (!workspaceId || !userId) {
     console.error(
       "[API /api/manage/snapshots/counts] Missing required parameters"

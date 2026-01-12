@@ -34,25 +34,19 @@ export function useSnapshotsState() {
 
   // localStorage에서 상태 복원
   useEffect(() => {
-    console.log('[useSnapshotsState] Initializing with current week:', currentWeek);
-    
     try {
       const savedState = localStorage.getItem(SNAPSHOTS_STATE_KEY);
-      console.log('[useSnapshotsState] Saved state from localStorage:', savedState);
       
       if (savedState) {
         const parsed: SnapshotsViewState = JSON.parse(savedState);
-        console.log('[useSnapshotsState] Parsed state:', parsed);
         
         // 저장된 주차가 현재 주차보다 미래이면 현재 주차로 리셋
         const savedDate = new Date(parsed.selectedYear, 0, 1 + (parsed.selectedWeek - 1) * 7);
         const currentDate = new Date(currentWeek.year, 0, 1 + (currentWeek.week - 1) * 7);
         
         if (savedDate > currentDate) {
-          console.log('[useSnapshotsState] Saved week is in the future, resetting to current week');
           setSelectedYear(currentWeek.year);
           setSelectedWeek(currentWeek.week);
-          // 미래 주차를 저장하지 않도록 localStorage 초기화
           localStorage.removeItem(SNAPSHOTS_STATE_KEY);
         } else {
           if (parsed.selectedYear) setSelectedYear(parsed.selectedYear);
@@ -61,14 +55,11 @@ export function useSnapshotsState() {
         
         if (parsed.viewMode) setViewMode(parsed.viewMode);
       } else {
-        // localStorage에 저장된 값이 없으면 현재 주차로 설정
-        console.log('[useSnapshotsState] No saved state, using current week');
         setSelectedYear(currentWeek.year);
         setSelectedWeek(currentWeek.week);
       }
     } catch (error) {
       console.error('[useSnapshotsState] Error loading state:', error);
-      // 에러 발생 시 현재 주차로 리셋
       setSelectedYear(currentWeek.year);
       setSelectedWeek(currentWeek.week);
     }
