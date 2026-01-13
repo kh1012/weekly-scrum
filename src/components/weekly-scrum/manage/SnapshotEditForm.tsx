@@ -22,7 +22,6 @@ import {
   RISK_LEVEL_OPTIONS,
   CUSTOM_INPUT_VALUE,
 } from "@/lib/snapshotMetaOptions";
-import { ShortcutHint } from "./ShortcutHint";
 import {
   inputStyles,
   inputStylesCompact,
@@ -355,7 +354,7 @@ function MetaField({
 }
 
 /**
- * Task 편집 컴포넌트 (Progress) - 25% 단위 슬라이더 포함
+ * Task 편집 컴포넌트 (Progress) - Notion 스타일 체크리스트
  */
 function TaskEditor({
   tasks,
@@ -368,31 +367,15 @@ function TaskEditor({
   baseTabIndex: number;
   compact?: boolean;
 }) {
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [focusIndex, setFocusIndex] = useState<number | null>(null);
-
-  // 새 항목 추가 후 포커스 이동
-  useEffect(() => {
-    if (focusIndex !== null && inputRefs.current[focusIndex]) {
-      inputRefs.current[focusIndex]?.focus();
-      setFocusIndex(null);
-    }
-  }, [focusIndex, tasks.length]);
+  const [newTaskInput, setNewTaskInput] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const addTask = () => {
-    const newIndex = tasks.length;
-    onChange([...tasks, { title: "", progress: 0 }]);
-    setFocusIndex(newIndex);
-  };
-
-  // 단축키 핸들러: Ctrl+Alt+↓ 또는 Cmd+Option+↓
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (
-      (e.ctrlKey && e.altKey && e.key === "ArrowDown") ||
-      (e.metaKey && e.altKey && e.key === "ArrowDown")
-    ) {
-      e.preventDefault();
-      addTask();
+    if (newTaskInput.trim()) {
+      onChange([...tasks, { title: newTaskInput.trim(), progress: 0 }]);
+      setNewTaskInput("");
+      inputRef.current?.focus();
     }
   };
 
@@ -417,194 +400,150 @@ function TaskEditor({
     onChange(tasks.filter((_, i) => i !== index));
   };
 
-  // 슬라이더 값을 25% 단위로 스냅
-  const snapToStep = (value: number) => Math.round(value / 25) * 25;
+  const completedCount = tasks.filter((t) => t.progress === 100).length;
+  const totalCount = tasks.length;
 
   return (
     <div
-      className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden bg-white ${
+      className={`border border-gray-200 overflow-hidden bg-white ${
         compact ? "rounded-lg" : "rounded-xl"
       }`}
     >
-      {tasks.map((task, index) => (
-        <div
-          key={index}
-          className={`group bg-white hover:bg-gray-50 transition-colors ${
-            compact ? "px-2.5 py-2" : "px-4 py-3"
+      {/* 상단: Add block text... 입력 필드 */}
+      <div className={compact ? "p-2.5" : "p-4"}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={newTaskInput}
+          onChange={(e) => setNewTaskInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              addTask();
+            }
+          }}
+          placeholder="Add block text..."
+          className={`w-full bg-white border-none focus:outline-none text-gray-900 placeholder-gray-300 ${
+            compact ? "text-xs" : "text-sm"
           }`}
-        >
-          {/* 상단: 제목 + 삭제 */}
-          <div className="flex items-center gap-2">
-            <input
-              ref={(el) => {
-                inputRefs.current[index] = el;
-              }}
-              type="text"
-              value={task.title}
-              onChange={(e) => updateTask(index, "title", e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="작업 내용..."
-              tabIndex={baseTabIndex + index * 2}
-              className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
-                compact
-                  ? "px-2 py-1.5 rounded text-xs"
-                  : "px-3 py-2 rounded-lg text-sm"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => removeTask(index)}
-              tabIndex={-1}
-              className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all shrink-0 ${
-                compact ? "p-1" : "p-2"
-              }`}
-            >
-              <svg
-                className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+        />
+      </div>
 
-          {/* 하단: 프로그레스바 + 진행률 선택 - 한 줄 컴팩트 */}
-          <div
-            className={`flex items-center gap-2 ${compact ? "mt-2" : "mt-3"}`}
-          >
-            {/* 프로그레스바 (클릭/드래그 가능) */}
-            <div
-              className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden cursor-pointer relative"
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const percent =
-                  Math.round(
-                    (((e.clientX - rect.left) / rect.width) * 100) / 25
-                  ) * 25;
-                updateTask(
-                  index,
-                  "progress",
-                  Math.max(0, Math.min(100, percent))
-                );
-              }}
-              onMouseDown={(e) => {
-                const bar = e.currentTarget;
-                const handleDrag = (moveEvent: MouseEvent) => {
-                  const rect = bar.getBoundingClientRect();
-                  const percent =
-                    Math.round(
-                      (((moveEvent.clientX - rect.left) / rect.width) * 100) /
-                        25
-                    ) * 25;
-                  updateTask(
-                    index,
-                    "progress",
-                    Math.max(0, Math.min(100, percent))
-                  );
-                };
-                const handleUp = () => {
-                  document.removeEventListener("mousemove", handleDrag);
-                  document.removeEventListener("mouseup", handleUp);
-                };
-                document.addEventListener("mousemove", handleDrag);
-                document.addEventListener("mouseup", handleUp);
-              }}
-            >
+      {/* 진행률 표시 바 */}
+      {totalCount > 0 && (
+        <div className={`border-t border-gray-100 ${compact ? "px-2.5 py-2" : "px-4 py-3"}`}>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-150 ${
-                  task.progress === 100 ? "bg-emerald-500" : "bg-gray-900"
-                }`}
-                style={{ width: `${task.progress}%` }}
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${(completedCount / totalCount) * 100}%` }}
               />
             </div>
-
-            {/* 반응형: 넓으면 버튼, 좁으면 셀렉트 */}
-            {/* 버튼 그룹 (md 이상) */}
-            <div className="hidden md:flex items-center gap-0.5 shrink-0">
-              {[0, 25, 50, 75, 100].map((value) => {
-                const isSelected = task.progress === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => updateTask(index, "progress", value)}
-                    tabIndex={-1}
-                    className={`
-                      px-2 py-1 text-xs font-medium rounded transition-all
-                      ${
-                        isSelected
-                          ? task.progress === 100
-                            ? "bg-emerald-500 text-white"
-                            : "bg-gray-900 text-white"
-                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                      }
-                    `}
-                  >
-                    {value}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* 셀렉트 (md 미만) */}
-            <select
-              value={snapToStep(task.progress)}
-              onChange={(e) =>
-                updateTask(index, "progress", Number(e.target.value))
-              }
-              tabIndex={baseTabIndex + index * 2 + 1}
-              className={`md:hidden shrink-0 bg-gray-100 border-0 rounded-lg font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-900 ${
-                task.progress === 100 ? "text-emerald-600" : "text-gray-700"
-              } ${compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"}`}
-            >
-              {[0, 25, 50, 75, 100].map((value) => (
-                <option key={value} value={value}>
-                  {value}%
-                </option>
-              ))}
-            </select>
+            <span className="text-xs font-medium text-gray-600 shrink-0">
+              ({completedCount}/{totalCount})
+            </span>
           </div>
         </div>
-      ))}
-      <div className="border-t border-gray-100">
-        <button
-          type="button"
-          onClick={addTask}
-          tabIndex={-1}
-          className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
-            compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
-          }`}
-        >
-          <svg
-            className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          작업 추가
-        </button>
-        <ShortcutHint label="새 항목 추가" />
-      </div>
+      )}
+
+      {/* 항목 리스트 */}
+      {tasks.length > 0 && (
+        <div className="divide-y divide-gray-100">
+          {tasks.map((task, index) => (
+            <div
+              key={index}
+              className={`group relative flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${
+                compact ? "px-2.5 py-2" : "px-4 py-3"
+              }`}
+            >
+              {/* 진행률 버튼 [0], [25], [50], [75], [100] */}
+              <div className="flex items-center gap-0.5 shrink-0">
+                {[0, 25, 50, 75, 100].map((value) => {
+                  const isSelected = task.progress === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => updateTask(index, "progress", value)}
+                      tabIndex={-1}
+                      className={`
+                        px-1.5 py-0.5 text-[10px] font-medium rounded transition-all
+                        ${
+                          isSelected
+                            ? value === 100
+                              ? "bg-emerald-500 text-white"
+                              : "bg-blue-500 text-white"
+                            : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                        }
+                      `}
+                    >
+                      {value}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 작업 내용 - 클릭시 편집 모드 */}
+              {editingIndex === index ? (
+                <input
+                  type="text"
+                  value={task.title}
+                  onChange={(e) => updateTask(index, "title", e.target.value)}
+                  onBlur={() => setEditingIndex(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                      setEditingIndex(null);
+                    }
+                  }}
+                  autoFocus
+                  className={`flex-1 bg-white border border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                    compact ? "px-2 py-1 rounded text-xs" : "px-3 py-1.5 rounded-lg text-sm"
+                  }`}
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingIndex(index)}
+                  className={`flex-1 cursor-text ${
+                    task.progress === 100 ? "text-gray-400 line-through" : "text-gray-700"
+                  } ${compact ? "text-xs" : "text-sm"}`}
+                >
+                  {task.title || "작업 내용..."}
+                </div>
+              )}
+
+              {/* 삭제 버튼 - absolute로 우측 끝에 */}
+              <button
+                type="button"
+                onClick={() => removeTask(index)}
+                tabIndex={-1}
+                className={`absolute right-2 text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${
+                  compact ? "p-1" : "p-1.5"
+                }`}
+              >
+                <svg
+                  className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 /**
- * Next Task 편집 컴포넌트
+ * Next Task 편집 컴포넌트 - Notion 스타일 체크리스트
  */
 function ThisWeekTaskEditor({
   tasks,
@@ -617,21 +556,16 @@ function ThisWeekTaskEditor({
   baseTabIndex: number;
   compact?: boolean;
 }) {
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [focusIndex, setFocusIndex] = useState<number | null>(null);
-
-  // 새 항목 추가 후 포커스 이동
-  useEffect(() => {
-    if (focusIndex !== null && inputRefs.current[focusIndex]) {
-      inputRefs.current[focusIndex]?.focus();
-      setFocusIndex(null);
-    }
-  }, [focusIndex, tasks.length]);
+  const [newTaskInput, setNewTaskInput] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const addTask = () => {
-    const newIndex = tasks.length;
-    onChange([...tasks, ""]);
-    setFocusIndex(newIndex);
+    if (newTaskInput.trim()) {
+      onChange([...tasks, newTaskInput.trim()]);
+      setNewTaskInput("");
+      inputRef.current?.focus();
+    }
   };
 
   const updateTask = (index: number, value: string) => {
@@ -644,108 +578,101 @@ function ThisWeekTaskEditor({
     onChange(tasks.filter((_, i) => i !== index));
   };
 
-  // 단축키 핸들러
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (
-      (e.ctrlKey && e.altKey && e.key === "ArrowDown") ||
-      (e.metaKey && e.altKey && e.key === "ArrowDown")
-    ) {
-      e.preventDefault();
-      addTask();
-    }
-  };
-
   return (
     <div
-      className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden bg-white ${
+      className={`border border-gray-200 overflow-hidden bg-white ${
         compact ? "rounded-lg" : "rounded-xl"
       }`}
     >
-      {tasks.map((task, index) => (
-        <div
-          key={index}
-          className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${
-            compact ? "px-2.5 py-2" : "px-4 py-3"
+      {/* 상단: Add block text... 입력 필드 */}
+      <div className={compact ? "p-2.5" : "p-4"}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={newTaskInput}
+          onChange={(e) => setNewTaskInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              addTask();
+            }
+          }}
+          placeholder="Add block text..."
+          className={`w-full bg-white border-none focus:outline-none text-gray-900 placeholder-gray-300 ${
+            compact ? "text-xs" : "text-sm"
           }`}
-        >
-          <div
-            className={`rounded-full bg-emerald-400 shrink-0 ${
-              compact ? "w-1.5 h-1.5" : "w-2 h-2"
-            }`}
-          />
-          <input
-            ref={(el) => {
-              inputRefs.current[index] = el;
-            }}
-            type="text"
-            value={task}
-            onChange={(e) => updateTask(index, e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="계획 작업..."
-            tabIndex={baseTabIndex + index}
-            className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
-              compact
-                ? "px-2 py-1.5 rounded text-xs"
-                : "px-3 py-2 rounded-lg text-sm"
-            }`}
-          />
-          <button
-            type="button"
-            onClick={() => removeTask(index)}
-            tabIndex={-1}
-            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${
-              compact ? "p-1" : "p-2"
-            }`}
-          >
-            <svg
-              className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-      ))}
-      <div className="border-t border-gray-100">
-        <button
-          type="button"
-          onClick={addTask}
-          tabIndex={-1}
-          className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
-            compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
-          }`}
-        >
-          <svg
-            className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          계획 추가
-        </button>
-        <ShortcutHint label="새 항목 추가" />
+        />
       </div>
+
+      {/* 항목 리스트 */}
+      {tasks.length > 0 && (
+        <div className="divide-y divide-gray-100 border-t border-gray-100">
+          {tasks.map((task, index) => (
+            <div
+              key={index}
+              className={`group relative flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${
+                compact ? "px-2.5 py-2" : "px-4 py-3"
+              }`}
+            >
+              {/* 작업 내용 - 클릭시 편집 모드 */}
+              {editingIndex === index ? (
+                <input
+                  type="text"
+                  value={task}
+                  onChange={(e) => updateTask(index, e.target.value)}
+                  onBlur={() => setEditingIndex(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                      setEditingIndex(null);
+                    }
+                  }}
+                  autoFocus
+                  className={`flex-1 bg-white border border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                    compact ? "px-2 py-1 rounded text-xs" : "px-3 py-1.5 rounded-lg text-sm"
+                  }`}
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingIndex(index)}
+                  className={`flex-1 cursor-text text-gray-700 ${compact ? "text-xs" : "text-sm"}`}
+                >
+                  {task || "계획 작업..."}
+                </div>
+              )}
+
+              {/* 삭제 버튼 - absolute로 우측 끝에 */}
+              <button
+                type="button"
+                onClick={() => removeTask(index)}
+                tabIndex={-1}
+                className={`absolute right-2 text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${
+                  compact ? "p-1" : "p-1.5"
+                }`}
+              >
+                <svg
+                  className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 /**
- * Risk 편집 컴포넌트 - 리스크 추가 버튼 기본 제공
- * RiskLevel 선택은 상위에서 Risks 레이블 우측에 표시
+ * Risk 편집 컴포넌트 - Notion 스타일 체크리스트
  */
 function RiskEditor({
   risks,
@@ -763,26 +690,16 @@ function RiskEditor({
   compact?: boolean;
 }) {
   const actualRisks = risks || [];
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const prevLengthRef = useRef(actualRisks.length);
+  const [newRiskInput, setNewRiskInput] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // 새 항목 추가 후 포커스 이동 (배열 길이 변화 감지)
-  useEffect(() => {
-    if (actualRisks.length > prevLengthRef.current) {
-      const newIndex = actualRisks.length - 1;
-      inputRefs.current[newIndex]?.focus();
-    }
-    prevLengthRef.current = actualRisks.length;
-  }, [actualRisks.length]);
-
-  // 단축키 핸들러: Ctrl+Alt+↓ 또는 Cmd+Option+↓
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (
-      (e.ctrlKey && e.altKey && e.key === "ArrowDown") ||
-      (e.metaKey && e.altKey && e.key === "ArrowDown")
-    ) {
-      e.preventDefault();
-      onAddRisk();
+  const addRisk = () => {
+    if (newRiskInput.trim()) {
+      const newRisks = [...actualRisks, newRiskInput.trim()];
+      onChange(newRisks);
+      setNewRiskInput("");
+      inputRef.current?.focus();
     }
   };
 
@@ -803,90 +720,93 @@ function RiskEditor({
 
   return (
     <div
-      className={`divide-y divide-gray-100 border border-gray-200 overflow-hidden bg-white ${
+      className={`border border-gray-200 overflow-hidden bg-white ${
         compact ? "rounded-lg" : "rounded-xl"
       }`}
     >
-      {/* 리스크 목록 */}
-      {actualRisks.map((risk, index) => (
-        <div
-          key={index}
-          className={`group flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${
-            compact ? "px-2.5 py-2" : "px-4 py-3"
+      {/* 상단: Add block text... 입력 필드 */}
+      <div className={compact ? "p-2.5" : "p-4"}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={newRiskInput}
+          onChange={(e) => setNewRiskInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              addRisk();
+            }
+          }}
+          placeholder="Add block text..."
+          className={`w-full bg-white border-none focus:outline-none text-gray-900 placeholder-gray-300 ${
+            compact ? "text-xs" : "text-sm"
           }`}
-        >
-          <div
-            className={`rounded-full bg-orange-400 shrink-0 ${
-              compact ? "w-1.5 h-1.5" : "w-2 h-2"
-            }`}
-          />
-          <input
-            ref={(el) => {
-              inputRefs.current[index] = el;
-            }}
-            type="text"
-            value={risk}
-            onChange={(e) => updateRisk(index, e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="리스크 내용..."
-            tabIndex={baseTabIndex + index}
-            className={`flex-1 bg-transparent border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent focus:bg-white ${
-              compact
-                ? "px-2 py-1.5 rounded text-xs"
-                : "px-3 py-2 rounded-lg text-sm"
-            }`}
-          />
-          <button
-            type="button"
-            onClick={() => removeRisk(index)}
-            tabIndex={-1}
-            className={`text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all shrink-0 ${
-              compact ? "p-1" : "p-2"
-            }`}
-          >
-            <svg
-              className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-      ))}
-      {/* 리스크 추가 버튼 */}
-      <div className="border-t border-gray-100">
-        <button
-          type="button"
-          onClick={onAddRisk}
-          tabIndex={-1}
-          className={`w-full flex items-center justify-center gap-2 font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
-            compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"
-          }`}
-        >
-          <svg
-            className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          리스크 추가
-        </button>
-        <ShortcutHint label="새 항목 추가" />
+        />
       </div>
+
+      {/* 리스크 목록 */}
+      {actualRisks.length > 0 && (
+        <div className="divide-y divide-gray-100 border-t border-gray-100">
+          {actualRisks.map((risk, index) => (
+            <div
+              key={index}
+              className={`group relative flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors ${
+                compact ? "px-2.5 py-2" : "px-4 py-3"
+              }`}
+            >
+              {/* 리스크 내용 - 클릭시 편집 모드 */}
+              {editingIndex === index ? (
+                <input
+                  type="text"
+                  value={risk}
+                  onChange={(e) => updateRisk(index, e.target.value)}
+                  onBlur={() => setEditingIndex(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                      setEditingIndex(null);
+                    }
+                  }}
+                  autoFocus
+                  className={`flex-1 bg-white border border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                    compact ? "px-2 py-1 rounded text-xs" : "px-3 py-1.5 rounded-lg text-sm"
+                  }`}
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingIndex(index)}
+                  className={`flex-1 cursor-text text-gray-700 ${compact ? "text-xs" : "text-sm"}`}
+                >
+                  {risk || "리스크 내용..."}
+                </div>
+              )}
+
+              {/* 삭제 버튼 - absolute로 우측 끝에 */}
+              <button
+                type="button"
+                onClick={() => removeRisk(index)}
+                tabIndex={-1}
+                className={`absolute right-2 text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ${
+                  compact ? "p-1" : "p-1.5"
+                }`}
+              >
+                <svg
+                  className={compact ? "w-3.5 h-3.5" : "w-4 h-4"}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1780,8 +1700,8 @@ export function SnapshotEditForm({
 
   // 포커스 상태에 따른 섹션 스타일
   const [currentFocus, setCurrentFocus] = useState<FormSection | null>(null);
-  // 영역별 흐리게 처리 토글 (기본: 켜짐)
-  const [isFocusDimEnabled, setIsFocusDimEnabled] = useState(true);
+  // 영역별 흐리게 처리 토글 (기본: 꺼짐)
+  const [isFocusDimEnabled, setIsFocusDimEnabled] = useState(false);
 
   // 콘텐츠 영역 ref
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1844,13 +1764,9 @@ export function SnapshotEditForm({
     return "border-l-2 border-l-gray-200 pl-4 ml-0 hover:border-l-gray-300";
   };
 
-  // 서브섹션 좌측 border 스타일
+  // 서브섹션 좌측 border 스타일 (제거됨)
   const getSubSectionBorderStyle = (section: FormSection) => {
-    const isActive = currentFocus === section;
-    if (isActive) {
-      return "border-l-2 border-l-blue-400 pl-3 -ml-px";
-    }
-    return "border-l-2 border-l-transparent pl-3 -ml-px hover:border-l-gray-200";
+    return "";
   };
 
   const getFocusAccent = (section: FormSection) => {

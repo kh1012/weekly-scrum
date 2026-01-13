@@ -45,6 +45,10 @@ import {
   tempSnapshotToV2Json,
   tempSnapshotToPlainText,
 } from "@/components/weekly-scrum/manage/types";
+import {
+  validateSnapshots,
+  formatMissingFieldsMessage,
+} from "@/components/weekly-scrum/manage/snapshotValidation";
 import { WorkloadLevelModal } from "@/components/weekly-scrum/manage/WorkloadLevelModal";
 import { LastWeekNextFab } from "@/components/snapshots/LastWeekNextFab";
 import { WeekTimeline } from "../../../../_components/WeekTimeline";
@@ -703,6 +707,13 @@ function EditSnapshotsViewInner({
       return;
     }
 
+    // 필수값 검증
+    const validation = validateSnapshots(tempSnapshots);
+    if (!validation.isValid) {
+      showToast(formatMissingFieldsMessage(validation.missingFields), "error");
+      return;
+    }
+
     setWorkloadLevel(level);
     setWorkloadNote(note);
     setIsSaving(true);
@@ -914,7 +925,7 @@ function EditSnapshotsViewInner({
       {/* 우측: 편집 영역 */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* 상단 툴바 */}
-        <div className="bg-gray-50 border-b border-gray-200 px-3 md:px-4 py-2 md:py-3 flex flex-col gap-2 shrink-0">
+        <div className="bg-gray-50 border-b border-gray-200 px-3 md:px-4 py-2 md:py-3 flex flex-col justify-center gap-2 shrink-0 min-h-[69px]">
           {/* 첫 번째 줄 */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -1053,7 +1064,6 @@ function EditSnapshotsViewInner({
               </LoadingButton>
             </div>
           </div>
-
           {/* 두 번째 줄: 스냅샷 선택 (PC 전용, 복수 스냅샷이 있을 때만) */}
           {snapshots.length > 1 && selectedSnapshotId && (
             <div className="hidden md:flex items-center gap-2">

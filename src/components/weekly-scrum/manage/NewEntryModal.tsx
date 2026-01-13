@@ -16,6 +16,10 @@ import { LoadingButton } from "@/components/common/LoadingButton";
 import { useToast } from "./Toast";
 import type { TempSnapshot } from "./types";
 import { createEmptySnapshot } from "./types";
+import {
+  validateSnapshot,
+  formatMissingFieldsMessage,
+} from "./snapshotValidation";
 import { createSnapshotAndEntries, updateSnapshotAndEntries } from "@/app/(scrum)/manage/snapshots/_actions";
 import type { SnapshotEntryPayload, CreateSnapshotPayload, UpdateSnapshotPayload } from "@/app/(scrum)/manage/snapshots/_actions";
 import type { WorkloadLevel } from "@/lib/supabase/types";
@@ -105,8 +109,9 @@ export function NewEntryModal({
   // 저장 핸들러
   const handleSave = useCallback(async () => {
     // 필수 필드 검증
-    if (!entry.domain || !entry.project) {
-      showToast("도메인과 프로젝트는 필수입니다.", "error");
+    const validation = validateSnapshot(entry);
+    if (!validation.isValid) {
+      showToast(formatMissingFieldsMessage(validation.missingFields), "error");
       return;
     }
 

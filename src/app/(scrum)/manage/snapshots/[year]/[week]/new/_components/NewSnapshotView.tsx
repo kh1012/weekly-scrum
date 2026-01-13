@@ -33,6 +33,10 @@ import {
   tempSnapshotToPlainText,
   convertToTempSnapshot,
 } from "@/components/weekly-scrum/manage/types";
+import {
+  validateSnapshots,
+  formatMissingFieldsMessage,
+} from "@/components/weekly-scrum/manage/snapshotValidation";
 import { WorkloadLevelModal } from "@/components/weekly-scrum/manage/WorkloadLevelModal";
 import { LastWeekNextFab } from "@/components/snapshots/LastWeekNextFab";
 import { createSnapshotAndEntries } from "../../../../_actions";
@@ -668,6 +672,13 @@ function NewSnapshotViewInner({
 
   // 모달에서 확인 시 실제 저장
   const handleSaveConfirm = async (level: WorkloadLevel, note: string) => {
+    // 필수값 검증
+    const validation = validateSnapshots(tempSnapshots);
+    if (!validation.isValid) {
+      showToast(formatMissingFieldsMessage(validation.missingFields), "error");
+      return;
+    }
+
     setWorkloadLevel(level);
     setWorkloadNote(note);
     setIsSaving(true);

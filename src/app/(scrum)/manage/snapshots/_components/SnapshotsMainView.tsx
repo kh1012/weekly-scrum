@@ -411,7 +411,7 @@ function SnapshotsMainViewInner({
       {/* 우측: 메인 콘텐츠 */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* 헤더 영역 */}
-        <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
+        <div className="shrink-0 px-4 md:px-6 py-3 bg-[#f6f8fa] border-b border-[#d0d7de]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             {/* 좌측: 타이틀 + 모바일 주차 버튼 */}
             <div className="flex items-center justify-center md:justify-start gap-3">
@@ -735,7 +735,7 @@ function SnapshotsMainViewInner({
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* 서브 메뉴 영역 */}
-          <div className="shrink-0 relative flex items-center justify-center lg:justify-between gap-3 px-4 md:px-6 py-3 bg-[#f6f8fa] border-b border-[#d0d7de]">
+          <div className="shrink-0 relative flex items-center justify-center lg:justify-between gap-3 px-4 md:px-6 py-3 bg-[#fff] border-b border-[#d0d7de]">
             {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
             <div className="hidden lg:flex flex-col gap-0.5 text-sm">
               <div className="flex items-center gap-2">
