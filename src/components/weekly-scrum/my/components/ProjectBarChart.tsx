@@ -22,13 +22,14 @@ export function ProjectBarChart({ data }: ProjectBarChartProps) {
       </h3>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 5 }}>
+          <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--notion-border)" horizontal={false} />
             <XAxis
               type="number"
               domain={[0, 100]}
               tick={{ fontSize: 11, fill: "var(--notion-text-secondary)" }}
               axisLine={{ stroke: "var(--notion-border)" }}
+              tickCount={6}
             />
             <YAxis
               type="category"

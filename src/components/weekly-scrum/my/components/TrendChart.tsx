@@ -64,7 +64,7 @@ export function TrendChart({ data, period, onPeriodChange, isRangeMode }: TrendC
       </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+          <LineChart data={data} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--notion-border)" />
             <XAxis
               dataKey="label"
@@ -76,6 +76,7 @@ export function TrendChart({ data, period, onPeriodChange, isRangeMode }: TrendC
               domain={[0, 120]}
               tick={{ fontSize: 11, fill: "var(--notion-text-secondary)" }}
               axisLine={{ stroke: "var(--notion-border)" }}
+              width={35}
             />
             <Tooltip
               contentStyle={{
