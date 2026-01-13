@@ -292,9 +292,9 @@ export function DataOnlyDashboard({
                         />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid 
-                      strokeDasharray="0" 
-                      stroke="#e5e7eb" 
+                    <CartesianGrid
+                      strokeDasharray="0"
+                      stroke="#e5e7eb"
                       opacity={0.3}
                       vertical={false}
                     />
@@ -319,7 +319,11 @@ export function DataOnlyDashboard({
                         boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
                         padding: "8px 12px",
                       }}
-                      labelStyle={{ color: "#f6f8fa", fontWeight: 600, fontSize: 12 }}
+                      labelStyle={{
+                        color: "#f6f8fa",
+                        fontWeight: 600,
+                        fontSize: 12,
+                      }}
                       itemStyle={{ color: "#58a6ff", fontSize: 12 }}
                       formatter={(value: number, name: string, props: any) => [
                         `${value}회`,
@@ -331,7 +335,11 @@ export function DataOnlyDashboard({
                         }
                         return label;
                       }}
-                      cursor={{ stroke: "#d0d7de", strokeWidth: 1, strokeDasharray: "3 3" }}
+                      cursor={{
+                        stroke: "#d0d7de",
+                        strokeWidth: 1,
+                        strokeDasharray: "3 3",
+                      }}
                     />
                     <Area
                       type="monotone"
@@ -340,7 +348,12 @@ export function DataOnlyDashboard({
                       strokeWidth={1.5}
                       fill="url(#colorVisits)"
                       dot={false}
-                      activeDot={{ r: 3, fill: "#0969da", strokeWidth: 2, stroke: "#ffffff" }}
+                      activeDot={{
+                        r: 3,
+                        fill: "#0969da",
+                        strokeWidth: 2,
+                        stroke: "#ffffff",
+                      }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -465,7 +478,7 @@ export function DataOnlyDashboard({
               <ResponsiveContainer width="100%" height={240}>
                 <AreaChart
                   data={weeklyProgressTrend}
-                  margin={{ top: 5, right: 5, left: -15, bottom: 5 }}
+                  margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                 >
                   <defs>
                     <linearGradient
@@ -475,13 +488,17 @@ export function DataOnlyDashboard({
                       x2="0"
                       y2="1"
                     >
-                      <stop offset="0%" stopColor="#1a7f37" stopOpacity={0.12} />
+                      <stop
+                        offset="0%"
+                        stopColor="#1a7f37"
+                        stopOpacity={0.12}
+                      />
                       <stop offset="100%" stopColor="#1a7f37" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid 
-                    strokeDasharray="0" 
-                    stroke="#e5e7eb" 
+                  <CartesianGrid
+                    strokeDasharray="0"
+                    stroke="#e5e7eb"
                     opacity={0.3}
                     vertical={false}
                   />
@@ -507,7 +524,11 @@ export function DataOnlyDashboard({
                       boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
                       padding: "8px 12px",
                     }}
-                    labelStyle={{ color: "#f6f8fa", fontWeight: 600, fontSize: 12 }}
+                    labelStyle={{
+                      color: "#f6f8fa",
+                      fontWeight: 600,
+                      fontSize: 12,
+                    }}
                     itemStyle={{ color: "#56d364", fontSize: 12 }}
                     formatter={(value: number, name: string, props: any) => {
                       const entryCount = props.payload.entryCount;
@@ -516,7 +537,11 @@ export function DataOnlyDashboard({
                         "평균 진행률",
                       ];
                     }}
-                    cursor={{ stroke: "#d0d7de", strokeWidth: 1, strokeDasharray: "3 3" }}
+                    cursor={{
+                      stroke: "#d0d7de",
+                      strokeWidth: 1,
+                      strokeDasharray: "3 3",
+                    }}
                   />
                   <Area
                     type="monotone"
@@ -767,7 +792,7 @@ export function DataOnlyDashboard({
                     count: item.count,
                     isLatest: idx === weeklyTrend.length - 1,
                   }))}
-                  margin={{ top: 5, right: 5, left: -15, bottom: 5 }}
+                  margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                 >
                   <defs>
                     <linearGradient
@@ -777,13 +802,17 @@ export function DataOnlyDashboard({
                       x2="0"
                       y2="1"
                     >
-                      <stop offset="0%" stopColor="#0969da" stopOpacity={0.12} />
+                      <stop
+                        offset="0%"
+                        stopColor="#0969da"
+                        stopOpacity={0.12}
+                      />
                       <stop offset="100%" stopColor="#0969da" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid 
-                    strokeDasharray="0" 
-                    stroke="#e5e7eb" 
+                  <CartesianGrid
+                    strokeDasharray="0"
+                    stroke="#e5e7eb"
                     opacity={0.3}
                     vertical={false}
                   />
@@ -809,10 +838,18 @@ export function DataOnlyDashboard({
                       boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
                       padding: "8px 12px",
                     }}
-                    labelStyle={{ color: "#f6f8fa", fontWeight: 600, fontSize: 12 }}
+                    labelStyle={{
+                      color: "#f6f8fa",
+                      fontWeight: 600,
+                      fontSize: 12,
+                    }}
                     itemStyle={{ color: "#58a6ff", fontSize: 12 }}
                     formatter={(value: number) => [`${value}개`, "엔트리 수"]}
-                    cursor={{ stroke: "#d0d7de", strokeWidth: 1, strokeDasharray: "3 3" }}
+                    cursor={{
+                      stroke: "#d0d7de",
+                      strokeWidth: 1,
+                      strokeDasharray: "3 3",
+                    }}
                   />
                   <Area
                     type="monotone"

@@ -1227,7 +1227,7 @@ function NewSnapshotViewInner({
   return (
     <div className="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* 상단 툴바 */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 shrink-0">
+      <div className="bg-gray-50 border-b border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 shrink-0">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 overflow-x-auto">
           <button
             onClick={() => {

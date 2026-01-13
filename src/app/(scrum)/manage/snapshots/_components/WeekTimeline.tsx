@@ -350,7 +350,7 @@ export function WeekTimeline({
   return (
     <div className={`flex flex-col ${className}`}>
       {/* 헤더 - PC에서만 표시 (모바일 Sheet에는 자체 헤더가 있음) */}
-      <div className="hidden lg:block shrink-0 px-4 md:px-6 py-3 md:py-4 bg-[#f6f8fa] border-b border-[#d0d7de]">
+      <div className="hidden lg:block shrink-0 px-4 md:px-6 py-2 md:py-3 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center justify-between">
           {isMultiSelectMode ? (
             // 다중 선택 모드

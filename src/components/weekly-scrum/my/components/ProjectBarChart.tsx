@@ -1,6 +1,15 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import { getProgressColor } from "@/lib/colorDefines";
 
 interface ProjectData {
@@ -17,13 +26,24 @@ interface ProjectBarChartProps {
 export function ProjectBarChart({ data }: ProjectBarChartProps) {
   return (
     <div className="notion-card p-4">
-      <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--notion-text)" }}>
+      <h3
+        className="text-sm font-semibold mb-4"
+        style={{ color: "var(--notion-text)" }}
+      >
         📁 프로젝트별 진척률
       </h3>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--notion-border)" horizontal={false} />
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--notion-border)"
+              horizontal={false}
+            />
             <XAxis
               type="number"
               domain={[0, 100]}
@@ -60,7 +80,10 @@ export function ProjectBarChart({ data }: ProjectBarChartProps) {
             />
             <Bar dataKey="avgProgress" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getProgressColor(entry.avgProgress)} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={getProgressColor(entry.avgProgress)}
+                />
               ))}
             </Bar>
           </BarChart>
@@ -69,4 +92,3 @@ export function ProjectBarChart({ data }: ProjectBarChartProps) {
     </div>
   );
 }
-

@@ -28,12 +28,20 @@ interface TrendChartProps {
   isRangeMode: boolean;
 }
 
-export function TrendChart({ data, period, onPeriodChange, isRangeMode }: TrendChartProps) {
+export function TrendChart({
+  data,
+  period,
+  onPeriodChange,
+  isRangeMode,
+}: TrendChartProps) {
   // 단일 주차 모드인 경우 안내 메시지 표시
   if (!isRangeMode) {
     return (
       <div className="notion-card p-4">
-        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--notion-text)" }}>
+        <h3
+          className="text-sm font-semibold mb-3"
+          style={{ color: "var(--notion-text)" }}
+        >
           📈 주차별 추이
         </h3>
         <TrendPlaceholder />
@@ -49,7 +57,10 @@ export function TrendChart({ data, period, onPeriodChange, isRangeMode }: TrendC
   return (
     <div className="notion-card p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--notion-text)" }}>
+        <h3
+          className="text-sm font-semibold"
+          style={{ color: "var(--notion-text)" }}
+        >
           📈 주차별 추이
         </h3>
         <select
@@ -64,8 +75,14 @@ export function TrendChart({ data, period, onPeriodChange, isRangeMode }: TrendC
       </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--notion-border)" />
+          <LineChart
+            data={data}
+            margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--notion-border)"
+            />
             <XAxis
               dataKey="label"
               tick={{ fontSize: 11, fill: "var(--notion-text-secondary)" }}
@@ -154,14 +171,19 @@ function TrendPlaceholder() {
           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
         />
       </svg>
-      <p className="text-sm font-medium mb-1" style={{ color: "var(--notion-text-secondary)" }}>
+      <p
+        className="text-sm font-medium mb-1"
+        style={{ color: "var(--notion-text-secondary)" }}
+      >
         단일 주차 데이터로는 추이를 확인할 수 없어요
       </p>
       <p className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
-        상단에서 <span className="font-medium" style={{ color: "var(--notion-blue)" }}>범위</span> 모드를 선택하면 주차별
-        변화를 확인할 수 있습니다
+        상단에서{" "}
+        <span className="font-medium" style={{ color: "var(--notion-blue)" }}>
+          범위
+        </span>{" "}
+        모드를 선택하면 주차별 변화를 확인할 수 있습니다
       </p>
     </div>
   );
 }
-

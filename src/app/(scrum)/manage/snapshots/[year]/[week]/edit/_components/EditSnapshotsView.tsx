@@ -914,7 +914,7 @@ function EditSnapshotsViewInner({
       {/* 우측: 편집 영역 */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* 상단 툴바 */}
-        <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 px-3 md:px-4 py-2 md:py-3 flex flex-col gap-2 shrink-0">
+        <div className="bg-gray-50 border-b border-gray-200 px-3 md:px-4 py-2 md:py-3 flex flex-col gap-2 shrink-0">
           {/* 첫 번째 줄 */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
