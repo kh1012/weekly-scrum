@@ -727,29 +727,6 @@ function SnapshotsMainViewInner({
                 >
                   편집
                 </LoadingButton>
-
-                <LoadingButton
-                  onClick={() => setIsNewEntryModalOpen(true)}
-                  variant="primary"
-                  size="sm"
-                  icon={
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                  }
-                >
-                  작성
-                </LoadingButton>
               </div>
             </div>
           </div>
@@ -758,7 +735,7 @@ function SnapshotsMainViewInner({
         {/* 메인 콘텐츠 영역 */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* 서브 메뉴 영역 */}
-          <div className="shrink-0 relative flex items-center justify-center lg:justify-between gap-3 px-4 md:px-6 py-3 bg-white border-b border-[#d0d7de]">
+          <div className="shrink-0 relative flex items-center justify-center lg:justify-between gap-3 px-4 md:px-6 py-3 bg-[#f6f8fa] border-b border-[#d0d7de]">
             {/* 좌측: 주차 정보 표시 (PC에서만, 타임라인에서 이미 선택됨) */}
             <div className="hidden lg:flex flex-col gap-0.5 text-sm">
               <div className="flex items-center gap-2">

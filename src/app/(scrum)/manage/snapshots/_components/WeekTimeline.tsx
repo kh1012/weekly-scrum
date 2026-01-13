@@ -291,98 +291,13 @@ export function WeekTimeline({
       nextWeek.week = 1;
     }
 
-    // 3. 스냅샷이 있는 주차들 추출 (유효한 주차만)
-    const snapshotWeeks: Array<{ year: number; week: number }> = [];
-    snapshotCountByWeek.forEach((_, key) => {
-      const [yearStr, weekStr] = key.split("-");
-      const year = parseInt(yearStr, 10);
-      const week = parseInt(weekStr, 10);
+    // 3. 시작 주차: 2025년 W46 (고정)
+    const startYear = 2025;
+    const startWeek = 46;
 
-      // 해당 연도의 최대 주차 수를 초과하는 주차는 제외
-      const maxWeeks = getWeeksInYear(year);
-      if (week <= maxWeeks) {
-        snapshotWeeks.push({ year, week });
-      }
-    });
-
-    // 4. 범위 결정: 가장 오래된 스냅샷 주차부터 가장 최신 스냅샷 주차까지
-    let startYear = currentISOWeek.year;
-    let startWeek = currentISOWeek.week;
-    let endYear = nextWeek.year;
-    let endWeek = nextWeek.week;
-
-    if (snapshotWeeks.length > 0) {
-      // 가장 오래된 주차와 가장 최신 주차 찾기
-      const sortedSnapshots = [...snapshotWeeks].sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        return a.week - b.week;
-      });
-      const oldest = sortedSnapshots[0];
-      const newest = sortedSnapshots[sortedSnapshots.length - 1];
-
-      // 가장 오래된 주차의 시작 날짜를 구한 후 5주(35일) 전 날짜로 이동
-      const oldestJan4 = new Date(Date.UTC(oldest.year, 0, 4));
-      const oldestJan4Day = oldestJan4.getUTCDay() || 7;
-      const oldestWeek1Monday = new Date(oldestJan4);
-      oldestWeek1Monday.setUTCDate(oldestJan4.getUTCDate() - oldestJan4Day + 1);
-
-      const oldestWeekStart = new Date(oldestWeek1Monday);
-      oldestWeekStart.setUTCDate(
-        oldestWeek1Monday.getUTCDate() + (oldest.week - 1) * 7
-      );
-
-      // 5주(35일) 전으로 이동
-      const fiveWeeksBeforeDate = new Date(oldestWeekStart);
-      fiveWeeksBeforeDate.setUTCDate(oldestWeekStart.getUTCDate() - 35);
-
-      // 해당 날짜가 속한 ISO Week 계산
-      const fiveWeeksBeforeYear = fiveWeeksBeforeDate.getUTCFullYear();
-      const fiveWeeksBeforeMonday = new Date(fiveWeeksBeforeDate);
-      const dayOfWeek = fiveWeeksBeforeDate.getUTCDay() || 7;
-      fiveWeeksBeforeMonday.setUTCDate(
-        fiveWeeksBeforeDate.getUTCDate() - dayOfWeek + 1
-      );
-
-      // 해당 주의 목요일
-      const thursday = new Date(fiveWeeksBeforeMonday);
-      thursday.setUTCDate(fiveWeeksBeforeMonday.getUTCDate() + 3);
-
-      // 목요일이 속한 연도가 ISO Week Year
-      const isoYear = thursday.getUTCFullYear();
-      const isoJan4 = new Date(Date.UTC(isoYear, 0, 4));
-      const isoJan4Day = isoJan4.getUTCDay() || 7;
-      const isoWeek1Monday = new Date(isoJan4);
-      isoWeek1Monday.setUTCDate(isoJan4.getUTCDate() - isoJan4Day + 1);
-
-      const isoWeekNumber =
-        Math.floor(
-          (thursday.getTime() - isoWeek1Monday.getTime()) / 86400000 / 7
-        ) + 1;
-
-      startYear = isoYear;
-      startWeek = isoWeekNumber;
-
-      // 가장 최신 주차의 다음 주차까지 포함
-      const newestWeeksInYear = getWeeksInYear(newest.year);
-
-      if (newest.week < newestWeeksInYear) {
-        endYear = newest.year;
-        endWeek = newest.week + 1;
-      } else {
-        endYear = newest.year + 1;
-        endWeek = 1;
-      }
-
-      // 현재 주차보다 미래인 경우 현재 주차 +1까지만 표시
-      if (
-        newest.year > currentISOWeek.year ||
-        (newest.year === currentISOWeek.year &&
-          newest.week >= currentISOWeek.week)
-      ) {
-        endYear = nextWeek.year;
-        endWeek = nextWeek.week;
-      }
-    }
+    // 4. 종료 주차: 현재 주차 +1
+    const endYear = nextWeek.year;
+    const endWeek = nextWeek.week;
 
     // 5. 시작 주차부터 끝 주차까지 모든 주차 생성
     const allWeeks = generateWeeksBetween(

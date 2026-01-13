@@ -88,11 +88,11 @@ export function LastWeekNextFab({
 
   return (
     <>
-      {/* Floating Action Button - GitHub 스타일 */}
+      {/* Floating Action Button - 보조 액션 스타일 */}
       <button
         onClick={() => setIsOpen(true)}
         onMouseEnter={handleMouseEnter}
-        className="fixed right-5 bottom-5 z-[9997] flex items-center gap-2 px-3 py-2 bg-[#0969da] text-white rounded-md shadow-md hover:bg-[#0860ca] hover:shadow-lg transition-all duration-200 font-medium text-xs border border-[#0969da]"
+        className="fixed right-5 bottom-5 z-[9997] flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md shadow-md hover:bg-gray-50 hover:shadow-lg transition-all duration-200 font-medium text-xs border border-gray-300"
         title="지난 주 Next 항목 참고하기"
       >
         <svg

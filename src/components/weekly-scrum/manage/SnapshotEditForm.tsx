@@ -1710,25 +1710,27 @@ export function SnapshotEditForm({
   onToggleThreeColumn,
 }: SnapshotEditFormProps) {
   // 빈 배열이거나 undefined일 때 기본값 사용
-  const domainOptions = (domainOptionsProp && domainOptionsProp.length > 0)
-    ? domainOptionsProp
-    : (DOMAIN_OPTIONS as unknown as string[]);
-  
-  const projectOptions = (projectOptionsProp && projectOptionsProp.length > 0)
-    ? projectOptionsProp
-    : (PROJECT_OPTIONS as unknown as string[]);
-  
-  const featureOptions = (featureOptionsProp && featureOptionsProp.length > 0)
-    ? featureOptionsProp
-    : (FEATURE_OPTIONS as unknown as string[]);
-  
-  const moduleOptions = moduleOptionsProp && moduleOptionsProp.length > 0
-    ? moduleOptionsProp
-    : (
-        snapshot.project && MODULE_OPTIONS[snapshot.project]
+  const domainOptions =
+    domainOptionsProp && domainOptionsProp.length > 0
+      ? domainOptionsProp
+      : (DOMAIN_OPTIONS as unknown as string[]);
+
+  const projectOptions =
+    projectOptionsProp && projectOptionsProp.length > 0
+      ? projectOptionsProp
+      : (PROJECT_OPTIONS as unknown as string[]);
+
+  const featureOptions =
+    featureOptionsProp && featureOptionsProp.length > 0
+      ? featureOptionsProp
+      : (FEATURE_OPTIONS as unknown as string[]);
+
+  const moduleOptions =
+    moduleOptionsProp && moduleOptionsProp.length > 0
+      ? moduleOptionsProp
+      : ((snapshot.project && MODULE_OPTIONS[snapshot.project]
           ? MODULE_OPTIONS[snapshot.project]
-          : ALL_MODULE_OPTIONS
-      ) as unknown as string[];
+          : ALL_MODULE_OPTIONS) as unknown as string[]);
 
   const handleMetaChange = useCallback(
     (field: keyof TempSnapshot, value: string) => {
@@ -1881,11 +1883,7 @@ export function SnapshotEditForm({
                     ? "bg-green-50 text-green-600 hover:bg-green-100"
                     : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                 }`}
-                title={
-                  forceThreeColumn
-                    ? "미리보기 끄기"
-                    : "미리보기 켜기"
-                }
+                title={forceThreeColumn ? "미리보기 끄기" : "미리보기 켜기"}
               >
                 <svg
                   className="w-3 h-3"
