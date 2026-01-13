@@ -905,6 +905,7 @@ function SnapshotsMainViewInner({
                 isSelectMode={isSelectMode}
                 onToggleSelectMode={setIsSelectMode}
                 onNewSnapshotClick={() => setIsNewSnapshotModalOpen(true)}
+                onNewEntryClick={() => setIsNewEntryModalOpen(true)}
               />
             </div>
 

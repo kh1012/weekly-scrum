@@ -44,6 +44,7 @@ interface SnapshotListProps {
   isSelectMode?: boolean;
   onToggleSelectMode?: (enabled: boolean) => void;
   onNewSnapshotClick?: () => void;
+  onNewEntryClick?: () => void;
 }
 
 export function SnapshotList({
@@ -57,6 +58,7 @@ export function SnapshotList({
   isSelectMode: externalSelectMode = false,
   onToggleSelectMode,
   onNewSnapshotClick,
+  onNewEntryClick,
 }: SnapshotListProps) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -239,6 +241,7 @@ export function SnapshotList({
           isSelectMode={isSelectMode}
           selectedEntryIds={selectedEntryIds}
           onToggleSelection={toggleSelection}
+          onNewEntryClick={onNewEntryClick}
         />
       ) : (
         <ListView
@@ -328,6 +331,7 @@ function GridView({
   isSelectMode,
   selectedEntryIds,
   onToggleSelection,
+  onNewEntryClick,
 }: {
   entries: SnapshotEntry[];
   allExpanded: boolean;
@@ -336,9 +340,14 @@ function GridView({
   isSelectMode?: boolean;
   selectedEntryIds?: Set<string>;
   onToggleSelection?: (entryId: string) => void;
+  onNewEntryClick?: () => void;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {/* 추가하기 카드 (선택 모드가 아닐 때만 표시) */}
+      {!isSelectMode && onNewEntryClick && (
+        <AddNewEntryCard onClick={onNewEntryClick} />
+      )}
       {entries.map((entry) => (
         <EntryCard
           key={`${entry.snapshotId}-${entry.entryIndex}`}
@@ -981,6 +990,40 @@ function EntryCard({
           document.body
         )}
     </div>
+  );
+}
+
+// 추가하기 카드 (그리드용)
+function AddNewEntryCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white rounded-md border-2 border-dashed border-[#d0d7de] hover:border-[#0969da] hover:bg-[#f6f8fa] transition-all cursor-pointer h-48 flex flex-col items-center justify-center gap-3 group"
+    >
+      <div className="w-12 h-12 rounded-md bg-[#ddf4ff] flex items-center justify-center group-hover:bg-[#0969da] transition-colors">
+        <svg
+          className="w-6 h-6 text-[#0969da] group-hover:text-white transition-colors"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+      </div>
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-sm font-medium text-[#24292f] group-hover:text-[#0969da] transition-colors">
+          새 엔트리 추가
+        </span>
+        <span className="text-xs text-[#57606a]">
+          클릭하여 작성 시작
+        </span>
+      </div>
+    </button>
   );
 }
 
