@@ -1054,7 +1054,7 @@ function CollaboratorEditor({
           : { top: rect.bottom + 4 }),
         left: rect.left,
         width: rect.width,
-        zIndex: 9999,
+        zIndex: 10001,
       });
     }
   }, []);
@@ -1077,7 +1077,7 @@ function CollaboratorEditor({
           : { top: rect.bottom + 4 }),
         left: rect.left,
         width: rect.width,
-        zIndex: 9999,
+        zIndex: 10001,
       });
     }
   }, []);
