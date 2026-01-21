@@ -37,8 +37,8 @@ export interface DraftTimelineProps {
   onDragDateChange?: (
     info: { startDate: string; endDate: string } | null
   ) => void;
-  /** 액션 발생 시 락 연장 (남은 시간이 절반 이하일 때) */
-  onAction?: () => void;
+  /** 액션 발생 시 락 연장 (남은 시간이 절반 이하일 때) + 기타 액션 처리 */
+  onAction?: (action?: { type?: string }) => void;
   /** 외부 스크롤 동기화용 (TreePanel에서 전달) */
   scrollTop?: number;
   onScrollChange?: (scrollTop: number) => void;

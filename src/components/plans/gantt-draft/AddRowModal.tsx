@@ -22,6 +22,8 @@ interface AddRowModalProps {
   onAdd: (project: string, module: string, feature: string) => void;
   existingProjects?: string[];
   existingModules?: string[];
+  initialProject?: string;
+  initialModule?: string;
 }
 
 export function AddRowModal({
@@ -30,9 +32,11 @@ export function AddRowModal({
   onAdd,
   existingProjects = [],
   existingModules = [],
+  initialProject = "",
+  initialModule = "",
 }: AddRowModalProps) {
-  const [project, setProject] = useState("");
-  const [module, setModule] = useState("");
+  const [project, setProject] = useState(initialProject);
+  const [module, setModule] = useState(initialModule);
   const [feature, setFeature] = useState("");
 
   // 드롭다운 상태
@@ -87,11 +91,11 @@ export function AddRowModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // 모달 열릴 때 초기화 및 프로젝트 필드 포커스
+  // 모달 열릴 때 초기화 및 포커스
   useEffect(() => {
     if (isOpen) {
-      setProject("");
-      setModule("");
+      setProject(initialProject);
+      setModule(initialModule);
       setFeature("");
       setShowProjectDropdown(false);
       setShowModuleDropdown(false);
@@ -99,12 +103,19 @@ export function AddRowModal({
       setProjectIndex(-1);
       setModuleIndex(-1);
       setFeatureIndex(-1);
-      // 약간의 딜레이 후 포커스 (모달 애니메이션 고려)
+      
+      // 값이 비어있는 첫 번째 필드에 포커스
       setTimeout(() => {
-        projectInputRef.current?.focus();
+        if (!initialProject) {
+          projectInputRef.current?.focus();
+        } else if (!initialModule) {
+          moduleInputRef.current?.focus();
+        } else {
+          featureInputRef.current?.focus();
+        }
       }, 100);
     }
-  }, [isOpen]);
+  }, [isOpen, initialProject, initialModule]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {

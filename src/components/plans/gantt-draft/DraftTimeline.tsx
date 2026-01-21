@@ -161,7 +161,6 @@ export function DraftTimeline({
     onVirtualScrollChange: setScrollTop,
   });
 
-  // Lane actions
   const laneActions = useTimelineLaneActions({
     rows: data.rows,
     activeBars: data.filteredActiveBars,
@@ -170,7 +169,13 @@ export function DraftTimeline({
     laneContextMenu: state.laneContextMenu,
     deleteLaneConfirm: state.deleteLaneConfirm,
     updateBar,
-    setLaneContextMenu: state.setLaneContextMenu,
+    setLaneContextMenu: (menu) => {
+      // Close tree context menu when opening lane context menu
+      if (menu && onAction) {
+        onAction({ type: "closeTreeContextMenu" });
+      }
+      state.setLaneContextMenu(menu);
+    },
     setDeleteLaneConfirm: state.setDeleteLaneConfirm,
     onAction,
   });

@@ -301,6 +301,9 @@ export const DraftGanttView = forwardRef<
   // 타임라인 스크롤바 높이 감지 (TreePanel 하단 정렬용)
   const timelineRef = useRef<HTMLDivElement>(null);
   const [timelineScrollbarHeight, setTimelineScrollbarHeight] = useState(0);
+  
+  // TreePanel ref (context menu 제어용)
+  const treePanelRef = useRef<{ closeContextMenu: () => void }>(null);
 
   // Row 하이라이트 상태 (timeline focus용)
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
@@ -445,6 +448,14 @@ export const DraftGanttView = forwardRef<
     () => calculateRange(3).start
   );
   const [rangeEnd, setRangeEnd] = useState<Date>(() => calculateRange(3).end);
+  
+  // onAction 핸들러: extendLockIfNeeded + closeTreeContextMenu
+  const handleOnAction = useCallback((action?: { type?: string }) => {
+    extendLockIfNeeded();
+    if (action?.type === "closeTreeContextMenu") {
+      treePanelRef.current?.closeContextMenu();
+    }
+  }, [extendLockIfNeeded]);
 
   // rangeMonths 변경 시 범위 업데이트 (0은 커스텀 모드이므로 무시)
   useEffect(() => {
@@ -1613,6 +1624,7 @@ export const DraftGanttView = forwardRef<
         {/* PC: 좌측 Tree (기존) */}
         {!isMobile && (
           <DraftTreePanel
+            ref={treePanelRef}
             isEditing={isEditing}
             filterOptions={{
               projects: [...new Set(rows.map((r) => r.project))],
@@ -1643,7 +1655,7 @@ export const DraftGanttView = forwardRef<
           workspaceId={workspaceId}
           onDragDateChange={setDragDateInfo}
           highlightedRowId={highlightedRowId}
-          onAction={extendLockIfNeeded}
+          onAction={handleOnAction}
           scrollTop={commonScrollTop}
           onScrollChange={setCommonScrollTop}
           onScrollbarHeightChange={setTimelineScrollbarHeight}

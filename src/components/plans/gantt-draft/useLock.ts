@@ -170,7 +170,8 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
 
   // 남은 시간, 다음 하트비트, 비활성 시간 계산
   useEffect(() => {
-    if (!lockState.isMyLock) {
+    // isEditing이 true일 때만 비활성 시간 추적
+    if (!lockState.isMyLock || !isEditing) {
       setRemainingSeconds(null);
       setNextHeartbeatSeconds(null);
       setInactivitySeconds(null);
@@ -201,19 +202,20 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
     const timer = setInterval(updateTimers, 1000);
 
     return () => clearInterval(timer);
-  }, [lockState.isMyLock, lockState.expiresAt]);
+  }, [lockState.isMyLock, lockState.expiresAt, isEditing]);
 
-  // 비활성 타임아웃 체크
+  // 비활성 타임아웃 체크 (isEditing일 때만)
   const stopEditingRef = useRef<(() => Promise<void>) | null>(null);
   
   useEffect(() => {
-    if (!lockState.isMyLock || inactivitySeconds === null) return;
+    // isEditing이 true일 때만 비활성 타임아웃 체크
+    if (!lockState.isMyLock || !isEditing || inactivitySeconds === null) return;
     
     if (inactivitySeconds >= INACTIVITY_TIMEOUT) {
       stopEditingRef.current?.();
       onInactivityTimeoutRef.current?.();
     }
-  }, [lockState.isMyLock, inactivitySeconds]);
+  }, [lockState.isMyLock, isEditing, inactivitySeconds]);
 
   // 활동 기록
   const recordActivity = useCallback(() => {

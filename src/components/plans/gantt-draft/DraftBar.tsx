@@ -252,6 +252,9 @@ export const DraftBar = memo(function DraftBar({
   // 드래그 시작
   const handleMouseDown = useCallback(
     (e: React.MouseEvent, mode: DragMode) => {
+      // 좌클릭만 허용 (button 0), 휠 클릭(button 1)과 우클릭(button 2)은 무시
+      if (e.button !== 0) return;
+      
       if (!isEditing) return;
 
       e.stopPropagation();

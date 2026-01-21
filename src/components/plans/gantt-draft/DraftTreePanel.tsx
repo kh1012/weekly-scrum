@@ -14,6 +14,8 @@ import {
   useRef,
   useEffect,
   useTransition,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -80,19 +82,25 @@ interface DraftTreePanelProps {
   highlightedRowId?: string | null;
 }
 
-export function DraftTreePanel({
-  isEditing,
-  filterOptions,
-  scrollTop: externalScrollTop,
-  onScroll,
-  showAddRowModal: externalShowAddRowModal,
-  onShowAddRowModal,
-  rangeStart,
-  rangeEnd,
-  workspaceId,
-  timelineScrollbarHeight = 0,
-  highlightedRowId,
-}: DraftTreePanelProps) {
+export const DraftTreePanel = forwardRef<
+  { closeContextMenu: () => void },
+  DraftTreePanelProps
+>(function DraftTreePanel(
+  {
+    isEditing,
+    filterOptions,
+    rangeStart,
+    rangeEnd,
+    onScroll: externalOnScroll,
+    scrollTop: externalScrollTop,
+    showAddRowModal: externalShowAddRowModal,
+    onShowAddRowModal,
+    workspaceId,
+    timelineScrollbarHeight = 0,
+    highlightedRowId,
+  },
+  ref
+) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -376,7 +384,82 @@ export function DraftTreePanel({
     };
   }, []);
 
-  // 필터 팝오버 외부 클릭 시 닫기
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId: string;
+    project: string;
+    module: string;
+  } | null>(null);
+
+  // Initial Modal Data State
+  const [initialModalData, setInitialModalData] = useState<{
+    project: string;
+    module: string;
+  } | null>(null);
+
+  // Expose closeContextMenu method to parent via ref
+  useImperativeHandle(ref, () => ({
+    closeContextMenu: () => setContextMenu(null),
+  }), []);
+
+  // Close context menu on click outside
+  // Close context menu on click outside or ESC
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setContextMenu(null);
+      }
+    };
+    
+    window.addEventListener("click", handleClick);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("click", handleClick);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const handleContextMenu = (e: React.MouseEvent, node: FlatTreeNode) => {
+    if (!isEditing) return;
+    
+    // Only allow context menu on nodes that provide project/module context
+    let project = "";
+    let module = "";
+
+    if (node.type === "feature") {
+      project = node.row?.project || "";
+      module = node.row?.module || "";
+    } else if (node.type === "module") {
+        // node.id is "project::module"
+        const parts = node.id.split("::");
+        project = parts[0];
+        module = parts[1];
+    } else if (node.type === "project") {
+        project = node.label;
+        // No module context for project node
+    }
+
+    // At minimum, we need a project to show the context menu
+    if (!project) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Close other menus
+    setShowFilters(false);
+    setShowExpandMenu(false);
+
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      nodeId: node.id,
+      project,
+      module,
+    });
+  };
   useEffect(() => {
     if (!showFilters) return;
 
@@ -774,10 +857,14 @@ export function DraftTreePanel({
   };
 
   const handleScroll = useCallback(() => {
-    if (scrollContainerRef.current && onScroll) {
-      onScroll(scrollContainerRef.current.scrollTop);
+    if (scrollContainerRef.current && externalOnScroll) {
+      externalOnScroll(scrollContainerRef.current.scrollTop);
     }
-  }, [onScroll]);
+    // Close context menu on scroll
+    if (contextMenu) {
+      setContextMenu(null);
+    }
+  }, [externalOnScroll, contextMenu]);
 
   // 외부 scrollTop 동기화
   useEffect(() => {
@@ -794,8 +881,27 @@ export function DraftTreePanel({
       resetFilters();
     }
 
-    addRow(project, module, feature);
+    const newRow = addRow(project, module, feature);
+    
+    // If opened from context menu, insert after the right-clicked row
+    if (initialModalData && contextMenu) {
+      const rightClickedRowId = contextMenu.nodeId;
+      // Find the row to insert after
+      const targetRowIndex = allRows.findIndex(r => r.rowId === rightClickedRowId);
+      
+      if (targetRowIndex !== -1) {
+        // Reorder: move new row to position after target
+        const newOrder = allRows
+          .filter(r => r.rowId !== newRow.rowId)
+          .flatMap((r, idx) => 
+            idx === targetRowIndex ? [r.rowId, newRow.rowId] : [r.rowId]
+          );
+        reorderRows(newOrder);
+      }
+    }
+    
     setShowAddRowModal(false);
+    setInitialModalData(null);
   };
 
   // 드래그앤드롭 핸들러
@@ -1190,6 +1296,7 @@ export function DraftTreePanel({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, node)}
         onDragEnd={handleDragEnd}
+        onContextMenu={(e) => handleContextMenu(e, node)}
         className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 ${
           node.type === "project" || node.type === "module" ? "px-2" : "px-3"
         } ${isSelected ? "" : "hover:translate-x-0.5"} ${
@@ -1928,13 +2035,71 @@ export function DraftTreePanel({
       </div>
 
       {/* AddRowModal */}
-      <AddRowModal
-        isOpen={showAddRowModal}
-        onClose={() => setShowAddRowModal(false)}
-        onAdd={handleAddRow}
-        existingProjects={allProjects}
-        existingModules={allModules}
-      />
+      {showAddRowModal && (
+        <AddRowModal
+          isOpen={showAddRowModal}
+          onClose={() => {
+            setShowAddRowModal(false);
+            setInitialModalData(null);
+          }}
+          onAdd={handleAddRow}
+          existingProjects={allProjects}
+          existingModules={allModules}
+          initialProject={initialModalData?.project}
+          initialModule={initialModalData?.module}
+        />
+      )}
+
+      {/* Context Menu Portal */}
+      {contextMenu && createPortal(
+        <div
+          className="fixed z-[10000] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          style={{
+            top: contextMenu.y,
+            left: contextMenu.x,
+            minWidth: 200,
+            background: "white",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            boxShadow:
+              "0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)",
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="py-2">
+            <button
+              onClick={() => {
+                setInitialModalData({
+                  project: contextMenu.project,
+                  module: contextMenu.module,
+                });
+                setShowAddRowModal(true);
+                setContextMenu(null);
+              }}
+              className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+              style={{
+                background: "transparent",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                  "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                <PlusIcon className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-xs text-gray-500">{contextMenu.project} / {contextMenu.module}</div>
+                <div className="text-sm font-medium text-gray-900">새 기능 추가</div>
+              </div>
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* 펼치기 드롭다운 메뉴 (Portal) */}
       {showExpandMenu &&
@@ -2022,4 +2187,4 @@ export function DraftTreePanel({
       />
     </div>
   );
-}
+});
