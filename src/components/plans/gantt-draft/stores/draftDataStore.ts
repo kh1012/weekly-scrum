@@ -194,16 +194,22 @@ export const createDraftDataStore: StateCreator<
   
   deleteRow: (rowId) => {
     const state = get();
+    // 1. 해당 rowId를 가진 모든 bars를 deleted로 마킹
     const newBars = state.bars.map((b) =>
       b.rowId === rowId && !b.deleted
         ? { ...b, deleted: true, dirty: true, updatedAtLocal: new Date().toISOString() }
         : b
     );
     
-    const filterIndex = buildFilterIndex(newBars, state.rows);
+    // 2. rows 배열에서 해당 rowId를 가진 row 제거
+    const newRows = state.rows.filter((r) => r.rowId !== rowId);
+    
+    // 3. filterIndex를 새로운 rows와 newBars로 재구성
+    const filterIndex = buildFilterIndex(newBars, newRows);
     
     set({
       bars: newBars,
+      rows: newRows,
       filterIndex,
     });
   },

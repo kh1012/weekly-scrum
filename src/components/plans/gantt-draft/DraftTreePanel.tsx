@@ -53,6 +53,7 @@ import { FlagDocPanel } from "./FlagDocPanel";
 import { filterBarsWithIndex, filterRowsWithIndex } from "./filterCache";
 import { FlagsPopover } from "./components/tree/FlagsPopover";
 import { isDateRangeOverlapping } from "./utils/flagUtils";
+import { ConfirmModal } from "@/components/common/ConfirmModal";
 
 export const TREE_WIDTH = 280;
 const HEADER_HEIGHT = 76; // 38px + 38px (검색 + 필터/버튼, p-2 패딩 포함)
@@ -298,6 +299,19 @@ export const DraftTreePanel = forwardRef<
   const [showFlagsPopover, setShowFlagsPopover] = useState(false);
   const [flagsAnchorRect, setFlagsAnchorRect] = useState<DOMRect | null>(null);
   const flagsSectionRef = useRef<HTMLDivElement>(null);
+
+  // 삭제 확인 모달 상태
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    rowId: string | null;
+    featureName: string;
+    planCount: number;
+  }>({
+    isOpen: false,
+    rowId: null,
+    featureName: "",
+    planCount: 0,
+  });
 
   // Flag Lane 높이 계산 (FlagLane과 동기화)
   const flagLaneHeight = useMemo(() => {
@@ -1165,12 +1179,14 @@ export const DraftTreePanel = forwardRef<
 
       // 전체 bar 개수 (삭제 확인용)
       const totalBarCount = node.bars?.length || 0;
-      const confirmed = confirm(
-        `"${node.label}" 기능과 관련된 ${totalBarCount}개의 계획을 삭제하시겠습니까?`
-      );
-      if (confirmed) {
-        deleteRow(node.row.rowId);
-      }
+      
+      // 삭제 확인 모달 표시
+      setDeleteConfirm({
+        isOpen: true,
+        rowId: node.row.rowId,
+        featureName: node.label,
+        planCount: totalBarCount,
+      });
     };
 
     const handleClick = () => {
@@ -2184,6 +2200,35 @@ export const DraftTreePanel = forwardRef<
         }}
         flag={selectedDocFlag}
         workspaceId={workspaceId || ""}
+      />
+
+      {/* 삭제 확인 모달 */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() =>
+          setDeleteConfirm({
+            isOpen: false,
+            rowId: null,
+            featureName: "",
+            planCount: 0,
+          })
+        }
+        onConfirm={() => {
+          if (deleteConfirm.rowId) {
+            deleteRow(deleteConfirm.rowId);
+            setDeleteConfirm({
+              isOpen: false,
+              rowId: null,
+              featureName: "",
+              planCount: 0,
+            });
+          }
+        }}
+        title="기능 삭제"
+        message={`"${deleteConfirm.featureName}" 기능과 관련된 ${deleteConfirm.planCount}개의 계획을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`}
+        confirmText="삭제"
+        cancelText="취소"
+        variant="danger"
       />
     </div>
   );

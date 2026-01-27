@@ -165,7 +165,7 @@ interface DraftGanttViewProps {
 export interface DraftGanttViewRef {
   scrollToRow: (
     rowId: string,
-    options?: { highlight?: boolean; smooth?: boolean }
+    options?: { highlight?: boolean; smooth?: boolean },
   ) => void;
 }
 
@@ -197,7 +197,7 @@ export const DraftGanttView = forwardRef<
     onFocusMismatch,
     isAlignmentPage = false,
   },
-  ref
+  ref,
 ) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -233,7 +233,7 @@ export const DraftGanttView = forwardRef<
   }, [viewMode]);
 
   // 자동 저장 옵션 (기본값: 활성화)
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
   const [autoSaveSuccess, setAutoSaveSuccess] = useState(false);
 
   const handleAutoSaveChange = useCallback((enabled: boolean) => {
@@ -242,7 +242,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "success",
         "자동 저장 활성화",
-        "90초 이상 비활성 시 자동으로 저장됩니다."
+        "90초 이상 비활성 시 자동으로 저장됩니다.",
       );
     } else {
       showToast("info", "자동 저장 비활성화", "수동으로만 저장됩니다.");
@@ -275,13 +275,13 @@ export const DraftGanttView = forwardRef<
       setIsHeaderHidden((prev) => !prev);
       // GNB도 함께 숨기기/보이기
       const gnb = document.querySelector(
-        'header[class*="sticky top-0"]'
+        'header[class*="sticky top-0"]',
       ) as HTMLElement;
       if (gnb) {
         gnb.style.display = isHeaderHidden ? "" : "none";
       }
     },
-    [isHeaderHidden]
+    [isHeaderHidden],
   );
 
   // 저장 진행 상태 모달
@@ -301,7 +301,7 @@ export const DraftGanttView = forwardRef<
   // 타임라인 스크롤바 높이 감지 (TreePanel 하단 정렬용)
   const timelineRef = useRef<HTMLDivElement>(null);
   const [timelineScrollbarHeight, setTimelineScrollbarHeight] = useState(0);
-  
+
   // TreePanel ref (context menu 제어용)
   const treePanelRef = useRef<{ closeContextMenu: () => void }>(null);
 
@@ -333,7 +333,7 @@ export const DraftGanttView = forwardRef<
     () => ({
       scrollToRow: (
         rowId: string,
-        options?: { highlight?: boolean; smooth?: boolean }
+        options?: { highlight?: boolean; smooth?: boolean },
       ) => {
         const targetRow = rows.find((r) => r.rowId === rowId);
         if (!targetRow) {
@@ -350,7 +350,7 @@ export const DraftGanttView = forwardRef<
 
         // Find the target node position
         const targetNode = nodePositions.find(
-          (pos) => pos.node.row?.rowId === rowId
+          (pos) => pos.node.row?.rowId === rowId,
         );
         if (!targetNode) {
           return;
@@ -360,7 +360,7 @@ export const DraftGanttView = forwardRef<
         const viewportHeight = timelineRef.current?.clientHeight || 600;
         const targetScrollTop = Math.max(
           0,
-          targetNode.top - viewportHeight / 2 + ROW_HEIGHT / 2
+          targetNode.top - viewportHeight / 2 + ROW_HEIGHT / 2,
         );
 
         setCommonScrollTop(targetScrollTop);
@@ -375,7 +375,7 @@ export const DraftGanttView = forwardRef<
         }
       },
     }),
-    [rows, bars, timelineRef]
+    [rows, bars, timelineRef],
   );
 
   // 필터를 store에 동기화
@@ -407,7 +407,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "warning",
         "비활성 타임아웃",
-        "10분간 활동이 없어 편집 모드가 자동 종료되었습니다."
+        "10분간 활동이 없어 편집 모드가 자동 종료되었습니다.",
       );
     },
   });
@@ -429,7 +429,7 @@ export const DraftGanttView = forwardRef<
       0,
       0,
       0,
-      0
+      0,
     );
     const end = new Date(
       today.getFullYear(),
@@ -438,24 +438,27 @@ export const DraftGanttView = forwardRef<
       0,
       0,
       0,
-      0
+      0,
     );
     return { start, end };
   }, []);
 
   // 범위를 state로 관리 (리렌더링을 위해)
   const [rangeStart, setRangeStart] = useState<Date>(
-    () => calculateRange(3).start
+    () => calculateRange(3).start,
   );
   const [rangeEnd, setRangeEnd] = useState<Date>(() => calculateRange(3).end);
-  
+
   // onAction 핸들러: extendLockIfNeeded + closeTreeContextMenu
-  const handleOnAction = useCallback((action?: { type?: string }) => {
-    extendLockIfNeeded();
-    if (action?.type === "closeTreeContextMenu") {
-      treePanelRef.current?.closeContextMenu();
-    }
-  }, [extendLockIfNeeded]);
+  const handleOnAction = useCallback(
+    (action?: { type?: string }) => {
+      extendLockIfNeeded();
+      if (action?.type === "closeTreeContextMenu") {
+        treePanelRef.current?.closeContextMenu();
+      }
+    },
+    [extendLockIfNeeded],
+  );
 
   // rangeMonths 변경 시 범위 업데이트 (0은 커스텀 모드이므로 무시)
   useEffect(() => {
@@ -483,7 +486,7 @@ export const DraftGanttView = forwardRef<
     const urlFlagId = searchParams.get("flagId");
     if (urlFlagId && flags.length > 0) {
       const flagExists = flags.some(
-        (f) => f.clientId === urlFlagId && !f.deleted
+        (f) => f.clientId === urlFlagId && !f.deleted,
       );
       if (flagExists && selectedFlagId !== urlFlagId) {
         selectFlag(urlFlagId);
@@ -508,7 +511,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "success",
         "Figma 연동 완료",
-        "이제 Gantt 차트를 Figma/FigJam에 업로드할 수 있습니다."
+        "이제 Gantt 차트를 Figma/FigJam에 업로드할 수 있습니다.",
       );
       // URL에서 파라미터 제거
       params.delete("figma_success");
@@ -598,7 +601,7 @@ export const DraftGanttView = forwardRef<
 
     // orderIndex 순서대로 정렬된 rows 생성
     const sortedRows = Array.from(rowMap.values()).sort(
-      (a, b) => a.orderIndex - b.orderIndex
+      (a, b) => a.orderIndex - b.orderIndex,
     );
 
     hydrate(sortedRows, loadedBars);
@@ -631,7 +634,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "success",
         "편집 모드 시작",
-        "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
+        "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다.",
       );
     } else {
       const currentLockState = useDraftStore.getState().ui.lockState;
@@ -641,13 +644,13 @@ export const DraftGanttView = forwardRef<
           "편집할 수 없음",
           `현재 ${
             currentLockState.lockedByName || "다른 사용자"
-          }님이 작업 중입니다.`
+          }님이 작업 중입니다.`,
         );
       } else {
         showToast(
           "error",
           "작업을 시작할 수 없습니다",
-          "네트워크 상태를 확인하고 다시 시도해주세요."
+          "네트워크 상태를 확인하고 다시 시도해주세요.",
         );
       }
     }
@@ -675,7 +678,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "info",
         "작업 종료",
-        `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`
+        `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`,
       );
     } else {
       showToast("success", "작업 종료", "작업이 정상적으로 종료되었습니다.");
@@ -757,8 +760,8 @@ export const DraftGanttView = forwardRef<
       if (allFlags.length > 0) {
         setSaveSteps((prev) =>
           prev.map((s) =>
-            s.id === "flags" ? { ...s, status: "in_progress" as const } : s
-          )
+            s.id === "flags" ? { ...s, status: "in_progress" as const } : s,
+          ),
         );
 
         const flagResult = await commitFlags({
@@ -776,8 +779,8 @@ export const DraftGanttView = forwardRef<
             prev.map((s) =>
               s.id === "flags"
                 ? { ...s, status: "success" as const, count: flagCount }
-                : s
-            )
+                : s,
+            ),
           );
           clearFlagDirtyFlags();
 
@@ -788,8 +791,8 @@ export const DraftGanttView = forwardRef<
             prev.map((s) =>
               s.id === "flags"
                 ? { ...s, status: "error" as const, error: flagResult.error }
-                : s
-            )
+                : s,
+            ),
           );
         }
       }
@@ -810,8 +813,8 @@ export const DraftGanttView = forwardRef<
           prev.map((s) =>
             s.id === "plans"
               ? { ...s, status: "in_progress" as const, logs: pendingLogs }
-              : s
-          )
+              : s,
+          ),
         );
 
         const payload = {
@@ -855,11 +858,11 @@ export const DraftGanttView = forwardRef<
                 item.action === "insert"
                   ? "생성"
                   : item.action === "update"
-                  ? "수정"
-                  : "삭제"
+                    ? "수정"
+                    : "삭제"
               }: ${item.title}`,
               timestamp: new Date(),
-            })
+            }),
           );
 
           // 순차적으로 로그를 success로 업데이트하는 애니메이션
@@ -873,7 +876,7 @@ export const DraftGanttView = forwardRef<
                   updatedLogs[i] = successLogs[i];
                 }
                 return { ...s, logs: updatedLogs };
-              })
+              }),
             );
           }
 
@@ -881,8 +884,8 @@ export const DraftGanttView = forwardRef<
             prev.map((s) =>
               s.id === "plans"
                 ? { ...s, status: "success" as const, count: planCount }
-                : s
-            )
+                : s,
+            ),
           );
           clearDirtyFlags();
         } else {
@@ -890,8 +893,8 @@ export const DraftGanttView = forwardRef<
             prev.map((s) =>
               s.id === "plans"
                 ? { ...s, status: "error" as const, error: planResult.error }
-                : s
-            )
+                : s,
+            ),
           );
         }
       }
@@ -906,8 +909,8 @@ export const DraftGanttView = forwardRef<
                 error:
                   err instanceof Error ? err.message : "알 수 없는 오류 발생",
               }
-            : s
-        )
+            : s,
+        ),
       );
     } finally {
       setIsCommitting(false);
@@ -1099,7 +1102,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "error",
         "Export 실패",
-        error instanceof Error ? error.message : "알 수 없는 오류"
+        error instanceof Error ? error.message : "알 수 없는 오류",
       );
     }
   }, [
@@ -1116,7 +1119,7 @@ export const DraftGanttView = forwardRef<
   const handleExportPNG = useCallback(
     async (
       quality: "low" | "normal" | "high" = "normal",
-      options?: { returnBlob?: boolean }
+      options?: { returnBlob?: boolean },
     ): Promise<Blob | void> => {
       const qualityLabels = {
         low: "저품질",
@@ -1129,7 +1132,7 @@ export const DraftGanttView = forwardRef<
         ? null
         : showLoadingToast(
             `PNG 생성 중 (${qualityLabels[quality]})`,
-            "잠시만 기다려주세요..."
+            "잠시만 기다려주세요...",
           );
 
       try {
@@ -1157,7 +1160,7 @@ export const DraftGanttView = forwardRef<
           updateToastToSuccess(
             toastId,
             "PNG Export 완료",
-            "이미지가 다운로드되었습니다."
+            "이미지가 다운로드되었습니다.",
           );
         }
       } catch (error) {
@@ -1171,19 +1174,19 @@ export const DraftGanttView = forwardRef<
           updateToastToError(
             toastId,
             "Export 실패",
-            error instanceof Error ? error.message : "알 수 없는 오류"
+            error instanceof Error ? error.message : "알 수 없는 오류",
           );
         }
       }
     },
-    []
+    [],
   );
 
   const handleExportDraw = useCallback(
     async (
       quality: "low" | "normal" | "high" = "normal",
       canvasOptions?: CanvasOptions,
-      options?: { returnBlob?: boolean }
+      options?: { returnBlob?: boolean },
     ): Promise<Blob | void> => {
       const qualityLabels = {
         low: "저품질",
@@ -1196,7 +1199,7 @@ export const DraftGanttView = forwardRef<
         ? null
         : showLoadingToast(
             `PNG Draw 생성 중 (${qualityLabels[quality]})`,
-            "Canvas로 정밀하게 렌더링 중..."
+            "Canvas로 정밀하게 렌더링 중...",
           );
 
       try {
@@ -1221,15 +1224,19 @@ export const DraftGanttView = forwardRef<
           },
         };
 
-        const result = await exportPNGWithCanvas(ganttContainerRef.current, ganttData, {
-          filename: `gantt-draw-${Date.now()}`,
-          quality,
-          pngOptions: {
-            backgroundColor: "#ffffff",
+        const result = await exportPNGWithCanvas(
+          ganttContainerRef.current,
+          ganttData,
+          {
+            filename: `gantt-draw-${Date.now()}`,
+            quality,
+            pngOptions: {
+              backgroundColor: "#ffffff",
+            },
+            canvasOptions,
+            returnBlob: options?.returnBlob,
           },
-          canvasOptions,
-          returnBlob: options?.returnBlob,
-        });
+        );
 
         // returnBlob 모드일 때는 Blob 반환
         if (options?.returnBlob) {
@@ -1241,7 +1248,7 @@ export const DraftGanttView = forwardRef<
           updateToastToSuccess(
             toastId,
             "PNG Draw Export 완료",
-            "이미지가 다운로드되었습니다."
+            "이미지가 다운로드되었습니다.",
           );
         }
       } catch (error) {
@@ -1255,12 +1262,12 @@ export const DraftGanttView = forwardRef<
           updateToastToError(
             toastId,
             "Export 실패",
-            error instanceof Error ? error.message : "알 수 없는 오류"
+            error instanceof Error ? error.message : "알 수 없는 오류",
           );
         }
       }
     },
-    [rows, bars, flags, rangeStart, rangeEnd]
+    [rows, bars, flags, rangeStart, rangeEnd],
   );
 
   // 키보드 단축키
@@ -1460,13 +1467,13 @@ export const DraftGanttView = forwardRef<
                 "편집할 수 없음",
                 `현재 ${
                   lockedByName || "다른 사용자"
-                }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
+                }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`,
               );
             } else {
               showToast(
                 "error",
                 "작업을 시작할 수 없습니다",
-                "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
+                "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.",
               );
             }
           }}
@@ -1474,7 +1481,7 @@ export const DraftGanttView = forwardRef<
             showToast(
               "success",
               "편집 모드 시작",
-              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
+              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다.",
             );
           }}
           onStopSuccess={(discardedCount) => {
@@ -1482,13 +1489,13 @@ export const DraftGanttView = forwardRef<
               showToast(
                 "info",
                 "작업 종료",
-                `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
+                `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`,
               );
             } else {
               showToast(
                 "success",
                 "작업 종료",
-                "작업이 정상적으로 종료되었습니다."
+                "작업이 정상적으로 종료되었습니다.",
               );
             }
           }}
