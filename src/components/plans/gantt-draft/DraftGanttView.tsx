@@ -19,6 +19,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDraftStore, createRowId } from "./store";
 import { useLock } from "./useLock";
+import { useGanttPersistence } from "./hooks/useGanttPersistence";
 import { DraftTreePanel } from "./DraftTreePanel";
 import { DraftTimeline } from "./DraftTimeline";
 import { GanttHeader } from "./GanttHeader";
@@ -326,6 +327,8 @@ export const DraftGanttView = forwardRef<
   const selectFlag = useDraftStore((s) => s.selectFlag);
   const setFilters = useDraftStore((s) => s.setFilters);
   const expandToLevel = useDraftStore((s) => s.expandToLevel);
+  const expandedNodes = useDraftStore((s) => s.ui.expandedNodes);
+  const setExpandedNodes = useDraftStore((s) => s.setExpandedNodes);
 
   // Expose scrollToRow method via ref
   useImperativeHandle(
@@ -467,6 +470,21 @@ export const DraftGanttView = forwardRef<
     setRangeStart(start);
     setRangeEnd(end);
   }, [rangeMonths, calculateRange]);
+
+  // 상태 지속성 (localStorage + URL 동기화)
+  useGanttPersistence({
+    workspaceId,
+    expandedNodes,
+    rangeMonths,
+    rangeStart,
+    rangeEnd,
+    onExpandedNodesChange: setExpandedNodes,
+    onRangeMonthsChange: setRangeMonths,
+    onRangeStartChange: setRangeStart,
+    onRangeEndChange: setRangeEnd,
+    autoShorten: true,
+    shortenThreshold: 2000,
+  });
 
   // selectedFlagId 변경 시 URL 업데이트
   useEffect(() => {

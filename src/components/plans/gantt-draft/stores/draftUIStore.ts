@@ -32,6 +32,7 @@ export interface DraftUIActions {
   expandAllNodes: () => void;
   collapseAllNodes: () => void;
   expandToLevel: (level: 0 | 1 | 2) => void;
+  setExpandedNodes: (nodes: string[]) => void;
 }
 
 export type DraftUIStore = { ui: DraftUIState } & DraftUIActions;
@@ -237,6 +238,15 @@ export const createDraftUIStore: StateCreator<
       ui: {
         ...state.ui,
         expandedNodes,
+      },
+    });
+  },
+  
+  setExpandedNodes: (nodes) => {
+    set({
+      ui: {
+        ...get().ui,
+        expandedNodes: nodes,
       },
     });
   },

@@ -287,13 +287,51 @@ export interface Database {
           updated_at?: string;
         };
       };
+      short_links: {
+        Row: {
+          id: string;
+          workspace_id: string | null;
+          short_id: string;
+          original_url: string;
+          query_string: string;
+          created_by: string | null;
+          created_at: string;
+          expires_at: string | null;
+          access_count: number;
+          last_accessed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id?: string | null;
+          short_id: string;
+          original_url: string;
+          query_string: string;
+          created_by?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          access_count?: number;
+          last_accessed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string | null;
+          short_id?: string;
+          original_url?: string;
+          query_string?: string;
+          created_by?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          access_count?: number;
+          last_accessed_at?: string | null;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       snapshot_workload_level: WorkloadLevel;
     };
-  };
+};
 }
 
 /**
