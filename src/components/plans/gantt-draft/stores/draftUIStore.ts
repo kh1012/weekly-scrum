@@ -168,7 +168,16 @@ export const createDraftUIStore: StateCreator<
         ),
       ];
       for (const module of modules) {
-        allNodeIds.push(`${project}::${module}`);
+        const moduleId = `${project}::${module}`;
+        allNodeIds.push(moduleId);
+        
+        // Feature 레벨까지 모두 펼치기
+        const features = state.rows.filter(
+          (r) => r.project === project && r.module === module
+        );
+        for (const feature of features) {
+          allNodeIds.push(feature.rowId);
+        }
       }
     }
     
@@ -207,7 +216,18 @@ export const createDraftUIStore: StateCreator<
             ),
           ];
           modules.forEach((module) => {
-            expandedNodes.push(`${project}::${module}`);
+            const moduleId = `${project}::${module}`;
+            expandedNodes.push(moduleId);
+            
+            if (level >= 2) {
+              // Feature 레벨까지 펼치기
+              const features = state.rows.filter(
+                (r) => r.project === project && r.module === module
+              );
+              features.forEach((feature) => {
+                expandedNodes.push(feature.rowId);
+              });
+            }
           });
         }
       });

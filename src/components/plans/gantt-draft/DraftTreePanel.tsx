@@ -631,19 +631,37 @@ export const DraftTreePanel = forwardRef<
     filters.projects.length,
   ]);
 
-  // 현재 펼침 레벨 계산 (프로젝트=0, 모듈=1, 기능=2)
+  // 현재 펼침 레벨 계산 (프로젝트=0, 모듈=1, 기능=2, 전체=3)
   // expandedNodesArray가 비어있으면 프로젝트까지 보기 상태
   // 프로젝트 노드만 펼쳐져 있으면 모듈까지 보기
   // 모듈 노드도 펼쳐져 있으면 기능까지 보기
+  // 모든 Feature 노드가 펼쳐져 있으면 전체 보기
   const currentExpandLevel = useMemo(() => {
     if (expandedNodesArray.length === 0) return 0; // 프로젝트까지 보기
     // 모듈 노드가 펼쳐져 있는지 확인 (::가 하나만 있는 경우)
     const hasModuleExpanded = expandedNodesArray.some(
       (id) => id.includes("::") && id.split("::").length === 2
     );
-    if (hasModuleExpanded) return 2; // 기능까지 보기
-    return 1; // 모듈까지 보기
-  }, [expandedNodesArray]);
+    if (!hasModuleExpanded) return 1; // 모듈까지 보기
+    
+    // Feature 노드가 펼쳐져 있는지 확인 (::가 두 개 있는 경우 또는 rowId)
+    const hasFeatureExpanded = expandedNodesArray.some(
+      (id) => id.includes("::") && id.split("::").length === 3
+    );
+    if (!hasFeatureExpanded) return 2; // 기능까지 보기
+    
+    // 모든 Feature가 펼쳐져 있는지 확인
+    const allFeatures = allRows.map((r) => r.rowId);
+    const expandedFeatures = expandedNodesArray.filter((id) =>
+      allFeatures.includes(id)
+    );
+    // 모든 Feature가 펼쳐져 있으면 전체 보기
+    if (expandedFeatures.length === allFeatures.length && allFeatures.length > 0) {
+      return 3; // 전체 보기
+    }
+    
+    return 2; // 기능까지 보기 (일부만 펼쳐진 경우)
+  }, [expandedNodesArray, allRows]);
 
   // FlatTree와 nodePositions 계산 (Timeline과 동일)
   // 중요: lane 레이아웃은 전체 bars(allBars) 기준으로 계산하되, 표시는 activeBars만
@@ -1158,7 +1176,8 @@ export const DraftTreePanel = forwardRef<
   }) => {
     const { node, top, height } = pos;
     const isExpanded = expandedNodes.has(node.id);
-    const hasChildren = node.type !== "feature";
+    // Feature도 bars가 있으면 접을 수 있음 (원래 bars 개수로 확인)
+    const hasChildren = node.type !== "feature" || (node.type === "feature" && (node.originalBarCount || 0) > 0);
     const isSelected = node.row?.rowId === selectedRowId;
 
     // feature의 bar 개수 (범위 내 + 필터링된 bar만 카운트)
@@ -1314,7 +1333,9 @@ export const DraftTreePanel = forwardRef<
         onDragEnd={handleDragEnd}
         onContextMenu={(e) => handleContextMenu(e, node)}
         className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 ${
-          node.type === "project" || node.type === "module" ? "px-2" : "px-3"
+          node.type === "project" || node.type === "module" || (node.type === "feature" && !isExpanded)
+            ? "px-2"
+            : "px-3"
         } ${isSelected ? "" : "hover:translate-x-0.5"} ${
           isDragging ? "opacity-50" : ""
         } ${isFocused ? "animate-pulse-subtle" : ""}`}
@@ -1452,7 +1473,7 @@ export const DraftTreePanel = forwardRef<
           ) : (
             <span
               className={`block truncate transition-colors duration-150 ${
-                node.type === "project" || node.type === "module"
+                node.type === "project" || node.type === "module" || (node.type === "feature" && !isExpanded)
                   ? "text-[11px]"
                   : "text-[13px]"
               } ${
@@ -2184,6 +2205,24 @@ export const DraftTreePanel = forwardRef<
                 기능까지 보기
               </span>
               {currentExpandLevel === 2 && (
+                <CheckIcon className="w-3 h-3 text-blue-500" />
+              )}
+            </button>
+            <button
+              onClick={() => {
+                expandAllNodes();
+                setShowExpandMenu(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors flex items-center justify-between gap-2"
+            >
+              <span
+                style={{
+                  color: currentExpandLevel === 3 ? "#3b82f6" : "#374151",
+                }}
+              >
+                전체 보기
+              </span>
+              {currentExpandLevel === 3 && (
                 <CheckIcon className="w-3 h-3 text-blue-500" />
               )}
             </button>

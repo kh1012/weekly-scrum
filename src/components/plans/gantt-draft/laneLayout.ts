@@ -17,6 +17,8 @@ export interface FlatTreeNode {
   bars?: BarWithLane[];
   laneCount: number;
   isExpanded?: boolean;
+  /** Feature의 원래 bars 개수 (접기/펼치기 아이콘 표시용) */
+  originalBarCount?: number;
   /** 모듈 요약 정보 (Summarized 모드용) */
   summary?: {
     featureCount: number;
@@ -386,8 +388,13 @@ export function buildFlatTree(
       if (!isModuleExpanded) continue;
 
       for (const row of features) {
-        const rowBars = barsByRow.get(row.rowId) || [];
-        const barsWithLane = assignLanesToBars(rowBars);
+        const rowId = row.rowId;
+        const isFeatureExpanded = expandedNodes.has(rowId);
+        const rowBars = barsByRow.get(rowId) || [];
+        const originalBarCount = rowBars.length; // 원래 bars 개수 저장
+        const barsWithLane = isFeatureExpanded
+          ? assignLanesToBars(rowBars)
+          : []; // 접혀있으면 bars를 빈 배열로
         const laneCount =
           barsWithLane.length > 0
             ? Math.max(...barsWithLane.map((b) => b.lane)) + 1
@@ -396,12 +403,14 @@ export function buildFlatTree(
         // 기능 노드
         result.push({
           type: "feature",
-          id: row.rowId,
+          id: rowId,
           label: row.feature,
           depth: 2,
           row,
           bars: barsWithLane,
           laneCount,
+          isExpanded: isFeatureExpanded,
+          originalBarCount, // 원래 bars 개수 저장
         });
       }
     }
@@ -424,9 +433,12 @@ export function calculateNodePositions(
     // feature 노드는 laneCount에 따라 높이 결정
     // project/module 노드는 더 컴팩트한 높이 (20px, 여백 없이)
     // summarized 모드에서 module은 요약 블록 높이에 맞춰 48px (36px bar + 6px top + 6px bottom)
+    // feature가 접혀있을 때는 project/module과 동일한 높이 (20px)
     let height: number;
     if (node.type === "feature") {
-      height = Math.max(1, node.laneCount) * LANE_HEIGHT;
+      // 접혀있으면 프로젝트/모듈과 동일한 높이
+      const isCollapsed = node.isExpanded === false;
+      height = isCollapsed ? 20 : Math.max(1, node.laneCount) * LANE_HEIGHT;
     } else if (node.type === "module" && viewMode === "summarized") {
       height = 48; // 요약 블록 높이 (36px) + 상하 여백 (12px)
     } else if (node.type === "project" || node.type === "module") {
