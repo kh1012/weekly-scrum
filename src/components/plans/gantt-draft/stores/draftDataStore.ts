@@ -379,16 +379,29 @@ export const createDraftDataStore: StateCreator<
 
   deleteBar: (clientUid) => {
     const state = get();
-    const newBars = state.bars.map((b) =>
-      b.clientUid === clientUid && !b.deleted
-        ? {
-            ...b,
-            deleted: true,
-            dirty: true,
-            updatedAtLocal: new Date().toISOString(),
-          }
-        : b,
-    );
+    const bar = state.bars.find((b) => b.clientUid === clientUid);
+    if (!bar || bar.deleted) return;
+
+    let newBars: DraftBar[];
+
+    // 서버에 저장되지 않은 임시 데이터는 완전히 제거
+    // 서버에 저장된 데이터는 deleted: true로 표시
+    if (!bar.serverId) {
+      // 임시 데이터: 배열에서 완전히 제거
+      newBars = state.bars.filter((b) => b.clientUid !== clientUid);
+    } else {
+      // 서버 데이터: deleted 플래그 설정
+      newBars = state.bars.map((b) =>
+        b.clientUid === clientUid
+          ? {
+              ...b,
+              deleted: true,
+              dirty: true,
+              updatedAtLocal: new Date().toISOString(),
+            }
+          : b,
+      );
+    }
 
     const filterIndex = buildFilterIndex(newBars, state.rows);
 
