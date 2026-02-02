@@ -329,6 +329,9 @@ export const DraftTreePanel = forwardRef<
   const highlightDateRange = useDraftStore((s) => s.ui.highlightDateRange);
   const setHighlightDateRange = useDraftStore((s) => s.setHighlightDateRange);
 
+  // 선택된 노드 상태 (프로젝트/모듈/기능 모두 선택 가능)
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
   // 편집 상태
   const [editingNode, setEditingNode] = useState<{
     id: string;
@@ -405,6 +408,10 @@ export const DraftTreePanel = forwardRef<
     nodeId: string;
     project: string;
     module: string;
+    nodeType: "project" | "module" | "feature";
+    label: string;
+    hasChildren: boolean;
+    isExpanded: boolean;
   } | null>(null);
 
   // Initial Modal Data State
@@ -466,12 +473,26 @@ export const DraftTreePanel = forwardRef<
     setShowFilters(false);
     setShowExpandMenu(false);
 
+    // Feature도 bars가 있으면 접을 수 있음
+    const hasChildren = node.type !== "feature" || (node.type === "feature" && (node.originalBarCount || 0) > 0);
+    const isExpanded = expandedNodes.has(node.id);
+
+    // 노드 선택
+    setSelectedNodeId(node.id);
+    if (node.row) {
+      selectRow(node.row.rowId);
+    }
+
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
       nodeId: node.id,
       project,
       module,
+      nodeType: node.type,
+      label: node.label,
+      hasChildren,
+      isExpanded,
     });
   };
   useEffect(() => {
@@ -898,6 +919,153 @@ export const DraftTreePanel = forwardRef<
     }
   }, [externalOnScroll, contextMenu]);
 
+  // 키보드 네비게이션 핸들러
+  const handleTreeKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      // 편집 중이면 키보드 네비게이션 비활성화
+      if (editingNode) return;
+      
+      const currentIndex = selectedNodeId
+        ? nodePositions.findIndex((p) => p.node.id === selectedNodeId)
+        : -1;
+
+      switch (e.key) {
+        case "ArrowUp": {
+          e.preventDefault();
+          if (currentIndex > 0) {
+            const prevNode = nodePositions[currentIndex - 1].node;
+            setSelectedNodeId(prevNode.id);
+            if (prevNode.row) {
+              selectRow(prevNode.row.rowId);
+            }
+            // 스크롤 조정
+            const prevTop = nodePositions[currentIndex - 1].top;
+            if (scrollContainerRef.current) {
+              const containerTop = scrollContainerRef.current.scrollTop;
+              if (prevTop < containerTop) {
+                scrollContainerRef.current.scrollTop = prevTop;
+              }
+            }
+          } else if (currentIndex === -1 && nodePositions.length > 0) {
+            // 선택된 노드가 없으면 첫 번째 노드 선택
+            const firstNode = nodePositions[0].node;
+            setSelectedNodeId(firstNode.id);
+            if (firstNode.row) {
+              selectRow(firstNode.row.rowId);
+            }
+          }
+          break;
+        }
+        case "ArrowDown": {
+          e.preventDefault();
+          if (currentIndex < nodePositions.length - 1) {
+            const nextIndex = currentIndex === -1 ? 0 : currentIndex + 1;
+            const nextNode = nodePositions[nextIndex].node;
+            setSelectedNodeId(nextNode.id);
+            if (nextNode.row) {
+              selectRow(nextNode.row.rowId);
+            }
+            // 스크롤 조정
+            const nextPos = nodePositions[nextIndex];
+            if (scrollContainerRef.current) {
+              const containerBottom =
+                scrollContainerRef.current.scrollTop +
+                scrollContainerRef.current.clientHeight;
+              const nodeBottom = nextPos.top + nextPos.height;
+              if (nodeBottom > containerBottom) {
+                scrollContainerRef.current.scrollTop =
+                  nodeBottom - scrollContainerRef.current.clientHeight;
+              }
+            }
+          }
+          break;
+        }
+        case "ArrowLeft": {
+          e.preventDefault();
+          if (selectedNodeId && viewMode !== "summarized") {
+            const currentNode = nodePositions.find(
+              (p) => p.node.id === selectedNodeId
+            )?.node;
+            if (currentNode) {
+              const hasChildren =
+                currentNode.type !== "feature" ||
+                (currentNode.type === "feature" &&
+                  (currentNode.originalBarCount || 0) > 0);
+              const isExpanded = expandedNodes.has(selectedNodeId);
+              
+              // 펼쳐져 있으면 접기
+              if (hasChildren && isExpanded) {
+                toggleNode(selectedNodeId);
+              } else {
+                // 접을 게 없으면 상위 노드로 선택 이동
+                let parentNodeId: string | null = null;
+                
+                if (currentNode.type === "feature" && currentNode.row) {
+                  // feature -> module
+                  parentNodeId = `${currentNode.row.project}::${currentNode.row.module}`;
+                } else if (currentNode.type === "module") {
+                  // module -> project
+                  const parts = selectedNodeId.split("::");
+                  parentNodeId = parts[0];
+                }
+                // project는 최상위이므로 이동 없음
+                
+                if (parentNodeId) {
+                  const parentPos = nodePositions.find(
+                    (p) => p.node.id === parentNodeId
+                  );
+                  if (parentPos) {
+                    setSelectedNodeId(parentNodeId);
+                    if (parentPos.node.row) {
+                      selectRow(parentPos.node.row.rowId);
+                    }
+                    // 스크롤 조정
+                    if (scrollContainerRef.current) {
+                      const containerTop = scrollContainerRef.current.scrollTop;
+                      if (parentPos.top < containerTop) {
+                        scrollContainerRef.current.scrollTop = parentPos.top;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
+        case "ArrowRight": {
+          e.preventDefault();
+          if (selectedNodeId && viewMode !== "summarized") {
+            const currentNode = nodePositions.find(
+              (p) => p.node.id === selectedNodeId
+            )?.node;
+            if (currentNode) {
+              const hasChildren =
+                currentNode.type !== "feature" ||
+                (currentNode.type === "feature" &&
+                  (currentNode.originalBarCount || 0) > 0);
+              const isExpanded = expandedNodes.has(selectedNodeId);
+              // 접혀있으면 펼치기
+              if (hasChildren && !isExpanded) {
+                toggleNode(selectedNodeId);
+              }
+            }
+          }
+          break;
+        }
+      }
+    },
+    [
+      selectedNodeId,
+      nodePositions,
+      editingNode,
+      expandedNodes,
+      viewMode,
+      toggleNode,
+      selectRow,
+    ]
+  );
+
   // 외부 scrollTop 동기화
   useEffect(() => {
     if (scrollContainerRef.current && externalScrollTop !== undefined) {
@@ -1178,7 +1346,8 @@ export const DraftTreePanel = forwardRef<
     const isExpanded = expandedNodes.has(node.id);
     // Feature도 bars가 있으면 접을 수 있음 (원래 bars 개수로 확인)
     const hasChildren = node.type !== "feature" || (node.type === "feature" && (node.originalBarCount || 0) > 0);
-    const isSelected = node.row?.rowId === selectedRowId;
+    // 선택 상태 (모든 노드 타입에 대해 selectedNodeId 기준)
+    const isSelected = selectedNodeId === node.id;
 
     // feature의 bar 개수 (범위 내 + 필터링된 bar만 카운트)
     const barCount = (() => {
@@ -1208,10 +1377,11 @@ export const DraftTreePanel = forwardRef<
       });
     };
 
-    const handleClick = () => {
-      if (hasChildren) {
-        toggleNode(node.id);
-      } else if (node.row) {
+    // 좌클릭으로 노드 선택
+    const handleNodeSelect = () => {
+      setSelectedNodeId(node.id);
+      // feature인 경우 기존 selectRow도 호출 (타임라인 연동)
+      if (node.row) {
         selectRow(node.row.rowId);
       }
     };
@@ -1352,10 +1522,7 @@ export const DraftTreePanel = forwardRef<
             ? "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)"
             : bgStyle,
           borderTop: showDropBefore ? "2px solid #3b82f6" : undefined,
-          cursor:
-            isEditing && (node.type === "feature" || node.type === "module")
-              ? "grab"
-              : undefined,
+          cursor: "default",
         }}
       >
         {/* 하단 border - 별도 div로 처리하여 타임라인과 높이 일치 */}
@@ -1429,7 +1596,7 @@ export const DraftTreePanel = forwardRef<
           onClick={(e) => {
             e.stopPropagation();
             if (hasChildren && viewMode !== "summarized") {
-              handleClick();
+              toggleNode(node.id);
             }
           }}
         >
@@ -1446,16 +1613,14 @@ export const DraftTreePanel = forwardRef<
           )}
         </div>
 
-        {/* 우측 영역: 라벨 - 더블 클릭으로 편집 가능 */}
+        {/* 우측 영역: 라벨 - 클릭으로 선택, 더블 클릭으로 편집 가능 */}
         <div
           className="flex-1 min-w-0 cursor-pointer"
           onDoubleClick={handleDoubleClick}
           onClick={(e) => {
             e.stopPropagation();
-            // 라벨 클릭 시 feature면 선택
-            if (node.type === "feature" && node.row) {
-              selectRow(node.row.rowId);
-            }
+            // 라벨 클릭 시 노드 선택
+            handleNodeSelect();
           }}
         >
           {isEditingThis ? (
@@ -2008,7 +2173,8 @@ export const DraftTreePanel = forwardRef<
       {/* 트리 영역 (스크롤) - Airbnb 스타일 */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide border border-t-[1px] border-gray-50/15"
+        tabIndex={0}
+        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide border border-t-[1px] border-gray-50/15 outline-none focus:ring-1 focus:ring-blue-200 focus:ring-inset"
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fafbfc 100%)",
           scrollbarWidth: "none", // Firefox
@@ -2019,6 +2185,7 @@ export const DraftTreePanel = forwardRef<
               : undefined,
         }}
         onScroll={handleScroll}
+        onKeyDown={handleTreeKeyDown}
       >
         {showSkeleton ? (
           <TreePanelSkeleton type={viewMode} />
@@ -2108,6 +2275,7 @@ export const DraftTreePanel = forwardRef<
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="py-2">
+            {/* 새 기능 추가 */}
             <button
               onClick={() => {
                 setInitialModalData({
@@ -2133,10 +2301,87 @@ export const DraftTreePanel = forwardRef<
                 <PlusIcon className="w-4 h-4 text-blue-600" />
               </div>
               <div className="flex-1">
-                <div className="text-xs text-gray-500">{contextMenu.project} / {contextMenu.module}</div>
+                <div className="text-xs text-gray-500">{contextMenu.project}{contextMenu.module ? ` / ${contextMenu.module}` : ""}</div>
                 <div className="text-sm font-medium text-gray-900">새 기능 추가</div>
               </div>
             </button>
+
+            {/* 이름 변경 */}
+            <button
+              onClick={() => {
+                // 편집 모드 시작 (기존 더블클릭 로직과 동일)
+                const idParts = contextMenu.nodeId.split("::");
+                setEditingNode({
+                  id: contextMenu.nodeId,
+                  type: contextMenu.nodeType,
+                  label: contextMenu.label,
+                  project: contextMenu.nodeType !== "project" ? contextMenu.project : undefined,
+                  module: contextMenu.nodeType === "feature" ? contextMenu.module : undefined,
+                });
+                setContextMenu(null);
+                // input에 포커스 및 텍스트 전체 선택
+                setTimeout(() => {
+                  editInputRef.current?.focus();
+                  editInputRef.current?.select();
+                }, 50);
+              }}
+              className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+              style={{
+                background: "transparent",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                  "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-50 group-hover:bg-amber-100 transition-colors">
+                <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="text-xs text-gray-500">{contextMenu.label}</div>
+                <div className="text-sm font-medium text-gray-900">이름 변경</div>
+              </div>
+            </button>
+
+            {/* 펼치기/접기 (hasChildren인 경우만) */}
+            {contextMenu.hasChildren && viewMode !== "summarized" && (
+              <button
+                onClick={() => {
+                  toggleNode(contextMenu.nodeId);
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+                style={{
+                  background: "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-50 group-hover:bg-violet-100 transition-colors">
+                  {contextMenu.isExpanded ? (
+                    <ChevronDownIcon className="w-4 h-4 text-violet-600" />
+                  ) : (
+                    <ChevronRightIcon className="w-4 h-4 text-violet-600" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500">하위 항목</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {contextMenu.isExpanded ? "접기" : "펼치기"}
+                  </div>
+                </div>
+              </button>
+            )}
           </div>
         </div>,
         document.body
