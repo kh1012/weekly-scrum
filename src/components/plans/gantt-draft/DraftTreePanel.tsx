@@ -380,6 +380,12 @@ export const DraftTreePanel = forwardRef<
   const [debouncedFilterSearchQuery, setDebouncedFilterSearchQuery] =
     useState("");
   const [isFilterSearching, setIsFilterSearching] = useState(false);
+  
+  // 로컬 필터 상태 (팝오버 내부에서만 사용, 적용 버튼 클릭 시 실제 필터에 반영)
+  const [localFilterProjects, setLocalFilterProjects] = useState<string[]>([]);
+  const [localFilterModules, setLocalFilterModules] = useState<string[]>([]);
+  const [localFilterFeatures, setLocalFilterFeatures] = useState<string[]>([]);
+  const [localFilterFlagIds, setLocalFilterFlagIds] = useState<string[]>([]);
   const filterSearchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -936,6 +942,93 @@ export const DraftTreePanel = forwardRef<
     },
     [toggleNodeStore, viewMode]
   );
+
+  // 로컬 필터 토글 (팝오버 내부에서만 사용)
+  const toggleLocalProjectFilter = (project: string) => {
+    setLocalFilterProjects((current) =>
+      current.includes(project)
+        ? current.filter((p) => p !== project)
+        : [...current, project]
+    );
+  };
+
+  const toggleLocalModuleFilter = (module: string) => {
+    setLocalFilterModules((current) =>
+      current.includes(module)
+        ? current.filter((m) => m !== module)
+        : [...current, module]
+    );
+  };
+
+  const toggleLocalFeatureFilter = (feature: string) => {
+    setLocalFilterFeatures((current) =>
+      current.includes(feature)
+        ? current.filter((f) => f !== feature)
+        : [...current, feature]
+    );
+  };
+
+  const toggleLocalFlagFilter = (flagId: string) => {
+    setLocalFilterFlagIds((current) =>
+      current.includes(flagId)
+        ? current.filter((f) => f !== flagId)
+        : [...current, flagId]
+    );
+  };
+
+  // 필터 적용 (로컬 상태를 실제 필터에 반영)
+  const applyLocalFilters = () => {
+    const newFilters = {
+      ...filters,
+      projects: localFilterProjects,
+      modules: localFilterModules,
+      features: localFilterFeatures,
+      flagIds: localFilterFlagIds,
+    };
+    setFilters(newFilters);
+    updateURLFilters(newFilters);
+    
+    // Flag 필터 URL 업데이트
+    const params = new URLSearchParams(searchParams.toString());
+    if (localFilterFlagIds.length > 0) {
+      params.set("flagIds", localFilterFlagIds.join(","));
+    } else {
+      params.delete("flagIds");
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+    
+    // 필터 적용 시 기능까지 펼치기
+    if (localFilterProjects.length > 0 || localFilterModules.length > 0 || localFilterFeatures.length > 0) {
+      expandToLevel(1);
+    }
+    
+    setShowFilters(false);
+  };
+
+  // 필터 취소 (팝오버만 닫기)
+  const cancelLocalFilters = () => {
+    setShowFilters(false);
+  };
+
+  // 로컬 필터 전체 해제
+  const resetLocalFilters = () => {
+    setLocalFilterProjects([]);
+    setLocalFilterModules([]);
+    setLocalFilterFeatures([]);
+    setLocalFilterFlagIds([]);
+  };
+
+  // 로컬 필터에 변경사항이 있는지 확인
+  const hasLocalFilterChanges = useMemo(() => {
+    const projectsChanged = JSON.stringify([...localFilterProjects].sort()) !== JSON.stringify([...filters.projects].sort());
+    const modulesChanged = JSON.stringify([...localFilterModules].sort()) !== JSON.stringify([...filters.modules].sort());
+    const featuresChanged = JSON.stringify([...localFilterFeatures].sort()) !== JSON.stringify([...filters.features].sort());
+    const flagIdsChanged = JSON.stringify([...localFilterFlagIds].sort()) !== JSON.stringify([...(filters.flagIds || [])].sort());
+    return projectsChanged || modulesChanged || featuresChanged || flagIdsChanged;
+  }, [localFilterProjects, localFilterModules, localFilterFeatures, localFilterFlagIds, filters]);
+
+  // 로컬 필터에 활성화된 항목이 있는지 확인
+  const hasLocalActiveFilters = localFilterProjects.length > 0 || localFilterModules.length > 0 || localFilterFeatures.length > 0 || localFilterFlagIds.length > 0;
 
   const toggleProjectFilter = (project: string) => {
     const current = filters.projects;
@@ -1949,6 +2042,11 @@ export const DraftTreePanel = forwardRef<
               onClick={() => {
                 if (!showFilters) {
                   handleFilterSearchClear();
+                  // 팝오버가 열릴 때 현재 필터를 로컬 상태에 복사
+                  setLocalFilterProjects([...filters.projects]);
+                  setLocalFilterModules([...filters.modules]);
+                  setLocalFilterFeatures([...filters.features]);
+                  setLocalFilterFlagIds([...(filters.flagIds || [])]);
                 }
                 setShowFilters(!showFilters);
               }}
@@ -2152,9 +2250,9 @@ export const DraftTreePanel = forwardRef<
           {/* 헤더 */}
           <div className="flex items-center justify-between px-3 pt-3 pb-2 flex-shrink-0">
             <span className="text-xs font-semibold text-gray-700">필터</span>
-            {hasActiveFilters && (
+            {hasLocalActiveFilters && (
               <button
-                onClick={resetFilters}
+                onClick={resetLocalFilters}
                 className="text-[10px] text-blue-600 hover:text-blue-700 font-medium"
               >
                 전체 해제
@@ -2229,7 +2327,7 @@ export const DraftTreePanel = forwardRef<
                 </div>
                 <div className="space-y-0.5">
                   {filteredRangeFlags.map((flag) => {
-                    const isChecked = filters.flagIds?.includes(flag.clientId) || false;
+                    const isChecked = localFilterFlagIds.includes(flag.clientId);
                     const flagColor = flag.color || "#ef4444";
                     // 날짜 포맷: M/D
                     const formatDate = (dateStr: string) => {
@@ -2246,7 +2344,7 @@ export const DraftTreePanel = forwardRef<
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={() => toggleFlagFilter(flag.clientId)}
+                          onChange={() => toggleLocalFlagFilter(flag.clientId)}
                           className="w-3.5 h-3.5 rounded border-gray-300 text-red-600 focus:ring-red-500"
                         />
                         <FlagIcon
@@ -2282,18 +2380,18 @@ export const DraftTreePanel = forwardRef<
                 {filteredFilterItems.map((item) => {
                   const isChecked =
                     item.type === "project"
-                      ? filters.projects.includes(item.name)
+                      ? localFilterProjects.includes(item.name)
                       : item.type === "module"
-                      ? filters.modules.includes(item.name)
-                      : filters.features.includes(item.name);
+                      ? localFilterModules.includes(item.name)
+                      : localFilterFeatures.includes(item.name);
 
                   const handleToggle = () => {
                     if (item.type === "project") {
-                      toggleProjectFilter(item.name);
+                      toggleLocalProjectFilter(item.name);
                     } else if (item.type === "module") {
-                      toggleModuleFilter(item.name);
+                      toggleLocalModuleFilter(item.name);
                     } else {
-                      toggleFeatureFilter(item.name);
+                      toggleLocalFeatureFilter(item.name);
                     }
                   };
 
@@ -2377,6 +2475,23 @@ export const DraftTreePanel = forwardRef<
                 })}
               </div>
             )}
+          </div>
+
+          {/* 하단 버튼 영역 */}
+          <div className="flex items-center justify-end gap-2 px-3 py-2.5 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
+            <button
+              onClick={cancelLocalFilters}
+              className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={applyLocalFilters}
+              disabled={!hasLocalFilterChanges && !hasLocalActiveFilters && !hasActiveFilters}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-md transition-colors"
+            >
+              적용
+            </button>
           </div>
         </div>
       )}
