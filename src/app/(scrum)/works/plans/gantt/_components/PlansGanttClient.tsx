@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition, useMemo, useEffect, useState } from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import { useDraftStore } from "@/components/plans/gantt-draft/store";
+import { useGanttQueryPersistence } from "@/components/plans/gantt-draft/hooks/useGanttQueryPersistence";
 import type { WorkspaceMemberOption } from "@/components/plans/gantt-draft/CreatePlanModal";
 
 interface InitialAssignee {
@@ -54,6 +55,9 @@ export function PlansGanttClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+
+  // URL queryString을 로컬 스토리지에 저장/복원
+  useGanttQueryPersistence({ storageKey: "works-plans-gantt" });
 
   const selectedStages = useMemo(() => new Set(initialStages), [initialStages]);
   const selectedAssignees = useMemo(() => new Set(initialAssignees), [initialAssignees]);

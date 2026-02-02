@@ -126,9 +126,14 @@ export function useTimelineData({
   const rows = useMemo(() => {
     const hasFlagFilter = filters.flagIds && filters.flagIds.length > 0;
     
-    if (filterIndex) {
-      // 인덱스를 사용한 고속 필터링
-      // filteredActiveBars 사용 (담당자/스테이지/Flag 필터 반영)
+    // Flag 필터가 활성화된 경우, filteredActiveBars의 rowId Set 생성
+    // 이 Set에 포함된 rows만 표시됨 (Flag 기간 내 bars가 있는 rows)
+    const activeRowIds = hasFlagFilter
+      ? new Set(filteredActiveBars.map((b) => b.rowId))
+      : null;
+    
+    // Flag 필터가 없는 경우에만 filterIndex 사용 (성능 최적화)
+    if (filterIndex && !hasFlagFilter) {
       const barsInView = new Set(filteredActiveBars.map((b) => b.clientUid));
       return filterRowsWithIndex(
         allRows,
@@ -140,17 +145,17 @@ export function useTimelineData({
           features: filters.features || [],
         },
         searchQuery,
-        hasFlagFilter
+        false
       );
     }
 
-    // 폴백: 기존 방식
+    // 폴백 또는 Flag 필터 활성화 시
     return allRows.filter((row) => {
-      // 로컬에서 생성된 row는 bars 없이도 표시
-      // 단, Flag 필터가 활성화된 경우에는 bars가 있어야만 표시
-      // 서버에서 로드된 row는 bars가 있어야 표시
-      if (!row.isLocal || hasFlagFilter) {
-        // filteredActiveBars 사용 (담당자/스테이지/Flag 필터 반영)
+      // Flag 필터가 활성화된 경우: filteredActiveBars에 해당 row의 bars가 있어야 함
+      if (hasFlagFilter && activeRowIds) {
+        if (!activeRowIds.has(row.rowId)) return false;
+      } else if (!row.isLocal) {
+        // Flag 필터가 없는 경우: 기존 로직
         const hasBars = filteredActiveBars.some((b) => b.rowId === row.rowId);
         if (!hasBars) return false;
       }
