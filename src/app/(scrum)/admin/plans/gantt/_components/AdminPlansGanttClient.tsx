@@ -167,7 +167,7 @@ export function AdminPlansGanttClient({
         onStagesChange={handleStagesChange}
         selectedAssignees={selectedAssignees}
         onAssigneesChange={handleAssigneesChange}
-        isFilterLoading={isPending}
+        isFilterLoading={isPending || !isRestored}
         maxUpdatedAt={maxUpdatedAt}
         updatedByName={updatedByName}
         onViewModeChange={handleViewModeChange}
