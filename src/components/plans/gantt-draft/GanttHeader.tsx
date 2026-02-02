@@ -1488,6 +1488,7 @@ export function GanttHeader({
                   color: "white",
                   boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
                 }}
+                data-onboarding="edit-button"
               >
                 {isStarting ? (
                   <LoadingIcon className="w-4 h-4 animate-spin" />
@@ -1629,6 +1630,7 @@ export function GanttHeader({
                       ? "0 4px 14px rgba(16, 185, 129, 0.4)"
                       : "none",
                   }}
+                  data-onboarding="save-button"
                 >
                   {isCommitting || isAutoSaving ? (
                     <LoadingIcon className="w-4 h-4 animate-spin" />

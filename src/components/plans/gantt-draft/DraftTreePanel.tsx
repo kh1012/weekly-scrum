@@ -2116,6 +2116,7 @@ export const DraftTreePanel = forwardRef<
                   : "hover:bg-white text-gray-500"
               }`}
               title="트리 필터 옵션"
+              data-onboarding="tree-filter"
             >
               <FilterIcon className="w-3 h-3" />
               <span>트리 필터</span>
@@ -2572,6 +2573,7 @@ export const DraftTreePanel = forwardRef<
         }}
         onScroll={handleScroll}
         onKeyDown={handleTreeKeyDown}
+        data-onboarding="tree-panel"
       >
         {showSkeleton ? (
           <TreePanelSkeleton type={viewMode} />
