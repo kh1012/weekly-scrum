@@ -66,24 +66,16 @@ export async function commitFeaturePlans(
     const adminSupabase = createServiceRoleClient();
 
     // 삭제 처리 (병렬)
+    // 항상 client_uid로 삭제 (serverId는 로컬에서 생성된 임시 값일 수 있음)
     if (toDelete.length > 0) {
 
       const deleteResults = await Promise.all(
         toDelete.map(async (plan) => {
-          const serverId = (plan as unknown as { serverId?: string }).serverId;
-
-          let deleteQuery = adminSupabase
+          const { error: deleteError } = await adminSupabase
             .from("plans")
             .delete()
-            .eq("workspace_id", payload.workspaceId || DEFAULT_WORKSPACE_ID);
-
-          if (serverId) {
-            deleteQuery = deleteQuery.eq("id", serverId);
-          } else {
-            deleteQuery = deleteQuery.eq("client_uid", plan.clientUid);
-          }
-
-          const { error: deleteError } = await deleteQuery;
+            .eq("workspace_id", payload.workspaceId || DEFAULT_WORKSPACE_ID)
+            .eq("client_uid", plan.clientUid);
 
           if (deleteError) {
             return { success: false, title: plan.title };
