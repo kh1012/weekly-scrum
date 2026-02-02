@@ -1030,6 +1030,23 @@ export const DraftTreePanel = forwardRef<
     }
     router.replace(`?${params.toString()}`, { scroll: false });
     
+    // 모든 필터가 비어있으면 로컬 스토리지도 삭제 (useGanttQueryPersistence와 동기화)
+    const hasNoFilters = 
+      localFilterProjects.length === 0 && 
+      localFilterModules.length === 0 && 
+      localFilterFeatures.length === 0 && 
+      localFilterFlagIds.length === 0;
+    
+    if (hasNoFilters && typeof window !== "undefined") {
+      const storageKey = pathname.replace(/^\//, "").replace(/\//g, "-");
+      const fullStorageKey = `gantt-query:${storageKey}`;
+      try {
+        localStorage.removeItem(fullStorageKey);
+      } catch {
+        // localStorage 접근 실패 무시
+      }
+    }
+    
     // 필터 적용 시 기능까지 펼치기
     if (localFilterProjects.length > 0 || localFilterModules.length > 0 || localFilterFeatures.length > 0) {
       expandToLevel(1);
