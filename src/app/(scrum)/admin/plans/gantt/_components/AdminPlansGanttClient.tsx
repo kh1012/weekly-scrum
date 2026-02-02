@@ -146,11 +146,8 @@ export function AdminPlansGanttClient({
     (mode: "detailed" | "summarized") => {
       setViewModeStore(mode);
       const params = new URLSearchParams(searchParams.toString());
-      if (mode === "summarized") {
-        params.set("viewMode", "summarized");
-      } else {
-        params.delete("viewMode"); // detailed가 기본값이므로 제거
-      }
+      // 항상 viewMode를 명시적으로 설정 (useGanttQueryPersistence가 로컬 스토리지에서 복원하지 않도록)
+      params.set("viewMode", mode);
       router.replace(`?${params.toString()}`, { scroll: false });
     },
     [setViewModeStore, router, searchParams],
