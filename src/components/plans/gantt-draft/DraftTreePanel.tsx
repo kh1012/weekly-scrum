@@ -1305,8 +1305,12 @@ export const DraftTreePanel = forwardRef<
     const isEditingThis = editingNode?.id === node.id;
 
     // Airbnb 스타일 배경색 (project/module/feature 구분)
+    // 접힌 feature는 연한 회색 음영 처리
+    const isFeatureCollapsed = node.type === "feature" && node.isExpanded === false;
     let bgStyle = "";
-    if (node.type === "project") {
+    if (isFeatureCollapsed) {
+      bgStyle = "rgba(0, 0, 0, 0.03)";
+    } else if (node.type === "project") {
       bgStyle =
         "linear-gradient(90deg, rgba(251, 191, 36, 0.08) 0%, rgba(251, 191, 36, 0.03) 100%)";
     } else if (node.type === "module") {

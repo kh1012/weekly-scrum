@@ -33,8 +33,7 @@ import {
   updateToastToError,
   ToastContainer,
 } from "./Toast";
-import { SaveProgressModal, SaveStep, LogEntry } from "./SaveProgressModal";
-import { commitFeaturePlans, commitFlags } from "./commitService";
+import { useSaveQueue } from "./hooks/useSaveQueue";
 import type { DraftRow, DraftBar, PlanStatus } from "./types";
 import type { WorkspaceMemberOption } from "./CreatePlanModal";
 import { formatRelativeTime } from "@/lib/utils/date";
@@ -203,7 +202,7 @@ export const DraftGanttView = forwardRef<
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [isCommitting, setIsCommitting] = useState(false);
+  // isCommitting은 useSaveQueue의 isSaving으로 대체됨
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -285,10 +284,7 @@ export const DraftGanttView = forwardRef<
     [isHeaderHidden],
   );
 
-  // 저장 진행 상태 모달
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [saveSteps, setSaveSteps] = useState<SaveStep[]>([]);
-  const [saveComplete, setSaveComplete] = useState(false);
+  // 저장 진행 상태는 useSaveQueue에서 Toast로 관리됨
 
   // 드래그 중인 기간 정보 (FloatingDock에 표시)
   const [dragDateInfo, setDragDateInfo] = useState<{
@@ -395,6 +391,19 @@ export const DraftGanttView = forwardRef<
   const clearFlagDirtyFlags = useDraftStore((s) => s.clearFlagDirtyFlags);
   const hasFlagChanges = useDraftStore((s) => s.hasFlagChanges());
   const fetchFlags = useDraftStore((s) => s.fetchFlags);
+
+  // 저장 큐 Hook (Toast 기반 저장 진행 표시)
+  const { requestSave, isSaving } = useSaveQueue({
+    workspaceId,
+    rows,
+    getDirtyBars,
+    getDeletedBars,
+    getDirtyFlags,
+    getDeletedFlags,
+    clearDirtyFlags,
+    clearFlagDirtyFlags,
+    fetchFlags,
+  });
 
   const {
     startEditing,
@@ -741,218 +750,10 @@ export const DraftGanttView = forwardRef<
     setShowCommandPalette(false);
   }, []);
 
-  // 커밋 핸들러 - 프로그래스 모달과 함께 Flags/Plans 순차 저장
+  // 커밋 핸들러 - Toast 기반 저장 (useSaveQueue 사용)
   const handleCommit = useCallback(async () => {
-    // 변경사항 확인
-    const dirtyBars = getDirtyBars();
-    const deletedBars = getDeletedBars();
-    const allBars = [...dirtyBars, ...deletedBars];
-
-    const dirtyFlags = getDirtyFlags();
-    const deletedFlags = getDeletedFlags();
-    const allFlags = [...dirtyFlags, ...deletedFlags];
-
-    if (allBars.length === 0 && allFlags.length === 0) {
-      showToast("info", "변경사항 없음", "저장할 변경사항이 없습니다.");
-      return;
-    }
-
-    // 저장 단계 초기화
-    const steps: SaveStep[] = [];
-
-    if (allFlags.length > 0) {
-      steps.push({
-        id: "flags",
-        label: `Flag 저장 (${allFlags.length}개)`,
-        status: "pending",
-      });
-    }
-
-    if (allBars.length > 0) {
-      steps.push({
-        id: "plans",
-        label: `기능 계획 저장 (${allBars.length}개)`,
-        status: "pending",
-      });
-    }
-
-    setSaveSteps(steps);
-    setSaveComplete(false);
-    setShowSaveModal(true);
-    setIsCommitting(true);
-
-    try {
-      // 1. Flags 저장
-      if (allFlags.length > 0) {
-        setSaveSteps((prev) =>
-          prev.map((s) =>
-            s.id === "flags" ? { ...s, status: "in_progress" as const } : s,
-          ),
-        );
-
-        const flagResult = await commitFlags({
-          workspaceId,
-          flags: allFlags,
-        });
-
-        if (flagResult.success) {
-          const flagCount =
-            (flagResult.createdCount || 0) +
-            (flagResult.updatedCount || 0) +
-            (flagResult.deletedCount || 0);
-
-          setSaveSteps((prev) =>
-            prev.map((s) =>
-              s.id === "flags"
-                ? { ...s, status: "success" as const, count: flagCount }
-                : s,
-            ),
-          );
-          clearFlagDirtyFlags();
-
-          // 서버에서 최신 Flag 데이터 다시 불러오기 (serverId 동기화)
-          await fetchFlags(workspaceId);
-        } else {
-          setSaveSteps((prev) =>
-            prev.map((s) =>
-              s.id === "flags"
-                ? { ...s, status: "error" as const, error: flagResult.error }
-                : s,
-            ),
-          );
-        }
-      }
-
-      // 2. Plans 저장
-      if (allBars.length > 0) {
-        // 저장할 항목들을 pending 상태로 미리 표시
-        const pendingLogs: LogEntry[] = allBars.map((bar, idx) => ({
-          id: `plan-${idx}`,
-          type: "pending" as const,
-          message: `${bar.deleted ? "삭제" : bar.serverId ? "수정" : "생성"}: ${
-            bar.title
-          }`,
-          timestamp: new Date(),
-        }));
-
-        setSaveSteps((prev) =>
-          prev.map((s) =>
-            s.id === "plans"
-              ? { ...s, status: "in_progress" as const, logs: pendingLogs }
-              : s,
-          ),
-        );
-
-        const payload = {
-          workspaceId,
-          plans: allBars.map((bar) => {
-            const row = rows.find((r) => r.rowId === bar.rowId);
-            return {
-              clientUid: bar.clientUid,
-              serverId: bar.serverId,
-              domain: row?.domain,
-              project: row?.project || "",
-              module: row?.module || "",
-              feature: row?.feature || "",
-              title: bar.title,
-              stage: bar.stage,
-              status: bar.status,
-              start_date: bar.startDate,
-              end_date: bar.endDate,
-              assignees: bar.assignees,
-              description: bar.description,
-              links: bar.links,
-              deleted: bar.deleted || false,
-              order_index: row?.orderIndex ?? 0, // 트리 순서 저장
-              lane_hint: bar.preferredLane, // 레인 위치 저장
-            };
-          }),
-        };
-
-        const planResult = await commitFeaturePlans(payload);
-
-        if (planResult.success) {
-          const planCount =
-            (planResult.upsertedCount || 0) + (planResult.deletedCount || 0);
-
-          // savedItems를 로그로 변환 (순차적으로 업데이트)
-          const successLogs: LogEntry[] = (planResult.savedItems || []).map(
-            (item, idx) => ({
-              id: `plan-${idx}`,
-              type: "success" as const,
-              message: `${
-                item.action === "insert"
-                  ? "생성"
-                  : item.action === "update"
-                    ? "수정"
-                    : "삭제"
-              }: ${item.title}`,
-              timestamp: new Date(),
-            }),
-          );
-
-          // 순차적으로 로그를 success로 업데이트하는 애니메이션
-          for (let i = 0; i < successLogs.length; i++) {
-            await new Promise((resolve) => setTimeout(resolve, 30)); // 30ms 딜레이
-            setSaveSteps((prev) =>
-              prev.map((s) => {
-                if (s.id !== "plans") return s;
-                const updatedLogs = [...(s.logs || [])];
-                if (updatedLogs[i]) {
-                  updatedLogs[i] = successLogs[i];
-                }
-                return { ...s, logs: updatedLogs };
-              }),
-            );
-          }
-
-          setSaveSteps((prev) =>
-            prev.map((s) =>
-              s.id === "plans"
-                ? { ...s, status: "success" as const, count: planCount }
-                : s,
-            ),
-          );
-          clearDirtyFlags();
-        } else {
-          setSaveSteps((prev) =>
-            prev.map((s) =>
-              s.id === "plans"
-                ? { ...s, status: "error" as const, error: planResult.error }
-                : s,
-            ),
-          );
-        }
-      }
-    } catch (err) {
-      // 현재 진행 중인 단계를 에러로 표시
-      setSaveSteps((prev) =>
-        prev.map((s) =>
-          s.status === "in_progress"
-            ? {
-                ...s,
-                status: "error" as const,
-                error:
-                  err instanceof Error ? err.message : "알 수 없는 오류 발생",
-              }
-            : s,
-        ),
-      );
-    } finally {
-      setIsCommitting(false);
-      setSaveComplete(true);
-    }
-  }, [
-    workspaceId,
-    getDirtyBars,
-    getDeletedBars,
-    getDirtyFlags,
-    getDeletedFlags,
-    rows,
-    clearDirtyFlags,
-    clearFlagDirtyFlags,
-    fetchFlags,
-  ]);
+    await requestSave();
+  }, [requestSave]);
 
   // 자동 저장 트리거 (정확히 90초 비활성 시)
   const lastAutoSaveRef = useRef<number>(0);
@@ -961,7 +762,7 @@ export const DraftGanttView = forwardRef<
     if (!autoSaveEnabled || !isMyLock) return;
     // 90초 미만일 때는 스킵
     if (inactivitySeconds === null || inactivitySeconds < 90) return;
-    if (isCommitting || isAutoSaving) return;
+    if (isSaving || isAutoSaving) return;
 
     // 마지막 자동 저장으로부터 최소 90초 경과 확인 (중복 방지)
     const now = Date.now();
@@ -974,13 +775,13 @@ export const DraftGanttView = forwardRef<
     autoSaveEnabled,
     isMyLock,
     inactivitySeconds,
-    isCommitting,
+    isSaving,
     isAutoSaving,
   ]);
 
-  // 조용한 자동 저장 (모달 없이)
+  // 조용한 자동 저장 (requestSave 사용)
   const handleAutoSave = useCallback(async () => {
-    if (isCommitting || isAutoSaving) return;
+    if (isSaving || isAutoSaving) return;
 
     const dirtyBars = getDirtyBars();
     const deletedBars = getDeletedBars();
@@ -999,93 +800,30 @@ export const DraftGanttView = forwardRef<
     setIsAutoSaving(true);
 
     try {
-      let flagSuccess = true;
-      let planSuccess = true;
-
-      // 1. Flags 저장
-      if (allFlags.length > 0) {
-        const flagResult = await commitFlags({
-          workspaceId,
-          flags: allFlags,
-        });
-
-        if (flagResult.success) {
-          clearFlagDirtyFlags();
-          await fetchFlags(workspaceId);
-        } else {
-          flagSuccess = false;
-        }
-      }
-
-      // 2. Plans 저장
-      if (allBars.length > 0) {
-        const payload = {
-          workspaceId,
-          plans: allBars.map((bar) => {
-            const row = rows.find((r) => r.rowId === bar.rowId);
-            return {
-              clientUid: bar.clientUid,
-              serverId: bar.serverId,
-              domain: row?.domain,
-              project: row?.project || "",
-              module: row?.module || "",
-              feature: row?.feature || "",
-              title: bar.title,
-              stage: bar.stage,
-              status: bar.status,
-              start_date: bar.startDate,
-              end_date: bar.endDate,
-              assignees: bar.assignees,
-              description: bar.description,
-              links: bar.links,
-              deleted: bar.deleted || false,
-              order_index: row?.orderIndex ?? 0,
-              lane_hint: bar.preferredLane,
-            };
-          }),
-        };
-
-        const planResult = await commitFeaturePlans(payload);
-
-        if (planResult.success) {
-          clearDirtyFlags();
-        } else {
-          planSuccess = false;
-        }
-      }
-
-      if (flagSuccess && planSuccess) {
-        showToast("success", "자동 저장 완료", undefined);
-        // 성공 플래그 설정 (체크 아이콘 표시용)
-        setAutoSaveSuccess(true);
-        // 1.5초 후 플래그 해제
-        setTimeout(() => {
-          setAutoSaveSuccess(false);
-        }, 1500);
-      } else {
-        showToast("error", "자동 저장 실패", "수동으로 저장해주세요.");
-      }
+      // requestSave를 사용하여 저장 (Toast로 진행 표시)
+      await requestSave();
+      
+      // 성공 플래그 설정 (체크 아이콘 표시용)
+      setAutoSaveSuccess(true);
+      // 1.5초 후 플래그 해제
+      setTimeout(() => {
+        setAutoSaveSuccess(false);
+      }, 1500);
     } catch (err) {
       showToast("error", "자동 저장 오류", "수동으로 저장해주세요.");
     } finally {
       setIsAutoSaving(false);
-      // 자동 저장 완료 후 타이머 즉시 리셋 (finally에서 실행하여 성공/실패 관계없이 리셋)
+      // 자동 저장 완료 후 타이머 즉시 리셋
       recordActivity();
     }
   }, [
-    hasUnsavedChanges,
-    isCommitting,
+    isSaving,
     isAutoSaving,
     getDirtyBars,
     getDeletedBars,
     getDirtyFlags,
     getDeletedFlags,
-    workspaceId,
-    rows,
-    clearDirtyFlags,
-    clearFlagDirtyFlags,
-    fetchFlags,
-    router,
+    requestSave,
     recordActivity,
   ]);
 
@@ -1430,7 +1168,7 @@ export const DraftGanttView = forwardRef<
         <GanttHeader
           workspaceId={workspaceId}
           onCommit={handleCommit}
-          isCommitting={isCommitting}
+          isCommitting={isSaving}
           onDiscardChanges={handleDiscardChanges}
           // 읽기 전용 모드
           readOnly={readOnly}
@@ -1719,20 +1457,6 @@ export const DraftGanttView = forwardRef<
 
       {/* Toast Container (sonner) */}
       <ToastContainer />
-
-      {/* Save Progress Modal */}
-      <SaveProgressModal
-        isOpen={showSaveModal}
-        onClose={() => {
-          setShowSaveModal(false);
-          // 저장 완료 후 페이지 새로고침 (서버 데이터 동기화)
-          if (saveComplete) {
-            router.refresh();
-          }
-        }}
-        steps={saveSteps}
-        isComplete={saveComplete}
-      />
     </div>
   );
 });

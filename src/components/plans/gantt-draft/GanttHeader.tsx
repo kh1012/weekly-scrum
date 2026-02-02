@@ -373,7 +373,10 @@ export function GanttHeader({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const hasUnsavedChanges = useDraftStore((s) => s.hasUnsavedChanges());
+  // 계획(bars) + 깃발(flags) 변경사항 체크
+  const hasUnsavedChanges = useDraftStore(
+    (s) => s.hasUnsavedChanges() || s.hasFlagChanges()
+  );
   const isEditing = useDraftStore((s) => s.ui.isEditing);
   // 계획(bars) + 깃발(flags) 변경사항 개수
   const changesCount = useDraftStore(
