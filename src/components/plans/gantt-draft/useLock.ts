@@ -87,6 +87,13 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
     if (isInitializedRef.current && lockManagerRef.current) {
       return;
     }
+    
+    // 스토어의 isEditing 상태를 확인하여 이미 편집 모드이면 hasAcquiredRef 복원
+    // (revalidatePath 등으로 컴포넌트가 재마운트될 때 편집 모드 유지)
+    const currentIsEditing = useDraftStore.getState().ui?.isEditing ?? false;
+    if (currentIsEditing) {
+      hasAcquiredRef.current = true;
+    }
 
     const handleLockStateChange = (state: LockState) => {
       setLockStateRef.current(state);
@@ -106,7 +113,11 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
           setEditingRef.current(true);
           hasAcquiredRef.current = true;
         } else {
-          setEditingRef.current(false);
+          // 스토어에서 이미 편집 모드이면 해제하지 않음
+          const storeIsEditing = useDraftStore.getState().ui?.isEditing ?? false;
+          if (!storeIsEditing) {
+            setEditingRef.current(false);
+          }
         }
       }
       
@@ -136,8 +147,17 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
     getWorkspaceLock(workspaceId).then((state) => {
       setLockStateRef.current(state);
       
+      // 스토어에서 이미 편집 모드이면 유지 (재마운트 시)
+      const storeIsEditing = useDraftStore.getState().ui?.isEditing ?? false;
+      if (storeIsEditing) {
+        hasAcquiredRef.current = true;
+        lastActivityRef.current = Date.now();
+        lastHeartbeatRef.current = Date.now();
+        lockManagerRef.current?.startHeartbeatExternal();
+        cleanupBeforeUnloadRef.current = setupBeforeUnloadHandler(workspaceId);
+      }
       // 내 락이면 자동으로 편집 모드 활성화 + heartbeat 시작
-      if (state.isMyLock) {
+      else if (state.isMyLock) {
         setEditingRef.current(true);
         hasAcquiredRef.current = true;
         lastActivityRef.current = Date.now();
@@ -146,8 +166,8 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
         // beforeunload 핸들러 등록
         cleanupBeforeUnloadRef.current = setupBeforeUnloadHandler(workspaceId);
       }
-      // 초기화 시에만 isMyLock이 false이면 편집 모드 해제 (이후 재실행 시에는 해제하지 않음)
-      else if (!isInitializedRef.current) {
+      // 초기화 시에만 isMyLock이 false이고 스토어도 편집 모드가 아니면 해제
+      else if (!isInitializedRef.current && !storeIsEditing) {
         setEditingRef.current(false);
       }
       
@@ -157,7 +177,8 @@ export function useLock({ workspaceId, onLockLost, onInactivityTimeout }: UseLoc
     return () => {
       lockManagerRef.current?.cleanup();
       isInitializedRef.current = false;
-      hasAcquiredRef.current = false;
+      // hasAcquiredRef는 cleanup 시에도 유지 (스토어 기반으로 복원하므로)
+      // hasAcquiredRef.current = false;
     };
   }, [workspaceId]); // 의존성을 workspaceId만으로 제한
 
