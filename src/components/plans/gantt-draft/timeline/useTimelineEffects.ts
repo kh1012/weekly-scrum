@@ -3,6 +3,7 @@
  */
 
 import { useEffect } from "react";
+import { useDraftStore } from "../store";
 
 interface UseTimelineEffectsProps {
   workspaceId: string;
@@ -66,14 +67,21 @@ export function useTimelineEffects({
     };
   }, [onScrollbarHeightChange, containerRef]);
 
-  // 초기 로드 시 오늘로 스크롤
+  // 초기 로드 시 오늘로 스크롤 (이미 스크롤된 적이 있으면 스킵)
+  const hasInitialScrolled = useDraftStore((s) => s.ui.hasInitialScrolled);
+  const setHasInitialScrolled = useDraftStore((s) => s.setHasInitialScrolled);
+  
   useEffect(() => {
+    // 이미 초기 스크롤이 완료된 경우 스킵 (저장 후 재렌더링 시)
+    if (hasInitialScrolled) return;
+    
     // 약간의 지연 후 스크롤 (레이아웃 완료 후)
     const timer = setTimeout(() => {
       scrollToToday(false); // 초기에는 부드러운 애니메이션 없이
+      setHasInitialScrolled(true);
     }, 100);
     return () => clearTimeout(timer);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasInitialScrolled, setHasInitialScrolled, scrollToToday]);
 
   // 오늘로 이동 이벤트 핸들러
   useEffect(() => {

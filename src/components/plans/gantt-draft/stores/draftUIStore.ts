@@ -38,6 +38,9 @@ export interface DraftUIActions {
   collapseAllNodes: () => void;
   expandToLevel: (level: 0 | 1 | 2) => void;
   setExpandedNodes: (nodes: string[]) => void;
+
+  // 초기 스크롤
+  setHasInitialScrolled: (value: boolean) => void;
 }
 
 export type DraftUIStore = { ui: DraftUIState } & DraftUIActions;
@@ -65,6 +68,7 @@ const initialUIState: DraftUIState = {
   highlightDateRange: null,
   lastActivityAt: undefined,
   viewMode: "detailed",
+  hasInitialScrolled: false,
 };
 
 export const createDraftUIStore: StateCreator<
@@ -252,6 +256,15 @@ export const createDraftUIStore: StateCreator<
       ui: {
         ...get().ui,
         expandedNodes: nodes,
+      },
+    });
+  },
+
+  setHasInitialScrolled: (value) => {
+    set({
+      ui: {
+        ...get().ui,
+        hasInitialScrolled: value,
       },
     });
   },
