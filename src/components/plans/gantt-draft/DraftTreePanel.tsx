@@ -871,6 +871,18 @@ export const DraftTreePanel = forwardRef<
     );
   }, [filterItems, debouncedFilterSearchQuery]);
 
+  // 검색어로 필터링된 Flags 목록 (debounced 값 사용)
+  const filteredRangeFlags = useMemo(() => {
+    if (!debouncedFilterSearchQuery.trim()) {
+      return visibleRangeFlags;
+    }
+
+    const query = debouncedFilterSearchQuery.toLowerCase();
+    return visibleRangeFlags.filter((flag) =>
+      flag.title.toLowerCase().includes(query)
+    );
+  }, [visibleRangeFlags, debouncedFilterSearchQuery]);
+
   const hasActiveFilters =
     searchQuery ||
     filters.projects.length > 0 ||
@@ -1852,6 +1864,10 @@ export const DraftTreePanel = forwardRef<
               type="text"
               value={localSearchValue}
               onChange={(e) => handleTreeSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                // 키 이벤트가 상위 요소로 버블링되지 않도록 차단
+                e.stopPropagation();
+              }}
               placeholder="검색..."
               className="flex-1 text-[11px] bg-transparent border-none outline-none text-gray-700 placeholder:text-gray-400"
             />
@@ -2094,7 +2110,7 @@ export const DraftTreePanel = forwardRef<
       {showFilters && (
         <div
           ref={filterRef}
-          className="absolute left-2 right-2 z-50 rounded-xl shadow-xl flex flex-col"
+          className="absolute left-2 right-2 z-50 rounded-xl shadow-xl flex flex-col overflow-hidden"
           style={{
             top: HEADER_HEIGHT + 4, // 필터 버튼 바로 아래 (4px 간격)
             background: "white",
@@ -2105,7 +2121,7 @@ export const DraftTreePanel = forwardRef<
           }}
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between px-3 pt-3 pb-2">
+          <div className="flex items-center justify-between px-3 pt-3 pb-2 flex-shrink-0">
             <span className="text-xs font-semibold text-gray-700">필터</span>
             {hasActiveFilters && (
               <button
@@ -2118,7 +2134,7 @@ export const DraftTreePanel = forwardRef<
           </div>
 
           {/* 검색 입력 */}
-          <div className="px-3 pb-3">
+          <div className="px-3 pb-3 flex-shrink-0">
             <div
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-all duration-150 focus-within:ring-1 focus-within:ring-blue-200"
               style={{
@@ -2132,11 +2148,8 @@ export const DraftTreePanel = forwardRef<
                 value={filterSearchQuery}
                 onChange={(e) => handleFilterSearchChange(e.target.value)}
                 onKeyDown={(e) => {
-                  // Cmd+A, Ctrl+A 전체 선택 허용
-                  if ((e.metaKey || e.ctrlKey) && e.key === "a") {
-                    e.stopPropagation();
-                    return;
-                  }
+                  // 키 이벤트가 상위 요소로 버블링되지 않도록 차단
+                  e.stopPropagation();
                 }}
                 placeholder="프로젝트, 모듈, 기능 검색..."
                 className="flex-1 text-[11px] bg-transparent border-none outline-none text-gray-700 placeholder:text-gray-400"
@@ -2177,56 +2190,57 @@ export const DraftTreePanel = forwardRef<
             </div>
           </div>
 
-          {/* Flag 기간 필터 섹션 */}
-          {visibleRangeFlags.length > 0 && (
-            <div className="px-3 pb-2">
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">
-                Flags (기간)
-              </div>
-              <div className="space-y-0.5">
-                {visibleRangeFlags.map((flag) => {
-                  const isChecked = filters.flagIds?.includes(flag.clientId) || false;
-                  const flagColor = flag.color || "#ef4444";
-                  // 날짜 포맷: M/D
-                  const formatDate = (dateStr: string) => {
-                    const d = new Date(dateStr);
-                    return `${d.getMonth() + 1}/${d.getDate()}`;
-                  };
-                  const dateRange = `${formatDate(flag.startDate)}~${formatDate(flag.endDate)}`;
+          {/* 스크롤 가능한 필터 영역 (Flag + 필터 항목) */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-3">
+            {/* Flag 기간 필터 섹션 */}
+            {filteredRangeFlags.length > 0 && (
+              <div className="pb-2">
+                <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">
+                  Flags (기간)
+                </div>
+                <div className="space-y-0.5">
+                  {filteredRangeFlags.map((flag) => {
+                    const isChecked = filters.flagIds?.includes(flag.clientId) || false;
+                    const flagColor = flag.color || "#ef4444";
+                    // 날짜 포맷: M/D
+                    const formatDate = (dateStr: string) => {
+                      const d = new Date(dateStr);
+                      return `${d.getMonth() + 1}/${d.getDate()}`;
+                    };
+                    const dateRange = `${formatDate(flag.startDate)}~${formatDate(flag.endDate)}`;
 
-                  return (
-                    <label
-                      key={flag.clientId}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-red-50/50 transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleFlagFilter(flag.clientId)}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                      />
-                      <FlagIcon
-                        className="w-3 h-3 flex-shrink-0"
-                        style={{ color: flagColor }}
-                      />
-                      <span className="text-xs text-gray-700 flex-1 truncate">
-                        {flag.title}
-                      </span>
-                      <span className="text-[10px] text-gray-400 flex-shrink-0">
-                        {dateRange}
-                      </span>
-                    </label>
-                  );
-                })}
+                    return (
+                      <label
+                        key={flag.clientId}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-red-50/50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleFlagFilter(flag.clientId)}
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        />
+                        <FlagIcon
+                          className="w-3 h-3 flex-shrink-0"
+                          style={{ color: flagColor }}
+                        />
+                        <span className="text-xs text-gray-700 flex-1 truncate">
+                          {flag.title}
+                        </span>
+                        <span className="text-[10px] text-gray-400 flex-shrink-0">
+                          {dateRange}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {/* 구분선 */}
+                <div className="border-t border-gray-100 mt-2" />
               </div>
-              {/* 구분선 */}
-              <div className="border-t border-gray-100 mt-2" />
-            </div>
-          )}
+            )}
 
-          {/* 필터 항목 리스트 */}
-          <div className="flex-1 overflow-y-auto px-3 pb-3">
-            {filteredFilterItems.length === 0 && visibleRangeFlags.length === 0 ? (
+            {/* 필터 항목 리스트 */}
+            {filteredFilterItems.length === 0 && filteredRangeFlags.length === 0 ? (
               <div className="text-xs text-gray-400 text-center py-4">
                 {debouncedFilterSearchQuery
                   ? "검색 결과가 없습니다"

@@ -129,9 +129,11 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             </h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <ShortcutRow keys={["⌘", "K"]} description="커맨드 팔레트 열기" />
+              <ShortcutRow keys={["⌘", "Enter"]} description="작업 시작" />
+              <ShortcutRow keys={["⌘", "⇧", "Enter"]} description="작업 종료" />
+              <ShortcutRow keys={["⌘", "S"]} description="저장 (Commit)" />
               <ShortcutRow keys={["⌘", "Z"]} description="실행 취소 (Undo)" />
               <ShortcutRow keys={["⌘", "⇧", "Z"]} description="다시 실행 (Redo)" />
-              <ShortcutRow keys={["⌘", "S"]} description="저장 (Commit)" />
               <ShortcutRow keys={["⌘", "D"]} description="선택 항목 복제" />
               <ShortcutRow keys={["Delete"]} description="선택 항목 삭제" />
               <ShortcutRow keys={["Esc"]} description="선택 해제 / 모달 닫기" />

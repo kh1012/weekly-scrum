@@ -230,6 +230,8 @@ export interface DraftUIState {
     features: string[];
     stages: string[];
     assignees: string[];
+    /** Flag 기간 필터 (Range Flag clientId 목록) */
+    flagIds: string[];
   };
   lockState: LockState;
   lastSyncAt?: string;

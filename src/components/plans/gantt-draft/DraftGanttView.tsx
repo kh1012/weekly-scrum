@@ -1051,6 +1051,24 @@ export const DraftGanttView = forwardRef<
         return;
       }
 
+      // 작업 시작 (Cmd/Ctrl + Enter)
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (!isEditing && canEdit) {
+          handleStartEditing();
+        }
+        return;
+      }
+
+      // 작업 종료 (Cmd/Ctrl + Shift + Enter)
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "Enter") {
+        e.preventDefault();
+        if (isEditing) {
+          handleStopEditing();
+        }
+        return;
+      }
+
       // Undo/Redo
       if ((e.metaKey || e.ctrlKey) && e.key === "z") {
         if (e.shiftKey) {
@@ -1078,8 +1096,11 @@ export const DraftGanttView = forwardRef<
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     isEditing,
+    canEdit,
     hasUnsavedChanges,
     handleCommit,
+    handleStartEditing,
+    handleStopEditing,
     canUndo,
     canRedo,
     undo,

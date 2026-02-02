@@ -115,6 +115,7 @@ export function CommandPalette({
         .replace(/⌘/g, "Ctrl+")
         .replace(/⇧/g, "Shift+")
         .replace(/⌥/g, "Alt+")
+        .replace(/↵/g, "Enter")
         .replace(/\+$/, "");
     },
     [isMac]
@@ -139,7 +140,7 @@ export function CommandPalette({
       {
         id: "start-editing",
         label: "작업 시작",
-        shortcut: "",
+        shortcut: "⌘↵",
         icon: <PlayIcon className="w-4 h-4" />,
         action: async () => {
           await onStartEditing();
@@ -152,7 +153,7 @@ export function CommandPalette({
       {
         id: "stop-editing",
         label: "작업 종료",
-        shortcut: "",
+        shortcut: "⌘⇧↵",
         icon: <StopIcon className="w-4 h-4" />,
         action: async () => {
           await onStopEditing();

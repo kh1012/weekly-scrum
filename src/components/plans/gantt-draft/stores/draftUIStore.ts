@@ -48,6 +48,7 @@ const initialUIState: DraftUIState = {
     features: [],
     stages: [],
     assignees: [],
+    flagIds: [],
   },
   lockState: {
     isLocked: false,
@@ -104,6 +105,7 @@ export const createDraftUIStore: StateCreator<
           features: [],
           stages: [],
           assignees: [],
+          flagIds: [],
         },
       },
     });
