@@ -7,10 +7,11 @@
  * 우선순위: URL > localStorage > default
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getItem, setItem } from "@/lib/utils/storage";
-import { shouldShortenUrl, createShortLink } from "@/lib/utils/shortLink";
+import { shouldShortenUrl } from "@/lib/utils/shortLink";
+import { createShortLinkAction } from "@/lib/actions/shortLinkActions";
 
 const STORAGE_KEY = "gantt-view-state";
 
@@ -99,6 +100,13 @@ function toQueryParams(state: Partial<StoredGanttState>): URLSearchParams {
   return params;
 }
 
+interface UseGanttPersistenceReturn {
+  /** 초기화 완료 여부 */
+  isInitialized: boolean;
+  /** URL/localStorage에 expanded 파라미터가 있었는지 */
+  hasExpandedInSource: boolean;
+}
+
 export function useGanttPersistence({
   workspaceId,
   expandedNodes,
@@ -111,12 +119,15 @@ export function useGanttPersistence({
   onRangeEndChange,
   autoShorten = true,
   shortenThreshold = 2000,
-}: UseGanttPersistenceProps) {
+}: UseGanttPersistenceProps): UseGanttPersistenceReturn {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isInitializedRef = useRef(false);
   const shouldSaveRef = useRef(false);
   const shorteningRef = useRef(false);
+  const shortLinkFailedRef = useRef(false); // shortLink 실패 시 재시도 방지
+  const hasExpandedInSourceRef = useRef(false); // URL/localStorage에 expanded가 있었는지
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 초기 상태 복원 (URL > localStorage > default)
   useEffect(() => {
@@ -139,6 +150,11 @@ export function useGanttPersistence({
       ...(storedState || {}),
       ...urlState, // URL이 우선
     };
+
+    // URL 또는 localStorage에 expanded가 있는지 확인
+    const hasExpandedInUrl = urlState.expandedNodes && urlState.expandedNodes.length > 0;
+    const hasExpandedInStorage = storedState?.expandedNodes && storedState.expandedNodes.length > 0;
+    hasExpandedInSourceRef.current = hasExpandedInUrl || hasExpandedInStorage;
 
     // 상태 적용
     if (mergedState.expandedNodes && mergedState.expandedNodes.length > 0) {
@@ -167,10 +183,26 @@ export function useGanttPersistence({
     }
 
     isInitializedRef.current = true;
-    // 다음 렌더 사이클에 저장 활성화
-    setTimeout(() => {
-      shouldSaveRef.current = true;
-    }, 0);
+    shouldSaveRef.current = true;
+    setIsInitialized(true);
+
+    // URL에 파라미터가 없고 localStorage에서 복원한 경우, URL도 업데이트
+    const hasUrlParams = urlSearchParams.toString().length > 0;
+    const hasStoredData = storedState && (
+      (storedState.expandedNodes?.length ?? 0) > 0 ||
+      storedState.rangeMonths !== null ||
+      storedState.rangeStart !== null ||
+      storedState.rangeEnd !== null
+    );
+
+    if (!hasUrlParams && hasStoredData) {
+      const params = toQueryParams(mergedState);
+      const queryString = params.toString();
+      if (queryString) {
+        const currentPath = window.location.pathname;
+        window.history.replaceState(null, "", `${currentPath}?${queryString}`);
+      }
+    }
   }, [
     workspaceId,
     onExpandedNodesChange,
@@ -259,45 +291,47 @@ export function useGanttPersistence({
       }
     }
 
-    // URL 업데이트
+    // URL 업데이트 (window.history.replaceState 사용 - 서버 컴포넌트 재실행 방지)
     if (hasChanges) {
       const newQueryString = newParams.toString();
 
-      // URL이 길어지면 자동 축약
+      // URL이 길어지면 자동 축약 (이 경우에만 router.replace 사용)
+      // shortLinkFailedRef가 true이면 이전에 실패했으므로 재시도하지 않음
       if (
         autoShorten &&
         shouldShortenUrl(newQueryString, shortenThreshold) &&
-        !shorteningRef.current
+        !shorteningRef.current &&
+        !shortLinkFailedRef.current
       ) {
         shorteningRef.current = true;
 
         const currentPath =
           typeof window !== "undefined" ? window.location.pathname : "";
-        createShortLink({
+        createShortLinkAction({
           workspaceId,
           originalUrl: currentPath,
           queryString: newQueryString,
         }).then((result) => {
+          shorteningRef.current = false;
           if (result.success) {
-            // 축약된 URL로 리다이렉트
+            // 축약된 URL로 리다이렉트 (서버 이동 필요)
             router.replace(`/s/${result.shortId}`, { scroll: false });
           } else {
-            // 축약 실패 시 일반 URL 사용
+            // 축약 실패 시 더 이상 시도하지 않도록 마킹
+            shortLinkFailedRef.current = true;
+            // 일반 URL 사용 (history API)
             const fallbackPath =
               typeof window !== "undefined" ? window.location.pathname : "";
-            router.replace(
-              newQueryString ? `?${newQueryString}` : fallbackPath,
-              { scroll: false },
-            );
+            const newUrl = newQueryString ? `${fallbackPath}?${newQueryString}` : fallbackPath;
+            window.history.replaceState(null, "", newUrl);
           }
-          shorteningRef.current = false;
         });
       } else {
+        // 일반 URL 업데이트 - window.history.replaceState 사용 (서버 재실행 방지)
         const currentPath =
           typeof window !== "undefined" ? window.location.pathname : "";
-        router.replace(newQueryString ? `?${newQueryString}` : currentPath, {
-          scroll: false,
-        });
+        const newUrl = newQueryString ? `${currentPath}?${newQueryString}` : currentPath;
+        window.history.replaceState(null, "", newUrl);
       }
     }
   }, [
@@ -311,4 +345,9 @@ export function useGanttPersistence({
     autoShorten,
     shortenThreshold,
   ]);
+
+  return {
+    isInitialized,
+    hasExpandedInSource: hasExpandedInSourceRef.current,
+  };
 }

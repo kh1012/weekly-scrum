@@ -481,7 +481,7 @@ export const DraftGanttView = forwardRef<
   }, [rangeMonths, calculateRange]);
 
   // 상태 지속성 (localStorage + URL 동기화)
-  useGanttPersistence({
+  const { isInitialized: isPersistenceInitialized, hasExpandedInSource } = useGanttPersistence({
     workspaceId,
     expandedNodes,
     rangeMonths,
@@ -649,21 +649,24 @@ export const DraftGanttView = forwardRef<
   }, [initialPlans, hydrate]);
 
   // 초기 로드 시 트리를 '기능까지 보기' 상태로 펼치기
-  // 단, URL에 expanded 파라미터가 있으면 URL 상태 우선 (덮어쓰지 않음)
+  // 단, URL/localStorage에 expanded가 있으면 해당 상태 우선 (덮어쓰지 않음)
+  // useGanttPersistence가 초기화 완료된 후에 실행하여 타이밍 문제 방지
   const hasInitializedExpandRef = useRef(false);
   useEffect(() => {
-    if (rows.length > 0 && !hasInitializedExpandRef.current) {
-      hasInitializedExpandRef.current = true;
-      
-      // URL에 expanded 파라미터가 있으면 초기 펼침 로직 건너뛰기
-      const hasExpandedInUrl = typeof window !== "undefined" && 
-        new URLSearchParams(window.location.search).has("expanded");
-      
-      if (!hasExpandedInUrl) {
-        expandToLevel(1);
-      }
+    // useGanttPersistence 초기화가 완료될 때까지 대기
+    if (!isPersistenceInitialized) return;
+    // rows가 로드될 때까지 대기
+    if (rows.length === 0) return;
+    // 이미 초기화된 경우 스킵
+    if (hasInitializedExpandRef.current) return;
+    
+    hasInitializedExpandRef.current = true;
+    
+    // URL/localStorage에 expanded가 있으면 초기 펼침 로직 건너뛰기
+    if (!hasExpandedInSource) {
+      expandToLevel(1);
     }
-  }, [rows.length, expandToLevel]);
+  }, [isPersistenceInitialized, rows.length, hasExpandedInSource, expandToLevel]);
 
   // 마지막 업데이트 시각 토스트 표시 (페이지 진입 시 한 번만)
   const hasShownToastRef = useRef(false);
