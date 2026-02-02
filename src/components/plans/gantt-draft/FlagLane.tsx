@@ -399,6 +399,9 @@ export function FlagLane({
             isEditing={isEditing}
             onSelect={() => selectFlag(flag.clientId)}
             onDoubleClick={(e) => {
+              // 기존 팝오버가 열려있으면 닫기
+              setViewPopover(null);
+              
               if (!isEditing && e) {
                 // 편집 모드가 아닐 때: 팝오버 표시 (읽기 전용)
                 setViewPopover({

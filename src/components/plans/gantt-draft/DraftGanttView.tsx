@@ -495,16 +495,26 @@ export const DraftGanttView = forwardRef<
     shortenThreshold: 2000,
   });
 
-  // selectedFlagId 변경 시 URL 업데이트
+  // selectedFlagId 변경 시 URL 업데이트 (history API 사용 - 서버 재실행 방지)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     const params = new URLSearchParams(searchParams.toString());
+    const currentFlagId = params.get("flagId");
+    
+    // 이미 동일한 상태면 스킵 (무한 루프 방지)
+    if (selectedFlagId === currentFlagId) return;
+    if (!selectedFlagId && !currentFlagId) return;
+    
     if (selectedFlagId) {
       params.set("flagId", selectedFlagId);
     } else {
       params.delete("flagId");
     }
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [selectedFlagId, router, searchParams]);
+    // window.history.replaceState 사용 - 서버 컴포넌트 재실행 방지
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [selectedFlagId, searchParams]);
 
   // 초기 로드 시 URL에서 flagId 읽어오기
   const hasInitializedFlagRef = useRef(false);
@@ -530,8 +540,10 @@ export const DraftGanttView = forwardRef<
     }
   }, [flags, selectedFlagId, searchParams, selectFlag]);
 
-  // Figma OAuth 콜백 처리
+  // Figma OAuth 콜백 처리 (history API 사용 - 서버 재실행 방지)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     const params = new URLSearchParams(searchParams.toString());
 
     if (params.get("figma_success")) {
@@ -542,7 +554,8 @@ export const DraftGanttView = forwardRef<
       );
       // URL에서 파라미터 제거
       params.delete("figma_success");
-      router.replace(`?${params.toString()}`, { scroll: false });
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState(null, "", newUrl);
     }
 
     if (params.get("figma_error")) {
@@ -555,9 +568,10 @@ export const DraftGanttView = forwardRef<
       showToast("error", "Figma 연동 실패", errorMap[error] || error);
       // URL에서 파라미터 제거
       params.delete("figma_error");
-      router.replace(`?${params.toString()}`, { scroll: false });
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState(null, "", newUrl);
     }
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   // 초기 데이터 로드
   useEffect(() => {

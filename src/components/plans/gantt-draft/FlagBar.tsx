@@ -256,6 +256,7 @@ export const FlagBar = memo(function FlagBar({
 
   const handleDoubleClickEvent = useCallback(
     (e: React.MouseEvent) => {
+      e.preventDefault();
       e.stopPropagation();
       // 더블 클릭 시 강조 표시 활성화
       setHighlightDateRange({
