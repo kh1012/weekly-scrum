@@ -543,7 +543,13 @@ export const createDraftDataStore: StateCreator<
     const state = get();
     const newBars = state.bars
       .filter((b) => !b.deleted)
-      .map((b) => ({ ...b, dirty: false }));
+      .map((b) => ({
+        ...b,
+        dirty: false,
+        // 저장 성공 시 serverId가 없으면 clientUid를 serverId로 설정
+        // (서버에서 client_uid 기준으로 upsert하므로 동일하게 취급됨)
+        serverId: b.serverId || b.clientUid,
+      }));
 
     set({
       bars: newBars,
