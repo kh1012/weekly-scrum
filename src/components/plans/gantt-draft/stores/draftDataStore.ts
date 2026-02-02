@@ -160,11 +160,16 @@ export const createDraftDataStore: StateCreator<
     const currentExpanded = state.ui.expandedNodes;
     const newExpandedNodes = [...currentExpanded];
     
+    // 프로젝트, 모듈, 기능(feature) 모두 펼쳐진 상태로 추가
     if (!newExpandedNodes.includes(projectId)) {
       newExpandedNodes.push(projectId);
     }
     if (!newExpandedNodes.includes(moduleId)) {
       newExpandedNodes.push(moduleId);
+    }
+    // 새로 생성된 feature도 펼쳐진 상태로 추가 (계획 블록 추가 가능)
+    if (!newExpandedNodes.includes(rowId)) {
+      newExpandedNodes.push(rowId);
     }
     
     set({
