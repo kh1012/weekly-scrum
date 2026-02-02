@@ -59,6 +59,10 @@ export function useTimelineData({
     [expandedNodesArray]
   );
 
+  // 기간 필터용 타임스탬프 (안정적인 의존성을 위해)
+  const rangeStartTime = rangeStart?.getTime();
+  const rangeEndTime = rangeEnd?.getTime();
+
   // 활성 bars (삭제되지 않은 것들 + 필터 적용)
   const filteredActiveBars = useMemo(() => {
     let bars: typeof allBars;
@@ -93,6 +97,13 @@ export function useTimelineData({
       }
     }
 
+    // 기간 필터 적용 (rangeStart ~ rangeEnd 범위 내 bars만)
+    if (rangeStart && rangeEnd) {
+      bars = bars.filter((bar) =>
+        isDateRangeOverlapping(bar.startDate, bar.endDate, rangeStart, rangeEnd)
+      );
+    }
+
     // Flag 기간 필터 적용 (Range Flag만 대상)
     if (filters.flagIds && filters.flagIds.length > 0 && rangeFlags) {
       const selectedFlags = rangeFlags.filter((f) =>
@@ -113,7 +124,7 @@ export function useTimelineData({
     }
 
     return bars;
-  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags]);
+  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
 
   // activeBars를 Set으로 변환 (빠른 조회용)
   const activeBarsSet = useMemo(() => {
@@ -125,15 +136,16 @@ export function useTimelineData({
   // 필터링된 rows (useMemo로 캐싱)
   const rows = useMemo(() => {
     const hasFlagFilter = filters.flagIds && filters.flagIds.length > 0;
+    const hasRangeFilter = rangeStart && rangeEnd;
     
-    // Flag 필터가 활성화된 경우, filteredActiveBars의 rowId Set 생성
-    // 이 Set에 포함된 rows만 표시됨 (Flag 기간 내 bars가 있는 rows)
-    const activeRowIds = hasFlagFilter
+    // 기간 필터 또는 Flag 필터가 활성화된 경우, filteredActiveBars의 rowId Set 생성
+    // 이 Set에 포함된 rows만 표시됨 (해당 기간 내 bars가 있는 rows)
+    const activeRowIds = (hasFlagFilter || hasRangeFilter)
       ? new Set(filteredActiveBars.map((b) => b.rowId))
       : null;
     
-    // Flag 필터가 없는 경우에만 filterIndex 사용 (성능 최적화)
-    if (filterIndex && !hasFlagFilter) {
+    // 기간/Flag 필터가 없는 경우에만 filterIndex 사용 (성능 최적화)
+    if (filterIndex && !hasFlagFilter && !hasRangeFilter) {
       const barsInView = new Set(filteredActiveBars.map((b) => b.clientUid));
       return filterRowsWithIndex(
         allRows,
@@ -149,13 +161,13 @@ export function useTimelineData({
       );
     }
 
-    // 폴백 또는 Flag 필터 활성화 시
+    // 폴백 또는 기간/Flag 필터 활성화 시
     return allRows.filter((row) => {
-      // Flag 필터가 활성화된 경우: filteredActiveBars에 해당 row의 bars가 있어야 함
-      if (hasFlagFilter && activeRowIds) {
+      // 기간/Flag 필터가 활성화된 경우: filteredActiveBars에 해당 row의 bars가 있어야 함
+      if ((hasFlagFilter || hasRangeFilter) && activeRowIds) {
         if (!activeRowIds.has(row.rowId)) return false;
       } else if (!row.isLocal) {
-        // Flag 필터가 없는 경우: 기존 로직
+        // 기간/Flag 필터가 없는 경우: 기존 로직
         const hasBars = filteredActiveBars.some((b) => b.rowId === row.rowId);
         if (!hasBars) return false;
       }
@@ -187,7 +199,7 @@ export function useTimelineData({
 
       return true;
     });
-  }, [allRows, filteredActiveBars, filterIndex, searchQuery, filters]);
+  }, [allRows, filteredActiveBars, filterIndex, searchQuery, filters, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
 
   // 날짜 배열 생성 (rangeStart ~ rangeEnd)
   const days = useMemo(() => {

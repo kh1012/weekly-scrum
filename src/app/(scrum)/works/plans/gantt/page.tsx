@@ -53,8 +53,14 @@ export default async function PlansPage({ searchParams }: PageProps) {
     basicRole: m.basic_role || undefined,
   }));
 
+  // 쿼리 파라미터가 없으면 강제 리마운트하여 로컬 스토리지에서 복원하도록 함
+  // 파라미터가 있으면 서버에서 받은 값 사용
+  const hasPersistedParams = params.stages || params.assignees || params.viewMode;
+  const componentKey = hasPersistedParams ? "with-params" : `restore-${Date.now()}`;
+
   return (
     <PlansGanttClient
+      key={componentKey}
       workspaceId={DEFAULT_WORKSPACE_ID}
       initialPlans={initialPlans}
       members={members}

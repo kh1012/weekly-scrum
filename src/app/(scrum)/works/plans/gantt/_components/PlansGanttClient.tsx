@@ -57,17 +57,40 @@ export function PlansGanttClient({
   const [isPending, startTransition] = useTransition();
 
   // URL queryString을 로컬 스토리지에 저장/복원
-  useGanttQueryPersistence({ storageKey: "works-plans-gantt" });
+  const { storedParams, isRestored } = useGanttQueryPersistence({ 
+    storageKey: "works-plans-gantt" 
+  });
 
-  const selectedStages = useMemo(() => new Set(initialStages), [initialStages]);
-  const selectedAssignees = useMemo(() => new Set(initialAssignees), [initialAssignees]);
+  // 서버에서 받은 초기값이 비어있으면 로컬 스토리지 값 사용
+  const effectiveStages = useMemo(() => {
+    // URL에 이미 파라미터가 있으면 서버값 사용
+    if (initialStages.length > 0) return initialStages;
+    // 복원된 값이 있으면 사용
+    if (storedParams?.stages?.length) return storedParams.stages;
+    return initialStages;
+  }, [initialStages, storedParams?.stages]);
+
+  const effectiveAssignees = useMemo(() => {
+    if (initialAssignees.length > 0) return initialAssignees;
+    if (storedParams?.assignees?.length) return storedParams.assignees;
+    return initialAssignees;
+  }, [initialAssignees, storedParams?.assignees]);
+
+  const effectiveViewMode = useMemo(() => {
+    if (initialViewMode !== "detailed") return initialViewMode;
+    if (storedParams?.viewMode) return storedParams.viewMode;
+    return initialViewMode;
+  }, [initialViewMode, storedParams?.viewMode]);
+
+  const selectedStages = useMemo(() => new Set(effectiveStages), [effectiveStages]);
+  const selectedAssignees = useMemo(() => new Set(effectiveAssignees), [effectiveAssignees]);
   
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
 
   // 초기 로드 시 URL의 viewMode를 store에 설정
   useEffect(() => {
-    setViewModeStore(initialViewMode);
-  }, [initialViewMode, setViewModeStore]);
+    setViewModeStore(effectiveViewMode);
+  }, [effectiveViewMode, setViewModeStore]);
 
   const handleStagesChange = useCallback(
     (stages: Set<string>) => {
@@ -125,7 +148,7 @@ export function PlansGanttClient({
       onStagesChange={handleStagesChange}
       selectedAssignees={selectedAssignees}
       onAssigneesChange={handleAssigneesChange}
-      isFilterLoading={isPending}
+      isFilterLoading={isPending || !isRestored}
       maxUpdatedAt={maxUpdatedAt}
       updatedByName={updatedByName}
       onViewModeChange={handleViewModeChange}

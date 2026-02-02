@@ -559,6 +559,10 @@ export const DraftTreePanel = forwardRef<
     );
   }, [rangeFlags, rangeStart, rangeEnd]);
 
+  // 기간 필터용 타임스탬프 (안정적인 의존성을 위해)
+  const rangeStartTime = rangeStart?.getTime();
+  const rangeEndTime = rangeEnd?.getTime();
+
   // 활성 bars (삭제되지 않은 것들 + 필터 적용)
   // 인덱스가 있으면 고속 필터링, 없으면 기존 방식
   const activeBars = useMemo(() => {
@@ -589,6 +593,13 @@ export const DraftTreePanel = forwardRef<
       }
     }
 
+    // 기간 필터 적용 (rangeStart ~ rangeEnd 범위 내 bars만)
+    if (rangeStart && rangeEnd) {
+      bars = bars.filter((bar) =>
+        isDateRangeOverlapping(bar.startDate, bar.endDate, rangeStart, rangeEnd)
+      );
+    }
+
     // Flag 기간 필터 적용 (Range Flag만 대상)
     if (filters.flagIds && filters.flagIds.length > 0) {
       const selectedFlags = rangeFlags.filter((f) =>
@@ -609,7 +620,7 @@ export const DraftTreePanel = forwardRef<
     }
 
     return bars;
-  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags]);
+  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
 
   // activeBars를 Set으로 변환 (빠른 조회용)
   const activeBarsSet = useMemo(
@@ -620,15 +631,16 @@ export const DraftTreePanel = forwardRef<
   // 필터링된 rows
   const filteredRows = useMemo(() => {
     const hasFlagFilter = filters.flagIds && filters.flagIds.length > 0;
+    const hasRangeFilter = rangeStart && rangeEnd;
     
-    // Flag 필터가 활성화된 경우, activeBars의 rowId Set 생성
-    // 이 Set에 포함된 rows만 표시됨 (Flag 기간 내 bars가 있는 rows)
-    const activeRowIds = hasFlagFilter
+    // 기간 필터 또는 Flag 필터가 활성화된 경우, activeBars의 rowId Set 생성
+    // 이 Set에 포함된 rows만 표시됨 (해당 기간 내 bars가 있는 rows)
+    const activeRowIds = (hasFlagFilter || hasRangeFilter)
       ? new Set(activeBars.map((b) => b.rowId))
       : null;
     
-    // Flag 필터가 없는 경우에만 filterIndex 사용 (성능 최적화)
-    if (filterIndex && !hasFlagFilter) {
+    // 기간/Flag 필터가 없는 경우에만 filterIndex 사용 (성능 최적화)
+    if (filterIndex && !hasFlagFilter && !hasRangeFilter) {
       const barsInView = new Set(activeBars.map((b) => b.clientUid));
       return filterRowsWithIndex(
         allRows,
@@ -644,13 +656,13 @@ export const DraftTreePanel = forwardRef<
       );
     }
 
-    // 폴백 또는 Flag 필터 활성화 시
+    // 폴백 또는 기간/Flag 필터 활성화 시
     return allRows.filter((row) => {
-      // Flag 필터가 활성화된 경우: activeBars에 해당 row의 bars가 있어야 함
-      if (hasFlagFilter && activeRowIds) {
+      // 기간/Flag 필터가 활성화된 경우: activeBars에 해당 row의 bars가 있어야 함
+      if ((hasFlagFilter || hasRangeFilter) && activeRowIds) {
         if (!activeRowIds.has(row.rowId)) return false;
       } else if (!row.isLocal) {
-        // Flag 필터가 없는 경우: 기존 로직
+        // 기간/Flag 필터가 없는 경우: 기존 로직
         const hasBars = activeBars.some((b) => b.rowId === row.rowId);
         if (!hasBars) return false;
       }
@@ -688,7 +700,7 @@ export const DraftTreePanel = forwardRef<
 
       return true;
     });
-  }, [allRows, activeBars, filterIndex, searchQuery, filters]);
+  }, [allRows, activeBars, filterIndex, searchQuery, filters, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
 
   // 필터 레벨 결정 (가장 하위 레벨 기준)
   // 기능 필터가 있으면 2, 모듈 필터가 있으면 1, 프로젝트 필터가 있으면 0, 없으면 -1
