@@ -60,6 +60,8 @@ interface CommandPaletteProps {
   rangeEnd?: Date;
   onRangeMonthsChange?: (months: number) => void;
   onCustomRangeChange?: (start: Date, end: Date) => void;
+  /** Flag 필터 활성화 여부 (기간 명령 비활성화) */
+  hasFlagFilter?: boolean;
 }
 
 export function CommandPalette({
@@ -78,6 +80,7 @@ export function CommandPalette({
   rangeEnd,
   onRangeMonthsChange,
   onCustomRangeChange,
+  hasFlagFilter = false,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -257,45 +260,50 @@ export function CommandPalette({
         },
         category: "보기",
       },
-      // 기간 설정
+      // 기간 설정 (Flag 필터 활성화 시 비활성화)
       {
         id: "range-3",
-        label: `기간: 3개월${rangeMonths === 3 ? " ✓" : ""}`,
+        label: `기간: 3개월${rangeMonths === 3 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(3),
+        disabled: hasFlagFilter,
         category: "기간 설정",
       },
       {
         id: "range-4",
-        label: `기간: 4개월${rangeMonths === 4 ? " ✓" : ""}`,
+        label: `기간: 4개월${rangeMonths === 4 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(4),
+        disabled: hasFlagFilter,
         category: "기간 설정",
       },
       {
         id: "range-5",
-        label: `기간: 5개월${rangeMonths === 5 ? " ✓" : ""}`,
+        label: `기간: 5개월${rangeMonths === 5 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(5),
+        disabled: hasFlagFilter,
         category: "기간 설정",
       },
       {
         id: "range-6",
-        label: `기간: 6개월${rangeMonths === 6 ? " ✓" : ""}`,
+        label: `기간: 6개월${rangeMonths === 6 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(6),
+        disabled: hasFlagFilter,
         category: "기간 설정",
       },
       {
         id: "range-custom",
-        label: `기간: 직접 선택${rangeMonths === 0 ? " ✓" : ""}`,
+        label: `기간: 직접 선택${rangeMonths === 0 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => setShowCustomRange(true),
+        disabled: hasFlagFilter,
         category: "기간 설정",
         keepOpen: true,
       },
@@ -330,6 +338,7 @@ export function CommandPalette({
       onOpenHelp,
       rangeMonths,
       onRangeMonthsChange,
+      hasFlagFilter,
     ],
   );
 

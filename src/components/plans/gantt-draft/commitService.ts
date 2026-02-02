@@ -236,10 +236,11 @@ export async function commitFeaturePlans(
       );
     }
 
-    // 경로 재검증
-    revalidatePath("/works/plans");
-    revalidatePath("/works/plans/gantt");
-    revalidatePath("/admin/plans");
+    // 경로 재검증 - 저장 후 UI 리렌더링을 방지하기 위해 제거
+    // 페이지 새로고침 시에만 최신 데이터가 반영됨
+    // revalidatePath("/works/plans");
+    // revalidatePath("/works/plans/gantt");
+    // revalidatePath("/admin/plans");
 
     return {
       success: true,
@@ -603,10 +604,11 @@ export async function commitFlags(payload: {
       updatedCount++;
     }
 
-    // 경로 재검증
-    revalidatePath("/works/plans");
-    revalidatePath("/works/plans/gantt");
-    revalidatePath("/admin/plans");
+    // 경로 재검증 - 저장 후 UI 리렌더링을 방지하기 위해 제거
+    // 페이지 새로고침 시에만 최신 데이터가 반영됨
+    // revalidatePath("/works/plans");
+    // revalidatePath("/works/plans/gantt");
+    // revalidatePath("/admin/plans");
 
     return {
       success: true,

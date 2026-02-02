@@ -27,7 +27,6 @@ interface UseSaveQueueProps {
   getDeletedFlags: () => DraftFlag[];
   clearDirtyFlags: () => void;
   clearFlagDirtyFlags: () => void;
-  fetchFlags: (workspaceId: string) => Promise<void>;
 }
 
 interface SaveQueueResult {
@@ -44,7 +43,6 @@ export function useSaveQueue({
   getDeletedFlags,
   clearDirtyFlags,
   clearFlagDirtyFlags,
-  fetchFlags,
 }: UseSaveQueueProps): SaveQueueResult {
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
@@ -115,9 +113,8 @@ export function useSaveQueue({
           saveStateRef.current = state;
           updateSaveToast(state);
 
-          // dirty 플래그 클리어 및 최신 데이터 동기화
+          // dirty 플래그 클리어 (UI 리렌더링 방지를 위해 fetchFlags 제거)
           clearFlagDirtyFlags();
-          await fetchFlags(workspaceId);
         } else {
           state = updateStepStatus(
             state,
@@ -216,7 +213,6 @@ export function useSaveQueue({
     getDeletedFlags,
     clearDirtyFlags,
     clearFlagDirtyFlags,
-    fetchFlags,
   ]);
 
   /**

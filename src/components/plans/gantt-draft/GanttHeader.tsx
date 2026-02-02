@@ -129,6 +129,8 @@ interface GanttHeaderProps {
   inactivitySeconds?: number | null;
   /** Alignment 페이지 여부 */
   isAlignmentPage?: boolean;
+  /** Flag 필터 활성화 여부 (기간 컨트롤 비활성화) */
+  hasFlagFilter?: boolean;
 }
 
 // 스타일 태그 (체크 아이콘 애니메이션)
@@ -189,6 +191,7 @@ export function GanttHeader({
   onExportDraw,
   inactivitySeconds: propsInactivitySeconds,
   isAlignmentPage = false,
+  hasFlagFilter = false,
 }: GanttHeaderProps) {
   const {
     lockState,
@@ -1306,22 +1309,36 @@ export function GanttHeader({
 
             {/* 기간 설정 버튼 */}
             <div className="relative" ref={rangePopoverRef}>
-              <button
-                onClick={() => setShowRangePopover(!showRangePopover)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:bg-gray-100"
-                style={{ color: "#374151" }}
-              >
-                <CalendarIcon className="w-4 h-4 text-blue-500" />
-                <span>{formatRangeLabel()}</span>
-                <ChevronDownIcon
-                  className={`w-3 h-3 transition-transform ${
-                    showRangePopover ? "rotate-180" : ""
+              <div className="group">
+                <button
+                  onClick={() => !hasFlagFilter && setShowRangePopover(!showRangePopover)}
+                  disabled={hasFlagFilter}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    hasFlagFilter
+                      ? "opacity-50 cursor-not-allowed bg-gray-50"
+                      : "hover:bg-gray-100"
                   }`}
-                />
-              </button>
+                  style={{ color: "#374151" }}
+                >
+                  <CalendarIcon className={`w-4 h-4 ${hasFlagFilter ? "text-gray-400" : "text-blue-500"}`} />
+                  <span>{formatRangeLabel()}</span>
+                  <ChevronDownIcon
+                    className={`w-3 h-3 transition-transform ${
+                      showRangePopover ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {/* Flag 필터 활성화 시 툴팁 */}
+                {hasFlagFilter && (
+                  <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    트리 필터의 기간 아이템을 체크 해제하면 변경할 수 있습니다
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
+                  </div>
+                )}
+              </div>
 
               {/* 기간 설정 팝오버 */}
-              {showRangePopover && (
+              {showRangePopover && !hasFlagFilter && (
                 <RangePopover
                   rangeMonths={rangeMonths}
                   rangeStart={rangeStart}

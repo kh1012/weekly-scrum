@@ -322,6 +322,7 @@ export const DraftGanttView = forwardRef<
   const selectedFlagId = useDraftStore((s) => s.selectedFlagId);
   const selectFlag = useDraftStore((s) => s.selectFlag);
   const setFilters = useDraftStore((s) => s.setFilters);
+  const filterFlagIds = useDraftStore((s) => s.ui.filters.flagIds);
   const expandToLevel = useDraftStore((s) => s.expandToLevel);
   const expandedNodes = useDraftStore((s) => s.ui.expandedNodes);
   const setExpandedNodes = useDraftStore((s) => s.setExpandedNodes);
@@ -390,7 +391,6 @@ export const DraftGanttView = forwardRef<
   const getDeletedFlags = useDraftStore((s) => s.getDeletedFlags);
   const clearFlagDirtyFlags = useDraftStore((s) => s.clearFlagDirtyFlags);
   const hasFlagChanges = useDraftStore((s) => s.hasFlagChanges());
-  const fetchFlags = useDraftStore((s) => s.fetchFlags);
 
   // 저장 큐 Hook (Toast 기반 저장 진행 표시)
   const { requestSave, isSaving } = useSaveQueue({
@@ -402,7 +402,6 @@ export const DraftGanttView = forwardRef<
     getDeletedFlags,
     clearDirtyFlags,
     clearFlagDirtyFlags,
-    fetchFlags,
   });
 
   const {
@@ -460,6 +459,64 @@ export const DraftGanttView = forwardRef<
     () => calculateRange(3).start,
   );
   const [rangeEnd, setRangeEnd] = useState<Date>(() => calculateRange(3).end);
+
+  // Flag 필터가 활성화된 경우, Flag의 날짜 범위로 기간 제한
+  const hasFlagFilter = filterFlagIds && filterFlagIds.length > 0;
+  const { effectiveRangeStart, effectiveRangeEnd, flagFilterDateRange } = useMemo(() => {
+    if (!hasFlagFilter) {
+      return {
+        effectiveRangeStart: rangeStart,
+        effectiveRangeEnd: rangeEnd,
+        flagFilterDateRange: null,
+      };
+    }
+
+    // 선택된 Flag들의 날짜 범위 계산
+    const selectedFlags = flags.filter(
+      (f) => filterFlagIds.includes(f.clientId) && !f.deleted
+    );
+
+    if (selectedFlags.length === 0) {
+      return {
+        effectiveRangeStart: rangeStart,
+        effectiveRangeEnd: rangeEnd,
+        flagFilterDateRange: null,
+      };
+    }
+
+    // 모든 선택된 Flag의 최소 시작일과 최대 종료일 계산
+    let minStart: Date | null = null;
+    let maxEnd: Date | null = null;
+
+    for (const flag of selectedFlags) {
+      const start = new Date(flag.startDate);
+      const end = new Date(flag.endDate);
+
+      if (!minStart || start < minStart) {
+        minStart = start;
+      }
+      if (!maxEnd || end > maxEnd) {
+        maxEnd = end;
+      }
+    }
+
+    if (!minStart || !maxEnd) {
+      return {
+        effectiveRangeStart: rangeStart,
+        effectiveRangeEnd: rangeEnd,
+        flagFilterDateRange: null,
+      };
+    }
+
+    return {
+      effectiveRangeStart: minStart,
+      effectiveRangeEnd: maxEnd,
+      flagFilterDateRange: {
+        start: minStart,
+        end: maxEnd,
+      },
+    };
+  }, [hasFlagFilter, filterFlagIds, flags, rangeStart, rangeEnd]);
 
   // onAction 핸들러: extendLockIfNeeded + closeTreeContextMenu
   const handleOnAction = useCallback(
@@ -1237,10 +1294,11 @@ export const DraftGanttView = forwardRef<
           dragInfo={dragDateInfo}
           // 기간 범위 props
           rangeMonths={rangeMonths}
-          onRangeMonthsChange={setRangeMonths}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          onCustomRangeChange={(start, end) => {
+          onRangeMonthsChange={hasFlagFilter ? undefined : setRangeMonths}
+          rangeStart={effectiveRangeStart}
+          rangeEnd={effectiveRangeEnd}
+          hasFlagFilter={hasFlagFilter}
+          onCustomRangeChange={hasFlagFilter ? undefined : (start, end) => {
             setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
             setRangeStart(start);
             setRangeEnd(end);
@@ -1420,8 +1478,8 @@ export const DraftGanttView = forwardRef<
                 }}
                 showAddRowModal={showAddRowModal}
                 onShowAddRowModal={setShowAddRowModal}
-                rangeStart={rangeStart}
-                rangeEnd={rangeEnd}
+                rangeStart={effectiveRangeStart}
+                rangeEnd={effectiveRangeEnd}
                 workspaceId={workspaceId}
                 timelineScrollbarHeight={timelineScrollbarHeight}
                 highlightedRowId={highlightedRowId}
@@ -1443,8 +1501,8 @@ export const DraftGanttView = forwardRef<
             }}
             showAddRowModal={showAddRowModal}
             onShowAddRowModal={setShowAddRowModal}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
+            rangeStart={effectiveRangeStart}
+            rangeEnd={effectiveRangeEnd}
             workspaceId={workspaceId}
             scrollTop={commonScrollTop}
             onScroll={setCommonScrollTop}
@@ -1455,8 +1513,8 @@ export const DraftGanttView = forwardRef<
 
         {/* 우측 Timeline */}
         <DraftTimeline
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
+          rangeStart={effectiveRangeStart}
+          rangeEnd={effectiveRangeEnd}
           isEditing={isEditing}
           isAdmin={true}
           readOnly={readOnly}
@@ -1484,10 +1542,11 @@ export const DraftGanttView = forwardRef<
         canEdit={canEdit}
         readOnly={readOnly}
         rangeMonths={rangeMonths}
-        rangeStart={rangeStart}
-        rangeEnd={rangeEnd}
-        onRangeMonthsChange={setRangeMonths}
-        onCustomRangeChange={handleCustomRangeChange}
+        rangeStart={effectiveRangeStart}
+        rangeEnd={effectiveRangeEnd}
+        onRangeMonthsChange={hasFlagFilter ? undefined : setRangeMonths}
+        onCustomRangeChange={hasFlagFilter ? undefined : handleCustomRangeChange}
+        hasFlagFilter={hasFlagFilter}
       />
 
       {/* Help Modal */}
