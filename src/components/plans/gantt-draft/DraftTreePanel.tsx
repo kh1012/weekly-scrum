@@ -856,6 +856,39 @@ export const DraftTreePanel = forwardRef<
     return [...new Set(filteredRows.map((r) => r.feature))].sort();
   }, [allRows, filters.projects, filters.modules, allFeatures]);
 
+  // 로컬 필터 상태에 따라 사용 가능한 모듈 목록 (팝오버 내부용)
+  const localAvailableModules = useMemo(() => {
+    if (localFilterProjects.length === 0) {
+      return allModules; // 프로젝트 선택 없으면 모든 모듈 사용 가능
+    }
+    return [
+      ...new Set(
+        allRows
+          .filter((r) => localFilterProjects.includes(r.project))
+          .map((r) => r.module)
+      ),
+    ].sort();
+  }, [allRows, localFilterProjects, allModules]);
+
+  // 로컬 필터 상태에 따라 사용 가능한 기능 목록 (팝오버 내부용)
+  const localAvailableFeatures = useMemo(() => {
+    if (localFilterModules.length === 0 && localFilterProjects.length === 0) {
+      return allFeatures; // 아무것도 선택 안됐으면 모든 기능 사용 가능
+    }
+    let filteredRows = allRows;
+    if (localFilterProjects.length > 0) {
+      filteredRows = filteredRows.filter((r) =>
+        localFilterProjects.includes(r.project)
+      );
+    }
+    if (localFilterModules.length > 0) {
+      filteredRows = filteredRows.filter((r) =>
+        localFilterModules.includes(r.module)
+      );
+    }
+    return [...new Set(filteredRows.map((r) => r.feature))].sort();
+  }, [allRows, localFilterProjects, localFilterModules, allFeatures]);
+
   // 통합 필터 항목 목록 (프로젝트, 모듈, 기능)
   type FilterItemType = "project" | "module" | "feature";
   type FilterItem = {
@@ -872,25 +905,25 @@ export const DraftTreePanel = forwardRef<
       items.push({
         type: "project",
         name: project,
-        isAvailable: true,
+        isAvailable: true, // 프로젝트는 항상 선택 가능
       });
     });
 
-    // 모듈 항목
+    // 모듈 항목 - 로컬 필터 상태 기반으로 비활성화 결정
     allModules.forEach((module) => {
       items.push({
         type: "module",
         name: module,
-        isAvailable: availableModules.includes(module),
+        isAvailable: localAvailableModules.includes(module),
       });
     });
 
-    // 기능 항목
+    // 기능 항목 - 로컬 필터 상태 기반으로 비활성화 결정
     allFeatures.forEach((feature) => {
       items.push({
         type: "feature",
         name: feature,
-        isAvailable: availableFeatures.includes(feature),
+        isAvailable: localAvailableFeatures.includes(feature),
       });
     });
 
@@ -899,8 +932,8 @@ export const DraftTreePanel = forwardRef<
     allProjects,
     allModules,
     allFeatures,
-    availableModules,
-    availableFeatures,
+    localAvailableModules,
+    localAvailableFeatures,
   ]);
 
   // 검색어로 필터링된 항목 목록 (debounced 값 사용)
