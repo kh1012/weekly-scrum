@@ -17,7 +17,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useDraftStore } from "./store";
 import { TreePanelSkeleton } from "./GanttSkeleton";
@@ -104,6 +104,7 @@ export const DraftTreePanel = forwardRef<
 ) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   // FlagDocPanel 상태
   const [showFlagDoc, setShowFlagDoc] = useState(false);
@@ -177,9 +178,22 @@ export const DraftTreePanel = forwardRef<
   const setFilters = useDraftStore((s) => s.setFilters);
   const resetFiltersStore = useDraftStore((s) => s.resetFilters);
 
-  // resetFilters 래퍼: URL도 함께 초기화
+  // resetFilters 래퍼: URL + 로컬 스토리지도 함께 초기화
   const resetFilters = useCallback(() => {
     resetFiltersStore();
+    
+    // 로컬 스토리지의 필터 데이터도 삭제 (useGanttQueryPersistence와 동기화)
+    // pathname에서 storageKey 생성: /works/plans/gantt → works-plans-gantt
+    if (typeof window !== "undefined") {
+      const storageKey = pathname.replace(/^\//, "").replace(/\//g, "-");
+      const fullStorageKey = `gantt-query:${storageKey}`;
+      try {
+        localStorage.removeItem(fullStorageKey);
+      } catch {
+        // localStorage 접근 실패 무시
+      }
+    }
+    
     const params = new URLSearchParams(searchParams.toString());
     params.delete("projects");
     params.delete("modules");
@@ -187,7 +201,7 @@ export const DraftTreePanel = forwardRef<
     params.delete("search");
     params.delete("flagIds");
     router.replace(`?${params.toString()}`, { scroll: false });
-  }, [resetFiltersStore, router, searchParams]);
+  }, [resetFiltersStore, router, searchParams, pathname]);
 
   // URL queryString 업데이트 함수
   const updateURLFilters = useCallback(
