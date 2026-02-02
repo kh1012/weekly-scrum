@@ -90,12 +90,15 @@ export function TimelineNodeFeature({
   const isRowSelected = row.rowId === selectedRowId;
   const isFocused = row.rowId === highlightedRowId;
 
+  // 접힌 상태에서는 드래그 생성 비활성화
+  const isCollapsed = node.isExpanded === false;
+
   return (
     <div
       key={node.id}
-      className={`absolute left-0 cursor-crosshair ${
-        isFocused ? "animate-pulse-subtle" : ""
-      }`}
+      className={`absolute left-0 ${
+        isCollapsed ? "cursor-default" : "cursor-crosshair"
+      } ${isFocused ? "animate-pulse-subtle" : ""}`}
       style={{
         top,
         height,
@@ -115,6 +118,9 @@ export function TimelineNodeFeature({
           : "none",
       }}
       onMouseDown={(e) => {
+        // 접힌 상태에서는 드래그 생성 비활성화
+        if (node.isExpanded === false) return;
+        
         // 클릭 위치에서 laneIndex 계산 (merge된 레인 지원)
         const rect = e.currentTarget.getBoundingClientRect();
         const relativeY = e.clientY - rect.top;
@@ -122,6 +128,12 @@ export function TimelineNodeFeature({
         onMouseDown(e, row.rowId, row, laneIndex);
       }}
       onMouseMove={(e) => {
+        // 접힌 상태에서는 호버 프리뷰 비활성화
+        if (node.isExpanded === false) {
+          setHoverInfo(null);
+          return;
+        }
+        
         // 편집 모드이고, 드래그 중이 아니고, 휠 클릭 스크롤 중이 아닐 때만 호버 프리뷰 표시
         if (
           isEditing &&

@@ -121,20 +121,25 @@ export function useGanttPersistence({
   useEffect(() => {
     if (isInitializedRef.current) return;
 
-    // URL에서 직접 파싱 (short link는 서버에서 리다이렉트되므로 여기서는 일반 쿼리만 처리)
-    const urlState = parseQueryParams(searchParams);
+    // 브라우저 환경에서만 실행
+    if (typeof window === "undefined") return;
 
-    // 3. localStorage에서 로드
+    // window.location.search를 직접 사용하여 URL 파라미터 파싱
+    // Next.js useSearchParams는 초기 렌더링 시 비어있을 수 있어서 직접 파싱
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const urlState = parseQueryParams(urlSearchParams);
+
+    // localStorage에서 로드
     const storageKey = `${STORAGE_KEY}:${workspaceId}`;
     const storedState = getItem<StoredGanttState>(storageKey);
 
-    // 4. 우선순위: URL > localStorage
+    // 우선순위: URL > localStorage
     const mergedState: Partial<StoredGanttState> = {
       ...(storedState || {}),
       ...urlState, // URL이 우선
     };
 
-    // 5. 상태 적용
+    // 상태 적용
     if (mergedState.expandedNodes && mergedState.expandedNodes.length > 0) {
       onExpandedNodesChange(mergedState.expandedNodes);
     }
@@ -162,7 +167,7 @@ export function useGanttPersistence({
     setTimeout(() => {
       shouldSaveRef.current = true;
     }, 0);
-  }, [workspaceId, router, searchParams, onExpandedNodesChange, onRangeMonthsChange, onRangeStartChange, onRangeEndChange]);
+  }, [workspaceId, onExpandedNodesChange, onRangeMonthsChange, onRangeStartChange, onRangeEndChange]);
 
   // 상태 변경 시 localStorage 저장 및 URL 동기화
   useEffect(() => {

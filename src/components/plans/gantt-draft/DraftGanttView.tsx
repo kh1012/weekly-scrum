@@ -626,11 +626,19 @@ export const DraftGanttView = forwardRef<
   }, [initialPlans, hydrate]);
 
   // 초기 로드 시 트리를 '기능까지 보기' 상태로 펼치기
+  // 단, URL에 expanded 파라미터가 있으면 URL 상태 우선 (덮어쓰지 않음)
   const hasInitializedExpandRef = useRef(false);
   useEffect(() => {
     if (rows.length > 0 && !hasInitializedExpandRef.current) {
       hasInitializedExpandRef.current = true;
-      expandToLevel(1);
+      
+      // URL에 expanded 파라미터가 있으면 초기 펼침 로직 건너뛰기
+      const hasExpandedInUrl = typeof window !== "undefined" && 
+        new URLSearchParams(window.location.search).has("expanded");
+      
+      if (!hasExpandedInUrl) {
+        expandToLevel(1);
+      }
     }
   }, [rows.length, expandToLevel]);
 
