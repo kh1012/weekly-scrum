@@ -72,9 +72,12 @@ interface DraftTreePanelProps {
   /** AddRowModal 표시 상태 (상위에서 관리) */
   showAddRowModal?: boolean;
   onShowAddRowModal?: (show: boolean) => void;
-  /** 타임라인 표시 범위 (개수 필터링용) */
+  /** 타임라인 표시 범위 (개수 필터링용) - Flag 필터 적용 시 effectiveRange */
   rangeStart?: Date;
   rangeEnd?: Date;
+  /** 원래 타임라인 표시 범위 (Flag 필터 팝오버용 - Flag 필터 적용 전 기간) */
+  originalRangeStart?: Date;
+  originalRangeEnd?: Date;
   /** 워크스페이스 ID (FlagDocPanel용) */
   workspaceId?: string;
   /** 타임라인 가로 스크롤바 높이 (하단 정렬용) */
@@ -92,6 +95,8 @@ export const DraftTreePanel = forwardRef<
     filterOptions,
     rangeStart,
     rangeEnd,
+    originalRangeStart,
+    originalRangeEnd,
     onScroll: externalOnScroll,
     scrollTop: externalScrollTop,
     showAddRowModal: externalShowAddRowModal,
@@ -572,12 +577,17 @@ export const DraftTreePanel = forwardRef<
   }, [flags]);
 
   // 범위 내 Range Flags (필터 팝오버에 표시될 Flag 목록)
+  // Flag 필터 팝오버에서는 원래 기간(originalRangeStart/End)을 사용
+  // FLAGS는 상호 상속관계가 없으므로 항상 원래 기간 내의 모든 Flag를 표시
   const visibleRangeFlags = useMemo(() => {
-    if (!rangeStart || !rangeEnd) return rangeFlags;
+    // Flag 필터 팝오버용: 원래 기간 기준으로 필터링
+    const startDate = originalRangeStart || rangeStart;
+    const endDate = originalRangeEnd || rangeEnd;
+    if (!startDate || !endDate) return rangeFlags;
     return rangeFlags.filter((f) =>
-      isDateRangeOverlapping(f.startDate, f.endDate, rangeStart, rangeEnd)
+      isDateRangeOverlapping(f.startDate, f.endDate, startDate, endDate)
     );
-  }, [rangeFlags, rangeStart, rangeEnd]);
+  }, [rangeFlags, originalRangeStart, originalRangeEnd, rangeStart, rangeEnd]);
 
   // 기간 필터용 타임스탬프 (안정적인 의존성을 위해)
   const rangeStartTime = rangeStart?.getTime();
