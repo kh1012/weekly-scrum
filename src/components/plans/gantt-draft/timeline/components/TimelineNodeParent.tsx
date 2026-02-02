@@ -15,6 +15,7 @@ interface TimelineNodeParentProps {
   height: number;
   totalWidth: number;
   rangeStart: Date;
+  rangeEnd: Date;
   rows: DraftRow[];
   activeBars: DraftBarType[];
   filters: {
@@ -31,6 +32,7 @@ export function TimelineNodeParent({
   height,
   totalWidth,
   rangeStart,
+  rangeEnd,
   rows,
   activeBars,
   filters,
@@ -52,11 +54,16 @@ export function TimelineNodeParent({
   // project/module 노드는 하위 bars의 기간 범위를 표시 (접혀도 유지)
   const dateRange = getNodeDateRange(node, rows, activeBars);
 
-  // rangeStart를 자정으로 정규화
+  // rangeStart, rangeEnd를 자정으로 정규화
   const rangeStartMidnight = new Date(
     rangeStart.getFullYear(),
     rangeStart.getMonth(),
     rangeStart.getDate()
+  );
+  const rangeEndMidnight = new Date(
+    rangeEnd.getFullYear(),
+    rangeEnd.getMonth(),
+    rangeEnd.getDate()
   );
 
   let rangeBarLeft = 0;
@@ -70,10 +77,16 @@ export function TimelineNodeParent({
       (minStartDate.getTime() - rangeStartMidnight.getTime()) /
         (1000 * 60 * 60 * 24)
     );
-    const endOffset = Math.round(
+    // endOffset을 rangeEnd를 초과하지 않도록 제한 (Flag 필터 적용 시 블록이 영역을 벗어나지 않도록)
+    const rawEndOffset = Math.round(
       (maxEndDate.getTime() - rangeStartMidnight.getTime()) /
         (1000 * 60 * 60 * 24)
     );
+    const maxEndOffset = Math.round(
+      (rangeEndMidnight.getTime() - rangeStartMidnight.getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    const endOffset = Math.min(rawEndOffset, maxEndOffset);
 
     rangeBarLeft = startOffset * DAY_WIDTH;
     rangeBarWidth = (endOffset - startOffset + 1) * DAY_WIDTH;

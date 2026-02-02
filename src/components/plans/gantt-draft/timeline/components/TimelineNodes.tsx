@@ -108,6 +108,7 @@ export function TimelineNodes({
               height={height}
               totalWidth={totalWidth}
               rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               flags={flags}
               readOnly={readOnly}
               onModuleSummaryClick={(node, rect) => {
@@ -137,6 +138,7 @@ export function TimelineNodes({
               height={height}
               totalWidth={totalWidth}
               rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               rows={rows}
               activeBars={activeBars}
               filters={{
