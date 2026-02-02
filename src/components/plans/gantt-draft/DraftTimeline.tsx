@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import { useDraftStore } from "./store";
 import { FlagLane } from "./FlagLane";
 import { packFlagsIntoLanes } from "./flagLayout";
@@ -108,15 +108,21 @@ export function DraftTimeline({
   const highlightDateRange = useDraftStore((s) => s.ui.highlightDateRange);
   const setHighlightDateRange = useDraftStore((s) => s.setHighlightDateRange);
 
+  // Range Flags (Point Flag 제외 - 기간 필터용)
+  const rangeFlags = useMemo(() => {
+    return flags.filter((f) => !f.deleted && f.startDate !== f.endDate);
+  }, [flags]);
+
   // Data calculations
   const data = useTimelineData({
     rangeStart,
     rangeEnd,
-        allRows,
+    allRows,
     allBars,
     activeBars: state.dragCreate?.isActive ? [] : allBars.filter((b) => !b.deleted),
     searchQuery,
     filters,
+    rangeFlags,
     filterIndex: filterIndex || null,
     expandedNodesArray,
     viewMode,

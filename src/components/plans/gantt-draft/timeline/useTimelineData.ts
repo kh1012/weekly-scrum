@@ -12,10 +12,11 @@ import {
   LANE_HEIGHT,
 } from "../laneLayout";
 import { filterBarsWithIndex, filterRowsWithIndex } from "../filterCache";
-import type { DraftRow, DraftBar as DraftBarType } from "../types";
+import type { DraftRow, DraftBar as DraftBarType, DraftFlag } from "../types";
 import type { FilterIndex } from "../filterCache";
 import { DAY_WIDTH } from "./timelineTypes";
 import { getFeatureFlags } from "../featureFlags";
+import { isDateRangeOverlapping } from "../utils/flagUtils";
 
 interface UseTimelineDataProps {
   rangeStart: Date;
@@ -30,7 +31,10 @@ interface UseTimelineDataProps {
     projects: string[];
     modules: string[];
     features: string[];
+    flagIds?: string[];
   };
+  /** Range Flags (기간 필터용) */
+  rangeFlags?: DraftFlag[];
   filterIndex: FilterIndex | null;
   expandedNodesArray: string[];
   viewMode: "detailed" | "summarized";
@@ -44,6 +48,7 @@ export function useTimelineData({
   activeBars,
   searchQuery,
   filters,
+  rangeFlags,
   filterIndex,
   expandedNodesArray,
   viewMode,
@@ -56,38 +61,59 @@ export function useTimelineData({
 
   // 활성 bars (삭제되지 않은 것들 + 필터 적용)
   const filteredActiveBars = useMemo(() => {
+    let bars: typeof allBars;
+
     if (filterIndex) {
       // 인덱스를 사용한 고속 필터링
-      return filterBarsWithIndex(allBars, filterIndex, {
+      bars = filterBarsWithIndex(allBars, filterIndex, {
         stages: filters.stages || [],
         assignees: filters.assignees || [],
       });
+    } else {
+      // 폴백: 기존 방식
+      bars = allBars.filter((b) => !b.deleted);
+
+      // 스테이지 필터 적용
+      if (filters.stages && filters.stages.length > 0) {
+        bars = bars.filter((b) => filters.stages.includes(b.stage));
+      }
+
+      // 담당자 필터 적용
+      if (filters.assignees && filters.assignees.length > 0) {
+        bars = bars.filter((b) => {
+          // Snapshot인 경우: authorId로 필터링
+          if (b.isSnapshot) {
+            return b.authorId && filters.assignees.includes(b.authorId);
+          }
+          // Plan인 경우: assignees로 필터링
+          return b.assignees.some((assignee) =>
+            filters.assignees.includes(assignee.userId)
+          );
+        });
+      }
     }
 
-    // 폴백: 기존 방식
-    let bars = allBars.filter((b) => !b.deleted);
-
-    // 스테이지 필터 적용
-    if (filters.stages && filters.stages.length > 0) {
-      bars = bars.filter((b) => filters.stages.includes(b.stage));
-    }
-
-    // 담당자 필터 적용
-    if (filters.assignees && filters.assignees.length > 0) {
-      bars = bars.filter((b) => {
-        // Snapshot인 경우: authorId로 필터링
-        if (b.isSnapshot) {
-          return b.authorId && filters.assignees.includes(b.authorId);
-        }
-        // Plan인 경우: assignees로 필터링
-        return b.assignees.some((assignee) =>
-          filters.assignees.includes(assignee.userId)
+    // Flag 기간 필터 적용 (Range Flag만 대상)
+    if (filters.flagIds && filters.flagIds.length > 0 && rangeFlags) {
+      const selectedFlags = rangeFlags.filter((f) =>
+        filters.flagIds!.includes(f.clientId)
+      );
+      if (selectedFlags.length > 0) {
+        bars = bars.filter((bar) =>
+          selectedFlags.some((flag) =>
+            isDateRangeOverlapping(
+              bar.startDate,
+              bar.endDate,
+              new Date(flag.startDate),
+              new Date(flag.endDate)
+            )
+          )
         );
-      });
+      }
     }
 
     return bars;
-  }, [allBars, filterIndex, filters.stages, filters.assignees]);
+  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags]);
 
   // activeBars를 Set으로 변환 (빠른 조회용)
   const activeBarsSet = useMemo(() => {
