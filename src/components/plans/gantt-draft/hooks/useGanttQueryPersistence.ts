@@ -183,6 +183,7 @@ export function useGanttQueryPersistence({
     // 현재 URL에 persisted params가 없으면 로컬 스토리지에서 복원
     if (!hasCurrentParams) {
       const rawStoredParams = getStoredParams();
+      
       if (rawStoredParams && Object.keys(rawStoredParams).length > 0) {
         // 기존 URL 파라미터 유지 (expanded, rangeMonths 등은 useGanttPersistence에서 관리)
         const newParams = new URLSearchParams(currentParams.toString());
@@ -213,7 +214,7 @@ export function useGanttQueryPersistence({
     lastRestoredPathRef.current = pathname;
     canSaveRef.current = true;
     setIsRestored(true);
-  }, [enabled, searchParams, pathname, router, getStoredParams]);
+  }, [enabled, searchParams, pathname, router, getStoredParams, fullStorageKey]);
 
   // 쿼리 파라미터 변경 시 저장
   useEffect(() => {

@@ -1062,7 +1062,7 @@ export const DraftGanttView = forwardRef<
 
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        if (isEditing && hasUnsavedChanges) {
+        if (isEditing && (hasUnsavedChanges || hasFlagChanges)) {
           handleCommit();
         }
         return;
@@ -1114,6 +1114,7 @@ export const DraftGanttView = forwardRef<
   }, [
     isEditing,
     hasUnsavedChanges,
+    hasFlagChanges,
     handleCommit,
     handleStartEditing,
     handleStopEditing,
@@ -1135,7 +1136,7 @@ export const DraftGanttView = forwardRef<
         }).catch(() => {});
       }
 
-      if (hasUnsavedChanges) {
+      if (hasUnsavedChanges || hasFlagChanges) {
         e.preventDefault();
         e.returnValue = "저장되지 않은 변경 사항이 있습니다.";
         return e.returnValue;
@@ -1160,7 +1161,7 @@ export const DraftGanttView = forwardRef<
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("pagehide", handlePageHide);
     };
-  }, [hasUnsavedChanges, isEditing, workspaceId]);
+  }, [hasUnsavedChanges, hasFlagChanges, isEditing, workspaceId]);
 
   if (isLoading) {
     return (

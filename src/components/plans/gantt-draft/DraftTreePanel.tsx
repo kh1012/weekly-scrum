@@ -1030,9 +1030,7 @@ export const DraftTreePanel = forwardRef<
           if (currentIndex > 0) {
             const prevNode = nodePositions[currentIndex - 1].node;
             setSelectedNodeId(prevNode.id);
-            if (prevNode.row) {
-              selectRow(prevNode.row.rowId);
-            }
+            selectRow(prevNode.row?.rowId ?? prevNode.id);
             // 스크롤 조정
             const prevTop = nodePositions[currentIndex - 1].top;
             if (scrollContainerRef.current) {
@@ -1045,9 +1043,7 @@ export const DraftTreePanel = forwardRef<
             // 선택된 노드가 없으면 첫 번째 노드 선택
             const firstNode = nodePositions[0].node;
             setSelectedNodeId(firstNode.id);
-            if (firstNode.row) {
-              selectRow(firstNode.row.rowId);
-            }
+            selectRow(firstNode.row?.rowId ?? firstNode.id);
           }
           break;
         }
@@ -1057,9 +1053,7 @@ export const DraftTreePanel = forwardRef<
             const nextIndex = currentIndex === -1 ? 0 : currentIndex + 1;
             const nextNode = nodePositions[nextIndex].node;
             setSelectedNodeId(nextNode.id);
-            if (nextNode.row) {
-              selectRow(nextNode.row.rowId);
-            }
+            selectRow(nextNode.row?.rowId ?? nextNode.id);
             // 스크롤 조정
             const nextPos = nodePositions[nextIndex];
             if (scrollContainerRef.current) {
@@ -1111,9 +1105,7 @@ export const DraftTreePanel = forwardRef<
                   );
                   if (parentPos) {
                     setSelectedNodeId(parentNodeId);
-                    if (parentPos.node.row) {
-                      selectRow(parentPos.node.row.rowId);
-                    }
+                    selectRow(parentPos.node.row?.rowId ?? parentNodeId);
                     // 스크롤 조정
                     if (scrollContainerRef.current) {
                       const containerTop = scrollContainerRef.current.scrollTop;
@@ -1515,10 +1507,9 @@ export const DraftTreePanel = forwardRef<
     // 좌클릭으로 노드 선택
     const handleNodeSelect = () => {
       setSelectedNodeId(node.id);
-      // feature인 경우 기존 selectRow도 호출 (타임라인 연동)
-      if (node.row) {
-        selectRow(node.row.rowId);
-      }
+      // 모든 노드 타입에서 selectRow 호출 (타임라인 연동)
+      // feature: node.row.rowId, project/module: node.id
+      selectRow(node.row?.rowId ?? node.id);
     };
 
     // 강조 버튼 클릭 핸들러

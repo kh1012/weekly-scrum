@@ -141,6 +141,8 @@ export function TimelineNodes({
                 features: filters.features,
                 modules: filters.modules,
               }}
+              selectedRowId={selectedRowId}
+              highlightedRowId={highlightedRowId}
             />
           );
         }

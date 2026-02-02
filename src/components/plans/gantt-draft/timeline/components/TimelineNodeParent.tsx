@@ -21,6 +21,8 @@ interface TimelineNodeParentProps {
     features: string[];
     modules: string[];
   };
+  selectedRowId?: string;
+  highlightedRowId?: string | null;
 }
 
 export function TimelineNodeParent({
@@ -32,6 +34,8 @@ export function TimelineNodeParent({
   rows,
   activeBars,
   filters,
+  selectedRowId,
+  highlightedRowId,
 }: TimelineNodeParentProps) {
   // 기능 필터가 적용된 경우: 프로젝트/모듈 행 숨김
   // 모듈 필터가 적용된 경우: 프로젝트 행 숨김
@@ -40,6 +44,10 @@ export function TimelineNodeParent({
 
   if (hasFeatureFilter) return null;
   if (hasModuleFilter && node.type === "project") return null;
+
+  // 선택/포커스 상태 확인
+  const isSelected = selectedRowId === node.id;
+  const isFocused = highlightedRowId === node.id;
 
   // project/module 노드는 하위 bars의 기간 범위를 표시 (접혀도 유지)
   const dateRange = getNodeDateRange(node, rows, activeBars);
@@ -71,20 +79,32 @@ export function TimelineNodeParent({
     rangeBarWidth = (endOffset - startOffset + 1) * DAY_WIDTH;
   }
 
+  // 배경색 결정 (선택/포커스 상태 우선)
+  const getBackground = () => {
+    if (isFocused) {
+      return "linear-gradient(90deg, rgba(251, 146, 60, 0.2) 0%, rgba(251, 146, 60, 0.1) 100%)";
+    }
+    if (isSelected) {
+      return "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)";
+    }
+    if (node.type === "project") {
+      return "linear-gradient(90deg, rgba(251, 191, 36, 0.06) 0%, rgba(251, 191, 36, 0.02) 100%)";
+    }
+    if (node.type === "module") {
+      return "linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(139, 92, 246, 0.01) 100%)";
+    }
+    return "transparent";
+  };
+
   return (
     <div
       key={node.id}
-      className="absolute left-0"
+      className="absolute left-0 transition-colors duration-150"
       style={{
         top,
         height,
         width: totalWidth,
-        background:
-          node.type === "project"
-            ? "linear-gradient(90deg, rgba(251, 191, 36, 0.06) 0%, rgba(251, 191, 36, 0.02) 100%)"
-            : node.type === "module"
-            ? "linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(139, 92, 246, 0.01) 100%)"
-            : "transparent",
+        background: getBackground(),
       }}
     >
       {/* 하위 feature들의 기간 범위 표시 - Airbnb 스타일 */}

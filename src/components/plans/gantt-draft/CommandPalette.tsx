@@ -86,20 +86,20 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
-  
+
   // 커스텀 범위 입력 상태
   const currentYear = new Date().getFullYear();
   const [customStartYear, setCustomStartYear] = useState(
-    rangeStart ? rangeStart.getFullYear() : currentYear
+    rangeStart ? rangeStart.getFullYear() : currentYear,
   );
   const [customStartMonth, setCustomStartMonth] = useState(
-    rangeStart ? rangeStart.getMonth() + 1 : new Date().getMonth() + 1
+    rangeStart ? rangeStart.getMonth() + 1 : new Date().getMonth() + 1,
   );
   const [customEndYear, setCustomEndYear] = useState(
-    rangeEnd ? rangeEnd.getFullYear() : currentYear
+    rangeEnd ? rangeEnd.getFullYear() : currentYear,
   );
   const [customEndMonth, setCustomEndMonth] = useState(
-    rangeEnd ? rangeEnd.getMonth() + 1 : new Date().getMonth() + 1
+    rangeEnd ? rangeEnd.getMonth() + 1 : new Date().getMonth() + 1,
   );
 
   const isMac = useIsMac();
@@ -118,7 +118,7 @@ export function CommandPalette({
         .replace(/↵/g, "Enter")
         .replace(/\+$/, "");
     },
-    [isMac]
+    [isMac],
   );
 
   const canUndo = useDraftStore((s) => s.canUndo());
@@ -330,7 +330,7 @@ export function CommandPalette({
       onOpenHelp,
       rangeMonths,
       onRangeMonthsChange,
-    ]
+    ],
   );
 
   // 읽기 전용 모드에서 숨길 명령 ID 목록
@@ -373,7 +373,7 @@ export function CommandPalette({
     return commands.filter(
       (cmd) =>
         cmd.label.toLowerCase().includes(q) ||
-        cmd.category.toLowerCase().includes(q)
+        cmd.category.toLowerCase().includes(q),
     );
   }, [commands, query]);
 
@@ -416,7 +416,7 @@ export function CommandPalette({
         }
       }
     },
-    [loadingCommandId, onClose]
+    [loadingCommandId, onClose],
   );
 
   // 열릴 때 초기화
@@ -465,7 +465,13 @@ export function CommandPalette({
         }
       }
     },
-    [filteredCommands, selectedIndex, onClose, loadingCommandId, executeCommand]
+    [
+      filteredCommands,
+      selectedIndex,
+      onClose,
+      loadingCommandId,
+      executeCommand,
+    ],
   );
 
   // 검색어 변경 시 인덱스 리셋
@@ -535,7 +541,10 @@ export function CommandPalette({
         {showCustomRange ? (
           <div className="p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium" style={{ color: "var(--notion-text)" }}>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--notion-text)" }}
+              >
                 기간 직접 선택
               </span>
               <button
@@ -549,7 +558,10 @@ export function CommandPalette({
 
             {/* 시작월 */}
             <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: "var(--notion-text-muted)" }}>
+              <label
+                className="block text-xs font-medium mb-2"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
                 시작월
               </label>
               <div className="flex gap-2">
@@ -557,20 +569,37 @@ export function CommandPalette({
                   value={customStartYear}
                   onChange={(e) => setCustomStartYear(Number(e.target.value))}
                   className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                  style={{
+                    background: "var(--notion-bg)",
+                    borderColor: "var(--notion-border)",
+                    color: "var(--notion-text)",
+                  }}
                 >
-                  {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map((y) => (
-                    <option key={y} value={y}>{y}년</option>
+                  {[
+                    currentYear - 1,
+                    currentYear,
+                    currentYear + 1,
+                    currentYear + 2,
+                  ].map((y) => (
+                    <option key={y} value={y}>
+                      {y}년
+                    </option>
                   ))}
                 </select>
                 <select
                   value={customStartMonth}
                   onChange={(e) => setCustomStartMonth(Number(e.target.value))}
                   className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                  style={{
+                    background: "var(--notion-bg)",
+                    borderColor: "var(--notion-border)",
+                    color: "var(--notion-text)",
+                  }}
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>{m}월</option>
+                    <option key={m} value={m}>
+                      {m}월
+                    </option>
                   ))}
                 </select>
               </div>
@@ -578,7 +607,10 @@ export function CommandPalette({
 
             {/* 종료월 */}
             <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: "var(--notion-text-muted)" }}>
+              <label
+                className="block text-xs font-medium mb-2"
+                style={{ color: "var(--notion-text-muted)" }}
+              >
                 종료월
               </label>
               <div className="flex gap-2">
@@ -586,20 +618,37 @@ export function CommandPalette({
                   value={customEndYear}
                   onChange={(e) => setCustomEndYear(Number(e.target.value))}
                   className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                  style={{
+                    background: "var(--notion-bg)",
+                    borderColor: "var(--notion-border)",
+                    color: "var(--notion-text)",
+                  }}
                 >
-                  {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map((y) => (
-                    <option key={y} value={y}>{y}년</option>
+                  {[
+                    currentYear - 1,
+                    currentYear,
+                    currentYear + 1,
+                    currentYear + 2,
+                  ].map((y) => (
+                    <option key={y} value={y}>
+                      {y}년
+                    </option>
                   ))}
                 </select>
                 <select
                   value={customEndMonth}
                   onChange={(e) => setCustomEndMonth(Number(e.target.value))}
                   className="flex-1 px-3 py-2 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ background: "var(--notion-bg)", borderColor: "var(--notion-border)", color: "var(--notion-text)" }}
+                  style={{
+                    background: "var(--notion-bg)",
+                    borderColor: "var(--notion-border)",
+                    color: "var(--notion-text)",
+                  }}
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>{m}월</option>
+                    <option key={m} value={m}>
+                      {m}월
+                    </option>
                   ))}
                 </select>
               </div>
@@ -608,14 +657,20 @@ export function CommandPalette({
             {/* 적용 버튼 */}
             <button
               onClick={() => {
-                const start = new Date(customStartYear, customStartMonth - 1, 1);
+                const start = new Date(
+                  customStartYear,
+                  customStartMonth - 1,
+                  1,
+                );
                 const end = new Date(customEndYear, customEndMonth, 0); // 해당 월의 마지막 날
                 onCustomRangeChange?.(start, end);
                 setShowCustomRange(false);
                 onClose();
               }}
               className="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-md"
-              style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}
+              style={{
+                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+              }}
             >
               ✓ 적용
             </button>
@@ -643,9 +698,7 @@ export function CommandPalette({
                         if (el && idx >= 0) itemRefs.current.set(idx, el);
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
-                        isSelected
-                          ? "bg-blue-500/10"
-                          : "hover:bg-blue-500/10"
+                        isSelected ? "bg-blue-500/10" : "hover:bg-blue-500/10"
                       } ${isLoading ? "cursor-wait opacity-70" : ""}`}
                       style={{ color: "var(--notion-text)" }}
                       onClick={() => executeCommand(cmd)}
@@ -661,7 +714,9 @@ export function CommandPalette({
                       </span>
                       <span className="flex-1 text-sm">{cmd.label}</span>
                       {isLoading && (
-                        <span className="text-xs text-gray-400">처리 중...</span>
+                        <span className="text-xs text-gray-400">
+                          처리 중...
+                        </span>
                       )}
                       {!isLoading && cmd.shortcut && (
                         <span

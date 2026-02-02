@@ -67,16 +67,19 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               className="text-sm leading-relaxed"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              동시 편집으로 인한 충돌을 방지하기 위해, 한 번에 한 명만 편집할 수 있습니다.
-              <strong>&quot;작업 시작&quot;</strong> 버튼을 클릭하면 편집 락을 획득하고,
-              다른 사용자는 읽기 전용으로만 볼 수 있습니다.
-              작업이 끝나면 반드시 <strong>&quot;작업 종료&quot;</strong> 또는 <strong>&quot;저장&quot;</strong>을 해주세요.
+              동시 편집으로 인한 충돌을 방지하기 위해, 한 번에 한 명만 편집할 수
+              있습니다.
+              <strong>&quot;작업 시작&quot;</strong> 버튼을 클릭하면 편집 락을
+              획득하고, 다른 사용자는 읽기 전용으로만 볼 수 있습니다. 작업이
+              끝나면 반드시 <strong>&quot;작업 종료&quot;</strong> 또는{" "}
+              <strong>&quot;저장&quot;</strong>을 해주세요.
             </p>
             <div
               className="mt-2 p-3 rounded-md text-xs"
               style={{ background: "var(--notion-bg-secondary)" }}
             >
-              💡 락은 60초마다 자동 갱신됩니다. 페이지를 떠나면 락이 자동 해제됩니다.
+              💡 락은 60초마다 자동 갱신됩니다. 페이지를 떠나면 락이 자동
+              해제됩니다.
             </div>
           </section>
 
@@ -93,28 +96,53 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               style={{ color: "var(--notion-text-muted)" }}
             >
               <li className="flex gap-2">
-                <span className="font-mono text-blue-500 flex-shrink-0">1.</span>
-                <span><strong>작업 시작</strong> 버튼을 클릭하여 편집 모드로 진입</span>
+                <span className="font-mono text-blue-500 flex-shrink-0">
+                  1.
+                </span>
+                <span>
+                  <strong>작업 시작</strong> 버튼을 클릭하여 편집 모드로 진입
+                </span>
               </li>
               <li className="flex gap-2">
-                <span className="font-mono text-blue-500 flex-shrink-0">2.</span>
-                <span>타임라인에서 <strong>드래그</strong>하여 새 계획 생성</span>
+                <span className="font-mono text-blue-500 flex-shrink-0">
+                  2.
+                </span>
+                <span>
+                  타임라인에서 <strong>드래그</strong>하여 새 계획 생성
+                </span>
               </li>
               <li className="flex gap-2">
-                <span className="font-mono text-blue-500 flex-shrink-0">3.</span>
-                <span>막대를 <strong>클릭</strong>하여 선택, <strong>드래그</strong>로 이동</span>
+                <span className="font-mono text-blue-500 flex-shrink-0">
+                  3.
+                </span>
+                <span>
+                  막대를 <strong>클릭</strong>하여 선택, <strong>드래그</strong>
+                  로 이동
+                </span>
               </li>
               <li className="flex gap-2">
-                <span className="font-mono text-blue-500 flex-shrink-0">4.</span>
-                <span>막대 양 끝을 <strong>드래그</strong>하여 기간 조정</span>
+                <span className="font-mono text-blue-500 flex-shrink-0">
+                  4.
+                </span>
+                <span>
+                  막대 양 끝을 <strong>드래그</strong>하여 기간 조정
+                </span>
               </li>
               <li className="flex gap-2">
-                <span className="font-mono text-blue-500 flex-shrink-0">5.</span>
-                <span><strong>저장</strong> 버튼으로 서버에 반영</span>
+                <span className="font-mono text-blue-500 flex-shrink-0">
+                  5.
+                </span>
+                <span>
+                  <strong>저장</strong> 버튼으로 서버에 반영
+                </span>
               </li>
               <li className="flex gap-2">
-                <span className="font-mono text-blue-500 flex-shrink-0">6.</span>
-                <span><strong>작업 종료</strong>로 편집 모드 종료</span>
+                <span className="font-mono text-blue-500 flex-shrink-0">
+                  6.
+                </span>
+                <span>
+                  <strong>작업 종료</strong>로 편집 모드 종료
+                </span>
               </li>
             </ol>
           </section>
@@ -133,7 +161,10 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               <ShortcutRow keys={["⌘", "⇧", "Enter"]} description="작업 종료" />
               <ShortcutRow keys={["⌘", "S"]} description="저장 (Commit)" />
               <ShortcutRow keys={["⌘", "Z"]} description="실행 취소 (Undo)" />
-              <ShortcutRow keys={["⌘", "⇧", "Z"]} description="다시 실행 (Redo)" />
+              <ShortcutRow
+                keys={["⌘", "⇧", "Z"]}
+                description="다시 실행 (Redo)"
+              />
               <ShortcutRow keys={["⌘", "D"]} description="선택 항목 복제" />
               <ShortcutRow keys={["Delete"]} description="선택 항목 삭제" />
               <ShortcutRow keys={["Esc"]} description="선택 해제 / 모달 닫기" />
@@ -152,15 +183,17 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               className="text-sm leading-relaxed"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              타임라인 영역을 더 넓게 보고 싶을 때, 헤더 우측의 <strong>눈 아이콘 (👁️‍🗨️)</strong> 버튼을 클릭하면
-              GNB와 헤더를 숨길 수 있습니다. 숨김 상태에서는 우측 상단에 Floating 버튼이 나타나며,
+              타임라인 영역을 더 넓게 보고 싶을 때, 헤더 우측의{" "}
+              <strong>눈 아이콘 (👁️‍🗨️)</strong> 버튼을 클릭하면 GNB와 헤더를 숨길
+              수 있습니다. 숨김 상태에서는 우측 상단에 Floating 버튼이 나타나며,
               이를 클릭하면 다시 헤더를 표시할 수 있습니다.
             </p>
             <div
               className="mt-2 p-3 rounded-md text-xs"
               style={{ background: "var(--notion-bg-secondary)" }}
             >
-              💡 임시로 타임라인 작업 영역을 최대화하는 기능입니다. 페이지를 새로고침하면 원래대로 돌아옵니다.
+              💡 임시로 타임라인 작업 영역을 최대화하는 기능입니다. 페이지를
+              새로고침하면 원래대로 돌아옵니다.
             </div>
           </section>
 
@@ -176,8 +209,9 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               className="text-sm leading-relaxed"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              같은 Feature에 여러 계획이 있고 기간이 겹치면, 자동으로 여러 줄(Lane)로 표시됩니다.
-              시작일이 빠른 순서대로, 동일 시작일이면 기간이 긴 순서대로 배치됩니다.
+              같은 Feature에 여러 계획이 있고 기간이 겹치면, 자동으로 여러
+              줄(Lane)로 표시됩니다. 시작일이 빠른 순서대로, 동일 시작일이면
+              기간이 긴 순서대로 배치됩니다.
             </p>
           </section>
 
@@ -193,8 +227,9 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               className="text-sm leading-relaxed"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              좌측 패널 상단의 검색창에서 프로젝트, 모듈, 기능명을 검색할 수 있습니다.
-              &quot;필터&quot; 버튼을 클릭하면 프로젝트/모듈별 체크박스 필터를 사용할 수 있습니다.
+              좌측 패널 상단의 검색창에서 프로젝트, 모듈, 기능명을 검색할 수
+              있습니다. &quot;필터&quot; 버튼을 클릭하면 프로젝트/모듈별
+              체크박스 필터를 사용할 수 있습니다.
             </p>
           </section>
 
@@ -210,9 +245,10 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               className="text-sm leading-relaxed"
               style={{ color: "var(--notion-text-muted)" }}
             >
-              타임라인 영역에서 <strong>휠 클릭(중간 버튼)</strong>을 누른 상태로 드래그하면
-              가로 및 세로 방향으로 자유롭게 스크롤할 수 있습니다.
-              마우스 커서가 이동 아이콘으로 변경되며, 넓은 타임라인을 편리하게 탐색할 수 있습니다.
+              타임라인 영역에서 <strong>휠 클릭(중간 버튼)</strong>을 누른
+              상태로 드래그하면 가로 및 세로 방향으로 자유롭게 스크롤할 수
+              있습니다. 마우스 커서가 이동 아이콘으로 변경되며, 넓은 타임라인을
+              편리하게 탐색할 수 있습니다.
             </p>
           </section>
 
@@ -249,7 +285,11 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             color: "var(--notion-text-muted)",
           }}
         >
-          언제든 <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800">⌘K</kbd> 로 커맨드 팔레트를 열 수 있습니다
+          언제든{" "}
+          <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800">
+            ⌘K
+          </kbd>{" "}
+          로 커맨드 팔레트를 열 수 있습니다
         </div>
       </div>
     </div>
@@ -265,7 +305,7 @@ function ShortcutRow({
 }) {
   // OS에 맞는 키 표시로 변환
   const displayKeys = getOSKeys(keys);
-  
+
   return (
     <div className="flex items-center gap-2">
       <div className="flex gap-0.5">
@@ -305,4 +345,3 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
     </div>
   );
 }
-

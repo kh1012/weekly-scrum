@@ -95,33 +95,31 @@ export function TimelineNodeFeature({
   // 접힌 상태에서는 드래그 생성 비활성화
   const isCollapsed = node.isExpanded === false;
 
+  // 배경색 결정 (선택/포커스 상태 우선)
+  const getBackground = () => {
+    if (isFocused) {
+      return "linear-gradient(90deg, rgba(251, 146, 60, 0.2) 0%, rgba(251, 146, 60, 0.1) 100%)";
+    }
+    if (isRowSelected) {
+      return "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)";
+    }
+    if (isCollapsed) {
+      return "rgba(0, 0, 0, 0.03)";
+    }
+    return "transparent";
+  };
+
   return (
     <div
       key={node.id}
-      className={`absolute left-0 ${
+      className={`absolute left-0 transition-colors duration-150 ${
         isCollapsed ? "cursor-default" : "cursor-crosshair"
       } ${isFocused ? "animate-pulse-subtle" : ""}`}
       style={{
         top,
         height,
         width: totalWidth,
-        // 접힌 상태: 연한 회색 음영, focus 상태: 주황색 음영
-        background: isCollapsed
-          ? "rgba(0, 0, 0, 0.03)"
-          : isFocused
-            ? "rgba(251, 146, 60, 0.08)"
-            : "transparent",
-        // 선택된 행 강조 - 파란색 얇은 라인
-        borderTop: isRowSelected
-          ? "1px solid #3b82f6"
-          : isFocused
-            ? "1px solid rgba(251, 146, 60, 0.3)"
-            : "none",
-        borderBottom: isRowSelected
-          ? "1px solid #3b82f6"
-          : isFocused
-            ? "1px solid rgba(251, 146, 60, 0.3)"
-            : "none",
+        background: getBackground(),
       }}
       onMouseDown={(e) => {
         // 접힌 상태에서는 드래그 생성 비활성화
