@@ -1,13 +1,13 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCallback,
   useTransition,
   useMemo,
   useEffect,
-  useState,
+  useRef,
 } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import { useDraftStore } from "@/components/plans/gantt-draft/store";
 import { useGanttQueryPersistence } from "@/components/plans/gantt-draft/hooks/useGanttQueryPersistence";
@@ -101,10 +101,15 @@ export function AdminPlansGanttClient({
 
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
 
-  // 초기 로드 시 URL의 viewMode를 store에 설정
+  // 초기 로드 시에만 URL의 viewMode를 store에 설정 (한 번만 실행)
+  const isInitialMount = useRef(true);
   useEffect(() => {
-    setViewModeStore(effectiveViewMode);
-  }, [effectiveViewMode, setViewModeStore]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      setViewModeStore(effectiveViewMode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStagesChange = useCallback(
     (stages: Set<string>) => {
