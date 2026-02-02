@@ -17,6 +17,7 @@ interface TimelineNodeFeatureProps {
   height: number;
   totalWidth: number;
   rangeStart: Date;
+  rangeEnd: Date;
   days: Date[];
   activeBarsSet: Set<string>;
   selectedBarId?: string;
@@ -63,6 +64,7 @@ export function TimelineNodeFeature({
   height,
   totalWidth,
   rangeStart,
+  rangeEnd,
   days,
   activeBarsSet,
   selectedBarId,
@@ -205,21 +207,32 @@ export function TimelineNodeFeature({
             const barStart = parseLocalDate(bar.startDate);
             const barEnd = parseLocalDate(bar.endDate);
 
-            // rangeStart도 자정으로 정규화하여 비교
+            // rangeStart, rangeEnd를 자정으로 정규화하여 비교
             const rangeStartMidnight = new Date(
               rangeStart.getFullYear(),
               rangeStart.getMonth(),
               rangeStart.getDate(),
+            );
+            const rangeEndMidnight = new Date(
+              rangeEnd.getFullYear(),
+              rangeEnd.getMonth(),
+              rangeEnd.getDate(),
             );
 
             const startOffset = Math.round(
               (barStart.getTime() - rangeStartMidnight.getTime()) /
                 (1000 * 60 * 60 * 24),
             );
-            const endOffset = Math.round(
+            // endOffset을 rangeEnd를 초과하지 않도록 제한 (Flag 필터 적용 시 블록이 영역을 벗어나지 않도록)
+            const rawEndOffset = Math.round(
               (barEnd.getTime() - rangeStartMidnight.getTime()) /
                 (1000 * 60 * 60 * 24),
             );
+            const maxEndOffset = Math.round(
+              (rangeEndMidnight.getTime() - rangeStartMidnight.getTime()) /
+                (1000 * 60 * 60 * 24),
+            );
+            const endOffset = Math.min(rawEndOffset, maxEndOffset);
 
             const left = startOffset * DAY_WIDTH;
             const width = (endOffset - startOffset + 1) * DAY_WIDTH;

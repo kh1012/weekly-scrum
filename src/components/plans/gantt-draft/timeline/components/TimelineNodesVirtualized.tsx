@@ -26,6 +26,7 @@ interface TimelineNodesVirtualizedProps {
   viewMode: "detailed" | "summarized";
   totalWidth: number;
   rangeStart: Date;
+  rangeEnd: Date;
   days: Date[];
   flags: DraftFlag[];
   rows: DraftRow[];

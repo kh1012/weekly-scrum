@@ -306,6 +306,7 @@ export function DraftTimeline({
               viewMode={viewMode}
               totalWidth={data.totalWidth}
               rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               days={data.days}
               flags={flags}
               rows={data.rows}
@@ -340,6 +341,7 @@ export function DraftTimeline({
               viewMode={viewMode}
               totalWidth={data.totalWidth}
               rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               days={data.days}
               flags={flags}
               rows={data.rows}

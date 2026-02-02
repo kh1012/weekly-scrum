@@ -19,6 +19,7 @@ interface TimelineNodesProps {
   viewMode: "detailed" | "summarized";
   totalWidth: number;
   rangeStart: Date;
+  rangeEnd: Date;
   days: Date[];
   flags: DraftFlag[];
   rows: DraftRow[];
@@ -67,6 +68,7 @@ export function TimelineNodes({
   viewMode,
   totalWidth,
   rangeStart,
+  rangeEnd,
   days,
   flags,
   rows,
@@ -156,6 +158,7 @@ export function TimelineNodes({
             height={height}
             totalWidth={totalWidth}
             rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
             days={days}
             activeBarsSet={activeBarsSet}
             selectedBarId={selectedBarId}
