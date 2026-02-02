@@ -230,6 +230,11 @@ export function useSaveQueue({
       return;
     }
 
+    // 저장 시작 전 이벤트 발생 (스크롤 위치 저장 등)
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("gantt:before-save"));
+    }
+
     // 저장 시작
     isSavingRef.current = true;
     setIsSaving(true);

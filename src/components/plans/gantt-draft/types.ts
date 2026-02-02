@@ -244,8 +244,8 @@ export interface DraftUIState {
   lastActivityAt?: string;
   /** 뷰 모드 (detailed: 기능별 상세, summarized: 모듈별 요약) */
   viewMode: "detailed" | "summarized";
-  /** 초기 스크롤(오늘로 이동)이 완료되었는지 여부 */
-  hasInitialScrolled?: boolean;
+  /** 저장 시 스크롤 위치 복원용 (저장 완료 후 null로 초기화) */
+  savedScrollPosition?: { left: number; top: number } | null;
 }
 
 /**

@@ -39,8 +39,9 @@ export interface DraftUIActions {
   expandToLevel: (level: 0 | 1 | 2) => void;
   setExpandedNodes: (nodes: string[]) => void;
 
-  // 초기 스크롤
-  setHasInitialScrolled: (value: boolean) => void;
+  // 스크롤 위치 저장/복원 (저장 동작용)
+  saveScrollPosition: (position: { left: number; top: number }) => void;
+  clearSavedScrollPosition: () => void;
 }
 
 export type DraftUIStore = { ui: DraftUIState } & DraftUIActions;
@@ -68,7 +69,7 @@ const initialUIState: DraftUIState = {
   highlightDateRange: null,
   lastActivityAt: undefined,
   viewMode: "detailed",
-  hasInitialScrolled: false,
+  savedScrollPosition: null,
 };
 
 export const createDraftUIStore: StateCreator<
@@ -260,11 +261,20 @@ export const createDraftUIStore: StateCreator<
     });
   },
 
-  setHasInitialScrolled: (value) => {
+  saveScrollPosition: (position) => {
     set({
       ui: {
         ...get().ui,
-        hasInitialScrolled: value,
+        savedScrollPosition: position,
+      },
+    });
+  },
+
+  clearSavedScrollPosition: () => {
+    set({
+      ui: {
+        ...get().ui,
+        savedScrollPosition: null,
       },
     });
   },
