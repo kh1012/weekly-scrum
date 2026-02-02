@@ -185,6 +185,7 @@ export const DraftTreePanel = forwardRef<
     params.delete("modules");
     params.delete("features");
     params.delete("search");
+    params.delete("flagIds");
     router.replace(`?${params.toString()}`, { scroll: false });
   }, [resetFiltersStore, router, searchParams]);
 
@@ -228,16 +229,18 @@ export const DraftTreePanel = forwardRef<
     const urlProjects = searchParams.get("projects");
     const urlModules = searchParams.get("modules");
     const urlFeatures = searchParams.get("features");
+    const urlFlagIds = searchParams.get("flagIds");
     const urlSearch = searchParams.get("search");
 
     const urlFilters = {
       projects: urlProjects ? urlProjects.split(",").filter(Boolean) : [],
       modules: urlModules ? urlModules.split(",").filter(Boolean) : [],
       features: urlFeatures ? urlFeatures.split(",").filter(Boolean) : [],
+      flagIds: urlFlagIds ? urlFlagIds.split(",").filter(Boolean) : [],
     };
 
     // URL에 필터가 있고 현재 필터와 다르면 적용
-    const hasURLFilters = urlProjects || urlModules || urlFeatures;
+    const hasURLFilters = urlProjects || urlModules || urlFeatures || urlFlagIds;
     if (hasURLFilters) {
       const currentFilters = filters;
       const isDifferent =
@@ -246,7 +249,9 @@ export const DraftTreePanel = forwardRef<
         JSON.stringify(currentFilters.modules.sort()) !==
           JSON.stringify(urlFilters.modules.sort()) ||
         JSON.stringify(currentFilters.features.sort()) !==
-          JSON.stringify(urlFilters.features.sort());
+          JSON.stringify(urlFilters.features.sort()) ||
+        JSON.stringify((currentFilters.flagIds || []).sort()) !==
+          JSON.stringify(urlFilters.flagIds.sort());
 
       if (isDifferent) {
         setFilters(urlFilters);
@@ -541,36 +546,70 @@ export const DraftTreePanel = forwardRef<
     [expandedNodesArray]
   );
 
+  // Range Flag 목록 (Point Flag 제외 - 기간 필터용)
+  const rangeFlags = useMemo(() => {
+    return flags.filter((f) => !f.deleted && f.startDate !== f.endDate);
+  }, [flags]);
+
+  // 범위 내 Range Flags (필터 팝오버에 표시될 Flag 목록)
+  const visibleRangeFlags = useMemo(() => {
+    if (!rangeStart || !rangeEnd) return rangeFlags;
+    return rangeFlags.filter((f) =>
+      isDateRangeOverlapping(f.startDate, f.endDate, rangeStart, rangeEnd)
+    );
+  }, [rangeFlags, rangeStart, rangeEnd]);
+
   // 활성 bars (삭제되지 않은 것들 + 필터 적용)
   // 인덱스가 있으면 고속 필터링, 없으면 기존 방식
   const activeBars = useMemo(() => {
+    let bars: typeof allBars;
+
     if (filterIndex) {
       // 인덱스를 사용한 고속 필터링
-      return filterBarsWithIndex(allBars, filterIndex, {
+      bars = filterBarsWithIndex(allBars, filterIndex, {
         stages: filters.stages || [],
         assignees: filters.assignees || [],
       });
+    } else {
+      // 폴백: 기존 방식
+      bars = allBars.filter((b) => !b.deleted);
+
+      // 스테이지 필터 적용
+      if (filters.stages && filters.stages.length > 0) {
+        bars = bars.filter((b) => filters.stages.includes(b.stage));
+      }
+
+      // 담당자 필터 적용
+      if (filters.assignees && filters.assignees.length > 0) {
+        bars = bars.filter((b) =>
+          b.assignees.some((assignee) =>
+            filters.assignees.includes(assignee.userId)
+          )
+        );
+      }
     }
 
-    // 폴백: 기존 방식
-    let bars = allBars.filter((b) => !b.deleted);
-
-    // 스테이지 필터 적용
-    if (filters.stages && filters.stages.length > 0) {
-      bars = bars.filter((b) => filters.stages.includes(b.stage));
-    }
-
-    // 담당자 필터 적용
-    if (filters.assignees && filters.assignees.length > 0) {
-      bars = bars.filter((b) =>
-        b.assignees.some((assignee) =>
-          filters.assignees.includes(assignee.userId)
-        )
+    // Flag 기간 필터 적용 (Range Flag만 대상)
+    if (filters.flagIds && filters.flagIds.length > 0) {
+      const selectedFlags = rangeFlags.filter((f) =>
+        filters.flagIds.includes(f.clientId)
       );
+      if (selectedFlags.length > 0) {
+        bars = bars.filter((bar) =>
+          selectedFlags.some((flag) =>
+            isDateRangeOverlapping(
+              bar.startDate,
+              bar.endDate,
+              new Date(flag.startDate),
+              new Date(flag.endDate)
+            )
+          )
+        );
+      }
     }
 
     return bars;
-  }, [allBars, filterIndex, filters.stages, filters.assignees]);
+  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags]);
 
   // activeBars를 Set으로 변환 (빠른 조회용)
   const activeBarsSet = useMemo(
@@ -836,7 +875,8 @@ export const DraftTreePanel = forwardRef<
     searchQuery ||
     filters.projects.length > 0 ||
     filters.modules.length > 0 ||
-    filters.features.length > 0;
+    filters.features.length > 0 ||
+    (filters.flagIds?.length ?? 0) > 0;
 
   const toggleNode = useCallback(
     (nodeId: string) => {
@@ -879,6 +919,25 @@ export const DraftTreePanel = forwardRef<
     const newFilters = { ...filters, features: next };
     setFilters(newFilters);
     updateURLFilters(newFilters);
+    // 필터 적용 시 기능까지 펼치기
+    expandToLevel(1);
+  };
+
+  const toggleFlagFilter = (flagId: string) => {
+    const current = filters.flagIds || [];
+    const next = current.includes(flagId)
+      ? current.filter((f) => f !== flagId)
+      : [...current, flagId];
+    const newFilters = { ...filters, flagIds: next };
+    setFilters(newFilters);
+    // URL 파라미터 업데이트 (선택사항)
+    const params = new URLSearchParams(searchParams.toString());
+    if (next.length > 0) {
+      params.set("flagIds", next.join(","));
+    } else {
+      params.delete("flagIds");
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
     // 필터 적용 시 기능까지 펼치기
     expandToLevel(1);
   };
@@ -1337,6 +1396,12 @@ export const DraftTreePanel = forwardRef<
     });
   }, []);
 
+  // 오늘 날짜 (YYYY-MM-DD 형식)
+  const todayStr = useMemo(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  }, []);
+
   const renderNode = (pos: {
     node: FlatTreeNode;
     top: number;
@@ -1348,6 +1413,40 @@ export const DraftTreePanel = forwardRef<
     const hasChildren = node.type !== "feature" || (node.type === "feature" && (node.originalBarCount || 0) > 0);
     // 선택 상태 (모든 노드 타입에 대해 selectedNodeId 기준)
     const isSelected = selectedNodeId === node.id;
+
+    // 접혀있을 때 오늘 날짜에 계획이 있는지 확인 (프로젝트/모듈/기능 모두)
+    const hasTodayPlan = (() => {
+      // 펼쳐져 있으면 체크 안함
+      if (isExpanded) return false;
+
+      if (node.type === "feature") {
+        // feature는 자신의 bars에서 확인
+        const featureBars = activeBars.filter((bar) => bar.rowId === node.row?.rowId);
+        return featureBars.some(
+          (bar) => bar.startDate <= todayStr && bar.endDate >= todayStr
+        );
+      }
+
+      // 해당 프로젝트/모듈에 속한 bars 필터링
+      const relevantBars = activeBars.filter((bar) => {
+        const row = filteredRows.find((r) => r.rowId === bar.rowId);
+        if (!row) return false;
+        
+        if (node.type === "project") {
+          return row.project === node.label;
+        } else if (node.type === "module") {
+          // module id 형식: "project::module"
+          const parts = node.id.split("::");
+          return row.project === parts[0] && row.module === parts[1];
+        }
+        return false;
+      });
+
+      // 오늘 날짜가 bar의 기간에 포함되는지 확인
+      return relevantBars.some(
+        (bar) => bar.startDate <= todayStr && bar.endDate >= todayStr
+      );
+    })();
 
     // feature의 bar 개수 (범위 내 + 필터링된 bar만 카운트)
     const barCount = (() => {
@@ -1612,6 +1711,26 @@ export const DraftTreePanel = forwardRef<
             <span className="w-4 flex-shrink-0" />
           )}
         </div>
+
+        {/* 오늘 날짜 계획 인디케이터 (접혀있을 때만) */}
+        {hasTodayPlan && (
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse"
+            style={{
+              background: node.type === "project"
+                ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                : node.type === "module"
+                ? "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
+                : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              boxShadow: node.type === "project"
+                ? "0 0 4px rgba(245, 158, 11, 0.5)"
+                : node.type === "module"
+                ? "0 0 4px rgba(139, 92, 246, 0.5)"
+                : "0 0 4px rgba(16, 185, 129, 0.5)",
+            }}
+            title="오늘 날짜에 진행 중인 계획이 있습니다"
+          />
+        )}
 
         {/* 우측 영역: 라벨 - 클릭으로 선택, 더블 클릭으로 편집 가능 */}
         <div
@@ -2058,14 +2177,63 @@ export const DraftTreePanel = forwardRef<
             </div>
           </div>
 
+          {/* Flag 기간 필터 섹션 */}
+          {visibleRangeFlags.length > 0 && (
+            <div className="px-3 pb-2">
+              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">
+                Flags (기간)
+              </div>
+              <div className="space-y-0.5">
+                {visibleRangeFlags.map((flag) => {
+                  const isChecked = filters.flagIds?.includes(flag.clientId) || false;
+                  const flagColor = flag.color || "#ef4444";
+                  // 날짜 포맷: M/D
+                  const formatDate = (dateStr: string) => {
+                    const d = new Date(dateStr);
+                    return `${d.getMonth() + 1}/${d.getDate()}`;
+                  };
+                  const dateRange = `${formatDate(flag.startDate)}~${formatDate(flag.endDate)}`;
+
+                  return (
+                    <label
+                      key={flag.clientId}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-red-50/50 transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleFlagFilter(flag.clientId)}
+                        className="w-3.5 h-3.5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                      <FlagIcon
+                        className="w-3 h-3 flex-shrink-0"
+                        style={{ color: flagColor }}
+                      />
+                      <span className="text-xs text-gray-700 flex-1 truncate">
+                        {flag.title}
+                      </span>
+                      <span className="text-[10px] text-gray-400 flex-shrink-0">
+                        {dateRange}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {/* 구분선 */}
+              <div className="border-t border-gray-100 mt-2" />
+            </div>
+          )}
+
           {/* 필터 항목 리스트 */}
           <div className="flex-1 overflow-y-auto px-3 pb-3">
-            {filteredFilterItems.length === 0 ? (
+            {filteredFilterItems.length === 0 && visibleRangeFlags.length === 0 ? (
               <div className="text-xs text-gray-400 text-center py-4">
                 {debouncedFilterSearchQuery
                   ? "검색 결과가 없습니다"
                   : "필터할 항목이 없습니다"}
               </div>
+            ) : filteredFilterItems.length === 0 ? (
+              null
             ) : (
               <div className="space-y-1">
                 {filteredFilterItems.map((item) => {
