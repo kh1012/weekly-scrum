@@ -103,8 +103,12 @@ export function TimelineNodeFeature({
         top,
         height,
         width: totalWidth,
-        // Timeline focus 하이라이트
-        background: isFocused ? "rgba(251, 146, 60, 0.08)" : "transparent",
+        // 접힌 상태: 연한 회색 음영, focus 상태: 주황색 음영
+        background: isCollapsed
+          ? "rgba(0, 0, 0, 0.03)"
+          : isFocused
+          ? "rgba(251, 146, 60, 0.08)"
+          : "transparent",
         // 선택된 행 강조 - 파란색 얇은 라인
         borderTop: isRowSelected
           ? "1px solid #3b82f6"
