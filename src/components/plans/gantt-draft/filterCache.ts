@@ -189,11 +189,14 @@ export function filterRowsWithIndex(
     modules: string[];
     features: string[];
   },
-  searchQuery: string
+  searchQuery: string,
+  /** Flag 필터 활성화 여부 (true면 isLocal도 bars 체크) */
+  hasFlagFilter: boolean = false
 ): DraftRow[] {
   return rows.filter((row) => {
     // 로컬에서 생성된 row는 bars 없이도 표시
-    if (!row.isLocal) {
+    // 단, Flag 필터가 활성화된 경우에는 bars가 있어야만 표시
+    if (!row.isLocal || hasFlagFilter) {
       const rowBars = index.byRowId.get(row.rowId);
       // 필터링된 bars 중 이 row에 속한 것이 있는지 확인
       if (!rowBars || ![...rowBars].some((barId) => barsInView.has(barId))) {

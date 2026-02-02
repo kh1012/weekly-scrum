@@ -1,9 +1,9 @@
 /**
  * Gantt 상태 지속성 Hook
- * 
+ *
  * - expandedNodes: 트리 접기/펼치기 상태
  * - rangeMonths, rangeStart, rangeEnd: 기간 선택 상태
- * 
+ *
  * 우선순위: URL > localStorage > default
  */
 
@@ -37,11 +37,12 @@ interface UseGanttPersistenceProps {
   shortenThreshold?: number;
 }
 
-
 /**
  * URL 쿼리 파라미터에서 상태 파싱
  */
-function parseQueryParams(searchParams: URLSearchParams): Partial<StoredGanttState> {
+function parseQueryParams(
+  searchParams: URLSearchParams,
+): Partial<StoredGanttState> {
   const result: Partial<StoredGanttState> = {};
 
   // expandedNodes (쉼표로 구분된 문자열)
@@ -144,7 +145,10 @@ export function useGanttPersistence({
       onExpandedNodesChange(mergedState.expandedNodes);
     }
 
-    if (mergedState.rangeMonths !== null && mergedState.rangeMonths !== undefined) {
+    if (
+      mergedState.rangeMonths !== null &&
+      mergedState.rangeMonths !== undefined
+    ) {
       onRangeMonthsChange(mergedState.rangeMonths);
     }
 
@@ -167,7 +171,13 @@ export function useGanttPersistence({
     setTimeout(() => {
       shouldSaveRef.current = true;
     }, 0);
-  }, [workspaceId, onExpandedNodesChange, onRangeMonthsChange, onRangeStartChange, onRangeEndChange]);
+  }, [
+    workspaceId,
+    onExpandedNodesChange,
+    onRangeMonthsChange,
+    onRangeStartChange,
+    onRangeEndChange,
+  ]);
 
   // 상태 변경 시 localStorage 저장 및 URL 동기화
   useEffect(() => {
@@ -242,7 +252,9 @@ export function useGanttPersistence({
 
     // 기존 파라미터 유지 (expanded, rangeMonths, rangeStart, rangeEnd 제외)
     for (const [key, value] of currentParams.entries()) {
-      if (!["expanded", "rangeMonths", "rangeStart", "rangeEnd"].includes(key)) {
+      if (
+        !["expanded", "rangeMonths", "rangeStart", "rangeEnd"].includes(key)
+      ) {
         newParams.set(key, value);
       }
     }
@@ -250,12 +262,17 @@ export function useGanttPersistence({
     // URL 업데이트
     if (hasChanges) {
       const newQueryString = newParams.toString();
-      
+
       // URL이 길어지면 자동 축약
-      if (autoShorten && shouldShortenUrl(newQueryString, shortenThreshold) && !shorteningRef.current) {
+      if (
+        autoShorten &&
+        shouldShortenUrl(newQueryString, shortenThreshold) &&
+        !shorteningRef.current
+      ) {
         shorteningRef.current = true;
-        
-        const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+
+        const currentPath =
+          typeof window !== "undefined" ? window.location.pathname : "";
         createShortLink({
           workspaceId,
           originalUrl: currentPath,
@@ -266,15 +283,32 @@ export function useGanttPersistence({
             router.replace(`/s/${result.shortId}`, { scroll: false });
           } else {
             // 축약 실패 시 일반 URL 사용
-            const fallbackPath = typeof window !== "undefined" ? window.location.pathname : "";
-            router.replace(newQueryString ? `?${newQueryString}` : fallbackPath, { scroll: false });
+            const fallbackPath =
+              typeof window !== "undefined" ? window.location.pathname : "";
+            router.replace(
+              newQueryString ? `?${newQueryString}` : fallbackPath,
+              { scroll: false },
+            );
           }
           shorteningRef.current = false;
         });
       } else {
-        const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
-        router.replace(newQueryString ? `?${newQueryString}` : currentPath, { scroll: false });
+        const currentPath =
+          typeof window !== "undefined" ? window.location.pathname : "";
+        router.replace(newQueryString ? `?${newQueryString}` : currentPath, {
+          scroll: false,
+        });
       }
     }
-  }, [workspaceId, expandedNodes, rangeMonths, rangeStart, rangeEnd, router, searchParams, autoShorten, shortenThreshold]);
+  }, [
+    workspaceId,
+    expandedNodes,
+    rangeMonths,
+    rangeStart,
+    rangeEnd,
+    router,
+    searchParams,
+    autoShorten,
+    shortenThreshold,
+  ]);
 }

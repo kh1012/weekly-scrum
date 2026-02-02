@@ -124,9 +124,11 @@ export function useTimelineData({
 
   // 필터링된 rows (useMemo로 캐싱)
   const rows = useMemo(() => {
+    const hasFlagFilter = filters.flagIds && filters.flagIds.length > 0;
+    
     if (filterIndex) {
       // 인덱스를 사용한 고속 필터링
-      // filteredActiveBars 사용 (담당자/스테이지 필터 반영)
+      // filteredActiveBars 사용 (담당자/스테이지/Flag 필터 반영)
       const barsInView = new Set(filteredActiveBars.map((b) => b.clientUid));
       return filterRowsWithIndex(
         allRows,
@@ -137,16 +139,18 @@ export function useTimelineData({
           modules: filters.modules || [],
           features: filters.features || [],
         },
-        searchQuery
+        searchQuery,
+        hasFlagFilter
       );
     }
 
     // 폴백: 기존 방식
     return allRows.filter((row) => {
       // 로컬에서 생성된 row는 bars 없이도 표시
+      // 단, Flag 필터가 활성화된 경우에는 bars가 있어야만 표시
       // 서버에서 로드된 row는 bars가 있어야 표시
-      if (!row.isLocal) {
-        // filteredActiveBars 사용 (담당자/스테이지 필터 반영)
+      if (!row.isLocal || hasFlagFilter) {
+        // filteredActiveBars 사용 (담당자/스테이지/Flag 필터 반영)
         const hasBars = filteredActiveBars.some((b) => b.rowId === row.rowId);
         if (!hasBars) return false;
       }

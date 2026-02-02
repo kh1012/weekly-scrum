@@ -83,7 +83,7 @@ interface GanttHeaderProps {
   /** 락 관련 오류 콜백 */
   onLockError?: (
     type: "locked_by_other" | "unknown",
-    lockedByName?: string
+    lockedByName?: string,
   ) => void;
   /** 작업 시작 성공 콜백 */
   onStartSuccess?: () => void;
@@ -118,12 +118,12 @@ interface GanttHeaderProps {
   onExportJSON?: () => Promise<void>;
   onExportPNG?: (
     quality?: "low" | "normal" | "high",
-    options?: { returnBlob?: boolean }
+    options?: { returnBlob?: boolean },
   ) => Promise<Blob | void>;
   onExportDraw?: (
     quality?: "low" | "normal" | "high",
     canvasOptions?: any,
-    options?: { returnBlob?: boolean }
+    options?: { returnBlob?: boolean },
   ) => Promise<Blob | void>;
   /** 비활성 시간 (초) - 외부에서 전달 */
   inactivitySeconds?: number | null;
@@ -214,7 +214,7 @@ export function GanttHeader({
   const mismatchButtonRef = useRef<HTMLButtonElement>(null);
   const mismatchPopoverRef = useRef<HTMLDivElement>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const isMac = useIsMac();
@@ -307,7 +307,7 @@ export function GanttHeader({
       onFocusMismatch?.(mismatch);
       setShowMismatchPopover(false);
     },
-    [onFocusMismatch]
+    [onFocusMismatch],
   );
 
   // 그룹 토글 핸들러
@@ -375,14 +375,14 @@ export function GanttHeader({
 
   // 계획(bars) + 깃발(flags) 변경사항 체크
   const hasUnsavedChanges = useDraftStore(
-    (s) => s.hasUnsavedChanges() || s.hasFlagChanges()
+    (s) => s.hasUnsavedChanges() || s.hasFlagChanges(),
   );
   const isEditing = useDraftStore((s) => s.ui.isEditing);
   // 계획(bars) + 깃발(flags) 변경사항 개수
   const changesCount = useDraftStore(
     (s) =>
       s.bars.filter((b) => b.dirty).length +
-      s.flags.filter((f) => f.dirty).length
+      s.flags.filter((f) => f.dirty).length,
   );
 
   // 비활성 경고 토스트 표시
@@ -445,17 +445,17 @@ export function GanttHeader({
 
   // 필터 로컬 상태 (드롭다운 내부에서만 사용)
   const [localStages, setLocalStages] = useState<Set<string>>(
-    new Set(selectedStages)
+    new Set(selectedStages),
   );
   const [localAssignees, setLocalAssignees] = useState<Set<string>>(
-    new Set(selectedAssignees)
+    new Set(selectedAssignees),
   );
 
   // Members 리스트를 안정화 (displayName으로 정렬하여 메모이제이션)
   const sortedMembers = useMemo(() => {
     if (!members || members.length === 0) return [];
     return [...members].sort((a, b) =>
-      a.displayName.localeCompare(b.displayName, "ko-KR")
+      a.displayName.localeCompare(b.displayName, "ko-KR"),
     );
   }, [members]);
 
@@ -516,10 +516,10 @@ export function GanttHeader({
   const formatRangeLabel = () => {
     if (!rangeStart || !rangeEnd) return `${rangeMonths}개월`;
     const startLabel = `${rangeStart.getFullYear()}.${String(
-      rangeStart.getMonth() + 1
+      rangeStart.getMonth() + 1,
     ).padStart(2, "0")}`;
     const endLabel = `${rangeEnd.getFullYear()}.${String(
-      rangeEnd.getMonth() + 1
+      rangeEnd.getMonth() + 1,
     ).padStart(2, "0")}`;
     return `${startLabel} ~ ${endLabel}`;
   };
@@ -533,7 +533,7 @@ export function GanttHeader({
         showToast(
           "info",
           "성능 옵션 임시 비활성화",
-          `편집 성능 향상을 위해 ${disabledOptions.join(", ")} 옵션이 일시적으로 비활성화되었습니다. 작업 종료 시 자동으로 복원됩니다.`
+          `편집 성능 향상을 위해 ${disabledOptions.join(", ")} 옵션이 일시적으로 비활성화되었습니다. 작업 종료 시 자동으로 복원됩니다.`,
         );
       }
 
@@ -555,7 +555,7 @@ export function GanttHeader({
       } else {
         // 작업 시작 실패 시 백업 복원
         restoreBackupFlags();
-        
+
         if (lockState.isLocked && !lockState.isMyLock) {
           onLockError?.("locked_by_other", lockState.lockedByName);
         } else {
@@ -583,17 +583,17 @@ export function GanttHeader({
       // 변경사항 폐기
       onDiscardChanges?.();
       await stopEditing();
-      
+
       // 성능 옵션 복원
       const restoredOptions = restoreBackupFlags();
       if (restoredOptions.length > 0) {
         showToast(
           "success",
           "성능 옵션 복원",
-          `${restoredOptions.join(", ")} 옵션이 복원되었습니다.`
+          `${restoredOptions.join(", ")} 옵션이 복원되었습니다.`,
         );
       }
-      
+
       // 종료 성공 콜백
       onStopSuccess?.(countToDiscard);
     } finally {
@@ -682,8 +682,8 @@ export function GanttHeader({
                   enableAlignmentCheck
                     ? "실행 커버리지 검토 활성화 중에는 요약 보기를 사용할 수 없습니다"
                     : hasActiveFilters
-                    ? "필터 활성화 중에는 요약 보기를 사용할 수 없습니다"
-                    : "요약 보기 (모듈별)"
+                      ? "필터 활성화 중에는 요약 보기를 사용할 수 없습니다"
+                      : "요약 보기 (모듈별)"
                 }
               >
                 Summarized
@@ -885,14 +885,14 @@ export function GanttHeader({
                                 group.items.map((mismatch, index) => {
                                   // 날짜 차이 계산
                                   const startDate = new Date(
-                                    mismatch.planStartDate
+                                    mismatch.planStartDate,
                                   );
                                   const endDate = new Date(
-                                    mismatch.planEndDate
+                                    mismatch.planEndDate,
                                   );
                                   const daysDiff = Math.ceil(
                                     (endDate.getTime() - startDate.getTime()) /
-                                      (1000 * 60 * 60 * 24)
+                                      (1000 * 60 * 60 * 24),
                                   );
 
                                   return (
@@ -1032,9 +1032,9 @@ export function GanttHeader({
                         inactivitySeconds !== null && inactivitySeconds > 540
                           ? "#dc2626"
                           : inactivitySeconds !== null &&
-                            inactivitySeconds > 300
-                          ? "#d97706"
-                          : "#6b7280",
+                              inactivitySeconds > 300
+                            ? "#d97706"
+                            : "#6b7280",
                     }}
                     title="10분간 활동이 없으면 자동으로 편집이 종료됩니다"
                   >
@@ -1042,7 +1042,7 @@ export function GanttHeader({
                       비활성{" "}
                       {inactivitySeconds !== null
                         ? `${Math.floor(inactivitySeconds / 60)}:${String(
-                            inactivitySeconds % 60
+                            inactivitySeconds % 60,
                           ).padStart(2, "0")}`
                         : "0:00"}
                     </span>
@@ -1621,8 +1621,8 @@ export function GanttHeader({
                   {isAutoSaving
                     ? "자동 저장 중..."
                     : isCommitting
-                    ? "저장 중..."
-                    : "저장"}
+                      ? "저장 중..."
+                      : "저장"}
                   {hasUnsavedChanges &&
                     !isCommitting &&
                     !isAutoSaving &&

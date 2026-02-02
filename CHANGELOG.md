@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.0] - 2026-02-02
+
+### Added
+- **필터 팝오버 개선**: Flag 기간 필터를 스크롤 영역 내로 이동, Flag도 검색 키워드로 필터링 가능
+- **작업 시작/종료 단축키**: `Cmd+Enter` (작업 시작), `Cmd+Shift+Enter` (작업 종료)
+- **접힌 노드 계획 인디케이터**: 접힌 트리 노드에 오늘 날짜 진행 중인 계획이 있으면 컬러 점 표시
+  - 프로젝트: 주황색, 모듈: 보라색, 기능: 초록색 pulse 애니메이션
+- **트리 패널 기본 액션 개선**:
+  - 좌클릭으로 프로젝트/모듈/기능 노드 선택 가능
+  - 우클릭 컨텍스트 메뉴에 '이름 변경', '펼치기/접기' 옵션 추가
+  - 키보드 네비게이션 지원 (↑↓: 선택 이동, ←: 접기 또는 상위 이동, →: 펼치기)
+- **저장 UI 개선**: Modal에서 Toast로 변경
+  - SaveToast: 컴팩트한 저장 진행 UI (프로그래스바, 단계별 상태)
+  - useSaveQueue: 연속 저장 요청 큐 관리 (저장 중 새 요청 시 자동 재저장)
+
+### Fixed
+- **Flag 필터 범위 확장**: Flag 기간 필터가 Timeline(우측 계획)에도 적용되도록 수정
+  - useTimelineData에 flagIds와 rangeFlags 파라미터 추가
+- **새 계획 생성 시 자동 펼침**: 새로 추가된 feature가 펼쳐진 상태로 생성되어 즉시 편집 가능
+- **URL expanded 파라미터 복원**: Next.js useSearchParams 초기화 타이밍 문제 해결
+  - window.location.search 직접 사용으로 즉시 파싱
+- **접힌 레인 호버 프리뷰 비활성화**: 접힌 상태에서 불필요한 호버 프리뷰 및 드래그 생성 차단
+
+### Changed
+- **접힌 레인 시각적 구분**: 타임라인 배경에 음영 처리 (`rgba(0, 0, 0, 0.03)`)
+- **저장 hasUnsavedChanges 로직**: flags 변경도 미저장 상태로 감지
+
+### Technical Details
+- `src/components/plans/gantt-draft/SaveToast.tsx`: 신규 컴포넌트 (307줄)
+- `src/components/plans/gantt-draft/hooks/useSaveQueue.ts`: 신규 Hook (258줄)
+- `src/components/plans/gantt-draft/DraftTreePanel.tsx`: 트리 패널 기능 확장 (+732줄)
+- `src/components/plans/gantt-draft/timeline/useTimelineData.ts`: Flag 필터 로직 추가
+- `src/components/plans/gantt-draft/timeline/components/TimelineNodeFeature.tsx`: 접힌 상태 처리
+
+---
+
 ## [2.9.0] - 2026-01-11
 
 ### Added

@@ -2,6 +2,55 @@ import type { Release } from "./types";
 
 export const RELEASES: Release[] = [
   {
+    version: "2.10.0",
+    date: "2026-02-02",
+    title: "Gantt 트리 패널 UX 강화 & 저장 시스템 개선",
+    summary:
+      "트리 패널에 선택, 키보드 네비게이션, 컨텍스트 메뉴를 추가하고, 저장 UI를 Modal에서 Toast로 변경했습니다. 접힌 노드에 오늘 날짜 계획 인디케이터 표시, Flag 필터 범위 확장 등이 포함되어 있습니다.",
+    changes: [
+      {
+        type: "feat",
+        description: "트리 패널 기본 액션 - 좌클릭 선택, 우클릭 메뉴(이름 변경/펼침), 키보드 네비게이션(↑↓←→)",
+      },
+      {
+        type: "feat",
+        description: "접힌 노드 계획 인디케이터 - 오늘 날짜 진행 중인 계획이 있으면 컬러 점 표시 (프로젝트🟠/모듈🟣/기능🟢)",
+      },
+      {
+        type: "feat",
+        description: "저장 UI 개선 - Modal → Toast로 변경, 프로그래스바와 단계별 상태 표시",
+      },
+      {
+        type: "feat",
+        description: "연속 저장 큐 처리 - useSaveQueue Hook으로 저장 중 새 요청 시 자동 재저장",
+      },
+      {
+        type: "feat",
+        description: "작업 시작/종료 단축키 - Cmd+Enter (시작), Cmd+Shift+Enter (종료)",
+      },
+      {
+        type: "feat",
+        description: "필터 팝오버 개선 - Flag 기간 필터 스크롤 영역 내 이동, Flag도 검색 키워드로 필터링",
+      },
+      {
+        type: "fix",
+        description: "Flag 필터 범위 확장 - Flag 기간 필터가 Timeline(우측 계획)에도 적용",
+      },
+      {
+        type: "fix",
+        description: "새 계획 생성 시 자동 펼침 - 새로 추가된 feature가 펼쳐진 상태로 생성",
+      },
+      {
+        type: "fix",
+        description: "URL expanded 파라미터 복원 - Next.js useSearchParams 타이밍 문제 해결",
+      },
+      {
+        type: "style",
+        description: "접힌 레인 시각적 구분 - 타임라인 배경에 음영 처리, 호버 프리뷰 비활성화",
+      },
+    ],
+  },
+  {
     version: "2.9.0",
     date: "2026-01-11",
     title: "성능 최적화 & 코드베이스 단순화",

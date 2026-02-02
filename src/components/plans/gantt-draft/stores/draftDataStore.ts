@@ -1,6 +1,6 @@
 /**
  * Draft Data Store
- * 
+ *
  * Rows와 Bars 데이터 관리를 담당
  */
 
@@ -27,13 +27,13 @@ export interface DraftDataActions {
   hydrate: (rows: DraftRow[], bars: DraftBar[]) => void;
   reset: () => void;
   updateLastSyncAt: () => void;
-  
+
   // Row 관리
   addRow: (
     project: string,
     module: string,
     feature: string,
-    domain?: string
+    domain?: string,
   ) => DraftRow;
   updateRow: (rowId: string, updates: Partial<Omit<DraftRow, "rowId">>) => void;
   deleteRow: (rowId: string) => void;
@@ -43,9 +43,9 @@ export interface DraftDataActions {
     oldName: string,
     newName: string,
     parentProject?: string,
-    parentModule?: string
+    parentModule?: string,
   ) => void;
-  
+
   // Bar 관리
   addBar: (params: {
     rowId: string;
@@ -62,11 +62,15 @@ export interface DraftDataActions {
   }) => DraftBar;
   updateBar: (
     clientUid: string,
-    updates: Partial<Omit<DraftBar, "clientUid" | "rowId">>
+    updates: Partial<Omit<DraftBar, "clientUid" | "rowId">>,
   ) => void;
   deleteBar: (clientUid: string) => void;
   restoreBar: (clientUid: string) => void;
-  moveBar: (clientUid: string, newStartDate: string, newEndDate: string) => void;
+  moveBar: (
+    clientUid: string,
+    newStartDate: string,
+    newEndDate: string,
+  ) => void;
   resizeBar: (clientUid: string, startDate: string, endDate: string) => void;
   duplicateBar: (clientUid: string) => DraftBar | null;
   moveBarToRow: (
@@ -74,9 +78,9 @@ export interface DraftDataActions {
     targetProject: string,
     targetModule: string,
     targetFeature: string,
-    targetDomain?: string
+    targetDomain?: string,
   ) => void;
-  
+
   // 유틸리티
   getDirtyBars: () => DraftBar[];
   getDeletedBars: () => DraftBar[];
@@ -90,7 +94,7 @@ export type DraftDataStore = DraftDataState & DraftDataActions;
 export function createRowId(
   project: string,
   module: string,
-  feature: string
+  feature: string,
 ): string {
   return `${project}::${module}::${feature}`;
 }
@@ -102,7 +106,7 @@ const initialDataState: DraftDataState = {
 };
 
 export const createDraftDataStore: StateCreator<
-  DraftDataStore & { 
+  DraftDataStore & {
     ui: { expandedNodes: string[]; lastSyncAt?: string };
     undoStack: UndoAction[];
     redoStack: UndoAction[];
@@ -112,7 +116,7 @@ export const createDraftDataStore: StateCreator<
   DraftDataStore
 > = (set, get) => ({
   ...initialDataState,
-  
+
   hydrate: (rows, bars) => {
     const filterIndex = buildFilterIndex(bars, rows);
     set({
@@ -123,11 +127,11 @@ export const createDraftDataStore: StateCreator<
       redoStack: [],
     });
   },
-  
+
   reset: () => {
     set(initialDataState);
   },
-  
+
   updateLastSyncAt: () => {
     set({
       ui: {
@@ -136,14 +140,14 @@ export const createDraftDataStore: StateCreator<
       },
     });
   },
-  
+
   addRow: (project, module, feature, domain) => {
     const state = get();
     const rowId = createRowId(project, module, feature);
-    
+
     const existing = state.rows.find((r) => r.rowId === rowId);
     if (existing) return existing;
-    
+
     const newRow: DraftRow = {
       rowId,
       project,
@@ -154,12 +158,12 @@ export const createDraftDataStore: StateCreator<
       expanded: true,
       isLocal: true,
     };
-    
+
     const projectId = project;
     const moduleId = `${project}::${module}`;
     const currentExpanded = state.ui.expandedNodes;
     const newExpandedNodes = [...currentExpanded];
-    
+
     // 프로젝트, 모듈, 기능(feature) 모두 펼쳐진 상태로 추가
     if (!newExpandedNodes.includes(projectId)) {
       newExpandedNodes.push(projectId);
@@ -171,7 +175,7 @@ export const createDraftDataStore: StateCreator<
     if (!newExpandedNodes.includes(rowId)) {
       newExpandedNodes.push(rowId);
     }
-    
+
     set({
       rows: [...state.rows, newRow],
       ui: {
@@ -179,85 +183,90 @@ export const createDraftDataStore: StateCreator<
         expandedNodes: newExpandedNodes,
       },
     });
-    
+
     return newRow;
   },
-  
+
   updateRow: (rowId, updates) => {
     const state = get();
     const rowIndex = state.rows.findIndex((r) => r.rowId === rowId);
     if (rowIndex === -1) return;
-    
+
     const prevRow = state.rows[rowIndex];
     const nextRow = { ...prevRow, ...updates };
-    
+
     const newRows = [...state.rows];
     newRows[rowIndex] = nextRow;
-    
+
     set({ rows: newRows });
   },
-  
+
   deleteRow: (rowId) => {
     const state = get();
     // 1. 해당 rowId를 가진 모든 bars를 deleted로 마킹
     const newBars = state.bars.map((b) =>
       b.rowId === rowId && !b.deleted
-        ? { ...b, deleted: true, dirty: true, updatedAtLocal: new Date().toISOString() }
-        : b
+        ? {
+            ...b,
+            deleted: true,
+            dirty: true,
+            updatedAtLocal: new Date().toISOString(),
+          }
+        : b,
     );
-    
+
     // 2. rows 배열에서 해당 rowId를 가진 row 제거
     const newRows = state.rows.filter((r) => r.rowId !== rowId);
-    
+
     // 3. filterIndex를 새로운 rows와 newBars로 재구성
     const filterIndex = buildFilterIndex(newBars, newRows);
-    
+
     set({
       bars: newBars,
       rows: newRows,
       filterIndex,
     });
   },
-  
+
   reorderRows: (newOrder) => {
     const state = get();
     const prevOrder = [...state.rows];
     const changedRowIds = new Set<string>();
-    
+
     const reordered = newOrder
       .map((rowId, idx) => {
         const row = state.rows.find((r) => r.rowId === rowId);
         if (!row) return null;
-        
+
         if (row.orderIndex !== idx) {
           changedRowIds.add(rowId);
         }
-        
+
         return { ...row, orderIndex: idx };
       })
       .filter((r): r is DraftRow => r !== null);
-    
+
     const newBars = state.bars.map((bar) => {
       if (changedRowIds.has(bar.rowId) && !bar.deleted) {
         return { ...bar, dirty: true };
       }
       return bar;
     });
-    
+
     set({
       rows: reordered,
       bars: newBars,
     });
   },
-  
+
   renameNode: (type, oldName, newName, parentProject, parentModule) => {
     if (oldName === newName || !newName.trim()) return;
-    
+
     const state = get();
     const newRows = state.rows.map((row) => {
       let shouldUpdate = false;
       const updated = { ...row };
-      
+
       if (type === "project" && row.project === oldName) {
         updated.project = newName;
         shouldUpdate = true;
@@ -277,18 +286,18 @@ export const createDraftDataStore: StateCreator<
         updated.feature = newName;
         shouldUpdate = true;
       }
-      
+
       if (shouldUpdate) {
         updated.rowId = createRowId(
           updated.project,
           updated.module,
-          updated.feature
+          updated.feature,
         );
       }
-      
+
       return shouldUpdate ? updated : row;
     });
-    
+
     const oldToNewRowId = new Map<string, string>();
     state.rows.forEach((oldRow, idx) => {
       const newRow = newRows[idx];
@@ -296,7 +305,7 @@ export const createDraftDataStore: StateCreator<
         oldToNewRowId.set(oldRow.rowId, newRow.rowId);
       }
     });
-    
+
     const newBars = state.bars.map((bar) => {
       const newRowId = oldToNewRowId.get(bar.rowId);
       if (newRowId) {
@@ -309,20 +318,20 @@ export const createDraftDataStore: StateCreator<
       }
       return bar;
     });
-    
+
     const filterIndex = buildFilterIndex(newBars, newRows);
-    
+
     set({
       rows: newRows,
       bars: newBars,
       filterIndex,
     });
   },
-  
+
   addBar: (params) => {
     const state = get();
     const now = new Date().toISOString();
-    
+
     const newBar: DraftBar = {
       clientUid: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       rowId: params.rowId,
@@ -341,19 +350,19 @@ export const createDraftDataStore: StateCreator<
       createdAtLocal: now,
       updatedAtLocal: now,
     };
-    
+
     set({
       bars: [...state.bars, newBar],
     });
-    
+
     return newBar;
   },
-  
+
   updateBar: (clientUid, updates) => {
     const state = get();
     const barIndex = state.bars.findIndex((b) => b.clientUid === clientUid);
     if (barIndex === -1) return;
-    
+
     const prevBar = state.bars[barIndex];
     const nextBar = {
       ...prevBar,
@@ -361,34 +370,39 @@ export const createDraftDataStore: StateCreator<
       dirty: true,
       updatedAtLocal: new Date().toISOString(),
     };
-    
+
     const newBars = [...state.bars];
     newBars[barIndex] = nextBar;
-    
+
     set({ bars: newBars });
   },
-  
+
   deleteBar: (clientUid) => {
     const state = get();
     const newBars = state.bars.map((b) =>
       b.clientUid === clientUid && !b.deleted
-        ? { ...b, deleted: true, dirty: true, updatedAtLocal: new Date().toISOString() }
-        : b
+        ? {
+            ...b,
+            deleted: true,
+            dirty: true,
+            updatedAtLocal: new Date().toISOString(),
+          }
+        : b,
     );
-    
+
     const filterIndex = buildFilterIndex(newBars, state.rows);
-    
+
     set({
       bars: newBars,
       filterIndex,
     });
   },
-  
+
   restoreBar: (clientUid) => {
     const state = get();
     const bar = state.bars.find((b) => b.clientUid === clientUid && b.deleted);
     if (!bar) return;
-    
+
     const newBars = state.bars.map((b) =>
       b.clientUid === clientUid
         ? {
@@ -397,43 +411,43 @@ export const createDraftDataStore: StateCreator<
             dirty: true,
             updatedAtLocal: new Date().toISOString(),
           }
-        : b
+        : b,
     );
-    
+
     const filterIndex = buildFilterIndex(newBars, state.rows);
-    
+
     set({
       bars: newBars,
       filterIndex,
     });
   },
-  
+
   moveBar: (clientUid, newStartDate, newEndDate) => {
     get().updateBar(clientUid, {
       startDate: newStartDate,
       endDate: newEndDate,
     });
   },
-  
+
   resizeBar: (clientUid, startDate, endDate) => {
     get().updateBar(clientUid, { startDate, endDate });
   },
-  
+
   duplicateBar: (clientUid) => {
     const state = get();
     const sourceBar = state.bars.find(
-      (b) => b.clientUid === clientUid && !b.deleted
+      (b) => b.clientUid === clientUid && !b.deleted,
     );
     if (!sourceBar) return null;
-    
+
     const sourceStart = new Date(sourceBar.startDate);
     const sourceEnd = new Date(sourceBar.endDate);
     const duration = sourceEnd.getTime() - sourceStart.getTime();
-    
+
     const newStart = new Date(sourceEnd);
     newStart.setDate(newStart.getDate() + 1);
     const newEnd = new Date(newStart.getTime() + duration);
-    
+
     const newBar: DraftBar = {
       clientUid: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       rowId: sourceBar.rowId,
@@ -451,38 +465,35 @@ export const createDraftDataStore: StateCreator<
       createdAtLocal: new Date().toISOString(),
       updatedAtLocal: new Date().toISOString(),
     };
-    
+
     set({
       bars: [...state.bars, newBar],
     });
-    
+
     return newBar;
   },
-  
+
   moveBarToRow: (
     clientUid,
     targetProject,
     targetModule,
     targetFeature,
-    targetDomain
+    targetDomain,
   ) => {
     const state = get();
     const barIndex = state.bars.findIndex((b) => b.clientUid === clientUid);
     if (barIndex === -1) return;
-    
+
     const prevBar = state.bars[barIndex];
     const newRowId = createRowId(targetProject, targetModule, targetFeature);
-    
+
     if (prevBar.rowId === newRowId) return;
-    
+
     let newRows = [...state.rows];
     const targetRowExists = state.rows.some((r) => r.rowId === newRowId);
-    
+
     if (!targetRowExists) {
-      const maxOrderIndex = Math.max(
-        0,
-        ...state.rows.map((r) => r.orderIndex)
-      );
+      const maxOrderIndex = Math.max(0, ...state.rows.map((r) => r.orderIndex));
       const newRow: DraftRow = {
         rowId: newRowId,
         project: targetProject,
@@ -494,47 +505,47 @@ export const createDraftDataStore: StateCreator<
       };
       newRows = [...newRows, newRow];
     }
-    
+
     const nextBar: DraftBar = {
       ...prevBar,
       rowId: newRowId,
       dirty: true,
       updatedAtLocal: new Date().toISOString(),
     };
-    
+
     const newBars = [...state.bars];
     newBars[barIndex] = nextBar;
-    
+
     set({
       rows: newRows,
       bars: newBars,
     });
   },
-  
+
   getDirtyBars: () => get().bars.filter((b) => b.dirty && !b.deleted),
-  
+
   getDeletedBars: () => get().bars.filter((b) => b.deleted && b.serverId),
-  
+
   clearDirtyFlags: () => {
     const state = get();
     const newBars = state.bars
       .filter((b) => !b.deleted)
       .map((b) => ({ ...b, dirty: false }));
-    
+
     set({
       bars: newBars,
       undoStack: [],
       redoStack: [],
     });
   },
-  
+
   hasUnsavedChanges: () => {
     return get().bars.some((b) => b.dirty);
   },
-  
+
   discardAllChanges: () => {
     const state = get();
-    
+
     const newBars = state.bars
       .filter((b) => b.serverId !== undefined)
       .map((b) => ({
@@ -542,9 +553,9 @@ export const createDraftDataStore: StateCreator<
         deleted: false,
         dirty: false,
       }));
-    
+
     const newRows = state.rows.filter((r) => !r.isLocal);
-    
+
     set({
       bars: newBars,
       rows: newRows,
