@@ -1799,7 +1799,8 @@ export const DraftTreePanel = forwardRef<
         onDrop={(e) => handleDrop(e, node)}
         onDragEnd={handleDragEnd}
         onContextMenu={(e) => handleContextMenu(e, node)}
-        className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 ${
+        onClick={() => handleNodeSelect()}
+        className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 cursor-pointer ${
           node.type === "project" || node.type === "module" || (node.type === "feature" && !isExpanded)
             ? "px-2"
             : "px-3"
@@ -1815,7 +1816,6 @@ export const DraftTreePanel = forwardRef<
             ? "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)"
             : bgStyle,
           borderTop: showDropBefore ? "2px solid #3b82f6" : undefined,
-          cursor: "default",
         }}
       >
         {/* 하단 border - 별도 div로 처리하여 타임라인과 높이 일치 */}
@@ -1829,7 +1829,10 @@ export const DraftTreePanel = forwardRef<
         />
         {/* 강조 버튼 - 고정 위치, 클릭 시 타임라인에 기간 강조 */}
         <button
-          onClick={handleHighlightClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleHighlightClick(e);
+          }}
           className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all duration-150 ${
             isHighlighted ? "scale-105" : "hover:scale-105"
           }`}
@@ -1994,7 +1997,10 @@ export const DraftTreePanel = forwardRef<
         {/* 삭제 버튼 (feature 노드, 편집 모드일 때만) - Airbnb 스타일 */}
         {node.type === "feature" && isEditing && (
           <button
-            onClick={handleDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(e);
+            }}
             className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center transition-all duration-150 hover:bg-red-100 active:scale-95 flex-shrink-0"
             title="기능 삭제"
           >

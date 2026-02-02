@@ -30,7 +30,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "edit-button",
     targetSelector: '[data-onboarding="edit-button"]',
-    title: "🚀 작업 시작/종료",
+    title: "작업 시작/종료",
     description:
       "편집 모드를 시작하거나 종료할 수 있습니다. 단축키를 사용하면 더 빠르게 작업할 수 있습니다.",
     position: "bottom",
@@ -42,7 +42,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "save-button",
     targetSelector: '[data-onboarding="save-button"]',
-    title: "💾 저장 & 토스트 알림",
+    title: "저장 & 토스트 알림",
     description:
       "저장 시 화면 하단에 토스트 메시지로 결과가 표시됩니다. 성공/실패 여부를 바로 확인할 수 있습니다.",
     position: "bottom",
@@ -51,7 +51,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "tree-filter",
     targetSelector: '[data-onboarding="tree-filter"]',
-    title: "🎯 트리 필터",
+    title: "트리 필터",
     description:
       "프로젝트, 모듈, 기능별로 필터링하고, FLAGS(기간)를 선택하면 해당 기간만 집중해서 볼 수 있습니다. 필터 설정은 URL에 저장되어 공유가 가능합니다!",
     position: "bottom",
@@ -59,7 +59,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "tree-panel",
     targetSelector: '[data-onboarding="tree-panel"]',
-    title: "🌳 트리 탐색",
+    title: "트리 탐색",
     description:
       "키보드 방향키(↑↓)로 항목을 이동하고, ←→로 펼침/접힘을 조작할 수 있습니다. Enter로 해당 항목을 타임라인에서 하이라이트합니다.",
     position: "right",
@@ -159,8 +159,8 @@ export function OnboardingTour({
             popoverMargin,
             Math.min(
               targetRect.left + targetRect.width / 2 - popoverWidth / 2,
-              window.innerWidth - popoverWidth - popoverMargin
-            )
+              window.innerWidth - popoverWidth - popoverMargin,
+            ),
           ),
           width: popoverWidth,
         };
@@ -171,8 +171,8 @@ export function OnboardingTour({
             popoverMargin,
             Math.min(
               targetRect.left + targetRect.width / 2 - popoverWidth / 2,
-              window.innerWidth - popoverWidth - popoverMargin
-            )
+              window.innerWidth - popoverWidth - popoverMargin,
+            ),
           ),
           width: popoverWidth,
         };
@@ -274,7 +274,9 @@ export function OnboardingTour({
                       </kbd>
                     ))}
                   </div>
-                  <span className="text-xs text-gray-500">{shortcut.label}</span>
+                  <span className="text-xs text-gray-500">
+                    {shortcut.label}
+                  </span>
                 </div>
               ))}
             </div>
@@ -319,7 +321,7 @@ export function OnboardingTour({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 

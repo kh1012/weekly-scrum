@@ -1,11 +1,20 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition, useMemo, useEffect, useState } from "react";
+import {
+  useCallback,
+  useTransition,
+  useMemo,
+  useEffect,
+  useState,
+} from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import { useDraftStore } from "@/components/plans/gantt-draft/store";
 import { useGanttQueryPersistence } from "@/components/plans/gantt-draft/hooks/useGanttQueryPersistence";
-import { OnboardingTour, useOnboardingTour } from "@/components/plans/gantt-draft/OnboardingTour";
+import {
+  OnboardingTour,
+  useOnboardingTour,
+} from "@/components/plans/gantt-draft/OnboardingTour";
 import type { WorkspaceMemberOption } from "@/components/plans/gantt-draft/CreatePlanModal";
 
 interface InitialAssignee {
@@ -58,8 +67,8 @@ export function AdminPlansGanttClient({
   const [isPending, startTransition] = useTransition();
 
   // URL queryString을 로컬 스토리지에 저장/복원
-  const { storedParams, isRestored } = useGanttQueryPersistence({ 
-    storageKey: "admin-plans-gantt" 
+  const { storedParams, isRestored } = useGanttQueryPersistence({
+    storageKey: "admin-plans-gantt",
   });
 
   // 서버에서 받은 초기값이 비어있으면 로컬 스토리지 값 사용
@@ -81,9 +90,15 @@ export function AdminPlansGanttClient({
     return initialViewMode;
   }, [initialViewMode, storedParams?.viewMode]);
 
-  const selectedStages = useMemo(() => new Set(effectiveStages), [effectiveStages]);
-  const selectedAssignees = useMemo(() => new Set(effectiveAssignees), [effectiveAssignees]);
-  
+  const selectedStages = useMemo(
+    () => new Set(effectiveStages),
+    [effectiveStages],
+  );
+  const selectedAssignees = useMemo(
+    () => new Set(effectiveAssignees),
+    [effectiveAssignees],
+  );
+
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
 
   // 초기 로드 시 URL의 viewMode를 store에 설정
@@ -103,7 +118,7 @@ export function AdminPlansGanttClient({
         router.push(`?${params.toString()}`);
       });
     },
-    [router, searchParams]
+    [router, searchParams],
   );
 
   const handleAssigneesChange = useCallback(
@@ -118,7 +133,7 @@ export function AdminPlansGanttClient({
         router.push(`?${params.toString()}`);
       });
     },
-    [router, searchParams]
+    [router, searchParams],
   );
 
   // viewMode 변경 핸들러 (store + URL 동시 업데이트)
@@ -133,13 +148,12 @@ export function AdminPlansGanttClient({
       }
       router.replace(`?${params.toString()}`, { scroll: false });
     },
-    [setViewModeStore, router, searchParams]
+    [setViewModeStore, router, searchParams],
   );
 
   // 온보딩 투어
-  const { shouldShow: shouldShowOnboarding, completeOnboarding } = useOnboardingTour(
-    "gantt-onboarding:admin-plans-gantt"
-  );
+  const { shouldShow: shouldShowOnboarding, completeOnboarding } =
+    useOnboardingTour("gantt-onboarding:admin-plans-gantt");
 
   return (
     <>
@@ -156,7 +170,7 @@ export function AdminPlansGanttClient({
         updatedByName={updatedByName}
         onViewModeChange={handleViewModeChange}
       />
-      
+
       {/* 온보딩 투어 */}
       {shouldShowOnboarding && (
         <OnboardingTour
@@ -165,7 +179,7 @@ export function AdminPlansGanttClient({
             {
               id: "edit-button",
               targetSelector: '[data-onboarding="edit-button"]',
-              title: "🚀 작업 시작/종료",
+              title: "작업 시작/종료",
               description:
                 "편집 모드를 시작하거나 종료할 수 있습니다. 단축키를 사용하면 더 빠르게 작업할 수 있습니다.",
               position: "bottom",
@@ -177,7 +191,7 @@ export function AdminPlansGanttClient({
             {
               id: "save-button",
               targetSelector: '[data-onboarding="save-button"]',
-              title: "💾 저장 & 토스트 알림",
+              title: "저장 & 토스트 알림",
               description:
                 "저장 시 화면 하단에 토스트 메시지로 결과가 표시됩니다. 성공/실패 여부를 바로 확인할 수 있습니다.",
               position: "bottom",
@@ -186,7 +200,7 @@ export function AdminPlansGanttClient({
             {
               id: "tree-filter",
               targetSelector: '[data-onboarding="tree-filter"]',
-              title: "🎯 트리 필터",
+              title: "트리 필터",
               description:
                 "프로젝트, 모듈, 기능별로 필터링하고, FLAGS(기간)를 선택하면 해당 기간만 집중해서 볼 수 있습니다. 필터 설정은 URL에 저장되어 공유가 가능합니다!",
               position: "bottom",
@@ -194,7 +208,7 @@ export function AdminPlansGanttClient({
             {
               id: "tree-panel",
               targetSelector: '[data-onboarding="tree-panel"]',
-              title: "🌳 트리 탐색",
+              title: "트리 탐색",
               description:
                 "키보드 방향키(↑↓)로 항목을 이동하고, ←→로 펼침/접힘을 조작할 수 있습니다. Enter로 해당 항목을 타임라인에서 하이라이트합니다.",
               position: "right",
@@ -211,4 +225,3 @@ export function AdminPlansGanttClient({
     </>
   );
 }
-
