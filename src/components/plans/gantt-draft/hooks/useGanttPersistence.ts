@@ -152,8 +152,12 @@ export function useGanttPersistence({
     };
 
     // URL 또는 localStorage에 expanded가 있는지 확인
-    const hasExpandedInUrl = urlState.expandedNodes && urlState.expandedNodes.length > 0;
-    const hasExpandedInStorage = storedState?.expandedNodes && storedState.expandedNodes.length > 0;
+    const hasExpandedInUrl = !!(
+      urlState.expandedNodes && urlState.expandedNodes.length > 0
+    );
+    const hasExpandedInStorage = !!(
+      storedState?.expandedNodes && storedState.expandedNodes.length > 0
+    );
     hasExpandedInSourceRef.current = hasExpandedInUrl || hasExpandedInStorage;
 
     // 상태 적용
@@ -188,12 +192,12 @@ export function useGanttPersistence({
 
     // URL에 파라미터가 없고 localStorage에서 복원한 경우, URL도 업데이트
     const hasUrlParams = urlSearchParams.toString().length > 0;
-    const hasStoredData = storedState && (
-      (storedState.expandedNodes?.length ?? 0) > 0 ||
-      storedState.rangeMonths !== null ||
-      storedState.rangeStart !== null ||
-      storedState.rangeEnd !== null
-    );
+    const hasStoredData =
+      storedState &&
+      ((storedState.expandedNodes?.length ?? 0) > 0 ||
+        storedState.rangeMonths !== null ||
+        storedState.rangeStart !== null ||
+        storedState.rangeEnd !== null);
 
     if (!hasUrlParams && hasStoredData) {
       const params = toQueryParams(mergedState);
@@ -322,7 +326,9 @@ export function useGanttPersistence({
             // 일반 URL 사용 (history API)
             const fallbackPath =
               typeof window !== "undefined" ? window.location.pathname : "";
-            const newUrl = newQueryString ? `${fallbackPath}?${newQueryString}` : fallbackPath;
+            const newUrl = newQueryString
+              ? `${fallbackPath}?${newQueryString}`
+              : fallbackPath;
             window.history.replaceState(null, "", newUrl);
           }
         });
@@ -330,7 +336,9 @@ export function useGanttPersistence({
         // 일반 URL 업데이트 - window.history.replaceState 사용 (서버 재실행 방지)
         const currentPath =
           typeof window !== "undefined" ? window.location.pathname : "";
-        const newUrl = newQueryString ? `${currentPath}?${newQueryString}` : currentPath;
+        const newUrl = newQueryString
+          ? `${currentPath}?${newQueryString}`
+          : currentPath;
         window.history.replaceState(null, "", newUrl);
       }
     }
