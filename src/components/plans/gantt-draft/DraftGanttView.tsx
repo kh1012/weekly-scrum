@@ -166,7 +166,7 @@ interface DraftGanttViewProps {
 export interface DraftGanttViewRef {
   scrollToRow: (
     rowId: string,
-    options?: { highlight?: boolean; smooth?: boolean },
+    options?: { highlight?: boolean; smooth?: boolean }
   ) => void;
 }
 
@@ -198,7 +198,7 @@ export const DraftGanttView = forwardRef<
     onFocusMismatch,
     isAlignmentPage = false,
   },
-  ref,
+  ref
 ) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -243,7 +243,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "success",
         "자동 저장 활성화",
-        "90초 이상 비활성 시 자동으로 저장됩니다.",
+        "90초 이상 비활성 시 자동으로 저장됩니다."
       );
     } else {
       showToast("info", "자동 저장 비활성화", "수동으로만 저장됩니다.");
@@ -276,13 +276,13 @@ export const DraftGanttView = forwardRef<
       setIsHeaderHidden((prev) => !prev);
       // GNB도 함께 숨기기/보이기
       const gnb = document.querySelector(
-        'header[class*="sticky top-0"]',
+        'header[class*="sticky top-0"]'
       ) as HTMLElement;
       if (gnb) {
         gnb.style.display = isHeaderHidden ? "" : "none";
       }
     },
-    [isHeaderHidden],
+    [isHeaderHidden]
   );
 
   // 저장 진행 상태는 useSaveQueue에서 Toast로 관리됨
@@ -302,6 +302,10 @@ export const DraftGanttView = forwardRef<
 
   // TreePanel ref (context menu 제어용)
   const treePanelRef = useRef<{ closeContextMenu: () => void }>(null);
+  // 트리 패널 DOM 래퍼 (클릭 외부 감지 시 트리 영역 제외용)
+  const treePanelWrapperRef = useRef<HTMLDivElement>(null);
+  // 모바일 트리 슬라이드 패널 DOM (클릭 시 선택 해제 제외용)
+  const mobileTreePanelRef = useRef<HTMLDivElement>(null);
 
   // Row 하이라이트 상태 (timeline focus용)
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
@@ -327,6 +331,8 @@ export const DraftGanttView = forwardRef<
   const expandToLevel = useDraftStore((s) => s.expandToLevel);
   const expandedNodes = useDraftStore((s) => s.ui.expandedNodes);
   const setExpandedNodes = useDraftStore((s) => s.setExpandedNodes);
+  const selectRow = useDraftStore((s) => s.selectRow);
+  const selectBar = useDraftStore((s) => s.selectBar);
 
   // Expose scrollToRow method via ref
   useImperativeHandle(
@@ -334,7 +340,7 @@ export const DraftGanttView = forwardRef<
     () => ({
       scrollToRow: (
         rowId: string,
-        options?: { highlight?: boolean; smooth?: boolean },
+        options?: { highlight?: boolean; smooth?: boolean }
       ) => {
         const targetRow = rows.find((r) => r.rowId === rowId);
         if (!targetRow) {
@@ -351,7 +357,7 @@ export const DraftGanttView = forwardRef<
 
         // Find the target node position
         const targetNode = nodePositions.find(
-          (pos) => pos.node.row?.rowId === rowId,
+          (pos) => pos.node.row?.rowId === rowId
         );
         if (!targetNode) {
           return;
@@ -361,7 +367,7 @@ export const DraftGanttView = forwardRef<
         const viewportHeight = timelineRef.current?.clientHeight || 600;
         const targetScrollTop = Math.max(
           0,
-          targetNode.top - viewportHeight / 2 + ROW_HEIGHT / 2,
+          targetNode.top - viewportHeight / 2 + ROW_HEIGHT / 2
         );
 
         setCommonScrollTop(targetScrollTop);
@@ -376,7 +382,7 @@ export const DraftGanttView = forwardRef<
         }
       },
     }),
-    [rows, bars, timelineRef],
+    [rows, bars, timelineRef]
   );
 
   // 필터를 store에 동기화
@@ -419,7 +425,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "warning",
         "비활성 타임아웃",
-        "10분간 활동이 없어 편집 모드가 자동 종료되었습니다.",
+        "10분간 활동이 없어 편집 모드가 자동 종료되었습니다."
       );
     },
   });
@@ -441,7 +447,7 @@ export const DraftGanttView = forwardRef<
       0,
       0,
       0,
-      0,
+      0
     );
     const end = new Date(
       today.getFullYear(),
@@ -450,74 +456,75 @@ export const DraftGanttView = forwardRef<
       0,
       0,
       0,
-      0,
+      0
     );
     return { start, end };
   }, []);
 
   // 범위를 state로 관리 (리렌더링을 위해)
   const [rangeStart, setRangeStart] = useState<Date>(
-    () => calculateRange(3).start,
+    () => calculateRange(3).start
   );
   const [rangeEnd, setRangeEnd] = useState<Date>(() => calculateRange(3).end);
 
   // Flag 필터가 활성화된 경우, Flag의 날짜 범위로 기간 제한
   const hasFlagFilter = filterFlagIds && filterFlagIds.length > 0;
-  const { effectiveRangeStart, effectiveRangeEnd, flagFilterDateRange } = useMemo(() => {
-    if (!hasFlagFilter) {
-      return {
-        effectiveRangeStart: rangeStart,
-        effectiveRangeEnd: rangeEnd,
-        flagFilterDateRange: null,
-      };
-    }
-
-    // 선택된 Flag들의 날짜 범위 계산
-    const selectedFlags = flags.filter(
-      (f) => filterFlagIds.includes(f.clientId) && !f.deleted
-    );
-
-    if (selectedFlags.length === 0) {
-      return {
-        effectiveRangeStart: rangeStart,
-        effectiveRangeEnd: rangeEnd,
-        flagFilterDateRange: null,
-      };
-    }
-
-    // 모든 선택된 Flag의 최소 시작일과 최대 종료일 계산
-    let minStart: Date | null = null;
-    let maxEnd: Date | null = null;
-
-    for (const flag of selectedFlags) {
-      const start = new Date(flag.startDate);
-      const end = new Date(flag.endDate);
-
-      if (!minStart || start < minStart) {
-        minStart = start;
+  const { effectiveRangeStart, effectiveRangeEnd, flagFilterDateRange } =
+    useMemo(() => {
+      if (!hasFlagFilter) {
+        return {
+          effectiveRangeStart: rangeStart,
+          effectiveRangeEnd: rangeEnd,
+          flagFilterDateRange: null,
+        };
       }
-      if (!maxEnd || end > maxEnd) {
-        maxEnd = end;
+
+      // 선택된 Flag들의 날짜 범위 계산
+      const selectedFlags = flags.filter(
+        (f) => filterFlagIds.includes(f.clientId) && !f.deleted
+      );
+
+      if (selectedFlags.length === 0) {
+        return {
+          effectiveRangeStart: rangeStart,
+          effectiveRangeEnd: rangeEnd,
+          flagFilterDateRange: null,
+        };
       }
-    }
 
-    if (!minStart || !maxEnd) {
+      // 모든 선택된 Flag의 최소 시작일과 최대 종료일 계산
+      let minStart: Date | null = null;
+      let maxEnd: Date | null = null;
+
+      for (const flag of selectedFlags) {
+        const start = new Date(flag.startDate);
+        const end = new Date(flag.endDate);
+
+        if (!minStart || start < minStart) {
+          minStart = start;
+        }
+        if (!maxEnd || end > maxEnd) {
+          maxEnd = end;
+        }
+      }
+
+      if (!minStart || !maxEnd) {
+        return {
+          effectiveRangeStart: rangeStart,
+          effectiveRangeEnd: rangeEnd,
+          flagFilterDateRange: null,
+        };
+      }
+
       return {
-        effectiveRangeStart: rangeStart,
-        effectiveRangeEnd: rangeEnd,
-        flagFilterDateRange: null,
+        effectiveRangeStart: minStart,
+        effectiveRangeEnd: maxEnd,
+        flagFilterDateRange: {
+          start: minStart,
+          end: maxEnd,
+        },
       };
-    }
-
-    return {
-      effectiveRangeStart: minStart,
-      effectiveRangeEnd: maxEnd,
-      flagFilterDateRange: {
-        start: minStart,
-        end: maxEnd,
-      },
-    };
-  }, [hasFlagFilter, filterFlagIds, flags, rangeStart, rangeEnd]);
+    }, [hasFlagFilter, filterFlagIds, flags, rangeStart, rangeEnd]);
 
   // onAction 핸들러: extendLockIfNeeded + closeTreeContextMenu
   const handleOnAction = useCallback(
@@ -527,7 +534,21 @@ export const DraftGanttView = forwardRef<
         treePanelRef.current?.closeContextMenu();
       }
     },
-    [extendLockIfNeeded],
+    [extendLockIfNeeded]
+  );
+
+  // 좌측 트리·선택된 레인 외 영역 클릭 시 선택 해제
+  const handleClearSelectionOnClickOutside = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      if (treePanelWrapperRef.current?.contains(target)) return;
+      if (mobileTreePanelRef.current?.contains(target)) return;
+      if (target.closest?.("[data-selected-row]")) return;
+      selectRow(undefined);
+      selectBar(undefined);
+      setHighlightedRowId(null);
+    },
+    [selectRow, selectBar]
   );
 
   // rangeMonths 변경 시 범위 업데이트 (0은 커스텀 모드이므로 무시)
@@ -539,31 +560,32 @@ export const DraftGanttView = forwardRef<
   }, [rangeMonths, calculateRange]);
 
   // 상태 지속성 (localStorage + URL 동기화)
-  const { isInitialized: isPersistenceInitialized, hasExpandedInSource } = useGanttPersistence({
-    workspaceId,
-    expandedNodes,
-    rangeMonths,
-    rangeStart,
-    rangeEnd,
-    onExpandedNodesChange: setExpandedNodes,
-    onRangeMonthsChange: setRangeMonths,
-    onRangeStartChange: setRangeStart,
-    onRangeEndChange: setRangeEnd,
-    autoShorten: true,
-    shortenThreshold: 2000,
-  });
+  const { isInitialized: isPersistenceInitialized, hasExpandedInSource } =
+    useGanttPersistence({
+      workspaceId,
+      expandedNodes,
+      rangeMonths,
+      rangeStart,
+      rangeEnd,
+      onExpandedNodesChange: setExpandedNodes,
+      onRangeMonthsChange: setRangeMonths,
+      onRangeStartChange: setRangeStart,
+      onRangeEndChange: setRangeEnd,
+      autoShorten: true,
+      shortenThreshold: 2000,
+    });
 
   // selectedFlagId 변경 시 URL 업데이트 (history API 사용 - 서버 재실행 방지)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
+
     const params = new URLSearchParams(searchParams.toString());
     const currentFlagId = params.get("flagId");
-    
+
     // 이미 동일한 상태면 스킵 (무한 루프 방지)
     if (selectedFlagId === currentFlagId) return;
     if (!selectedFlagId && !currentFlagId) return;
-    
+
     if (selectedFlagId) {
       params.set("flagId", selectedFlagId);
     } else {
@@ -581,7 +603,7 @@ export const DraftGanttView = forwardRef<
     const urlFlagId = searchParams.get("flagId");
     if (urlFlagId && flags.length > 0) {
       const flagExists = flags.some(
-        (f) => f.clientId === urlFlagId && !f.deleted,
+        (f) => f.clientId === urlFlagId && !f.deleted
       );
       if (flagExists && selectedFlagId !== urlFlagId) {
         selectFlag(urlFlagId);
@@ -601,14 +623,14 @@ export const DraftGanttView = forwardRef<
   // Figma OAuth 콜백 처리 (history API 사용 - 서버 재실행 방지)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
+
     const params = new URLSearchParams(searchParams.toString());
 
     if (params.get("figma_success")) {
       showToast(
         "success",
         "Figma 연동 완료",
-        "이제 Gantt 차트를 Figma/FigJam에 업로드할 수 있습니다.",
+        "이제 Gantt 차트를 Figma/FigJam에 업로드할 수 있습니다."
       );
       // URL에서 파라미터 제거
       params.delete("figma_success");
@@ -700,7 +722,7 @@ export const DraftGanttView = forwardRef<
 
     // orderIndex 순서대로 정렬된 rows 생성
     const sortedRows = Array.from(rowMap.values()).sort(
-      (a, b) => a.orderIndex - b.orderIndex,
+      (a, b) => a.orderIndex - b.orderIndex
     );
 
     hydrate(sortedRows, loadedBars);
@@ -717,14 +739,19 @@ export const DraftGanttView = forwardRef<
     if (rows.length === 0) return;
     // 이미 초기화된 경우 스킵
     if (hasInitializedExpandRef.current) return;
-    
+
     hasInitializedExpandRef.current = true;
-    
+
     // URL/localStorage에 expanded가 있으면 초기 펼침 로직 건너뛰기
     if (!hasExpandedInSource) {
       expandToLevel(1);
     }
-  }, [isPersistenceInitialized, rows.length, hasExpandedInSource, expandToLevel]);
+  }, [
+    isPersistenceInitialized,
+    rows.length,
+    hasExpandedInSource,
+    expandToLevel,
+  ]);
 
   // 마지막 업데이트 시각 토스트 표시 (페이지 진입 시 한 번만)
   const hasShownToastRef = useRef(false);
@@ -744,7 +771,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "success",
         "편집 모드 시작",
-        "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다.",
+        "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
       );
     } else {
       const currentLockState = useDraftStore.getState().ui.lockState;
@@ -754,13 +781,13 @@ export const DraftGanttView = forwardRef<
           "편집할 수 없음",
           `현재 ${
             currentLockState.lockedByName || "다른 사용자"
-          }님이 작업 중입니다.`,
+          }님이 작업 중입니다.`
         );
       } else {
         showToast(
           "error",
           "작업을 시작할 수 없습니다",
-          "네트워크 상태를 확인하고 다시 시도해주세요.",
+          "네트워크 상태를 확인하고 다시 시도해주세요."
         );
       }
     }
@@ -788,7 +815,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "info",
         "작업 종료",
-        `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`,
+        `${countToDiscard}개의 변경사항이 모두 폐기되었습니다.`
       );
     } else {
       showToast("success", "작업 종료", "작업이 정상적으로 종료되었습니다.");
@@ -846,13 +873,7 @@ export const DraftGanttView = forwardRef<
     lastAutoSaveRef.current = now;
     handleAutoSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    autoSaveEnabled,
-    isMyLock,
-    inactivitySeconds,
-    isSaving,
-    isAutoSaving,
-  ]);
+  }, [autoSaveEnabled, isMyLock, inactivitySeconds, isSaving, isAutoSaving]);
 
   // 조용한 자동 저장 (requestSave 사용)
   const handleAutoSave = useCallback(async () => {
@@ -877,7 +898,7 @@ export const DraftGanttView = forwardRef<
     try {
       // requestSave를 사용하여 저장 (Toast로 진행 표시)
       await requestSave();
-      
+
       // 성공 플래그 설정 (체크 아이콘 표시용)
       setAutoSaveSuccess(true);
       // 1.5초 후 플래그 해제
@@ -941,7 +962,7 @@ export const DraftGanttView = forwardRef<
       showToast(
         "error",
         "Export 실패",
-        error instanceof Error ? error.message : "알 수 없는 오류",
+        error instanceof Error ? error.message : "알 수 없는 오류"
       );
     }
   }, [
@@ -958,7 +979,7 @@ export const DraftGanttView = forwardRef<
   const handleExportPNG = useCallback(
     async (
       quality: "low" | "normal" | "high" = "normal",
-      options?: { returnBlob?: boolean },
+      options?: { returnBlob?: boolean }
     ): Promise<Blob | void> => {
       const qualityLabels = {
         low: "저품질",
@@ -971,7 +992,7 @@ export const DraftGanttView = forwardRef<
         ? null
         : showLoadingToast(
             `PNG 생성 중 (${qualityLabels[quality]})`,
-            "잠시만 기다려주세요...",
+            "잠시만 기다려주세요..."
           );
 
       try {
@@ -999,7 +1020,7 @@ export const DraftGanttView = forwardRef<
           updateToastToSuccess(
             toastId,
             "PNG Export 완료",
-            "이미지가 다운로드되었습니다.",
+            "이미지가 다운로드되었습니다."
           );
         }
       } catch (error) {
@@ -1013,19 +1034,19 @@ export const DraftGanttView = forwardRef<
           updateToastToError(
             toastId,
             "Export 실패",
-            error instanceof Error ? error.message : "알 수 없는 오류",
+            error instanceof Error ? error.message : "알 수 없는 오류"
           );
         }
       }
     },
-    [],
+    []
   );
 
   const handleExportDraw = useCallback(
     async (
       quality: "low" | "normal" | "high" = "normal",
       canvasOptions?: CanvasOptions,
-      options?: { returnBlob?: boolean },
+      options?: { returnBlob?: boolean }
     ): Promise<Blob | void> => {
       const qualityLabels = {
         low: "저품질",
@@ -1038,7 +1059,7 @@ export const DraftGanttView = forwardRef<
         ? null
         : showLoadingToast(
             `PNG Draw 생성 중 (${qualityLabels[quality]})`,
-            "Canvas로 정밀하게 렌더링 중...",
+            "Canvas로 정밀하게 렌더링 중..."
           );
 
       try {
@@ -1074,7 +1095,7 @@ export const DraftGanttView = forwardRef<
             },
             canvasOptions,
             returnBlob: options?.returnBlob,
-          },
+          }
         );
 
         // returnBlob 모드일 때는 Blob 반환
@@ -1087,7 +1108,7 @@ export const DraftGanttView = forwardRef<
           updateToastToSuccess(
             toastId,
             "PNG Draw Export 완료",
-            "이미지가 다운로드되었습니다.",
+            "이미지가 다운로드되었습니다."
           );
         }
       } catch (error) {
@@ -1101,12 +1122,12 @@ export const DraftGanttView = forwardRef<
           updateToastToError(
             toastId,
             "Export 실패",
-            error instanceof Error ? error.message : "알 수 없는 오류",
+            error instanceof Error ? error.message : "알 수 없는 오류"
           );
         }
       }
     },
-    [rows, bars, flags, rangeStart, rangeEnd],
+    [rows, bars, flags, rangeStart, rangeEnd]
   );
 
   // 키보드 단축키
@@ -1299,11 +1320,15 @@ export const DraftGanttView = forwardRef<
           rangeStart={effectiveRangeStart}
           rangeEnd={effectiveRangeEnd}
           hasFlagFilter={hasFlagFilter}
-          onCustomRangeChange={hasFlagFilter ? undefined : (start, end) => {
-            setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
-            setRangeStart(start);
-            setRangeEnd(end);
-          }}
+          onCustomRangeChange={
+            hasFlagFilter
+              ? undefined
+              : (start, end) => {
+                  setRangeMonths(0); // 커스텀 범위 사용 시 기본 기간 선택 해제
+                  setRangeStart(start);
+                  setRangeEnd(end);
+                }
+          }
           onToggleHeader={handleToggleHeader}
           autoSaveEnabled={autoSaveEnabled}
           onAutoSaveChange={handleAutoSaveChange}
@@ -1328,13 +1353,13 @@ export const DraftGanttView = forwardRef<
                 "편집할 수 없음",
                 `현재 ${
                   lockedByName || "다른 사용자"
-                }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`,
+                }님이 작업 중입니다. 헤더의 락 상태를 확인하거나, 잠시 후 다시 시도해주세요.`
               );
             } else {
               showToast(
                 "error",
                 "작업을 시작할 수 없습니다",
-                "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.",
+                "네트워크 상태를 확인하고 새로고침 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요."
               );
             }
           }}
@@ -1342,7 +1367,7 @@ export const DraftGanttView = forwardRef<
             showToast(
               "success",
               "편집 모드 시작",
-              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다.",
+              "정상적으로 편집 환경을 점유하였습니다.\n다른 사용자에게는 사용자님의 이름이 노출됩니다."
             );
           }}
           onStopSuccess={(discardedCount) => {
@@ -1350,13 +1375,13 @@ export const DraftGanttView = forwardRef<
               showToast(
                 "info",
                 "작업 종료",
-                `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`,
+                `${discardedCount}개의 변경사항이 모두 폐기되었습니다.`
               );
             } else {
               showToast(
                 "success",
                 "작업 종료",
-                "작업이 정상적으로 종료되었습니다.",
+                "작업이 정상적으로 종료되었습니다."
               );
             }
           }}
@@ -1399,6 +1424,7 @@ export const DraftGanttView = forwardRef<
       <div
         ref={ganttContainerRef}
         className="flex flex-1 overflow-hidden bg-white relative"
+        onClick={handleClearSelectionOnClickOutside}
       >
         {/* 필터 로딩 & 뷰 모드 전환 스켈레톤 (테이블 영역만) */}
         {(isFilterLoading ||
@@ -1445,6 +1471,7 @@ export const DraftGanttView = forwardRef<
             />
             {/* 슬라이드 패널 */}
             <div
+              ref={mobileTreePanelRef}
               className="fixed inset-y-0 left-0 w-[85%] max-w-sm z-[70] bg-white shadow-2xl transform transition-transform duration-300"
               style={{
                 boxShadow: "4px 0 24px rgba(0, 0, 0, 0.15)",
@@ -1491,10 +1518,11 @@ export const DraftGanttView = forwardRef<
           </>
         )}
 
-        {/* PC: 좌측 Tree (기존) */}
+        {/* PC: 좌측 Tree (기존) - containerRef로 트리 루트 DOM 참조 (클릭 외부 감지용, 래퍼 없이 스크롤 동기화 유지) */}
         {!isMobile && (
           <DraftTreePanel
             ref={treePanelRef}
+            containerRef={treePanelWrapperRef}
             isEditing={isEditing}
             filterOptions={{
               projects: [...new Set(rows.map((r) => r.project))],
@@ -1550,7 +1578,9 @@ export const DraftGanttView = forwardRef<
         rangeStart={effectiveRangeStart}
         rangeEnd={effectiveRangeEnd}
         onRangeMonthsChange={hasFlagFilter ? undefined : setRangeMonths}
-        onCustomRangeChange={hasFlagFilter ? undefined : handleCustomRangeChange}
+        onCustomRangeChange={
+          hasFlagFilter ? undefined : handleCustomRangeChange
+        }
         hasFlagFilter={hasFlagFilter}
       />
 

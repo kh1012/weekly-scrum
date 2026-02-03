@@ -38,7 +38,7 @@ interface TimelineNodeFeatureProps {
     e: React.MouseEvent,
     rowId: string,
     row: DraftRow,
-    laneIndex: number,
+    laneIndex: number
   ) => void;
   setHoverInfo: (info: any) => void;
   setLaneContextMenu: (menu: any) => void;
@@ -47,14 +47,14 @@ interface TimelineNodeFeatureProps {
   setShowEditModal: (bar: DraftBarType | null) => void;
   setBlockContextMenu?: (menu: any) => void;
   onDragDateChange?: (
-    info: { startDate: string; endDate: string } | null,
+    info: { startDate: string; endDate: string } | null
   ) => void;
   moveBarToRow: (
     clientUid: string,
     project: string,
     module: string,
     feature: string,
-    domain?: string,
+    domain?: string
   ) => void;
 }
 
@@ -114,6 +114,7 @@ export function TimelineNodeFeature({
   return (
     <div
       key={node.id}
+      {...(isRowSelected ? { "data-selected-row": "true" } : {})}
       className={`absolute left-0 transition-colors duration-150 ${
         isCollapsed ? "cursor-default" : "cursor-crosshair"
       } ${isFocused ? "animate-pulse-subtle" : ""}`}
@@ -211,26 +212,26 @@ export function TimelineNodeFeature({
             const rangeStartMidnight = new Date(
               rangeStart.getFullYear(),
               rangeStart.getMonth(),
-              rangeStart.getDate(),
+              rangeStart.getDate()
             );
             const rangeEndMidnight = new Date(
               rangeEnd.getFullYear(),
               rangeEnd.getMonth(),
-              rangeEnd.getDate(),
+              rangeEnd.getDate()
             );
 
             const startOffset = Math.round(
               (barStart.getTime() - rangeStartMidnight.getTime()) /
-                (1000 * 60 * 60 * 24),
+                (1000 * 60 * 60 * 24)
             );
             // endOffset을 rangeEnd를 초과하지 않도록 제한 (Flag 필터 적용 시 블록이 영역을 벗어나지 않도록)
             const rawEndOffset = Math.round(
               (barEnd.getTime() - rangeStartMidnight.getTime()) /
-                (1000 * 60 * 60 * 24),
+                (1000 * 60 * 60 * 24)
             );
             const maxEndOffset = Math.round(
               (rangeEndMidnight.getTime() - rangeStartMidnight.getTime()) /
-                (1000 * 60 * 60 * 24),
+                (1000 * 60 * 60 * 24)
             );
             const endOffset = Math.min(rawEndOffset, maxEndOffset);
 
@@ -331,7 +332,7 @@ export function TimelineNodeFeature({
                       targetNode.row.project,
                       targetNode.row.module,
                       targetNode.row.feature,
-                      targetNode.row.domain,
+                      targetNode.row.domain
                     );
                   }
                 }}

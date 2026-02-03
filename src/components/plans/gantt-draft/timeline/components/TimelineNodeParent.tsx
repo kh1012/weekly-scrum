@@ -112,6 +112,7 @@ export function TimelineNodeParent({
   return (
     <div
       key={node.id}
+      {...(isSelected ? { "data-selected-row": "true" } : {})}
       className="absolute left-0 transition-colors duration-150"
       style={{
         top,
@@ -147,4 +148,3 @@ export function TimelineNodeParent({
     </div>
   );
 }
-

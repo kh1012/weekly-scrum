@@ -124,12 +124,23 @@ export function useTimelineData({
     }
 
     return bars;
-  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
+  }, [
+    allBars,
+    filterIndex,
+    filters.stages,
+    filters.assignees,
+    filters.flagIds,
+    rangeFlags,
+    rangeStart,
+    rangeEnd,
+    rangeStartTime,
+    rangeEndTime,
+  ]);
 
   // activeBars를 Set으로 변환 (빠른 조회용)
   const activeBarsSet = useMemo(() => {
     const set = new Set(filteredActiveBars.map((b) => b.clientUid));
-    
+
     return set;
   }, [filteredActiveBars]);
 
@@ -137,13 +148,14 @@ export function useTimelineData({
   const rows = useMemo(() => {
     const hasFlagFilter = filters.flagIds && filters.flagIds.length > 0;
     const hasRangeFilter = rangeStart && rangeEnd;
-    
+
     // 기간 필터 또는 Flag 필터가 활성화된 경우, filteredActiveBars의 rowId Set 생성
     // 이 Set에 포함된 rows만 표시됨 (해당 기간 내 bars가 있는 rows)
-    const activeRowIds = (hasFlagFilter || hasRangeFilter)
-      ? new Set(filteredActiveBars.map((b) => b.rowId))
-      : null;
-    
+    const activeRowIds =
+      hasFlagFilter || hasRangeFilter
+        ? new Set(filteredActiveBars.map((b) => b.rowId))
+        : null;
+
     // 기간/Flag 필터가 없는 경우에만 filterIndex 사용 (성능 최적화)
     if (filterIndex && !hasFlagFilter && !hasRangeFilter) {
       const barsInView = new Set(filteredActiveBars.map((b) => b.clientUid));
@@ -163,8 +175,8 @@ export function useTimelineData({
 
     // 폴백 또는 기간/Flag 필터 활성화 시
     return allRows.filter((row) => {
-      // 기간/Flag 필터가 활성화된 경우: filteredActiveBars에 해당 row의 bars가 있어야 함
-      if ((hasFlagFilter || hasRangeFilter) && activeRowIds) {
+      // 기간/Flag 필터가 활성화된 경우: filteredActiveBars에 해당 row의 bars가 있어야 함 (isLocal row는 예외 — 새 기능 추가 행 항상 표시)
+      if ((hasFlagFilter || hasRangeFilter) && activeRowIds && !row.isLocal) {
         if (!activeRowIds.has(row.rowId)) return false;
       } else if (!row.isLocal) {
         // 기간/Flag 필터가 없는 경우: 기존 로직
@@ -199,7 +211,17 @@ export function useTimelineData({
 
       return true;
     });
-  }, [allRows, filteredActiveBars, filterIndex, searchQuery, filters, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
+  }, [
+    allRows,
+    filteredActiveBars,
+    filterIndex,
+    searchQuery,
+    filters,
+    rangeStart,
+    rangeEnd,
+    rangeStartTime,
+    rangeEndTime,
+  ]);
 
   // 날짜 배열 생성 (rangeStart ~ rangeEnd)
   const days = useMemo(() => {
@@ -257,7 +279,14 @@ export function useTimelineData({
       );
     }
     return nodes;
-  }, [rows, filteredActiveBars, expandedNodes, filters.features, filters.modules, viewMode]);
+  }, [
+    rows,
+    filteredActiveBars,
+    expandedNodes,
+    filters.features,
+    filters.modules,
+    viewMode,
+  ]);
 
   // 노드별 위치 계산
   const nodePositions = useMemo(
@@ -295,9 +324,9 @@ export function useTimelineData({
 
     // 고급 메모이제이션 활성화 시 Map 인덱싱 사용
     const nodePositionMap = flags.enableAdvancedMemo
-      ? new Map<string, typeof nodePositions[0]>()
+      ? new Map<string, (typeof nodePositions)[0]>()
       : null;
-    
+
     if (nodePositionMap) {
       for (const pos of nodePositions) {
         if (pos.node.type === "feature" && pos.node.row?.rowId) {
@@ -348,13 +377,15 @@ export function useTimelineData({
           ? nodePositionMap.get(current.rowId)
           : nodePositions.find(
               (pos) =>
-                pos.node.type === "feature" && pos.node.row?.rowId === current.rowId
+                pos.node.type === "feature" &&
+                pos.node.row?.rowId === current.rowId
             );
         const nextNode = nodePositionMap
           ? nodePositionMap.get(next.rowId)
           : nodePositions.find(
               (pos) =>
-                pos.node.type === "feature" && pos.node.row?.rowId === next.rowId
+                pos.node.type === "feature" &&
+                pos.node.row?.rowId === next.rowId
             );
 
         if (!currentNode || !nextNode) continue;
@@ -366,11 +397,15 @@ export function useTimelineData({
         if (rowBarsCache) {
           // 캐시에서 가져오거나 계산 후 캐싱
           if (!rowBarsCache.has(current.rowId)) {
-            const bars = filteredActiveBars.filter((b) => b.rowId === current.rowId);
+            const bars = filteredActiveBars.filter(
+              (b) => b.rowId === current.rowId
+            );
             rowBarsCache.set(current.rowId, assignLanesToBars(bars));
           }
           if (!rowBarsCache.has(next.rowId)) {
-            const bars = filteredActiveBars.filter((b) => b.rowId === next.rowId);
+            const bars = filteredActiveBars.filter(
+              (b) => b.rowId === next.rowId
+            );
             rowBarsCache.set(next.rowId, assignLanesToBars(bars));
           }
           currentBarsWithLane = rowBarsCache.get(current.rowId)!;
@@ -458,4 +493,3 @@ export function useTimelineData({
     snapshotConnections,
   };
 }
-
