@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useTransition,
-  useMemo,
-  useEffect,
-  useRef,
-} from "react";
+import { useCallback, useTransition, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import { useDraftStore } from "@/components/plans/gantt-draft/store";
@@ -92,11 +86,11 @@ export function AdminPlansGanttClient({
 
   const selectedStages = useMemo(
     () => new Set(effectiveStages),
-    [effectiveStages],
+    [effectiveStages]
   );
   const selectedAssignees = useMemo(
     () => new Set(effectiveAssignees),
-    [effectiveAssignees],
+    [effectiveAssignees]
   );
 
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
@@ -123,7 +117,7 @@ export function AdminPlansGanttClient({
         router.push(`?${params.toString()}`);
       });
     },
-    [router, searchParams],
+    [router, searchParams]
   );
 
   const handleAssigneesChange = useCallback(
@@ -138,7 +132,7 @@ export function AdminPlansGanttClient({
         router.push(`?${params.toString()}`);
       });
     },
-    [router, searchParams],
+    [router, searchParams]
   );
 
   // viewMode 변경 핸들러 (store + URL 동시 업데이트)
@@ -150,7 +144,7 @@ export function AdminPlansGanttClient({
       params.set("viewMode", mode);
       router.replace(`?${params.toString()}`, { scroll: false });
     },
-    [setViewModeStore, router, searchParams],
+    [setViewModeStore, router, searchParams]
   );
 
   // 온보딩 투어
@@ -212,12 +206,13 @@ export function AdminPlansGanttClient({
               targetSelector: '[data-onboarding="tree-panel"]',
               title: "트리 탐색",
               description:
-                "키보드 방향키(↑↓)로 항목을 이동하고, ←→로 펼침/접힘을 조작할 수 있습니다. Enter로 해당 항목을 타임라인에서 하이라이트합니다.",
+                "키보드 방향키(↑↓)로 항목을 이동하고, ←→로 펼침/접힘을 조작할 수 있습니다. 항목을 선택한 뒤 Enter를 누르면 새 기능 추가 모달이 열립니다. + 버튼이나 ⌘⇧⌥N으로도 열 수 있습니다.",
               position: "right",
               shortcuts: [
                 { keys: ["↑", "↓"], label: "항목 이동" },
                 { keys: ["←", "→"], label: "펼침/접힘" },
-                { keys: ["Enter"], label: "하이라이트" },
+                { keys: ["Enter"], label: "새 기능 추가" },
+                { keys: ["⌘", "⇧", "⌥", "N"], label: "새 기능 추가 (단축키)" },
               ],
             },
           ]}

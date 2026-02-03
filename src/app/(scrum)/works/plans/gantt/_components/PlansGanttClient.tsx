@@ -1,10 +1,20 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition, useMemo, useEffect, useState } from "react";
+import {
+  useCallback,
+  useTransition,
+  useMemo,
+  useEffect,
+  useState,
+} from "react";
 import { DraftGanttView } from "@/components/plans/gantt-draft";
 import { useDraftStore } from "@/components/plans/gantt-draft/store";
 import { useGanttQueryPersistence } from "@/components/plans/gantt-draft/hooks/useGanttQueryPersistence";
+import {
+  OnboardingTour,
+  useOnboardingTour,
+} from "@/components/plans/gantt-draft/OnboardingTour";
 import type { WorkspaceMemberOption } from "@/components/plans/gantt-draft/CreatePlanModal";
 
 interface InitialAssignee {
@@ -57,8 +67,8 @@ export function PlansGanttClient({
   const [isPending, startTransition] = useTransition();
 
   // URL queryString을 로컬 스토리지에 저장/복원
-  const { storedParams, isRestored } = useGanttQueryPersistence({ 
-    storageKey: "works-plans-gantt" 
+  const { storedParams, isRestored } = useGanttQueryPersistence({
+    storageKey: "works-plans-gantt",
   });
 
   // 서버에서 받은 초기값이 비어있으면 로컬 스토리지 값 사용
@@ -82,9 +92,15 @@ export function PlansGanttClient({
     return initialViewMode;
   }, [initialViewMode, storedParams?.viewMode]);
 
-  const selectedStages = useMemo(() => new Set(effectiveStages), [effectiveStages]);
-  const selectedAssignees = useMemo(() => new Set(effectiveAssignees), [effectiveAssignees]);
-  
+  const selectedStages = useMemo(
+    () => new Set(effectiveStages),
+    [effectiveStages]
+  );
+  const selectedAssignees = useMemo(
+    () => new Set(effectiveAssignees),
+    [effectiveAssignees]
+  );
+
   const setViewModeStore = useDraftStore((s) => s.setViewMode);
 
   // 초기 로드 시 URL의 viewMode를 store에 설정
@@ -137,22 +153,33 @@ export function PlansGanttClient({
     [setViewModeStore, router, searchParams]
   );
 
+  const { shouldShow: shouldShowOnboarding, completeOnboarding } =
+    useOnboardingTour("gantt-onboarding:works-plans-gantt");
+
   return (
-    <DraftGanttView
-      workspaceId={workspaceId}
-      initialPlans={initialPlans}
-      members={members}
-      readOnly={true}
-      title="계획"
-      selectedStages={selectedStages}
-      onStagesChange={handleStagesChange}
-      selectedAssignees={selectedAssignees}
-      onAssigneesChange={handleAssigneesChange}
-      isFilterLoading={isPending}
-      maxUpdatedAt={maxUpdatedAt}
-      updatedByName={updatedByName}
-      onViewModeChange={handleViewModeChange}
-    />
+    <>
+      <DraftGanttView
+        workspaceId={workspaceId}
+        initialPlans={initialPlans}
+        members={members}
+        readOnly={true}
+        title="계획"
+        selectedStages={selectedStages}
+        onStagesChange={handleStagesChange}
+        selectedAssignees={selectedAssignees}
+        onAssigneesChange={handleAssigneesChange}
+        isFilterLoading={isPending}
+        maxUpdatedAt={maxUpdatedAt}
+        updatedByName={updatedByName}
+        onViewModeChange={handleViewModeChange}
+      />
+
+      {shouldShowOnboarding && (
+        <OnboardingTour
+          storageKey="gantt-onboarding:works-plans-gantt"
+          onComplete={completeOnboarding}
+        />
+      )}
+    </>
   );
 }
-
