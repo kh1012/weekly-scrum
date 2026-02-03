@@ -23,6 +23,7 @@ import { useLock } from "./useLock";
 import { useGanttPersistence } from "./hooks/useGanttPersistence";
 import { DraftTreePanel } from "./DraftTreePanel";
 import { DraftTimeline } from "./DraftTimeline";
+import type { DraftTimelineHandle } from "./timeline/timelineTypes";
 import { GanttHeader } from "./GanttHeader";
 import { CommandPalette } from "./CommandPalette";
 import { HelpModal } from "./HelpModal";
@@ -298,6 +299,8 @@ export const DraftGanttView = forwardRef<
 
   // 타임라인 스크롤바 높이 감지 (TreePanel 하단 정렬용)
   const timelineRef = useRef<HTMLDivElement>(null);
+  /** 타임라인 인스턴스 ref (오늘로 이동 등 scrollToToday 호출용) */
+  const draftTimelineRef = useRef<DraftTimelineHandle>(null);
   const [timelineScrollbarHeight, setTimelineScrollbarHeight] = useState(0);
 
   // TreePanel ref (context menu 제어용)
@@ -384,6 +387,16 @@ export const DraftGanttView = forwardRef<
     }),
     [rows, bars, timelineRef]
   );
+
+  // 명령 팔레트 "오늘로 이동" → 타임라인 ref로 직접 스크롤 (이벤트만으로는 타이밍 이슈 있음)
+  useEffect(() => {
+    const handleScrollToToday = () => {
+      draftTimelineRef.current?.scrollToToday(true);
+    };
+    window.addEventListener("gantt:scroll-to-today", handleScrollToToday);
+    return () =>
+      window.removeEventListener("gantt:scroll-to-today", handleScrollToToday);
+  }, []);
 
   // 필터를 store에 동기화
   useEffect(() => {
@@ -1546,6 +1559,7 @@ export const DraftGanttView = forwardRef<
 
         {/* 우측 Timeline */}
         <DraftTimeline
+          ref={draftTimelineRef}
           rangeStart={effectiveRangeStart}
           rangeEnd={effectiveRangeEnd}
           isEditing={isEditing}

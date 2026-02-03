@@ -2,11 +2,7 @@
  * DraftTimeline 타입 정의
  */
 
-import type {
-  DraftRow,
-  DraftBar as DraftBarType,
-  DraftFlag,
-} from "../types";
+import type { DraftRow, DraftBar as DraftBarType, DraftFlag } from "../types";
 import type { WorkspaceMemberOption } from "../CreatePlanModal";
 import type { FlatTreeNode } from "../laneLayout";
 
@@ -46,6 +42,11 @@ export interface DraftTimelineProps {
   onScrollbarHeightChange?: (height: number) => void;
   /** 하이라이트할 Row ID (timeline focus용) */
   highlightedRowId?: string | null;
+}
+
+/** DraftTimeline ref handle (scrollToToday 등) */
+export interface DraftTimelineHandle {
+  scrollToToday: (smooth: boolean) => void;
 }
 
 export interface DragCreateState {
@@ -112,4 +113,3 @@ export interface BlockContextMenuState {
   type: "moduleSummary" | "bar";
   data: any; // node or bar
 }
-

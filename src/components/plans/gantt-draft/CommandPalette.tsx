@@ -231,8 +231,39 @@ export function CommandPalette({
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => {
-          // 오늘로 스크롤 (이벤트 발생)
-          window.dispatchEvent(new CustomEvent("gantt:scroll-to-today"));
+          const today = new Date();
+          const todayStart = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate()
+          );
+          const inRange =
+            rangeStart &&
+            rangeEnd &&
+            todayStart >= rangeStart &&
+            todayStart <= rangeEnd;
+
+          if (!inRange && onRangeMonthsChange && !hasFlagFilter) {
+            // 오늘이 표시 기간 밖이면 기간을 오늘 포함(3개월)으로 변경 후 스크롤
+            onRangeMonthsChange(3);
+            showToast(
+              "info",
+              "기간 변경",
+              "오늘을 포함하도록 기간을 3개월로 변경했습니다."
+            );
+            // 기간 상태 반영 후 스크롤 (리렌더 대기)
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent("gantt:scroll-to-today"));
+            }, 250);
+          } else if (!inRange && hasFlagFilter) {
+            showToast(
+              "info",
+              "오늘로 이동",
+              "오늘이 현재 Flag 기간에 없습니다. Flag 필터를 해제하면 이동할 수 있습니다."
+            );
+          } else {
+            window.dispatchEvent(new CustomEvent("gantt:scroll-to-today"));
+          }
         },
         category: "보기",
       },
@@ -347,6 +378,8 @@ export function CommandPalette({
       setZoom,
       onOpenHelp,
       rangeMonths,
+      rangeStart,
+      rangeEnd,
       onRangeMonthsChange,
       hasFlagFilter,
     ]

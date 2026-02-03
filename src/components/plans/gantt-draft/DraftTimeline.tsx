@@ -7,13 +7,24 @@
 
 "use client";
 
-import { useRef, useCallback, useState, useEffect, useMemo } from "react";
+import {
+  useRef,
+  useCallback,
+  useState,
+  useEffect,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useDraftStore } from "./store";
 import { FlagLane } from "./FlagLane";
 import { packFlagsIntoLanes } from "./flagLayout";
 import { ROW_HEIGHT, LANE_HEIGHT } from "./laneLayout";
 import { DAY_WIDTH, HEADER_HEIGHT } from "./timeline/timelineTypes";
-import type { DraftTimelineProps } from "./timeline/timelineTypes";
+import type {
+  DraftTimelineProps,
+  DraftTimelineHandle,
+} from "./timeline/timelineTypes";
 
 // State & Hooks
 import { useTimelineState } from "./timeline/useTimelineState";
@@ -38,21 +49,27 @@ import { TimelineDeleteLaneModal } from "./timeline/components/TimelineDeleteLan
 import { BlockContextMenu } from "./timeline/components/BlockContextMenu";
 import { getFeatureFlags } from "./featureFlags";
 
-export function DraftTimeline({
-  rangeStart,
-  rangeEnd,
-  isEditing,
-  isAdmin = false,
-  readOnly = false,
-  members = [],
-  workspaceId = "",
-  onDragDateChange,
-  onAction,
-  scrollTop: externalScrollTop,
-  onScrollChange,
-  onScrollbarHeightChange,
-  highlightedRowId,
-}: DraftTimelineProps) {
+export const DraftTimeline = forwardRef<
+  DraftTimelineHandle,
+  DraftTimelineProps
+>(function DraftTimeline(
+  {
+    rangeStart,
+    rangeEnd,
+    isEditing,
+    isAdmin = false,
+    readOnly = false,
+    members = [],
+    workspaceId = "",
+    onDragDateChange,
+    onAction,
+    scrollTop: externalScrollTop,
+    onScrollChange,
+    onScrollbarHeightChange,
+    highlightedRowId,
+  },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const flagLaneRef = useRef<HTMLDivElement>(null);
@@ -70,14 +87,14 @@ export function DraftTimeline({
   // ResizeObserver로 컨테이너 높이 감지
   useEffect(() => {
     if (!containerRef.current) return;
-    
+
     const observer = new ResizeObserver((entries) => {
       const height = entries[0].contentRect.height;
       setContainerHeight(height);
     });
-    
+
     observer.observe(containerRef.current);
-    
+
     return () => observer.disconnect();
   }, []);
 
@@ -119,7 +136,9 @@ export function DraftTimeline({
     rangeEnd,
     allRows,
     allBars,
-    activeBars: state.dragCreate?.isActive ? [] : allBars.filter((b) => !b.deleted),
+    activeBars: state.dragCreate?.isActive
+      ? []
+      : allBars.filter((b) => !b.deleted),
     searchQuery,
     filters,
     rangeFlags,
@@ -209,7 +228,14 @@ export function DraftTimeline({
     onScrollbarHeightChange,
     scrollToToday: scrollLogic.scrollToToday,
     scrollToDateRange: scrollLogic.scrollToDateRange,
-          });
+  });
+
+  // ref로 scrollToToday 노출 (명령 팔레트 "오늘로 이동" 등)
+  useImperativeHandle(
+    ref,
+    () => ({ scrollToToday: scrollLogic.scrollToToday }),
+    [scrollLogic.scrollToToday]
+  );
 
   const handleCellLeave = useCallback(() => {
     state.setHoverInfo(null);
@@ -257,7 +283,9 @@ export function DraftTimeline({
           cursor: state.middleClickScroll?.isActive ? "move" : undefined,
           // 성능 최적화
           contain: "layout style paint", // 브라우저에게 격리 힌트
-          willChange: state.middleClickScroll?.isActive ? "scroll-position" : "auto",
+          willChange: state.middleClickScroll?.isActive
+            ? "scroll-position"
+            : "auto",
         }}
         onScroll={scrollLogic.handleScroll}
         onMouseDown={scrollLogic.handleMiddleClickStart}
@@ -290,7 +318,7 @@ export function DraftTimeline({
             flagItems={flagItems}
             flagLaneHeight={flagLaneHeight}
             nodePositions={data.nodePositions}
-                  />
+          />
 
           {/* 그리드 라인 */}
           <TimelineGridLines
@@ -375,16 +403,16 @@ export function DraftTimeline({
             isEditing={isEditing}
             dragCreateIsActive={!!state.dragCreate?.isActive}
             hoverInfo={state.hoverInfo}
-            />
+          />
 
           {/* 스냅샷 연결 */}
           <SnapshotConnections
             connections={data.snapshotConnections}
             totalWidth={data.totalWidth}
             totalHeight={data.totalHeight}
-                    />
+          />
         </div>
-        </div>
+      </div>
 
       {/* 모달들 */}
       <TimelineModals
@@ -395,7 +423,7 @@ export function DraftTimeline({
         viewPopover={state.viewPopover}
         moduleSummaryPopover={state.moduleSummaryPopover}
         flags={flags}
-          members={members}
+        members={members}
         workspaceId={workspaceId}
         filters={filters}
         setShowCreateModal={state.setShowCreateModal}
@@ -407,7 +435,7 @@ export function DraftTimeline({
         onCreatePlan={dragLogic.handleCreatePlan}
         updateBar={updateBar}
         deleteBar={deleteBar}
-        />
+      />
 
       {/* 레인 컨텍스트 메뉴 */}
       <TimelineLaneMenu
@@ -431,29 +459,34 @@ export function DraftTimeline({
 
           const mouseX = state.blockContextMenu.position.x;
           const mouseY = state.blockContextMenu.position.y;
-          
+
           // 팝오버 예상 높이 (실제 팝오버 높이에 따라 조정 가능)
           const ESTIMATED_POPOVER_HEIGHT = 400;
           const SPACING = 8; // 마우스 커서와의 간격
-          
+
           // 화면 높이 확인
           const viewportHeight = window.innerHeight;
           const spaceBelow = viewportHeight - mouseY;
-          
+
           // 아래 공간이 충분한지 확인
-          const shouldShowBelow = spaceBelow >= ESTIMATED_POPOVER_HEIGHT + SPACING;
+          const shouldShowBelow =
+            spaceBelow >= ESTIMATED_POPOVER_HEIGHT + SPACING;
 
           if (state.blockContextMenu.type === "moduleSummary") {
             // 모듈 요약 블록: ModuleSummaryPopover 열기
             const node = state.blockContextMenu.data;
             // 마우스 위치 기준으로 rect 생성
-            const yPosition = shouldShowBelow ? mouseY + SPACING : mouseY - SPACING;
+            const yPosition = shouldShowBelow
+              ? mouseY + SPACING
+              : mouseY - SPACING;
             const rect = new DOMRect(mouseX, yPosition, 0, 0);
             state.setModuleSummaryPopover({ node, anchorRect: rect });
           } else if (state.blockContextMenu.type === "bar") {
             // 계획 블록: PlanViewPopover 열기
             const bar = state.blockContextMenu.data;
-            const yPosition = shouldShowBelow ? mouseY + SPACING : mouseY - SPACING;
+            const yPosition = shouldShowBelow
+              ? mouseY + SPACING
+              : mouseY - SPACING;
             state.setViewPopover({
               bar,
               position: {
@@ -464,9 +497,9 @@ export function DraftTimeline({
           }
         }}
         onClose={() => state.setBlockContextMenu(null)}
-        />
+      />
     </div>
   );
-}
+});
 
 export { DAY_WIDTH, ROW_HEIGHT, LANE_HEIGHT };

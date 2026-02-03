@@ -12,7 +12,11 @@ interface UseTimelineEffectsProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
   onScrollbarHeightChange?: (height: number) => void;
   scrollToToday: (smooth: boolean) => void;
-  scrollToDateRange: (startDate: string, endDate: string, smooth: boolean) => void;
+  scrollToDateRange: (
+    startDate: string,
+    endDate: string,
+    smooth: boolean
+  ) => void;
 }
 
 export function useTimelineEffects({
@@ -47,7 +51,8 @@ export function useTimelineEffects({
         const hasHorizontalScrollbar =
           containerRef.current.scrollWidth > containerRef.current.clientWidth;
         const scrollbarHeight = hasHorizontalScrollbar
-          ? containerRef.current.offsetHeight - containerRef.current.clientHeight
+          ? containerRef.current.offsetHeight -
+            containerRef.current.clientHeight
           : 0;
         onScrollbarHeightChange(scrollbarHeight);
       }
@@ -69,7 +74,7 @@ export function useTimelineEffects({
 
   // 저장 전 스크롤 위치 저장 이벤트 핸들러
   const saveScrollPosition = useDraftStore((s) => s.saveScrollPosition);
-  
+
   useEffect(() => {
     const handleBeforeSave = () => {
       if (containerRef.current) {
@@ -81,16 +86,19 @@ export function useTimelineEffects({
     };
 
     window.addEventListener("gantt:before-save", handleBeforeSave);
-    return () => window.removeEventListener("gantt:before-save", handleBeforeSave);
+    return () =>
+      window.removeEventListener("gantt:before-save", handleBeforeSave);
   }, [containerRef, saveScrollPosition]);
 
   // 저장 후 스크롤 위치 복원
   const savedScrollPosition = useDraftStore((s) => s.ui.savedScrollPosition);
-  const clearSavedScrollPosition = useDraftStore((s) => s.clearSavedScrollPosition);
-  
+  const clearSavedScrollPosition = useDraftStore(
+    (s) => s.clearSavedScrollPosition
+  );
+
   useEffect(() => {
     if (!savedScrollPosition || !containerRef.current) return;
-    
+
     // 저장된 스크롤 위치로 복원
     const timer = setTimeout(() => {
       if (containerRef.current) {
@@ -106,9 +114,10 @@ export function useTimelineEffects({
   useEffect(() => {
     // 저장된 스크롤 위치가 있으면 스킵 (저장 후 재렌더링 시)
     // 스토어에서 직접 확인 (구독 대신 스냅샷)
-    const hasSavedPosition = useDraftStore.getState().ui.savedScrollPosition !== null;
+    const hasSavedPosition =
+      useDraftStore.getState().ui.savedScrollPosition !== null;
     if (hasSavedPosition) return;
-    
+
     // 약간의 지연 후 스크롤 (레이아웃 완료 후)
     const timer = setTimeout(() => {
       scrollToToday(false); // 초기에는 부드러운 애니메이션 없이
@@ -116,16 +125,7 @@ export function useTimelineEffects({
     return () => clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 오늘로 이동 이벤트 핸들러
-  useEffect(() => {
-    const handleScrollToToday = () => {
-      scrollToToday(true);
-    };
-
-    window.addEventListener("gantt:scroll-to-today", handleScrollToToday);
-    return () =>
-      window.removeEventListener("gantt:scroll-to-today", handleScrollToToday);
-  }, [scrollToToday]);
+  // 오늘로 이동은 부모(DraftGanttView)에서 ref로 호출 (명령 팔레트 등)
 
   // Epic으로 스크롤하는 이벤트 핸들러
   useEffect(() => {
@@ -167,4 +167,3 @@ export function useTimelineEffects({
       );
   }, [scrollToDateRange]);
 }
-
