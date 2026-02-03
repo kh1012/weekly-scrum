@@ -93,16 +93,16 @@ export function CommandPalette({
   // 커스텀 범위 입력 상태
   const currentYear = new Date().getFullYear();
   const [customStartYear, setCustomStartYear] = useState(
-    rangeStart ? rangeStart.getFullYear() : currentYear,
+    rangeStart ? rangeStart.getFullYear() : currentYear
   );
   const [customStartMonth, setCustomStartMonth] = useState(
-    rangeStart ? rangeStart.getMonth() + 1 : new Date().getMonth() + 1,
+    rangeStart ? rangeStart.getMonth() + 1 : new Date().getMonth() + 1
   );
   const [customEndYear, setCustomEndYear] = useState(
-    rangeEnd ? rangeEnd.getFullYear() : currentYear,
+    rangeEnd ? rangeEnd.getFullYear() : currentYear
   );
   const [customEndMonth, setCustomEndMonth] = useState(
-    rangeEnd ? rangeEnd.getMonth() + 1 : new Date().getMonth() + 1,
+    rangeEnd ? rangeEnd.getMonth() + 1 : new Date().getMonth() + 1
   );
 
   const isMac = useIsMac();
@@ -121,7 +121,7 @@ export function CommandPalette({
         .replace(/↵/g, "Enter")
         .replace(/\+$/, "");
     },
-    [isMac],
+    [isMac]
   );
 
   const canUndo = useDraftStore((s) => s.canUndo());
@@ -181,7 +181,7 @@ export function CommandPalette({
       {
         id: "add-row",
         label: "새 기능 추가",
-        shortcut: "",
+        shortcut: "Enter / ⌘⇧⌥N",
         icon: <PlusIcon className="w-4 h-4" />,
         action: onAddRow,
         disabled: !isEditing,
@@ -263,7 +263,9 @@ export function CommandPalette({
       // 기간 설정 (Flag 필터 활성화 시 비활성화)
       {
         id: "range-3",
-        label: `기간: 3개월${rangeMonths === 3 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
+        label: `기간: 3개월${rangeMonths === 3 ? " ✓" : ""}${
+          hasFlagFilter ? " (Flag 필터)" : ""
+        }`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(3),
@@ -272,7 +274,9 @@ export function CommandPalette({
       },
       {
         id: "range-4",
-        label: `기간: 4개월${rangeMonths === 4 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
+        label: `기간: 4개월${rangeMonths === 4 ? " ✓" : ""}${
+          hasFlagFilter ? " (Flag 필터)" : ""
+        }`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(4),
@@ -281,7 +285,9 @@ export function CommandPalette({
       },
       {
         id: "range-5",
-        label: `기간: 5개월${rangeMonths === 5 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
+        label: `기간: 5개월${rangeMonths === 5 ? " ✓" : ""}${
+          hasFlagFilter ? " (Flag 필터)" : ""
+        }`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(5),
@@ -290,7 +296,9 @@ export function CommandPalette({
       },
       {
         id: "range-6",
-        label: `기간: 6개월${rangeMonths === 6 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
+        label: `기간: 6개월${rangeMonths === 6 ? " ✓" : ""}${
+          hasFlagFilter ? " (Flag 필터)" : ""
+        }`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => onRangeMonthsChange?.(6),
@@ -299,7 +307,9 @@ export function CommandPalette({
       },
       {
         id: "range-custom",
-        label: `기간: 직접 선택${rangeMonths === 0 ? " ✓" : ""}${hasFlagFilter ? " (Flag 필터)" : ""}`,
+        label: `기간: 직접 선택${rangeMonths === 0 ? " ✓" : ""}${
+          hasFlagFilter ? " (Flag 필터)" : ""
+        }`,
         shortcut: "",
         icon: <CalendarIcon className="w-4 h-4" />,
         action: () => setShowCustomRange(true),
@@ -339,7 +349,7 @@ export function CommandPalette({
       rangeMonths,
       onRangeMonthsChange,
       hasFlagFilter,
-    ],
+    ]
   );
 
   // 읽기 전용 모드에서 숨길 명령 ID 목록
@@ -382,7 +392,7 @@ export function CommandPalette({
     return commands.filter(
       (cmd) =>
         cmd.label.toLowerCase().includes(q) ||
-        cmd.category.toLowerCase().includes(q),
+        cmd.category.toLowerCase().includes(q)
     );
   }, [commands, query]);
 
@@ -425,7 +435,7 @@ export function CommandPalette({
         }
       }
     },
-    [loadingCommandId, onClose],
+    [loadingCommandId, onClose]
   );
 
   // 열릴 때 초기화
@@ -474,13 +484,7 @@ export function CommandPalette({
         }
       }
     },
-    [
-      filteredCommands,
-      selectedIndex,
-      onClose,
-      loadingCommandId,
-      executeCommand,
-    ],
+    [filteredCommands, selectedIndex, onClose, loadingCommandId, executeCommand]
   );
 
   // 검색어 변경 시 인덱스 리셋
@@ -669,7 +673,7 @@ export function CommandPalette({
                 const start = new Date(
                   customStartYear,
                   customStartMonth - 1,
-                  1,
+                  1
                 );
                 const end = new Date(customEndYear, customEndMonth, 0); // 해당 월의 마지막 날
                 onCustomRangeChange?.(start, end);

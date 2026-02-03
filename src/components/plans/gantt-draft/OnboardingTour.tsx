@@ -61,12 +61,13 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     targetSelector: '[data-onboarding="tree-panel"]',
     title: "트리 탐색",
     description:
-      "키보드 방향키(↑↓)로 항목을 이동하고, ←→로 펼침/접힘을 조작할 수 있습니다. Enter로 해당 항목을 타임라인에서 하이라이트합니다.",
+      "키보드 방향키(↑↓)로 항목을 이동하고, ←→로 펼침/접힘을 조작할 수 있습니다. 항목을 선택한 뒤 Enter를 누르면 새 기능 추가 모달이 열립니다. + 버튼이나 ⌘⇧⌥N으로도 열 수 있으며, 선택한 프로젝트/모듈이 채워진 상태로 열립니다.",
     position: "right",
     shortcuts: [
       { keys: ["↑", "↓"], label: "항목 이동" },
       { keys: ["←", "→"], label: "펼침/접힘" },
-      { keys: ["Enter"], label: "하이라이트" },
+      { keys: ["Enter"], label: "새 기능 추가" },
+      { keys: ["⌘", "⇧", "⌥", "N"], label: "새 기능 추가 (단축키)" },
     ],
   },
 ];
@@ -159,8 +160,8 @@ export function OnboardingTour({
             popoverMargin,
             Math.min(
               targetRect.left + targetRect.width / 2 - popoverWidth / 2,
-              window.innerWidth - popoverWidth - popoverMargin,
-            ),
+              window.innerWidth - popoverWidth - popoverMargin
+            )
           ),
           width: popoverWidth,
         };
@@ -171,8 +172,8 @@ export function OnboardingTour({
             popoverMargin,
             Math.min(
               targetRect.left + targetRect.width / 2 - popoverWidth / 2,
-              window.innerWidth - popoverWidth - popoverMargin,
-            ),
+              window.innerWidth - popoverWidth - popoverMargin
+            )
           ),
           width: popoverWidth,
         };
@@ -321,7 +322,7 @@ export function OnboardingTour({
         </div>
       </div>
     </div>,
-    document.body,
+    document.body
   );
 }
 

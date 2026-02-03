@@ -160,6 +160,14 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               <ShortcutRow keys={["⌘", "Enter"]} description="작업 시작" />
               <ShortcutRow keys={["⌘", "⇧", "Enter"]} description="작업 종료" />
               <ShortcutRow keys={["⌘", "S"]} description="저장 (Commit)" />
+              <ShortcutRow
+                keys={["Enter"]}
+                description="새 기능 추가 (트리 선택 시)"
+              />
+              <ShortcutRow
+                keys={["⌘", "⇧", "⌥", "N"]}
+                description="새 기능 추가 (트리 선택 시 프로젝트/모듈 채움)"
+              />
               <ShortcutRow keys={["⌘", "Z"]} description="실행 취소 (Undo)" />
               <ShortcutRow
                 keys={["⌘", "⇧", "Z"]}
