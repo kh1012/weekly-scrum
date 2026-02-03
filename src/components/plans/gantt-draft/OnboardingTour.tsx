@@ -22,7 +22,8 @@ interface OnboardingStep {
 
 interface OnboardingTourProps {
   storageKey: string;
-  steps: OnboardingStep[];
+  /** 미지정 시 기본 ONBOARDING_STEPS 사용 */
+  steps?: OnboardingStep[];
   onComplete: () => void;
 }
 
