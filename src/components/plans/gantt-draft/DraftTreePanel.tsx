@@ -84,6 +84,8 @@ interface DraftTreePanelProps {
   timelineScrollbarHeight?: number;
   /** 하이라이트할 Row ID (timeline focus용) */
   highlightedRowId?: string | null;
+  /** 루트 DOM ref (클릭 외부 감지 등 상위에서 사용) */
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const DraftTreePanel = forwardRef<
@@ -104,6 +106,7 @@ export const DraftTreePanel = forwardRef<
     workspaceId,
     timelineScrollbarHeight = 0,
     highlightedRowId,
+    containerRef,
   },
   ref
 ) {
@@ -186,7 +189,7 @@ export const DraftTreePanel = forwardRef<
   // resetFilters 래퍼: URL + 로컬 스토리지도 함께 초기화
   const resetFilters = useCallback(() => {
     resetFiltersStore();
-    
+
     // 로컬 스토리지의 필터 데이터도 삭제 (useGanttQueryPersistence와 동기화)
     // pathname에서 storageKey 생성: /works/plans/gantt → works-plans-gantt
     if (typeof window !== "undefined") {
@@ -198,7 +201,7 @@ export const DraftTreePanel = forwardRef<
         // localStorage 접근 실패 무시
       }
     }
-    
+
     const params = new URLSearchParams(searchParams.toString());
     params.delete("projects");
     params.delete("modules");
@@ -259,7 +262,8 @@ export const DraftTreePanel = forwardRef<
     };
 
     // URL에 필터가 있고 현재 필터와 다르면 적용
-    const hasURLFilters = urlProjects || urlModules || urlFeatures || urlFlagIds;
+    const hasURLFilters =
+      urlProjects || urlModules || urlFeatures || urlFlagIds;
     if (hasURLFilters) {
       const currentFilters = filters;
       const isDifferent =
@@ -356,6 +360,13 @@ export const DraftTreePanel = forwardRef<
   // 선택된 노드 상태 (프로젝트/모듈/기능 모두 선택 가능)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
+  // 스토어 selectedRowId가 외부에서 해제되면 트리 선택도 해제 (레인 외부 클릭 시 동기화)
+  useEffect(() => {
+    if (selectedRowId == null) {
+      setSelectedNodeId(null);
+    }
+  }, [selectedRowId]);
+
   // 편집 상태
   const [editingNode, setEditingNode] = useState<{
     id: string;
@@ -385,7 +396,7 @@ export const DraftTreePanel = forwardRef<
   const [debouncedFilterSearchQuery, setDebouncedFilterSearchQuery] =
     useState("");
   const [isFilterSearching, setIsFilterSearching] = useState(false);
-  
+
   // 로컬 필터 상태 (팝오버 내부에서만 사용, 적용 버튼 클릭 시 실제 필터에 반영)
   const [localFilterProjects, setLocalFilterProjects] = useState<string[]>([]);
   const [localFilterModules, setLocalFilterModules] = useState<string[]>([]);
@@ -444,16 +455,21 @@ export const DraftTreePanel = forwardRef<
     isExpanded: boolean;
   } | null>(null);
 
-  // Initial Modal Data State
+  // Initial Modal Data State (컨텍스트 메뉴 또는 Cmd+N/Ctrl+N 시 모달 초기값)
   const [initialModalData, setInitialModalData] = useState<{
     project: string;
     module: string;
+    feature?: string;
   } | null>(null);
 
   // Expose closeContextMenu method to parent via ref
-  useImperativeHandle(ref, () => ({
-    closeContextMenu: () => setContextMenu(null),
-  }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      closeContextMenu: () => setContextMenu(null),
+    }),
+    []
+  );
 
   // Close context menu on click outside
   // Close context menu on click outside or ESC
@@ -464,7 +480,7 @@ export const DraftTreePanel = forwardRef<
         setContextMenu(null);
       }
     };
-    
+
     window.addEventListener("click", handleClick);
     window.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -475,7 +491,7 @@ export const DraftTreePanel = forwardRef<
 
   const handleContextMenu = (e: React.MouseEvent, node: FlatTreeNode) => {
     if (!isEditing) return;
-    
+
     // Only allow context menu on nodes that provide project/module context
     let project = "";
     let module = "";
@@ -484,18 +500,18 @@ export const DraftTreePanel = forwardRef<
       project = node.row?.project || "";
       module = node.row?.module || "";
     } else if (node.type === "module") {
-        // node.id is "project::module"
-        const parts = node.id.split("::");
-        project = parts[0];
-        module = parts[1];
+      // node.id is "project::module"
+      const parts = node.id.split("::");
+      project = parts[0];
+      module = parts[1];
     } else if (node.type === "project") {
-        project = node.label;
-        // No module context for project node
+      project = node.label;
+      // No module context for project node
     }
 
     // At minimum, we need a project to show the context menu
     if (!project) return;
-    
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -504,7 +520,9 @@ export const DraftTreePanel = forwardRef<
     setShowExpandMenu(false);
 
     // Feature도 bars가 있으면 접을 수 있음
-    const hasChildren = node.type !== "feature" || (node.type === "feature" && (node.originalBarCount || 0) > 0);
+    const hasChildren =
+      node.type !== "feature" ||
+      (node.type === "feature" && (node.originalBarCount || 0) > 0);
     const isExpanded = expandedNodes.has(node.id);
 
     // 노드 선택
@@ -650,7 +668,18 @@ export const DraftTreePanel = forwardRef<
     }
 
     return bars;
-  }, [allBars, filterIndex, filters.stages, filters.assignees, filters.flagIds, rangeFlags, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
+  }, [
+    allBars,
+    filterIndex,
+    filters.stages,
+    filters.assignees,
+    filters.flagIds,
+    rangeFlags,
+    rangeStart,
+    rangeEnd,
+    rangeStartTime,
+    rangeEndTime,
+  ]);
 
   // activeBars를 Set으로 변환 (빠른 조회용)
   const activeBarsSet = useMemo(
@@ -658,17 +687,55 @@ export const DraftTreePanel = forwardRef<
     [activeBars]
   );
 
+  // 선택된 feature 행에서 Backspace 시 휴지통 버튼과 동일한 삭제 로직 수행
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Backspace") return;
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
+      if (!selectedRowId) return;
+      const row = allRows.find((r) => r.rowId === selectedRowId);
+      if (!row) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // 해당 row의 실제 계획 수(삭제되지 않은 bars만)로 판단
+      const planCount = allBars.filter(
+        (b) => !b.deleted && b.rowId === selectedRowId
+      ).length;
+      const isNewEmptyFeature =
+        row.feature.trim() === "새 기능 추가" && planCount === 0;
+      if (isNewEmptyFeature) {
+        deleteRow(selectedRowId);
+      } else {
+        setDeleteConfirm({
+          isOpen: true,
+          rowId: selectedRowId,
+          featureName: row.feature,
+          planCount,
+        });
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedRowId, allRows, allBars, deleteRow]);
+
   // 필터링된 rows
   const filteredRows = useMemo(() => {
     const hasFlagFilter = filters.flagIds && filters.flagIds.length > 0;
     const hasRangeFilter = rangeStart && rangeEnd;
-    
+
     // 기간 필터 또는 Flag 필터가 활성화된 경우, activeBars의 rowId Set 생성
     // 이 Set에 포함된 rows만 표시됨 (해당 기간 내 bars가 있는 rows)
-    const activeRowIds = (hasFlagFilter || hasRangeFilter)
-      ? new Set(activeBars.map((b) => b.rowId))
-      : null;
-    
+    const activeRowIds =
+      hasFlagFilter || hasRangeFilter
+        ? new Set(activeBars.map((b) => b.rowId))
+        : null;
+
     // 기간/Flag 필터가 없는 경우에만 filterIndex 사용 (성능 최적화)
     if (filterIndex && !hasFlagFilter && !hasRangeFilter) {
       const barsInView = new Set(activeBars.map((b) => b.clientUid));
@@ -688,8 +755,8 @@ export const DraftTreePanel = forwardRef<
 
     // 폴백 또는 기간/Flag 필터 활성화 시
     return allRows.filter((row) => {
-      // 기간/Flag 필터가 활성화된 경우: activeBars에 해당 row의 bars가 있어야 함
-      if ((hasFlagFilter || hasRangeFilter) && activeRowIds) {
+      // 기간/Flag 필터가 활성화된 경우: activeBars에 해당 row의 bars가 있어야 함 (isLocal row는 예외 — 새 기능 추가 행 항상 표시)
+      if ((hasFlagFilter || hasRangeFilter) && activeRowIds && !row.isLocal) {
         if (!activeRowIds.has(row.rowId)) return false;
       } else if (!row.isLocal) {
         // 기간/Flag 필터가 없는 경우: 기존 로직
@@ -730,7 +797,17 @@ export const DraftTreePanel = forwardRef<
 
       return true;
     });
-  }, [allRows, activeBars, filterIndex, searchQuery, filters, rangeStart, rangeEnd, rangeStartTime, rangeEndTime]);
+  }, [
+    allRows,
+    activeBars,
+    filterIndex,
+    searchQuery,
+    filters,
+    rangeStart,
+    rangeEnd,
+    rangeStartTime,
+    rangeEndTime,
+  ]);
 
   // 필터 레벨 결정 (가장 하위 레벨 기준)
   // 기능 필터가 있으면 2, 모듈 필터가 있으면 1, 프로젝트 필터가 있으면 0, 없으면 -1
@@ -757,23 +834,26 @@ export const DraftTreePanel = forwardRef<
       (id) => id.includes("::") && id.split("::").length === 2
     );
     if (!hasModuleExpanded) return 1; // 모듈까지 보기
-    
+
     // Feature 노드가 펼쳐져 있는지 확인 (::가 두 개 있는 경우 또는 rowId)
     const hasFeatureExpanded = expandedNodesArray.some(
       (id) => id.includes("::") && id.split("::").length === 3
     );
     if (!hasFeatureExpanded) return 2; // 기능까지 보기
-    
+
     // 모든 Feature가 펼쳐져 있는지 확인
     const allFeatures = allRows.map((r) => r.rowId);
     const expandedFeatures = expandedNodesArray.filter((id) =>
       allFeatures.includes(id)
     );
     // 모든 Feature가 펼쳐져 있으면 전체 보기
-    if (expandedFeatures.length === allFeatures.length && allFeatures.length > 0) {
+    if (
+      expandedFeatures.length === allFeatures.length &&
+      allFeatures.length > 0
+    ) {
       return 3; // 전체 보기
     }
-    
+
     return 2; // 기능까지 보기 (일부만 펼쳐진 경우)
   }, [expandedNodesArray, allRows]);
 
@@ -812,6 +892,58 @@ export const DraftTreePanel = forwardRef<
   }, [flatNodes, filterLevel, viewMode]);
 
   const nodePositions = visibleNodePositions;
+
+  // Cmd+Shift+Option+N(Mac) / Ctrl+Shift+Alt+N(Win): "새 기능 추가" 모달 열기 (Cmd+N, Cmd+Option+N 등은 브라우저 예약)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isNewFeatureShortcut =
+        e.key === "n" && e.shiftKey && e.altKey && (e.metaKey || e.ctrlKey);
+      if (!isNewFeatureShortcut) return;
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
+      if (!isEditing) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      let project = "";
+      let module = "";
+      let feature: string | undefined;
+
+      if (selectedNodeId && nodePositions.length > 0) {
+        const pos = nodePositions.find((p) => p.node.id === selectedNodeId);
+        if (pos) {
+          const { node } = pos;
+          if (node.type === "project") {
+            project = node.label;
+          } else if (node.type === "module") {
+            const parts = node.id.split("::");
+            project = parts[0] ?? "";
+            module = parts[1] ?? "";
+          } else if (node.type === "feature" && node.row) {
+            // 프로젝트/모듈만 채우고 기능명은 비움 (새 기능 추가이므로)
+            project = node.row.project ?? "";
+            module = node.row.module ?? "";
+          }
+        }
+      }
+
+      setInitialModalData(
+        project || module || feature
+          ? { project, module, ...(feature !== undefined && { feature }) }
+          : null
+      );
+      setShowAddRowModal(true);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isEditing, selectedNodeId, nodePositions, setShowAddRowModal]);
 
   const totalHeight = useMemo(() => {
     if (nodePositions.length === 0) return 0;
@@ -1030,7 +1162,7 @@ export const DraftTreePanel = forwardRef<
     };
     setFilters(newFilters);
     updateURLFilters(newFilters);
-    
+
     // Flag 필터 URL 업데이트
     const params = new URLSearchParams(searchParams.toString());
     if (localFilterFlagIds.length > 0) {
@@ -1039,14 +1171,14 @@ export const DraftTreePanel = forwardRef<
       params.delete("flagIds");
     }
     router.replace(`?${params.toString()}`, { scroll: false });
-    
+
     // 모든 필터가 비어있으면 로컬 스토리지도 삭제 (useGanttQueryPersistence와 동기화)
-    const hasNoFilters = 
-      localFilterProjects.length === 0 && 
-      localFilterModules.length === 0 && 
-      localFilterFeatures.length === 0 && 
+    const hasNoFilters =
+      localFilterProjects.length === 0 &&
+      localFilterModules.length === 0 &&
+      localFilterFeatures.length === 0 &&
       localFilterFlagIds.length === 0;
-    
+
     if (hasNoFilters && typeof window !== "undefined") {
       const storageKey = pathname.replace(/^\//, "").replace(/\//g, "-");
       const fullStorageKey = `gantt-query:${storageKey}`;
@@ -1056,12 +1188,16 @@ export const DraftTreePanel = forwardRef<
         // localStorage 접근 실패 무시
       }
     }
-    
+
     // 필터 적용 시 기능까지 펼치기
-    if (localFilterProjects.length > 0 || localFilterModules.length > 0 || localFilterFeatures.length > 0) {
+    if (
+      localFilterProjects.length > 0 ||
+      localFilterModules.length > 0 ||
+      localFilterFeatures.length > 0
+    ) {
       expandToLevel(1);
     }
-    
+
     setShowFilters(false);
   };
 
@@ -1080,15 +1216,35 @@ export const DraftTreePanel = forwardRef<
 
   // 로컬 필터에 변경사항이 있는지 확인
   const hasLocalFilterChanges = useMemo(() => {
-    const projectsChanged = JSON.stringify([...localFilterProjects].sort()) !== JSON.stringify([...filters.projects].sort());
-    const modulesChanged = JSON.stringify([...localFilterModules].sort()) !== JSON.stringify([...filters.modules].sort());
-    const featuresChanged = JSON.stringify([...localFilterFeatures].sort()) !== JSON.stringify([...filters.features].sort());
-    const flagIdsChanged = JSON.stringify([...localFilterFlagIds].sort()) !== JSON.stringify([...(filters.flagIds || [])].sort());
-    return projectsChanged || modulesChanged || featuresChanged || flagIdsChanged;
-  }, [localFilterProjects, localFilterModules, localFilterFeatures, localFilterFlagIds, filters]);
+    const projectsChanged =
+      JSON.stringify([...localFilterProjects].sort()) !==
+      JSON.stringify([...filters.projects].sort());
+    const modulesChanged =
+      JSON.stringify([...localFilterModules].sort()) !==
+      JSON.stringify([...filters.modules].sort());
+    const featuresChanged =
+      JSON.stringify([...localFilterFeatures].sort()) !==
+      JSON.stringify([...filters.features].sort());
+    const flagIdsChanged =
+      JSON.stringify([...localFilterFlagIds].sort()) !==
+      JSON.stringify([...(filters.flagIds || [])].sort());
+    return (
+      projectsChanged || modulesChanged || featuresChanged || flagIdsChanged
+    );
+  }, [
+    localFilterProjects,
+    localFilterModules,
+    localFilterFeatures,
+    localFilterFlagIds,
+    filters,
+  ]);
 
   // 로컬 필터에 활성화된 항목이 있는지 확인
-  const hasLocalActiveFilters = localFilterProjects.length > 0 || localFilterModules.length > 0 || localFilterFeatures.length > 0 || localFilterFlagIds.length > 0;
+  const hasLocalActiveFilters =
+    localFilterProjects.length > 0 ||
+    localFilterModules.length > 0 ||
+    localFilterFeatures.length > 0 ||
+    localFilterFlagIds.length > 0;
 
   const toggleProjectFilter = (project: string) => {
     const current = filters.projects;
@@ -1186,7 +1342,7 @@ export const DraftTreePanel = forwardRef<
     (e: React.KeyboardEvent) => {
       // 편집 중이면 키보드 네비게이션 비활성화
       if (editingNode) return;
-      
+
       const currentIndex = selectedNodeId
         ? nodePositions.findIndex((p) => p.node.id === selectedNodeId)
         : -1;
@@ -1248,14 +1404,14 @@ export const DraftTreePanel = forwardRef<
                 (currentNode.type === "feature" &&
                   (currentNode.originalBarCount || 0) > 0);
               const isExpanded = expandedNodes.has(selectedNodeId);
-              
+
               // 펼쳐져 있으면 접기
               if (hasChildren && isExpanded) {
                 toggleNode(selectedNodeId);
               } else {
                 // 접을 게 없으면 상위 노드로 선택 이동
                 let parentNodeId: string | null = null;
-                
+
                 if (currentNode.type === "feature" && currentNode.row) {
                   // feature -> module
                   parentNodeId = `${currentNode.row.project}::${currentNode.row.module}`;
@@ -1265,7 +1421,7 @@ export const DraftTreePanel = forwardRef<
                   parentNodeId = parts[0];
                 }
                 // project는 최상위이므로 이동 없음
-                
+
                 if (parentNodeId) {
                   const parentPos = nodePositions.find(
                     (p) => p.node.id === parentNodeId
@@ -1307,6 +1463,30 @@ export const DraftTreePanel = forwardRef<
           }
           break;
         }
+        case "Enter": {
+          // 트리 선택 상태에서 Enter → 새 기능 추가 모달
+          if (!isEditing || !selectedNodeId || nodePositions.length === 0)
+            break;
+          const pos = nodePositions.find((p) => p.node.id === selectedNodeId);
+          if (!pos) break;
+          e.preventDefault();
+          const { node } = pos;
+          let project = "";
+          let module = "";
+          if (node.type === "project") {
+            project = node.label;
+          } else if (node.type === "module") {
+            const parts = node.id.split("::");
+            project = parts[0] ?? "";
+            module = parts[1] ?? "";
+          } else if (node.type === "feature" && node.row) {
+            project = node.row.project ?? "";
+            module = node.row.module ?? "";
+          }
+          setInitialModalData(project || module ? { project, module } : null);
+          setShowAddRowModal(true);
+          break;
+        }
       }
     },
     [
@@ -1317,6 +1497,8 @@ export const DraftTreePanel = forwardRef<
       viewMode,
       toggleNode,
       selectRow,
+      isEditing,
+      setShowAddRowModal,
     ]
   );
 
@@ -1336,26 +1518,34 @@ export const DraftTreePanel = forwardRef<
     }
 
     const newRow = addRow(project, module, feature);
-    
+
     // If opened from context menu, insert after the right-clicked row
     if (initialModalData && contextMenu) {
       const rightClickedRowId = contextMenu.nodeId;
       // Find the row to insert after
-      const targetRowIndex = allRows.findIndex(r => r.rowId === rightClickedRowId);
-      
+      const targetRowIndex = allRows.findIndex(
+        (r) => r.rowId === rightClickedRowId
+      );
+
       if (targetRowIndex !== -1) {
         // Reorder: move new row to position after target
         const newOrder = allRows
-          .filter(r => r.rowId !== newRow.rowId)
-          .flatMap((r, idx) => 
+          .filter((r) => r.rowId !== newRow.rowId)
+          .flatMap((r, idx) =>
             idx === targetRowIndex ? [r.rowId, newRow.rowId] : [r.rowId]
           );
         reorderRows(newOrder);
       }
     }
-    
+
+    // 새로 추가된 행을 선택해, 바로 Backspace 시 해당 행 삭제(경고 없이)가 동작하도록 함
+    setSelectedNodeId(newRow.rowId);
+    selectRow(newRow.rowId);
+
     setShowAddRowModal(false);
     setInitialModalData(null);
+    // 모달이 DOM에서 제거된 뒤 트리로 포커스 복원 (방향키 이동 유지)
+    setTimeout(() => scrollContainerRef.current?.focus(), 0);
   };
 
   // 드래그앤드롭 핸들러
@@ -1594,7 +1784,10 @@ export const DraftTreePanel = forwardRef<
   // 오늘 날짜 (YYYY-MM-DD 형식)
   const todayStr = useMemo(() => {
     const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(today.getDate()).padStart(2, "0")}`;
   }, []);
 
   const renderNode = (pos: {
@@ -1605,7 +1798,9 @@ export const DraftTreePanel = forwardRef<
     const { node, top, height } = pos;
     const isExpanded = expandedNodes.has(node.id);
     // Feature도 bars가 있으면 접을 수 있음 (원래 bars 개수로 확인)
-    const hasChildren = node.type !== "feature" || (node.type === "feature" && (node.originalBarCount || 0) > 0);
+    const hasChildren =
+      node.type !== "feature" ||
+      (node.type === "feature" && (node.originalBarCount || 0) > 0);
     // 선택 상태 (모든 노드 타입에 대해 selectedNodeId 기준)
     const isSelected = selectedNodeId === node.id;
 
@@ -1616,7 +1811,9 @@ export const DraftTreePanel = forwardRef<
 
       if (node.type === "feature") {
         // feature는 자신의 bars에서 확인
-        const featureBars = activeBars.filter((bar) => bar.rowId === node.row?.rowId);
+        const featureBars = activeBars.filter(
+          (bar) => bar.rowId === node.row?.rowId
+        );
         return featureBars.some(
           (bar) => bar.startDate <= todayStr && bar.endDate >= todayStr
         );
@@ -1626,7 +1823,7 @@ export const DraftTreePanel = forwardRef<
       const relevantBars = activeBars.filter((bar) => {
         const row = filteredRows.find((r) => r.rowId === bar.rowId);
         if (!row) return false;
-        
+
         if (node.type === "project") {
           return row.project === node.label;
         } else if (node.type === "module") {
@@ -1659,9 +1856,17 @@ export const DraftTreePanel = forwardRef<
       e.stopPropagation();
       if (!node.row) return;
 
-      // 전체 bar 개수 (삭제 확인용)
-      const totalBarCount = node.bars?.length || 0;
-      
+      // 해당 row의 실제 계획 수(삭제되지 않은 bars만)로 판단
+      const totalBarCount = allBars.filter(
+        (b) => !b.deleted && b.rowId === node.row!.rowId
+      ).length;
+
+      // "새 기능 추가"이고 포함된 계획이 없으면 경고 없이 바로 삭제
+      if (node.label.trim() === "새 기능 추가" && totalBarCount === 0) {
+        deleteRow(node.row.rowId);
+        return;
+      }
+
       // 삭제 확인 모달 표시
       setDeleteConfirm({
         isOpen: true,
@@ -1769,7 +1974,8 @@ export const DraftTreePanel = forwardRef<
 
     // Airbnb 스타일 배경색 (project/module/feature 구분)
     // 접힌 feature는 연한 회색 음영 처리
-    const isFeatureCollapsed = node.type === "feature" && node.isExpanded === false;
+    const isFeatureCollapsed =
+      node.type === "feature" && node.isExpanded === false;
     let bgStyle = "";
     if (isFeatureCollapsed) {
       bgStyle = "rgba(0, 0, 0, 0.03)";
@@ -1801,7 +2007,9 @@ export const DraftTreePanel = forwardRef<
         onContextMenu={(e) => handleContextMenu(e, node)}
         onClick={() => handleNodeSelect()}
         className={`absolute left-0 right-0 flex items-center gap-1 group transition-all duration-150 cursor-pointer ${
-          node.type === "project" || node.type === "module" || (node.type === "feature" && !isExpanded)
+          node.type === "project" ||
+          node.type === "module" ||
+          (node.type === "feature" && !isExpanded)
             ? "px-2"
             : "px-3"
         } ${isSelected ? "" : "hover:translate-x-0.5"} ${
@@ -1914,16 +2122,18 @@ export const DraftTreePanel = forwardRef<
           <div
             className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse"
             style={{
-              background: node.type === "project"
-                ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                : node.type === "module"
-                ? "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
-                : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-              boxShadow: node.type === "project"
-                ? "0 0 4px rgba(245, 158, 11, 0.5)"
-                : node.type === "module"
-                ? "0 0 4px rgba(139, 92, 246, 0.5)"
-                : "0 0 4px rgba(16, 185, 129, 0.5)",
+              background:
+                node.type === "project"
+                  ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                  : node.type === "module"
+                  ? "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
+                  : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              boxShadow:
+                node.type === "project"
+                  ? "0 0 4px rgba(245, 158, 11, 0.5)"
+                  : node.type === "module"
+                  ? "0 0 4px rgba(139, 92, 246, 0.5)"
+                  : "0 0 4px rgba(16, 185, 129, 0.5)",
             }}
             title="오늘 날짜에 진행 중인 계획이 있습니다"
           />
@@ -1958,7 +2168,9 @@ export const DraftTreePanel = forwardRef<
           ) : (
             <span
               className={`block truncate transition-colors duration-150 ${
-                node.type === "project" || node.type === "module" || (node.type === "feature" && !isExpanded)
+                node.type === "project" ||
+                node.type === "module" ||
+                (node.type === "feature" && !isExpanded)
                   ? "text-[11px]"
                   : "text-[13px]"
               } ${
@@ -2013,6 +2225,7 @@ export const DraftTreePanel = forwardRef<
 
   return (
     <div
+      ref={containerRef}
       className="flex-shrink-0 overflow-hidden flex flex-col relative"
       style={{
         width: TREE_WIDTH,
@@ -2167,7 +2380,7 @@ export const DraftTreePanel = forwardRef<
               <button
                 onClick={() => setShowAddRowModal(true)}
                 className="p-1.5 rounded-md transition-all duration-150 hover:bg-blue-50 active:scale-95"
-                title="새 기능 추가"
+                title="새 기능 추가 (Enter / ⌘⇧⌥N)"
               >
                 <PlusIcon className="w-3.5 h-3.5 text-blue-500" />
               </button>
@@ -2394,14 +2607,18 @@ export const DraftTreePanel = forwardRef<
                 </div>
                 <div className="space-y-0.5">
                   {filteredRangeFlags.map((flag) => {
-                    const isChecked = localFilterFlagIds.includes(flag.clientId);
+                    const isChecked = localFilterFlagIds.includes(
+                      flag.clientId
+                    );
                     const flagColor = flag.color || "#ef4444";
                     // 날짜 포맷: M/D
                     const formatDate = (dateStr: string) => {
                       const d = new Date(dateStr);
                       return `${d.getMonth() + 1}/${d.getDate()}`;
                     };
-                    const dateRange = `${formatDate(flag.startDate)}~${formatDate(flag.endDate)}`;
+                    const dateRange = `${formatDate(
+                      flag.startDate
+                    )}~${formatDate(flag.endDate)}`;
 
                     return (
                       <label
@@ -2434,15 +2651,14 @@ export const DraftTreePanel = forwardRef<
             )}
 
             {/* 필터 항목 리스트 */}
-            {filteredFilterItems.length === 0 && filteredRangeFlags.length === 0 ? (
+            {filteredFilterItems.length === 0 &&
+            filteredRangeFlags.length === 0 ? (
               <div className="text-xs text-gray-400 text-center py-4">
                 {debouncedFilterSearchQuery
                   ? "검색 결과가 없습니다"
                   : "필터할 항목이 없습니다"}
               </div>
-            ) : filteredFilterItems.length === 0 ? (
-              null
-            ) : (
+            ) : filteredFilterItems.length === 0 ? null : (
               <div className="space-y-1">
                 {filteredFilterItems.map((item) => {
                   const isChecked =
@@ -2554,7 +2770,11 @@ export const DraftTreePanel = forwardRef<
             </button>
             <button
               onClick={applyLocalFilters}
-              disabled={!hasLocalFilterChanges && !hasLocalActiveFilters && !hasActiveFilters}
+              disabled={
+                !hasLocalFilterChanges &&
+                !hasLocalActiveFilters &&
+                !hasActiveFilters
+              }
               className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-md transition-colors"
             >
               적용
@@ -2643,110 +2863,44 @@ export const DraftTreePanel = forwardRef<
           onClose={() => {
             setShowAddRowModal(false);
             setInitialModalData(null);
+            // 모달이 DOM에서 제거된 뒤 트리로 포커스 복원 (방향키 이동 유지)
+            setTimeout(() => scrollContainerRef.current?.focus(), 0);
           }}
           onAdd={handleAddRow}
           existingProjects={allProjects}
           existingModules={allModules}
           initialProject={initialModalData?.project}
           initialModule={initialModalData?.module}
+          initialFeature={initialModalData?.feature}
         />
       )}
 
       {/* Context Menu Portal */}
-      {contextMenu && createPortal(
-        <div
-          className="fixed z-[10000] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
-          style={{
-            top: contextMenu.y,
-            left: contextMenu.x,
-            minWidth: 200,
-            background: "white",
-            border: "1px solid rgba(0, 0, 0, 0.08)",
-            boxShadow:
-              "0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)",
-          }}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <div className="py-2">
-            {/* 새 기능 추가 */}
-            <button
-              onClick={() => {
-                setInitialModalData({
-                  project: contextMenu.project,
-                  module: contextMenu.module,
-                });
-                setShowAddRowModal(true);
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
-              style={{
-                background: "transparent",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background =
-                  "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 group-hover:bg-blue-100 transition-colors">
-                <PlusIcon className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <div className="text-xs text-gray-500">{contextMenu.project}{contextMenu.module ? ` / ${contextMenu.module}` : ""}</div>
-                <div className="text-sm font-medium text-gray-900">새 기능 추가</div>
-              </div>
-            </button>
-
-            {/* 이름 변경 */}
-            <button
-              onClick={() => {
-                // 편집 모드 시작 (기존 더블클릭 로직과 동일)
-                const idParts = contextMenu.nodeId.split("::");
-                setEditingNode({
-                  id: contextMenu.nodeId,
-                  type: contextMenu.nodeType,
-                  label: contextMenu.label,
-                  project: contextMenu.nodeType !== "project" ? contextMenu.project : undefined,
-                  module: contextMenu.nodeType === "feature" ? contextMenu.module : undefined,
-                });
-                setContextMenu(null);
-                // input에 포커스 및 텍스트 전체 선택
-                setTimeout(() => {
-                  editInputRef.current?.focus();
-                  editInputRef.current?.select();
-                }, 50);
-              }}
-              className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
-              style={{
-                background: "transparent",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background =
-                  "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-50 group-hover:bg-amber-100 transition-colors">
-                <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <div className="text-xs text-gray-500">{contextMenu.label}</div>
-                <div className="text-sm font-medium text-gray-900">이름 변경</div>
-              </div>
-            </button>
-
-            {/* 펼치기/접기 (hasChildren인 경우만) */}
-            {contextMenu.hasChildren && viewMode !== "summarized" && (
+      {contextMenu &&
+        createPortal(
+          <div
+            className="fixed z-[10000] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+            style={{
+              top: contextMenu.y,
+              left: contextMenu.x,
+              minWidth: 200,
+              background: "white",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              boxShadow:
+                "0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="py-2">
+              {/* 새 기능 추가 */}
               <button
                 onClick={() => {
-                  toggleNode(contextMenu.nodeId);
+                  setInitialModalData({
+                    project: contextMenu.project,
+                    module: contextMenu.module,
+                  });
+                  setShowAddRowModal(true);
                   setContextMenu(null);
                 }}
                 className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
@@ -2761,25 +2915,120 @@ export const DraftTreePanel = forwardRef<
                   e.currentTarget.style.background = "transparent";
                 }}
               >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-50 group-hover:bg-violet-100 transition-colors">
-                  {contextMenu.isExpanded ? (
-                    <ChevronDownIcon className="w-4 h-4 text-violet-600" />
-                  ) : (
-                    <ChevronRightIcon className="w-4 h-4 text-violet-600" />
-                  )}
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                  <PlusIcon className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500">하위 항목</div>
+                  <div className="text-xs text-gray-500">
+                    {contextMenu.project}
+                    {contextMenu.module ? ` / ${contextMenu.module}` : ""}
+                  </div>
                   <div className="text-sm font-medium text-gray-900">
-                    {contextMenu.isExpanded ? "접기" : "펼치기"}
+                    새 기능 추가
                   </div>
                 </div>
               </button>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+
+              {/* 이름 변경 */}
+              <button
+                onClick={() => {
+                  // 편집 모드 시작 (기존 더블클릭 로직과 동일)
+                  const idParts = contextMenu.nodeId.split("::");
+                  setEditingNode({
+                    id: contextMenu.nodeId,
+                    type: contextMenu.nodeType,
+                    label: contextMenu.label,
+                    project:
+                      contextMenu.nodeType !== "project"
+                        ? contextMenu.project
+                        : undefined,
+                    module:
+                      contextMenu.nodeType === "feature"
+                        ? contextMenu.module
+                        : undefined,
+                  });
+                  setContextMenu(null);
+                  // input에 포커스 및 텍스트 전체 선택
+                  setTimeout(() => {
+                    editInputRef.current?.focus();
+                    editInputRef.current?.select();
+                  }, 50);
+                }}
+                className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+                style={{
+                  background: "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-50 group-hover:bg-amber-100 transition-colors">
+                  <svg
+                    className="w-4 h-4 text-amber-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500">
+                    {contextMenu.label}
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">
+                    이름 변경
+                  </div>
+                </div>
+              </button>
+
+              {/* 펼치기/접기 (hasChildren인 경우만) */}
+              {contextMenu.hasChildren && viewMode !== "summarized" && (
+                <button
+                  onClick={() => {
+                    toggleNode(contextMenu.nodeId);
+                    setContextMenu(null);
+                  }}
+                  className="w-full px-4 py-2.5 text-left flex items-center gap-3 group transition-all duration-150"
+                  style={{
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background =
+                      "linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-50 group-hover:bg-violet-100 transition-colors">
+                    {contextMenu.isExpanded ? (
+                      <ChevronDownIcon className="w-4 h-4 text-violet-600" />
+                    ) : (
+                      <ChevronRightIcon className="w-4 h-4 text-violet-600" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-500">하위 항목</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {contextMenu.isExpanded ? "접기" : "펼치기"}
+                    </div>
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* 펼치기 드롭다운 메뉴 (Portal) */}
       {showExpandMenu &&
