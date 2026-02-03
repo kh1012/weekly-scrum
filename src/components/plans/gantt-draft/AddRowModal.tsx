@@ -8,7 +8,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { XIcon, FolderIcon, CubeIcon, CodeIcon } from "@/components/common/Icons";
+import {
+  XIcon,
+  FolderIcon,
+  CubeIcon,
+  CodeIcon,
+} from "@/components/common/Icons";
 import {
   PROJECT_OPTIONS,
   MODULE_OPTIONS,
@@ -24,6 +29,8 @@ interface AddRowModalProps {
   existingModules?: string[];
   initialProject?: string;
   initialModule?: string;
+  /** 기능 노드 선택 시 채울 초기 기능명 */
+  initialFeature?: string;
 }
 
 export function AddRowModal({
@@ -34,10 +41,11 @@ export function AddRowModal({
   existingModules = [],
   initialProject = "",
   initialModule = "",
+  initialFeature = "",
 }: AddRowModalProps) {
   const [project, setProject] = useState(initialProject);
   const [module, setModule] = useState(initialModule);
-  const [feature, setFeature] = useState("");
+  const [feature, setFeature] = useState(initialFeature);
 
   // 드롭다운 상태
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
@@ -96,14 +104,14 @@ export function AddRowModal({
     if (isOpen) {
       setProject(initialProject);
       setModule(initialModule);
-      setFeature("");
+      setFeature(initialFeature);
       setShowProjectDropdown(false);
       setShowModuleDropdown(false);
       setShowFeatureDropdown(false);
       setProjectIndex(-1);
       setModuleIndex(-1);
       setFeatureIndex(-1);
-      
+
       // 값이 비어있는 첫 번째 필드에 포커스
       setTimeout(() => {
         if (!initialProject) {
@@ -115,7 +123,7 @@ export function AddRowModal({
         }
       }, 100);
     }
-  }, [isOpen, initialProject, initialModule]);
+  }, [isOpen, initialProject, initialModule, initialFeature]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -195,14 +203,20 @@ export function AddRowModal({
           className="flex items-center justify-between px-5 py-4 border-b"
           style={{ borderColor: "var(--notion-border)" }}
         >
-          <h3 className="text-lg font-semibold" style={{ color: "var(--notion-text)" }}>
+          <h3
+            className="text-lg font-semibold"
+            style={{ color: "var(--notion-text)" }}
+          >
             새 기능 추가
           </h3>
           <button
             onClick={onClose}
             className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <XIcon className="w-5 h-5" style={{ color: "var(--notion-text-muted)" }} />
+            <XIcon
+              className="w-5 h-5"
+              style={{ color: "var(--notion-text-muted)" }}
+            />
           </button>
         </div>
 
@@ -235,7 +249,9 @@ export function AddRowModal({
                   setProjectIndex(projectOptions.length > 0 ? 0 : -1);
                 }
               }}
-              onBlur={() => setTimeout(() => setShowProjectDropdown(false), 150)}
+              onBlur={() =>
+                setTimeout(() => setShowProjectDropdown(false), 150)
+              }
               onKeyDown={(e) =>
                 handleKeyDown(
                   e,
@@ -252,7 +268,9 @@ export function AddRowModal({
               className="w-full px-3 py-2 text-sm rounded-lg border transition-colors"
               style={{
                 background: "var(--notion-bg-secondary)",
-                borderColor: showProjectDropdown ? "#3b82f6" : "var(--notion-border)",
+                borderColor: showProjectDropdown
+                  ? "#3b82f6"
+                  : "var(--notion-border)",
                 color: "var(--notion-text)",
               }}
               autoComplete="off"
@@ -333,7 +351,9 @@ export function AddRowModal({
               className="w-full px-3 py-2 text-sm rounded-lg border transition-colors"
               style={{
                 background: "var(--notion-bg-secondary)",
-                borderColor: showModuleDropdown ? "#3b82f6" : "var(--notion-border)",
+                borderColor: showModuleDropdown
+                  ? "#3b82f6"
+                  : "var(--notion-border)",
                 color: "var(--notion-text)",
               }}
               autoComplete="off"
@@ -397,7 +417,9 @@ export function AddRowModal({
                   setFeatureIndex(featureOptions.length > 0 ? 0 : -1);
                 }
               }}
-              onBlur={() => setTimeout(() => setShowFeatureDropdown(false), 150)}
+              onBlur={() =>
+                setTimeout(() => setShowFeatureDropdown(false), 150)
+              }
               onKeyDown={(e) => {
                 handleKeyDown(
                   e,
@@ -410,7 +432,11 @@ export function AddRowModal({
                   undefined
                 );
                 // Enter로 폼 제출
-                if (e.key === "Enter" && !showFeatureDropdown && feature.trim()) {
+                if (
+                  e.key === "Enter" &&
+                  !showFeatureDropdown &&
+                  feature.trim()
+                ) {
                   handleSubmit(e);
                 }
               }}
@@ -418,7 +444,9 @@ export function AddRowModal({
               className="w-full px-3 py-2 text-sm rounded-lg border transition-colors"
               style={{
                 background: "var(--notion-bg-secondary)",
-                borderColor: showFeatureDropdown ? "#3b82f6" : "var(--notion-border)",
+                borderColor: showFeatureDropdown
+                  ? "#3b82f6"
+                  : "var(--notion-border)",
                 color: "var(--notion-text)",
               }}
               autoComplete="off"
@@ -455,10 +483,7 @@ export function AddRowModal({
           </div>
 
           {/* 힌트 */}
-          <p
-            className="text-xs"
-            style={{ color: "var(--notion-text-muted)" }}
-          >
+          <p className="text-xs" style={{ color: "var(--notion-text-muted)" }}>
             💡 방향키(↓)로 목록 탐색, Enter로 선택, Tab으로 다음 필드 이동
           </p>
 
